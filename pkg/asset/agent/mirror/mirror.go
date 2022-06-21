@@ -14,7 +14,8 @@ var (
 
 // AgentMirror generates all the files required for disconnected installations.
 type AgentMirror struct {
-	FileList []*asset.File
+	FileList     []*asset.File
+	MirrorConfig []RegistriesConfig
 }
 
 // Name returns a human friendly name.
@@ -38,6 +39,11 @@ func (m *AgentMirror) Generate(dependencies asset.Parents) error {
 	} {
 		dependencies.Get(a)
 		m.FileList = append(m.FileList, a.Files()...)
+
+		switch v := a.(type) {
+		case *RegistriesConf:
+			m.MirrorConfig = v.MirrorConfig
+		}
 	}
 
 	asset.SortFiles(m.FileList)

@@ -8,9 +8,10 @@ ConditionPathExists=/etc/assisted-service/node0
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
 Environment=SERVICE_BASE_URL={{.ServiceBaseURL}}
+Environment=OPENSHIFT_INSTALL_RELEASE_IMAGE_MIRROR={{.ReleaseImageMirror}}
 ExecStartPre=/bin/rm -f %t/%n.ctr-id
 ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
-ExecStart=podman run --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --rm --pod-id-file=%t/assisted-service-pod.pod-id --replace --name=create-cluster-and-infraenv -v /etc/assisted/manifests:/manifests --env SERVICE_BASE_URL quay.io/edge-infrastructure/assisted-service:latest /agent-based-installer-register-cluster-and-infraenv
+ExecStart=podman run --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --rm --pod-id-file=%t/assisted-service-pod.pod-id --replace --name=create-cluster-and-infraenv -v /etc/assisted/manifests:/manifests --env SERVICE_BASE_URL --env OPENSHIFT_INSTALL_RELEASE_IMAGE_MIRROR quay.io/edge-infrastructure/assisted-service:latest /agent-based-installer-register-cluster-and-infraenv
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
 ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
 

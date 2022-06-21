@@ -1,10 +1,12 @@
 package image
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 	"path"
 	"path/filepath"
+	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/tls"
@@ -20,6 +23,7 @@ import (
 
 const manifestPath = "/etc/assisted/manifests"
 const nmConnectionsPath = "/etc/assisted/network"
+const mirrorPath = "/etc/assisted/mirror"
 
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
@@ -34,13 +38,16 @@ type agentTemplateData struct {
 	PullSecret      string
 	// PullSecretToken is token to use for authentication when AUTH_TYPE=rhsso
 	// in assisted-service
-	PullSecretToken     string
-	NodeZeroIP          string
-	AssistedServiceHost string
-	APIVIP              string
-	ControlPlaneAgents  int
-	WorkerAgents        int
-	ReleaseImages       string
+	PullSecretToken       string
+	NodeZeroIP            string
+	AssistedServiceHost   string
+	APIVIP                string
+	ControlPlaneAgents    int
+	WorkerAgents          int
+	ReleaseImages         string
+	ReleaseImageMirror    string
+	MirrorRegistriesMount string
+	CaBundleMount         string
 }
 
 var (
@@ -74,6 +81,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&tls.AdminKubeConfigSignerCertKey{},
 		&tls.AdminKubeConfigClientCertKey{},
 		&agentconfig.Asset{},
+		&mirror.AgentMirror{},
 	}
 }
 
@@ -112,10 +120,38 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
+	agentMirror := &mirror.AgentMirror{}
+	dependencies.Get(agentMirror)
+
+	// Mount files for assisted-service
+	mirrorRegistriesMount := ""
+	caBundleMount := ""
+	for _, file := range agentMirror.FileList {
+		if file.Filename == mirror.RegistriesConfFilename {
+			mirrorRegistriesMount = fmt.Sprintf("-v %s:/etc/containers/registries.conf:z", filepath.Join("/etc/assisted", file.Filename))
+		}
+		if file.Filename == mirror.CaBundleFilename {
+			caBundleMount = fmt.Sprintf("-v %s:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:z", filepath.Join("/etc/assisted", file.Filename))
+		}
+	}
+
+	// Get the mirror for release image
+	releaseImageMirror := ""
+	source := strings.Split(agentManifests.ClusterImageSet.Spec.ReleaseImage, ":")
+	for _, config := range agentMirror.MirrorConfig {
+		if config.Location == source[0] {
+			// include the tag with the build release image
+			releaseImageMirror = fmt.Sprintf("%s:%s", config.Mirror, source[1])
+		}
+	}
+
 	agentTemplateData := getTemplateData(
 		agentManifests.GetPullSecretData(),
 		nodeZeroIP,
 		releaseImageList,
+		releaseImageMirror,
+		mirrorRegistriesMount,
+		caBundleMount,
 		agentManifests.AgentClusterInstall)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
@@ -149,12 +185,14 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	addTLSData(&config, dependencies)
 
+	addMirrorData(&config, agentMirror)
+
 	a.Config = &config
 	return nil
 }
 
 func getTemplateData(pullSecret string, nodeZeroIP string, releaseImageList string,
-	agentClusterInstall *hiveext.AgentClusterInstall) *agentTemplateData {
+	releaseImageMirror string, mirrorRegistriesMount string, caBundleMount string, agentClusterInstall *hiveext.AgentClusterInstall) *agentTemplateData {
 	serviceBaseURL := url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -162,16 +200,19 @@ func getTemplateData(pullSecret string, nodeZeroIP string, releaseImageList stri
 	}
 
 	return &agentTemplateData{
-		ServiceProtocol:     serviceBaseURL.Scheme,
-		ServiceBaseURL:      serviceBaseURL.String(),
-		PullSecret:          pullSecret,
-		PullSecretToken:     "",
-		NodeZeroIP:          serviceBaseURL.Hostname(),
-		AssistedServiceHost: serviceBaseURL.Host,
-		APIVIP:              agentClusterInstall.Spec.APIVIP,
-		ControlPlaneAgents:  agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
-		WorkerAgents:        agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
-		ReleaseImages:       releaseImageList,
+		ServiceProtocol:       serviceBaseURL.Scheme,
+		ServiceBaseURL:        serviceBaseURL.String(),
+		PullSecret:            pullSecret,
+		PullSecretToken:       "",
+		NodeZeroIP:            serviceBaseURL.Hostname(),
+		AssistedServiceHost:   serviceBaseURL.Host,
+		APIVIP:                agentClusterInstall.Spec.APIVIP,
+		ControlPlaneAgents:    agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
+		WorkerAgents:          agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
+		ReleaseImages:         releaseImageList,
+		ReleaseImageMirror:    releaseImageMirror,
+		MirrorRegistriesMount: mirrorRegistriesMount,
+		CaBundleMount:         caBundleMount,
 	}
 }
 
@@ -214,6 +255,25 @@ func addTLSData(config *igntypes.Config, dependencies asset.Parents) {
 		for _, d := range ck.(asset.WritableAsset).Files() {
 			f := ignition.FileFromBytes(path.Join("/opt/agent", d.Filename), "root", 0600, d.Data)
 			config.Storage.Files = append(config.Storage.Files, f)
+		}
+	}
+}
+
+func addMirrorData(config *igntypes.Config, agentMirror *mirror.AgentMirror) {
+
+	// add mirror files to ignition
+	for _, file := range agentMirror.FileList {
+		// These are required for assisted-service to build the ICSP for openshift-install
+		mirrorFile := ignition.FileFromBytes(filepath.Join(mirrorPath, filepath.Base(file.Filename)),
+			"root", 0600, file.Data)
+		config.Storage.Files = append(config.Storage.Files, mirrorFile)
+
+		// This is required for the agent to run the podman commands to the mirror
+		if file.Filename == mirror.CaBundleFilename {
+			mirrorFile := ignition.FileFromBytes("/etc/pki/ca-trust/source/anchors/domain.crt",
+				"root", 0600, file.Data)
+			config.Storage.Files = append(config.Storage.Files, mirrorFile)
+
 		}
 	}
 }
