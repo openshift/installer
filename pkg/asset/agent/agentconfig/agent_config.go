@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
-
-	"github.com/openshift/installer/pkg/asset"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 // Asset reads the agent-config.yaml file.
 type Asset struct {
 	File   *asset.File
-	Config *AgentConfig
+	Config *agent.Config
 }
 
 // Name returns a human friendly name for the asset.
@@ -56,7 +56,7 @@ func (a *Asset) Load(f asset.FileFetcher) (bool, error) {
 		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", agentConfigFilename))
 	}
 
-	config := &AgentConfig{}
+	config := &agent.Config{}
 	if err := yaml.UnmarshalStrict(file.Data, config); err != nil {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", agentConfigFilename)
 	}

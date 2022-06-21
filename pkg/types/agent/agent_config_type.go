@@ -1,4 +1,4 @@
-package agentconfig
+package agent
 
 import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
@@ -6,9 +6,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// AgentConfig is the API for specifying additional configuration for the
-// agent-based installer not covered by install-config.
-type AgentConfig struct {
+// Config or aka AgentConfig is the API for specifying additional
+// configuration for the agent-based installer not covered by
+// install-config.
+type Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 

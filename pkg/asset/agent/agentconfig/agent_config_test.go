@@ -8,6 +8,7 @@ import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +25,7 @@ func TestAgentConfig_LoadedFromDisk(t *testing.T) {
 		fetchError     error
 		expectedFound  bool
 		expectedError  string
-		expectedConfig *AgentConfig
+		expectedConfig *agent.Config
 	}{
 		{
 			name: "valid-config-single-node",
@@ -53,13 +54,13 @@ spec:
         - name: enp3s1
           macAddress: 28:d2:44:d2:b2:1a`,
 			expectedFound: true,
-			expectedConfig: &AgentConfig{
+			expectedConfig: &agent.Config{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
-				Spec: Spec{
+				Spec: agent.Spec{
 					RendezvousIP: "192.168.111.80",
-					Hosts: []Host{
+					Hosts: []agent.Host{
 						{
 							Hostname: "control-0.example.org",
 							Role:     "master",
@@ -124,13 +125,13 @@ spec:
         - name: enp3s1
           macAddress: 28:d2:44:d2:b2:1b`,
 			expectedFound: true,
-			expectedConfig: &AgentConfig{
+			expectedConfig: &agent.Config{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
-				Spec: Spec{
+				Spec: agent.Spec{
 					RendezvousIP: "192.168.111.80",
-					Hosts: []Host{
+					Hosts: []agent.Host{
 						{
 							Hostname: "control-0.example.org",
 							Role:     "master",
@@ -178,7 +179,7 @@ spec:
 		{
 			name:          "not-yaml",
 			data:          `This is not a yaml file`,
-			expectedError: "failed to unmarshal agent-config.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type agentconfig.AgentConfig",
+			expectedError: "failed to unmarshal agent-config.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type agent.Config",
 		},
 		{
 			name:       "file-not-found",
@@ -225,13 +226,13 @@ spec:
         - name: enp3s1
           macAddress: 28:d2:44:d2:b2:1a`,
 			expectedFound: true,
-			expectedConfig: &AgentConfig{
+			expectedConfig: &agent.Config{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
-				Spec: Spec{
+				Spec: agent.Spec{
 					RendezvousIP: "192.168.111.80",
-					Hosts: []Host{
+					Hosts: []agent.Host{
 						{
 							Interfaces: []*aiv1beta1.Interface{
 								{
