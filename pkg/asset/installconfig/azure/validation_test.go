@@ -201,12 +201,6 @@ var (
 	erroringOSImageSKU               = "test-sku-gen1"
 	erroringLicenseTermsOSImageSKU   = "erroring-license-terms"
 	unacceptedLicenseTermsOSImageSKU = "unaccepted-license-terms"
-	validOSImage                     = azure.OSImage{
-		Publisher: validOSImagePublisher,
-		Offer:     validOSImageOffer,
-		SKU:       validOSImageSKU,
-		Version:   validOSImageVersion,
-	}
 
 	validDiskEncryptionSetDefaultMachinePlatform = func(ic *types.InstallConfig) {
 		ic.Azure.DefaultMachinePlatform.OSDisk.DiskEncryptionSet = validDiskEncryptionSetConfig()
@@ -228,7 +222,12 @@ var (
 	}
 
 	validOSImageCompute = func(ic *types.InstallConfig) {
-		ic.Compute[0].Platform.Azure.OSImage = validOSImage
+		ic.Compute[0].Platform.Azure.OSImage = &azure.OSImage{
+			Publisher: validOSImagePublisher,
+			Offer:     validOSImageOffer,
+			SKU:       validOSImageSKU,
+			Version:   validOSImageVersion,
+		}
 	}
 	invalidOSImageCompute = func(ic *types.InstallConfig) {
 		validOSImageCompute(ic)

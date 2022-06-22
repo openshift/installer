@@ -42,7 +42,7 @@ type MachinePool struct {
 
 	// OSImage defines the image to use for the OS.
 	// +optional
-	OSImage OSImage `json:"osImage,omitempty"`
+	OSImage *OSImage `json:"osImage,omitempty"`
 }
 
 // VMNetworkingCapability defines the states for accelerated networking feature
@@ -99,7 +99,7 @@ func (a *MachinePool) Set(required *MachinePool) {
 	}
 
 	var emptyOSImage OSImage
-	if required.OSImage != emptyOSImage {
+	if required.OSImage != nil && *required.OSImage != emptyOSImage {
 		a.OSImage = required.OSImage
 	}
 }

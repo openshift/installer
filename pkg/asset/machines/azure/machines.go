@@ -103,7 +103,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	rg := platform.ClusterResourceGroupName(clusterID)
 
 	var image machineapi.Image
-	if mpool.OSImage.Publisher != "" {
+	if mpool.OSImage != nil && mpool.OSImage.Publisher != "" {
 		image.Type = machineapi.AzureImageTypeMarketplaceWithPlan
 		image.Publisher = mpool.OSImage.Publisher
 		image.Offer = mpool.OSImage.Offer

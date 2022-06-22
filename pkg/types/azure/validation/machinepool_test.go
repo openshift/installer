@@ -125,7 +125,7 @@ func TestValidateMachinePool(t *testing.T) {
 				Name: "worker",
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						OSImage: azure.OSImage{
+						OSImage: &azure.OSImage{
 							Publisher: "test-publisher",
 							Offer:     "test-offer",
 							SKU:       "test-sku",
@@ -141,7 +141,7 @@ func TestValidateMachinePool(t *testing.T) {
 				Name: "worker",
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						OSImage: azure.OSImage{
+						OSImage: &azure.OSImage{
 							Offer:   "test-offer",
 							SKU:     "test-sku",
 							Version: "test-version",
@@ -157,7 +157,7 @@ func TestValidateMachinePool(t *testing.T) {
 				Name: "worker",
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						OSImage: azure.OSImage{
+						OSImage: &azure.OSImage{
 							Publisher: "test-publisher",
 							SKU:       "test-sku",
 							Version:   "test-version",
@@ -173,7 +173,7 @@ func TestValidateMachinePool(t *testing.T) {
 				Name: "worker",
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						OSImage: azure.OSImage{
+						OSImage: &azure.OSImage{
 							Publisher: "test-publisher",
 							Offer:     "test-offer",
 							Version:   "test-version",
@@ -189,7 +189,7 @@ func TestValidateMachinePool(t *testing.T) {
 				Name: "worker",
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						OSImage: azure.OSImage{
+						OSImage: &azure.OSImage{
 							Publisher: "test-publisher",
 							Offer:     "test-offer",
 							SKU:       "test-sku",
@@ -205,7 +205,7 @@ func TestValidateMachinePool(t *testing.T) {
 				Name: "master",
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						OSImage: azure.OSImage{
+						OSImage: &azure.OSImage{
 							Publisher: "test-publisher",
 							Offer:     "test-offer",
 							SKU:       "test-sku",
@@ -222,7 +222,7 @@ func TestValidateMachinePool(t *testing.T) {
 				Name: "",
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						OSImage: azure.OSImage{
+						OSImage: &azure.OSImage{
 							Publisher: "test-publisher",
 							Offer:     "test-offer",
 							SKU:       "test-sku",

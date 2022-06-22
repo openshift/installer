@@ -532,6 +532,9 @@ func validateMarketplaceImage(client API, installConfig *types.InstallConfig) fi
 		if platform == nil {
 			continue
 		}
+		if platform.OSImage == nil {
+			continue
+		}
 		if platform.OSImage.Publisher == "" {
 			continue
 		}

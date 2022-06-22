@@ -63,7 +63,7 @@ func validateOSImage(p *azure.MachinePool, poolName string, fldPath *field.Path)
 	osImageFldPath := fldPath.Child("osImage")
 
 	emptyOSImage := azure.OSImage{}
-	if p.OSImage != emptyOSImage {
+	if p.OSImage != nil && *p.OSImage != emptyOSImage {
 		// The control plane cannot use the marketplace image. Don't let the default machine pool specify the
 		// marketplace image either.
 		if poolName == "" || poolName == "master" {
