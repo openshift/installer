@@ -30,16 +30,25 @@ variable "ignition_master" {
 variable "ovirt_master_memory" {
   type        = string
   description = "master VM memory in MiB"
+  default     = 16348 * 1024 * 1024
 }
 
 variable "ovirt_master_cores" {
   type        = string
   description = "master VM number of cores"
+  default     = 1
 }
 
 variable "ovirt_master_sockets" {
   type        = string
   description = "master VM number of sockets"
+  default     = 1
+}
+
+variable "ovirt_master_threads" {
+  type        = string
+  description = "master VM number of threads"
+  default     = 1
 }
 
 variable "ovirt_master_os_disk_size_gb" {
@@ -60,6 +69,7 @@ variable "ovirt_master_instance_type_id" {
 variable "ovirt_master_affinity_groups" {
   type        = list(string)
   description = "master VMs affinity groups names"
+  default     = []
 }
 
 //TODO: REMOVE once we port to TF 0.13 and can use depends_on modules

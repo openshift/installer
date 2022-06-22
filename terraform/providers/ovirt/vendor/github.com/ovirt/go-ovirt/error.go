@@ -4,20 +4,22 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 )
 
 type baseError struct {
+	// Code contains the HTTP status code that caused this error.
 	Code int
-	Msg  string
+	// Msg contains the text message that should be printed to the user.
+	Msg string
 }
 
+// Error returns the error string.
 func (b *baseError) Error() string {
 	return b.Msg
 }
 
-// AuthError indicates that an authentiation or authorization
+// AuthError indicates that an authentication or authorization
 // problem happened, like incorrect user name, incorrect password, or
 // missing permissions.
 type AuthError struct {
@@ -29,12 +31,26 @@ type NotFoundError struct {
 	baseError
 }
 
-// CheckFault procoesses error parsing and returns it back
-func CheckFault(response *http.Response) error {
-	resBytes, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return fmt.Errorf("Failed to read response, reason: %s", err.Error())
-	}
+// ResponseParseError indicates that the response from the oVirt Engine could not be parsed.
+type ResponseParseError struct {
+	baseError
+
+	cause error
+	body  []byte
+}
+
+// Unwrap returns the root cause of this error.
+func (r *ResponseParseError) Unwrap() error {
+	return r.cause
+}
+
+// Body returns the HTTP response body that caused the parse error.
+func (r *ResponseParseError) Body() []byte {
+	return r.body
+}
+
+// CheckFault takes a failed HTTP response (non-200) and extracts the fault from it.
+func CheckFault(resBytes []byte, response *http.Response) error {
 	// Process empty response body
 	if len(resBytes) == 0 {
 		return BuildError(response, nil)
@@ -43,11 +59,18 @@ func CheckFault(response *http.Response) error {
 	reader := NewXMLReader(resBytes)
 	fault, err := XMLFaultReadOne(reader, nil, "")
 	if err != nil {
-		// If the XML is not a <fault>, just return nil
-		if err, ok := err.(XMLTagNotMatchError); ok {
-			return err
+		return &ResponseParseError{
+			baseError{
+				Code: response.StatusCode,
+				Msg: fmt.Sprintf(
+					"failed to parse oVirt Engine fault response: %s (%v)",
+					resBytes,
+					err,
+				),
+			},
+			err,
+			resBytes,
 		}
-		return err
 	}
 	if fault != nil || response.StatusCode >= 400 {
 		return BuildError(response, fault)
@@ -56,22 +79,30 @@ func CheckFault(response *http.Response) error {
 }
 
 // CheckAction checks if response contains an Action instance
-func CheckAction(response *http.Response) (*Action, error) {
-	resBytes, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to read response, reason: %s", err.Error())
-	}
+func CheckAction(resBytes []byte, response *http.Response) (*Action, error) {
 	// Process empty response body
 	if len(resBytes) == 0 {
 		return nil, BuildError(response, nil)
 	}
+	var tagNotMatchError XMLTagNotMatchError
 
 	faultreader := NewXMLReader(resBytes)
 	fault, err := XMLFaultReadOne(faultreader, nil, "")
 	if err != nil {
 		// If the tag mismatches, return the err
-		if _, ok := err.(XMLTagNotMatchError); !ok {
-			return nil, err
+		if !errors.As(err, &tagNotMatchError) {
+			return nil, &ResponseParseError{
+				baseError{
+					Code: response.StatusCode,
+					Msg: fmt.Sprintf(
+						"failed to parse oVirt Engine response: %s (%v)",
+						resBytes,
+						err,
+					),
+				},
+				err,
+				resBytes,
+			}
 		}
 	}
 	if fault != nil {
@@ -82,7 +113,7 @@ func CheckAction(response *http.Response) (*Action, error) {
 	action, err := XMLActionReadOne(actionreader, nil, "")
 	if err != nil {
 		// If the tag mismatches, return the err
-		if _, ok := err.(XMLTagNotMatchError); !ok {
+		if errors.As(err, &tagNotMatchError) {
 			return nil, err
 		}
 	}

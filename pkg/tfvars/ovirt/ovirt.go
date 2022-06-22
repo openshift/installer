@@ -36,6 +36,7 @@ type config struct {
 	MasterMemory            int32                    `json:"ovirt_master_memory"`
 	MasterCores             int32                    `json:"ovirt_master_cores"`
 	MasterSockets           int32                    `json:"ovirt_master_sockets"`
+	MasterThreads           int32                    `json:"ovirt_master_threads"`
 	MasterOsDiskGB          int64                    `json:"ovirt_master_os_disk_gb"`
 	MasterAffinityGroups    []string                 `json:"ovirt_master_affinity_groups"`
 	MasterAutoPinningPolicy string                   `json:"ovirt_master_auto_pinning_policy,omitempty"`
@@ -83,6 +84,7 @@ func TFVars(
 	if masterSpec.CPU != nil {
 		cfg.MasterCores = masterSpec.CPU.Cores
 		cfg.MasterSockets = masterSpec.CPU.Sockets
+		cfg.MasterThreads = masterSpec.CPU.Threads
 	}
 
 	imageName, isURL := rhcos.GenerateOpenStackImageName(baseImage, infraID)

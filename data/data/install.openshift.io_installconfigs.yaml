@@ -578,9 +578,14 @@ spec:
                                 VM. Total CPUs is (Sockets * Cores)
                               format: int32
                               type: integer
+                            threads:
+                              description: Threads is the number of CPU threads.
+                              format: int32
+                              type: integer
                           required:
                           - cores
                           - sockets
+                          - threads
                           type: object
                         format:
                           description: Format is the disk format that the disks are
@@ -1207,9 +1212,14 @@ spec:
                               Total CPUs is (Sockets * Cores)
                             format: int32
                             type: integer
+                          threads:
+                            description: Threads is the number of CPU threads.
+                            format: int32
+                            type: integer
                         required:
                         - cores
                         - sockets
+                        - threads
                         type: object
                       format:
                         description: Format is the disk format that the disks are
@@ -2684,9 +2694,14 @@ spec:
                               Total CPUs is (Sockets * Cores)
                             format: int32
                             type: integer
+                          threads:
+                            description: Threads is the number of CPU threads.
+                            format: int32
+                            type: integer
                         required:
                         - cores
                         - sockets
+                        - threads
                         type: object
                       format:
                         description: Format is the disk format that the disks are

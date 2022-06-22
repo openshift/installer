@@ -3,8 +3,9 @@
 `go-plugin` is a Go (golang) plugin system over RPC. It is the plugin system
 that has been in use by HashiCorp tooling for over 4 years. While initially
 created for [Packer](https://www.packer.io), it is additionally in use by
-[Terraform](https://www.terraform.io), [Nomad](https://www.nomadproject.io), and
-[Vault](https://www.vaultproject.io).
+[Terraform](https://www.terraform.io), [Nomad](https://www.nomadproject.io),
+[Vault](https://www.vaultproject.io), and
+[Boundary](https://www.boundaryproject.io).
 
 While the plugin system is over RPC, it is currently only designed to work
 over a local [reliable] network. Plugins over a real network are not supported
@@ -140,11 +141,6 @@ At this point in time, the roadmap for the plugin system is:
 This plugin system will give host processes a system for constraining
 versions. This is in addition to the protocol versioning already present
 which is more for larger underlying changes.
-
-**Plugin fetching.** We will integrate with [go-getter](https://github.com/hashicorp/go-getter)
-to support automatic download + install of plugins. Paired with cryptographically
-secure plugins (above), we can make this a safe operation for an amazing
-user experience.
 
 ## What About Shared Libraries?
 
