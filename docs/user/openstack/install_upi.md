@@ -184,19 +184,31 @@ A proper [RHCOS][rhcos] image in the OpenStack cluster or project is required fo
 
 Get the RHCOS image for your OpenShift version [here][rhcos-image]. You should download images with the highest version that is less than or equal to the OpenShift version that you install. Use the image versions that match your OpenShift version if they are available.
 
+The OpenStack RHCOS image corresponding to a given openshift-install binary can be extracted from the binary itself. If the jq tool is available, extraction can be done programmatically:
+<!--- e2e-openstack-upi: INCLUDE START --->
+```sh
+$ curl -sSL --remote-name "$(openshift-install coreos print-stream-json | jq --raw-output '.architectures.x86_64.artifacts.openstack.formats."qcow2.gz".disk.location')"
+$ export RHCOSVERSION="$(openshift-install coreos print-stream-json | jq --raw-output '.architectures.x86_64.artifacts.openstack.release')"
+```
+<!--- e2e-openstack-upi: INCLUDE END --->
+
 The OpenStack QCOW2 image is only available in a compressed format with the `.gz` extension; it must be decompressed locally before uploading it to Glance. The following command will unpack the image into `rhcos-${RHCOSVERSION}-openstack.x86_64.qcow2`:
 
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ gunzip rhcos-${RHCOSVERSION}-openstack.x86_64.qcow2.gz
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 Next step is to create a Glance image.
 
 **NOTE:** *This document* will use `rhcos` as the Glance image name, but it's not mandatory.
 
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.x86_64.qcow2 rhcos
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 **NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/introduction.html#disk-and-container-formats-for-images) for more information.
 
@@ -302,21 +314,24 @@ more addresses, usually .2, .3, .11 and .12. The actual addresses used by these 
 the OpenStack deployment in use. You should check your OpenStack deployment.
 
 
-The following script modifies the value of `machineNetwork.CIDR` in the `install-config.yaml` file.
-
+The following script modifies the value of `machineNetwork.CIDR` in the `install-config.yaml` file to match the `os_subnet_range` defined in `inventory.yaml`.
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ python -c 'import yaml
-path = "install-config.yaml"
-data = yaml.safe_load(open(path))
-data["networking"]["machineNetwork"][0]["cidr"] = "192.0.2.0/24"
-open(path, "w").write(yaml.dump(data, default_flow_style=False))'
+installconfig_path = "install-config.yaml"
+installconfig = yaml.safe_load(open(installconfig_path))
+inventory = yaml.safe_load(open("inventory.yaml"))
+inventory_subnet_range = inventory["all"]["hosts"]["localhost"]["os_subnet_range"]
+installconfig["networking"]["machineNetwork"][0]["cidr"] = inventory_subnet_range
+open(installconfig_path, "w").write(yaml.dump(installconfig, default_flow_style=False))'
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 Next, we need to correct the `apiVIP` and `ingressVIP` values.
 
 The following script will clear the values from the `install-config.yaml` file so that the installer will pick
 the 5th and 7th IP addresses in the new range, 192.0.2.5 and 192.0.2.7.
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ python -c 'import yaml
 import sys
@@ -328,6 +343,7 @@ if "ingressVIP" in data["platform"]["openstack"]:
    del data["platform"]["openstack"]["ingressVIP"]
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 If you want to specify the values yourself, you can use the following script, which sets them to 192.0.2.8
 and 192.0.2.9.
@@ -354,7 +370,7 @@ UPI will not rely on the Machine API for node creation. Instead, we will create 
 We will set their count to `0` in `install-config.yaml`. Look under `compute` -> (first entry) -> `replicas`.
 
 This command will do it for you:
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ python -c '
 import yaml
@@ -363,6 +379,7 @@ data = yaml.safe_load(open(path))
 data["compute"][0]["replicas"] = 0
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 ### Modify NetworkType (Required for Kuryr SDN)
 
@@ -390,10 +407,13 @@ We are not relying on the Machine API so we can delete the control plane Machine
 **WARNING**: The `install-config.yaml` file will be automatically deleted in the next section. If you want to keep it around, copy it elsewhere now!
 
 First, let's turn the install config into manifests:
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ openshift-install create manifests
+```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
+```sh
 $ tree
 .
 ├── manifests
@@ -433,10 +453,11 @@ $ tree
 
 Remove the control-plane Machines and compute MachineSets, because we'll be providing those ourselves and don't want to involve the
 [machine-API operator][mao]:
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_openshift-cluster-api_worker-machineset-*.yaml
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 Leave the compute MachineSets in if you want to create compute machines via the machine API. However, some references must be updated in the machineset spec (`openshift/99_openshift-cluster-api_worker-machineset-0.yaml`) to match your environment:
 
 * The OS image: `spec.template.spec.providerSpec.value.image`
@@ -446,7 +467,7 @@ Leave the compute MachineSets in if you want to create compute machines via the 
 ### Make control-plane nodes unschedulable
 
 Currently [emptying the compute pools][empty-compute-pools] makes control-plane nodes schedulable. But due to a [Kubernetes limitation][kubebug], router pods running on control-plane nodes will not be reachable by the ingress load balancer. Update the scheduler configuration to keep router pods and other workloads off the control-plane nodes:
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ python -c '
 import yaml
@@ -455,6 +476,7 @@ data = yaml.safe_load(open(path))
 data["spec"]["mastersSchedulable"] = False
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 [empty-compute-pools]: #empty-compute-pools
 [kubebug]: https://github.com/kubernetes/kubernetes/issues/65618
@@ -462,9 +484,12 @@ open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ## Ignition Config
 
 Next, we will turn these manifests into [Ignition][ignition] files. These will be used to configure the Nova servers on boot (Ignition performs a similar function as cloud-init).
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ openshift-install create ignition-configs
+```
+<!--- e2e-openstack-upi: INCLUDE END --->
+```sh
 $ tree
 .
 ├── auth
@@ -484,9 +509,12 @@ The OpenShift cluster has been assigned an identifier in the form of `<cluster n
 You can see the various metadata about your future cluster in `metadata.json`.
 
 The Infra ID is under the `infraID` key:
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ export INFRA_ID=$(jq -r .infraID metadata.json)
+```
+<!--- e2e-openstack-upi: INCLUDE END --->
+```sh
 $ echo $INFRA_ID
 openshift-qlvwv
 ```
@@ -517,6 +545,7 @@ openshift-qlvwv-bootstrap
 
 You can edit the Ignition file manually or run this Python script:
 
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```python
 import base64
 import json
@@ -560,6 +589,7 @@ ignition['storage'] = storage
 with open('bootstrap.ign', 'w') as f:
     json.dump(ignition, f)
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 Feel free to make any other changes.
 
@@ -596,18 +626,14 @@ It can be installed by the following command:
 $ sudo dnf install python3-swiftclient
 ```
 
-Create the `<container_name>` (e.g. $INFRA_ID) container and upload the `bootstrap.ign` file:
-
+Create the Swift container (in this example we call it "ocp-$INFRA_ID") and upload `bootstrap.ign`:
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
-$ openstack container create <container_name> --public
-$ openstack object create <container_name> bootstrap.ign
+$ openstack container create "ocp-${INFRA_ID}" --public
+$ openstack object create "ocp-${INFRA_ID}" bootstrap.ign
+$ export BOOTSTRAP_URL="$(openstack catalog show swift -f json | jq -r '.endpoints[] | select(.interface=="public").url')/ocp-${INFRA_ID}/bootstrap.ign"
 ```
-
-Get the `storage_url` from the output:
-
-```sh
-$ swift stat -v
-```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 The URL to be put in the `source` property of the Ignition Shim (see below) will have the following format: `<storage_url>/<container_name>/bootstrap.ign`.
 
@@ -659,14 +685,14 @@ Example of the link to be put in the `source` property of the Ignition Shim (see
 As mentioned before due to Nova user data size limit, we will need to create a new Ignition file that will load the bulk of the Bootstrap node configuration. This will be similar to the existing `master.ign` and `worker.ign` files.
 
 Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`) with the following contents:
-
-```json
+<!--- e2e-openstack-upi: INCLUDE START --->
+```${INFRA_ID}-bootstrap-ignition.json
 {
   "ignition": {
     "config": {
       "merge": [
         {
-          "source": "https://static.example.com/bootstrap.ign",
+          "source": "${BOOTSTRAP_URL}"
         }
       ]
     },
@@ -674,6 +700,7 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
   }
 }
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 Change the `ignition.config.merge.source` field to the URL hosting the `bootstrap.ign` file you've uploaded previously.
 
@@ -704,6 +731,48 @@ Add the base64-encoded certificate to the ignition shim:
 }
 ```
 
+Or programmatically add the certificate to the bootstrap ignition shim with Python:
+<!--- e2e-openstack-upi: INCLUDE START --->
+```python
+import base64
+import json
+import os
+
+ca_cert_path = os.environ.get('OS_CACERT', '')
+if ca_cert_path:
+    with open(ca_cert_path, 'r') as f:
+        ca_cert = f.read().encode().strip()
+        ca_cert_b64 = base64.standard_b64encode(ca_cert).decode().strip()
+
+    certificateAuthority = {
+        'source': 'data:text/plain;charset=utf-8;base64,'+ca_cert_b64,
+    }
+else:
+    exit()
+
+infra_id = os.environ.get('INFRA_ID', 'openshift').encode()
+
+bootstrap_ignition_shim = infra_id+'-bootstrap-ignition.json'
+
+with open(bootstrap_ignition_shim, 'r') as f:
+    ignition_data = json.load(f)
+
+ignition = ignition_data.get('ignition', {})
+security = ignition.get('security', {})
+tls = storage.get('tls', {})
+certificateAuthorities = storage.get('certificateAuthorities', [])
+
+certificateAuthorities.append(certificateAuthority)
+tls['certificateAuthorities'] = certificateAuthorities
+security['tls'] = tls
+ignition['security'] = security
+ignition_data['ignition'] = ignition
+
+with open(bootstrap_ignition_shim, 'w') as f:
+    json.dump(ignition_data, f)
+```
+<!--- e2e-openstack-upi: INCLUDE END --->
+
 ### Master Ignition
 
 Similar to bootstrap, we need to make sure the hostname is set to the expected value (it must match the name of the Nova server exactly).
@@ -712,6 +781,7 @@ Since that value will be different for each master node, we need to create one I
 
 We will deploy three Control plane (master) nodes. Their Ignition configs can be created like so:
 
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ for index in $(seq 0 2); do
     MASTER_HOSTNAME="$INFRA_ID-master-$index\n"
@@ -725,6 +795,7 @@ ignition['storage'] = storage
 json.dump(ignition, sys.stdout)" <master.ign >"$INFRA_ID-master-$index-ignition.json"
 done
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 This should create files `openshift-qlvwv-master-0-ignition.json`, `openshift-qlvwv-master-1-ignition.json` and `openshift-qlvwv-master-2-ignition.json`.
 
@@ -739,17 +810,19 @@ You can make your own changes here.
 In this section we'll create all the networking pieces necessary to host the OpenShift cluster: security groups, network, subnet, router, ports.
 
 ### Security Groups
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ ansible-playbook -i inventory.yaml security-groups.yaml
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 The playbook creates one Security group for the Control Plane and one for the Compute nodes, then attaches rules for enabling communication between the nodes.
 ### Network, Subnet and external router
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ ansible-playbook -i inventory.yaml network.yaml
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 The playbook creates a network and a subnet. The subnet obeys `os_subnet_range`; however the first ten IP addresses are removed from the allocation pool. These addresses will be used for the VRRP addresses managed by keepalived for high availability. For more information, read the [networking infrastructure design document][net-infra].
 
@@ -774,10 +847,11 @@ $ openstack subnet set --dns-nameserver <198.51.100.86> --dns-nameserver <198.51
 ```
 
 ## Bootstrap
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ ansible-playbook -i inventory.yaml bootstrap.yaml
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 The playbook sets the *allowed address pairs* on each port attached to our OpenShift nodes.
 
@@ -799,10 +873,11 @@ $ ssh core@203.0.113.24
 ```
 
 ## Control Plane
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ ansible-playbook -i inventory.yaml control-plane.yaml
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 Our control plane will consist of three nodes. The servers will be passed the `master-?-ignition.json` files prepared earlier.
 
@@ -819,10 +894,11 @@ If `os_networking_type` is set to `Kuryr` in the Ansible inventory, the playbook
 When that happens, the masters will start running their own pods, run etcd and join the "bootstrap" cluster. Eventually, they will form a fully operational control plane.
 
 You can monitor this via the following command:
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ openshift-install wait-for bootstrap-complete
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 Eventually, it should output the following:
 
@@ -842,9 +918,12 @@ INFO It is now safe to remove the bootstrap resources
 ### Access the OpenShift API
 
 You can use the `oc` or `kubectl` commands to talk to the OpenShift API. The admin credentials are in `auth/kubeconfig`:
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ export KUBECONFIG="$PWD/auth/kubeconfig"
+```
+<!--- e2e-openstack-upi: INCLUDE END --->
+```sh
 $ oc get nodes
 $ oc get pods -A
 ```
@@ -852,10 +931,11 @@ $ oc get pods -A
 **NOTE**: Only the API will be up at this point. The OpenShift UI will run on the compute nodes.
 
 ### Delete the Bootstrap Resources
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ ansible-playbook -i inventory.yaml down-bootstrap.yaml
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 The teardown playbook deletes the bootstrap port and server.
 
@@ -864,10 +944,11 @@ Now the bootstrap floating IP can also be destroyed.
 If you haven't done so already, you should also disable the bootstrap Ignition URL.
 
 ## Compute Nodes
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ ansible-playbook -i inventory.yaml compute-nodes.yaml
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 This process is similar to the masters, but the workers need to be approved before they're allowed to join the cluster.
 
@@ -997,6 +1078,7 @@ Upon success, it will print the URL to the OpenShift Console (the web UI) as wel
 
 ## Destroy the OpenShift Cluster
 
+<!--- e2e-openstack-upi(deprovision): INCLUDE START --->
 ```sh
 $ ansible-playbook -i inventory.yaml  \
 	down-bootstrap.yaml      \
@@ -1007,6 +1089,7 @@ $ ansible-playbook -i inventory.yaml  \
 	down-network.yaml        \
 	down-security-groups.yaml
 ```
+<!--- e2e-openstack-upi(deprovision): INCLUDE END --->
 
 The playbook `down-load-balancers.yaml` idempotently deletes the load balancers created by the Kuryr installation, if any.
 
