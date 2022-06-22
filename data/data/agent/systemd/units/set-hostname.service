@@ -6,7 +6,10 @@ After=network-online.target
 [Service]
 ExecStart=/usr/local/bin/set-hostname.sh
 ExecStartPost=/bin/sleep 5
-Restart=on-failure
+
+KillMode=none
+Type=oneshot
+RemainAfterExit=true
 
 [Install]
 WantedBy=multi-user.target
