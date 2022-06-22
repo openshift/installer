@@ -184,10 +184,10 @@ A proper [RHCOS][rhcos] image in the OpenStack cluster or project is required fo
 
 Get the RHCOS image for your OpenShift version [here][rhcos-image]. You should download images with the highest version that is less than or equal to the OpenShift version that you install. Use the image versions that match your OpenShift version if they are available.
 
-The OpenStack QCOW2 image is delivered in compressed format and therefore has the `.gz` extension. Unfortunately, compressed image support is not supported in OpenStack. So, you have to decompress the data before uploading it into Glance. The following command will unpack the image and create `rhcos-${RHCOSVERSION}-openstack.qcow2` file without `.gz` extension.
+The OpenStack QCOW2 image is only available in a compressed format with the `.gz` extension; it must be decompressed locally before uploading it to Glance. The following command will unpack the image into `rhcos-${RHCOSVERSION}-openstack.x86_64.qcow2`:
 
 ```sh
-$ gunzip rhcos-${RHCOSVERSION}-openstack.qcow2.gz
+$ gunzip rhcos-${RHCOSVERSION}-openstack.x86_64.qcow2.gz
 ```
 
 Next step is to create a Glance image.
@@ -195,7 +195,7 @@ Next step is to create a Glance image.
 **NOTE:** *This document* will use `rhcos` as the Glance image name, but it's not mandatory.
 
 ```sh
-$ openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos
+$ openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.x86_64.qcow2 rhcos
 ```
 
 **NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/introduction.html#disk-and-container-formats-for-images) for more information.
@@ -683,7 +683,7 @@ In order for the bootstrap node to retrieve the ignition file when it is served 
 
 Encode the certificate to base64:
 ```sh
-$ openssl x509 -in cacert.pem | base64 -w0
+$ openssl x509 -in "$OS_CACERT" | base64 -w0
 ```
 
 Add the base64-encoded certificate to the ignition shim:
@@ -708,9 +708,9 @@ Add the base64-encoded certificate to the ignition shim:
 
 Similar to bootstrap, we need to make sure the hostname is set to the expected value (it must match the name of the Nova server exactly).
 
-Since that value will be different for every master node, we will need to create multiple Ignition files: one for every node.
+Since that value will be different for each master node, we need to create one Ignition file per master node.
 
-We will deploy three Control plane (master) nodes. Their Ignition configs can be create like so:
+We will deploy three Control plane (master) nodes. Their Ignition configs can be created like so:
 
 ```sh
 $ for index in $(seq 0 2); do
