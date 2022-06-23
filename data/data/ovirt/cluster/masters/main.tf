@@ -66,7 +66,7 @@ resource "ovirt_vm" "master" {
   #
   # TODO there may be a bug here since we are pinning the masters to the existing detected hosts and this is never
   #      updated.
-  placement_policy_affinity = var.ovirt_master_auto_pinning_policy != "" && var.ovirt_master_auto_pinning_policy != "none" ? "migratable" : null
+  placement_policy_affinity = var.ovirt_master_auto_pinning_policy != "" && var.ovirt_master_auto_pinning_policy != "none" ? (var.ovirt_master_vm_type == "high_performance" ? "user_migratable" : "migratable") : null
   placement_policy_host_ids = var.ovirt_master_auto_pinning_policy != "" && var.ovirt_master_auto_pinning_policy != "none" ? data.ovirt_cluster_hosts.master.hosts.*.id : null
 
   # This section overrides the format and sparse option for the disks from the template.
