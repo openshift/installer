@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -18,19 +19,19 @@ type clusterZeroKubeAPIClient struct {
 	configPath string
 }
 
-func NewClusterZeroKubeAPIClient(ctx context.Context, assertDir string) (*clusterZeroKubeAPIClient, error) {
+func NewClusterZeroKubeAPIClient(ctx context.Context, assetDir string) (*clusterZeroKubeAPIClient, error) {
 
 	zeroKubeClient := &clusterZeroKubeAPIClient{}
 
-	kubeconfigpath := filepath.Join(assertDir, "auth", "kubeconfig")
+	kubeconfigpath := filepath.Join(assetDir, "auth", "kubeconfig")
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigpath)
 	if err != nil {
-		return nil, errors.Wrap(err, "loading kubeconfig")
+		return nil, errors.Wrap(err, "Error loading kubeconfig from assets.")
 	}
 
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating a Kubernetes client")
+		return nil, errors.Wrap(err, "Creating a Kubernetes client from assets failed.")
 	}
 
 	zeroKubeClient.Client = kubeclient
@@ -57,12 +58,30 @@ func (zerokube *clusterZeroKubeAPIClient) DoesKubeConfigExist() (bool, error) {
 
 	_, err := clientcmd.LoadFromFile(zerokube.configPath)
 	if err != nil {
-		return false, errors.Wrap(err, "loading kubeconfig")
+		return false, errors.Wrap(err, "Error loading kubeconfig from file.")
 	}
 	return true, nil
 }
 
-func (zerokube *clusterZeroKubeAPIClient) DoesBootstrapConfigMapExist() (bool, error) {
+func (zerokube *clusterZeroKubeAPIClient) IsBootstrapConfigMapComplete() (bool, error) {
 
-	return true, nil
+	// Get latest version of bootstrap configmap
+	bootstrap, err := zerokube.Client.CoreV1().ConfigMaps("kube-system").Get(zerokube.ctx, "bootstrap", v1.GetOptions{})
+
+	if err != nil {
+		logrus.Debug("bootstrap configmap not found")
+		return false, err
+	}
+	// Found a bootstrap configmap need to check its status
+	if bootstrap != nil && err == nil {
+		status, ok := bootstrap.Data["status"]
+		if !ok {
+			logrus.Debug("No status found in bootstrap configmap.")
+			return false, nil
+		}
+		if status == "complete" {
+			return true, nil
+		}
+	}
+	return false, nil
 }

@@ -18,28 +18,9 @@ func NewWaitForCmd() *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(newWaitForClusterValidationSuccessCmd())
 	cmd.AddCommand(newWaitForBootstrapCompleteCmd())
 	cmd.AddCommand(newWaitForInstallCompleteCmd())
 	return cmd
-}
-
-func newWaitForClusterValidationSuccessCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "cluster-validated",
-		Short: "Wait until the cluster manifests are validated for install",
-		Args:  cobra.ExactArgs(0),
-		Run: func(cmd *cobra.Command, _ []string) {
-			assetDir := cmd.Flags().Lookup("dir").Value.String()
-			if len(assetDir) == 0 || assetDir == "" {
-				logrus.Fatal("No cluster installation directory found")
-			}
-			err := runWaitForClusterValidationSuccessCmd(assetDir)
-			if err != nil {
-				logrus.Fatal(err)
-			}
-		},
-	}
 }
 
 func newWaitForBootstrapCompleteCmd() *cobra.Command {
@@ -49,7 +30,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			assetDir := cmd.Flags().Lookup("dir").Value.String()
-			if len(assetDir) == 0 || assetDir == "" {
+			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
 			}
 			err := runWaitForBootstrapCompleteCmd(assetDir)
@@ -67,7 +48,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, _ []string) {
 			assetDir := cmd.Flags().Lookup("dir").Value.String()
-			if len(assetDir) == 0 || assetDir == "" {
+			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
 			}
 			err := runWaitForInstallCompleteCmd(assetDir)
@@ -79,12 +60,9 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 
 }
 
-func runWaitForClusterValidationSuccessCmd(directory string) error {
-	return agentpkg.WaitForClusterValidationSuccess(directory)
-}
-
 func runWaitForBootstrapCompleteCmd(directory string) error {
-	return agentpkg.WaitForBootstrapComplete(directory)
+	_, err := agentpkg.WaitForBootstrapComplete(directory)
+	return err
 }
 
 func runWaitForInstallCompleteCmd(directory string) error {

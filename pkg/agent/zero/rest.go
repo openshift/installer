@@ -40,7 +40,7 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*nodeZeroRestC
 		return nil, err
 	}
 	config := client.Config{}
-	*config.URL = url.URL{
+	config.URL = &url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
 		Path:   client.DefaultBasePath,

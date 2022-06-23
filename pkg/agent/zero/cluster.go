@@ -4,34 +4,42 @@ import (
 	"context"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/assisted-service/client/installer"
 	"github.com/openshift/assisted-service/models"
 )
 
-// DEV_NOTES(lranjbar): Maybe we move these into a seperate "ClusterChecker" interface.
-// I expect most of these to take a *models.Cluster object at least until the bootstrap reboots.
-// After bootstrap reboots we will only have the kubeAPI to check on things. So while it wouldn't
-// be the models.Cluster perhaps it is an object from kubernetes instead.
-type ClusterZeroChecker interface {
-	IsInstalling(cluster *models.Cluster) (bool, string)
-	HasErrored(cluster *models.Cluster) (bool, string)
-	HasStoppedInstalling(cluster *models.Cluster) (bool, string)
-	ParseValidationInfo(cluster *models.Cluster) (bool, error)
-	PrintInstallStatus(cluster *models.Cluster) (string, error)
-}
-
 type ClusterZero struct {
 	Ctx                   context.Context
 	Api                   *zeroClient
 	clusterZeroID         *strfmt.UUID
 	clusterZeroInfraEnvID *strfmt.UUID
+	installHistory        *clusterInstallStatusHistory
 }
 
 type zeroClient struct {
 	Kube *clusterZeroKubeAPIClient
 	Rest *nodeZeroRestClient
+}
+
+type clusterInstallStatusHistory struct {
+	AgentRestApiSeen                                  bool
+	AgentClusterStatusAddingHostsSeen                 bool
+	AgentClusterStatusCancelledSeen                   bool
+	AgentClusterStatusInstallingSeen                  bool
+	AgentClusterStatusInstallingPendingUserActionSeen bool
+	AgentClusterStatusInsufficientSeen                bool
+	AgentClusterStatusFinalizingSeen                  bool
+	AgentClusterStatusErrorSeen                       bool
+	AgentClusterStatusPendingForInputSeen             bool
+	AgentClusterStatusPreparingForInstallationSeen    bool
+	AgentClusterStatusReadySeen                       bool
+	AgentCurrentClusterStatus                         string
+	AgentPreviousClusterStatus                        string
+	AgentHostValidationsPassed                        bool
+	ClusterKubeApiSeen                                bool
 }
 
 func NewClusterZero(ctx context.Context, assetDir string) (*ClusterZero, error) {
@@ -60,10 +68,29 @@ func NewClusterZero(ctx context.Context, assetDir string) (*ClusterZero, error) 
 		return nil, err
 	}
 
+	cinstallstatushistory := &clusterInstallStatusHistory{
+		AgentRestApiSeen:                                  false,
+		AgentClusterStatusAddingHostsSeen:                 false,
+		AgentClusterStatusCancelledSeen:                   false,
+		AgentClusterStatusInstallingSeen:                  false,
+		AgentClusterStatusInstallingPendingUserActionSeen: false,
+		AgentClusterStatusInsufficientSeen:                false,
+		AgentClusterStatusFinalizingSeen:                  false,
+		AgentClusterStatusErrorSeen:                       false,
+		AgentClusterStatusPendingForInputSeen:             false,
+		AgentClusterStatusPreparingForInstallationSeen:    false,
+		AgentClusterStatusReadySeen:                       false,
+		AgentCurrentClusterStatus:                         "",
+		AgentPreviousClusterStatus:                        "",
+		AgentHostValidationsPassed:                        false,
+		ClusterKubeApiSeen:                                false,
+	}
+
 	czero.Ctx = ctx
 	czero.Api = capi
 	czero.clusterZeroID = clusterZeroID
 	czero.clusterZeroInfraEnvID = clusterZeroInfraEnvID
+	czero.installHistory = cinstallstatushistory
 	return czero, nil
 }
 
@@ -78,152 +105,214 @@ func (czero *ClusterZero) Get() (*models.Cluster, error) {
 	return clusterZero, nil
 }
 
-func (czero *ClusterZero) IsInstalling(cluster *models.Cluster) (bool, string) {
-	clusterInstallingStates := map[string]bool{
-		models.ClusterStatusInsufficient:                false,
-		models.ClusterStatusError:                       false,
-		models.ClusterStatusReady:                       true,
-		models.ClusterStatusPreparingForInstallation:    true,
-		models.ClusterStatusPendingForInput:             true,
-		models.ClusterStatusInstalling:                  true,
-		models.ClusterStatusFinalizing:                  true,
-		models.ClusterStatusAddingHosts:                 true,
-		models.ClusterStatusCancelled:                   false,
-		models.ClusterStatusInstallingPendingUserAction: false,
+func (czero *ClusterZero) IsBootstrapComplete() (bool, error) {
+
+	agentRestApiLive, agentRestApiErr := czero.Api.Rest.IsAgentAPILive()
+	if agentRestApiErr != nil {
+		logrus.Debug("Node Zero Agent API is not available.")
+		logrus.Debug(agentRestApiErr)
 	}
-	return clusterInstallingStates[*cluster.Status], *cluster.Status
+
+	clusterKubeApiLive, clusterKubeApiErr := czero.Api.Kube.IsKubeAPILive()
+	if clusterKubeApiErr != nil {
+		logrus.Debug("Cluster Kube API is not available.")
+		logrus.Debug(clusterKubeApiErr)
+	}
+
+	if clusterKubeApiLive {
+		// First time we see the cluster Kube Api
+		if !czero.installHistory.ClusterKubeApiSeen {
+			logrus.Info("Cluster Kube API Initialized")
+			czero.installHistory.ClusterKubeApiSeen = true
+		}
+
+		configmap, _ := czero.Api.Kube.IsBootstrapConfigMapComplete()
+		if configmap {
+			logrus.Info("Bootstrap configMap status is complete.")
+			return true, nil
+		}
+	}
+
+	if agentRestApiLive {
+		// First time we see the agent Rest Api
+		if !czero.installHistory.AgentRestApiSeen {
+			logrus.Info("Node Zero Agent API Initialized")
+			czero.installHistory.AgentRestApiSeen = true
+		}
+		logrus.Trace("Getting cluster info from Node Zero Agent API")
+		clusterState, _ := czero.Get()
+
+		// TODO(lranjbar)[AGENT-172]: Add CheckHostValidations
+		// if !czero.installHistory.AgentHostValidationsPassed {
+		// 	validations := CheckHostValidations()
+		// 	if validations {
+		// 		czero.installHistory.AgentHostValidationsPassed = true
+		// 	}
+		// }
+
+		czero.PrintInstallStatus(clusterState)
+		czero.installHistory.AgentCurrentClusterStatus = *clusterState.Status
+
+		// Update Install History object when we see these states
+		czero.updateInstallHistoryClusterStatus(clusterState)
+
+		stopped, _ := czero.HasStoppedInstalling(*clusterState.Status)
+		if stopped {
+			logrus.Error("Cluster has stopped installing.")
+			errored, _ := czero.HasErrored(*clusterState.Status)
+			if errored {
+				return false, errors.New("Cluster installation has stopped due to errors.")
+			}
+			return false, errors.New("Cluster has stopped installing and/or insallation was cancelled.")
+		}
+
+	}
+
+	// both Api's are not available
+	if !agentRestApiLive && !clusterKubeApiLive {
+		logrus.Debug("Current API Status: Node Zero Agent API: down, Cluster Kube API: down")
+		if !czero.installHistory.AgentRestApiSeen && !czero.installHistory.ClusterKubeApiSeen {
+			logrus.Debug("Nero Zero Agent API never initialized. Cluster API never initialized.")
+			logrus.Warn("Unable to detect installation. Cluster install has either not initalized or was not started.")
+			return false, nil
+		}
+
+		if czero.installHistory.AgentRestApiSeen && !czero.installHistory.ClusterKubeApiSeen {
+			logrus.Debug("Cluster API never initialized.")
+			logrus.Debug("Cluster install status last seen was: %s", czero.installHistory.AgentCurrentClusterStatus)
+			return false, errors.New("Cluster installation did not complete.")
+		}
+	}
+
+	logrus.Debug("Bootstrap is not complete. Sleeping...")
+	return false, nil
 }
 
-func (czero *ClusterZero) HasErrored(cluster *models.Cluster) (bool, string) {
-	clusterErrorStates := map[string]bool{
-		models.ClusterStatusInsufficient:                true,
-		models.ClusterStatusError:                       true,
-		models.ClusterStatusReady:                       false,
-		models.ClusterStatusPreparingForInstallation:    false,
-		models.ClusterStatusPendingForInput:             false,
-		models.ClusterStatusInstalling:                  false,
-		models.ClusterStatusFinalizing:                  false,
-		models.ClusterStatusAddingHosts:                 false,
-		models.ClusterStatusCancelled:                   false,
-		models.ClusterStatusInstallingPendingUserAction: true,
-	}
-	return clusterErrorStates[*cluster.Status], *cluster.Status
-}
-
-func (czero *ClusterZero) HasStoppedInstalling(cluster *models.Cluster) (bool, string) {
-	clusterStoppedInstallingStates := map[string]bool{
-		models.ClusterStatusInsufficient:                true,
-		models.ClusterStatusError:                       true,
-		models.ClusterStatusReady:                       false,
-		models.ClusterStatusPreparingForInstallation:    false,
-		models.ClusterStatusPendingForInput:             false,
-		models.ClusterStatusInstalling:                  false,
-		models.ClusterStatusFinalizing:                  false,
-		models.ClusterStatusAddingHosts:                 false,
-		models.ClusterStatusCancelled:                   true,
-		models.ClusterStatusInstallingPendingUserAction: true,
-	}
-	return clusterStoppedInstallingStates[*cluster.Status], *cluster.Status
-}
-
-// TODO(lranjbar)[AGENT-172]: Need to parse the validations_info object returned by the REST API
-// Example Response from /v2/clusters/:
-// *models.Cluster I expect have a validations_info JSON object to marshal
-// [
-//   {
-//     "api_vip": "192.168.111.5",
-//     "base_dns_domain": "test.metalkube.org",
-//     "cluster_networks": [
-//       {
-//         "cidr": "10.128.0.0/14",
-//         "cluster_id": "bfe541fa-9494-4bcc-8c45-3ebba77a7344",
-//         "host_prefix": 23
-//       }
-//     ],
-//     "connectivity_majority_groups": "{\"192.168.110.0/23\":[\"303f1bcb-8f34-4b58-94d1-f3acc1ec3a10\",\"91774a06-ef2d-4f76-9df6-8dd58ccd5ef0\",\"c28d55ad-4054-4a37-be60-d44b37d561fc\",\"f89c67fc-8b12-416e-a762-a2de58204fff\",\"f93bf19f-50d1-4256-ab5b-26ec43dd88d4\"],\"IPv4\":[\"303f1bcb-8f34-4b58-94d1-f3acc1ec3a10\",\"91774a06-ef2d-4f76-9df6-8dd58ccd5ef0\",\"c28d55ad-4054-4a37-be60-d44b37d561fc\",\"f89c67fc-8b12-416e-a762-a2de58204fff\",\"f93bf19f-50d1-4256-ab5b-26ec43dd88d4\"],\"IPv6\":[\"303f1bcb-8f34-4b58-94d1-f3acc1ec3a10\",\"91774a06-ef2d-4f76-9df6-8dd58ccd5ef0\",\"c28d55ad-4054-4a37-be60-d44b37d561fc\",\"f89c67fc-8b12-416e-a762-a2de58204fff\",\"f93bf19f-50d1-4256-ab5b-26ec43dd88d4\"]}",
-//     "controller_logs_collected_at": "0001-01-01T00:00:00.000Z",
-//     "controller_logs_started_at": "0001-01-01T00:00:00.000Z",
-//     "cpu_architecture": "x86_64",
-//     "created_at": "2022-06-08T21:06:52.523858Z",
-//     "deleted_at": null,
-//     "disk_encryption": {
-//       "enable_on": "none",
-//       "mode": "tpmv2"
-//     },
-//     "email_domain": "Unknown",
-//     "enabled_host_count": 5,
-//     "feature_usage": "{\"auto assign role\":{\"id\":\"AUTO_ASSIGN_ROLE\",\"name\":\"auto assign role\"}}",
-//     "host_networks": null,
-//     "hosts": [],
-//     "href": "/api/assisted-install/v2/clusters/bfe541fa-9494-4bcc-8c45-3ebba77a7344",
-//     "hyperthreading": "all",
-//     "id": "bfe541fa-9494-4bcc-8c45-3ebba77a7344",
-//     "ignition_endpoint": {},
-//     "image_info": {
-//       "created_at": "2022-06-08T21:06:52.523858Z",
-//       "expires_at": "0001-01-01T00:00:00.000Z"
-//     },
-//     "ingress_vip": "192.168.111.4",
-//     "install_completed_at": "0001-01-01T00:00:00.000Z",
-//     "install_started_at": "2022-06-08T21:08:38.876Z",
-//     "kind": "Cluster",
-//     "machine_networks": [
-//       {
-//         "cidr": "192.168.110.0/23",
-//         "cluster_id": "bfe541fa-9494-4bcc-8c45-3ebba77a7344"
-//       }
-//     ],
-//     "monitored_operators": [
-//       {
-//         "cluster_id": "bfe541fa-9494-4bcc-8c45-3ebba77a7344",
-//         "name": "console",
-//         "operator_type": "builtin",
-//         "status_updated_at": "0001-01-01T00:00:00.000Z",
-//         "timeout_seconds": 3600
-//       }
-//     ],
-//     "name": "ostest",
-//     "ocp_release_image": "registry.ci.openshift.org/ocp/release:4.11.0-0.nightly-2022-06-06-201913",
-//     "openshift_cluster_id": "ec5e3943-7d7c-46a9-a6c6-193689137fbb",
-//     "openshift_version": "4.11.0-0.nightly-2022-06-06-201913",
-//     "platform": {
-//       "ovirt": {},
-//       "type": "baremetal"
-//     },
-//     "progress": {
-//       "installing_stage_percentage": 52,
-//       "preparing_for_installation_stage_percentage": 100,
-//       "total_percentage": 46
-//     },
-//     "pull_secret_set": true,
-//     "schedulable_masters": false,
-//     "service_networks": [
-//       {
-//         "cidr": "172.30.0.0/16",
-//         "cluster_id": "bfe541fa-9494-4bcc-8c45-3ebba77a7344"
-//       }
-//     ],
-//     "ssh_public_key": "REDACTED",
-//     "status": "installing",
-//     "status_info": "Installation in progress",
-//     "status_updated_at": "2022-06-08T21:09:29.176Z",
-//     "total_host_count": 5,
-//     "updated_at": "2022-06-08T21:09:29.179951Z",
-//     "user_managed_networking": false,
-//     "user_name": "admin",
-//     "validations_info": "{\"configuration\":[{\"id\":\"pull-secret-set\",\"status\":\"success\",\"message\":\"The pull secret is set.\"}],\"hosts-data\":[{\"id\":\"all-hosts-are-ready-to-install\",\"status\":\"success\",\"message\":\"All hosts in the cluster are ready to install.\"},{\"id\":\"sufficient-masters-count\",\"status\":\"success\",\"message\":\"The cluster has a sufficient number of master candidates.\"}],\"network\":[{\"id\":\"api-vip-defined\",\"status\":\"success\",\"message\":\"The API virtual IP is defined.\"},{\"id\":\"api-vip-valid\",\"status\":\"success\",\"message\":\"api vip 192.168.111.5 belongs to the Machine CIDR and is not in use.\"},{\"id\":\"cluster-cidr-defined\",\"status\":\"success\",\"message\":\"The Cluster Network CIDR is defined.\"},{\"id\":\"dns-domain-defined\",\"status\":\"success\",\"message\":\"The base domain is defined.\"},{\"id\":\"ingress-vip-defined\",\"status\":\"success\",\"message\":\"The Ingress virtual IP is defined.\"},{\"id\":\"ingress-vip-valid\",\"status\":\"success\",\"message\":\"ingress vip 192.168.111.4 belongs to the Machine CIDR and is not in use.\"},{\"id\":\"machine-cidr-defined\",\"status\":\"success\",\"message\":\"The Machine Network CIDR is defined.\"},{\"id\":\"machine-cidr-equals-to-calculated-cidr\",\"status\":\"success\",\"message\":\"The Cluster Machine CIDR is equivalent to the calculated CIDR.\"},{\"id\":\"network-prefix-valid\",\"status\":\"success\",\"message\":\"The Cluster Network prefix is valid.\"},{\"id\":\"network-type-valid\",\"status\":\"success\",\"message\":\"The cluster has a valid network type\"},{\"id\":\"networks-same-address-families\",\"status\":\"success\",\"message\":\"Same address families for all networks.\"},{\"id\":\"no-cidrs-overlapping\",\"status\":\"success\",\"message\":\"No CIDRS are overlapping.\"},{\"id\":\"ntp-server-configured\",\"status\":\"success\",\"message\":\"No ntp problems found\"},{\"id\":\"service-cidr-defined\",\"status\":\"success\",\"message\":\"The Service Network CIDR is defined.\"}],\"operators\":[{\"id\":\"cnv-requirements-satisfied\",\"status\":\"success\",\"message\":\"cnv is disabled\"},{\"id\":\"lso-requirements-satisfied\",\"status\":\"success\",\"message\":\"lso is disabled\"},{\"id\":\"odf-requirements-satisfied\",\"status\":\"success\",\"message\":\"odf is disabled\"}]}",
-//     "vip_dhcp_allocation": false
-//   }
-// ]
-// TODO(lranjbar)[AGENT-172]: Need to parse the validations_info object returned by the REST API
-// *models.Cluster I expect have a validations_info JSON object to marshal
-func (czero *ClusterZero) ParseValidationInfo(cluster *models.Cluster) (bool, error) {
-
+func (czero *ClusterZero) IsInstallComplete() (bool, error) {
 	return true, nil
 }
 
-// TODO(lranjbar): Print install status from the Cluster object
-func (czero *ClusterZero) PrintInstallStatus(cluster *models.Cluster) (string, error) {
+func (czero *ClusterZero) IsInstalling(status string) (bool, string) {
+	clusterInstallingStates := map[string]bool{
+		models.ClusterStatusAddingHosts:                 true,
+		models.ClusterStatusCancelled:                   false,
+		models.ClusterStatusInstalling:                  true,
+		models.ClusterStatusInstallingPendingUserAction: false,
+		models.ClusterStatusInsufficient:                false,
+		models.ClusterStatusError:                       false,
+		models.ClusterStatusFinalizing:                  true,
+		models.ClusterStatusPendingForInput:             true,
+		models.ClusterStatusPreparingForInstallation:    true,
+		models.ClusterStatusReady:                       true,
+	}
+	return clusterInstallingStates[status], status
+}
 
-	return "", nil
+func (czero *ClusterZero) HasErrored(status string) (bool, string) {
+	clusterErrorStates := map[string]bool{
+		models.ClusterStatusAddingHosts:                 false,
+		models.ClusterStatusCancelled:                   false,
+		models.ClusterStatusInstalling:                  false,
+		models.ClusterStatusInstallingPendingUserAction: true,
+		models.ClusterStatusInsufficient:                true,
+		models.ClusterStatusError:                       true,
+		models.ClusterStatusFinalizing:                  false,
+		models.ClusterStatusPendingForInput:             false,
+		models.ClusterStatusPreparingForInstallation:    false,
+		models.ClusterStatusReady:                       false,
+	}
+	return clusterErrorStates[status], status
+}
+
+func (czero *ClusterZero) HasStoppedInstalling(status string) (bool, string) {
+	clusterStoppedInstallingStates := map[string]bool{
+		models.ClusterStatusAddingHosts:                 false,
+		models.ClusterStatusCancelled:                   true,
+		models.ClusterStatusFinalizing:                  false,
+		models.ClusterStatusInstalling:                  false,
+		models.ClusterStatusInstallingPendingUserAction: true,
+		models.ClusterStatusInsufficient:                true,
+		models.ClusterStatusError:                       true,
+		models.ClusterStatusPendingForInput:             false,
+		models.ClusterStatusPreparingForInstallation:    false,
+		models.ClusterStatusReady:                       false,
+	}
+	return clusterStoppedInstallingStates[status], status
+}
+
+// TODO(lranjbar): Print install status from the Cluster object
+func (czero *ClusterZero) PrintInstallStatus(cluster *models.Cluster) error {
+
+	// Don't print the same status message back to back
+	if *cluster.Status != czero.installHistory.AgentCurrentClusterStatus {
+		friendlyStatus := humanFriendlyClusterInstallStatus(*cluster.Status)
+		logrus.Info(friendlyStatus)
+	}
+
+	return nil
+}
+
+func humanFriendlyClusterInstallStatus(status string) string {
+	clusterStoppedInstallingStates := map[string]string{
+		models.ClusterStatusAddingHosts:                 "Cluster is adding hosts.",
+		models.ClusterStatusCancelled:                   "Cluster installation cancelled.",
+		models.ClusterStatusError:                       "Cluster has hosts in error.",
+		models.ClusterStatusFinalizing:                  "Finalizing cluster installation.",
+		models.ClusterStatusInstalling:                  "Cluster installation in progress.",
+		models.ClusterStatusInstallingPendingUserAction: "Cluster has hosts requiring user input.",
+		models.ClusterStatusInsufficient:                "Cluster is not ready for install. Check hardware settings.",
+		models.ClusterStatusPendingForInput:             "User input is required to continue cluster installation.",
+		models.ClusterStatusPreparingForInstallation:    "Preparing cluster for installation.",
+		models.ClusterStatusReady:                       "Cluster is ready for install.",
+	}
+	return clusterStoppedInstallingStates[status]
+
+}
+
+func (czero *ClusterZero) updateInstallHistoryClusterStatus(cluster *models.Cluster) error {
+
+	switch *cluster.Status {
+	case models.ClusterStatusAddingHosts:
+		if !czero.installHistory.AgentClusterStatusAddingHostsSeen {
+			czero.installHistory.AgentClusterStatusAddingHostsSeen = true
+		}
+	case models.ClusterStatusCancelled:
+		if !czero.installHistory.AgentClusterStatusCancelledSeen {
+			czero.installHistory.AgentClusterStatusCancelledSeen = true
+		}
+	case models.ClusterStatusError:
+		if !czero.installHistory.AgentClusterStatusErrorSeen {
+			czero.installHistory.AgentClusterStatusErrorSeen = true
+		}
+	case models.ClusterStatusFinalizing:
+		if !czero.installHistory.AgentClusterStatusFinalizingSeen {
+			czero.installHistory.AgentClusterStatusFinalizingSeen = true
+		}
+	case models.ClusterStatusInsufficient:
+		if !czero.installHistory.AgentClusterStatusInsufficientSeen {
+			czero.installHistory.AgentClusterStatusInsufficientSeen = true
+		}
+	case models.ClusterStatusInstalling:
+		if !czero.installHistory.AgentClusterStatusInstallingSeen {
+			czero.installHistory.AgentClusterStatusInstallingSeen = true
+		}
+	case models.ClusterStatusInstallingPendingUserAction:
+		if !czero.installHistory.AgentClusterStatusInstallingPendingUserActionSeen {
+			czero.installHistory.AgentClusterStatusInstallingPendingUserActionSeen = true
+		}
+	case models.ClusterStatusPendingForInput:
+		if !czero.installHistory.AgentClusterStatusPendingForInputSeen {
+			czero.installHistory.AgentClusterStatusPendingForInputSeen = true
+		}
+	case models.ClusterStatusPreparingForInstallation:
+		if !czero.installHistory.AgentClusterStatusPreparingForInstallationSeen {
+			czero.installHistory.AgentClusterStatusPreparingForInstallationSeen = true
+		}
+	case models.ClusterStatusReady:
+		if !czero.installHistory.AgentClusterStatusReadySeen {
+			czero.installHistory.AgentClusterStatusReadySeen = true
+		}
+	}
+
+	return nil
 }
