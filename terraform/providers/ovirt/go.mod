@@ -2,7 +2,7 @@ module github.com/openshift/installer/terraform/providers/ovirt
 
 go 1.17
 
-require github.com/ovirt/terraform-provider-ovirt/v2 v2.0.0
+require github.com/ovirt/terraform-provider-ovirt/v2 v2.0.1
 
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/ovirt/go-ovirt v0.0.0-20220427092237-114c47f2835c // indirect
-	github.com/ovirt/go-ovirt-client v1.0.0 // indirect
+	github.com/ovirt/go-ovirt-client v1.0.1 // indirect
 	github.com/ovirt/go-ovirt-client-log/v3 v3.0.0 // indirect
 	github.com/posener/complete v1.2.3 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect

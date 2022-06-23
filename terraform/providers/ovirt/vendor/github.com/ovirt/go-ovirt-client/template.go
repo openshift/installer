@@ -129,10 +129,7 @@ func convertSDKTemplate(sdkTemplate *ovirtsdk.Template, client Client) (Template
 	if !ok {
 		return nil, newError(EFieldMissing, "template does not contain a name")
 	}
-	description, ok := sdkTemplate.Description()
-	if !ok {
-		return nil, newError(EFieldMissing, "template does not contain a description")
-	}
+	description, _ := sdkTemplate.Description()
 	status, ok := sdkTemplate.Status()
 	if !ok {
 		return nil, newFieldNotFound("template", "status")

@@ -389,7 +389,7 @@ func (m *maxTriesStrategy) Continue(err error, action string) error {
 		return wrap(
 			err,
 			ETimeout,
-			"maximum retries reached while trying to %s, giving up",
+			"maximum retries reached while %s, giving up",
 			action,
 		)
 	}
