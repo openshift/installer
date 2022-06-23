@@ -274,11 +274,9 @@ func convertSDKAffinityGroupName(sdkObject *ovirtsdk.AffinityGroup, result *affi
 }
 
 func convertSDKAffinityGroupDescription(sdkObject *ovirtsdk.AffinityGroup, result *affinityGroup) error {
-	description, ok := sdkObject.Description()
-	if !ok {
-		return newFieldNotFound("affinity group", "description")
+	if description, ok := sdkObject.Description(); ok {
+		result.description = description
 	}
-	result.description = description
 	return nil
 }
 
