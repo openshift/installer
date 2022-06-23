@@ -54,7 +54,8 @@ type ContainerAuthenticator struct {
 
 	// [optional] The IAM token server's base endpoint URL.
 	// Default value: "https://iam.cloud.ibm.com"
-	URL string
+	URL     string
+	urlInit sync.Once
 
 	// [optional] The ClientID and ClientSecret fields are used to form a "basic auth"
 	// Authorization header for interactions with the IAM token server.
@@ -223,6 +224,20 @@ func (authenticator *ContainerAuthenticator) Authenticate(request *http.Request)
 	return nil
 }
 
+// url returns the authenticator's URL property after potentially initializing it.
+func (authenticator *ContainerAuthenticator) url() string {
+	authenticator.urlInit.Do(func() {
+		if authenticator.URL == "" {
+			// If URL was not specified, then use the default IAM endpoint.
+			authenticator.URL = defaultIamTokenServerEndpoint
+		} else {
+			// Canonicalize the URL by removing the operation path if it was specified by the user.
+			authenticator.URL = strings.TrimSuffix(authenticator.URL, iamAuthOperationPathGetToken)
+		}
+	})
+	return authenticator.URL
+}
+
 // getTokenData returns the tokenData field from the authenticator with synchronization.
 func (authenticator *ContainerAuthenticator) getTokenData() *iamTokenData {
 	authenticator.tokenDataMutex.Lock()
@@ -332,7 +347,6 @@ func (authenticator *ContainerAuthenticator) invokeRequestTokenData() error {
 // that to obtain a new IAM access token from the IAM token server.
 func (authenticator *ContainerAuthenticator) RequestToken() (*IamTokenServerResponse, error) {
 	var err error
-	var operationPath string = "/identity/token"
 
 	// First, retrieve the CR token value for this compute resource.
 	crToken, err := authenticator.retrieveCRToken()
@@ -343,18 +357,9 @@ func (authenticator *ContainerAuthenticator) RequestToken() (*IamTokenServerResp
 		return nil, NewAuthenticationError(&DetailedResponse{}, err)
 	}
 
-	// Use the default IAM URL if one was not specified by the user.
-	url := authenticator.URL
-	if url == "" {
-		url = defaultIamTokenServerEndpoint
-	} else {
-		// Canonicalize the URL by removing the operation path if it was specified by the user.
-		url = strings.TrimSuffix(url, operationPath)
-	}
-
 	// Set up the request for the IAM "get token" invocation.
 	builder := NewRequestBuilder(POST)
-	_, err = builder.ResolveRequestURL(url, operationPath, nil)
+	_, err = builder.ResolveRequestURL(authenticator.url(), iamAuthOperationPathGetToken, nil)
 	if err != nil {
 		return nil, NewAuthenticationError(&DetailedResponse{}, err)
 	}

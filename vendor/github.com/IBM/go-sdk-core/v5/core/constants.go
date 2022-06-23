@@ -1,6 +1,6 @@
 package core
 
-// (C) Copyright IBM Corp. 2019, 2021.
+// (C) Copyright IBM Corp. 2019, 2022.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -76,7 +76,6 @@ const (
 	ERRORMSG_PARAM_NOT_SLICE         = "The 'slice' parameter must be a slice"
 	ERRORMSG_MARSHAL_SLICE           = "An error occurred while marshalling the slice: %s"
 	ERRORMSG_CONVERT_SLICE           = "An error occurred while converting 'slice' to string slice"
-	ERRORMSG_CREATE_RETRYABLE_REQ    = "An error occurred while creating a retryable http Request: %s"
 	ERRORMSG_UNEXPECTED_STATUS_CODE  = "Unexpected HTTP status code %d (%s)"
 	ERRORMSG_UNMARSHAL_AUTH_RESPONSE = "error unmarshalling authentication response: %s"
 	ERRORMSG_UNABLE_RETRIEVE_CRTOKEN = "unable to retrieve compute resource token value: %s"          // #nosec G101
