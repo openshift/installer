@@ -51,6 +51,7 @@ var (
 		"assisted-service.service",
 		"create-cluster-and-infraenv.service",
 		"node-zero.service",
+		"multipathd.service",
 		"pre-network-manager-config.service",
 		"selinux.service",
 		"start-cluster-installation.service",
