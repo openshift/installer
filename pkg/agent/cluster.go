@@ -199,8 +199,7 @@ func (czero *Cluster) IsInstallComplete() (bool, error) {
 	return true, nil
 }
 
-// IsInstalling Determine if the cluster is still installing using
-// the models from the Agent Rest API.
+// IsInstalling Determine if the cluster is still installing using the models from the Agent Rest API.
 func (czero *Cluster) IsInstalling(status string) (bool, string) {
 	clusterInstallingStates := map[string]bool{
 		models.ClusterStatusAddingHosts:                 true,
@@ -217,8 +216,7 @@ func (czero *Cluster) IsInstalling(status string) (bool, string) {
 	return clusterInstallingStates[status], status
 }
 
-// HasErrored Determine if the cluster installation has errored using
-// the models from the Agent Rest API.
+// HasErrored Determine if the cluster installation has errored using the models from the Agent Rest API.
 func (czero *Cluster) HasErrored(status string) (bool, string) {
 	clusterErrorStates := map[string]bool{
 		models.ClusterStatusAddingHosts:                 false,
@@ -235,8 +233,7 @@ func (czero *Cluster) HasErrored(status string) (bool, string) {
 	return clusterErrorStates[status], status
 }
 
-// IsInstalling Determine if the cluster has stopped installing using
-// the models from the Agent Rest API.
+// HasStoppedInstalling Determine if the cluster has stopped installing using the models from the Agent Rest API.
 func (czero *Cluster) HasStoppedInstalling(status string) (bool, string) {
 	clusterStoppedInstallingStates := map[string]bool{
 		models.ClusterStatusAddingHosts:                 false,
@@ -253,8 +250,7 @@ func (czero *Cluster) HasStoppedInstalling(status string) (bool, string) {
 	return clusterStoppedInstallingStates[status], status
 }
 
-// PrintInstallStatus Print a human friendly message using the models from the
-// Agent Rest API.
+// PrintInstallStatus Print a human friendly message using the models from the Agent Rest API.
 func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster) error {
 
 	// Don't print the same status message back to back
