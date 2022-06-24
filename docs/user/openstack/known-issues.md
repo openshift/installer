@@ -165,3 +165,18 @@ $ rm -f openshift/99_openshift-cluster-api_worker-machineset-*.yaml
 ```
 [bugzilla-upi]: https://bugzilla.redhat.com/show_bug.cgi?id=1927244
 [manifests-removal]:../openstack/install_upi.md#remove-machines-and-machinesets
+
+## Limitations of creating external load balancers using pre-defined FIPs
+
+On most clouds, the default policy prevents non-admin users from creating                                     
+a floating IP that has a specific address. Such policies cause the cloud provider
+to fail handling floating IP assignment to load balancers if a floating IP address
+is present in the service specification.
+
+You can pre-create a floating IP and pass the address of it in the service
+specification if using the external cloud provider. The in-tree cloud
+provider does not support this.
+Alternatively, you can [relax the Neutron policy][policy-change-steps]
+to allow non-admin users to create FIPs with a specific IP address.
+
+[policy-change-steps]: https://access.redhat.com/solutions/6069071
