@@ -636,6 +636,13 @@ github.com/openshift/assisted-image-service/pkg/overlay
 github.com/openshift/assisted-service/api/common
 github.com/openshift/assisted-service/api/hiveextension/v1beta1
 github.com/openshift/assisted-service/api/v1beta1
+github.com/openshift/assisted-service/client
+github.com/openshift/assisted-service/client/events
+github.com/openshift/assisted-service/client/installer
+github.com/openshift/assisted-service/client/managed_domains
+github.com/openshift/assisted-service/client/manifests
+github.com/openshift/assisted-service/client/operators
+github.com/openshift/assisted-service/client/versions
 github.com/openshift/assisted-service/models
 github.com/openshift/assisted-service/pkg/executer
 github.com/openshift/assisted-service/pkg/staticnetworkconfig
