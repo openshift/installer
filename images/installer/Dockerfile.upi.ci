@@ -10,11 +10,15 @@ COPY . .
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/4.10:cli as cli
+FROM quay.io/ocp-splat/govc:v0.29.0 as govc
 
 FROM registry.ci.openshift.org/ocp/4.10:base
+
 COPY --from=cli /usr/bin/oc /bin/oc
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
+
+COPY --from=govc /govc /bin/govc
 
 RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
 RUN sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" >/etc/yum.repos.d/azure-cli.repo'
@@ -56,7 +60,6 @@ ENV IGNITION_PROVIDER_VERSION=v2.1.0
 RUN curl -L -O https://github.com/community-terraform-providers/terraform-provider-ignition/releases/download/${IGNITION_PROVIDER_VERSION}/terraform-provider-ignition-${IGNITION_PROVIDER_VERSION}-linux-amd64.tar.gz && \
     tar xzf terraform-provider-ignition-${IGNITION_PROVIDER_VERSION}-linux-amd64.tar.gz && \
     mv terraform-provider-ignition-${IGNITION_PROVIDER_VERSION}-linux-amd64/terraform-provider-ignition /bin/terraform-provider-ignition
-RUN curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | tar -C /bin -xvzf - govc
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
     ./aws/install -b /bin && \
