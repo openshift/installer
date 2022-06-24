@@ -1,4 +1,4 @@
-package zero
+package agent
 
 import (
 	"context"
@@ -12,16 +12,16 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-type clusterZeroKubeAPIClient struct {
+type agentClusterKubeAPIClient struct {
 	Client     *kubernetes.Clientset
 	ctx        context.Context
 	config     *rest.Config
 	configPath string
 }
 
-func NewClusterZeroKubeAPIClient(ctx context.Context, assetDir string) (*clusterZeroKubeAPIClient, error) {
+func NewAgentClusterKubeAPIClient(ctx context.Context, assetDir string) (*agentClusterKubeAPIClient, error) {
 
-	zeroKubeClient := &clusterZeroKubeAPIClient{}
+	zeroKubeClient := &agentClusterKubeAPIClient{}
 
 	kubeconfigpath := filepath.Join(assetDir, "auth", "kubeconfig")
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigpath)
@@ -42,7 +42,7 @@ func NewClusterZeroKubeAPIClient(ctx context.Context, assetDir string) (*cluster
 	return zeroKubeClient, nil
 }
 
-func (zerokube *clusterZeroKubeAPIClient) IsKubeAPILive() (bool, error) {
+func (zerokube *agentClusterKubeAPIClient) IsKubeAPILive() (bool, error) {
 
 	discovery := zerokube.Client.Discovery()
 	version, err := discovery.ServerVersion()
@@ -54,7 +54,7 @@ func (zerokube *clusterZeroKubeAPIClient) IsKubeAPILive() (bool, error) {
 }
 
 // DEV_NOTES(lranjbar): Potentially redundant? We will fail when making the client if kubeconfig is not around
-func (zerokube *clusterZeroKubeAPIClient) DoesKubeConfigExist() (bool, error) {
+func (zerokube *agentClusterKubeAPIClient) DoesKubeConfigExist() (bool, error) {
 
 	_, err := clientcmd.LoadFromFile(zerokube.configPath)
 	if err != nil {
@@ -63,7 +63,7 @@ func (zerokube *clusterZeroKubeAPIClient) DoesKubeConfigExist() (bool, error) {
 	return true, nil
 }
 
-func (zerokube *clusterZeroKubeAPIClient) IsBootstrapConfigMapComplete() (bool, error) {
+func (zerokube *agentClusterKubeAPIClient) IsBootstrapConfigMapComplete() (bool, error) {
 
 	// Get latest version of bootstrap configmap
 	bootstrap, err := zerokube.Client.CoreV1().ConfigMaps("kube-system").Get(zerokube.ctx, "bootstrap", v1.GetOptions{})

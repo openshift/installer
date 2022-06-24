@@ -1,4 +1,4 @@
-package zero
+package agent
 
 import (
 	"context"
@@ -11,21 +11,21 @@ import (
 	"github.com/openshift/assisted-service/models"
 )
 
-type ClusterZero struct {
-	Ctx                   context.Context
-	Api                   *zeroClient
-	clusterZeroID         *strfmt.UUID
-	clusterZeroInfraEnvID *strfmt.UUID
-	installHistory        *clusterInstallStatusHistory
+type AgentCluster struct {
+	Ctx                    context.Context
+	API                    *clientSet
+	agentClusterID         *strfmt.UUID
+	agentClusterInfraEnvID *strfmt.UUID
+	installHistory         *clusterInstallStatusHistory
 }
 
-type zeroClient struct {
-	Kube *clusterZeroKubeAPIClient
+type clientSet struct {
+	Kube *agentClusterKubeAPIClient
 	Rest *nodeZeroRestClient
 }
 
 type clusterInstallStatusHistory struct {
-	AgentRestApiSeen                                  bool
+	AgentRestAPISeen                                  bool
 	AgentClusterStatusAddingHostsSeen                 bool
 	AgentClusterStatusCancelledSeen                   bool
 	AgentClusterStatusInstallingSeen                  bool
@@ -39,19 +39,20 @@ type clusterInstallStatusHistory struct {
 	AgentCurrentClusterStatus                         string
 	AgentPreviousClusterStatus                        string
 	AgentHostValidationsPassed                        bool
-	ClusterKubeApiSeen                                bool
+	ClusterKubeAPISeen                                bool
 }
 
-func NewClusterZero(ctx context.Context, assetDir string) (*ClusterZero, error) {
+// NewAgentCluster initializes a AgentCluster object
+func NewAgentCluster(ctx context.Context, assetDir string) (*AgentCluster, error) {
 
-	czero := &ClusterZero{}
-	capi := &zeroClient{}
+	czero := &AgentCluster{}
+	capi := &clientSet{}
 
 	restclient, err := NewNodeZeroRestClient(ctx, assetDir)
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	kubeclient, err := NewClusterZeroKubeAPIClient(ctx, assetDir)
+	kubeclient, err := NewAgentClusterKubeAPIClient(ctx, assetDir)
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -59,17 +60,17 @@ func NewClusterZero(ctx context.Context, assetDir string) (*ClusterZero, error) 
 	capi.Rest = restclient
 	capi.Kube = kubeclient
 
-	clusterZeroID, err := restclient.getClusterZeroClusterID()
+	agentClusterID, err := restclient.getAgentClusterClusterID()
 	if err != nil {
 		return nil, err
 	}
-	clusterZeroInfraEnvID, err := restclient.getClusterZeroInfraEnvID()
+	agentClusterInfraEnvID, err := restclient.getAgentClusterInfraEnvID()
 	if err != nil {
 		return nil, err
 	}
 
 	cinstallstatushistory := &clusterInstallStatusHistory{
-		AgentRestApiSeen:                                  false,
+		AgentRestAPISeen:                                  false,
 		AgentClusterStatusAddingHostsSeen:                 false,
 		AgentClusterStatusCancelledSeen:                   false,
 		AgentClusterStatusInstallingSeen:                  false,
@@ -83,61 +84,61 @@ func NewClusterZero(ctx context.Context, assetDir string) (*ClusterZero, error) 
 		AgentCurrentClusterStatus:                         "",
 		AgentPreviousClusterStatus:                        "",
 		AgentHostValidationsPassed:                        false,
-		ClusterKubeApiSeen:                                false,
+		ClusterKubeAPISeen:                                false,
 	}
 
 	czero.Ctx = ctx
-	czero.Api = capi
-	czero.clusterZeroID = clusterZeroID
-	czero.clusterZeroInfraEnvID = clusterZeroInfraEnvID
+	czero.API = capi
+	czero.agentClusterID = agentClusterID
+	czero.agentClusterInfraEnvID = agentClusterInfraEnvID
 	czero.installHistory = cinstallstatushistory
 	return czero, nil
 }
 
-func (czero *ClusterZero) Get() (*models.Cluster, error) {
+func (czero *AgentCluster) Get() (*models.Cluster, error) {
 	// GET /v2/clusters/{cluster_zero_id}
-	getClusterParams := &installer.V2GetClusterParams{ClusterID: *czero.clusterZeroID}
-	result, err := czero.Api.Rest.Client.Installer.V2GetCluster(czero.Ctx, getClusterParams)
+	getClusterParams := &installer.V2GetClusterParams{ClusterID: *czero.agentClusterID}
+	result, err := czero.API.Rest.Client.Installer.V2GetCluster(czero.Ctx, getClusterParams)
 	if err != nil {
 		return nil, err
 	}
-	clusterZero := result.Payload
-	return clusterZero, nil
+	agentCluster := result.Payload
+	return agentCluster, nil
 }
 
-func (czero *ClusterZero) IsBootstrapComplete() (bool, error) {
+func (czero *AgentCluster) IsBootstrapComplete() (bool, error) {
 
-	agentRestApiLive, agentRestApiErr := czero.Api.Rest.IsAgentAPILive()
-	if agentRestApiErr != nil {
+	agentRestAPILive, agentRestAPIErr := czero.API.Rest.IsAgentAPILive()
+	if agentRestAPIErr != nil {
 		logrus.Debug("Node Zero Agent API is not available.")
-		logrus.Debug(agentRestApiErr)
+		logrus.Debug(agentRestAPIErr)
 	}
 
-	clusterKubeApiLive, clusterKubeApiErr := czero.Api.Kube.IsKubeAPILive()
-	if clusterKubeApiErr != nil {
+	clusterKubeAPILive, clusterKubeAPIErr := czero.API.Kube.IsKubeAPILive()
+	if clusterKubeAPIErr != nil {
 		logrus.Debug("Cluster Kube API is not available.")
-		logrus.Debug(clusterKubeApiErr)
+		logrus.Debug(clusterKubeAPIErr)
 	}
 
-	if clusterKubeApiLive {
-		// First time we see the cluster Kube Api
-		if !czero.installHistory.ClusterKubeApiSeen {
+	if clusterKubeAPILive {
+		// First time we see the cluster Kube API
+		if !czero.installHistory.ClusterKubeAPISeen {
 			logrus.Info("Cluster Kube API Initialized")
-			czero.installHistory.ClusterKubeApiSeen = true
+			czero.installHistory.ClusterKubeAPISeen = true
 		}
 
-		configmap, _ := czero.Api.Kube.IsBootstrapConfigMapComplete()
+		configmap, _ := czero.API.Kube.IsBootstrapConfigMapComplete()
 		if configmap {
 			logrus.Info("Bootstrap configMap status is complete.")
 			return true, nil
 		}
 	}
 
-	if agentRestApiLive {
-		// First time we see the agent Rest Api
-		if !czero.installHistory.AgentRestApiSeen {
+	if agentRestAPILive {
+		// First time we see the agent Rest API
+		if !czero.installHistory.AgentRestAPISeen {
 			logrus.Info("Node Zero Agent API Initialized")
-			czero.installHistory.AgentRestApiSeen = true
+			czero.installHistory.AgentRestAPISeen = true
 		}
 		logrus.Trace("Getting cluster info from Node Zero Agent API")
 		clusterState, _ := czero.Get()
@@ -168,16 +169,16 @@ func (czero *ClusterZero) IsBootstrapComplete() (bool, error) {
 
 	}
 
-	// both Api's are not available
-	if !agentRestApiLive && !clusterKubeApiLive {
+	// both API's are not available
+	if !agentRestAPILive && !clusterKubeAPILive {
 		logrus.Debug("Current API Status: Node Zero Agent API: down, Cluster Kube API: down")
-		if !czero.installHistory.AgentRestApiSeen && !czero.installHistory.ClusterKubeApiSeen {
+		if !czero.installHistory.AgentRestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
 			logrus.Debug("Nero Zero Agent API never initialized. Cluster API never initialized.")
 			logrus.Warn("Unable to detect installation. Cluster install has either not initalized or was not started.")
 			return false, nil
 		}
 
-		if czero.installHistory.AgentRestApiSeen && !czero.installHistory.ClusterKubeApiSeen {
+		if czero.installHistory.AgentRestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
 			logrus.Debug("Cluster API never initialized.")
 			logrus.Debug("Cluster install status last seen was: %s", czero.installHistory.AgentCurrentClusterStatus)
 			return false, errors.New("Cluster installation did not complete.")
@@ -188,11 +189,11 @@ func (czero *ClusterZero) IsBootstrapComplete() (bool, error) {
 	return false, nil
 }
 
-func (czero *ClusterZero) IsInstallComplete() (bool, error) {
+func (czero *AgentCluster) IsInstallComplete() (bool, error) {
 	return true, nil
 }
 
-func (czero *ClusterZero) IsInstalling(status string) (bool, string) {
+func (czero *AgentCluster) IsInstalling(status string) (bool, string) {
 	clusterInstallingStates := map[string]bool{
 		models.ClusterStatusAddingHosts:                 true,
 		models.ClusterStatusCancelled:                   false,
@@ -208,7 +209,7 @@ func (czero *ClusterZero) IsInstalling(status string) (bool, string) {
 	return clusterInstallingStates[status], status
 }
 
-func (czero *ClusterZero) HasErrored(status string) (bool, string) {
+func (czero *AgentCluster) HasErrored(status string) (bool, string) {
 	clusterErrorStates := map[string]bool{
 		models.ClusterStatusAddingHosts:                 false,
 		models.ClusterStatusCancelled:                   false,
@@ -224,7 +225,7 @@ func (czero *ClusterZero) HasErrored(status string) (bool, string) {
 	return clusterErrorStates[status], status
 }
 
-func (czero *ClusterZero) HasStoppedInstalling(status string) (bool, string) {
+func (czero *AgentCluster) HasStoppedInstalling(status string) (bool, string) {
 	clusterStoppedInstallingStates := map[string]bool{
 		models.ClusterStatusAddingHosts:                 false,
 		models.ClusterStatusCancelled:                   true,
@@ -241,7 +242,7 @@ func (czero *ClusterZero) HasStoppedInstalling(status string) (bool, string) {
 }
 
 // TODO(lranjbar): Print install status from the Cluster object
-func (czero *ClusterZero) PrintInstallStatus(cluster *models.Cluster) error {
+func (czero *AgentCluster) PrintInstallStatus(cluster *models.Cluster) error {
 
 	// Don't print the same status message back to back
 	if *cluster.Status != czero.installHistory.AgentCurrentClusterStatus {
@@ -269,7 +270,7 @@ func humanFriendlyClusterInstallStatus(status string) string {
 
 }
 
-func (czero *ClusterZero) updateInstallHistoryClusterStatus(cluster *models.Cluster) error {
+func (czero *AgentCluster) updateInstallHistoryClusterStatus(cluster *models.Cluster) error {
 
 	switch *cluster.Status {
 	case models.ClusterStatusAddingHosts:

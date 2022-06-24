@@ -1,4 +1,4 @@
-package zero
+package agent
 
 import (
 	"context"
@@ -70,24 +70,24 @@ func (zerorest *nodeZeroRestClient) GetAgentAPIServiceBaseURL() *url.URL {
 	return zerorest.config.URL
 }
 
-func (zerorest *nodeZeroRestClient) getClusterZeroClusterID() (*strfmt.UUID, error) {
+func (zerorest *nodeZeroRestClient) getAgentClusterClusterID() (*strfmt.UUID, error) {
 	// GET /v2/clusters and return first result
 	listClusterParams := installer.NewV2ListClustersParams()
 	clusterResult, err := zerorest.Client.Installer.V2ListClusters(zerorest.ctx, listClusterParams)
 	if err != nil {
 		return nil, err
 	}
-	clusterZeroID := clusterResult.Payload[0].ID
-	return clusterZeroID, nil
+	agentClusterID := clusterResult.Payload[0].ID
+	return agentClusterID, nil
 }
 
-func (zerorest *nodeZeroRestClient) getClusterZeroInfraEnvID() (*strfmt.UUID, error) {
+func (zerorest *nodeZeroRestClient) getAgentClusterInfraEnvID() (*strfmt.UUID, error) {
 	// GET /v2/infraenvs and return first result
 	listInfraEnvParams := installer.NewListInfraEnvsParams()
 	infraenvResult, err := zerorest.Client.Installer.ListInfraEnvs(zerorest.ctx, listInfraEnvParams)
 	if err != nil {
 		return nil, err
 	}
-	clusterZeroInfraEnvID := infraenvResult.Payload[0].ID
-	return clusterZeroInfraEnvID, nil
+	agentClusterInfraEnvID := infraenvResult.Payload[0].ID
+	return agentClusterInfraEnvID, nil
 }

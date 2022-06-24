@@ -11,22 +11,22 @@ import (
 )
 
 // Wait for the bootstrap complete triggered by the agent installer.
-func WaitForBootstrapComplete(assetDir string) (*zero.ClusterZero, error) {
+func WaitForBootstrapComplete(assetDir string) (*zero.AgentCluster, error) {
 	logrus.Info("WaitForBootstrapComplete")
 
 	ctx := context.Background()
-	clusterZero, err := zero.NewClusterZero(ctx, assetDir)
+	agentCluster, err := zero.NewAgentCluster(ctx, assetDir)
 	if err != nil {
 		logrus.Warn("Unable to make cluster zero object")
 		return nil, err
 	}
 
 	timeout := 40 * time.Minute
-	waitContext, cancel := context.WithTimeout(clusterZero.Ctx, timeout)
+	waitContext, cancel := context.WithTimeout(agentCluster.Ctx, timeout)
 	defer cancel()
 
 	wait.Until(func() {
-		bootstrap, err := clusterZero.IsBootstrapComplete()
+		bootstrap, err := agentCluster.IsBootstrapComplete()
 		if bootstrap && err == nil {
 			logrus.Info("Cluster bootstrap is complete")
 			cancel()
@@ -38,10 +38,10 @@ func WaitForBootstrapComplete(assetDir string) (*zero.ClusterZero, error) {
 	}, 5*time.Second, waitContext.Done())
 
 	if err != nil {
-		return clusterZero, err
+		return agentCluster, err
 	}
 
-	return clusterZero, nil
+	return agentCluster, nil
 }
 
 // TODO(lranjbar)[AGENT-173]: Add wait for install complete in AGENT-173
