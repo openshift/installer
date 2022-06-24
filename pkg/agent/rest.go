@@ -57,7 +57,7 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 	return restClient, nil
 }
 
-// NodeZeroRestClient.IsRestAPILive Determine if the Agent Rest API on node zero has initialized
+// IsRestAPILive Determine if the Agent Rest API on node zero has initialized
 func (rest *NodeZeroRestClient) IsRestAPILive() (bool, error) {
 	// GET /v2/openshift-versions
 	listOpenshiftVersionsParams := versions.NewV2ListSupportedOpenshiftVersionsParams()
@@ -69,12 +69,12 @@ func (rest *NodeZeroRestClient) IsRestAPILive() (bool, error) {
 	return true, nil
 }
 
-// NodeZeroRestClient.GetRestAPIServiceBaseURL Return the url of the Agent Rest API on node zero
+// GetRestAPIServiceBaseURL Return the url of the Agent Rest API on node zero
 func (rest *NodeZeroRestClient) GetRestAPIServiceBaseURL() *url.URL {
 	return rest.config.URL
 }
 
-// NodeZeroRestClient.getClusterID Return the cluster ID assigned to the by the Agent Rest API
+// getClusterID Return the cluster ID assigned to the by the Agent Rest API
 func (rest *NodeZeroRestClient) getClusterID() (*strfmt.UUID, error) {
 	// GET /v2/clusters and return first result
 	listClusterParams := installer.NewV2ListClustersParams()
@@ -86,7 +86,7 @@ func (rest *NodeZeroRestClient) getClusterID() (*strfmt.UUID, error) {
 	return clusterID, nil
 }
 
-// NodeZeroRestClient.getClusterID Return the infraEnv ID associated with the cluster in the Agent Rest API
+// getClusterID Return the infraEnv ID associated with the cluster in the Agent Rest API
 func (rest *NodeZeroRestClient) getClusterInfraEnvID() (*strfmt.UUID, error) {
 	// GET /v2/infraenvs and return first result
 	listInfraEnvParams := installer.NewListInfraEnvsParams()

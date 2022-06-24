@@ -97,7 +97,7 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 	return czero, nil
 }
 
-// Cluster.Get Retrieve the current cluster metadata from the Agent Rest API
+// Get Retrieve the current cluster metadata from the Agent Rest API
 func (czero *Cluster) Get() (*models.Cluster, error) {
 	// GET /v2/clusters/{cluster_zero_id}
 	getClusterParams := &installer.V2GetClusterParams{ClusterID: *czero.clusterID}
@@ -109,32 +109,32 @@ func (czero *Cluster) Get() (*models.Cluster, error) {
 	return cluster, nil
 }
 
-// Cluster.IsBootstrapComplete Determine if the cluster that agent installer
+// IsBootstrapComplete Determine if the cluster that agent installer
 // is installing has completed the bootstrap process.
 func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 
 	agentRestAPILive, agentRestAPIErr := czero.API.Rest.IsRestAPILive()
 	if agentRestAPIErr != nil {
-		logrus.Debug("Node Zero Agent API is not available.")
+		logrus.Debug("node zero Agent API is not available")
 		logrus.Debug(agentRestAPIErr)
 	}
 
 	clusterKubeAPILive, clusterKubeAPIErr := czero.API.Kube.IsKubeAPILive()
 	if clusterKubeAPIErr != nil {
-		logrus.Debug("Cluster Kube API is not available.")
+		logrus.Debug("cluster Kube API is not available")
 		logrus.Debug(clusterKubeAPIErr)
 	}
 
 	if clusterKubeAPILive {
 		// First time we see the cluster Kube API
 		if !czero.installHistory.ClusterKubeAPISeen {
-			logrus.Info("Cluster Kube API Initialized")
+			logrus.Info("cluster Kube API Initialized")
 			czero.installHistory.ClusterKubeAPISeen = true
 		}
 
 		configmap, _ := czero.API.Kube.IsBootstrapConfigMapComplete()
 		if configmap {
-			logrus.Info("Bootstrap configMap status is complete.")
+			logrus.Info("bootstrap configMap status is complete")
 			return true, nil
 		}
 	}
@@ -142,10 +142,10 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 	if agentRestAPILive {
 		// First time we see the agent Rest API
 		if !czero.installHistory.RestAPISeen {
-			logrus.Info("Node Zero Agent API Initialized")
+			logrus.Info("node zero Agent API Initialized")
 			czero.installHistory.RestAPISeen = true
 		}
-		logrus.Trace("Getting cluster info from Node Zero Agent API")
+		logrus.Trace("getting cluster info from Node Zero Agent API")
 		clusterState, _ := czero.Get()
 
 		// TODO(lranjbar)[AGENT-172]: Add CheckHostValidations
@@ -164,42 +164,42 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 
 		stopped, _ := czero.HasStoppedInstalling(*clusterState.Status)
 		if stopped {
-			logrus.Error("Cluster has stopped installing")
+			logrus.Error("cluster has stopped installing")
 			errored, _ := czero.HasErrored(*clusterState.Status)
 			if errored {
-				return false, errors.New("Cluster installation has stopped due to errors")
+				return false, errors.New("cluster installation has stopped due to errors")
 			}
-			return false, errors.New("Cluster has stopped installing and/or insallation was cancelled")
+			return false, errors.New("cluster has stopped installing and/or insallation was cancelled")
 		}
 
 	}
 
 	// both API's are not available
 	if !agentRestAPILive && !clusterKubeAPILive {
-		logrus.Debug("Current API Status: Node Zero Agent API: down, Cluster Kube API: down")
+		logrus.Debug("current API Status: Node Zero Agent API: down, Cluster Kube API: down")
 		if !czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
-			logrus.Debug("Nero Zero Agent API never initialized. Cluster API never initialized.")
-			logrus.Warn("Unable to detect installation. Cluster install has either not initalized or was not started.")
+			logrus.Debug("nero zero Agent API never initialized. Cluster API never initialized")
+			logrus.Warn("unable to detect installation. Cluster install has either not initalized or was not started")
 			return false, nil
 		}
 
 		if czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
-			logrus.Debug("Cluster API never initialized.")
-			logrus.Debug("Cluster install status last seen was: %s", czero.installHistory.RestAPICurrentClusterStatus)
-			return false, errors.New("Cluster installation did not complete.")
+			logrus.Debug("cluster API never initialized")
+			logrus.Debug("cluster install status last seen was: %s", czero.installHistory.RestAPICurrentClusterStatus)
+			return false, errors.New("cluster installation did not complete")
 		}
 	}
 
-	logrus.Debug("Bootstrap is not complete. Sleeping...")
+	logrus.Debug("bootstrap is not complete. sleeping... ")
 	return false, nil
 }
 
-// Cluster.IsInstallComplete Determine if the cluster has completed installation.
+// IsInstallComplete Determine if the cluster has completed installation.
 func (czero *Cluster) IsInstallComplete() (bool, error) {
 	return true, nil
 }
 
-// Cluster.IsInstalling Determine if the cluster is still installing using
+// IsInstalling Determine if the cluster is still installing using
 // the models from the Agent Rest API.
 func (czero *Cluster) IsInstalling(status string) (bool, string) {
 	clusterInstallingStates := map[string]bool{
@@ -217,7 +217,7 @@ func (czero *Cluster) IsInstalling(status string) (bool, string) {
 	return clusterInstallingStates[status], status
 }
 
-// Cluster.HasErrored Determine if the cluster installation has errored using
+// HasErrored Determine if the cluster installation has errored using
 // the models from the Agent Rest API.
 func (czero *Cluster) HasErrored(status string) (bool, string) {
 	clusterErrorStates := map[string]bool{
@@ -235,7 +235,7 @@ func (czero *Cluster) HasErrored(status string) (bool, string) {
 	return clusterErrorStates[status], status
 }
 
-// Cluster.IsInstalling Determine if the cluster has stopped installing using
+// IsInstalling Determine if the cluster has stopped installing using
 // the models from the Agent Rest API.
 func (czero *Cluster) HasStoppedInstalling(status string) (bool, string) {
 	clusterStoppedInstallingStates := map[string]bool{
@@ -269,16 +269,16 @@ func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster) error {
 // Human friendly install status strings mapped to the Agent Rest API cluster statuses
 func humanFriendlyClusterInstallStatus(status string) string {
 	clusterStoppedInstallingStates := map[string]string{
-		models.ClusterStatusAddingHosts:                 "Cluster is adding hosts.",
-		models.ClusterStatusCancelled:                   "Cluster installation cancelled.",
-		models.ClusterStatusError:                       "Cluster has hosts in error.",
-		models.ClusterStatusFinalizing:                  "Finalizing cluster installation.",
-		models.ClusterStatusInstalling:                  "Cluster installation in progress.",
-		models.ClusterStatusInstallingPendingUserAction: "Cluster has hosts requiring user input.",
-		models.ClusterStatusInsufficient:                "Cluster is not ready for install. Check hardware settings.",
-		models.ClusterStatusPendingForInput:             "User input is required to continue cluster installation.",
-		models.ClusterStatusPreparingForInstallation:    "Preparing cluster for installation.",
-		models.ClusterStatusReady:                       "Cluster is ready for install.",
+		models.ClusterStatusAddingHosts:                 "Cluster is adding hosts",
+		models.ClusterStatusCancelled:                   "Cluster installation cancelled",
+		models.ClusterStatusError:                       "Cluster has hosts in error",
+		models.ClusterStatusFinalizing:                  "Finalizing cluster installation",
+		models.ClusterStatusInstalling:                  "Cluster installation in progress",
+		models.ClusterStatusInstallingPendingUserAction: "Cluster has hosts requiring user input",
+		models.ClusterStatusInsufficient:                "Cluster is not ready for install. Check host validations",
+		models.ClusterStatusPendingForInput:             "User input is required to continue cluster installation",
+		models.ClusterStatusPreparingForInstallation:    "Preparing cluster for installation",
+		models.ClusterStatusReady:                       "Cluster is ready for install",
 	}
 	return clusterStoppedInstallingStates[status]
 

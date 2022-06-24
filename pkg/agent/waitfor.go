@@ -11,12 +11,11 @@ import (
 // WaitForBootstrapComplete Wait for the bootstrap process to complete on
 // cluster installations triggered by the agent installer.
 func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
-	logrus.Info("WaitForBootstrapComplete")
 
 	ctx := context.Background()
 	cluster, err := NewCluster(ctx, assetDir)
 	if err != nil {
-		logrus.Warn("Unable to make cluster zero object")
+		logrus.Warn("unable to make cluster object to track installation")
 		return nil, err
 	}
 
@@ -27,7 +26,7 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 	wait.Until(func() {
 		bootstrap, err := cluster.IsBootstrapComplete()
 		if bootstrap && err == nil {
-			logrus.Info("Cluster bootstrap is complete")
+			logrus.Info("cluster bootstrap is complete")
 			cancel()
 		}
 
@@ -46,7 +45,6 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 // WaitForInstallComplete Wait for the cluster installation triggered by the
 // agent installer to be complete.
 func WaitForInstallComplete(assetDir string) error {
-	logrus.Info("WaitForInstallComplete")
 
 	// Research notes: In installer main package create.go:
 	// waitForInitializedCluster()
@@ -64,7 +62,7 @@ func WaitForInstallComplete(assetDir string) error {
 	wait.Until(func() {
 		installed, err := cluster.IsInstallComplete()
 		if installed && err == nil {
-			logrus.Info("Cluster is installed.")
+			logrus.Info("cluster is installed")
 			cancel()
 		}
 
