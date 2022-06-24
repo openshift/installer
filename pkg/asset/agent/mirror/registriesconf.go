@@ -5,18 +5,26 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
-
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/pelletier/go-toml"
+	"github.com/pkg/errors"
 )
 
 var (
-	registriesConfFilename = filepath.Join(mirrorConfigDir, "registries.conf")
+	// RegistriesConfFilename defines the name of the file on disk
+	RegistriesConfFilename = filepath.Join(mirrorConfigDir, "registries.conf")
 )
 
 // RegistriesConf generates the registries.conf file.
 type RegistriesConf struct {
-	File *asset.File
+	File         *asset.File
+	MirrorConfig []RegistriesConfig
+}
+
+// RegistriesConfig holds the data extracted from registries.conf
+type RegistriesConfig struct {
+	Location string
+	Mirror   string
 }
 
 var _ asset.WritableAsset = (*RegistriesConf)(nil)
@@ -55,9 +63,11 @@ func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 	// }
 
 	// i.File = &asset.File{
-	//      Filename: registriesConfFilename,
+	//      Filename: RegistriesConfFilename,
 	//      Data:     registries,
 	// }
+
+	// return i.finish()
 
 	return nil
 }
@@ -73,14 +83,62 @@ func (i *RegistriesConf) Files() []*asset.File {
 // Load returns RegistriesConf asset from the disk.
 func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
 
-	file, err := f.FetchByName(registriesConfFilename)
+	file, err := f.FetchByName(RegistriesConfFilename)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
 		}
-		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", registriesConfFilename))
+		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", RegistriesConfFilename))
 	}
 
 	i.File = file
+
+	if err = i.finish(); err != nil {
+		return false, err
+	}
+
 	return true, nil
+}
+
+func (i *RegistriesConf) finish() error {
+
+	config, err := extractLocationMirrorDataFromRegistries(string(i.File.Data))
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("failed to parse mirrors in %s", RegistriesConfFilename))
+	}
+
+	i.MirrorConfig = config
+
+	return nil
+}
+
+// From assisted-service pkg/mirrorregistries/generator.go
+func extractLocationMirrorDataFromRegistries(registriesConfToml string) ([]RegistriesConfig, error) {
+	tomlTree, err := toml.Load(registriesConfToml)
+	if err != nil {
+		return nil, err
+	}
+
+	registriesTree, ok := tomlTree.Get("registry").([]*toml.Tree)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast registry key to toml Tree")
+	}
+	registriesConfList := make([]RegistriesConfig, len(registriesTree))
+	for i, registryTree := range registriesTree {
+		location, ok := registryTree.Get("location").(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to cast location key to string")
+		}
+		mirrorTree, ok := registryTree.Get("mirror").([]*toml.Tree)
+		if !ok {
+			return nil, fmt.Errorf("failed to cast mirror key to toml Tree")
+		}
+		mirror, ok := mirrorTree[0].Get("location").(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to cast mirror location key to string")
+		}
+		registriesConfList[i] = RegistriesConfig{Location: location, Mirror: mirror}
+	}
+
+	return registriesConfList, nil
 }

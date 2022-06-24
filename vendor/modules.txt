@@ -709,6 +709,9 @@ github.com/ovirt/go-ovirt
 # github.com/pborman/uuid v1.2.0
 ## explicit
 github.com/pborman/uuid
+# github.com/pelletier/go-toml v1.9.3
+## explicit; go 1.12
+github.com/pelletier/go-toml
 # github.com/pierrec/lz4 v2.3.0+incompatible
 ## explicit
 github.com/pierrec/lz4

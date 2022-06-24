@@ -25,30 +25,18 @@ func TestRegistries_LoadedFromDisk(t *testing.T) {
 			name: "valid-config-file",
 			data: `
 [[registry]]
-prefix = "example.com/foo"
-insecure = false
-blocked = false
-location = "internal-registry-for-example.com/bar"
+location = "registry.ci.openshift.org/ocp/release" 
 mirror-by-digest-only = false
 
 [[registry.mirror]]
-location = "example-mirror-0.local/mirror-for-foo"
-
-[[registry.mirror]]
-location = "example-mirror-1.local/mirrors/foo"
-insecure = true
+location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 
 [[registry]]
-location = "registry.com"
+location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+mirror-by-digest-only = false
 
 [[registry.mirror]]
-location = "mirror.registry.com`,
-			expectedFound: true,
-			expectedError: "",
-		},
-		{
-			name:          "empty",
-			data:          "",
+location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"`,
 			expectedFound: true,
 			expectedError: "",
 		},
@@ -69,10 +57,10 @@ location = "mirror.registry.com`,
 			defer mockCtrl.Finish()
 
 			fileFetcher := mock.NewMockFileFetcher(mockCtrl)
-			fileFetcher.EXPECT().FetchByName(registriesConfFilename).
+			fileFetcher.EXPECT().FetchByName(RegistriesConfFilename).
 				Return(
 					&asset.File{
-						Filename: registriesConfFilename,
+						Filename: RegistriesConfFilename,
 						Data:     []byte(tc.data)},
 					tc.fetchError,
 				)

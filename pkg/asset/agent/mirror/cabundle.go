@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	caBundleFilename = filepath.Join(mirrorConfigDir, "ca-bundle.crt")
+	// CaBundleFilename defines the name of the file on disk
+	CaBundleFilename = filepath.Join(mirrorConfigDir, "ca-bundle.crt")
 )
 
 // CaBundle generates the cetificate file for disconnected mirrors.
@@ -49,7 +50,7 @@ func (i *CaBundle) Generate(dependencies asset.Parents) error {
 	//}
 
 	// i.File = &asset.File{
-	//      Filename: caBundleFilename,
+	//      Filename: CaBundleFilename,
 	//      Data:     data,
 	// }
 
@@ -67,12 +68,12 @@ func (i *CaBundle) Files() []*asset.File {
 // Load returns the Mirror Registries certificate file from the disk.
 func (i *CaBundle) Load(f asset.FileFetcher) (bool, error) {
 
-	file, err := f.FetchByName(caBundleFilename)
+	file, err := f.FetchByName(CaBundleFilename)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
 		}
-		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", caBundleFilename))
+		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", CaBundleFilename))
 	}
 
 	i.File = file

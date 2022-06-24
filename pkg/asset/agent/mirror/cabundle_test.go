@@ -53,10 +53,10 @@ MIIDvTCCAqWgAwIBAgICEAA....
 			defer mockCtrl.Finish()
 
 			fileFetcher := mock.NewMockFileFetcher(mockCtrl)
-			fileFetcher.EXPECT().FetchByName(caBundleFilename).
+			fileFetcher.EXPECT().FetchByName(CaBundleFilename).
 				Return(
 					&asset.File{
-						Filename: caBundleFilename,
+						Filename: CaBundleFilename,
 						Data:     []byte(tc.data)},
 					tc.fetchError,
 				)
