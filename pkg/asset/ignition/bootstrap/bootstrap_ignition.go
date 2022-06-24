@@ -35,23 +35,9 @@ func parseCertificateBundle(userCA []byte) ([]igntypes.Resource, error) {
 	return carefs, nil
 }
 
-// GenerateIgnitionShimWithCertBundle is used to generate an ignition file that contains a user ca bundle
-// in its Security section.
-func GenerateIgnitionShimWithCertBundle(bootstrapConfigURL string, userCA string) ([]byte, error) {
-	ign, err := generateIgnitionShimWithCertBundle(bootstrapConfigURL, userCA)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := ignition.Marshal(ign)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
-}
-
-func generateIgnitionShimWithCertBundle(bootstrapConfigURL string, userCA string) (igntypes.Config, error) {
+// GenerateIgnitionShimWithCertBundleAndProxy is used to generate an ignition file that contains both a user ca bundle
+// in its Security section and proxy settings (if any).
+func GenerateIgnitionShimWithCertBundleAndProxy(bootstrapConfigURL string, userCA string, proxy *types.Proxy) ([]byte, error) {
 	ign := igntypes.Config{
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
@@ -65,7 +51,7 @@ func generateIgnitionShimWithCertBundle(bootstrapConfigURL string, userCA string
 
 	carefs, err := parseCertificateBundle([]byte(userCA))
 	if err != nil {
-		return ign, err
+		return nil, err
 	}
 	if len(carefs) > 0 {
 		ign.Ignition.Security = igntypes.Security{
@@ -74,18 +60,10 @@ func generateIgnitionShimWithCertBundle(bootstrapConfigURL string, userCA string
 			},
 		}
 	}
-	return ign, nil
-}
 
-// GenerateIgnitionShimWithCertBundleAndProxy is used to generate an ignition file that contains both a user ca bundle
-// in its Security section and proxy settings.
-func GenerateIgnitionShimWithCertBundleAndProxy(bootstrapConfigURL string, userCA string, proxy *types.Proxy) ([]byte, error) {
-	ign, err := generateIgnitionShimWithCertBundle(bootstrapConfigURL, userCA)
-	if err != nil {
-		return nil, err
+	if proxy != nil {
+		ign.Ignition.Proxy = ignitionProxy(proxy)
 	}
-
-	ign.Ignition.Proxy = ignitionProxy(proxy)
 
 	data, err := ignition.Marshal(ign)
 	if err != nil {
