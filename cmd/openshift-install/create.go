@@ -594,7 +594,7 @@ func logComplete(directory, consoleURL string) error {
 		return err
 	}
 	logrus.Info("Install complete!")
-	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=%s'", kubeconfig)
+	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run\n    export KUBECONFIG=%s", kubeconfig)
 	logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
 	logrus.Infof("Login to the console with user: %q, and password: %q", "kubeadmin", pw)
 	return nil
