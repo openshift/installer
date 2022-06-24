@@ -6,27 +6,26 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	"github.com/openshift/installer/pkg/agent/zero"
 )
 
-// Wait for the bootstrap complete triggered by the agent installer.
-func WaitForBootstrapComplete(assetDir string) (*zero.AgentCluster, error) {
+// WaitForBootstrapComplete Wait for the bootstrap process to complete on
+// cluster installations triggered by the agent installer.
+func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 	logrus.Info("WaitForBootstrapComplete")
 
 	ctx := context.Background()
-	agentCluster, err := zero.NewAgentCluster(ctx, assetDir)
+	cluster, err := NewCluster(ctx, assetDir)
 	if err != nil {
 		logrus.Warn("Unable to make cluster zero object")
 		return nil, err
 	}
 
 	timeout := 40 * time.Minute
-	waitContext, cancel := context.WithTimeout(agentCluster.Ctx, timeout)
+	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
 
 	wait.Until(func() {
-		bootstrap, err := agentCluster.IsBootstrapComplete()
+		bootstrap, err := cluster.IsBootstrapComplete()
 		if bootstrap && err == nil {
 			logrus.Info("Cluster bootstrap is complete")
 			cancel()
@@ -38,14 +37,14 @@ func WaitForBootstrapComplete(assetDir string) (*zero.AgentCluster, error) {
 	}, 5*time.Second, waitContext.Done())
 
 	if err != nil {
-		return agentCluster, err
+		return cluster, err
 	}
 
-	return agentCluster, nil
+	return cluster, nil
 }
 
-// TODO(lranjbar)[AGENT-173]: Add wait for install complete in AGENT-173
-// Wait for the installation complete triggered by the agent installer.
+// WaitForInstallComplete Wait for the cluster installation triggered by the
+// agent installer to be complete.
 func WaitForInstallComplete(assetDir string) error {
 	logrus.Info("WaitForInstallComplete")
 

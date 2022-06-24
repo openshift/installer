@@ -16,15 +16,17 @@ import (
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 )
 
-type nodeZeroRestClient struct {
+// NodeZeroRestClient is a struct to interact with the Agent Rest API that is on node zero.
+type NodeZeroRestClient struct {
 	Client     *client.AssistedInstall
 	ctx        context.Context
 	config     client.Config
-	nodeZeroIP string
+	NodeZeroIP string
 }
 
-func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*nodeZeroRestClient, error) {
-	zeroRestClient := &nodeZeroRestClient{}
+// NewNodeZeroRestClient Initialize a new rest client to interact with the Agent Rest API on node zero.
+func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestClient, error) {
+	restClient := &NodeZeroRestClient{}
 
 	assetStore, err := assetstore.NewStore(assetDir)
 	if err != nil {
@@ -35,30 +37,31 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*nodeZeroRestC
 		return nil, errors.Wrapf(err, "failed to fetch %s", nmState.Name())
 	}
 
-	nodeZeroIP, err := manifests.GetNodeZeroIP(nmState.Config)
+	NodeZeroIP, err := manifests.GetNodeZeroIP(nmState.Config)
 	if err != nil {
 		return nil, err
 	}
 	config := client.Config{}
 	config.URL = &url.URL{
 		Scheme: "http",
-		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
+		Host:   net.JoinHostPort(NodeZeroIP, "8090"),
 		Path:   client.DefaultBasePath,
 	}
 	client := client.New(config)
 
-	zeroRestClient.Client = client
-	zeroRestClient.ctx = ctx
-	zeroRestClient.config = config
-	zeroRestClient.nodeZeroIP = nodeZeroIP
+	restClient.Client = client
+	restClient.ctx = ctx
+	restClient.config = config
+	restClient.NodeZeroIP = NodeZeroIP
 
-	return zeroRestClient, nil
+	return restClient, nil
 }
 
-func (zerorest *nodeZeroRestClient) IsAgentAPILive() (bool, error) {
+// NodeZeroRestClient.IsRestAPILive Determine if the Agent Rest API on node zero has initialized
+func (rest *NodeZeroRestClient) IsRestAPILive() (bool, error) {
 	// GET /v2/openshift-versions
 	listOpenshiftVersionsParams := versions.NewV2ListSupportedOpenshiftVersionsParams()
-	_, err := zerorest.Client.Versions.ListSupportedOpenshiftVersions(zerorest.ctx, (*versions.ListSupportedOpenshiftVersionsParams)(listOpenshiftVersionsParams))
+	_, err := rest.Client.Versions.ListSupportedOpenshiftVersions(rest.ctx, (*versions.ListSupportedOpenshiftVersionsParams)(listOpenshiftVersionsParams))
 
 	if err != nil {
 		return false, err
@@ -66,28 +69,31 @@ func (zerorest *nodeZeroRestClient) IsAgentAPILive() (bool, error) {
 	return true, nil
 }
 
-func (zerorest *nodeZeroRestClient) GetAgentAPIServiceBaseURL() *url.URL {
-	return zerorest.config.URL
+// NodeZeroRestClient.GetRestAPIServiceBaseURL Return the url of the Agent Rest API on node zero
+func (rest *NodeZeroRestClient) GetRestAPIServiceBaseURL() *url.URL {
+	return rest.config.URL
 }
 
-func (zerorest *nodeZeroRestClient) getAgentClusterClusterID() (*strfmt.UUID, error) {
+// NodeZeroRestClient.getClusterID Return the cluster ID assigned to the by the Agent Rest API
+func (rest *NodeZeroRestClient) getClusterID() (*strfmt.UUID, error) {
 	// GET /v2/clusters and return first result
 	listClusterParams := installer.NewV2ListClustersParams()
-	clusterResult, err := zerorest.Client.Installer.V2ListClusters(zerorest.ctx, listClusterParams)
+	clusterResult, err := rest.Client.Installer.V2ListClusters(rest.ctx, listClusterParams)
 	if err != nil {
 		return nil, err
 	}
-	agentClusterID := clusterResult.Payload[0].ID
-	return agentClusterID, nil
+	clusterID := clusterResult.Payload[0].ID
+	return clusterID, nil
 }
 
-func (zerorest *nodeZeroRestClient) getAgentClusterInfraEnvID() (*strfmt.UUID, error) {
+// NodeZeroRestClient.getClusterID Return the infraEnv ID associated with the cluster in the Agent Rest API
+func (rest *NodeZeroRestClient) getClusterInfraEnvID() (*strfmt.UUID, error) {
 	// GET /v2/infraenvs and return first result
 	listInfraEnvParams := installer.NewListInfraEnvsParams()
-	infraenvResult, err := zerorest.Client.Installer.ListInfraEnvs(zerorest.ctx, listInfraEnvParams)
+	infraenvResult, err := rest.Client.Installer.ListInfraEnvs(rest.ctx, listInfraEnvParams)
 	if err != nil {
 		return nil, err
 	}
-	agentClusterInfraEnvID := infraenvResult.Payload[0].ID
-	return agentClusterInfraEnvID, nil
+	clusterInfraEnvID := infraenvResult.Payload[0].ID
+	return clusterInfraEnvID, nil
 }

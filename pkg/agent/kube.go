@@ -12,16 +12,19 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-type agentClusterKubeAPIClient struct {
+// ClusterKubeAPIClient is a kube client to interact with the cluster that agent installer
+// is installing.
+type ClusterKubeAPIClient struct {
 	Client     *kubernetes.Clientset
 	ctx        context.Context
 	config     *rest.Config
 	configPath string
 }
 
-func NewAgentClusterKubeAPIClient(ctx context.Context, assetDir string) (*agentClusterKubeAPIClient, error) {
+// NewClusterKubeAPIClient Create a new kube client to interact with the cluster under install.
+func NewClusterKubeAPIClient(ctx context.Context, assetDir string) (*ClusterKubeAPIClient, error) {
 
-	zeroKubeClient := &agentClusterKubeAPIClient{}
+	kubeClient := &ClusterKubeAPIClient{}
 
 	kubeconfigpath := filepath.Join(assetDir, "auth", "kubeconfig")
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigpath)
@@ -34,17 +37,19 @@ func NewAgentClusterKubeAPIClient(ctx context.Context, assetDir string) (*agentC
 		return nil, errors.Wrap(err, "Creating a Kubernetes client from assets failed.")
 	}
 
-	zeroKubeClient.Client = kubeclient
-	zeroKubeClient.ctx = ctx
-	zeroKubeClient.config = kubeconfig
-	zeroKubeClient.configPath = kubeconfigpath
+	kubeClient.Client = kubeclient
+	kubeClient.ctx = ctx
+	kubeClient.config = kubeconfig
+	kubeClient.configPath = kubeconfigpath
 
-	return zeroKubeClient, nil
+	return kubeClient, nil
 }
 
-func (zerokube *agentClusterKubeAPIClient) IsKubeAPILive() (bool, error) {
+// ClusterKubeAPIClient.IsKubeAPILive Determine if the cluster under install has initailized the
+// kubenertes API.
+func (kube *ClusterKubeAPIClient) IsKubeAPILive() (bool, error) {
 
-	discovery := zerokube.Client.Discovery()
+	discovery := kube.Client.Discovery()
 	version, err := discovery.ServerVersion()
 	if err != nil {
 		return false, err
@@ -53,20 +58,23 @@ func (zerokube *agentClusterKubeAPIClient) IsKubeAPILive() (bool, error) {
 	return true, nil
 }
 
-// DEV_NOTES(lranjbar): Potentially redundant? We will fail when making the client if kubeconfig is not around
-func (zerokube *agentClusterKubeAPIClient) DoesKubeConfigExist() (bool, error) {
+// DoesKubeConfigExist.DoesKubeConfigExist Determine if the kubeconfig for the cluster
+// can be used without errors.
+func (kube *ClusterKubeAPIClient) DoesKubeConfigExist() (bool, error) {
 
-	_, err := clientcmd.LoadFromFile(zerokube.configPath)
+	_, err := clientcmd.LoadFromFile(kube.configPath)
 	if err != nil {
 		return false, errors.Wrap(err, "Error loading kubeconfig from file.")
 	}
 	return true, nil
 }
 
-func (zerokube *agentClusterKubeAPIClient) IsBootstrapConfigMapComplete() (bool, error) {
+// ClusterKubeAPIClient.IsBootstrapConfigMapComplete Detemine if the cluster's bootstrap
+// configmap has the status complete.
+func (kube *ClusterKubeAPIClient) IsBootstrapConfigMapComplete() (bool, error) {
 
 	// Get latest version of bootstrap configmap
-	bootstrap, err := zerokube.Client.CoreV1().ConfigMaps("kube-system").Get(zerokube.ctx, "bootstrap", v1.GetOptions{})
+	bootstrap, err := kube.Client.CoreV1().ConfigMaps("kube-system").Get(kube.ctx, "bootstrap", v1.GetOptions{})
 
 	if err != nil {
 		logrus.Debug("bootstrap configmap not found")
