@@ -185,7 +185,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 
 		if czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
 			logrus.Debug("cluster API never initialized")
-			logrus.Debug("cluster install status last seen was: %s", czero.installHistory.RestAPICurrentClusterStatus)
+			logrus.Debugf("cluster install status last seen was: %s", czero.installHistory.RestAPICurrentClusterStatus)
 			return false, errors.New("cluster installation did not complete")
 		}
 	}
