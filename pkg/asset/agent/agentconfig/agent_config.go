@@ -166,6 +166,14 @@ func (a *Asset) HostConfigFiles() (HostConfigFileMap, error) {
 		if len(macs) > 0 {
 			files[filepath.Join(name, "mac_addresses")] = []byte(strings.Join(macs, ""))
 		}
+
+		rdh, err := yaml.Marshal(host.RootDeviceHints)
+		if err != nil {
+			return nil, err
+		}
+		if len(rdh) > 0 && string(rdh) != "{}\n" {
+			files[filepath.Join(name, "root-device-hints.yaml")] = rdh
+		}
 	}
 	return files, nil
 }
