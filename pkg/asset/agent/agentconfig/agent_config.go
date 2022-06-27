@@ -3,6 +3,8 @@ package agentconfig
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/agent"
@@ -109,4 +111,34 @@ func (a *Asset) validateNodesHaveAtLeastOneMacAddressDefined() field.ErrorList {
 		}
 	}
 	return allErrs
+}
+
+// HostConfigFileMap is a map from a filepath ("<host>/<file>") to file content
+// for hostconfig files.
+type HostConfigFileMap map[string][]byte
+
+// HostConfigFiles returns a map from filename to contents of the files used for
+// host-specific configuration by the agent installer client
+func (a *Asset) HostConfigFiles() (HostConfigFileMap, error) {
+	if a == nil || a.Config == nil {
+		return nil, nil
+	}
+
+	files := HostConfigFileMap{}
+	for i, host := range a.Config.Spec.Hosts {
+		name := fmt.Sprintf("host-%d", i)
+		if host.Hostname != "" {
+			name = host.Hostname
+		}
+
+		macs := []string{}
+		for _, iface := range host.Interfaces {
+			macs = append(macs, iface.MacAddress+"\n")
+		}
+
+		if len(macs) > 0 {
+			files[filepath.Join(name, "mac_addresses")] = []byte(strings.Join(macs, ""))
+		}
+	}
+	return files, nil
 }

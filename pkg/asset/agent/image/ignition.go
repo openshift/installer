@@ -187,6 +187,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	addMirrorData(&config, agentMirror)
 
+	addHostConfig(&config, agentConfigAsset)
+
 	a.Config = &config
 	return nil
 }
@@ -276,4 +278,17 @@ func addMirrorData(config *igntypes.Config, agentMirror *mirror.AgentMirror) {
 
 		}
 	}
+}
+
+func addHostConfig(config *igntypes.Config, agentConfig *agentconfig.Asset) error {
+	confs, err := agentConfig.HostConfigFiles()
+	if err != nil {
+		return err
+	}
+
+	for path, content := range confs {
+		hostConfigFile := ignition.FileFromBytes(filepath.Join("/etc/assisted/hostconfig", path), "root", 0644, content)
+		config.Storage.Files = append(config.Storage.Files, hostConfigFile)
+	}
+	return nil
 }
