@@ -53,6 +53,7 @@ variable "azure_master_root_volume_size" {
 
 variable "azure_base_domain_resource_group_name" {
   type        = string
+  default     = ""
   description = "The resource group that contains the dns zone used as base domain for the cluster."
 }
 
