@@ -31,6 +31,13 @@ type MachinePool struct {
 	// If no zones are provided, all instances will be deployed on OpenStack Nova default availability zone
 	// +optional
 	Zones []string `json:"zones,omitempty"`
+
+	// Subnets is the list of subnets where the instances should be deployed.
+	// By setting this, the installer will no longer create a network and subnet.
+	// The subnets specified in Subnets will not be deleted or modified by the installer.
+	// Cannot be used together with Platform.MachinesSubnet.
+	// +optional
+	Subnets []string `json:"subnets,omitempty"`
 }
 
 // Set sets the values from `required` to `o`.

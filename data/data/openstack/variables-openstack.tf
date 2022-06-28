@@ -365,6 +365,12 @@ variable "openstack_master_root_volume_availability_zones" {
   description = "List of availability Zones to Schedule the masters root volumes on."
 }
 
+variable "openstack_master_subnets" {
+  type        = list(string)
+  default     = [""]
+  description = "List of subnets to Schedule the masters on."
+}
+
 variable "openstack_worker_server_group_names" {
   type        = set(string)
   description = "Names of the server groups for the worker nodes."

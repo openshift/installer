@@ -52,6 +52,7 @@ type config struct {
 	MachinesNetwork                  string                            `json:"openstack_machines_network_id,omitempty"`
 	MasterAvailabilityZones          []string                          `json:"openstack_master_availability_zones,omitempty"`
 	MasterRootVolumeAvalabilityZones []string                          `json:"openstack_master_root_volume_availability_zones,omitempty"`
+	MasterSubnets                    []string                          `json:"openstack_master_subnets,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
@@ -169,6 +170,9 @@ func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1
 	}
 	if mastermpool != nil && mastermpool.RootVolume != nil && mastermpool.RootVolume.Zones != nil {
 		cfg.MasterRootVolumeAvalabilityZones = mastermpool.RootVolume.Zones
+	}
+	if mastermpool != nil && mastermpool.Subnets != nil {
+		cfg.MasterSubnets = mastermpool.Subnets
 	}
 
 	serviceCatalog, err := getServiceCatalog(cloud)

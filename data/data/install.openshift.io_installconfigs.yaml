@@ -1188,6 +1188,12 @@ spec:
                         - anti-affinity
                         - soft-anti-affinity
                         type: string
+                      subnets:
+                        description: Subnets is the list of subnets where the instances
+                          should be connected to as a primary interface. This option is not
+                          compatible with "machinesSubnet".
+                        items: string
+                        type: array
                       type:
                         description: FlavorName defines the OpenStack Nova flavor.
                           eg. m1.large

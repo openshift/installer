@@ -13,6 +13,11 @@ data "openstack_networking_network_v2" "external_network" {
   external   = true
 }
 
+data "openstack_networking_subnet_v2" "master_subnets" {
+  count     = length(var.openstack_master_subnets)
+  subnet_id = element(var.openstack_master_subnets, count.index)
+}
+
 resource "openstack_networking_network_v2" "openshift-private" {
   count          = var.openstack_machines_subnet_id == "" ? 1 : 0
   name           = "${var.cluster_id}-openshift"
@@ -46,7 +51,7 @@ resource "openstack_networking_port_v2" "masters" {
   description = local.description
 
   admin_state_up = "true"
-  network_id     = local.nodes_network_id
+  network_id     = var.openstack_master_subnets == "" ? local.nodes_network_id : data.openstack_networking_subnet_v2.master_subnets[count.index].network_id
   security_group_ids = concat(
     var.openstack_master_extra_sg_ids,
     [openstack_networking_secgroup_v2.master.id],
@@ -59,7 +64,7 @@ resource "openstack_networking_port_v2" "masters" {
   }
 
   fixed_ip {
-    subnet_id = local.nodes_subnet_id
+    subnet_id = var.openstack_master_subnets == "" ? local.nodes_subnet_id : data.openstack_networking_subnet_v2.master_subnets[count.index].subnet_id
   }
 
   allowed_address_pairs {

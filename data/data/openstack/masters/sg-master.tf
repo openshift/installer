@@ -4,6 +4,8 @@ resource "openstack_networking_secgroup_v2" "master" {
   description = local.description
 }
 
+// if openstack_master_subnets is defined, we need to create one SG per subnet and use:
+// data.openstack_networking_subnet_v2.master_subnets[${count.index}].cidr
 resource "openstack_networking_secgroup_rule_v2" "master_mcs" {
   count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
