@@ -86,6 +86,10 @@ func (a *Asset) validateAgent() field.ErrorList {
 		allErrs = append(allErrs, err...)
 	}
 
+	if err := a.validateRootDeviceHints(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
 	return allErrs
 }
 
@@ -112,6 +116,27 @@ func (a *Asset) validateNodesHaveAtLeastOneMacAddressDefined() field.ErrorList {
 			}
 		}
 	}
+	return allErrs
+}
+
+func (a *Asset) validateRootDeviceHints() field.ErrorList {
+	var allErrs field.ErrorList
+	rootPath := field.NewPath("Spec", "Hosts")
+
+	for i, host := range a.Config.Spec.Hosts {
+		hostPath := rootPath.Index(i)
+		if host.RootDeviceHints.WWNWithExtension != "" {
+			allErrs = append(allErrs, field.Forbidden(
+				hostPath.Child("RootDeviceHints", "WWNWithExtension"),
+				"WWN extensions are not supported in root device hints"))
+		}
+		if host.RootDeviceHints.WWNVendorExtension != "" {
+			allErrs = append(allErrs, field.Forbidden(
+				hostPath.Child("RootDeviceHints", "WWNVendorExtension"),
+				"WWN vendor extensions are not supported in root device hints"))
+		}
+	}
+
 	return allErrs
 }
 
