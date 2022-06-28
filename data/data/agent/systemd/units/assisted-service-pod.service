@@ -16,7 +16,7 @@ ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/%n.pid --pod-i
 ExecStartPre=/usr/local/bin/get-container-images.sh
 ExecStart=/usr/bin/podman pod start --pod-id-file=%t/%N.pod-id
 ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file=%t/%N.pod-id -t 10
-ExecStopPost=/usr/bin/podman pod rm --ignore -f --pod-id-file=%t/%N.pod-id
+ExecStopPost=/usr/bin/podman pod rm --ignore -f assisted-service
 PIDFile=%t/%n.pid
 Type=forking
 
