@@ -15,10 +15,11 @@ node-tags       = uid-master
 node-tags       = uid-worker
 node-instance-prefix = uid
 external-instance-groups-prefix = uid
+network-name = uid-network
 subnetwork-name = uid-worker-subnet
 
 `
-	actualConfig, err := CloudProviderConfig("uid", "test-project-id", "uid-worker-subnet")
+	actualConfig, err := CloudProviderConfig("uid", "test-project-id", "uid-network", "uid-worker-subnet")
 	assert.NoError(t, err, "failed to create cloud provider config")
 	assert.Equal(t, expectedConfig, actualConfig, "unexpected cloud provider config")
 }
