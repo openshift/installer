@@ -30,43 +30,17 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 			cancel()
 		}
 
-		if err != nil {
-			cancel()
-		}
+		logrus.Info("Cluster is still installing")
+
 	}, 5*time.Second, waitContext.Done())
 
-	if err != nil {
-		return cluster, err
+	waitErr := waitContext.Err()
+	if waitErr != nil && waitErr != context.Canceled {
+		if err != nil {
+			return cluster, err
+		}
+		return cluster, waitErr
 	}
 
 	return cluster, nil
-}
-
-// WaitForInstallComplete Wait for the cluster installation triggered by the
-// agent installer to be complete.
-func WaitForInstallComplete(assetDir string) error {
-
-	// Research notes: In installer main package create.go:
-	// waitForInitializedCluster()
-
-	cluster, err := WaitForBootstrapComplete(assetDir)
-
-	if err != nil {
-		return err
-	}
-
-	timeout := 40 * time.Minute
-	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
-	defer cancel()
-
-	wait.Until(func() {
-		installed, err := cluster.IsInstallComplete()
-		if installed && err == nil {
-			logrus.Info("cluster is installed")
-			cancel()
-		}
-
-	}, 5*time.Second, waitContext.Done())
-
-	return nil
 }

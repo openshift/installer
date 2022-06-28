@@ -7,10 +7,10 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/assisted-service/client"
 	"github.com/openshift/assisted-service/client/installer"
-	"github.com/openshift/assisted-service/client/versions"
 
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
@@ -59,10 +59,9 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 
 // IsRestAPILive Determine if the Agent Rest API on node zero has initialized
 func (rest *NodeZeroRestClient) IsRestAPILive() (bool, error) {
-	// GET /v2/openshift-versions
-	listOpenshiftVersionsParams := versions.NewV2ListSupportedOpenshiftVersionsParams()
-	_, err := rest.Client.Versions.ListSupportedOpenshiftVersions(rest.ctx, (*versions.ListSupportedOpenshiftVersionsParams)(listOpenshiftVersionsParams))
-
+	// GET /v2/infraenvs
+	listInfraEnvsParams := installer.NewListInfraEnvsParams()
+	_, err := rest.Client.Installer.ListInfraEnvs(rest.ctx, listInfraEnvsParams)
 	if err != nil {
 		return false, err
 	}
@@ -74,26 +73,44 @@ func (rest *NodeZeroRestClient) GetRestAPIServiceBaseURL() *url.URL {
 	return rest.config.URL
 }
 
-// getClusterID Return the cluster ID assigned to the by the Agent Rest API
+// getClusterID Return the cluster ID assigned by the Agent Rest API
 func (rest *NodeZeroRestClient) getClusterID() (*strfmt.UUID, error) {
 	// GET /v2/clusters and return first result
 	listClusterParams := installer.NewV2ListClustersParams()
 	clusterResult, err := rest.Client.Installer.V2ListClusters(rest.ctx, listClusterParams)
+	clusterList := clusterResult.Payload
 	if err != nil {
 		return nil, err
 	}
-	clusterID := clusterResult.Payload[0].ID
-	return clusterID, nil
+	if len(clusterList) == 1 {
+		clusterID := clusterList[0].ID
+		return clusterID, nil
+	} else if len(clusterList) == 0 {
+		logrus.Debug("cluster is not registered in rest API")
+		return nil, nil
+	} else {
+		logrus.Debugf("number of clusters found: %d", len(clusterList))
+		return nil, errors.New("found too many clusters")
+	}
 }
 
 // getClusterID Return the infraEnv ID associated with the cluster in the Agent Rest API
 func (rest *NodeZeroRestClient) getClusterInfraEnvID() (*strfmt.UUID, error) {
 	// GET /v2/infraenvs and return first result
 	listInfraEnvParams := installer.NewListInfraEnvsParams()
-	infraenvResult, err := rest.Client.Installer.ListInfraEnvs(rest.ctx, listInfraEnvParams)
+	infraEnvResult, err := rest.Client.Installer.ListInfraEnvs(rest.ctx, listInfraEnvParams)
+	infraEnvList := infraEnvResult.Payload
 	if err != nil {
 		return nil, err
 	}
-	clusterInfraEnvID := infraenvResult.Payload[0].ID
-	return clusterInfraEnvID, nil
+	if len(infraEnvList) == 1 {
+		clusterInfraEnvID := infraEnvList[0].ID
+		return clusterInfraEnvID, nil
+	} else if len(infraEnvList) == 0 {
+		logrus.Debug("infraenv is not registered in rest API")
+		return nil, nil
+	} else {
+		logrus.Debugf("number of infraenvs found: %d", len(infraEnvList))
+		return nil, errors.New("found too many infraenvs")
+	}
 }

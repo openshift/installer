@@ -19,7 +19,6 @@ func NewWaitForCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(newWaitForBootstrapCompleteCmd())
-	cmd.AddCommand(newWaitForInstallCompleteCmd())
 	return cmd
 }
 
@@ -30,6 +29,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			assetDir := cmd.Flags().Lookup("dir").Value.String()
+			logrus.Debugf("asset directory: %s", assetDir)
 			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
 			}
@@ -41,30 +41,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 	}
 }
 
-func newWaitForInstallCompleteCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "install-complete",
-		Short: "Wait until the cluster installation is complete",
-		Args:  cobra.ExactArgs(0),
-		Run: func(cmd *cobra.Command, _ []string) {
-			assetDir := cmd.Flags().Lookup("dir").Value.String()
-			if len(assetDir) == 0 {
-				logrus.Fatal("No cluster installation directory found")
-			}
-			err := runWaitForInstallCompleteCmd(assetDir)
-			if err != nil {
-				logrus.Fatal(err)
-			}
-		},
-	}
-
-}
-
 func runWaitForBootstrapCompleteCmd(directory string) error {
 	_, err := agentpkg.WaitForBootstrapComplete(directory)
 	return err
-}
-
-func runWaitForInstallCompleteCmd(directory string) error {
-	return agentpkg.WaitForInstallComplete(directory)
 }

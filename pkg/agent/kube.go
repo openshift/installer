@@ -52,7 +52,7 @@ func (kube *ClusterKubeAPIClient) IsKubeAPILive() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	logrus.Infof("cluster API is up and running %s", version)
+	logrus.Debugf("cluster API is up and running %s", version)
 	return true, nil
 }
 
@@ -77,7 +77,7 @@ func (kube *ClusterKubeAPIClient) IsBootstrapConfigMapComplete() (bool, error) {
 		return false, err
 	}
 	// Found a bootstrap configmap need to check its status
-	if bootstrap != nil && err == nil {
+	if bootstrap != nil {
 		status, ok := bootstrap.Data["status"]
 		if !ok {
 			logrus.Debug("no status found in bootstrap configmap")
