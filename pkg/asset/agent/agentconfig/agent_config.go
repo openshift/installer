@@ -96,16 +96,18 @@ func (a *Asset) validateNodesHaveAtLeastOneMacAddressDefined() field.ErrorList {
 		return allErrs
 	}
 
+	rootPath := field.NewPath("Spec", "Hosts")
+
 	for i := range a.Config.Spec.Hosts {
 		node := a.Config.Spec.Hosts[i]
+		interfacePath := rootPath.Index(i).Child("Interfaces")
 		if len(node.Interfaces) == 0 {
-			interfacePath := field.NewPath("Spec", "Hosts", "Interfaces", "macAddress")
 			allErrs = append(allErrs, field.Required(interfacePath, "at least one interface must be defined for each node"))
 		}
 
 		for j := range node.Interfaces {
 			if node.Interfaces[j].MacAddress == "" {
-				macAddressPath := field.NewPath("Spec", "Hosts", "Interfaces", "macAddress")
+				macAddressPath := interfacePath.Index(j).Child("macAddress")
 				allErrs = append(allErrs, field.Required(macAddressPath, "each interface must have a MAC address defined"))
 			}
 		}

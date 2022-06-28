@@ -212,7 +212,7 @@ spec:
         - name: enp2s0
         - name: enp3s1
           macAddress: 28:d2:44:d2:b2:1a`,
-			expectedError: "invalid Agent Config configuration: Spec.Hosts.Interfaces.macAddress: Required value: each interface must have a MAC address defined",
+			expectedError: "invalid Agent Config configuration: Spec.Hosts[0].Interfaces[0].macAddress: Required value: each interface must have a MAC address defined",
 		},
 		{
 			name: "node-hostname-and-role-are-not-required",
