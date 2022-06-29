@@ -78,7 +78,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 
 	// Get list of zones in region
 	zones, err := client.GetZones(context.TODO(), ic.GCP.ProjectID, fmt.Sprintf("region eq .*%s", ic.GCP.Region))
-	if err != nil {
+	if err != nil || len(zones) == 0 {
 		return append(allErrs, field.InternalError(nil, err))
 	}
 
