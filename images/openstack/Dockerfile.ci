@@ -11,7 +11,8 @@ FROM registry.ci.openshift.org/origin/4.10:cli AS cli
 FROM registry.ci.openshift.org/origin/4.10:base
 COPY --from=cli /usr/bin/oc /bin/oc
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
-COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
+COPY --from=builder /go/src/github.com/openshift/installer/upi/openstack /var/lib/openshift-install/upi
+COPY --from=builder /go/src/github.com/openshift/installer/docs/user/openstack /var/lib/openshift-install/docs
 COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-train.repo /etc/yum.repos.d/rdo-train.repo
 COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-train.gpg /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-Cloud
 COPY --from=builder /go/src/github.com/openshift/installer/hack/openstack/test-manifests.sh /go/src/github.com/openshift/installer/scripts/openstack/manifest-tests /var/lib/openshift-install/manifest-tests
