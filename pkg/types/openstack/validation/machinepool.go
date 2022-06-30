@@ -32,9 +32,9 @@ func ValidateMachinePool(platform *openstack.Platform, machinePool *openstack.Ma
 
 func validateSubnets(platform *openstack.Platform, machinePool *openstack.MachinePool, fldPath *field.Path) (errs field.ErrorList) {
 	subnetsNumber := len(machinePool.Subnets)
-	if subnetsNumber > 0 && platform.MachinesSubnet != "" {
-		errs = append(errs, field.Invalid(fldPath.Child("subnets"), machinePool.Subnets, "can't be used together with machinesSubnet"))
-	}
+	// if subnetsNumber > 0 && platform.MachinesSubnet != "" {
+	// 	errs = append(errs, field.Invalid(fldPath.Child("subnets"), machinePool.Subnets, "can't be used together with machinesSubnet"))
+	// }
 	zonesNumber := len(machinePool.Zones)
 	if subnetsNumber > 0 && zonesNumber > 0 && subnetsNumber != zonesNumber {
 		errs = append(errs, field.Invalid(fldPath.Child("subnets"), subnetsNumber, "must match the number of zones"))

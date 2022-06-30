@@ -3,7 +3,9 @@ locals {
   nodes_cidr_block = var.machine_v4_cidrs[0]
   nodes_subnet_id  = var.openstack_machines_subnet_id != "" ? var.openstack_machines_subnet_id : openstack_networking_subnet_v2.nodes[0].id
   nodes_network_id = var.openstack_machines_network_id != "" ? var.openstack_machines_network_id : openstack_networking_network_v2.openshift-private[0].id
-  create_router    = (var.openstack_external_network != "" && var.openstack_machines_subnet_id == "") ? 1 : 0
+  # TODO(mandre) - do not create networking resources if openstack_master_subnets and openstack_worker_subnets are both set
+  create_network   = var.openstack_machines_subnet_id == "" && length(var.openstack_master_subnets) == 0 ? 1 : 0
+  create_router    = var.openstack_machines_subnet_id == "" && length(var.openstack_master_subnets) == 0 && var.openstack_external_network != "" ? 1 : 0
 }
 
 data "openstack_networking_network_v2" "external_network" {
@@ -19,7 +21,7 @@ data "openstack_networking_subnet_v2" "master_subnets" {
 }
 
 resource "openstack_networking_network_v2" "openshift-private" {
-  count          = var.openstack_machines_subnet_id == "" ? 1 : 0
+  count          = local.create_network
   name           = "${var.cluster_id}-openshift"
   admin_state_up = "true"
   description    = local.description
@@ -27,7 +29,7 @@ resource "openstack_networking_network_v2" "openshift-private" {
 }
 
 resource "openstack_networking_subnet_v2" "nodes" {
-  count           = var.openstack_machines_subnet_id == "" ? 1 : 0
+  count           = local.create_network
   name            = "${var.cluster_id}-nodes"
   description     = local.description
   cidr            = local.nodes_cidr_block
@@ -51,7 +53,7 @@ resource "openstack_networking_port_v2" "masters" {
   description = local.description
 
   admin_state_up = "true"
-  network_id     = var.openstack_master_subnets == "" ? local.nodes_network_id : data.openstack_networking_subnet_v2.master_subnets[count.index].network_id
+  network_id     = length(var.openstack_master_subnets) == 0 ? local.nodes_network_id : data.openstack_networking_subnet_v2.master_subnets[count.index].network_id
   security_group_ids = concat(
     var.openstack_master_extra_sg_ids,
     [openstack_networking_secgroup_v2.master.id],
@@ -64,7 +66,7 @@ resource "openstack_networking_port_v2" "masters" {
   }
 
   fixed_ip {
-    subnet_id = var.openstack_master_subnets == "" ? local.nodes_subnet_id : data.openstack_networking_subnet_v2.master_subnets[count.index].subnet_id
+    subnet_id = length(var.openstack_master_subnets) == 0 ? local.nodes_subnet_id : data.openstack_networking_subnet_v2.master_subnets[count.index].subnet_id
   }
 
   allowed_address_pairs {
