@@ -22,7 +22,7 @@ import (
 )
 
 const manifestPath = "/etc/assisted/manifests"
-const hostnamesPath = "/etc/agent-installer/hostnames"
+const hostnamesPath = "/etc/assisted/hostnames"
 const nmConnectionsPath = "/etc/assisted/network"
 const mirrorPath = "/etc/assisted/mirror"
 

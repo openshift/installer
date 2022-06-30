@@ -1,19 +1,19 @@
 #!/bin/bash
 #
 # The hostnames defined in agent-config.yaml are written out
-# to files at /etc/agent-installer/hostnames/<MAC-address>.
+# to files at /etc/assisted/hostnames/<MAC-address>.
 # 
 # If a host has multiple interfaces, the host's first network 
 # interface's MAC address is used.
 #
 # This script compares the MAC addresses on the current host
-# with the addresses in /etc/agent-installer/hostnames/.
+# with the addresses in /etc/assisted/hostnames/.
 #
 # If a match is found, then the hostname in the file is set
 # as this host's hostname.
 #
 
-HOSTNAMES_PATH=/etc/agent-installer/hostnames
+HOSTNAMES_PATH=/etc/assisted/hostnames
 FILES=$(ls $HOSTNAMES_PATH)
 for filename in $FILES
 do
