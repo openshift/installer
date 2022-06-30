@@ -45,8 +45,6 @@ spec:
         serialNumber: "serial-number-value"
         minSizeGigabytes: 20
         wwn: "wwn-value"
-        wwnWithExtension: "wwn-with-extension-value"
-        wwnVendorExtension: "wwn-vendor-extension-value"
         rotational: false
       interfaces:
         - name: enp2s0
@@ -65,16 +63,14 @@ spec:
 							Hostname: "control-0.example.org",
 							Role:     "master",
 							RootDeviceHints: baremetal.RootDeviceHints{
-								DeviceName:         "/dev/sda",
-								HCTL:               "hctl-value",
-								Model:              "model-value",
-								Vendor:             "vendor-value",
-								SerialNumber:       "serial-number-value",
-								MinSizeGigabytes:   20,
-								WWN:                "wwn-value",
-								WWNWithExtension:   "wwn-with-extension-value",
-								WWNVendorExtension: "wwn-vendor-extension-value",
-								Rotational:         falsePtr,
+								DeviceName:       "/dev/sda",
+								HCTL:             "hctl-value",
+								Model:            "model-value",
+								Vendor:           "vendor-value",
+								SerialNumber:     "serial-number-value",
+								MinSizeGigabytes: 20,
+								WWN:              "wwn-value",
+								Rotational:       falsePtr,
 							},
 							Interfaces: []*aiv1beta1.Interface{
 								{
@@ -109,8 +105,6 @@ spec:
         serialNumber: "serial-number-value"
         minSizeGigabytes: 20
         wwn: "wwn-value"
-        wwnWithExtension: "wwn-with-extension-value"
-        wwnVendorExtension: "wwn-vendor-extension-value"
         rotational: false
       interfaces:
         - name: enp2s0
@@ -136,16 +130,14 @@ spec:
 							Hostname: "control-0.example.org",
 							Role:     "master",
 							RootDeviceHints: baremetal.RootDeviceHints{
-								DeviceName:         "/dev/sda",
-								HCTL:               "hctl-value",
-								Model:              "model-value",
-								Vendor:             "vendor-value",
-								SerialNumber:       "serial-number-value",
-								MinSizeGigabytes:   20,
-								WWN:                "wwn-value",
-								WWNWithExtension:   "wwn-with-extension-value",
-								WWNVendorExtension: "wwn-vendor-extension-value",
-								Rotational:         falsePtr,
+								DeviceName:       "/dev/sda",
+								HCTL:             "hctl-value",
+								Model:            "model-value",
+								Vendor:           "vendor-value",
+								SerialNumber:     "serial-number-value",
+								MinSizeGigabytes: 20,
+								WWN:              "wwn-value",
+								Rotational:       falsePtr,
 							},
 							Interfaces: []*aiv1beta1.Interface{
 								{
@@ -212,7 +204,39 @@ spec:
         - name: enp2s0
         - name: enp3s1
           macAddress: 28:d2:44:d2:b2:1a`,
-			expectedError: "invalid Agent Config configuration: Spec.Hosts.Interfaces.macAddress: Required value: each interface must have a MAC address defined",
+			expectedError: "invalid Agent Config configuration: Spec.Hosts[0].Interfaces[0].macAddress: Required value: each interface must have a MAC address defined",
+		},
+		{
+			name: "unsupported wwn extension root device hint",
+			data: `
+metadata:
+  name: agent-config-cluster0
+spec:
+  rendezvousIP: 192.168.111.80
+  hosts:
+    - hostname: control-0.example.org
+      interfaces:
+        - name: enp2s0
+          macAddress: 98:af:65:a5:8d:01
+      rootDeviceHints:
+        wwnWithExtension: "wwn-with-extension-value"`,
+			expectedError: "invalid Agent Config configuration: Spec.Hosts[0].RootDeviceHints.WWNWithExtension: Forbidden: WWN extensions are not supported in root device hints",
+		},
+		{
+			name: "unsupported wwn vendor extension root device hint",
+			data: `
+metadata:
+  name: agent-config-cluster0
+spec:
+  rendezvousIP: 192.168.111.80
+  hosts:
+    - hostname: control-0.example.org
+      interfaces:
+        - name: enp2s0
+          macAddress: 98:af:65:a5:8d:01
+      rootDeviceHints:
+        wwnVendorExtension: "wwn-with-vendor-extension-value"`,
+			expectedError: "invalid Agent Config configuration: Spec.Hosts[0].RootDeviceHints.WWNVendorExtension: Forbidden: WWN vendor extensions are not supported in root device hints",
 		},
 		{
 			name: "node-hostname-and-role-are-not-required",

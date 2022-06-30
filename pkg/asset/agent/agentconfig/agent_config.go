@@ -3,6 +3,8 @@ package agentconfig
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/agent"
@@ -84,6 +86,10 @@ func (a *Asset) validateAgent() field.ErrorList {
 		allErrs = append(allErrs, err...)
 	}
 
+	if err := a.validateRootDeviceHints(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
 	return allErrs
 }
 
@@ -94,19 +100,80 @@ func (a *Asset) validateNodesHaveAtLeastOneMacAddressDefined() field.ErrorList {
 		return allErrs
 	}
 
+	rootPath := field.NewPath("Spec", "Hosts")
+
 	for i := range a.Config.Spec.Hosts {
 		node := a.Config.Spec.Hosts[i]
+		interfacePath := rootPath.Index(i).Child("Interfaces")
 		if len(node.Interfaces) == 0 {
-			interfacePath := field.NewPath("Spec", "Hosts", "Interfaces", "macAddress")
 			allErrs = append(allErrs, field.Required(interfacePath, "at least one interface must be defined for each node"))
 		}
 
 		for j := range node.Interfaces {
 			if node.Interfaces[j].MacAddress == "" {
-				macAddressPath := field.NewPath("Spec", "Hosts", "Interfaces", "macAddress")
+				macAddressPath := interfacePath.Index(j).Child("macAddress")
 				allErrs = append(allErrs, field.Required(macAddressPath, "each interface must have a MAC address defined"))
 			}
 		}
 	}
 	return allErrs
+}
+
+func (a *Asset) validateRootDeviceHints() field.ErrorList {
+	var allErrs field.ErrorList
+	rootPath := field.NewPath("Spec", "Hosts")
+
+	for i, host := range a.Config.Spec.Hosts {
+		hostPath := rootPath.Index(i)
+		if host.RootDeviceHints.WWNWithExtension != "" {
+			allErrs = append(allErrs, field.Forbidden(
+				hostPath.Child("RootDeviceHints", "WWNWithExtension"),
+				"WWN extensions are not supported in root device hints"))
+		}
+		if host.RootDeviceHints.WWNVendorExtension != "" {
+			allErrs = append(allErrs, field.Forbidden(
+				hostPath.Child("RootDeviceHints", "WWNVendorExtension"),
+				"WWN vendor extensions are not supported in root device hints"))
+		}
+	}
+
+	return allErrs
+}
+
+// HostConfigFileMap is a map from a filepath ("<host>/<file>") to file content
+// for hostconfig files.
+type HostConfigFileMap map[string][]byte
+
+// HostConfigFiles returns a map from filename to contents of the files used for
+// host-specific configuration by the agent installer client
+func (a *Asset) HostConfigFiles() (HostConfigFileMap, error) {
+	if a == nil || a.Config == nil {
+		return nil, nil
+	}
+
+	files := HostConfigFileMap{}
+	for i, host := range a.Config.Spec.Hosts {
+		name := fmt.Sprintf("host-%d", i)
+		if host.Hostname != "" {
+			name = host.Hostname
+		}
+
+		macs := []string{}
+		for _, iface := range host.Interfaces {
+			macs = append(macs, iface.MacAddress+"\n")
+		}
+
+		if len(macs) > 0 {
+			files[filepath.Join(name, "mac_addresses")] = []byte(strings.Join(macs, ""))
+		}
+
+		rdh, err := yaml.Marshal(host.RootDeviceHints)
+		if err != nil {
+			return nil, err
+		}
+		if len(rdh) > 0 && string(rdh) != "{}\n" {
+			files[filepath.Join(name, "root-device-hints.yaml")] = rdh
+		}
+	}
+	return files, nil
 }
