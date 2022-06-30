@@ -35,6 +35,7 @@ type API interface {
 	GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error)
 	GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error)
 	GetVPCZonesForRegion(ctx context.Context, region string) ([]string, error)
+	SetVPCServiceURLForRegion(ctx context.Context, region string) error
 }
 
 // Client makes calls to the IBM Cloud API.
@@ -151,7 +152,7 @@ func (c *Client) GetCISInstance(ctx context.Context, crnstr string) (*resourceco
 
 // GetDedicatedHostByName gets dedicated host by name.
 func (c *Client) GetDedicatedHostByName(ctx context.Context, name string, region string) (*vpcv1.DedicatedHost, error) {
-	err := c.setVPCServiceURLForRegion(ctx, region)
+	err := c.SetVPCServiceURLForRegion(ctx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +174,7 @@ func (c *Client) GetDedicatedHostByName(ctx context.Context, name string, region
 
 // GetDedicatedHostProfiles gets a list of profiles supported in a region.
 func (c *Client) GetDedicatedHostProfiles(ctx context.Context, region string) ([]vpcv1.DedicatedHostProfile, error) {
-	err := c.setVPCServiceURLForRegion(ctx, region)
+	err := c.SetVPCServiceURLForRegion(ctx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -452,7 +453,8 @@ func (c *Client) loadVPCV1API() error {
 	return nil
 }
 
-func (c *Client) setVPCServiceURLForRegion(ctx context.Context, region string) error {
+// SetVPCServiceURLForRegion will set the VPC Service URL to a specific IBM Cloud Region, in order to access Region scoped resources
+func (c *Client) SetVPCServiceURLForRegion(ctx context.Context, region string) error {
 	regionOptions := c.vpcAPI.NewGetRegionOptions(region)
 	vpcRegion, _, err := c.vpcAPI.GetRegionWithContext(ctx, regionOptions)
 	if err != nil {
