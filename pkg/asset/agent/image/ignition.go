@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/models"
@@ -48,6 +50,7 @@ type agentTemplateData struct {
 	ReleaseImageMirror    string
 	MirrorRegistriesMount string
 	CaBundleMount         string
+	InfraEnvID            string
 }
 
 var (
@@ -145,6 +148,9 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		}
 	}
 
+	infraEnvID := uuid.New().String()
+	logrus.Debug("Generated random infra-env id ", infraEnvID)
+
 	agentTemplateData := getTemplateData(
 		agentManifests.GetPullSecretData(),
 		nodeZeroIP,
@@ -152,7 +158,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		releaseImageMirror,
 		mirrorRegistriesMount,
 		caBundleMount,
-		agentManifests.AgentClusterInstall)
+		agentManifests.AgentClusterInstall,
+		infraEnvID)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -194,7 +201,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 }
 
 func getTemplateData(pullSecret string, nodeZeroIP string, releaseImageList string,
-	releaseImageMirror string, mirrorRegistriesMount string, caBundleMount string, agentClusterInstall *hiveext.AgentClusterInstall) *agentTemplateData {
+	releaseImageMirror string, mirrorRegistriesMount string, caBundleMount string, agentClusterInstall *hiveext.AgentClusterInstall, infraEnvID string) *agentTemplateData {
 	serviceBaseURL := url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -215,6 +222,7 @@ func getTemplateData(pullSecret string, nodeZeroIP string, releaseImageList stri
 		ReleaseImageMirror:    releaseImageMirror,
 		MirrorRegistriesMount: mirrorRegistriesMount,
 		CaBundleMount:         caBundleMount,
+		InfraEnvID:            infraEnvID,
 	}
 }
 
