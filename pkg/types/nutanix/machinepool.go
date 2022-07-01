@@ -30,10 +30,10 @@ type MachinePool struct {
 
 // OSDisk defines the disk for a virtual machine.
 type OSDisk struct {
-	// DiskSizeMiB defines the size of disk in MiB.
+	// DiskSizeGiB defines the size of disk in GiB.
 	//
 	// +optional
-	DiskSizeMiB int64 `json:"diskSizeMiB,omitempty"`
+	DiskSizeGiB int64 `json:"diskSizeGiB,omitempty"`
 }
 
 // Set sets the values from `required` to `p`.
@@ -54,7 +54,7 @@ func (p *MachinePool) Set(required *MachinePool) {
 		p.MemoryMiB = required.MemoryMiB
 	}
 
-	if required.OSDisk.DiskSizeMiB != 0 {
-		p.OSDisk.DiskSizeMiB = required.OSDisk.DiskSizeMiB
+	if required.OSDisk.DiskSizeGiB != 0 {
+		p.OSDisk.DiskSizeGiB = required.OSDisk.DiskSizeGiB
 	}
 }

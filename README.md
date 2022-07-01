@@ -49,7 +49,8 @@ Example output:
 ```sh
 INFO Waiting 10m0s for the openshift-console route to be created...
 INFO Install complete!
-INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/path/to/installer/auth/kubeconfig'
+INFO To access the cluster as the system:admin user when using 'oc', run
+    export KUBECONFIG=/path/to/installer/auth/kubeconfig
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.${CLUSTER_NAME}.${BASE_DOMAIN}:6443
 INFO Login to the console with user: kubeadmin, password: 5char-5char-5char-5char
 ```

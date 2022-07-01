@@ -1,10 +1,10 @@
 provider "ovirt" {
-  url       = var.ovirt_url
-  username  = var.ovirt_username
-  password  = var.ovirt_password
-  cafile    = var.ovirt_cafile
-  ca_bundle = var.ovirt_ca_bundle
-  insecure  = var.ovirt_insecure
+  url           = var.ovirt_url
+  username      = var.ovirt_username
+  password      = var.ovirt_password
+  tls_ca_files  = var.ovirt_cafile == "" ? [] : [var.ovirt_cafile]
+  tls_ca_bundle = var.ovirt_ca_bundle
+  tls_insecure  = var.ovirt_insecure
 }
 
 module "template" {
@@ -32,6 +32,7 @@ module "masters" {
   ovirt_master_instance_type_id    = var.ovirt_master_instance_type_id
   ovirt_master_cores               = var.ovirt_master_cores
   ovirt_master_sockets             = var.ovirt_master_sockets
+  ovirt_master_threads             = var.ovirt_master_threads
   ovirt_master_memory              = var.ovirt_master_memory
   ovirt_master_vm_type             = var.ovirt_master_vm_type
   ovirt_master_os_disk_size_gb     = var.ovirt_master_os_disk_gb

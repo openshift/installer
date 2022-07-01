@@ -352,6 +352,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 	discovery := client.Discovery()
 
 	apiTimeout := 20 * time.Minute
+
 	untilTime := time.Now().Add(apiTimeout)
 	logrus.Infof("Waiting up to %v (until %v) for the Kubernetes API at %s...",
 		apiTimeout, untilTime.Format(time.Kitchen), config.Host)
@@ -403,6 +404,16 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 // completed.
 func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) *clusterCreateError {
 	timeout := 30 * time.Minute
+
+	// Wait longer for baremetal, due to length of time it takes to boot
+	if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
+		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
+			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
+				timeout = 60 * time.Minute
+			}
+		}
+	}
+
 	untilTime := time.Now().Add(timeout)
 	logrus.Infof("Waiting up to %v (until %v) for bootstrapping to complete...",
 		timeout, untilTime.Format(time.Kitchen))
@@ -585,7 +596,7 @@ func logComplete(directory, consoleURL string) error {
 		return err
 	}
 	logrus.Info("Install complete!")
-	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=%s'", kubeconfig)
+	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run\n    export KUBECONFIG=%s", kubeconfig)
 	logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
 	logrus.Infof("Login to the console with user: %q, and password: %q", "kubeadmin", pw)
 	return nil

@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
+	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/quota"
@@ -22,6 +23,7 @@ import (
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
+	typesopenstack "github.com/openshift/installer/pkg/types/openstack"
 )
 
 var (
@@ -109,6 +111,10 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		}
 	case typesazure.Name, typesazure.StackTerraformName:
 		if err := azure.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
+			return err
+		}
+	case typesopenstack.Name:
+		if err := openstack.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
 			return err
 		}
 	}

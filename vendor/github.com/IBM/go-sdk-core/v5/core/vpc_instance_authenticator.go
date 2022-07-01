@@ -280,11 +280,6 @@ func (authenticator *VpcInstanceAuthenticator) invokeRequestTokenData() error {
 // and then (2) exchange that for an IAM access token.
 func (authenticator *VpcInstanceAuthenticator) RequestToken() (iamTokenResponse *IamTokenServerResponse, err error) {
 
-	// Use the default VPC base endpoint if user didn't specifiy the URL property.
-	if authenticator.URL == "" {
-		authenticator.URL = vpcauthDefaultIMSEndpoint
-	}
-
 	// Retrieve the instance identity token from the VPC Instance Metadata Service.
 	instanceIdentityToken, err := authenticator.retrieveInstanceIdentityToken()
 	if err != nil {

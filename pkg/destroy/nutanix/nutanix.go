@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
+	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix/v3"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	nutanixclientv3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/installer/pkg/destroy/providers"

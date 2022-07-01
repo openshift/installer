@@ -519,6 +519,17 @@ const (
 // AWSClassicLoadBalancerParameters holds configuration parameters for an
 // AWS Classic load balancer.
 type AWSClassicLoadBalancerParameters struct {
+	// connectionIdleTimeout specifies the maximum time period that a
+	// connection may be idle before the load balancer closes the
+	// connection.  The value must be parseable as a time duration value;
+	// see <https://pkg.go.dev/time#ParseDuration>.  A nil or zero value
+	// means no opinion, in which case a default value is used.  The default
+	// value for this field is 60s.  This default is subject to change.
+	//
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Format=duration
+	// +optional
+	ConnectionIdleTimeout metav1.Duration `json:"connectionIdleTimeout,omitempty"`
 }
 
 // AWSNetworkLoadBalancerParameters holds configuration parameters for an
@@ -561,22 +572,24 @@ type HostNetworkStrategy struct {
 	// httpPort is the port on the host which should be used to listen for
 	// HTTP requests. This field should be set when port 80 is already in use.
 	// The value should not coincide with the NodePort range of the cluster.
-	// When not specified the value defaults to 80.
+	// When the value is 0 or is not specified it defaults to 80.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Maximum=65535
-	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:default=80
-	HTTPPort int32 `json:"httpPort"`
+	// +optional
+	HTTPPort int32 `json:"httpPort,omitempty"`
 
 	// httpsPort is the port on the host which should be used to listen for
 	// HTTPS requests. This field should be set when port 443 is already in use.
 	// The value should not coincide with the NodePort range of the cluster.
-	// When not specified the value defaults to 443.
+	// When the value is 0 or is not specified it defaults to 443.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Maximum=65535
-	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:default=443
-	HTTPSPort int32 `json:"httpsPort"`
+	// +optional
+	HTTPSPort int32 `json:"httpsPort,omitempty"`
 
 	// statsPort is the port on the host where the stats from the router are
 	// published. The value should not coincide with the NodePort range of the
@@ -590,13 +603,14 @@ type HostNetworkStrategy struct {
 	// within a maximum of 45 seconds after /healthz/ready starts reporting
 	// not-ready. Probing every 5 to 10 seconds, with a 5-second timeout and with
 	// a threshold of two successful or failed requests to become healthy or
-	// unhealthy respectively, are well-tested values. When not specified the
-	// value defaults to 1936.
+	// unhealthy respectively, are well-tested values. When the value is 0 or
+	// is not specified it defaults to 1936.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Maximum=65535
-	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:default=1936
-	StatsPort int32 `json:"statsPort"`
+	// +optional
+	StatsPort int32 `json:"statsPort,omitempty"`
 }
 
 // PrivateStrategy holds parameters for the Private endpoint publishing
@@ -1389,6 +1403,51 @@ type IngressControllerTuningOptions struct {
 	// +kubebuilder:validation:Format=duration
 	// +optional
 	HealthCheckInterval *metav1.Duration `json:"healthCheckInterval,omitempty"`
+
+	// maxConnections defines the maximum number of simultaneous
+	// connections that can be established per HAProxy process.
+	// Increasing this value allows each ingress controller pod to
+	// handle more connections but at the cost of additional
+	// system resources being consumed.
+	//
+	// Permitted values are: empty, 0, -1, and the range
+	// 2000-2000000.
+	//
+	// If this field is empty or 0, the IngressController will use
+	// the default value of 20000, but the default is subject to
+	// change in future releases.
+	//
+	// If the value is -1 then HAProxy will dynamically compute a
+	// maximum value based on the available ulimits in the running
+	// container. Selecting -1 (i.e., auto) will result in a large
+	// value being computed (~520000 on OpenShift >=4.10 clusters)
+	// and therefore each HAProxy process will incur significant
+	// memory usage compared to the current default of 20000.
+	//
+	// Setting a value that is greater than the current operating
+	// system limit will prevent the HAProxy process from
+	// starting.
+	//
+	// If you choose a discrete value (e.g., 750000) and the
+	// router pod is migrated to a new node, there's no guarantee
+	// that that new node has identical ulimits configured. In
+	// such a scenario the pod would fail to start. If you have
+	// nodes with different ulimits configured (e.g., different
+	// tuned profiles) and you choose a discrete value then the
+	// guidance is to use -1 and let the value be computed
+	// dynamically at runtime.
+	//
+	// You can monitor memory usage for router containers with the
+	// following metric:
+	// 'container_memory_working_set_bytes{container="router",namespace="openshift-ingress"}'.
+	//
+	// You can monitor memory usage of individual HAProxy
+	// processes in router containers with the following metric:
+	// 'container_memory_working_set_bytes{container="router",namespace="openshift-ingress"}/container_processes{container="router",namespace="openshift-ingress"}'.
+	//
+	// +kubebuilder:validation:Optional
+	// +optional
+	MaxConnections int32 `json:"maxConnections,omitempty"`
 }
 
 // HTTPEmptyRequestsPolicy indicates how HTTP connections for which no request

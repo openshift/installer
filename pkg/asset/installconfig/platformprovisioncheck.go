@@ -74,7 +74,15 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		}
 		return azconfig.ValidateForProvisioning(client, ic.Config)
 	case baremetal.Name:
+		err = bmconfig.ValidateBaremetalPlatformSet(ic.Config)
+		if err != nil {
+			return err
+		}
 		err = bmconfig.ValidateProvisioning(ic.Config)
+		if err != nil {
+			return err
+		}
+		err = bmconfig.ValidateStaticBootstrapNetworking(ic.Config)
 		if err != nil {
 			return err
 		}

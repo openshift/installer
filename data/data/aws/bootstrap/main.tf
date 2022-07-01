@@ -175,7 +175,11 @@ resource "aws_instance" "bootstrap" {
     local.tags,
   )
 
-  depends_on = [aws_s3_bucket_object.ignition]
+  depends_on = [
+    aws_s3_bucket_object.ignition,
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1859153
+    aws_iam_instance_profile.bootstrap,
+  ]
 }
 
 resource "aws_lb_target_group_attachment" "bootstrap" {

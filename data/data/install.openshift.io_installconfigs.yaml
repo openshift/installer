@@ -459,9 +459,9 @@ spec:
                         osDisk:
                           description: OSDisk defines the storage for instance.
                           properties:
-                            diskSizeMiB:
-                              description: DiskSizeMiB defines the size of disk in
-                                MiB.
+                            diskSizeGiB:
+                              description: DiskSizeGiB defines the size of disk in
+                                GiB.
                               format: int64
                               type: integer
                           type: object
@@ -578,9 +578,14 @@ spec:
                                 VM. Total CPUs is (Sockets * Cores)
                               format: int32
                               type: integer
+                            threads:
+                              description: Threads is the number of CPU threads.
+                              format: int32
+                              type: integer
                           required:
                           - cores
                           - sockets
+                          - threads
                           type: object
                         format:
                           description: Format is the disk format that the disks are
@@ -636,22 +641,27 @@ spec:
                       description: PowerVS is the configuration used when installing
                         on IBM Power VS.
                       properties:
-                        memory:
-                          description: Memory defines the memory in GB for the instance.
-                          type: string
+                        memoryGiB:
+                          description: memoryGiB is the size of a virtual machine's
+                            memory, in GiB.
+                          format: int32
+                          type: integer
                         procType:
                           description: ProcType defines the processor sharing model
-                            for the instance. Must be one of {capped, dedicated, shared}.
+                            for the instance. Must be one of {Capped, Dedicated, Shared}.
                           enum:
+                          - Dedicated
+                          - Shared
+                          - Capped
                           - ""
-                          - capped
-                          - dedicated
-                          - shared
                           type: string
                         processors:
+                          anyOf:
+                          - type: integer
+                          - type: string
                           description: Processors defines the processing units for
                             the instance.
-                          type: string
+                          x-kubernetes-int-or-string: true
                         sysType:
                           description: SysType defines the system type for instance.
                           type: string
@@ -1084,8 +1094,8 @@ spec:
                       osDisk:
                         description: OSDisk defines the storage for instance.
                         properties:
-                          diskSizeMiB:
-                            description: DiskSizeMiB defines the size of disk in MiB.
+                          diskSizeGiB:
+                            description: DiskSizeGiB defines the size of disk in GiB.
                             format: int64
                             type: integer
                         type: object
@@ -1202,9 +1212,14 @@ spec:
                               Total CPUs is (Sockets * Cores)
                             format: int32
                             type: integer
+                          threads:
+                            description: Threads is the number of CPU threads.
+                            format: int32
+                            type: integer
                         required:
                         - cores
                         - sockets
+                        - threads
                         type: object
                       format:
                         description: Format is the disk format that the disks are
@@ -1260,22 +1275,27 @@ spec:
                     description: PowerVS is the configuration used when installing
                       on IBM Power VS.
                     properties:
-                      memory:
-                        description: Memory defines the memory in GB for the instance.
-                        type: string
+                      memoryGiB:
+                        description: memoryGiB is the size of a virtual machine's
+                          memory, in GiB.
+                        format: int32
+                        type: integer
                       procType:
                         description: ProcType defines the processor sharing model
-                          for the instance. Must be one of {capped, dedicated, shared}.
+                          for the instance. Must be one of {Capped, Dedicated, Shared}.
                         enum:
+                        - Dedicated
+                        - Shared
+                        - Capped
                         - ""
-                        - capped
-                        - dedicated
-                        - shared
                         type: string
                       processors:
+                        anyOf:
+                        - type: integer
+                        - type: string
                         description: Processors defines the processing units for the
                           instance.
-                        type: string
+                        x-kubernetes-int-or-string: true
                       sysType:
                         description: SysType defines the system type for instance.
                         type: string
@@ -1442,8 +1462,8 @@ spec:
                 description: MachineNetwork is the list of IP address pools for machines.
                   This field replaces MachineCIDR, and if set MachineCIDR must be
                   empty or match the first entry in the list. Default is 10.0.0.0/16
-                  for all platforms other than libvirt. For libvirt, the default is
-                  192.168.126.0/24.
+                  for all platforms other than libvirt and Power VS. For libvirt,
+                  the default is 192.168.126.0/24. For Power VS, the default is 192.168.0.0/16.
                 items:
                   description: MachineNetworkEntry is a single IP address block for
                     node IP blocks.
@@ -1872,6 +1892,18 @@ spec:
                 properties:
                   apiVIP:
                     description: APIVIP is the VIP to use for internal API communication
+                    format: ip
+                    type: string
+                  bootstrapExternalStaticGateway:
+                    description: BootstrapExternalStaticGateway is the static network
+                      gateway of the bootstrap node. This can be useful in environments
+                      without a DHCP server.
+                    format: ip
+                    type: string
+                  bootstrapExternalStaticIP:
+                    description: BootstrapExternalStaticIP is the static IP address
+                      of the bootstrap node. This can be useful in environments without
+                      a DHCP server.
                     format: ip
                     type: string
                   bootstrapOSImage:
@@ -2337,8 +2369,8 @@ spec:
                       osDisk:
                         description: OSDisk defines the storage for instance.
                         properties:
-                          diskSizeMiB:
-                            description: DiskSizeMiB defines the size of disk in MiB.
+                          diskSizeGiB:
+                            description: DiskSizeGiB defines the size of disk in GiB.
                             format: int64
                             type: integer
                         type: object
@@ -2662,9 +2694,14 @@ spec:
                               Total CPUs is (Sockets * Cores)
                             format: int32
                             type: integer
+                          threads:
+                            description: Threads is the number of CPU threads.
+                            format: int32
+                            type: integer
                         required:
                         - cores
                         - sockets
+                        - threads
                         type: object
                       format:
                         description: Format is the disk format that the disks are
@@ -2760,22 +2797,27 @@ spec:
                       used when installing on Power VS for machine pools which do
                       not define their own platform configuration.
                     properties:
-                      memory:
-                        description: Memory defines the memory in GB for the instance.
-                        type: string
+                      memoryGiB:
+                        description: memoryGiB is the size of a virtual machine's
+                          memory, in GiB.
+                        format: int32
+                        type: integer
                       procType:
                         description: ProcType defines the processor sharing model
-                          for the instance. Must be one of {capped, dedicated, shared}.
+                          for the instance. Must be one of {Capped, Dedicated, Shared}.
                         enum:
+                        - Dedicated
+                        - Shared
+                        - Capped
                         - ""
-                        - capped
-                        - dedicated
-                        - shared
                         type: string
                       processors:
+                        anyOf:
+                        - type: integer
+                        - type: string
                         description: Processors defines the processing units for the
                           instance.
-                        type: string
+                        x-kubernetes-int-or-string: true
                       sysType:
                         description: SysType defines the system type for instance.
                         type: string

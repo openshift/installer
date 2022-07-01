@@ -1573,36 +1573,6 @@ func (NodeSpec) SwaggerDoc() map[string]string {
 	return map_NodeSpec
 }
 
-var map_NodeStatus = map[string]string{
-	"workerLatencyProfileStatus": "WorkerLatencyProfileStatus provides the current status of WorkerLatencyProfile",
-}
-
-func (NodeStatus) SwaggerDoc() map[string]string {
-	return map_NodeStatus
-}
-
-var map_WorkerLatencyProfileStatus = map[string]string{
-	"":           "WorkerLatencyProfileStatus provides status information about the WorkerLatencyProfile rollout",
-	"conditions": "conditions describes the state of the WorkerLatencyProfile and related components (Kubelet or Controller Manager or Kube API Server)",
-}
-
-func (WorkerLatencyProfileStatus) SwaggerDoc() map[string]string {
-	return map_WorkerLatencyProfileStatus
-}
-
-var map_WorkerLatencyStatusCondition = map[string]string{
-	"owner":              "Owner specifies the operator that is updating this condition",
-	"type":               "type specifies the aspect reported by this condition.",
-	"status":             "status of the condition, one of True, False, Unknown.",
-	"lastTransitionTime": "lastTransitionTime is the time of the last update to the current status property.",
-	"reason":             "reason is the CamelCase reason for the condition's current status.",
-	"message":            "message provides additional information about the current condition. This is only to be consumed by humans.  It may contain Line Feed characters (U+000A), which should be rendered as new lines.",
-}
-
-func (WorkerLatencyStatusCondition) SwaggerDoc() map[string]string {
-	return map_WorkerLatencyStatusCondition
-}
-
 var map_BasicAuthIdentityProvider = map[string]string{
 	"": "BasicAuthPasswordIdentityProvider provides identities for users authenticating using HTTP basic auth credentials",
 }

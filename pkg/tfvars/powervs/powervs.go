@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
+	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/openshift/installer/pkg/types/powervs"
-	"github.com/openshift/machine-api-provider-powervs/pkg/apis/powervsprovider/v1alpha1"
 )
 
 type config struct {
@@ -26,9 +27,9 @@ type config struct {
 	NetworkName          string `json:"powervs_network_name"`
 	VPCName              string `json:"powervs_vpc_name"`
 	VPCSubnetName        string `json:"powervs_vpc_subnet_name"`
-	BootstrapMemory      string `json:"powervs_bootstrap_memory"`
+	BootstrapMemory      int32  `json:"powervs_bootstrap_memory"`
 	BootstrapProcessors  string `json:"powervs_bootstrap_processors"`
-	MasterMemory         string `json:"powervs_master_memory"`
+	MasterMemory         int32  `json:"powervs_master_memory"`
 	MasterProcessors     string `json:"powervs_master_processors"`
 	ProcType             string `json:"powervs_proc_type"`
 	SysType              string `json:"powervs_sys_type"`
@@ -36,7 +37,7 @@ type config struct {
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
-	MasterConfigs        []*v1alpha1.PowerVSMachineProviderConfig
+	MasterConfigs        []*machinev1.PowerVSMachineProviderConfig
 	APIKey               string
 	SSHKey               string
 	Region               string
@@ -62,8 +63,21 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	// All supported Regions are MZRs and have Zones named "region-[1-3]"
 	vpcZone := fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1)
 
+	var serviceInstanceID, processor string
+	if masterConfig.ServiceInstance.ID != nil {
+		serviceInstanceID = *masterConfig.ServiceInstance.ID
+	} else {
+		return nil, fmt.Errorf("serviceInstanceID is nil")
+	}
+
+	if masterConfig.Processors.StrVal != "" {
+		processor = masterConfig.Processors.StrVal
+	} else {
+		processor = fmt.Sprintf("%d", masterConfig.Processors.IntVal)
+	}
+
 	cfg := &config{
-		ServiceInstanceID:    masterConfig.ServiceInstanceID,
+		ServiceInstanceID:    serviceInstanceID,
 		APIKey:               sources.APIKey,
 		SSHKey:               sources.SSHKey,
 		PowerVSRegion:        sources.Region,
@@ -76,12 +90,12 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ImageBucketFileName:  sources.ImageBucketFileName,
 		VPCName:              sources.VPCName,
 		VPCSubnetName:        sources.VPCSubnetName,
-		BootstrapMemory:      masterConfig.Memory,
-		BootstrapProcessors:  masterConfig.Processors,
-		MasterMemory:         masterConfig.Memory,
-		MasterProcessors:     masterConfig.Processors,
-		ProcType:             masterConfig.ProcType,
-		SysType:              masterConfig.SysType,
+		BootstrapMemory:      masterConfig.MemoryGiB,
+		BootstrapProcessors:  processor,
+		MasterMemory:         masterConfig.MemoryGiB,
+		MasterProcessors:     processor,
+		ProcType:             strings.ToLower(string(masterConfig.ProcessorType)),
+		SysType:              masterConfig.SystemType,
 	}
 	if masterConfig.Network.Name != nil {
 		cfg.NetworkName = *masterConfig.Network.Name

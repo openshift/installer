@@ -289,8 +289,9 @@ type Networking struct {
 	// MachineNetwork is the list of IP address pools for machines.
 	// This field replaces MachineCIDR, and if set MachineCIDR must
 	// be empty or match the first entry in the list.
-	// Default is 10.0.0.0/16 for all platforms other than libvirt.
+	// Default is 10.0.0.0/16 for all platforms other than libvirt and Power VS.
 	// For libvirt, the default is 192.168.126.0/24.
+	// For Power VS, the default is 192.168.0.0/16.
 	//
 	// +optional
 	MachineNetwork []MachineNetworkEntry `json:"machineNetwork,omitempty"`

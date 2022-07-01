@@ -48,7 +48,8 @@ type IamAuthenticator struct {
 
 	// The URL representing the IAM token server's endpoint; If not specified,
 	// a suitable default value will be used [optional].
-	URL string
+	URL     string
+	urlInit sync.Once
 
 	// The ClientId and ClientSecret fields are used to form a "basic auth"
 	// Authorization header for interactions with the IAM token server.
@@ -226,6 +227,20 @@ func (authenticator *IamAuthenticator) Authenticate(request *http.Request) error
 	return nil
 }
 
+// url returns the authenticator's URL property after potentially initializing it.
+func (authenticator *IamAuthenticator) url() string {
+	authenticator.urlInit.Do(func() {
+		if authenticator.URL == "" {
+			// If URL was not specified, then use the default IAM endpoint.
+			authenticator.URL = defaultIamTokenServerEndpoint
+		} else {
+			// Canonicalize the URL by removing the operation path if it was specified by the user.
+			authenticator.URL = strings.TrimSuffix(authenticator.URL, iamAuthOperationPathGetToken)
+		}
+	})
+	return authenticator.URL
+}
+
 // getTokenData returns the tokenData field from the authenticator.
 func (authenticator *IamAuthenticator) getTokenData() *iamTokenData {
 	authenticator.tokenDataMutex.Lock()
@@ -260,9 +275,24 @@ func (authenticator *IamAuthenticator) setTokenData(tokenData *iamTokenData) {
 // and that the ClientId and ClientSecret properties are mutually inclusive.
 func (this *IamAuthenticator) Validate() error {
 
-	// The user should specify exactly one of ApiKey or RefreshToken.
-	if this.ApiKey == "" && this.RefreshToken == "" ||
-		this.ApiKey != "" && this.RefreshToken != "" {
+	// The user should specify at least one of ApiKey or RefreshToken.
+	// Note: We'll allow both ApiKey and RefreshToken to be specified,
+	// in which case we'd use ApiKey in the RequestToken() method.
+	// Consider this scenario...
+	// - An IamAuthenticator instance is configured with an apikey and is initially
+	//   declared to be "valid" by the Validate() method.
+	// - The authenticator is used to construct a service, then an operation is
+	//   invoked which then triggers the very first call to RequestToken().
+	// - The authenticator invokes the IAM get_token operation and then receives
+	//   the response.  The authenticator copies the refresh_token value from the response
+	//   to the authenticator's RefreshToken field.
+	// - At this point, the authenticator would have non-empty values in both the
+	//   ApiKey and RefreshToken fields.
+	// This all means that we must try to make sure that a previously-validated
+	// instance of the authenticator doesn't become invalidated simply through
+	// normal use.
+	//
+	if this.ApiKey == "" && this.RefreshToken == "" {
 		return fmt.Errorf(ERRORMSG_EXCLUSIVE_PROPS_ERROR, "ApiKey", "RefreshToken")
 	}
 
@@ -271,10 +301,9 @@ func (this *IamAuthenticator) Validate() error {
 	}
 
 	// Validate ClientId and ClientSecret.
-	// If RefreshToken is not specified, then both or neither should be specified.
-	// If RefreshToken is specified, then both must be specified.
-	if this.ClientId == "" && this.ClientSecret == "" && this.RefreshToken == "" {
-		// Do nothing as this is the valid scenario
+	// Either both or neither should be specified.
+	if this.ClientId == "" && this.ClientSecret == "" {
+		// Do nothing as this is the valid scenario.
 	} else {
 		// Since it is NOT the case that both properties are empty, make sure BOTH are specified.
 		if this.ClientId == "" {
@@ -348,17 +377,8 @@ func (authenticator *IamAuthenticator) invokeRequestTokenData() error {
 // RequestToken fetches a new access token from the token server.
 func (authenticator *IamAuthenticator) RequestToken() (*IamTokenServerResponse, error) {
 
-	// Use the default IAM URL if one was not specified by the user.
-	url := authenticator.URL
-	if url == "" {
-		url = defaultIamTokenServerEndpoint
-	} else {
-		// Canonicalize the URL by removing the operation path if it was specified by the user.
-		url = strings.TrimSuffix(url, iamAuthOperationPathGetToken)
-	}
-
 	builder := NewRequestBuilder(POST)
-	_, err := builder.ResolveRequestURL(url, iamAuthOperationPathGetToken, nil)
+	_, err := builder.ResolveRequestURL(authenticator.url(), iamAuthOperationPathGetToken, nil)
 	if err != nil {
 		return nil, err
 	}

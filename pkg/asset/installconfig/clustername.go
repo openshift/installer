@@ -48,7 +48,7 @@ func (a *clusterName) Generate(parents asset.Parents) error {
 			return validate.ClusterNameMaxLength(ans.(string), 14)
 		})
 	}
-	if platform.VSphere != nil || platform.BareMetal != nil {
+	if platform.VSphere != nil || platform.BareMetal != nil || platform.Nutanix != nil {
 		validator = survey.ComposeValidators(validator, func(ans interface{}) error {
 			return validate.OnPremClusterName(ans.(string))
 		})

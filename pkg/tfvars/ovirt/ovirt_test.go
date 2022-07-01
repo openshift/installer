@@ -57,6 +57,7 @@ var defaultTerraformOvirtVarsJSON = `{
   "ovirt_master_memory": 16000,
   "ovirt_master_cores": 8,
   "ovirt_master_sockets": 1,
+  "ovirt_master_threads": 1,
   "ovirt_master_os_disk_gb": 31,
   "ovirt_master_affinity_groups": [
     "clusterName-xxxxx-controlplane"
@@ -122,7 +123,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed during test case %s: %v", tc.name, err)
 			}
-			assert.Equal(t, tc.expected, tfVar, "unexpected ovirt-specific Terraform variables file")
+			assert.JSONEq(t, string(tc.expected), string(tfVar), "unexpected ovirt-specific Terraform variables file")
 		})
 	}
 }

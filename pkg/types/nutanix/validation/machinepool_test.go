@@ -23,10 +23,10 @@ func TestValidateMachinePool(t *testing.T) {
 			name: "negative disk size",
 			pool: &nutanix.MachinePool{
 				OSDisk: nutanix.OSDisk{
-					DiskSizeMiB: -1,
+					DiskSizeGiB: -1,
 				},
 			},
-			expectedErrMsg: `^test-path\.diskSizeMiB: Invalid value: -1: storage disk size must be positive$`,
+			expectedErrMsg: `^test-path\.diskSizeGiB: Invalid value: -1: storage disk size must be positive$`,
 		}, {
 			name: "negative CPUs",
 			pool: &nutanix.MachinePool{

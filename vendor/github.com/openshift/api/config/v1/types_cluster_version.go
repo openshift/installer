@@ -247,6 +247,13 @@ const (
 	ClusterVersionCapabilityMarketplace ClusterVersionCapability = "marketplace"
 )
 
+// KnownClusterVersionCapabilities includes all known optional, core cluster components.
+var KnownClusterVersionCapabilities = []ClusterVersionCapability{
+	ClusterVersionCapabilityBaremetal,
+	ClusterVersionCapabilityMarketplace,
+	ClusterVersionCapabilityOpenShiftSamples,
+}
+
 // ClusterVersionCapabilitySet defines sets of cluster version capabilities.
 // +kubebuilder:validation:Enum=None;v4.11;vCurrent
 type ClusterVersionCapabilitySet string

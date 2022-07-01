@@ -73,7 +73,6 @@ const (
 	AlibabaResourceReferenceTypeTags AlibabaResourceReferenceType = "Tags"
 )
 
-// +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // AlibabaCloudMachineProviderConfig is the Schema for the alibabacloudmachineproviderconfig API
