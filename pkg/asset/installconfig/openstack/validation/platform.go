@@ -3,6 +3,7 @@ package validation
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/url"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -91,8 +92,11 @@ func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Pa
 }
 
 func validateVIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
-	if p.APIVIP != "" && p.IngressVIP != "" {
-		if p.APIVIP == p.IngressVIP {
+	apiVIP := net.ParseIP(p.APIVIP)
+	ingressVIP := net.ParseIP(p.IngressVIP)
+
+	if apiVIP != nil && ingressVIP != nil {
+		if apiVIP.Equal(ingressVIP) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, "ingressVIP can not be the same as apiVIP"))
 		}
 	}
