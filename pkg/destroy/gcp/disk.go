@@ -17,12 +17,16 @@ const (
 	storageNameLength = maxGCEPDNameLength - estimatedPVNameLength - 1
 )
 
-// formatClusterIDForStorage will format the Cluster ID as it will be used for creating
+// formatClusterIDForStorage will format the Cluster ID as it will be used for destroying
 // GCE PDs. The maximum length is 63 characters, and can end with "-dynamic".
 // https://github.com/kubernetes/kubernetes/blob/master/pkg/volume/util/util.go, GenerateVolumeName()
 func (o *ClusterUninstaller) formatClusterIDForStorage() string {
 	storageName := o.ClusterID + "-dynamic"
-	return storageName[:storageNameLength]
+	slicedLength := storageNameLength
+	if len(storageName) < slicedLength {
+		slicedLength = len(storageName)
+	}
+	return storageName[:slicedLength]
 }
 
 func (o *ClusterUninstaller) storageIDFilter() string {
