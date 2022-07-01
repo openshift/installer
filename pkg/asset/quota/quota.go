@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	configgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackvalidation "github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
+	configpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/quota/aws"
 	"github.com/openshift/installer/pkg/asset/quota/gcp"
@@ -144,7 +145,26 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 			return summarizeFailingReport(reports)
 		}
 		summarizeReport(reports)
-	case alibabacloud.Name, azure.Name, baremetal.Name, ibmcloud.Name, libvirt.Name, none.Name, ovirt.Name, powervs.Name, vsphere.Name, nutanix.Name:
+	case powervs.Name:
+		bxCli, err := configpowervs.NewBxClient()
+		if err != nil {
+			return errors.Wrap(err, "failed to create bluemix client")
+		}
+
+		err = bxCli.NewPISession()
+		if err != nil {
+			return errors.Wrap(err, "failed to get PowerVS connection details")
+		}
+		err = bxCli.ValidateCloudConnectionInPowerVSRegion(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID)
+		if err != nil {
+			return errors.Wrap(err, "failed to meet the prerequisite for Cloud Connections")
+		}
+
+		err = bxCli.ValidateDhcpService(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID)
+		if err != nil {
+			return errors.Wrap(err, "failed to meet the prerequisite of one DHCP service per Power VS instance")
+		}
+	case alibabacloud.Name, azure.Name, baremetal.Name, ibmcloud.Name, libvirt.Name, none.Name, ovirt.Name, vsphere.Name, nutanix.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)

@@ -1,6 +1,7 @@
 package powervs
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -20,6 +21,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/http"
 	"github.com/IBM-Cloud/bluemix-go/rest"
 	bxsession "github.com/IBM-Cloud/bluemix-go/session"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/form3tech-oss/jwt-go"
@@ -133,7 +135,6 @@ func NewBxClient() (*BxClient, error) {
 
 	bxSess, err := bxsession.New(&bluemix.Config{
 		BluemixAPIKey: pisv.APIKey,
-		Region:        powervs.Regions[pisv.Region].VPCRegion,
 	})
 	if err != nil {
 		return nil, err
@@ -157,6 +158,7 @@ func NewBxClient() (*BxClient, error) {
 	}
 
 	c.AccountAPIV2 = accClient.Accounts()
+	c.Session.Config.Region = powervs.Regions[pisv.Region].VPCRegion
 	return c, nil
 }
 
@@ -178,6 +180,62 @@ func (c *BxClient) ValidateAccountPermissions() error {
 	}
 	if accType == "TRIAL" {
 		return fmt.Errorf("account type must be of Pay-As-You-Go/Subscription type for provision Power VS resources")
+	}
+	return nil
+}
+
+//ValidateDhcpService checks for existing Dhcp service for the provided PowerVS cloud instance
+func (c *BxClient) ValidateDhcpService(ctx context.Context, svcInsID string) error {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+
+	//create Power VS DHCP Client
+	dhcpClient := instance.NewIBMPIDhcpClient(ctx, c.PISession, svcInsID)
+	//Get all DHCP Services
+	dhcpServices, err := dhcpClient.GetAll()
+	if err != nil {
+		return errors.Wrap(err, "failed to get DHCP service details")
+	}
+	if len(dhcpServices) > 0 {
+		return fmt.Errorf("DHCP service already exists for provided cloud instance")
+	}
+	return nil
+}
+
+//ValidateCloudConnectionInPowerVSRegion counts cloud connection in PowerVS Region
+func (c *BxClient) ValidateCloudConnectionInPowerVSRegion(ctx context.Context, svcInsID string) error {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+	var cloudConnectionsIDs []string
+	cloudConnectionClient := instance.NewIBMPICloudConnectionClient(ctx, c.PISession, svcInsID)
+
+	//check number of cloudconnections
+	getAllResp, err := cloudConnectionClient.GetAll()
+	if err != nil {
+		return errors.Wrap(err, "failed to get existing Cloud connection details")
+	}
+
+	if len(getAllResp.CloudConnections) >= 2 {
+		return fmt.Errorf("cannot create new Cloud connection in Power VS. Only two Cloud connections are allowed per zone")
+	}
+
+	for _, cc := range getAllResp.CloudConnections {
+		cloudConnectionsIDs = append(cloudConnectionsIDs, *cc.CloudConnectionID)
+	}
+
+	//check for Cloud connection attached to DHCP Service
+	for _, cc := range cloudConnectionsIDs {
+		cloudConn, err := cloudConnectionClient.Get(cc)
+		if err != nil {
+			return errors.Wrap(err, "failed to get Cloud connection details")
+		}
+		if cloudConn != nil {
+			for _, nw := range cloudConn.Networks {
+				if nw.DhcpManaged {
+					return fmt.Errorf("only one Cloud connection can be attached to any DHCP network per account per zone")
+				}
+			}
+		}
 	}
 	return nil
 }

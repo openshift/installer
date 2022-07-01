@@ -37,7 +37,7 @@ func validateMachinePool(fldPath *field.Path, machinePool *types.MachinePool) fi
 
 // ValidatePreExistingPublicDNS ensure no pre-existing DNS record exists in the CIS
 // DNS zone for cluster's Kubernetes API.
-func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig, metadata *Metadata) error {
+func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig, metadata MetadataAPI) error {
 	allErrs := field.ErrorList{}
 
 	// Get CIS CRN

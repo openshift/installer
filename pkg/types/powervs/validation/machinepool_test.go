@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"testing"
 
 	"github.com/openshift/installer/pkg/types/powervs"
@@ -47,68 +48,61 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "valid memory",
 			pool: &powervs.MachinePool{
-				Memory: "5",
+				MemoryGiB: 5,
 			},
 		},
 		{
 			name: "invalid memory under",
 			pool: &powervs.MachinePool{
-				Memory: "1",
+				MemoryGiB: 1,
 			},
-			expected: `^test-path\.memory: Invalid value: "1": memory must be an integer number of GB that is at least 2 and no more than 64$`,
+			expected: `^test-path\.memory: Invalid value: 1: memory must be an integer number of GB that is at least 2 and no more than 64$`,
 		},
 		{
 			name: "invalid memory over",
 			pool: &powervs.MachinePool{
-				Memory: "65",
+				MemoryGiB: 65,
 			},
-			expected: `^test-path\.memory: Invalid value: "65": memory must be an integer number of GB that is at least 2 and no more than 64$`,
-		},
-		{
-			name: "invalid memory string",
-			pool: &powervs.MachinePool{
-				Memory: "all",
-			},
-			expected: `^test-path\.memory: Invalid value: "all": memory must be an integer number of GB that is at least 2 and no more than 64$`,
+			expected: `^test-path\.memory: Invalid value: 65: memory must be an integer number of GB that is at least 2 and no more than 64$`,
 		},
 		{
 			name: "valid processors",
 			pool: &powervs.MachinePool{
-				Processors: "1.25",
+				Processors: intstr.FromString("1.25"),
 			},
-		},
-		{
-			name: "invalid processors under",
-			pool: &powervs.MachinePool{
-				Processors: "0",
-			},
-			expected: `^test-path\.processors: Invalid value: "0": number of processors must be from \.25 to 32 cores$`,
 		},
 		{
 			name: "invalid processors over",
 			pool: &powervs.MachinePool{
-				Processors: "33",
+				Processors: intstr.FromInt(33),
 			},
-			expected: `^test-path\.processors: Invalid value: "33": number of processors must be from \.25 to 32 cores$`,
+			expected: `^test-path\.processors: Invalid value: 33: number of processors must be from \.5 to 32 cores$`,
+		},
+		{
+			name: "invalid processors under",
+			pool: &powervs.MachinePool{
+				Processors: intstr.FromString("0.25"),
+			},
+			expected: `^test-path\.processors: Invalid value: 0.25: number of processors must be from \.5 to 32 cores$`,
 		},
 		{
 			name: "invalid processors string",
 			pool: &powervs.MachinePool{
-				Processors: "all",
+				Processors: intstr.FromString("all"),
 			},
 			expected: `^test-path\.processors: Invalid value: "all": processors must be a valid floating point number$`,
 		},
 		{
 			name: "invalid processors increment",
 			pool: &powervs.MachinePool{
-				Processors: "1.33",
+				Processors: intstr.FromString("1.33"),
 			},
-			expected: `^test-path\.processors: Invalid value: "1\.33": processors must be in increments of \.25$`,
+			expected: `^test-path\.processors: Invalid value: 1.33: processors must be in increments of \.25$`,
 		},
 		{
 			name: "valid procType",
 			pool: &powervs.MachinePool{
-				ProcType: "shared",
+				ProcType: "Shared",
 			},
 		},
 		{
@@ -116,7 +110,7 @@ func TestValidateMachinePool(t *testing.T) {
 			pool: &powervs.MachinePool{
 				ProcType: "none",
 			},
-			expected: `^test-path\.procType: Unsupported value: "none": supported values: "capped", "dedicated", "shared"$`,
+			expected: `^test-path\.procType: Unsupported value: "none": supported values: "Capped", "Dedicated", "Shared"$`,
 		},
 		{
 			name: "valid sysType",

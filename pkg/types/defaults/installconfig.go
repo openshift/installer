@@ -41,6 +41,11 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 				{CIDR: *libvirtdefaults.DefaultMachineCIDR},
 			}
 		}
+		if c.Platform.PowerVS != nil {
+			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+				{CIDR: *powervsdefaults.DefaultMachineCIDR},
+			}
+		}
 	}
 	if c.Networking.NetworkType == "" {
 		if c.IsOKD() || c.IsSingleNodeOpenShift() {
@@ -81,6 +86,8 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		if c.Platform.Azure != nil && c.Platform.Azure.CloudName == azure.StackCloud {
 			c.CredentialsMode = types.ManualCredentialsMode
 		} else if c.Platform.Nutanix != nil {
+			c.CredentialsMode = types.ManualCredentialsMode
+		} else if c.Platform.PowerVS != nil {
 			c.CredentialsMode = types.ManualCredentialsMode
 		}
 	}

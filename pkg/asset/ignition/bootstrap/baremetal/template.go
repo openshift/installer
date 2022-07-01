@@ -58,6 +58,16 @@ type TemplateData struct {
 
 	// ProvisioningNetwork displays the type of provisioning network being used
 	ProvisioningNetwork string
+
+	// ExternalStaticIP is the static IP of the bootstrap node
+	ExternalStaticIP string
+
+	// ExternalStaticIP is the static gateway of the bootstrap node
+	ExternalStaticGateway string
+
+	ExternalSubnetCIDR int
+
+	ExternalMACAddress string
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
@@ -70,6 +80,17 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	templateData.ProvisioningNetwork = string(config.ProvisioningNetwork)
 	templateData.BaremetalEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIP, "6385"))
 	templateData.BaremetalIntrospectionEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIP, "5050"))
+	templateData.ExternalStaticIP = config.BootstrapExternalStaticIP
+	templateData.ExternalStaticGateway = config.BootstrapExternalStaticGateway
+	templateData.ExternalMACAddress = config.ExternalMACAddress
+
+	if config.BootstrapExternalStaticIP != "" {
+		for _, network := range networks {
+			cidr, _ := network.CIDR.Mask.Size()
+			templateData.ExternalSubnetCIDR = cidr
+			break
+		}
+	}
 
 	if config.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork {
 		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()

@@ -172,6 +172,10 @@ resource "aws_instance" "master" {
     },
     var.tags,
   )
+
+  depends_on = [
+    aws_network_interface.master
+  ]
 }
 
 resource "aws_lb_target_group_attachment" "master" {

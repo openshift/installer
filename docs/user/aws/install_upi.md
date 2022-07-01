@@ -114,6 +114,10 @@ open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 
 If you do so, you'll need to [add ingress DNS records manually](#add-the-ingress-dns-records) later on.
 
+#### Disconnected clusters
+
+For disconnected clusters, Openshift has to be configured [not to manage DNS](#remove-dns-zones), otherwise [the ingress operator][ingress-operator] will try to contact the STS endpoint "sts.amazon.com" directly as opposed to the configured VPC endpoint for the cluster.
+
 ## Create Ignition Configs
 
 Now we can create the bootstrap Ignition configs:

@@ -17,20 +17,14 @@ resource "ovirt_template" "releaseimage_template" {
   // name the template after the openshift cluster id
   name        = local.image_name
   description = "Template in use by OpenShift. Do not delete!"
-  cluster_id  = var.ovirt_cluster_id
   // create from vm
   vm_id = var.tmp_import_vm_id
-  timeouts {
-    create = "20m"
-  }
 }
 
 // existing template provided by the user
 data "ovirt_templates" "finalTemplate" {
   count = var.tmp_import_vm_id == "" ? 1 : 0
 
-  search = {
-    criteria       = "name=${var.openstack_base_image_name}"
-    case_sensitive = true
-  }
+  fail_on_empty = true
+  name          = var.openstack_base_image_name
 }

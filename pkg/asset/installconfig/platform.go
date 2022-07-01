@@ -112,6 +112,9 @@ func (a *platform) Generate(asset.Parents) error {
 		}
 	case powervs.Name:
 		a.PowerVS, err = powervsconfig.Platform()
+		if err != nil {
+			return err
+		}
 	case nutanix.Name:
 		a.Nutanix, err = nutanixconfig.Platform()
 		if err != nil {

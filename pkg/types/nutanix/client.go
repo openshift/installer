@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	nutanixclient "github.com/terraform-providers/terraform-provider-nutanix/client"
-	nutanixclientv3 "github.com/terraform-providers/terraform-provider-nutanix/client/v3"
+	nutanixclient "github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix"
+	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix/v3"
 )
 
 // CreateNutanixClient creates a Nutanix V3 Client
