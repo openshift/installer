@@ -49,13 +49,14 @@ func selectProject(ctx context.Context) (string, error) {
 	projects, err := client.GetProjects(ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get projects")
+	} else if len(projects) == 0 {
+		return "", fmt.Errorf("failed to get projects for the given service principal, please check your permissions")
 	}
 
 	var options []string
 	ids := make(map[string]string)
 
 	var defaultValue string
-
 	for id, name := range projects {
 		option := fmt.Sprintf("%s (%s)", name, id)
 		ids[option] = id
