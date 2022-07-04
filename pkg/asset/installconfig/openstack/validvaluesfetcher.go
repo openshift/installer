@@ -88,7 +88,39 @@ func getFlavorNames(cloud string) ([]string, error) {
 
 	return flavorNames, nil
 }
-func getFloatingIPNames(cloud string, floatingNetworkName string) ([]string, error) {
+
+type sortableFloatingIPCollection []floatingips.FloatingIP
+
+func (fips sortableFloatingIPCollection) Len() int { return len(fips) }
+func (fips sortableFloatingIPCollection) Less(i, j int) bool {
+	return fips[i].FloatingIP < fips[j].FloatingIP
+}
+func (fips sortableFloatingIPCollection) Swap(i, j int) {
+	fips[i], fips[j] = fips[j], fips[i]
+}
+
+func (fips sortableFloatingIPCollection) Names() []string {
+	names := make([]string, len(fips))
+	for i := range fips {
+		names[i] = fips[i].FloatingIP
+	}
+	return names
+}
+
+func (fips sortableFloatingIPCollection) Description(index int) string {
+	return fips[index].Description
+}
+
+func (fips sortableFloatingIPCollection) Contains(value string) bool {
+	for i := range fips {
+		if value == fips[i].FloatingIP {
+			return true
+		}
+	}
+	return false
+}
+
+func getFloatingIPs(cloud string, floatingNetworkName string) (sortableFloatingIPCollection, error) {
 	conn, err := clientconfig.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
@@ -120,10 +152,5 @@ func getFloatingIPNames(cloud string, floatingNetworkName string) ([]string, err
 		return nil, errors.New("there are no unassigned floating IP addresses available")
 	}
 
-	floatingIPNames := make([]string, len(allFloatingIPs))
-	for i, floatingIP := range allFloatingIPs {
-		floatingIPNames[i] = floatingIP.FloatingIP
-	}
-
-	return floatingIPNames, nil
+	return allFloatingIPs, nil
 }

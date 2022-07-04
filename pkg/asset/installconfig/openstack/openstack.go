@@ -80,23 +80,22 @@ func Platform() (*openstack.Platform, error) {
 
 	var apiFloatingIP string
 	if extNet != "" {
-		floatingIPNames, err := getFloatingIPNames(cloud, extNet)
+		floatingIPs, err := getFloatingIPs(cloud, extNet)
 		if err != nil {
 			return nil, err
 		}
-		sort.Strings(floatingIPNames)
+		sort.Sort(floatingIPs)
 		err = survey.Ask([]*survey.Question{
 			{
 				Prompt: &survey.Select{
-					Message: "APIFloatingIPAddress",
-					Help:    "The Floating IP address used for external access to the OpenShift API.",
-					Options: floatingIPNames,
+					Message:     "APIFloatingIPAddress",
+					Help:        "The Floating IP address used for external access to the OpenShift API.",
+					Options:     floatingIPs.Names(),
+					Description: func(_ string, index int) string { return floatingIPs.Description(index) },
 				},
 				Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-					value := ans.(core.OptionAnswer).Value
-					i := sort.SearchStrings(floatingIPNames, value)
-					if i == len(floatingIPNames) || floatingIPNames[i] != value {
-						return errors.Errorf("invalid floating IP %q, should be one of %+v", value, strings.Join(floatingIPNames, ", "))
+					if value := ans.(core.OptionAnswer).Value; !floatingIPs.Contains(value) {
+						return errors.Errorf("invalid floating IP %q, should be one of %+v", value, strings.Join(floatingIPs.Names(), ", "))
 					}
 					return nil
 				}),
