@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"fmt"
+	"github.com/openshift/installer/pkg/types/aws"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
@@ -114,6 +115,18 @@ func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, 
 		Status: configv1.IngressStatus{
 			DefaultPlacement: defaultPlacement,
 		},
+	}
+
+	switch config.Platform.Name() {
+	case aws.Name:
+		obj.Spec.LoadBalancer = configv1.LoadBalancer{
+			Platform: configv1.IngressPlatformSpec{
+				AWS: &configv1.AWSIngressSpec{
+					Type: config.AWS.LBType,
+				},
+				Type: configv1.AWSPlatformType,
+			},
+		}
 	}
 	return yaml.Marshal(obj)
 }
