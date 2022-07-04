@@ -35,6 +35,7 @@ var PublishedApis = map[string]ApiAppId{
 	"AzureMaps":                         "ba1ea022-5807-41d5-bbeb-292c7e1cf5f6",
 	"AzureMediaServices":                "374b2a64-3b6b-436b-934c-b820eacca870",
 	"AzurePortal":                       "c44b4083-3bb0-49c1-b47d-974e53cbdf3c",
+	"AzureSecurityInsights":             "98785600-1bb7-4fb9-b9fa-19afe2c8a360",
 	"AzureServiceBus":                   "80a10ef9-8168-493d-abf9-3297c4ef6e3c",
 	"AzureServiceDeploy":                "5b306cba-9c71-49db-96c3-d17ca2379c4d",
 	"AzureServiceManagement":            "797f4846-ba00-4fd7-ba43-dac1f8f63013",
