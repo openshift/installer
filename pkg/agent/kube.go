@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -73,8 +73,7 @@ func (kube *ClusterKubeAPIClient) IsBootstrapConfigMapComplete() (bool, error) {
 	bootstrap, err := kube.Client.CoreV1().ConfigMaps("kube-system").Get(kube.ctx, "bootstrap", v1.GetOptions{})
 
 	if err != nil {
-		logrus.Debug("bootstrap configmap not found")
-		return false, err
+		return false, errors.Wrap(err, "bootstrap configmap not found")
 	}
 	// Found a bootstrap configmap need to check its status
 	if bootstrap != nil {

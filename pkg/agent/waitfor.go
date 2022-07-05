@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -19,6 +20,8 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 		return nil, err
 	}
 
+	start := time.Now()
+	previous := time.Now()
 	timeout := 40 * time.Minute
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
@@ -30,16 +33,23 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 			cancel()
 		}
 
-		logrus.Info("Cluster is still installing")
+		current := time.Now()
+		elapsed := current.Sub(previous)
+		elapsedTotal := current.Sub(start)
+		logrus.Tracef("elapsed: %s, elapsedTotal: %s", elapsed.String(), elapsedTotal.String())
+		if elapsed >= 30*time.Second {
+			logrus.Info("Waiting for cluster bootstrap to complete. Time elapsed: %s", elapsedTotal.String())
+			previous = current
+		}
 
-	}, 5*time.Second, waitContext.Done())
+	}, 2*time.Second, waitContext.Done())
 
 	waitErr := waitContext.Err()
 	if waitErr != nil && waitErr != context.Canceled {
 		if err != nil {
-			return cluster, err
+			return cluster, errors.Wrap(err, "bootstrap process returned error")
 		}
-		return cluster, waitErr
+		return cluster, errors.Wrap(waitErr, "bootstrap process timed out")
 	}
 
 	return cluster, nil

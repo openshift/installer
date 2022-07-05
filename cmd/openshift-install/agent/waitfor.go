@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -33,15 +34,19 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
 			}
-			err := runWaitForBootstrapCompleteCmd(assetDir)
+			cluster, err := runWaitForBootstrapCompleteCmd(assetDir)
 			if err != nil {
-				logrus.Fatal(err)
+				logrus.Info("Use the following commands to gather logs from the cluster")
+				logrus.Info("openshift-install gather bootstrap --help")
+				logrus.Error(errors.Wrap(err, "Bootstrap failed to complete: "))
+				logrus.Trace("Cluster Operator Condidtions at time of failure:")
+				cluster.API.OpenShift.LogClusterOperatorConditions()
 			}
 		},
 	}
 }
 
-func runWaitForBootstrapCompleteCmd(directory string) error {
-	_, err := agentpkg.WaitForBootstrapComplete(directory)
-	return err
+func runWaitForBootstrapCompleteCmd(directory string) (*agentpkg.Cluster, error) {
+	cluster, err := agentpkg.WaitForBootstrapComplete(directory)
+	return cluster, err
 }
