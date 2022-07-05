@@ -240,7 +240,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	}
 
 	registries := []sysregistriesv2.Registry{}
-	for _, group := range mergedMirrorSets(installConfig.Config.ImageContentSources) {
+	for _, group := range MergedMirrorSets(installConfig.Config.ImageContentSources) {
 		if len(group.Mirrors) == 0 {
 			continue
 		}

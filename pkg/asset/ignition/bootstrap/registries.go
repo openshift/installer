@@ -6,7 +6,9 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-func mergedMirrorSets(sources []types.ImageContentSource) []types.ImageContentSource {
+// MergedMirrorSets consolidates a list of ImageContentSources so that each
+// source appears only once.
+func MergedMirrorSets(sources []types.ImageContentSource) []types.ImageContentSource {
 	sourceSet := make(map[string][]string)
 	mirrorSet := make(map[string]sets.String)
 	orderedSources := []string{}
