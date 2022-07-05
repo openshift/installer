@@ -10,7 +10,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/assisted-service/client"
+	"github.com/openshift/assisted-service/client/events"
 	"github.com/openshift/assisted-service/client/installer"
+	"github.com/openshift/assisted-service/models"
 
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
@@ -71,6 +73,16 @@ func (rest *NodeZeroRestClient) IsRestAPILive() (bool, error) {
 // GetRestAPIServiceBaseURL Return the url of the Agent Rest API on node zero
 func (rest *NodeZeroRestClient) GetRestAPIServiceBaseURL() *url.URL {
 	return rest.config.URL
+}
+
+// GetInfraEnvEvents Return the event list for the provided infraEnvID from the Agent Rest API
+func (rest *NodeZeroRestClient) GetInfraEnvEvents(infraEnvID *strfmt.UUID) (models.EventList, error) {
+	listEventsParams := &events.V2ListEventsParams{InfraEnvID: infraEnvID}
+	clusterEventsResult, err := rest.Client.Events.V2ListEvents(rest.ctx, listEventsParams)
+	if err != nil {
+		return nil, err
+	}
+	return clusterEventsResult.Payload, nil
 }
 
 // getClusterID Return the cluster ID assigned by the Agent Rest API

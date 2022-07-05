@@ -14,6 +14,7 @@ import (
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 )
 
+// ClusterOpenShiftAPIClient Kube client using the OpenShift clientset instead of the Kubernetes clientset
 type ClusterOpenShiftAPIClient struct {
 	Client     *configclient.Clientset
 	ctx        context.Context
@@ -28,6 +29,9 @@ func NewClusterOpenShiftAPIClient(ctx context.Context, assetDir string) (*Cluste
 
 	kubeconfigpath := filepath.Join(assetDir, "auth", "kubeconfig")
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigpath)
+	if err != nil {
+		return nil, errors.Wrap(err, "creating kubeconfig for ocp config client")
+	}
 
 	ocpclient, err := configclient.NewForConfig(kubeconfig)
 	if err != nil {

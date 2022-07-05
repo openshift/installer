@@ -40,8 +40,8 @@ type clusterInstallStatusHistory struct {
 	RestAPIClusterStatusPendingForInputSeen             bool
 	RestAPIClusterStatusPreparingForInstallationSeen    bool
 	RestAPIClusterStatusReadySeen                       bool
-	RestAPICurrentClusterStatus                         string
 	RestAPIPreviousClusterStatus                        string
+	RestAPIPreviousEventMessage                         string
 	RestAPIHostValidationsPassed                        bool
 	ClusterKubeAPISeen                                  bool
 }
@@ -61,8 +61,14 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 		logrus.Fatal(err)
 	}
 
+	ocpclient, err := NewClusterOpenShiftAPIClient(ctx, assetDir)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
 	capi.Rest = restclient
 	capi.Kube = kubeclient
+	capi.OpenShift = ocpclient
 
 	cinstallstatushistory := &clusterInstallStatusHistory{
 		RestAPISeen:                                         false,
@@ -76,8 +82,8 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 		RestAPIClusterStatusPendingForInputSeen:             false,
 		RestAPIClusterStatusPreparingForInstallationSeen:    false,
 		RestAPIClusterStatusReadySeen:                       false,
-		RestAPICurrentClusterStatus:                         "",
 		RestAPIPreviousClusterStatus:                        "",
+		RestAPIPreviousEventMessage:                         "",
 		RestAPIHostValidationsPassed:                        false,
 		ClusterKubeAPISeen:                                  false,
 	}
@@ -108,7 +114,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 
 	clusterKubeAPILive, clusterKubeAPIErr := czero.API.Kube.IsKubeAPILive()
 	if clusterKubeAPIErr != nil {
-		logrus.Debug(errors.Wrap(clusterKubeAPIErr, "cluster Kube API is not available"))
+		logrus.Trace(errors.Wrap(clusterKubeAPIErr, "cluster Kube API is not available"))
 	}
 
 	if clusterKubeAPILive {
@@ -136,14 +142,14 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 
 	agentRestAPILive, agentRestAPIErr := czero.API.Rest.IsRestAPILive()
 	if agentRestAPIErr != nil {
-		logrus.Debug(errors.Wrap(agentRestAPIErr, "node zero Agent Rest API is not available"))
+		logrus.Trace(errors.Wrap(agentRestAPIErr, "Agent Rest API is not available"))
 	}
 
 	if agentRestAPILive {
 
 		// First time we see the agent Rest API
 		if !czero.installHistory.RestAPISeen {
-			logrus.Debug("node zero Agent Rest API Initialized")
+			logrus.Debug("Agent Rest API Initialized")
 			czero.installHistory.RestAPISeen = true
 		}
 
@@ -164,20 +170,18 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 			czero.clusterInfraEnvID = clusterInfraEnvID
 		}
 
-		logrus.Trace("getting cluster metadata from node zero Agent Rest API")
+		logrus.Trace("getting cluster metadata from Agent Rest API")
 		clusterMetadata, err := czero.GetClusterRestAPIMetadata()
 		if err != nil {
-			return false, errors.Wrap(err, "unable to retrieve cluster metadata from Node Zero Agent Rest API")
+			return false, errors.Wrap(err, "unable to retrieve cluster metadata from Agent Rest API")
 		}
 
 		if clusterMetadata == nil {
-			return false, errors.New("cluster metadata returned nil from Node Zero Agent Rest API")
+			return false, errors.New("cluster metadata returned nil from Agent Rest API")
 		}
 
-		// TODO[AGENT-172]: Add CheckHostValidations
-
 		czero.PrintInstallStatus(clusterMetadata)
-		czero.installHistory.RestAPICurrentClusterStatus = *clusterMetadata.Status
+		czero.installHistory.RestAPIPreviousClusterStatus = *clusterMetadata.Status
 
 		// Update Install History object when we see these states
 		czero.updateInstallHistoryClusterStatus(clusterMetadata)
@@ -193,11 +197,31 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 			}
 		}
 
+		// Print most recent event assoicated with the clusterInfraEnvID
+		eventList, err := czero.API.Rest.GetInfraEnvEvents(czero.clusterInfraEnvID)
+		if err != nil {
+			return false, errors.Wrap(err, "unable to retrieve events about the cluster from the Agent Rest API")
+		}
+		if len(eventList) == 0 {
+			logrus.Trace("no cluster events detected from the Agent Rest API")
+		} else {
+			mostRecentEvent := eventList[len(eventList)-1]
+			// Don't print the same status message back to back
+			if mostRecentEvent.Message != &czero.installHistory.RestAPIPreviousEventMessage {
+				if *mostRecentEvent.Severity == models.EventSeverityInfo {
+					logrus.Info(mostRecentEvent.Message)
+				} else {
+					logrus.Warn(mostRecentEvent.Message)
+				}
+			}
+			czero.installHistory.RestAPIPreviousEventMessage = *mostRecentEvent.Message
+		}
+
 	}
 
 	// both API's are not available
 	if !agentRestAPILive && !clusterKubeAPILive {
-		logrus.Debug("current API Status: Node Zero Agent API: down, Cluster Kube API: down")
+		logrus.Trace("current API Status: Node Zero Agent API: down, Cluster Kube API: down")
 		if !czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
 			logrus.Debug("node zero Agent Rest API never initialized. Cluster API never initialized")
 			logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
@@ -207,7 +231,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 
 		if czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
 			logrus.Debug("cluster API never initialized")
-			logrus.Debugf("cluster install status from Agent Rest API last seen was: %s", czero.installHistory.RestAPICurrentClusterStatus)
+			logrus.Debugf("cluster install status from Agent Rest API last seen was: %s", czero.installHistory.RestAPIPreviousClusterStatus)
 			return false, errors.New("cluster installation did not complete")
 		}
 	}
@@ -256,7 +280,7 @@ func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster) error {
 	friendlyStatus := humanFriendlyClusterInstallStatus(*cluster.Status)
 	logrus.Trace(friendlyStatus)
 	// Don't print the same status message back to back
-	if *cluster.Status != czero.installHistory.RestAPICurrentClusterStatus {
+	if *cluster.Status != czero.installHistory.RestAPIPreviousClusterStatus {
 		logrus.Info(friendlyStatus)
 	}
 
