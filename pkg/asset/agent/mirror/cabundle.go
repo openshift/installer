@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/pkg/errors"
 )
 
@@ -30,14 +31,14 @@ func (*CaBundle) Name() string {
 // the asset.
 func (*CaBundle) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		// &installconfig.InstallConfig{},
+		&agent.OptionalInstallConfig{},
 	}
 }
 
 // Generate generates the Mirror Registries certificate file from install-config.
 func (i *CaBundle) Generate(dependencies asset.Parents) error {
 
-	// installConfig := &installconfig.InstallConfig{}
+	// installConfig := &agent.OptionalInstallConfig{}
 	// dependencies.Get(installConfig)
 
 	// if installConfig.Config.AdditionalTrustBundle == "" {

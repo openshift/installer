@@ -29,7 +29,7 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 		// {
 		// 	name: "default",
 		// 	dependencies: []asset.Asset{
-		// 		&installconfig.InstallConfig{
+		// 		&agent.OptionalInstallConfig{
 		// 			Config: &types.InstallConfig{
 		// 				ObjectMeta: v1.ObjectMeta{
 		// 					Namespace: "cluster-0",

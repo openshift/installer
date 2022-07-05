@@ -10,6 +10,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/pkg/errors"
 )
 
@@ -35,14 +36,14 @@ func (*AgentPullSecret) Name() string {
 // the asset.
 func (*AgentPullSecret) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		// &installconfig.InstallConfig{},
+		&agent.OptionalInstallConfig{},
 	}
 }
 
 // Generate generates the AgentPullSecret manifest.
 func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
 
-	// installConfigAsset := &installconfig.InstallConfig{}
+	// installConfigAsset := &agent.OptionalInstallConfig{}
 	// dependencies.Get(installConfigAsset)
 
 	// secret := &corev1.Secret{

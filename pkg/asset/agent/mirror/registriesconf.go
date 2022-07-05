@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 )
@@ -38,14 +39,14 @@ func (*RegistriesConf) Name() string {
 // the asset.
 func (*RegistriesConf) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		// &installconfig.InstallConfig{},
+		&agent.OptionalInstallConfig{},
 	}
 }
 
 // Generate generates the registries.conf file from install-config.
 func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 
-	// installConfig := &installconfig.InstallConfig{}
+	// installConfig := &agent.OptionalInstallConfig{}
 
 	// registries := []sysregistriesv2.Registry{}
 	// for _, group := range bootstrap.MergedMirrorSets(installConfig.Config.ImageContentSources) {
