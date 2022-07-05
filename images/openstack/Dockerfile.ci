@@ -13,8 +13,6 @@ COPY --from=cli /usr/bin/oc /bin/oc
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/upi/openstack /var/lib/openshift-install/upi
 COPY --from=builder /go/src/github.com/openshift/installer/docs/user/openstack /var/lib/openshift-install/docs
-COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-train.repo /etc/yum.repos.d/rdo-train.repo
-COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-train.gpg /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-Cloud
 COPY --from=builder /go/src/github.com/openshift/installer/hack/openstack/test-manifests.sh /go/src/github.com/openshift/installer/scripts/openstack/manifest-tests /var/lib/openshift-install/manifest-tests
 
 # Install Dependendencies for tests
@@ -26,10 +24,9 @@ RUN yum install --setopt=tsflags=nodocs -y gettext make git gzip util-linux glib
     git config --system user.email test@example.com && \
     chmod g+w /etc/passwd
 
-# Pin openstacksdk - https://bugzilla.redhat.com/show_bug.cgi?id=1980029
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-    python3-openstackclient ansible-2.9.14-1.el8ae python3-openstacksdk-0.36.* python3-netaddr unzip jq && \
+    python3-openstackclient ansible-2.9.14-1.el8ae python3-openstacksdk python3-netaddr unzip jq && \
     yum clean all && rm -rf /var/cache/yum/*
 
 RUN python -m pip install yq
