@@ -42,7 +42,7 @@ mandatory ignition files and to monitor the installation process itself.
     * [Approve CSRs](#approve-csrs)
 * [Wait for Installation Complete](#wait-for-installation-complete)
 * [Destroy OpenShift cluster](#destroy-openshift-cluster)
-
+* [Post Install: Add additional workers](#add-additional-workers)
 # Prerequisites
 The [inventory.yml](../../../upi/ovirt/inventory.yml) file all the variables used by this installation can be customized as per
 user needs.
@@ -818,3 +818,24 @@ $ ansible-playbook -i inventory.yml \
 ```
 
 Removing DNS added records, Load balancers and any other infrastructure configuration is left to the user.
+
+## Add additional workers 
+
+steps for adding more workers to existing cluster:
+- change the [inventory.yml](../../../upi/ovirt/inventory.yml) file to include the new workers.
+- run the [create-templates-and-vms](../../../upi/ovirt/create-templates-and-vms.yml) ansible playbook to create the disks and the VMs.
+  ```sh
+  $ ansible-playbook -i inventory.yml create-templates-and-vms.yml
+  ```
+
+- run the [workers.yml](../../../upi/ovirt/workers.yml) ansible playbook to start the VMs.
+  ```sh
+  $ ansible-playbook -i inventory.yml workers.yml
+  ```
+
+- CSRs for new workers joining the cluster will need to be approved by the administrator. 
+  The following command helps to approve all the pending requests
+
+  ```sh
+  $ oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc adm certificate approve
+  ```
