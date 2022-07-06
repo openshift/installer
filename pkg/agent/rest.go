@@ -101,8 +101,8 @@ func (rest *NodeZeroRestClient) getClusterID() (*strfmt.UUID, error) {
 		logrus.Debug("cluster is not registered in rest API")
 		return nil, nil
 	} else {
-		logrus.Debugf("number of clusters found: %d", len(clusterList))
-		return nil, errors.New("found too many clusters")
+		logrus.Infof("found too many clusters. number of clusters found: %d", len(clusterList))
+		return nil, nil
 	}
 }
 
@@ -122,7 +122,7 @@ func (rest *NodeZeroRestClient) getClusterInfraEnvID() (*strfmt.UUID, error) {
 		logrus.Debug("infraenv is not registered in rest API")
 		return nil, nil
 	} else {
-		logrus.Debugf("number of infraenvs found: %d", len(infraEnvList))
-		return nil, errors.New("found too many infraenvs")
+		logrus.Infof("found too many infraenvs. number of infraenvs found: %d", len(infraEnvList))
+		return nil, nil
 	}
 }

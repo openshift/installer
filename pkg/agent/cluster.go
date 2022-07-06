@@ -125,11 +125,6 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 			czero.installHistory.ClusterKubeAPISeen = true
 		}
 
-		err := czero.API.OpenShift.LogClusterOperatorConditions()
-		if err != nil {
-			logrus.Debug(err)
-		}
-
 		configmap, err := czero.API.Kube.IsBootstrapConfigMapComplete()
 		if configmap {
 			logrus.Info("bootstrap configMap status is complete")
@@ -197,7 +192,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 			}
 		}
 
-		// Print most recent event assoicated with the clusterInfraEnvID
+		// Print most recent event associated with the clusterInfraEnvID
 		eventList, err := czero.API.Rest.GetInfraEnvEvents(czero.clusterInfraEnvID)
 		if err != nil {
 			return false, errors.Wrap(err, "unable to retrieve events about the cluster from the Agent Rest API")
@@ -207,11 +202,11 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 		} else {
 			mostRecentEvent := eventList[len(eventList)-1]
 			// Don't print the same status message back to back
-			if mostRecentEvent.Message != &czero.installHistory.RestAPIPreviousEventMessage {
+			if *mostRecentEvent.Message != czero.installHistory.RestAPIPreviousEventMessage {
 				if *mostRecentEvent.Severity == models.EventSeverityInfo {
-					logrus.Info(mostRecentEvent.Message)
+					logrus.Info(*mostRecentEvent.Message)
 				} else {
-					logrus.Warn(mostRecentEvent.Message)
+					logrus.Warn(*mostRecentEvent.Message)
 				}
 			}
 			czero.installHistory.RestAPIPreviousEventMessage = *mostRecentEvent.Message

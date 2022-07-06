@@ -8,6 +8,13 @@ import (
 	agentpkg "github.com/openshift/installer/pkg/agent"
 )
 
+const (
+	exitCodeInstallConfigError = iota + 3
+	exitCodeInfrastructureFailed
+	exitCodeBootstrapFailed
+	exitCodeInstallFailed
+)
+
 // NewWaitForCmd create the commands for waiting the completion of the agent based cluster installation.
 func NewWaitForCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -36,11 +43,14 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			}
 			cluster, err := runWaitForBootstrapCompleteCmd(assetDir)
 			if err != nil {
+				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
+				if err2 != nil {
+					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
+				}
 				logrus.Info("Use the following commands to gather logs from the cluster")
 				logrus.Info("openshift-install gather bootstrap --help")
 				logrus.Error(errors.Wrap(err, "Bootstrap failed to complete: "))
-				logrus.Trace("Cluster Operator Condidtions at time of failure:")
-				cluster.API.OpenShift.LogClusterOperatorConditions()
+				logrus.Exit(exitCodeBootstrapFailed)
 			}
 		},
 	}

@@ -36,9 +36,8 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 		current := time.Now()
 		elapsed := current.Sub(previous)
 		elapsedTotal := current.Sub(start)
-		logrus.Tracef("elapsed: %s, elapsedTotal: %s", elapsed.String(), elapsedTotal.String())
-		if elapsed >= 30*time.Second {
-			logrus.Infof("Waiting for cluster bootstrap to complete. Time elapsed: %s", elapsedTotal.String())
+		if elapsed >= 1*time.Minute {
+			logrus.Tracef("elapsed: %s, elapsedTotal: %s", elapsed.String(), elapsedTotal.String())
 			previous = current
 		}
 
