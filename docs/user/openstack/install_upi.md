@@ -202,11 +202,11 @@ $ gunzip rhcos-${RHCOSVERSION}-openstack.x86_64.qcow2.gz
 
 Next step is to create a Glance image.
 
-**NOTE:** *This document* will use `rhcos` as the Glance image name, but it's not mandatory.
+**NOTE:** *This document* will use `rhcos-${CLUSTER_NAME}` as the Glance image name. The name of the Glance image must be the one configured as `os_image_rhcos` in `inventory.yaml`.
 
 <!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
-$ openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.x86_64.qcow2 rhcos
+$ openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.x86_64.qcow2 "rhcos-${CLUSTER_NAME}"
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
 
@@ -219,13 +219,13 @@ access between OpenStack KVM hypervisors and the cluster nodes.
 To enable this feature, you must add the `hw_qemu_guest_agent=yes` property to the image:
 
 ```
-$ openstack image rhcos update --property hw_qemu_guest_agent=yes
+$ openstack image "rhcos-${CLUSTER_NAME}" update --property hw_qemu_guest_agent=yes
 ```
 
 Finally validate that the image was successfully created:
 
 ```sh
-$ openstack image show rhcos
+$ openstack image show "rhcos-${CLUSTER_NAME}"
 ```
 
 [rhcos]: https://www.openshift.com/learn/coreos/
@@ -983,7 +983,7 @@ openstack port create radio_port --vnic-type direct --network radio --fixed-ip s
 When you create your instance, make sure that the SR-IOV port and the OCP port you created for it are added as NICs.
 
 ```sh
-openstack server create --image <infraID>-rhcos --flavor ocp --user-data <ocp project>/build-artifacts/worker.ign --nic port-id=<os_port_worker_0 ID> --nic port-id=<radio_port ID> --config-drive true worker-<worker_id>.<cluster_name>.<cluster_domain>
+openstack server create --image "rhcos-${CLUSTER_NAME}" --flavor ocp --user-data <ocp project>/build-artifacts/worker.ign --nic port-id=<os_port_worker_0 ID> --nic port-id=<radio_port ID> --config-drive true worker-<worker_id>.<cluster_name>.<cluster_domain>
 ```
 
 ### Approve the worker CSRs
@@ -1095,6 +1095,14 @@ The playbook `down-load-balancers.yaml` idempotently deletes the load balancers 
 
 **NOTE:** The deletion of load balancers with `provisioning_status` `PENDING-*` is skipped. Make sure to retry the
 `down-load-balancers.yaml` playbook once the load balancers have transitioned to `ACTIVE`.
+
+Delete the RHCOS image if it's no longer useful.
+
+<!--- e2e-openstack-upi(deprovision): INCLUDE START --->
+```sh
+openstack image delete "rhcos-${CLUSTER_NAME}"
+```
+<!--- e2e-openstack-upi(deprovision): INCLUDE END --->
 
 Then, remove the `api` and `*.apps` DNS records.
 
