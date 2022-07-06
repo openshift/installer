@@ -782,6 +782,8 @@ func deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logge
 		return deleteEC2VPCEndpoint(ctx, client, id, logger)
 	case "vpc-peering-connection":
 		return deleteEC2VPCPeeringConnection(ctx, client, id, logger)
+	case "vpc-endpoint-service":
+		return deleteEC2VPCEndpointService(ctx, client, id, logger)
 	default:
 		return errors.Errorf("unrecognized EC2 resource type %s", resourceType)
 	}
@@ -1433,6 +1435,20 @@ func deleteEC2VPCPeeringConnection(ctx context.Context, client *ec2.EC2, id stri
 			return nil
 		}
 		return errors.Wrapf(err, "cannot delete VPC Peering Connection %s", id)
+	}
+	logger.Info("Deleted")
+	return nil
+}
+
+func deleteEC2VPCEndpointService(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
+	_, err := client.DeleteVpcEndpointServiceConfigurationsWithContext(ctx, &ec2.DeleteVpcEndpointServiceConfigurationsInput{
+		ServiceIds: aws.StringSlice([]string{id}),
+	})
+	if err != nil {
+		if err.(awserr.Error).Code() == "InvalidVpcEndpointService.NotFound" {
+			return nil
+		}
+		return errors.Wrapf(err, "cannot delete VPC Endpoint Service %s", id)
 	}
 	logger.Info("Deleted")
 	return nil
