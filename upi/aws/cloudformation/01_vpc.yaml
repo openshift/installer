@@ -22,6 +22,12 @@ Parameters:
     Default: 12
     Description: "Size of each subnet to create within the availability zones. (Min: 5 = /27, Max: 13 = /19)"
     Type: Number
+  ClusterName:
+    Type: String
+    Default: "openshift"
+    Description: Cluster Name used to prefix resource names
+    AllowedPattern: ^[a-z0-9,-\.]+$
+    ConstraintDescription: ClusterName must be string of lowercase letters, hyphens (-), and periods (.),
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -54,6 +60,10 @@ Resources:
       EnableDnsSupport: "true"
       EnableDnsHostnames: "true"
       CidrBlock: !Ref VpcCidr
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-vpc"]]
+
   PublicSubnet:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -62,6 +72,9 @@ Resources:
       AvailabilityZone: !Select
       - 0
       - Fn::GetAZs: !Ref "AWS::Region"
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-public-1"]]
   PublicSubnet2:
     Type: "AWS::EC2::Subnet"
     Condition: DoAz2
@@ -71,6 +84,9 @@ Resources:
       AvailabilityZone: !Select
       - 1
       - Fn::GetAZs: !Ref "AWS::Region"
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-public-2"]]
   PublicSubnet3:
     Type: "AWS::EC2::Subnet"
     Condition: DoAz3
@@ -80,17 +96,29 @@ Resources:
       AvailabilityZone: !Select
       - 2
       - Fn::GetAZs: !Ref "AWS::Region"
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-public-3"]]
+
   InternetGateway:
     Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-igw"]]
   GatewayToInternet:
     Type: "AWS::EC2::VPCGatewayAttachment"
     Properties:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
+
   PublicRouteTable:
     Type: "AWS::EC2::RouteTable"
     Properties:
       VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-rtb-public"]]
   PublicRoute:
     Type: "AWS::EC2::Route"
     DependsOn: GatewayToInternet
@@ -110,11 +138,12 @@ Resources:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
   PublicSubnetRouteTableAssociation3:
-    Condition: DoAz3
     Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Condition: DoAz3
     Properties:
       SubnetId: !Ref PublicSubnet3
       RouteTableId: !Ref PublicRouteTable
+
   PrivateSubnet:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -123,10 +152,16 @@ Resources:
       AvailabilityZone: !Select
       - 0
       - Fn::GetAZs: !Ref "AWS::Region"
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-private-1"]]
   PrivateRouteTable:
     Type: "AWS::EC2::RouteTable"
     Properties:
       VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-rtb-private-1"]]
   PrivateSubnetRouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
@@ -142,6 +177,9 @@ Resources:
         - EIP
         - AllocationId
       SubnetId: !Ref PublicSubnet
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-natgw-private-1"]]
   EIP:
     Type: "AWS::EC2::EIP"
     Properties:
@@ -154,6 +192,7 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId:
         Ref: NAT
+
   PrivateSubnet2:
     Type: "AWS::EC2::Subnet"
     Condition: DoAz2
@@ -163,11 +202,17 @@ Resources:
       AvailabilityZone: !Select
       - 1
       - Fn::GetAZs: !Ref "AWS::Region"
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-private-2"]]
   PrivateRouteTable2:
     Type: "AWS::EC2::RouteTable"
     Condition: DoAz2
     Properties:
       VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-rtb-private-2"]]
   PrivateSubnetRouteTableAssociation2:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Condition: DoAz2
@@ -185,11 +230,17 @@ Resources:
         - EIP2
         - AllocationId
       SubnetId: !Ref PublicSubnet2
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-natgw-private-2"]]
   EIP2:
     Type: "AWS::EC2::EIP"
     Condition: DoAz2
     Properties:
       Domain: vpc
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-eip-private-2"]]
   Route2:
     Type: "AWS::EC2::Route"
     Condition: DoAz2
@@ -199,6 +250,7 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId:
         Ref: NAT2
+
   PrivateSubnet3:
     Type: "AWS::EC2::Subnet"
     Condition: DoAz3
@@ -208,11 +260,17 @@ Resources:
       AvailabilityZone: !Select
       - 2
       - Fn::GetAZs: !Ref "AWS::Region"
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-private-3"]]
   PrivateRouteTable3:
     Type: "AWS::EC2::RouteTable"
     Condition: DoAz3
     Properties:
       VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-rtb-private-3"]]
   PrivateSubnetRouteTableAssociation3:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Condition: DoAz3
@@ -230,11 +288,17 @@ Resources:
         - EIP3
         - AllocationId
       SubnetId: !Ref PublicSubnet3
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-natgw-private-3"]]
   EIP3:
     Type: "AWS::EC2::EIP"
     Condition: DoAz3
     Properties:
       Domain: vpc
+      Tags:
+      - Key: Name
+        Value: !Join ["", [!Ref ClusterName, "-eip-private-3"]]
   Route3:
     Type: "AWS::EC2::Route"
     Condition: DoAz3
@@ -244,6 +308,7 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId:
         Ref: NAT3
+
   S3Endpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
@@ -286,3 +351,9 @@ Outputs:
         ",",
         [!Ref PrivateSubnet, !If [DoAz2, !Ref PrivateSubnet2, !Ref "AWS::NoValue"], !If [DoAz3, !Ref PrivateSubnet3, !Ref "AWS::NoValue"]]
       ]
+  PublicRouteTableId:
+    Description: Public Route table ID
+    Value: !Ref PublicRouteTable
+  PrivateRouteTableId:
+    Description: Private Route table ID
+    Value: !Ref PrivateRouteTable
