@@ -43,6 +43,8 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			}
 			cluster, err := runWaitForBootstrapCompleteCmd(assetDir)
 			if err != nil {
+				logrus.Debug("Printing the event list gathered from the Agent Rest API")
+				cluster.PrintInfraEnvRestAPIEventList()
 				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
 				if err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)

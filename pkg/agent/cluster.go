@@ -40,6 +40,7 @@ type clusterInstallStatusHistory struct {
 	RestAPIClusterStatusPendingForInputSeen             bool
 	RestAPIClusterStatusPreparingForInstallationSeen    bool
 	RestAPIClusterStatusReadySeen                       bool
+	RestAPIInfraEnvEventList                            models.EventList
 	RestAPIPreviousClusterStatus                        string
 	RestAPIPreviousEventMessage                         string
 	RestAPIHostValidationsPassed                        bool
@@ -82,6 +83,7 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 		RestAPIClusterStatusPendingForInputSeen:             false,
 		RestAPIClusterStatusPreparingForInstallationSeen:    false,
 		RestAPIClusterStatusReadySeen:                       false,
+		RestAPIInfraEnvEventList:                            nil,
 		RestAPIPreviousClusterStatus:                        "",
 		RestAPIPreviousEventMessage:                         "",
 		RestAPIHostValidationsPassed:                        false,
@@ -96,20 +98,7 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 	return czero, nil
 }
 
-// GetClusterRestAPIMetadata Retrieve the current cluster metadata from the Agent Rest API
-func (czero *Cluster) GetClusterRestAPIMetadata() (*models.Cluster, error) {
-	// GET /v2/clusters/{cluster_zero_id}
-	getClusterParams := &installer.V2GetClusterParams{ClusterID: *czero.clusterID}
-	result, err := czero.API.Rest.Client.Installer.V2GetCluster(czero.Ctx, getClusterParams)
-	if err != nil {
-		return nil, err
-	}
-	cluster := result.Payload
-	return cluster, nil
-}
-
-// IsBootstrapComplete Determine if the cluster that agent installer
-// is installing has completed the bootstrap process.
+// IsBootstrapComplete Determine if the cluster has completed the bootstrap process.
 func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 
 	clusterKubeAPILive, clusterKubeAPIErr := czero.API.Kube.IsKubeAPILive()
@@ -210,6 +199,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 				}
 			}
 			czero.installHistory.RestAPIPreviousEventMessage = *mostRecentEvent.Message
+			czero.installHistory.RestAPIInfraEnvEventList = eventList
 		}
 
 	}
@@ -235,21 +225,18 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 	return false, nil
 }
 
-// IsInstalling Determine if the cluster is still installing using the models from the Agent Rest API.
-func (czero *Cluster) IsInstalling(status string) (bool, string) {
-	clusterInstallingStates := map[string]bool{
-		models.ClusterStatusAddingHosts:                 true,
-		models.ClusterStatusCancelled:                   false,
-		models.ClusterStatusInstalling:                  true,
-		models.ClusterStatusInstallingPendingUserAction: false,
-		models.ClusterStatusInsufficient:                false,
-		models.ClusterStatusError:                       false,
-		models.ClusterStatusFinalizing:                  true,
-		models.ClusterStatusPendingForInput:             true,
-		models.ClusterStatusPreparingForInstallation:    true,
-		models.ClusterStatusReady:                       true,
+// GetClusterRestAPIMetadata Retrieve the current cluster metadata from the Agent Rest API
+func (czero *Cluster) GetClusterRestAPIMetadata() (*models.Cluster, error) {
+	// GET /v2/clusters/{cluster_zero_id}
+	if czero.clusterID != nil {
+		getClusterParams := &installer.V2GetClusterParams{ClusterID: *czero.clusterID}
+		result, err := czero.API.Rest.Client.Installer.V2GetCluster(czero.Ctx, getClusterParams)
+		if err != nil {
+			return nil, err
+		}
+		return result.Payload, nil
 	}
-	return clusterInstallingStates[status], status
+	return nil, errors.New("no clusterID known for the cluster")
 }
 
 // HasErrored Determine if the cluster installation has errored using the models from the Agent Rest API.
@@ -267,6 +254,34 @@ func (czero *Cluster) HasErrored(status string) (bool, string) {
 		models.ClusterStatusReady:                       false,
 	}
 	return clusterErrorStates[status], status
+}
+
+// IsInstalling Determine if the cluster is still installing using the models from the Agent Rest API.
+func (czero *Cluster) IsInstalling(status string) (bool, string) {
+	clusterInstallingStates := map[string]bool{
+		models.ClusterStatusAddingHosts:                 true,
+		models.ClusterStatusCancelled:                   false,
+		models.ClusterStatusInstalling:                  true,
+		models.ClusterStatusInstallingPendingUserAction: false,
+		models.ClusterStatusInsufficient:                false,
+		models.ClusterStatusError:                       false,
+		models.ClusterStatusFinalizing:                  true,
+		models.ClusterStatusPendingForInput:             true,
+		models.ClusterStatusPreparingForInstallation:    true,
+		models.ClusterStatusReady:                       true,
+	}
+	return clusterInstallingStates[status], status
+}
+
+// PrintInfraEnvRestAPIEventList Prints the whole event list for debugging
+func (czero *Cluster) PrintInfraEnvRestAPIEventList() {
+	if czero.installHistory.RestAPIInfraEnvEventList != nil {
+		for i := 0; i < len(czero.installHistory.RestAPIInfraEnvEventList); i++ {
+			logrus.Debug(*czero.installHistory.RestAPIInfraEnvEventList[i].Message)
+		}
+	} else {
+		logrus.Debug("No events logged from the Agent Rest API")
+	}
 }
 
 // PrintInstallStatus Print a human friendly message using the models from the Agent Rest API.
