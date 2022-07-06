@@ -1,0 +1,14 @@
+[Unit]
+Description=Agent-based installer hostname update service
+Wants=network-online.target
+After=local-fs.target
+
+[Service]
+ExecStart=/usr/local/bin/set-hostname.sh
+
+KillMode=none
+Type=oneshot
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

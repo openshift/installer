@@ -24,6 +24,7 @@ import (
 )
 
 const manifestPath = "/etc/assisted/manifests"
+const hostnamesPath = "/etc/assisted/hostnames"
 const nmConnectionsPath = "/etc/assisted/network"
 const mirrorPath = "/etc/assisted/mirror"
 
@@ -65,6 +66,7 @@ var (
 		"multipathd.service",
 		"pre-network-manager-config.service",
 		"selinux.service",
+		"set-hostname.service",
 		"start-cluster-installation.service",
 	}
 )
@@ -180,6 +182,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		config.Storage.Files = append(config.Storage.Files, agentConfigFile)
 	}
 
+	addMacAddressToHostnameMappings(&config, agentConfigAsset)
+
 	err = addStaticNetworkConfig(&config, agentManifests.StaticNetworkConfigs)
 	if err != nil {
 		return err
@@ -283,7 +287,25 @@ func addMirrorData(config *igntypes.Config, agentMirror *mirror.AgentMirror) {
 			mirrorFile := ignition.FileFromBytes("/etc/pki/ca-trust/source/anchors/domain.crt",
 				"root", 0600, file.Data)
 			config.Storage.Files = append(config.Storage.Files, mirrorFile)
+		}
+	}
+}
 
+// Creates a file named with a host's MAC address. The desired hostname
+// is the file's content. The files are read by a systemd service that
+// sets the hostname using "hostnamectl set-hostname" when the ISO boots.
+func addMacAddressToHostnameMappings(
+	config *igntypes.Config,
+	agentConfigAsset *agentconfig.Asset) {
+	if agentConfigAsset.Config == nil || len(agentConfigAsset.Config.Spec.Hosts) == 0 {
+		return
+	}
+	for _, host := range agentConfigAsset.Config.Spec.Hosts {
+		if host.Hostname != "" {
+			file := ignition.FileFromBytes(filepath.Join(hostnamesPath,
+				filepath.Base(host.Interfaces[0].MacAddress)),
+				"root", 0600, []byte(host.Hostname))
+			config.Storage.Files = append(config.Storage.Files, file)
 		}
 	}
 }
