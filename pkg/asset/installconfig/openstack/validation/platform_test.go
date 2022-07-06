@@ -34,8 +34,18 @@ func validNetworking() *types.Networking {
 	return &types.Networking{}
 }
 
-func validPlatformCloudInfo() *CloudInfo {
-	return &CloudInfo{
+func withMachinesSubnet(subnetCIDR, allocationPoolStart, allocationPoolEnd string) func(*CloudInfo) {
+	return func(ci *CloudInfo) {
+		ci.MachinesSubnet = &subnets.Subnet{
+			CIDR: subnetCIDR,
+			AllocationPools: []subnets.AllocationPool{
+				{Start: allocationPoolStart, End: allocationPoolEnd},
+			},
+		}
+	}
+}
+func validPlatformCloudInfo(options ...func(*CloudInfo)) *CloudInfo {
+	ci := CloudInfo{
 		ExternalNetwork: &networks.Network{
 			ID:           "71b97520-69af-4c35-8153-cdf827z96e60",
 			Name:         validExternalNetwork,
@@ -51,6 +61,12 @@ func validPlatformCloudInfo() *CloudInfo {
 			Status: "DOWN",
 		},
 	}
+
+	for _, apply := range options {
+		apply(&ci)
+	}
+
+	return &ci
 }
 
 func TestOpenStackPlatformValidation(t *testing.T) {
@@ -221,6 +237,38 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 			networking:     validNetworking(),
 			expectedError:  true,
 			expectedErrMsg: "platform.openstack.ingressVIP: Invalid value: \"2001:db8:0::5\": ingressVIP can not be the same as apiVIP",
+		},
+		{
+			name: "APIVIP inside subnet allocation pool",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.APIVIP = "10.0.128.10"
+				return p
+			}(),
+			cloudInfo: validPlatformCloudInfo(withMachinesSubnet(
+				"10.0.128.0/24",
+				"10.0.128.8",
+				"10.0.128.255",
+			)),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: "platform.openstack.apiVIP: Invalid value: \"10.0.128.10\": apiVIP can not fall in a MachineNetwork allocation pool",
+		},
+		{
+			name: "ingressVIP inside subnet allocation pool",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.IngressVIP = "10.0.128.42"
+				return p
+			}(),
+			cloudInfo: validPlatformCloudInfo(withMachinesSubnet(
+				"10.0.128.0/24",
+				"10.0.128.8",
+				"10.0.128.255",
+			)),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: "platform.openstack.ingressVIP: Invalid value: \"10.0.128.42\": ingressVIP can not fall in a MachineNetwork allocation pool",
 		},
 	}
 

@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"net"
@@ -100,6 +101,32 @@ func validateVIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (al
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, "ingressVIP can not be the same as apiVIP"))
 		}
 	}
+
+	// If the subnet is not found in the CloudInfo object, abandon validation
+	if ci.MachinesSubnet != nil {
+		for _, allocationPool := range ci.MachinesSubnet.AllocationPools {
+			start := net.ParseIP(allocationPool.Start)
+			end := net.ParseIP(allocationPool.End)
+
+			// If the allocation pool is undefined, abandon validation
+			if start == nil || end == nil {
+				continue
+			}
+
+			if apiVIP != nil {
+				if bytes.Compare(start, apiVIP) <= 0 && bytes.Compare(end, apiVIP) >= 0 {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, "apiVIP can not fall in a MachineNetwork allocation pool"))
+				}
+			}
+
+			if ingressVIP != nil {
+				if bytes.Compare(start, ingressVIP) <= 0 && bytes.Compare(end, ingressVIP) >= 0 {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, "ingressVIP can not fall in a MachineNetwork allocation pool"))
+				}
+			}
+		}
+	}
+
 	return allErrs
 }
 
