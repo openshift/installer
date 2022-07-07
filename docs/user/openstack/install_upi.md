@@ -39,8 +39,7 @@ of this method of installation.
     - [Bootstrap Ignition](#bootstrap-ignition)
       - [Edit the Bootstrap Ignition](#edit-the-bootstrap-ignition)
       - [Upload the Boostrap Ignition](#upload-the-boostrap-ignition)
-        - [Example 1: Swift](#example-1-swift)
-        - [Example 2: Glance image service](#example-2-glance-image-service)
+        - [Example: Glance image service](#example-glance-image-service)
     - [Create the Bootstrap Ignition Shim](#create-the-bootstrap-ignition-shim)
       - [Ignition file served by server using self-signed certificate](#ignition-file-served-by-server-using-self-signed-certificate)
     - [Master Ignition](#master-ignition)
@@ -607,8 +606,8 @@ Choose the storage that best fits your needs and availability.
 
 Possible choices include:
 
-* Swift (see Example 1 below);
-* Glance (see Example 2 below);
+* Glance (see the example below);
+* Swift;
 * Amazon S3;
 * Internal web server inside your organization;
 * A throwaway Nova server in `$INFRA_ID-nodes` hosting a static web server exposing the file.
@@ -617,33 +616,15 @@ In this guide, we will assume the file is at the following URL:
 
 https://static.example.com/bootstrap.ign
 
-##### Example 1: Swift
+##### Example: Glance image service
 
-The `swift` client is needed for enabling listing on the container.
-It can be installed by the following command:
+Create the `bootstrap-ign-${INFRA_ID}` image and upload the `bootstrap.ign` file:
 
-```sh
-$ sudo dnf install python3-swiftclient
-```
-
-Create the Swift container (in this example we call it "ocp-$INFRA_ID") and upload `bootstrap.ign`:
 <!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
-$ openstack container create "ocp-${INFRA_ID}" --public
-$ openstack object create "ocp-${INFRA_ID}" bootstrap.ign
-$ export BOOTSTRAP_URL="$(openstack catalog show swift -f json | jq -r '.endpoints[] | select(.interface=="public").url')/ocp-${INFRA_ID}/bootstrap.ign"
+$ openstack image create --disk-format=raw --container-format=bare --file bootstrap.ign "bootstrap-ign-${INFRA_ID}"
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
-
-The URL to be put in the `source` property of the Ignition Shim (see below) will have the following format: `<storage_url>/<container_name>/bootstrap.ign`.
-
-##### Example 2: Glance image service
-
-Create the `<image_name>` image and upload the `bootstrap.ign` file:
-
-```sh
-$ openstack image create --disk-format=raw --container-format=bare --file bootstrap.ign <image_name>
-```
 
 **NOTE**: Make sure the created image has `active` status.
 
@@ -658,25 +639,22 @@ $ openstack catalog show image
 By default Glance service doesn't allow anonymous access to the data. So, if you use Glance to store the ignition config, then you also need to provide a valid auth token in the `ignition.config.merge.httpHeaders` field.
 
 The token can be obtained with this command:
-
+<!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
-openstack token issue -c id -f value
+$ export GLANCE_TOKEN="$(openstack token issue -c id -f value)"
 ```
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 Note that this token can be generated as any OpenStack user with Glance read access; this particular token will only be used for downloading the Ignition file.
 
-The command will return the token to be added to the `ignition.config.merge[0].httpHeaders` property in the Bootstrap Ignition Shim (see [below](#create-the-bootstrap-ignition-shim)):
+The command will return the token to be added to the `ignition.config.merge[0].httpHeaders` property in the Bootstrap Ignition Shim (see [below](#create-the-bootstrap-ignition-shim)).
 
-```json
-"httpHeaders": [
-	{
-		"name": "X-Auth-Token",
-		"value": "<token>"
-	}
-]
+Combine the public URL with the `file` value to get the link to your bootstrap ignition, in the format `<glance_public_url>/v2/images/<image_id>/file`:
+<!--- e2e-openstack-upi: INCLUDE START --->
+```sh
+$ export BOOTSTRAP_URL="$(openstack catalog show glance -f json | jq -r '.endpoints[] | select(.interface=="public").url')$(openstack image show -f value -c file bootstrap-ign-${INFRA_ID})"
 ```
-
-Combine the public URL with the `file` value to get the link to your bootstrap ignition, in the format `<glance_public_url>/v2/images/<image_id>/file`.
+<!--- e2e-openstack-upi: INCLUDE END --->
 
 Example of the link to be put in the `source` property of the Ignition Shim (see below): `https://public.glance.example.com:9292/v2/images/b7e2b84e-15cf-440a-a113-3197518da024/file`.
 
@@ -692,6 +670,12 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
     "config": {
       "merge": [
         {
+	  "httpHeaders": [
+	    {
+	      "name": "X-Auth-Token",
+	      "value": "${GLANCE_TOKEN}"
+	    }
+	  ],
           "source": "${BOOTSTRAP_URL}"
         }
       ]
@@ -702,7 +686,7 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
 
-Change the `ignition.config.merge.source` field to the URL hosting the `bootstrap.ign` file you've uploaded previously.
+Replace the `ignition.config.merge.source` value to the URL hosting the `bootstrap.ign` file you've uploaded previously. If using Glance, the `X-Auth-Token` value with the Glance token.
 
 #### Ignition file served by server using self-signed certificate
 
@@ -941,7 +925,15 @@ The teardown playbook deletes the bootstrap port and server.
 
 Now the bootstrap floating IP can also be destroyed.
 
-If you haven't done so already, you should also disable the bootstrap Ignition URL.
+If you haven't done so already, you should also disable the bootstrap Ignition URL. If you are following the Glance example:
+
+<!--- e2e-openstack-upi: INCLUDE START --->
+```sh
+$ openstack image delete "bootstrap-ign-${INFRA_ID}"
+$ openstack token revoke "$GLANCE_TOKEN"
+```
+<!--- e2e-openstack-upi: INCLUDE END --->
+
 
 ## Compute Nodes
 <!--- e2e-openstack-upi: INCLUDE START --->
