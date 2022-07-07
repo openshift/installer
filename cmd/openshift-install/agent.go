@@ -7,6 +7,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 )
 
@@ -34,6 +35,8 @@ var (
 		},
 		assets: []asset.WritableAsset{
 			&manifests.AgentManifests{},
+			&mirror.RegistriesConf{},
+			&mirror.CaBundle{},
 		},
 	}
 
