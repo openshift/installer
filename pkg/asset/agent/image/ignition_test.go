@@ -6,8 +6,10 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	"github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
+	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -131,4 +133,48 @@ func TestIgnition_addStaticNetworkConfig(t *testing.T) {
 			assert.Equal(t, tc.expectedFileList, fileList)
 		})
 	}
+}
+
+func TestRetrieveRendezvousIP(t *testing.T) {
+	rawConfig := `interfaces: 
+  - ipv4: 
+      address: 
+        - ip: "192.168.122.21"`
+	cases := []struct {
+		Name                 string
+		agentConfig          *agent.Config
+		nmStateConfigs       []*v1beta1.NMStateConfig
+		expectedRendezvousIP string
+	}{
+		{
+			Name: "valid-agent-config-provided-with-RendezvousIP",
+			agentConfig: &agent.Config{
+				Spec: agent.Spec{
+					RendezvousIP: "192.168.122.21",
+				},
+			},
+			expectedRendezvousIP: "192.168.122.21",
+		},
+		{
+			Name: "no-agent-config-provided-so-read-from-nmstateconfig",
+			nmStateConfigs: []*v1beta1.NMStateConfig{
+				{
+					Spec: v1beta1.NMStateConfigSpec{
+						NetConfig: v1beta1.NetConfig{
+							Raw: []byte(rawConfig),
+						},
+					},
+				},
+			},
+			expectedRendezvousIP: "192.168.122.21",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			rendezvousIP, err := retrieveRendezvousIP(tc.agentConfig, tc.nmStateConfigs)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectedRendezvousIP, rendezvousIP)
+		})
+	}
+
 }

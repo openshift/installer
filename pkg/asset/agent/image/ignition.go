@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	"github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
@@ -21,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/types/agent"
 )
 
 const manifestPath = "/etc/assisted/manifests"
@@ -114,7 +116,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		},
 	}
 
-	nodeZeroIP, err := manifests.GetNodeZeroIP(agentManifests.NMStateConfigs)
+	nodeZeroIP, err := retrieveRendezvousIP(agentConfigAsset.Config, agentManifests.NMStateConfigs)
 	if err != nil {
 		return err
 	}
@@ -321,4 +323,19 @@ func addHostConfig(config *igntypes.Config, agentConfig *agentconfig.Asset) erro
 		config.Storage.Files = append(config.Storage.Files, hostConfigFile)
 	}
 	return nil
+}
+
+func retrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.NMStateConfig) (string, error) {
+	var err error
+	var RendezvousIP string
+	// AgentConfig contains RendezvousIP
+	if agentConfig != nil && agentConfig.Spec.RendezvousIP != "" {
+		RendezvousIP = agentConfig.Spec.RendezvousIP
+		logrus.Debug("RendezvousIP from the AgentConfig ", RendezvousIP)
+
+	} else {
+		RendezvousIP, err = manifests.GetNodeZeroIP(nmStateConfigs)
+		logrus.Debug("RendezvousIP from the NMStateConfig ", RendezvousIP)
+	}
+	return RendezvousIP, err
 }
