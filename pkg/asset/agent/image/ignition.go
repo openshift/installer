@@ -43,18 +43,17 @@ type agentTemplateData struct {
 	PullSecret      string
 	// PullSecretToken is token to use for authentication when AUTH_TYPE=rhsso
 	// in assisted-service
-	PullSecretToken       string
-	NodeZeroIP            string
-	AssistedServiceHost   string
-	APIVIP                string
-	ControlPlaneAgents    int
-	WorkerAgents          int
-	ReleaseImages         string
-	ReleaseImage          string
-	ReleaseImageMirror    string
-	MirrorRegistriesMount string
-	CaBundleMount         string
-	InfraEnvID            string
+	PullSecretToken     string
+	NodeZeroIP          string
+	AssistedServiceHost string
+	APIVIP              string
+	ControlPlaneAgents  int
+	WorkerAgents        int
+	ReleaseImages       string
+	ReleaseImage        string
+	ReleaseImageMirror  string
+	HaveMirrorConfig    bool
+	InfraEnvID          string
 }
 
 var (
@@ -131,18 +130,6 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentMirror := &mirror.AgentMirror{}
 	dependencies.Get(agentMirror)
 
-	// Mount files for assisted-service
-	mirrorRegistriesMount := ""
-	caBundleMount := ""
-	for _, file := range agentMirror.FileList {
-		if file.Filename == mirror.RegistriesConfFilename {
-			mirrorRegistriesMount = fmt.Sprintf("-v %s:/etc/containers/registries.conf:z", filepath.Join("/etc/assisted", file.Filename))
-		}
-		if file.Filename == mirror.CaBundleFilename {
-			caBundleMount = fmt.Sprintf("-v %s:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:z", filepath.Join("/etc/assisted", file.Filename))
-		}
-	}
-
 	// Get the mirror for release image
 	releaseImageMirror := ""
 	source := strings.Split(agentManifests.ClusterImageSet.Spec.ReleaseImage, ":")
@@ -162,8 +149,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		releaseImageList,
 		agentManifests.ClusterImageSet.Spec.ReleaseImage,
 		releaseImageMirror,
-		mirrorRegistriesMount,
-		caBundleMount,
+		len(agentMirror.MirrorConfig) > 0,
 		agentManifests.AgentClusterInstall,
 		infraEnvID)
 
@@ -216,8 +202,10 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-func getTemplateData(pullSecret string, nodeZeroIP string, releaseImageList string, releaseImage string,
-	releaseImageMirror string, mirrorRegistriesMount string, caBundleMount string, agentClusterInstall *hiveext.AgentClusterInstall, infraEnvID string) *agentTemplateData {
+func getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage,
+	releaseImageMirror string, haveMirrorConfig bool,
+	agentClusterInstall *hiveext.AgentClusterInstall,
+	infraEnvID string) *agentTemplateData {
 	serviceBaseURL := url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -225,21 +213,20 @@ func getTemplateData(pullSecret string, nodeZeroIP string, releaseImageList stri
 	}
 
 	return &agentTemplateData{
-		ServiceProtocol:       serviceBaseURL.Scheme,
-		ServiceBaseURL:        serviceBaseURL.String(),
-		PullSecret:            pullSecret,
-		PullSecretToken:       "",
-		NodeZeroIP:            serviceBaseURL.Hostname(),
-		AssistedServiceHost:   serviceBaseURL.Host,
-		APIVIP:                agentClusterInstall.Spec.APIVIP,
-		ControlPlaneAgents:    agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
-		WorkerAgents:          agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
-		ReleaseImages:         releaseImageList,
-		ReleaseImage:          releaseImage,
-		ReleaseImageMirror:    releaseImageMirror,
-		MirrorRegistriesMount: mirrorRegistriesMount,
-		CaBundleMount:         caBundleMount,
-		InfraEnvID:            infraEnvID,
+		ServiceProtocol:     serviceBaseURL.Scheme,
+		ServiceBaseURL:      serviceBaseURL.String(),
+		PullSecret:          pullSecret,
+		PullSecretToken:     "",
+		NodeZeroIP:          serviceBaseURL.Hostname(),
+		AssistedServiceHost: serviceBaseURL.Host,
+		APIVIP:              agentClusterInstall.Spec.APIVIP,
+		ControlPlaneAgents:  agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
+		WorkerAgents:        agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
+		ReleaseImages:       releaseImageList,
+		ReleaseImage:        releaseImage,
+		ReleaseImageMirror:  releaseImageMirror,
+		HaveMirrorConfig:    haveMirrorConfig,
+		InfraEnvID:          infraEnvID,
 	}
 }
 
@@ -290,10 +277,12 @@ func addMirrorData(config *igntypes.Config, agentMirror *mirror.AgentMirror) {
 
 	// add mirror files to ignition
 	for _, file := range agentMirror.FileList {
-		// These are required for assisted-service to build the ICSP for openshift-install
-		mirrorFile := ignition.FileFromBytes(filepath.Join(mirrorPath, filepath.Base(file.Filename)),
-			"root", 0600, file.Data)
-		config.Storage.Files = append(config.Storage.Files, mirrorFile)
+		// This is required for assisted-service to build the ICSP for openshift-install
+		if file.Filename == mirror.RegistriesConfFilename {
+			mirrorFile := ignition.FileFromBytes("/etc/containers/registries.conf",
+				"root", 0600, file.Data)
+			config.Storage.Files = append(config.Storage.Files, mirrorFile)
+		}
 
 		// This is required for the agent to run the podman commands to the mirror
 		if file.Filename == mirror.CaBundleFilename {
