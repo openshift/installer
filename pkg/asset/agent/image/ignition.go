@@ -28,7 +28,6 @@ import (
 const manifestPath = "/etc/assisted/manifests"
 const hostnamesPath = "/etc/assisted/hostnames"
 const nmConnectionsPath = "/etc/assisted/network"
-const mirrorPath = "/etc/assisted/mirror"
 
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
@@ -88,7 +87,8 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&tls.AdminKubeConfigSignerCertKey{},
 		&tls.AdminKubeConfigClientCertKey{},
 		&agentconfig.Asset{},
-		&mirror.AgentMirror{},
+		&mirror.RegistriesConf{},
+		&mirror.CaBundle{},
 	}
 }
 
@@ -127,13 +127,14 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	agentMirror := &mirror.AgentMirror{}
-	dependencies.Get(agentMirror)
+	registriesConfig := &mirror.RegistriesConf{}
+	registryCABundle := &mirror.CaBundle{}
+	dependencies.Get(registriesConfig, registryCABundle)
 
 	// Get the mirror for release image
 	releaseImageMirror := ""
 	source := strings.Split(agentManifests.ClusterImageSet.Spec.ReleaseImage, ":")
-	for _, config := range agentMirror.MirrorConfig {
+	for _, config := range registriesConfig.MirrorConfig {
 		if config.Location == source[0] {
 			// include the tag with the build release image
 			releaseImageMirror = fmt.Sprintf("%s:%s", config.Mirror, source[1])
@@ -149,7 +150,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		releaseImageList,
 		agentManifests.ClusterImageSet.Spec.ReleaseImage,
 		releaseImageMirror,
-		len(agentMirror.MirrorConfig) > 0,
+		len(registriesConfig.MirrorConfig) > 0,
 		agentManifests.AgentClusterInstall,
 		infraEnvID)
 
@@ -194,7 +195,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	addTLSData(&config, dependencies)
 
-	addMirrorData(&config, agentMirror)
+	addMirrorData(&config, registriesConfig, registryCABundle)
 
 	addHostConfig(&config, agentConfigAsset)
 
@@ -273,29 +274,20 @@ func addTLSData(config *igntypes.Config, dependencies asset.Parents) {
 	}
 }
 
-func addMirrorData(config *igntypes.Config, agentMirror *mirror.AgentMirror) {
+func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesConf, registryCABundle *mirror.CaBundle) {
 
-	// add mirror files to ignition
-	for _, file := range agentMirror.FileList {
-		// This is required for assisted-service to build the ICSP for openshift-install
-		if file.Filename == mirror.RegistriesConfFilename {
-			mirrorFile := ignition.FileFromBytes("/etc/containers/registries.conf",
-				"root", 0600, file.Data)
-			config.Storage.Files = append(config.Storage.Files, mirrorFile)
-		}
+	// This is required for assisted-service to build the ICSP for openshift-install
+	if registriesConfig.File != nil {
+		registriesFile := ignition.FileFromBytes("/etc/containers/registries.conf",
+			"root", 0600, registriesConfig.File.Data)
+		config.Storage.Files = append(config.Storage.Files, registriesFile)
+	}
 
-		// This is required for the agent to run the podman commands to the mirror
-		if file.Filename == mirror.CaBundleFilename {
-			mirrorFile := ignition.FileFromBytes("/etc/pki/ca-trust/source/anchors/domain.crt",
-				"root", 0600, file.Data)
-			config.Storage.Files = append(config.Storage.Files, mirrorFile)
-		}
-		if file.Filename == mirror.RegistriesConfFilename {
-			registriesFile := ignition.FileFromBytes("/etc/containers/registries.conf",
-				"root", 0600, file.Data)
-			config.Storage.Files = append(config.Storage.Files, registriesFile)
-
-		}
+	// This is required for the agent to run the podman commands to the mirror
+	if registryCABundle.File != nil {
+		caFile := ignition.FileFromBytes("/etc/pki/ca-trust/source/anchors/domain.crt",
+			"root", 0600, registryCABundle.File.Data)
+		config.Storage.Files = append(config.Storage.Files, caFile)
 	}
 }
 
