@@ -52,6 +52,10 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 	if group.Tags == nil {
 		group.Tags = map[string]*string{}
 	}
+	logrus.Debugf("Resource Group: %s", installConfig.Config.Azure.ResourceGroupName)
+	logrus.Debugf("Subscription ID: %s", session.Credentials.SubscriptionID)
+	logrus.Debugf("Tenant ID: %s", session.Credentials.TenantID)
+	logrus.Debugf("Infra ID: %s", clusterID)
 	group.Tags[fmt.Sprintf("kubernetes.io_cluster.%s", clusterID)] = to.StringPtr("owned")
 	logrus.Debugf("Tagging %s with kubernetes.io/cluster/%s: shared", installConfig.Config.Azure.ResourceGroupName, clusterID)
 	_, err = client.Update(ctx, installConfig.Config.Azure.ResourceGroupName, resources.GroupPatchable{

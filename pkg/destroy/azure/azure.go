@@ -90,6 +90,10 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	if len(group) == 0 {
 		group = metadata.InfraID + "-rg"
 	}
+	logger.Debugf("Resource Group: %s", group)
+	logger.Debugf("Subscription ID: %s", session.Credentials.SubscriptionID)
+	logger.Debugf("Tenant ID: %s", session.Credentials.TenantID)
+	logger.Debugf("Infra ID: %s", metadata.InfraID)
 
 	return &ClusterUninstaller{
 		SubscriptionID:              session.Credentials.SubscriptionID,
@@ -224,7 +228,7 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 	var errs []error
 
 	zonesPage, err := dnsClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
-	logger.Debug(err)
+	logger.Debugf("%v", zonesPage.Response().Header)
 	if err != nil {
 		if zonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
 			logger.Debug("already deleted the AzureStack zones")
@@ -282,6 +286,7 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 	var errs []error
 
 	zonesPage, err := dnsClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
+	logger.Debugf("%v", zonesPage.Response().Header)
 	if err != nil {
 		if zonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
 			logger.Debug("already deleted")
@@ -313,6 +318,7 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 	}
 
 	privateZonesPage, err := privateDNSClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
+	logger.Debugf("%v", privateZonesPage.Response().Header)
 	if err != nil {
 		if privateZonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
 			logger.Debug("already deleted")
@@ -465,6 +471,7 @@ func deleteResourceGroup(ctx context.Context, client resources.GroupsClient, log
 	defer cancel()
 
 	delFuture, err := client.Delete(ctx, name)
+	logger.Debugf("%v", delFuture.Response().Header)
 	if err == nil {
 		err = delFuture.WaitForCompletionRef(ctx, client.Client)
 	}
