@@ -26,7 +26,7 @@ copy_terraform_to_mirror() {
   cp "${PWD}/terraform/bin/${TARGET_OS_ARCH}/terraform" "${PWD}/pkg/terraform/providers/mirror/terraform/"
 }
 
-minimum_go_version=1.17
+minimum_go_version=1.18
 current_go_version=$(go version | cut -d " " -f 3)
 
 if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version")" ]; then

@@ -20,11 +20,11 @@ if [ "$IS_CONTAINER" != "" ]; then
   verify_module "${PWD}"
 
   # Verify the sub-modules for the terraform providers.
-  # The -compat=1.17 is needed for the openstack provider. The provider uses golang.org/x/mod, which go 1.17 selects
+  # The -compat=1.18 is needed for the openstack provider. The provider uses golang.org/x/mod, which go 1.18 selects
   # as v0.3.0 but go 1.16 selects as v0.4.2.
   find terraform/providers -maxdepth 1 -mindepth 1 -print0 | while read -r -d '' dir
   do
-    verify_module "$dir" "1.17"
+    verify_module "$dir" "1.18"
   done
 
   # Verify the terraform sub-module.
@@ -36,6 +36,6 @@ else
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
     --workdir /go/src/github.com/openshift/installer \
-    docker.io/golang:1.17 \
+    docker.io/golang:1.18 \
     ./hack/verify-vendor.sh "${@}"
 fi
