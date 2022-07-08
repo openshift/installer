@@ -47,7 +47,16 @@ func (i *CaBundle) Generate(dependencies asset.Parents) error {
 	if installConfig.Config.AdditionalTrustBundle == "" {
 		return nil
 	}
-	data, err := manifests.ParseCertificates(installConfig.Config.AdditionalTrustBundle)
+
+	return i.parseCertificates(installConfig.Config.AdditionalTrustBundle)
+}
+
+func (i *CaBundle) parseCertificates(certs string) error {
+	if len(certs) == 0 {
+		return nil
+	}
+
+	data, err := manifests.ParseCertificates(certs)
 	if err != nil {
 		return err
 	}
@@ -85,6 +94,5 @@ func (i *CaBundle) Load(f asset.FileFetcher) (bool, error) {
 		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", CaBundleFilename))
 	}
 
-	i.File = file
-	return true, nil
+	return true, i.parseCertificates(string(file.Data))
 }

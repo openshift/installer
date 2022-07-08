@@ -146,10 +146,39 @@ func TestCaBundle_LoadedFromDisk(t *testing.T) {
 			name: "valid-config-file",
 			data: `
 -----BEGIN CERTIFICATE-----
-MIIDvTCCAqWgAwIBAgICEAA....
------ END CERTIFICATE -----`,
+MIIDZTCCAk2gAwIBAgIURbA8lR+5xlJZUoOXK66AHFWd3uswDQYJKoZIhvcNAQEL
+BQAwQjELMAkGA1UEBhMCWFgxFTATBgNVBAcMDERlZmF1bHQgQ2l0eTEcMBoGA1UE
+CgwTRGVmYXVsdCBDb21wYW55IEx0ZDAeFw0yMjA3MDgxOTUzMTVaFw0yMjA4MDcx
+OTUzMTVaMEIxCzAJBgNVBAYTAlhYMRUwEwYDVQQHDAxEZWZhdWx0IENpdHkxHDAa
+BgNVBAoME0RlZmF1bHQgQ29tcGFueSBMdGQwggEiMA0GCSqGSIb3DQEBAQUAA4IB
+DwAwggEKAoIBAQCroH9c2PLWI0O/nBrmKtS2IuReyWaR0DOMJY7C/vc12l9zlH0D
+xTOUfEtdqRktjVsUn1vIIiFakxd0QLIPcMyKplmbavIBUQp+MZr0pNVX+lwcctbA
+7FVHEnbWYNVepoV7kZkTVvMXAqFylMXU4gDmuZzIxhVMMxjialJNED+3ngqvX4w3
+4q4KSk1ytaHGwjREIErwPJjv5PK48KVJL2nlCuA+tbxu1r8eVkOUvZlxAuNNXk/U
+mf3QX5EiUlTtsmRAct6fIUT3jkrsHSS/tZ66EYJ9Q0OBoX2lL/Msmi27OQvA7uYn
+uqYlwJzU43tCsiip9E9z/UrLcMYyXx3oPJyPAgMBAAGjUzBRMB0GA1UdDgQWBBTI
+ahE8DDT4T1vta6cXVVaRjnel0zAfBgNVHSMEGDAWgBTIahE8DDT4T1vta6cXVVaR
+jnel0zAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCQbsMtPFkq
+PxwOAIds3IoupuyIKmsF32ECEH/OlS+7Sj7MUJnGTQrwgjrsVS5sl8AmnGx4hPdL
+VX98nEcKMNkph3Hkvh4EvgjSfmYGUXuJBcYU5jqNQrlrGv37rEf5FnvdHV1F3MG8
+A0Mj0TLtcTdtaJFoOrnQuD/k0/1d+cMiYGTSaT5XK/unARqGEMd4BlWPh5P3SflV
+/Vy2hHlMpv7OcZ8yaAI3htENZLus+L5kjHWKu6dxlPHKu6ef5k64su2LTNE07Vr9
+S655uiFW5AX2wDVUcQEDCOiEn6SI9DTt5oQjWPMxPf+rEyfQ2f1QwVez7cyr6Qc5
+OIUk31HnM/Fj
+-----END CERTIFICATE-----
+`,
 			expectedFound: true,
 			expectedError: "",
+		},
+		{
+			name: "invalid-config-file",
+			data: `
+-----BEGIN CERTIFICATE-----
+nope
+-----END CERTIFICATE-----
+`,
+			expectedFound: true,
+			expectedError: "x509: malformed certificate",
 		},
 		{
 			name:          "empty",
