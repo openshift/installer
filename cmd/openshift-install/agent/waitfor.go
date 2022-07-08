@@ -1,10 +1,18 @@
 package agent
 
 import (
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	agentcmd "github.com/openshift/installer/pkg/agent"
+	agentpkg "github.com/openshift/installer/pkg/agent"
+)
+
+const (
+	exitCodeInstallConfigError = iota + 3
+	exitCodeInfrastructureFailed
+	exitCodeBootstrapFailed
+	exitCodeInstallFailed
 )
 
 // NewWaitForCmd create the commands for waiting the completion of the agent based cluster installation.
@@ -18,25 +26,39 @@ func NewWaitForCmd() *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(newWaitForInstallCompleteCmd())
+	cmd.AddCommand(newWaitForBootstrapCompleteCmd())
 	return cmd
 }
 
-func newWaitForInstallCompleteCmd() *cobra.Command {
+func newWaitForBootstrapCompleteCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "install-complete",
-		Short: "Wait until the cluster is ready",
+		Use:   "bootstrap-complete",
+		Short: "Wait until the cluster bootstrap is complete",
 		Args:  cobra.ExactArgs(0),
-		Run: func(_ *cobra.Command, _ []string) {
-			err := runWaitForInstallCompleteCmd()
+		Run: func(cmd *cobra.Command, args []string) {
+			assetDir := cmd.Flags().Lookup("dir").Value.String()
+			logrus.Debugf("asset directory: %s", assetDir)
+			if len(assetDir) == 0 {
+				logrus.Fatal("No cluster installation directory found")
+			}
+			cluster, err := runWaitForBootstrapCompleteCmd(assetDir)
 			if err != nil {
-				logrus.Fatal(err)
+				logrus.Debug("Printing the event list gathered from the Agent Rest API")
+				cluster.PrintInfraEnvRestAPIEventList()
+				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
+				if err2 != nil {
+					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
+				}
+				logrus.Info("Use the following commands to gather logs from the cluster")
+				logrus.Info("openshift-install gather bootstrap --help")
+				logrus.Error(errors.Wrap(err, "Bootstrap failed to complete: "))
+				logrus.Exit(exitCodeBootstrapFailed)
 			}
 		},
 	}
-
 }
 
-func runWaitForInstallCompleteCmd() error {
-	return agentcmd.WaitFor()
+func runWaitForBootstrapCompleteCmd(directory string) (*agentpkg.Cluster, error) {
+	cluster, err := agentpkg.WaitForBootstrapComplete(directory)
+	return cluster, err
 }
