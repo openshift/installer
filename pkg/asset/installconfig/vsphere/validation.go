@@ -92,8 +92,9 @@ func validateNetwork(client *vim25.Client, finder Finder, p *vsphere.Platform, f
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, p.Datacenter, err.Error())}
 	}
-
-	_, err = GetNetworkMoID(ctx, client, finder, dataCenter.Name(), p.Cluster, p.Network)
+	// Remove any trailing backslash before getting networkMoID
+	trimmedPath := strings.TrimPrefix(dataCenter.InventoryPath, "/")
+	_, err = GetNetworkMoID(ctx, client, finder, trimmedPath, p.Cluster, p.Network)
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, p.Network, err.Error())}
 	}

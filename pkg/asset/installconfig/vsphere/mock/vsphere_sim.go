@@ -19,6 +19,9 @@ import (
 //                to retrieve a vim25.client which will connect to and trust this simulator
 func StartSimulator() *simulator.Server {
 	model := simulator.VPX()
+	model.Folder = 1
+	model.Datacenter = 2
+	model.OpaqueNetwork = 1
 	model.Create()
 	model.Service.TLS = new(tls.Config)
 	model.Service.TLS.ServerName = "127.0.0.1"
