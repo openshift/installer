@@ -7,6 +7,7 @@ import (
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 )
@@ -32,13 +33,13 @@ func (*AgentClusterInstall) Name() string {
 // the asset.
 func (*AgentClusterInstall) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		// &installconfig.InstallConfig{},
+		&agent.OptionalInstallConfig{},
 	}
 }
 
 // Generate generates the AgentClusterInstall manifest.
 func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
-	// installConfig := &installconfig.InstallConfig{}
+	// installConfig := &agent.OptionalInstallConfig{}
 	// dependencies.Get(installConfig)
 
 	// agentClusterInstall := &hiveext.AgentClusterInstall{

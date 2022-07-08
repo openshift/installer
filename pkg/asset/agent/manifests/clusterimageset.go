@@ -7,6 +7,7 @@ import (
 
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -35,7 +36,7 @@ func (*ClusterImageSet) Name() string {
 func (*ClusterImageSet) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		// &releaseimage.Image{},
-		// &installconfig.InstallConfig{},
+		&agent.OptionalInstallConfig{},
 	}
 }
 
@@ -43,7 +44,7 @@ func (*ClusterImageSet) Dependencies() []asset.Asset {
 func (a *ClusterImageSet) Generate(dependencies asset.Parents) error {
 
 	// releaseImage := &releaseimage.Image{}
-	// installConfig := &installconfig.InstallConfig{}
+	// installConfig := &agent.OptionalInstallConfig{}
 	// dependencies.Get(releaseImage, installConfig)
 
 	// currentVersion, err := version.Version()

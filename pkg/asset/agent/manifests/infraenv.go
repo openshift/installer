@@ -11,6 +11,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 )
 
 var (
@@ -34,7 +35,7 @@ func (*InfraEnv) Name() string {
 // the asset.
 func (*InfraEnv) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		// &installconfig.InstallConfig{},
+		&agent.OptionalInstallConfig{},
 		// &AgentPullSecret{},
 	}
 }
@@ -42,7 +43,7 @@ func (*InfraEnv) Dependencies() []asset.Asset {
 // Generate generates the InfraEnv manifest.
 func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 
-	// installConfig := &installconfig.InstallConfig{}
+	// installConfig := &agent.OptionalInstallConfig{}
 	// agentPullSecret := &AgentPullSecret{}
 	// dependencies.Get(installConfig, agentPullSecret)
 

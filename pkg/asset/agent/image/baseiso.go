@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/rhcos"
 )
 
@@ -87,8 +88,7 @@ func getIsoFromReleasePayload() (string, error) {
 // Dependencies returns dependencies used by the asset.
 func (i *BaseIso) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		// TODO - will need to depend on installConfig for disconnected image registry
-		// &installconfig.InstallConfig{},
+		&agent.OptionalInstallConfig{},
 	}
 }
 
@@ -96,7 +96,7 @@ func (i *BaseIso) Dependencies() []asset.Asset {
 func (i *BaseIso) Generate(p asset.Parents) error {
 
 	// TODO - if image registry location is defined in InstallConfig,
-	// ic := &installconfig.InstallConfig{}
+	// ic := &agent.OptionalInstallConfig{}
 	// p.Get(ic)
 	// use the GetIso function to get the BaseIso from the release payload
 	isoGetter := newGetIso(GetIsoPluggable)

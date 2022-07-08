@@ -10,6 +10,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 )
 
 var (
@@ -33,7 +34,7 @@ func (*ClusterDeployment) Name() string {
 // the asset.
 func (*ClusterDeployment) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		// TODO: add dependency to InstallConfig when generation is implemented
+		&agent.OptionalInstallConfig{},
 	}
 }
 

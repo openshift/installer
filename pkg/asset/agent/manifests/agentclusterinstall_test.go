@@ -31,7 +31,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		// {
 		// 	name: "default",
 		// 	dependencies: []asset.Asset{
-		// 		&installconfig.InstallConfig{
+		// 		&agent.OptionalInstallConfig{
 		// 			Config: &types.InstallConfig{
 		// 				ObjectMeta: v1.ObjectMeta{
 		// 					Name:      "ocp-edge-cluster-0",
@@ -104,7 +104,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 
 // func TestAgentClusterInstall_Generate(t *testing.T) {
 
-// 	installConfig := &installconfig.InstallConfig{
+// 	installConfig := &agent.OptionalInstallConfig{
 // 		Config: &types.InstallConfig{
 // 			ObjectMeta: v1.ObjectMeta{
 // 				Name:      "cluster0-name",
