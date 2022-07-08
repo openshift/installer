@@ -50,6 +50,7 @@ type agentTemplateData struct {
 	ControlPlaneAgents    int
 	WorkerAgents          int
 	ReleaseImages         string
+	ReleaseImage          string
 	ReleaseImageMirror    string
 	MirrorRegistriesMount string
 	CaBundleMount         string
@@ -159,6 +160,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		agentManifests.GetPullSecretData(),
 		nodeZeroIP,
 		releaseImageList,
+		agentManifests.ClusterImageSet.Spec.ReleaseImage,
 		releaseImageMirror,
 		mirrorRegistriesMount,
 		caBundleMount,
@@ -166,6 +168,14 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		infraEnvID)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
+	if err != nil {
+		return err
+	}
+
+	// Use bootstrap script to get container images
+	err = bootstrap.AddStorageFiles(&config, "/usr/local/bin/release-image.sh",
+		"bootstrap/files/usr/local/bin/release-image.sh.template",
+		struct{ ReleaseImage string }{ReleaseImage: agentManifests.ClusterImageSet.Spec.ReleaseImage})
 	if err != nil {
 		return err
 	}
@@ -206,7 +216,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-func getTemplateData(pullSecret string, nodeZeroIP string, releaseImageList string,
+func getTemplateData(pullSecret string, nodeZeroIP string, releaseImageList string, releaseImage string,
 	releaseImageMirror string, mirrorRegistriesMount string, caBundleMount string, agentClusterInstall *hiveext.AgentClusterInstall, infraEnvID string) *agentTemplateData {
 	serviceBaseURL := url.URL{
 		Scheme: "http",
@@ -225,6 +235,7 @@ func getTemplateData(pullSecret string, nodeZeroIP string, releaseImageList stri
 		ControlPlaneAgents:    agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
 		WorkerAgents:          agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
 		ReleaseImages:         releaseImageList,
+		ReleaseImage:          releaseImage,
 		ReleaseImageMirror:    releaseImageMirror,
 		MirrorRegistriesMount: mirrorRegistriesMount,
 		CaBundleMount:         caBundleMount,
@@ -289,6 +300,12 @@ func addMirrorData(config *igntypes.Config, agentMirror *mirror.AgentMirror) {
 			mirrorFile := ignition.FileFromBytes("/etc/pki/ca-trust/source/anchors/domain.crt",
 				"root", 0600, file.Data)
 			config.Storage.Files = append(config.Storage.Files, mirrorFile)
+		}
+		if file.Filename == mirror.RegistriesConfFilename {
+			registriesFile := ignition.FileFromBytes("/etc/containers/registries.conf",
+				"root", 0600, file.Data)
+			config.Storage.Files = append(config.Storage.Files, registriesFile)
+
 		}
 	}
 }

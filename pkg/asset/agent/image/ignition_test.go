@@ -46,6 +46,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 			},
 		},
 	}
+	releaseImage := "quay.io:443/openshift-release-dev/ocp-release:4.10.0-rc.1-x86_64"
 	releaseImageMirror := "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 	mirrorRegistriesMount := "-v /etc/assisted/mirror/registries.conf:/etc/containers/registries.conf"
 	caBundleMount := "-v /etc/assisted/mirror/ca-bundle.crt:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"
@@ -53,7 +54,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 
 	releaseImageList, err := releaseImageList(clusterImageSet.Spec.ReleaseImage, "x86_64")
 	assert.NoError(t, err)
-	templateData := getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImageMirror, mirrorRegistriesMount, caBundleMount, agentClusterInstall, infraEnvID)
+	templateData := getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage, releaseImageMirror, mirrorRegistriesMount, caBundleMount, agentClusterInstall, infraEnvID)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, "http://"+nodeZeroIP+":8090/", templateData.ServiceBaseURL)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -64,6 +65,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, templateData.ControlPlaneAgents)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, templateData.WorkerAgents)
 	assert.Equal(t, releaseImageList, templateData.ReleaseImages)
+	assert.Equal(t, releaseImage, templateData.ReleaseImage)
 	assert.Equal(t, releaseImageMirror, templateData.ReleaseImageMirror)
 	assert.Equal(t, mirrorRegistriesMount, templateData.MirrorRegistriesMount)
 	assert.Equal(t, caBundleMount, templateData.CaBundleMount)
