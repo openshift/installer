@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
 	"io"
 	"io/ioutil"
 	"net"
@@ -78,7 +79,7 @@ type bootstrapTemplateData struct {
 	BootstrapInPlace      *types.BootstrapInPlace
 	UseIPv6ForNodeIP      bool
 	IsOKD                 bool
-	BootstrapNodeIP       string
+	MachineCidr           string
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -257,18 +258,16 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 
 	// Generate platform-specific bootstrap data
 	var platformData platformTemplateData
+	var machineCidr string
 
 	switch installConfig.Config.Platform.Name() {
 	case baremetaltypes.Name:
 		platformData.BareMetal = baremetal.GetTemplateData(installConfig.Config.Platform.BareMetal, installConfig.Config.MachineNetwork, ironicCreds.Username, ironicCreds.Password)
+		machineCidr = installConfig.Config.MachineNetwork[0].CIDR.String()
 	case vspheretypes.Name:
 		platformData.VSphere = vsphere.GetTemplateData(installConfig.Config.Platform.VSphere)
-	}
-
-	bootstrapNodeIP := os.Getenv("OPENSHIFT_INSTALL_BOOTSTRAP_NODE_IP")
-	if bootstrapNodeIP != "" && net.ParseIP(bootstrapNodeIP) == nil {
-		logrus.Warnf("OPENSHIFT_INSTALL_BOOTSTRAP_NODE_IP must have valid ip address, given %s. Skipping it", bootstrapNodeIP)
-		bootstrapNodeIP = ""
+	case nonetypes.Name:
+		machineCidr = installConfig.Config.MachineNetwork[0].CIDR.String()
 	}
 
 	var APIIntVIPonIPv6 bool
@@ -294,17 +293,17 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		FIPS:                  installConfig.Config.FIPS,
 		PullSecret:            installConfig.Config.PullSecret,
 		SSHKey:                installConfig.Config.SSHKey,
-		ReleaseImage:          releaseImage.PullSpec,
-		EtcdCluster:           strings.Join(etcdEndpoints, ","),
-		Proxy:                 &proxy.Config.Status,
-		Registries:            registries,
-		BootImage:             string(*rhcosImage),
-		PlatformData:          platformData,
-		ClusterProfile:        clusterProfile,
-		BootstrapInPlace:      bootstrapInPlaceConfig,
-		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
-		IsOKD:                 installConfig.Config.IsOKD(),
-		BootstrapNodeIP:       bootstrapNodeIP,
+		ReleaseImage:     releaseImage.PullSpec,
+		EtcdCluster:      strings.Join(etcdEndpoints, ","),
+		Proxy:            &proxy.Config.Status,
+		Registries:       registries,
+		BootImage:        string(*rhcosImage),
+		PlatformData:     platformData,
+		ClusterProfile:   clusterProfile,
+		BootstrapInPlace: bootstrapInPlaceConfig,
+		UseIPv6ForNodeIP: APIIntVIPonIPv6,
+		IsOKD:            installConfig.Config.IsOKD(),
+		MachineCidr:      machineCidr,
 	}
 }
 

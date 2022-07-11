@@ -3,15 +3,23 @@
 # shellcheck disable=SC1091  # using path on bootstrap machine
 . /usr/local/bin/bootstrap-service-record.sh
 
+{{- if .MachineCidr }}
+{{- if .UseIPv6ForNodeIP }}
+KUBELET_IP=$(ip -6 route show | grep -i "{{.MachineCidr}}" | awk '{ if ($2 == "dev") { print $9; exit } }')
+{{- else}}
+KUBELET_IP=$(ip route show | grep -i "{{.MachineCidr}}" | awk '{ if ($2 == "dev") { print $9; exit } }')
+{{- end}}
+{{- end}}
+
 /usr/bin/hyperkube \
   kubelet \
     --anonymous-auth=false \
     --container-runtime=remote \
     --container-runtime-endpoint=/var/run/crio/crio.sock \
     --runtime-request-timeout="${KUBELET_RUNTIME_REQUEST_TIMEOUT}" \
-{{- if .BootstrapNodeIP }}
-    --node-ip="{{.BootstrapNodeIP}}" \
-    --address="{{.BootstrapNodeIP}}" \
+{{- if .MachineCidr }}
+    --node-ip="${KUBELET_IP}" \
+    --address="${KUBELET_IP}" \
 {{- else}}
 {{- if .UseIPv6ForNodeIP }}
     --node-ip=:: \
