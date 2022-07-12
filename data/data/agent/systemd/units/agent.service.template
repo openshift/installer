@@ -13,7 +13,7 @@ Environment=no_proxy=
 # https://github.com/openshift/assisted-service/blob/master/internal/ignition/ignition.go#L1381
 Environment=PULL_SECRET_TOKEN={{.PullSecretToken}}
 TimeoutStartSec=3000
-ExecStartPre=podman run --privileged --rm -v /usr/local/bin:/hostbin quay.io/edge-infrastructure/assisted-installer-agent:latest cp /usr/bin/agent /hostbin
+ExecStartPre=/usr/local/bin/extract-agent.sh
 ExecStart=/usr/local/bin/start-agent.sh
 
 [Unit]
