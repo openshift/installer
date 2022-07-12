@@ -42,7 +42,24 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	numOfAZs := int32(len(mpool.Zones))
 	var machinesets []*clusterapi.MachineSet
 
-	for idx, az := range mpool.Zones {
+	var zones []string
+	if mpool.FailureDomainNames != nil {
+		for _, name := range mpool.FailureDomainNames {
+			if len(platform.FailureDomains) > 0 {
+				for _, domain := range platform.FailureDomains {
+					if domain.Name == name {
+						zones = append(zones, domain.ComputeZone)
+						volumeAZs = append(volumeAZs, domain.StorageZone)
+						break
+					}
+				}
+			}
+		}
+	} else {
+		zones = mpool.Zones
+	}
+
+	for idx, az := range zones {
 		replicas := int32(total / numOfAZs)
 		if int32(idx) < total%numOfAZs {
 			replicas++

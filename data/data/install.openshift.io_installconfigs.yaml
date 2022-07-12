@@ -1153,6 +1153,12 @@ spec:
                         items:
                           type: string
                         type: array
+                      failureDomainNames:
+                        description: failureDomainNames contains a list of failure domains
+                          defined by `failureDomains`.
+                        items:
+                          type: string
+                        type: array
                       rootVolume:
                         description: RootVolume defines the root volume for instances
                           in the machine pool. The instances use ephemeral disks if
@@ -1188,12 +1194,6 @@ spec:
                         - anti-affinity
                         - soft-anti-affinity
                         type: string
-                      subnets:
-                        description: Subnets is the list of subnets where the instances
-                          should be connected to as a primary interface. This option is not
-                          compatible with "machinesSubnet".
-                        items: string
-                        type: array
                       type:
                         description: FlavorName defines the OpenStack Nova flavor.
                           eg. m1.large
@@ -2764,6 +2764,35 @@ spec:
                     description: ExternalNetwork is name of the external network in
                       your OpenStack cluster.
                     type: string
+                  failureDomains:
+                    description: FailureDomains contains a list of domains and their
+                      specifications.
+                    items:
+                      description: FailureDomain stores the configuration for
+                        the domain.
+                      properties:
+                        name:
+                          description: Name is the name of the failure domain.
+                          type: string
+                        computeZone:
+                          description: Name of the availability zone where the instances
+                            should be deployed. If no zone is provided, all instances
+                            will be deployed on OpenStack Nova default availability zone.
+                          type: string
+                        storageZone:
+                          description: Name of the availability zone where the volumes
+                            should be deployed. If no zone is provided, all instances
+                            will be deployed on OpenStack Cinder default availability zone.
+                          type: string
+                        subnet:
+                          description: OpenStack Neutron subnet UUID where the instances
+                            should be connected to as a primary interface.
+                          type: string
+                      required:
+                      - name
+                      - subnet
+                      type: object
+                    type: array
                   ingressFloatingIP:
                     description: IngressFloatingIP is the ID of an available floating
                       IP in your OpenStack cluster that will be associated with the

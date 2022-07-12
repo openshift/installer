@@ -114,4 +114,8 @@ type Platform struct {
 	// The subnet and network specified in MachinesSubnet will not be deleted or modified by the installer.
 	// +optional
 	MachinesSubnet string `json:"machinesSubnet,omitempty"`
+
+	// FailureDomains configures failure domain information for the OpenStack platform
+	// +optional
+	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
 }

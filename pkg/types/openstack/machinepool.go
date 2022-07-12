@@ -32,12 +32,8 @@ type MachinePool struct {
 	// +optional
 	Zones []string `json:"zones,omitempty"`
 
-	// Subnets is the list of subnets where the instances should be deployed.
-	// By setting this, the installer will no longer create a network and subnet.
-	// The subnets specified in Subnets will not be deleted or modified by the installer.
-	// Cannot be used together with Platform.MachinesSubnet.
-	// +optional
-	Subnets []string `json:"subnets,omitempty"`
+	// FailureDomainNames will be used to list all domains to deploy a machine pool.
+	FailureDomainNames []string `json:"failureDomainNames,omitempty"`
 }
 
 // Set sets the values from `required` to `o`.
