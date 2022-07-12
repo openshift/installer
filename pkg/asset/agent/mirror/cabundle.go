@@ -45,6 +45,10 @@ func (i *CaBundle) Generate(dependencies asset.Parents) error {
 	}
 
 	if installConfig.Config.AdditionalTrustBundle == "" {
+		i.File = &asset.File{
+			Filename: CaBundleFilename,
+			Data:     []byte{},
+		}
 		return nil
 	}
 

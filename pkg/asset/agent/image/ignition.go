@@ -284,7 +284,7 @@ func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesC
 	}
 
 	// This is required for the agent to run the podman commands to the mirror
-	if registryCABundle.File != nil {
+	if registryCABundle.File != nil && len(registryCABundle.File.Data) > 0 {
 		caFile := ignition.FileFromBytes("/etc/pki/ca-trust/source/anchors/domain.crt",
 			"root", 0600, registryCABundle.File.Data)
 		config.Storage.Files = append(config.Storage.Files, caFile)

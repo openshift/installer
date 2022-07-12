@@ -126,7 +126,12 @@ OIUk31HnM/Fj
 					assert.Equal(t, CaBundleFilename, files[0].Filename)
 					assert.Equal(t, tc.expectedConfig, string(files[0].Data))
 				} else {
-					assert.Empty(t, files)
+					if len(files) == 1 {
+						assert.Equal(t, CaBundleFilename, files[0].Filename)
+						assert.Equal(t, []byte{}, files[0].Data)
+					} else {
+						assert.Empty(t, files)
+					}
 				}
 			}
 		})
