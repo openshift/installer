@@ -74,6 +74,12 @@ func (o *ClusterUninstaller) deleteDNSRecord(item cloudResource) error {
 // destroyDNSRecords removes all DNS record resources that have a name containing
 // the cluster's infra ID.
 func (o *ClusterUninstaller) destroyDNSRecords() error {
+	// If CIS CRN is not set, skip DNS records cleanup
+	if len(o.CISInstanceCRN) == 0 {
+		o.Logger.Info("Skipping deletion of DNS Records, no CIS CRN found")
+		return nil
+	}
+
 	found, err := o.listDNSRecords()
 	if err != nil {
 		return err
