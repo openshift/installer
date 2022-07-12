@@ -8,11 +8,13 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	hivev1agent "github.com/openshift/hive/apis/hive/v1/agent"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/manifests/unittest"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 func TestClusterDeployment_Generate(t *testing.T) {
@@ -25,7 +27,49 @@ func TestClusterDeployment_Generate(t *testing.T) {
 	}{
 		{
 			name:          "missing-config",
+			dependencies:  unittest.GetEmptyTestAssets(),
 			expectedError: "missing configuration or manifest file",
+		},
+		{
+			name:         "default",
+			dependencies: unittest.GetTestAssetsWithValidInstallConfig(),
+			expectedConfig: &hivev1.ClusterDeployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "ClusterDeployment",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ocp-edge-cluster-0",
+					Namespace: "cluster-0",
+				},
+				Spec: hivev1.ClusterDeploymentSpec{
+					ClusterName: "ocp-edge-cluster-0",
+					BaseDomain:  "testing.com",
+					Platform: hivev1.Platform{
+						AgentBareMetal: &hivev1agent.BareMetalPlatform{
+							AgentSelector: metav1.LabelSelector{
+								MatchLabels: make(map[string]string),
+							},
+						},
+					},
+					PullSecretRef: &corev1.LocalObjectReference{Name: "pull-secret"},
+					ControlPlaneConfig: hivev1.ControlPlaneConfigSpec{
+						ServingCertificates: hivev1.ControlPlaneServingCertificateSpec{
+							// Default: "",
+							// Additional: []hivev1.ControlPlaneAdditionalCertificate{{
+							// 	Name:   clusterDeploymentFilename,
+							// 	Domain: "",
+							// }},
+						},
+					},
+					ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
+						Group:   "extensions.hive.openshift.io",
+						Version: "v1beta1",
+						Kind:    "AgentClusterInstall",
+						Name:    "agent-cluster-install",
+					},
+				},
+			},
 		},
 	}
 	for _, tc := range cases {
@@ -41,6 +85,19 @@ func TestClusterDeployment_Generate(t *testing.T) {
 				assert.Equal(t, tc.expectedError, err.Error())
 			} else {
 				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedConfig, asset.Config)
+				assert.NotEmpty(t, asset.Files())
+
+				configFile := asset.Files()[0]
+				assert.Equal(t, "cluster-manifests/cluster-deployment.yaml", configFile.Filename)
+
+				var actualConfig hivev1.ClusterDeployment
+				err = yaml.Unmarshal(configFile.Data, &actualConfig)
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedConfig.Spec.ClusterName, actualConfig.Spec.ClusterName)
+				assert.Equal(t, tc.expectedConfig.Spec.BaseDomain, actualConfig.Spec.BaseDomain)
+				assert.Equal(t, tc.expectedConfig.Spec.PullSecretRef, actualConfig.Spec.PullSecretRef)
+				assert.Equal(t, tc.expectedConfig.Spec.ClusterInstallRef, actualConfig.Spec.ClusterInstallRef)
 			}
 		})
 	}
