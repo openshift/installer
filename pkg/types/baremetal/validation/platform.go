@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/ipnet"
@@ -280,6 +281,17 @@ func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorLis
 	return platformErrs
 }
 
+func validateHostsName(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
+	for idx, host := range hosts {
+		validationMessages := validation.IsDNS1123Subdomain(host.Name)
+		if len(validationMessages) != 0 {
+			msg := strings.Join(validationMessages, "\n")
+			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("name"), host.Name, msg))
+		}
+	}
+	return
+}
+
 // ensure that the number of hosts is enough to cover the ControlPlane
 // and Compute replicas. Hosts without role will be considered eligible
 // for the ControlPlane or Compute requirements.
@@ -435,6 +447,8 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 
 	allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath.Child("Hosts"))...)
 	allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath.Child("Hosts"))...)
+
+	allErrs = append(allErrs, validateHostsName(p.Hosts, fldPath.Child("Hosts"))...)
 
 	return allErrs
 }
