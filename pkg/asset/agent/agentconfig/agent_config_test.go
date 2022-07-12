@@ -269,6 +269,66 @@ spec:
 				},
 			},
 		},
+		{
+			name: "host-roles-have-correct-values",
+			data: `
+metadata:
+  name: agent-config-cluster0
+spec:
+  rendezvousIP: 192.168.111.80
+  hosts:
+    - role: master
+      interfaces:
+        - name: enp3s1
+          macAddress: 28:d2:44:d2:b2:1a
+    - role: worker
+      interfaces:
+        - name: enp3s1
+          macAddress: 28:d2:44:d2:b2:1b`,
+			expectedFound: true,
+			expectedConfig: &agent.Config{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "agent-config-cluster0",
+				},
+				Spec: agent.Spec{
+					RendezvousIP: "192.168.111.80",
+					Hosts: []agent.Host{
+						{
+							Role: "master",
+							Interfaces: []*aiv1beta1.Interface{
+								{
+									Name:       "enp3s1",
+									MacAddress: "28:d2:44:d2:b2:1a",
+								},
+							},
+						},
+						{
+							Role: "worker",
+							Interfaces: []*aiv1beta1.Interface{
+								{
+									Name:       "enp3s1",
+									MacAddress: "28:d2:44:d2:b2:1b",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "host-roles-have-incorrect-values",
+			data: `
+metadata:
+  name: agent-config-cluster0
+spec:
+  rendezvousIP: 192.168.111.80
+  hosts:
+    - role: invalid-role
+      interfaces:
+        - name: enp3s1
+          macAddress: 28:d2:44:d2:b2:1a`,
+			expectedError: "invalid Agent Config configuration: Spec.Hosts[0].Host: Forbidden: host role has incorrect value. Role must either be 'master' or 'worker'",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

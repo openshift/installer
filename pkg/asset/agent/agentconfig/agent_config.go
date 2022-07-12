@@ -90,6 +90,10 @@ func (a *Asset) validateAgent() field.ErrorList {
 		allErrs = append(allErrs, err...)
 	}
 
+	if err := a.validateRoles(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
 	return allErrs
 }
 
@@ -140,6 +144,22 @@ func (a *Asset) validateRootDeviceHints() field.ErrorList {
 	return allErrs
 }
 
+func (a *Asset) validateRoles() field.ErrorList {
+	var allErrs field.ErrorList
+	rootPath := field.NewPath("Spec", "Hosts")
+
+	for i, host := range a.Config.Spec.Hosts {
+		hostPath := rootPath.Index(i)
+		if len(host.Role) > 0 && host.Role != "master" && host.Role != "worker" {
+			allErrs = append(allErrs, field.Forbidden(
+				hostPath.Child("Host"),
+				"host role has incorrect value. Role must either be 'master' or 'worker'"))
+		}
+	}
+
+	return allErrs
+}
+
 // HostConfigFileMap is a map from a filepath ("<host>/<file>") to file content
 // for hostconfig files.
 type HostConfigFileMap map[string][]byte
@@ -173,6 +193,10 @@ func (a *Asset) HostConfigFiles() (HostConfigFileMap, error) {
 		}
 		if len(rdh) > 0 && string(rdh) != "{}\n" {
 			files[filepath.Join(name, "root-device-hints.yaml")] = rdh
+		}
+
+		if len(host.Role) > 0 {
+			files[filepath.Join(name, "role")] = []byte(host.Role)
 		}
 	}
 	return files, nil
