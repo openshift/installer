@@ -22,7 +22,7 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 
 	start := time.Now()
 	previous := time.Now()
-	timeout := 40 * time.Minute
+	timeout := 30 * time.Minute
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
 
@@ -51,5 +51,38 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 		return cluster, errors.Wrap(waitErr, "bootstrap process timed out")
 	}
 
+	return cluster, nil
+}
+
+// WaitForInstallComplete Wait for the cluster installation triggered by the
+// agent installer to be complete.
+func WaitForInstallComplete(assetDir string) (*Cluster, error) {
+
+	cluster, err := WaitForBootstrapComplete(assetDir)
+
+	if err != nil {
+		return cluster, errors.Wrap(err, "error occured during bootstrap process")
+	}
+
+	timeout := 90 * time.Minute
+	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
+	defer cancel()
+
+	wait.Until(func() {
+		installed, err := cluster.IsInstallComplete(waitContext)
+		if installed && err == nil {
+			logrus.Info("cluster is installed")
+			cancel()
+		}
+
+	}, 2*time.Second, waitContext.Done())
+
+	waitErr := waitContext.Err()
+	if waitErr != nil && waitErr != context.Canceled {
+		if err != nil {
+			return cluster, errors.Wrap(err, "error occurred during installation")
+		}
+		return cluster, errors.Wrap(waitErr, "installation timed out")
+	}
 	return cluster, nil
 }

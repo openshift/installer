@@ -27,6 +27,7 @@ func NewWaitForCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(newWaitForBootstrapCompleteCmd())
+	cmd.AddCommand(newWaitForInstallCompleteCmd())
 	return cmd
 }
 
@@ -60,5 +61,39 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 
 func runWaitForBootstrapCompleteCmd(directory string) (*agentpkg.Cluster, error) {
 	cluster, err := agentpkg.WaitForBootstrapComplete(directory)
+	return cluster, err
+}
+
+func newWaitForInstallCompleteCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "install-complete",
+		Short: "Wait until the cluster installation is complete",
+		Args:  cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			assetDir := cmd.Flags().Lookup("dir").Value.String()
+			logrus.Debugf("asset directory: %s", assetDir)
+			if len(assetDir) == 0 {
+				logrus.Fatal("No cluster installation directory found")
+			}
+			cluster, err := runWaitForInstallCompleteCmd(assetDir)
+			if err != nil {
+				logrus.Debug("Printing the event list gathered from the Agent Rest API")
+				cluster.PrintInfraEnvRestAPIEventList()
+				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
+				if err2 != nil {
+					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
+				}
+				logrus.Error(`Cluster initialization failed because one or more operators are not functioning properly.
+				The cluster should be accessible for troubleshooting as detailed in the documentation linked below,
+				https://docs.openshift.com/container-platform/latest/support/troubleshooting/troubleshooting-installations.html`)
+				logrus.Exit(exitCodeInstallFailed)
+			}
+			cluster.PrintInstallationComplete()
+		},
+	}
+}
+
+func runWaitForInstallCompleteCmd(directory string) (*agentpkg.Cluster, error) {
+	cluster, err := agentpkg.WaitForInstallComplete(directory)
 	return cluster, err
 }
