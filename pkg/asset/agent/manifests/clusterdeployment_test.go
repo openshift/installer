@@ -8,7 +8,7 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	hivev1agent "github.com/openshift/hive/apis/hive/v1/agent"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent/manifests/unittest"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -26,13 +26,19 @@ func TestClusterDeployment_Generate(t *testing.T) {
 		expectedConfig *hivev1.ClusterDeployment
 	}{
 		{
-			name:          "missing-config",
-			dependencies:  unittest.GetEmptyTestAssets(),
+			name: "missing config",
+			dependencies: []asset.Asset{
+				&AgentPullSecret{},
+				&agent.OptionalInstallConfig{},
+			},
 			expectedError: "missing configuration or manifest file",
 		},
 		{
-			name:         "default",
-			dependencies: unittest.GetTestAssetsWithValidInstallConfig(),
+			name: "valid configurations",
+			dependencies: []asset.Asset{
+				GetValidAgentPullSecret(),
+				GetValidOptionalInstallConfig(),
+			},
 			expectedConfig: &hivev1.ClusterDeployment{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ClusterDeployment",
@@ -52,7 +58,7 @@ func TestClusterDeployment_Generate(t *testing.T) {
 						Group:   "extensions.hive.openshift.io",
 						Version: "v1beta1",
 						Kind:    "AgentClusterInstall",
-						Name:    "agent-cluster-install",
+						Name:    "ocp-edge-cluster-0",
 					},
 				},
 			},
