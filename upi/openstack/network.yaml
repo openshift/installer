@@ -26,6 +26,7 @@
       cidr: "{{ os_subnet_range }}"
       allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
       allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
+      dns_nameservers: "{{ os_external_dns }}"
 
   - name: 'Set tags on  primary cluster subnet'
     command:
