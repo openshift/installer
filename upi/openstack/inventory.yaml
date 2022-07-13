@@ -28,6 +28,17 @@ all:
       # 3 is the minimum number for a fully-functional cluster.
       os_compute_nodes_number: 3
 
+      # The IP addresses of DNS servers to be used for the DNS resolution of
+      # all instances in the cluster. The total number of dns servers supported
+      # by an instance is three. That total includes any dns server provided by
+      # the underlying OpenStack infrastructure.
+      #
+      # Note that the values below are example IPs and do not point to actual
+      # resolvers. To use the OpenStack defaults, remove the values below.
+      os_external_dns:
+      - 192.0.2.53
+      - 192.0.2.153
+
       # The public network providing connectivity to the cluster. If not
       # provided, the cluster external connectivity must be provided in another
       # way.
