@@ -45,22 +45,8 @@ func TestClusterDeployment_Generate(t *testing.T) {
 				Spec: hivev1.ClusterDeploymentSpec{
 					ClusterName: "ocp-edge-cluster-0",
 					BaseDomain:  "testing.com",
-					Platform: hivev1.Platform{
-						AgentBareMetal: &hivev1agent.BareMetalPlatform{
-							AgentSelector: metav1.LabelSelector{
-								MatchLabels: make(map[string]string),
-							},
-						},
-					},
-					PullSecretRef: &corev1.LocalObjectReference{Name: "pull-secret"},
-					ControlPlaneConfig: hivev1.ControlPlaneConfigSpec{
-						ServingCertificates: hivev1.ControlPlaneServingCertificateSpec{
-							// Default: "",
-							// Additional: []hivev1.ControlPlaneAdditionalCertificate{{
-							// 	Name:   clusterDeploymentFilename,
-							// 	Domain: "",
-							// }},
-						},
+					PullSecretRef: &corev1.LocalObjectReference{
+						Name: "pull-secret",
 					},
 					ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
 						Group:   "extensions.hive.openshift.io",
@@ -94,10 +80,7 @@ func TestClusterDeployment_Generate(t *testing.T) {
 				var actualConfig hivev1.ClusterDeployment
 				err = yaml.Unmarshal(configFile.Data, &actualConfig)
 				assert.NoError(t, err)
-				assert.Equal(t, tc.expectedConfig.Spec.ClusterName, actualConfig.Spec.ClusterName)
-				assert.Equal(t, tc.expectedConfig.Spec.BaseDomain, actualConfig.Spec.BaseDomain)
-				assert.Equal(t, tc.expectedConfig.Spec.PullSecretRef, actualConfig.Spec.PullSecretRef)
-				assert.Equal(t, tc.expectedConfig.Spec.ClusterInstallRef, actualConfig.Spec.ClusterInstallRef)
+				assert.Equal(t, *tc.expectedConfig, actualConfig)
 			}
 		})
 	}

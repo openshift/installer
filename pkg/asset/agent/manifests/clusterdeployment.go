@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
-	hivev1agent "github.com/openshift/hive/apis/hive/v1/agent"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,24 +58,8 @@ func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
 			Spec: hivev1.ClusterDeploymentSpec{
 				ClusterName: installConfig.Config.ObjectMeta.Name,
 				BaseDomain:  installConfig.Config.BaseDomain,
-				Platform: hivev1.Platform{
-					AgentBareMetal: &hivev1agent.BareMetalPlatform{
-						AgentSelector: metav1.LabelSelector{
-							// What labels should be set here? Will the values come from install config?
-							MatchLabels: map[string]string{},
-						},
-					},
-				},
-				// What should be set as PullSecretRef name here? Will the values come from install config?
-				PullSecretRef: &corev1.LocalObjectReference{Name: "pull-secret"},
-				ControlPlaneConfig: hivev1.ControlPlaneConfigSpec{
-					ServingCertificates: hivev1.ControlPlaneServingCertificateSpec{
-						// Default: "",
-						// Additional: []hivev1.ControlPlaneAdditionalCertificate{{
-						// 	Name:   clusterDeploymentFilename,
-						// 	Domain: "",
-						// }},
-					},
+				PullSecretRef: &corev1.LocalObjectReference{
+					Name: "pull-secret",
 				},
 				ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
 					Group:   "extensions.hive.openshift.io",
