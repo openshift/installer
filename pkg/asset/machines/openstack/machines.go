@@ -58,11 +58,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	machines := make([]machineapi.Machine, 0, total)
 	providerConfigs := map[string]*openstackprovider.OpenstackProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
-		var volumeAZ, zone string
+		var subnet, volumeAZ, zone string
 		if len(mpool.FailureDomainNames) > 0 {
 			failureDomainName := mpool.FailureDomainNames[idx%int64(len(mpool.FailureDomainNames))]
 			zone = platform.FailureDomains[int(idx)%len(failureDomainName)].ComputeZone
 			volumeAZ = platform.FailureDomains[int(idx)%len(failureDomainName)].StorageZone
+			subnet = platform.FailureDomains[int(idx)%len(failureDomainName)].Subnet
 		} else {
 			zone = mpool.Zones[int(idx)%len(mpool.Zones)]
 			volumeAZ = volumeAZs[int(idx)%len(volumeAZs)]
@@ -80,6 +81,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				userDataSecret,
 				trunkSupport,
 				volumeAZ,
+				subnet,
 			)
 			if err != nil {
 				return nil, err
@@ -116,9 +118,15 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool, rootVolumeAZ string) (*openstackprovider.OpenstackProviderSpec, error) {
+func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool, rootVolumeAZ string, subnet string) (*openstackprovider.OpenstackProviderSpec, error) {
 	var networks []openstackprovider.NetworkParam
-	if platform.MachinesSubnet != "" {
+	if subnet != "" {
+		networks = []openstackprovider.NetworkParam{{
+			Subnets: []openstackprovider.SubnetParam{{
+				UUID: subnet,
+			}}},
+		}
+	} else if platform.MachinesSubnet != "" {
 		networks = []openstackprovider.NetworkParam{{
 			Subnets: []openstackprovider.SubnetParam{{
 				UUID: platform.MachinesSubnet,

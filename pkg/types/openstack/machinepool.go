@@ -72,6 +72,10 @@ func (o *MachinePool) Set(required *MachinePool) {
 	if len(required.Zones) > 0 {
 		o.Zones = required.Zones
 	}
+
+	if len(required.FailureDomainNames) > 0 {
+		o.FailureDomainNames = required.FailureDomainNames
+	}
 }
 
 // RootVolume defines the storage for an instance.
