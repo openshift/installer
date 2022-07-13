@@ -322,7 +322,7 @@ func addMacAddressToHostnameMappings(
 	for _, host := range agentConfigAsset.Config.Spec.Hosts {
 		if host.Hostname != "" {
 			file := ignition.FileFromBytes(filepath.Join(hostnamesPath,
-				filepath.Base(host.Interfaces[0].MacAddress)),
+				strings.ToLower(filepath.Base(host.Interfaces[0].MacAddress))),
 				"root", 0600, []byte(host.Hostname))
 			config.Storage.Files = append(config.Storage.Files, file)
 		}
