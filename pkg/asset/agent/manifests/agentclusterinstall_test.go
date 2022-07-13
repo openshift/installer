@@ -8,6 +8,8 @@ import (
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -25,54 +27,34 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		expectedConfig *hiveext.AgentClusterInstall
 	}{
 		{
-			name:          "missing-config",
+			name: "missing install config",
+			dependencies: []asset.Asset{
+				&agent.OptionalInstallConfig{},
+			},
 			expectedError: "missing configuration or manifest file",
 		},
-		// {
-		// 	name: "default",
-		// 	dependencies: []asset.Asset{
-		// 		&agent.OptionalInstallConfig{
-		// 			Config: &types.InstallConfig{
-		// 				ObjectMeta: v1.ObjectMeta{
-		// 					Name:      "ocp-edge-cluster-0",
-		// 					Namespace: "cluster-0",
-		// 				},
-		// 				SSHKey: "ssh-key",
-		// 				ControlPlane: &types.MachinePool{
-		// 					Name:     "master",
-		// 					Replicas: pointer.Int64Ptr(3),
-		// 					Platform: types.MachinePoolPlatform{},
-		// 				},
-		// 				Compute: []types.MachinePool{
-		// 					{
-		// 						Name:     "worker-machine-pool-1",
-		// 						Replicas: pointer.Int64Ptr(2),
-		// 					},
-		// 					{
-		// 						Name:     "worker-machine-pool-2",
-		// 						Replicas: pointer.Int64Ptr(3),
-		// 					},
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	expectedConfig: &hiveext.AgentClusterInstall{
-		// 		ObjectMeta: v1.ObjectMeta{
-		// 			Name:      "agent-cluster-install",
-		// 			Namespace: "cluster-0",
-		// 		},
-		// 		Spec: hiveext.AgentClusterInstallSpec{
-		// 			ClusterDeploymentRef: corev1.LocalObjectReference{
-		// 				Name: "ocp-edge-cluster-0",
-		// 			},
-		// 			ProvisionRequirements: hiveext.ProvisionRequirements{
-		// 				ControlPlaneAgents: 3,
-		// 				WorkerAgents:       5,
-		// 			},
-		// 			SSHPublicKey: "ssh-key",
-		// 		},
-		// 	},
-		// },
+		{
+			name: "valid configuration",
+			dependencies: []asset.Asset{
+				GetValidOptionalInstallConfig(),
+			},
+			expectedConfig: &hiveext.AgentClusterInstall{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "agent-cluster-install",
+					Namespace: "cluster-0",
+				},
+				Spec: hiveext.AgentClusterInstallSpec{
+					ClusterDeploymentRef: corev1.LocalObjectReference{
+						Name: "ocp-edge-cluster-0",
+					},
+					ProvisionRequirements: hiveext.ProvisionRequirements{
+						ControlPlaneAgents: 3,
+						WorkerAgents:       5,
+					},
+					SSHPublicKey: "ssh-key",
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

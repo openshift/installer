@@ -1,11 +1,13 @@
 package manifests
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
@@ -43,33 +45,35 @@ func (*AgentPullSecret) Dependencies() []asset.Asset {
 // Generate generates the AgentPullSecret manifest.
 func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
 
-	// installConfigAsset := &agent.OptionalInstallConfig{}
-	// dependencies.Get(installConfigAsset)
+	installConfig := &agent.OptionalInstallConfig{}
+	dependencies.Get(installConfig)
 
-	// secret := &corev1.Secret{
-	// 	TypeMeta: metav1.TypeMeta{
-	// 		APIVersion: "v1",
-	// 		Kind:       "Secret",
-	// 	},
-	// 	ObjectMeta: metav1.ObjectMeta{
-	// 		Name:      a.ResourceName(),
-	// 		Namespace: installConfigAsset.Config.Namespace,
-	// 	},
-	// 	StringData: map[string]string{
-	// 		".dockerconfigjson": base64.StdEncoding.EncodeToString([]byte(installConfigAsset.Config.PullSecret)),
-	// 	},
-	// }
-	// a.Config = secret
+	if installConfig.Config != nil {
+		secret := &corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      a.ResourceName(),
+				Namespace: installConfig.Config.Namespace,
+			},
+			StringData: map[string]string{
+				".dockerconfigjson": base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+			},
+		}
+		a.Config = secret
 
-	// secretData, err := yaml.Marshal(secret)
-	// if err != nil {
-	// 	return errors.Wrap(err, "failed to marshal agent secret")
-	// }
+		secretData, err := yaml.Marshal(secret)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal agent secret")
+		}
 
-	// a.File = &asset.File{
-	// 	Filename: agentPullSecretFilename,
-	// 	Data:     secretData,
-	// }
+		a.File = &asset.File{
+			Filename: agentPullSecretFilename,
+			Data:     secretData,
+		}
+	}
 
 	return a.finish()
 }

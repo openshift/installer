@@ -9,10 +9,13 @@ import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/mock"
 )
 
@@ -25,41 +28,56 @@ func TestInfraEnv_Generate(t *testing.T) {
 		expectedConfig *aiv1beta1.InfraEnv
 	}{
 		{
-			name:          "missing-config",
+			name: "missing-config",
+			dependencies: []asset.Asset{
+				&agent.OptionalInstallConfig{},
+				&AgentPullSecret{},
+				&NMStateConfig{},
+			},
 			expectedError: "missing configuration or manifest file",
 		},
-		// {
-		// 	name: "default",
-		// 	dependencies: []asset.Asset{
-		// 		&agent.OptionalInstallConfig{
-		// 			Config: &types.InstallConfig{
-		// 				ObjectMeta: v1.ObjectMeta{
-		// 					Name:      "ocp-edge-cluster-0",
-		// 					Namespace: "cluster-0",
-		// 				},
-		// 				PullSecret: "secret-agent",
-		// 				SSHKey:     "ssh-key",
-		// 			},
-		// 		},
-		// 		&AgentPullSecret{},
-		// 	},
-		// 	expectedConfig: &aiv1beta1.InfraEnv{
-		// 		ObjectMeta: v1.ObjectMeta{
-		// 			Name:      "infraEnv",
-		// 			Namespace: "cluster-0",
-		// 		},
-		// 		Spec: aiv1beta1.InfraEnvSpec{
-		// 			ClusterRef: &aiv1beta1.ClusterReference{
-		// 				Name:      "ocp-edge-cluster-0",
-		// 				Namespace: "cluster-0",
-		// 			},
-		// 			SSHAuthorizedKey: "ssh-key",
-		// 			PullSecretRef: &corev1.LocalObjectReference{
-		// 				Name: "pull-secret",
-		// 			},
-		// 		},
-		// 	},
-		// },
+		{
+			name: "invalid InfraEnv configuration",
+			dependencies: []asset.Asset{
+				GetValidOptionalInstallConfig(),
+				&AgentPullSecret{},
+				&NMStateConfig{Config: []*aiv1beta1.NMStateConfig{{}}},
+			},
+			expectedError: "invalid InfraEnv configuration: Spec.NMStateConfigLabelSelector.MatchLabels: Required value: at least one label must be set",
+		},
+		{
+			name: "valid configuration",
+			dependencies: []asset.Asset{
+				GetValidOptionalInstallConfig(),
+				&AgentPullSecret{},
+				&NMStateConfig{Config: []*aiv1beta1.NMStateConfig{
+					{
+						ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
+							"key": "val",
+						}},
+					},
+				}},
+			},
+			expectedConfig: &aiv1beta1.InfraEnv{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "infraEnv",
+					Namespace: "cluster-0",
+				},
+				Spec: aiv1beta1.InfraEnvSpec{
+					ClusterRef: &aiv1beta1.ClusterReference{
+						Name:      "ocp-edge-cluster-0",
+						Namespace: "cluster-0",
+					},
+					SSHAuthorizedKey: "ssh-key",
+					PullSecretRef: &corev1.LocalObjectReference{
+						Name: "pull-secret",
+					},
+					NMStateConfigLabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{
+						"key": "val",
+					}},
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
