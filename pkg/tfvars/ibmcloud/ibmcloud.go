@@ -35,6 +35,10 @@ type config struct {
 	PublishStrategy         string          `json:"ibmcloud_publish_strategy,omitempty"`
 	ResourceGroupName       string          `json:"ibmcloud_resource_group_name,omitempty"`
 	ImageFilePath           string          `json:"ibmcloud_image_filepath,omitempty"`
+	PreexistingVPC          bool            `json:"ibmcloud_preexisting_vpc,omitempty"`
+	VPC                     string          `json:"ibmcloud_vpc,omitempty"`
+	ControlPlaneSubnets     []string        `json:"ibmcloud_control_plane_subnets,omitempty"`
+	ComputeSubnets          []string        `json:"ibmcloud_compute_subnets,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -44,6 +48,7 @@ type TFVarsSources struct {
 	ImageURL             string
 	MasterConfigs        []*ibmcloudprovider.IBMCloudMachineProviderSpec
 	MasterDedicatedHosts []DedicatedHost
+	PreexistingVPC       bool
 	PublishStrategy      types.PublishingStrategy
 	ResourceGroupName    string
 	WorkerConfigs        []*ibmcloudprovider.IBMCloudMachineProviderSpec
@@ -67,6 +72,20 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		workerAvailabilityZones[i] = c.Zone
 	}
 
+	// Set pre-existing network config
+	var vpc string
+	masterSubnets := make([]string, len(sources.MasterConfigs))
+	workerSubnets := make([]string, len(sources.WorkerConfigs))
+	if sources.PreexistingVPC {
+		vpc = sources.MasterConfigs[0].VPC
+		for index, config := range sources.MasterConfigs {
+			masterSubnets[index] = config.PrimaryNetworkInterface.Subnet
+		}
+		for index, config := range sources.WorkerConfigs {
+			workerSubnets[index] = config.PrimaryNetworkInterface.Subnet
+		}
+	}
+
 	cfg := &config{
 		Auth:                    sources.Auth,
 		BootstrapInstanceType:   masterConfig.Profile,
@@ -80,6 +99,10 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ResourceGroupName:       sources.ResourceGroupName,
 		WorkerAvailabilityZones: workerAvailabilityZones,
 		WorkerDedicatedHosts:    sources.WorkerDedicatedHosts,
+		PreexistingVPC:          sources.PreexistingVPC,
+		VPC:                     vpc,
+		ControlPlaneSubnets:     masterSubnets,
+		ComputeSubnets:          workerSubnets,
 
 		// TODO: IBM: Future support
 		// ExtraTags:               masterConfig.Tags,
