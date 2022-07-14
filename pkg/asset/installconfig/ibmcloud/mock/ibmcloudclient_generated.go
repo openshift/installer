@@ -205,6 +205,21 @@ func (mr *MockAPIMockRecorder) GetSubnet(ctx, subnetID interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnet", reflect.TypeOf((*MockAPI)(nil).GetSubnet), ctx, subnetID)
 }
 
+// GetSubnetByName mocks base method.
+func (m *MockAPI) GetSubnetByName(ctx context.Context, subnetName, region string) (*vpcv1.Subnet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubnetByName", ctx, subnetName, region)
+	ret0, _ := ret[0].(*vpcv1.Subnet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSubnetByName indicates an expected call of GetSubnetByName.
+func (mr *MockAPIMockRecorder) GetSubnetByName(ctx, subnetName, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnetByName", reflect.TypeOf((*MockAPI)(nil).GetSubnetByName), ctx, subnetName, region)
+}
+
 // GetVPC mocks base method.
 func (m *MockAPI) GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error) {
 	m.ctrl.T.Helper()
@@ -233,6 +248,21 @@ func (m *MockAPI) GetVPCZonesForRegion(ctx context.Context, region string) ([]st
 func (mr *MockAPIMockRecorder) GetVPCZonesForRegion(ctx, region interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCZonesForRegion", reflect.TypeOf((*MockAPI)(nil).GetVPCZonesForRegion), ctx, region)
+}
+
+// GetVPCs mocks base method.
+func (m *MockAPI) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVPCs", ctx, region)
+	ret0, _ := ret[0].([]vpcv1.VPC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVPCs indicates an expected call of GetVPCs.
+func (mr *MockAPIMockRecorder) GetVPCs(ctx, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCs", reflect.TypeOf((*MockAPI)(nil).GetVPCs), ctx, region)
 }
 
 // GetVSIProfiles mocks base method.

@@ -42,6 +42,10 @@ func validatePlatform(client API, ic *types.InstallConfig, path *field.Path) fie
 		allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
 	}
 
+	if ic.Platform.IBMCloud.VPCName != "" {
+		allErrs = append(allErrs, validateExistingVPC(client, ic, path)...)
+	}
+
 	if ic.Platform.IBMCloud.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, validateMachinePool(client, ic.IBMCloud, ic.Platform.IBMCloud.DefaultMachinePlatform, path)...)
 	}
@@ -213,6 +217,90 @@ func validateResourceGroup(client API, ic *types.InstallConfig, path *field.Path
 
 	if !found {
 		return append(allErrs, field.NotFound(path.Child("resourceGroupName"), ic.IBMCloud.ResourceGroupName))
+	}
+
+	return allErrs
+}
+
+func validateExistingVPC(client API, ic *types.InstallConfig, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if ic.IBMCloud.VPCName == "" {
+		return allErrs
+	}
+
+	if ic.IBMCloud.ResourceGroupName == "" {
+		return append(allErrs, field.NotFound(path.Child("resourceGroupName"), ic.IBMCloud.ResourceGroupName))
+	}
+
+	vpcs, err := client.GetVPCs(context.TODO(), ic.IBMCloud.Region)
+	if err != nil {
+		return append(allErrs, field.InternalError(path.Child("vpcName"), err))
+	}
+
+	found := false
+	for _, vpc := range vpcs {
+		if *vpc.Name == ic.IBMCloud.VPCName {
+			if *vpc.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *vpc.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
+				return append(allErrs, field.Invalid(path.Child("vpcName"), ic.IBMCloud.VPCName, fmt.Sprintf("vpc is not in provided ResourceGroup: %s", ic.IBMCloud.ResourceGroupName)))
+			}
+			found = true
+			allErrs = append(allErrs, validateExistingSubnets(client, ic, path, *vpc.ID)...)
+			break
+		}
+	}
+
+	if !found {
+		allErrs = append(allErrs, field.NotFound(path.Child("vpcName"), ic.IBMCloud.VPCName))
+	}
+	return allErrs
+}
+
+func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Path, vpcID string) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if len(ic.IBMCloud.ControlPlaneSubnets) == 0 {
+		allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), ic.IBMCloud.ControlPlaneSubnets, fmt.Sprintf("controlPlaneSubnets cannot be empty when providing a vpcName: %s", ic.IBMCloud.VPCName)))
+	} else {
+		for _, controlPlaneSubnet := range ic.IBMCloud.ControlPlaneSubnets {
+			subnet, err := client.GetSubnetByName(context.TODO(), controlPlaneSubnet, ic.IBMCloud.Region)
+			if err != nil {
+				if errors.Is(err, &VPCResourceNotFoundError{}) {
+					allErrs = append(allErrs, field.NotFound(path.Child("controlPlaneSubnets"), controlPlaneSubnet))
+				} else {
+					allErrs = append(allErrs, field.InternalError(path.Child("controlPlaneSubnets"), err))
+				}
+			} else {
+				if *subnet.VPC.ID != vpcID {
+					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), controlPlaneSubnet, fmt.Sprintf("controlPlaneSubnets contains subnet: %s, not found in expected vpcID: %s", controlPlaneSubnet, vpcID)))
+				}
+				if *subnet.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
+					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), controlPlaneSubnet, fmt.Sprintf("controlPlaneSubnets contains subnet: %s, not found in expected resourceGroupName: %s", controlPlaneSubnet, ic.IBMCloud.ResourceGroupName)))
+				}
+			}
+		}
+	}
+
+	if len(ic.IBMCloud.ComputeSubnets) == 0 {
+		allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), ic.IBMCloud.ComputeSubnets, fmt.Sprintf("computeSubnets cannot be empty when providing a vpcName: %s", ic.IBMCloud.VPCName)))
+	} else {
+		for _, computeSubnet := range ic.IBMCloud.ComputeSubnets {
+			subnet, err := client.GetSubnetByName(context.TODO(), computeSubnet, ic.IBMCloud.Region)
+			if err != nil {
+				if errors.Is(err, &VPCResourceNotFoundError{}) {
+					allErrs = append(allErrs, field.NotFound(path.Child("computeSubnets"), computeSubnet))
+				} else {
+					allErrs = append(allErrs, field.InternalError(path.Child("computeSubnets"), err))
+				}
+			} else {
+				if *subnet.VPC.ID != vpcID {
+					allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), computeSubnet, fmt.Sprintf("computeSubnets contains subnet: %s, not found in expected vpcID: %s", computeSubnet, vpcID)))
+				}
+				if *subnet.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
+					allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), computeSubnet, fmt.Sprintf("computeSubnets contains subnet: %s, not found in expected resourceGroupName: %s", computeSubnet, ic.IBMCloud.ResourceGroupName)))
+				}
+			}
+		}
 	}
 
 	return allErrs

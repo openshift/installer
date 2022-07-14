@@ -2220,6 +2220,18 @@ spec:
                 description: IBMCloud is the configuration used when installing on
                   IBM Cloud.
                 properties:
+                  computeSubnets:
+                    description: ComputeSubnets are the names of already existing
+                      subnets where the cluster compute nodes should be created.
+                    items:
+                      type: string
+                    type: array
+                  controlPlaneSubnets:
+                    description: ControlPlaneSubnets are the names of already existing
+                      subnets where the cluster control plane nodes should be created.
+                    items:
+                      type: string
+                    type: array
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on IBM Cloud for machine pools which do
@@ -2270,15 +2282,13 @@ spec:
                       will be created.
                     type: string
                   resourceGroupName:
-                    description: "ResourceGroupName is the name of an already existing
-                      resource group where the cluster should be installed. This resource
-                      group should only be used for this specific cluster and the
-                      cluster components will assume ownership of all resources in
-                      the resource group. Destroying the cluster using installer will
-                      delete this resource group. \n This resource group must be empty
-                      with no other resources when trying to use it for creating a
-                      cluster. If empty, a new resource group will be created for
-                      the cluster."
+                    description: ResourceGroupName is the name of an already existing
+                      resource group where the cluster should be installed. If empty,
+                      a new resource group will be created for the cluster.
+                    type: string
+                  vpcName:
+                    description: VPCName is the name of an already existing VPC where
+                      the cluster should be installed.
                     type: string
                 required:
                 - region
