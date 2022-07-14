@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/pkg/errors"
 )
 
@@ -37,23 +38,43 @@ func (*CaBundle) Dependencies() []asset.Asset {
 
 // Generate generates the Mirror Registries certificate file from install-config.
 func (i *CaBundle) Generate(dependencies asset.Parents) error {
+	installConfig := &agent.OptionalInstallConfig{}
+	dependencies.Get(installConfig)
+	if !installConfig.Supplied {
+		return nil
+	}
 
-	// installConfig := &agent.OptionalInstallConfig{}
-	// dependencies.Get(installConfig)
+	if installConfig.Config.AdditionalTrustBundle == "" {
+		i.File = &asset.File{
+			Filename: CaBundleFilename,
+			Data:     []byte{},
+		}
+		return nil
+	}
 
-	// if installConfig.Config.AdditionalTrustBundle == "" {
-	//        return nil
-	// }
-	// data, err := parseCertificates(installConfig.Config.AdditionalTrustBundle)
+	return i.parseCertificates(installConfig.Config.AdditionalTrustBundle)
+}
 
-	//if err != nil {
-	//        return err
-	//}
+func (i *CaBundle) parseCertificates(certs string) error {
+	if len(certs) == 0 {
+		return nil
+	}
 
-	// i.File = &asset.File{
-	//      Filename: CaBundleFilename,
-	//      Data:     data,
-	// }
+	data, err := manifests.ParseCertificates(certs)
+	if err != nil {
+		return err
+	}
+
+	for filename, content := range data {
+		if filepath.Base(CaBundleFilename) == filename {
+			i.File = &asset.File{
+				Filename: CaBundleFilename,
+				Data:     []byte(content),
+			}
+		} else {
+			return fmt.Errorf("unexpected CA Bundle filename %s", filename)
+		}
+	}
 
 	return nil
 }
@@ -77,6 +98,5 @@ func (i *CaBundle) Load(f asset.FileFetcher) (bool, error) {
 		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", CaBundleFilename))
 	}
 
-	i.File = file
-	return true, nil
+	return true, i.parseCertificates(string(file.Data))
 }
