@@ -8,13 +8,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-	clientwatch "k8s.io/client-go/tools/watch"
 
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
@@ -48,18 +43,18 @@ func NewClusterOpenShiftAPIClient(ctx context.Context, assetDir string) (*Cluste
 		return nil, errors.Wrap(err, "creating kubeconfig for ocp config client")
 	}
 
-	configclient, err := configclient.NewForConfig(kubeconfig)
+	configClient, err := configclient.NewForConfig(kubeconfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating an ocp config client")
 	}
 
-	routeclient, err := routeclient.NewForConfig(kubeconfig)
+	routeClient, err := routeclient.NewForConfig(kubeconfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating an ocp route client")
 	}
 
-	ocpClient.ConfigClient = configclient
-	ocpClient.RouteClient = routeclient
+	ocpClient.ConfigClient = configClient
+	ocpClient.RouteClient = routeClient
 	ocpClient.ctx = ctx
 	ocpClient.config = kubeconfig
 	ocpClient.configPath = kubeconfigpath
@@ -68,52 +63,56 @@ func NewClusterOpenShiftAPIClient(ctx context.Context, assetDir string) (*Cluste
 
 }
 
-// AreClusterOperatorsInitalized Wait for all Openshift cluster operators to initialize
-func (ocp *ClusterOpenShiftAPIClient) AreClusterOperatorsInitalized(waitctx context.Context) (bool, error) {
+// AreClusterOperatorsInitialized Waits for all Openshift cluster operators to initialize
+func (ocp *ClusterOpenShiftAPIClient) AreClusterOperatorsInitialized() (bool, error) {
+
+	operators, err := ocp.ConfigClient.ConfigV1().ClusterOperators().List(ocp.ctx, metav1.ListOptions{})
+	if err != nil {
+		return false, errors.Wrap(err, "Listing ClusterOperator objects")
+	}
+
+	for _, operator := range operators.Items {
+		for _, condition := range operator.Status.Conditions {
+			if condition.Type == configv1.OperatorUpgradeable {
+				// continue
+				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+			} else if condition.Type == configv1.OperatorAvailable && condition.Status == configv1.ConditionTrue {
+				// continue
+				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+			} else if (condition.Type == configv1.OperatorDegraded || condition.Type == configv1.OperatorProgressing) && condition.Status == configv1.ConditionFalse {
+				// continue
+				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+			}
+			if condition.Type == configv1.OperatorDegraded {
+				logrus.Errorf("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+			} else {
+				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+			}
+		}
+	}
+
 	failing := configv1.ClusterStatusConditionType("Failing")
 	var lastError string
 
-	_, err := clientwatch.UntilWithSync(
-		waitctx,
-		cache.NewListWatchFromClient(ocp.ConfigClient.ConfigV1().RESTClient(), "clusterversions", "", fields.OneTermEqualSelector("metadata.name", "version")),
-		&configv1.ClusterVersion{},
-		nil,
-		func(event watch.Event) (bool, error) {
-			switch event.Type {
-			case watch.Added, watch.Modified:
-				cv, ok := event.Object.(*configv1.ClusterVersion)
-				if !ok {
-					logrus.Warnf("Expected a ClusterVersion object but got a %q object instead", event.Object.GetObjectKind().GroupVersionKind())
-					return false, nil
-				}
-				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) &&
-					cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, failing) &&
-					cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, configv1.OperatorProgressing) {
-					logrus.Debug("Cluster operators intitalized")
-					return true, nil
-				}
-				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, failing) {
-					lastError = cov1helpers.FindStatusCondition(cv.Status.Conditions, failing).Message
-				} else if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorProgressing) {
-					lastError = cov1helpers.FindStatusCondition(cv.Status.Conditions, configv1.OperatorProgressing).Message
-				}
-				logrus.Debugf("Still waiting for the cluster to initialize: %s", lastError)
-				return false, nil
-			}
-			logrus.Debug("Still waiting for the cluster to initialize...")
-			return false, nil
-		},
-	)
-
-	if lastError != "" {
-		if err == wait.ErrWaitTimeout {
-			return false, errors.Errorf("failed to initialize the cluster: %s", lastError)
-		}
-
-		return false, errors.Wrapf(err, "failed to initialize the cluster: %s", lastError)
+	cv, err := ocp.ConfigClient.ConfigV1().ClusterVersions().Get(ocp.ctx, "", metav1.GetOptions{})
+	if err != nil {
+		logrus.Debug(errors.Wrap(err, "Unable to retrieve cluster version object"))
+		return false, nil
 	}
 
-	return false, errors.Wrap(err, "failed to initialize the cluster")
+	if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) &&
+		cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, failing) &&
+		cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, configv1.OperatorProgressing) {
+		logrus.Info("Cluster operators initialized")
+		return true, nil
+	}
+	if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, failing) {
+		lastError = cov1helpers.FindStatusCondition(cv.Status.Conditions, failing).Message
+	} else if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorProgressing) {
+		lastError = cov1helpers.FindStatusCondition(cv.Status.Conditions, configv1.OperatorProgressing).Message
+	}
+	logrus.Debugf("Still waiting for the cluster operators to initialize: %s", lastError)
+	return false, nil
 }
 
 // IsConsoleRouteAvaiable Check if the OCP console route is created
@@ -128,7 +127,7 @@ func (ocp *ClusterOpenShiftAPIClient) IsConsoleRouteAvaiable() (bool, error) {
 			err = err2
 		}
 	}
-	return false, errors.Wrap(err, "waiting for openshift-console route")
+	return false, errors.Wrap(err, "Waiting for openshift-console route")
 
 }
 
@@ -144,7 +143,7 @@ func (ocp *ClusterOpenShiftAPIClient) IsConsoleRouteURLAvailable() (bool, string
 		}
 	}
 	if url == "" {
-		return false, url, errors.Wrap(err, "waiting for openshift-console URL")
+		return false, url, errors.Wrap(err, "Waiting for openshift-console URL")
 	}
 	return true, url, nil
 }
@@ -154,7 +153,7 @@ func (ocp *ClusterOpenShiftAPIClient) LogClusterOperatorConditions() error {
 
 	operators, err := ocp.ConfigClient.ConfigV1().ClusterOperators().List(ocp.ctx, metav1.ListOptions{})
 	if err != nil {
-		return errors.Wrap(err, "listing ClusterOperator objects")
+		return errors.Wrap(err, "Listing ClusterOperator objects")
 	}
 
 	for _, operator := range operators.Items {

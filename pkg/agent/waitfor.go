@@ -54,7 +54,7 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 	return cluster, nil
 }
 
-// WaitForInstallComplete Wait for the cluster installation triggered by the
+// WaitForInstallComplete Waits for the cluster installation triggered by the
 // agent installer to be complete.
 func WaitForInstallComplete(assetDir string) (*Cluster, error) {
 
@@ -69,9 +69,9 @@ func WaitForInstallComplete(assetDir string) (*Cluster, error) {
 	defer cancel()
 
 	wait.Until(func() {
-		installed, err := cluster.IsInstallComplete(waitContext)
+		installed, err := cluster.IsInstallComplete()
 		if installed && err == nil {
-			logrus.Info("cluster is installed")
+			logrus.Info("Cluster is installed")
 			cancel()
 		}
 
@@ -80,9 +80,9 @@ func WaitForInstallComplete(assetDir string) (*Cluster, error) {
 	waitErr := waitContext.Err()
 	if waitErr != nil && waitErr != context.Canceled {
 		if err != nil {
-			return cluster, errors.Wrap(err, "error occurred during installation")
+			return cluster, errors.Wrap(err, "Error occurred during installation")
 		}
-		return cluster, errors.Wrap(waitErr, "installation timed out")
+		return cluster, errors.Wrap(waitErr, "Cluster installation timed out")
 	}
 	return cluster, nil
 }
