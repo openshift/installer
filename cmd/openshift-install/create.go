@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -52,6 +53,11 @@ const (
 	exitCodeInfrastructureFailed
 	exitCodeBootstrapFailed
 	exitCodeInstallFailed
+	exitCodeOperatorStabilityFailed
+
+	// coStabilityThreshold is how long a cluster operator must have Progressing=False
+	// in order to be considered stable. Measured in seconds.
+	coStabilityThreshold float64 = 30
 )
 
 // each target is a variable to preserve the order when creating subcommands and still
@@ -489,7 +495,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	defer cancel()
 
 	failing := configv1.ClusterStatusConditionType("Failing")
-	timer.StartTimer("Cluster Operators")
+	timer.StartTimer("Cluster Operators Available")
 	var lastError string
 	_, err = clientwatch.UntilWithSync(
 		clusterVersionContext,
@@ -507,7 +513,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) &&
 					cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, failing) &&
 					cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, configv1.OperatorProgressing) {
-					timer.StopTimer("Cluster Operators")
+					timer.StopTimer("Cluster Operators Available")
 					return true, nil
 				}
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, failing) {
@@ -537,6 +543,57 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	}
 
 	return errors.Wrap(err, "failed to initialize the cluster")
+}
+
+// waitForStableOperators ensures that each cluster operator is "stable", i.e. the
+// operator has not been in a progressing state for at least a certain duration,
+// 30 seconds by default. Returns an error if any operator does meet this threshold
+// after a deadline, 5 minutes by default.
+func waitForStableOperators(ctx context.Context, config *rest.Config) error {
+	timer.StartTimer("Cluster Operators Stable")
+
+	stabilityCheckDuration := 5 * time.Minute
+	stabilityContext, cancel := context.WithTimeout(ctx, stabilityCheckDuration)
+	defer cancel()
+
+	untilTime := time.Now().Add(stabilityCheckDuration)
+	logrus.Infof("Waiting up to %v (until %v) to ensure each cluster operator has finished progressing...",
+		stabilityCheckDuration, untilTime.Format(time.Kitchen))
+
+	cc, err := configclient.NewForConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "failed to create a config client")
+	}
+
+	coNames, err := getClusterOperatorNames(ctx, cc)
+	if err != nil {
+		return err
+	}
+
+	// stabilityCheck closure maintains state of whether any cluster operator
+	// encounters a stability error
+	stabilityCheck := coStabilityChecker()
+
+	var wg sync.WaitGroup
+	for _, co := range coNames {
+		wg.Add(1)
+		go func(co string) {
+			defer wg.Done()
+			status, statusErr := getCOProgressingStatus(stabilityContext, cc, co)
+			err = stabilityCheck(co, status, statusErr)
+		}(co)
+	}
+	wg.Wait()
+
+	if err != nil {
+		return err
+	}
+
+	timer.StopTimer("Cluster Operators Stable")
+
+	logrus.Info("All cluster operators have completed progressing")
+
+	return nil
 }
 
 // getConsole returns the console URL from the route 'console' in namespace openshift-console
@@ -621,6 +678,10 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 		return err
 	}
 
+	if err := waitForStableOperators(ctx, config); err != nil {
+		return err
+	}
+
 	consoleURL, err := getConsole(ctx, config)
 	if err == nil {
 		if err = addRouterCAToClusterCA(ctx, config, rootOpts.dir); err != nil {
@@ -638,4 +699,91 @@ func logTroubleshootingLink() {
 The cluster should be accessible for troubleshooting as detailed in the documentation linked below,
 https://docs.openshift.com/container-platform/latest/support/troubleshooting/troubleshooting-installations.html
 The 'wait-for install-complete' subcommand can then be used to continue the installation`)
+}
+
+func getClusterOperatorNames(ctx context.Context, cc *configclient.Clientset) ([]string, error) {
+	listCtx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	cos, err := cc.ConfigV1().ClusterOperators().List(listCtx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	names := []string{}
+	for _, v := range cos.Items {
+		names = append(names, v.Name)
+	}
+	return names, nil
+}
+
+func getCOProgressingStatus(ctx context.Context, cc *configclient.Clientset, name string) (*configv1.ClusterOperatorStatusCondition, error) {
+	coListWatcher := cache.NewListWatchFromClient(cc.ConfigV1().RESTClient(),
+		"clusteroperators",
+		"",
+		fields.OneTermEqualSelector("metadata.name", name))
+
+	var pStatus *configv1.ClusterOperatorStatusCondition
+
+	_, err := clientwatch.UntilWithSync(
+		ctx,
+		coListWatcher,
+		&configv1.ClusterOperator{},
+		nil,
+		func(event watch.Event) (bool, error) {
+			switch event.Type {
+			case watch.Added, watch.Modified:
+				cos, ok := event.Object.(*configv1.ClusterOperator)
+				if !ok {
+					logrus.Debugf("Cluster Operator %s status not found", name)
+					return false, nil
+				}
+				progressing := cov1helpers.FindStatusCondition(cos.Status.Conditions, configv1.OperatorProgressing)
+				if progressing == nil {
+					logrus.Debugf("Cluster Operator %s progressing == nil", name)
+					return false, nil
+				}
+				pStatus = progressing
+
+				if meetsStabilityThreshold(pStatus) {
+					logrus.Debugf("Cluster Operator %s is stable", name)
+					return true, nil
+				}
+				logrus.Debugf("Cluster Operator %s is Progressing=%s LastTransitionTime=%v DurationSinceTransition=%.fs Reason=%s Message=%s", name, progressing.Status, progressing.LastTransitionTime.Time, time.Since(progressing.LastTransitionTime.Time).Seconds(), progressing.Reason, progressing.Message)
+			}
+			return false, nil
+		},
+	)
+	return pStatus, err
+}
+
+// coStabilityChecker returns a closure which references a shared error variable. err
+// tracks whether any operator has had a stability error. The closure function will
+// return an error if any operator has had an instability error, even if the operator
+// currently being checked is stable.
+func coStabilityChecker() func(string, *configv1.ClusterOperatorStatusCondition, error) error {
+	var err error
+
+	return func(name string, status *configv1.ClusterOperatorStatusCondition, statusErr error) error {
+		if statusErr == nil {
+			return err
+		}
+		if !errors.Is(statusErr, wait.ErrWaitTimeout) {
+			logrus.Errorf("Error checking cluster operator %s Progressing status: %q", name, statusErr)
+			logrus.Exit(exitCodeOperatorStabilityFailed)
+			err = errors.New("cluster operators are not stable")
+		}
+		if meetsStabilityThreshold(status) {
+			logrus.Debugf("Cluster operator %s is now stable: Progressing=%s LastTransitionTime=%v DurationSinceTransition=%.fs Reason=%s Message=%s", name, status.Status, status.LastTransitionTime.Time, time.Since(status.LastTransitionTime.Time).Seconds(), status.Reason, status.Message)
+		} else {
+			logrus.Errorf("Cluster operator %s does not meet stability threshold of Progressing=false for greater than %.f seconds with Reason: %q and Message: %q", name, coStabilityThreshold, status.Reason, status.Message)
+			logrus.Exit(exitCodeOperatorStabilityFailed)
+			err = errors.New("cluster operators are not stable")
+		}
+		return err
+	}
+}
+
+func meetsStabilityThreshold(progressing *configv1.ClusterOperatorStatusCondition) bool {
+	return progressing.Status == configv1.ConditionFalse && time.Since(progressing.LastTransitionTime.Time).Seconds() > coStabilityThreshold
 }
