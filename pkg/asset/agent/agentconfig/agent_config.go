@@ -160,7 +160,7 @@ func (a *Asset) HostConfigFiles() (HostConfigFileMap, error) {
 
 		macs := []string{}
 		for _, iface := range host.Interfaces {
-			macs = append(macs, iface.MacAddress+"\n")
+			macs = append(macs, strings.ToLower(iface.MacAddress)+"\n")
 		}
 
 		if len(macs) > 0 {
