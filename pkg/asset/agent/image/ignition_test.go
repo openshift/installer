@@ -1,6 +1,7 @@
 package image
 
 import (
+	"strings"
 	"testing"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
@@ -9,6 +10,7 @@ import (
 	"github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -176,6 +178,74 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 			rendezvousIP, err := retrieveRendezvousIP(tc.agentConfig, tc.nmStateConfigs)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedRendezvousIP, rendezvousIP)
+		})
+	}
+
+}
+
+func TestAddHostConfig_Roles(t *testing.T) {
+	cases := []struct {
+		Name                            string
+		agentConfig                     *agentconfig.Asset
+		expectedNumberOfHostConfigFiles int
+	}{
+		{
+			Name: "one-host-role-defined",
+			agentConfig: &agentconfig.Asset{
+				Config: &agent.Config{
+					Spec: agent.Spec{
+						Hosts: []agent.Host{
+							{
+								Role: "master",
+							},
+						},
+					},
+				},
+			},
+			expectedNumberOfHostConfigFiles: 1,
+		},
+		{
+			Name: "multiple-host-roles-defined",
+			agentConfig: &agentconfig.Asset{
+				Config: &agent.Config{
+					Spec: agent.Spec{
+						Hosts: []agent.Host{
+							{
+								Role: "master",
+							},
+							{
+								Role: "master",
+							},
+							{
+								Role: "master",
+							},
+							{
+								Role: "worker",
+							},
+							{
+								Role: "worker",
+							},
+						},
+					},
+				},
+			},
+			expectedNumberOfHostConfigFiles: 5,
+		},
+		{
+			Name:                            "zero-host-roles-defined",
+			expectedNumberOfHostConfigFiles: 0,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			config := &igntypes.Config{}
+			err := addHostConfig(config, tc.agentConfig)
+			assert.NoError(t, err)
+			assert.Equal(t, len(config.Storage.Files), tc.expectedNumberOfHostConfigFiles)
+			for _, file := range config.Storage.Files {
+				assert.Equal(t, true, strings.HasPrefix(file.Path, "/etc/assisted/hostconfig"))
+				assert.Equal(t, true, strings.HasSuffix(file.Path, "role"))
+			}
 		})
 	}
 
