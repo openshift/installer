@@ -214,6 +214,12 @@ func TestValidatePlatform(t *testing.T) {
 			expected: "baremetal.hosts\\[1\\].Name: Duplicate value: \"host1\"",
 		},
 		{
+			name: "invalid_host_name",
+			platform: platform().
+				Hosts(host1().Name("Host1")).build(),
+			expected: "baremetal.Hosts\\[0\\].name: Invalid value: \"Host1\"",
+		},
+		{
 			name: "duplicate_host_mac",
 			platform: platform().
 				Hosts(
