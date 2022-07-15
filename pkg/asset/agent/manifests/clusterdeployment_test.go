@@ -8,11 +8,13 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	hivev1agent "github.com/openshift/hive/apis/hive/v1/agent"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	// "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 func TestClusterDeployment_Generate(t *testing.T) {
@@ -24,9 +26,43 @@ func TestClusterDeployment_Generate(t *testing.T) {
 		expectedConfig *hivev1.ClusterDeployment
 	}{
 		{
-			name:          "missing-config",
+			name: "missing config",
+			dependencies: []asset.Asset{
+				&AgentPullSecret{},
+				&agent.OptionalInstallConfig{},
+			},
 			expectedError: "missing configuration or manifest file",
 		},
+		// {
+		// 	name: "valid configurations",
+		// 	dependencies: []asset.Asset{
+		// 		GetValidAgentPullSecret(),
+		// 		GetValidOptionalInstallConfig(),
+		// 	},
+		// 	expectedConfig: &hivev1.ClusterDeployment{
+		// 		TypeMeta: metav1.TypeMeta{
+		// 			Kind:       "ClusterDeployment",
+		// 			APIVersion: "v1",
+		// 		},
+		// 		ObjectMeta: metav1.ObjectMeta{
+		// 			Name:      "ocp-edge-cluster-0",
+		// 			Namespace: "cluster-0",
+		// 		},
+		// 		Spec: hivev1.ClusterDeploymentSpec{
+		// 			ClusterName: "ocp-edge-cluster-0",
+		// 			BaseDomain:  "testing.com",
+		// 			PullSecretRef: &corev1.LocalObjectReference{
+		// 				Name: "pull-secret",
+		// 			},
+		// 			ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
+		// 				Group:   "extensions.hive.openshift.io",
+		// 				Version: "v1beta1",
+		// 				Kind:    "AgentClusterInstall",
+		// 				Name:    "ocp-edge-cluster-0",
+		// 			},
+		// 		},
+		// 	},
+		// },
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -41,6 +77,16 @@ func TestClusterDeployment_Generate(t *testing.T) {
 				assert.Equal(t, tc.expectedError, err.Error())
 			} else {
 				assert.NoError(t, err)
+				// assert.Equal(t, tc.expectedConfig, asset.Config)
+				// assert.NotEmpty(t, asset.Files())
+
+				// configFile := asset.Files()[0]
+				// assert.Equal(t, "cluster-manifests/cluster-deployment.yaml", configFile.Filename)
+
+				// var actualConfig hivev1.ClusterDeployment
+				// err = yaml.Unmarshal(configFile.Data, &actualConfig)
+				// assert.NoError(t, err)
+				// assert.Equal(t, *tc.expectedConfig, actualConfig)
 			}
 		})
 	}
