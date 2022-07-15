@@ -7,8 +7,8 @@ import (
 
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	// corev1 "k8s.io/api/core/v1"
+	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -37,53 +37,53 @@ func (*ClusterDeployment) Name() string {
 func (*ClusterDeployment) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
-		&AgentPullSecret{},
+		// &AgentPullSecret{},
 	}
 }
 
 // Generate generates the ClusterDeployment manifest.
 func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
-	installConfig := &agent.OptionalInstallConfig{}
-	agentPullSecret := &AgentPullSecret{}
-	dependencies.Get(installConfig, agentPullSecret)
+	// installConfig := &agent.OptionalInstallConfig{}
+	// agentPullSecret := &AgentPullSecret{}
+	// dependencies.Get(installConfig, agentPullSecret)
 
-	if installConfig.Config != nil && agentPullSecret.Config != nil {
-		clusterDeployment := &hivev1.ClusterDeployment{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ClusterDeployment",
-				APIVersion: "v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      installConfig.Config.ObjectMeta.Name,
-				Namespace: installConfig.Config.ObjectMeta.Namespace,
-			},
-			Spec: hivev1.ClusterDeploymentSpec{
-				ClusterName: installConfig.Config.ObjectMeta.Name,
-				BaseDomain:  installConfig.Config.BaseDomain,
-				PullSecretRef: &corev1.LocalObjectReference{
-					Name: agentPullSecret.ResourceName(),
-				},
-				ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
-					Group:   "extensions.hive.openshift.io",
-					Version: "v1beta1",
-					Kind:    "AgentClusterInstall",
-					Name:    installConfig.Config.ObjectMeta.Name,
-				},
-			},
-		}
+	// if installConfig.Config != nil && agentPullSecret.Config != nil {
+	// 	clusterDeployment := &hivev1.ClusterDeployment{
+	// 		TypeMeta: metav1.TypeMeta{
+	// 			Kind:       "ClusterDeployment",
+	// 			APIVersion: "v1",
+	// 		},
+	// 		ObjectMeta: metav1.ObjectMeta{
+	// 			Name:      installConfig.Config.ObjectMeta.Name,
+	// 			Namespace: installConfig.Config.ObjectMeta.Namespace,
+	// 		},
+	// 		Spec: hivev1.ClusterDeploymentSpec{
+	// 			ClusterName: installConfig.Config.ObjectMeta.Name,
+	// 			BaseDomain:  installConfig.Config.BaseDomain,
+	// 			PullSecretRef: &corev1.LocalObjectReference{
+	// 				Name: agentPullSecret.ResourceName(),
+	// 			},
+	// 			ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
+	// 				Group:   "extensions.hive.openshift.io",
+	// 				Version: "v1beta1",
+	// 				Kind:    "AgentClusterInstall",
+	// 				Name:    installConfig.Config.ObjectMeta.Name,
+	// 			},
+	// 		},
+	// 	}
 
-		cd.Config = clusterDeployment
-		clusterDeploymentData, err := yaml.Marshal(clusterDeployment)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal agent installer ClusterDeployment")
-		}
+	// 	cd.Config = clusterDeployment
+	// 	clusterDeploymentData, err := yaml.Marshal(clusterDeployment)
+	// 	if err != nil {
+	// 		return errors.Wrap(err, "failed to marshal agent installer ClusterDeployment")
+	// 	}
 
-		cd.File = &asset.File{
-			Filename: clusterDeploymentFilename,
-			Data:     clusterDeploymentData,
-		}
+	// 	cd.File = &asset.File{
+	// 		Filename: clusterDeploymentFilename,
+	// 		Data:     clusterDeploymentData,
+	// 	}
 
-	}
+	// }
 
 	return cd.finish()
 }
