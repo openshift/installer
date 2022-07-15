@@ -3,7 +3,6 @@ package asset
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -61,11 +60,7 @@ func TestPersistToFile(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			dir, err := ioutil.TempDir("", "TestStatePersistToFile")
-			if err != nil {
-				t.Skipf("could not create temporary directory: %v", err)
-			}
-			defer os.RemoveAll(dir)
+			dir := t.TempDir()
 
 			asset := &writablePersistAsset{
 				FileList: make([]*File, len(tc.filenames)),
@@ -79,7 +74,7 @@ func TestPersistToFile(t *testing.T) {
 				}
 				expectedFiles[filepath.Join(dir, filename)] = data
 			}
-			err = PersistToFile(asset, dir)
+			err := PersistToFile(asset, dir)
 			assert.NoError(t, err, "unexpected error persisting state to file")
 			verifyFilesCreated(t, dir, expectedFiles)
 		})
