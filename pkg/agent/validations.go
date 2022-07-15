@@ -2,6 +2,9 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
+	"reflect"
+	"sort"
 
 	"github.com/openshift/assisted-service/api/common"
 	"github.com/openshift/assisted-service/models"
@@ -51,38 +54,81 @@ var hostValidationLabels = map[string]string{
 	"vsphere-disk-uuid-enabled":                       "Vsphere disk uuidenabled",
 }
 
-func checkHostsValidations(cluster *models.Cluster, log *logrus.Logger) bool {
+type validationTrace struct {
+	header   string
+	category string
+	label    string
+	message  string
+}
 
-	hostsValidationsOk := true
+var previousValidations []validationTrace
 
-	for _, h := range cluster.Hosts {
-		validationsInfo := common.ValidationsStatus{}
-		err := json.Unmarshal([]byte(h.ValidationsInfo), &validationsInfo)
-		if err != nil {
-			log.WithError(err).Error("Unable to verify cluster hosts validations")
-			return false
-		}
+func logValidationsStatus(errorMsg string, validations string, log *logrus.Logger) []validationTrace {
 
-		for category, validationResults := range validationsInfo {
-			for _, r := range validationResults {
-				switch r.Status {
-				case validationFailure, validationError:
-					hostsValidationsOk = false
+	traces := []validationTrace{}
+	if validations == "" {
+		return traces
+	}
 
-					label := r.ID
-					if v, ok := hostValidationLabels[r.ID]; ok {
-						label = v
-					}
+	validationsInfo := common.ValidationsStatus{}
+	err := json.Unmarshal([]byte(validations), &validationsInfo)
+	if err != nil {
+		log.WithError(err).Error("Unable to verify validations")
+		return traces
+	}
 
-					log.WithFields(logrus.Fields{
-						"category": category,
-						"label":    label,
-						"message":  r.Message,
-					}).Errorf("Validation failure found for %s", h.RequestedHostname)
+	for category, validationResults := range validationsInfo {
+		for _, r := range validationResults {
+			switch r.Status {
+			case validationFailure, validationError:
+				label := r.ID
+				if v, ok := hostValidationLabels[r.ID]; ok {
+					label = v
 				}
+
+				traces = append(traces, validationTrace{
+					header:   errorMsg,
+					category: category,
+					label:    label,
+					message:  r.Message,
+				})
 			}
 		}
 	}
 
-	return hostsValidationsOk
+	return traces
+}
+
+func checkHostsValidations(cluster *models.Cluster, log *logrus.Logger) bool {
+
+	var currentValidations []validationTrace
+
+	currentValidations = append(currentValidations, logValidationsStatus("Validation failure found for cluster", cluster.ValidationsInfo, log)...)
+	for _, h := range cluster.Hosts {
+		currentValidations = append(currentValidations, logValidationsStatus(fmt.Sprintf("Validation failure found for %s", h.RequestedHostname), h.ValidationsInfo, log)...)
+	}
+
+	sort.Slice(currentValidations, func(i, j int) bool {
+		if currentValidations[i].header != currentValidations[j].header {
+			return currentValidations[i].header < currentValidations[j].header
+		}
+		if currentValidations[i].category != currentValidations[j].category {
+			return currentValidations[i].category < currentValidations[j].category
+		}
+		return currentValidations[i].label < currentValidations[j].label
+	})
+
+	if !reflect.DeepEqual(currentValidations, previousValidations) {
+		previousValidations = currentValidations
+		log.Info("Checking for validation failures ----------------------------------------------")
+		for _, v := range previousValidations {
+			log.WithFields(logrus.Fields{
+				"category": v.category,
+				"label":    v.label,
+				"message":  v.message,
+			}).Error(v.header)
+		}
+	}
+
+	return len(previousValidations) == 0
 }

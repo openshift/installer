@@ -40,6 +40,7 @@ func TestCheckHostsValidation(t *testing.T) {
 			},
 			expectedResult: false,
 			expectedLogs: []string{
+				`Checking for validation failures ----------------------------------------------`,
 				`level=error msg="Validation failure found for master\-0.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
 			},
 		},
@@ -57,6 +58,7 @@ func TestCheckHostsValidation(t *testing.T) {
 			},
 			expectedResult: false,
 			expectedLogs: []string{
+				`Checking for validation failures ----------------------------------------------`,
 				`level=error msg="Validation failure found for master\-0.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
 				`level=error msg="Validation failure found for master\-1.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
 			},
@@ -69,9 +71,10 @@ func TestCheckHostsValidation(t *testing.T) {
 					ValidationsInfo:   `not a valid info`,
 				},
 			},
-			expectedResult: false,
+			expectedResult: true,
 			expectedLogs: []string{
-				`Unable to verify cluster hosts validations`,
+				`Checking for validation failures ----------------------------------------------`,
+				`Unable to verify validations`,
 			},
 		},
 	}
