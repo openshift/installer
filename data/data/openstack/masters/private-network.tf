@@ -1,4 +1,5 @@
 locals {
+  # Create subnet for the first MachineNetwork CIDR if we need to
   nodes_cidr_block = var.machine_v4_cidrs[0]
   nodes_subnet_id  = var.openstack_machines_subnet_id != "" ? var.openstack_machines_subnet_id : openstack_networking_subnet_v2.nodes[0].id
   nodes_network_id = var.openstack_machines_network_id != "" ? var.openstack_machines_network_id : openstack_networking_network_v2.openshift-private[0].id
