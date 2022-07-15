@@ -59,7 +59,10 @@ func GetSession() (*session.Session, error) { return GetSessionWithOptions() }
 // and, if no creds are found, asks for them and stores them on disk in a config file
 func GetSessionWithOptions(optFuncs ...SessionOptions) (*session.Session, error) {
 	options := session.Options{
-		Config:            aws.Config{MaxRetries: aws.Int(0)},
+		Config: aws.Config{
+			MaxRetries:          aws.Int(0),
+			STSRegionalEndpoint: endpoints.RegionalSTSEndpoint,
+		},
 		SharedConfigState: session.SharedConfigEnable,
 	}
 	for _, optFunc := range optFuncs {
