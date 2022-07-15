@@ -41,13 +41,8 @@ func validateFailureDomainsPlatform(p *openstack.Platform, c *types.InstallConfi
 		}
 	}
 
-	var controlPlaneFailureDomains, computeFailureDomains bool
-	if c.ControlPlane.Platform.OpenStack.FailureDomainNames != nil {
-		controlPlaneFailureDomains = true
-	}
-	if c.Compute[0].Platform.OpenStack.FailureDomainNames != nil {
-		computeFailureDomains = true
-	}
+	controlPlaneFailureDomains := c.ControlPlane.Platform.OpenStack.FailureDomainNames != nil
+	computeFailureDomains := c.Compute[0].Platform.OpenStack.FailureDomainNames != nil
 	if controlPlaneFailureDomains != computeFailureDomains {
 		return errors.New("must specify failure domains for both control plane and compute")
 	}

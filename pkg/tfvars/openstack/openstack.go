@@ -143,7 +143,7 @@ func TFVars(
 	)
 }
 
-func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mastermpool, workermpool, defaultmpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy, failureDomains []types_openstack.FailureDomain) ([]byte, error) {
+func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mastermpool, workermpool, defaultmpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy, failureDomains []*types_openstack.FailureDomain) ([]byte, error) {
 	zones := []string{}
 	seen := map[string]bool{}
 	for _, config := range masterConfigs {
@@ -173,19 +173,24 @@ func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1
 		cfg.MasterRootVolumeAvalabilityZones = mastermpool.RootVolume.Zones
 	}
 
+	var failureDomainNames []string
+	if defaultmpool != nil && defaultmpool.FailureDomainNames != nil {
+		failureDomainNames = defaultmpool.FailureDomainNames
+	}
 	if mastermpool != nil && mastermpool.FailureDomainNames != nil {
-		for _, name := range mastermpool.FailureDomainNames {
-			if len(failureDomains) > 0 {
-				for _, domain := range failureDomains {
-					if domain.Name == name {
-						cfg.MasterSubnets = append(cfg.MasterSubnets, domain.Subnet)
-						break
-					}
+		failureDomainNames = mastermpool.FailureDomainNames
+	}
+	for _, name := range failureDomainNames {
+		if len(failureDomains) > 0 {
+			for _, domain := range failureDomains {
+				if domain.Name == name {
+					cfg.MasterSubnets = append(cfg.MasterSubnets, domain.Subnet)
+					break
 				}
 			}
-			if cfg.MasterSubnets == nil {
-				return nil, errors.Errorf("failed to find a corresponding domain named %s in failureDomains", name)
-			}
+		}
+		if cfg.MasterSubnets == nil {
+			return nil, errors.Errorf("failed to find a corresponding domain named %s in failureDomains", name)
 		}
 	}
 

@@ -2,7 +2,7 @@ package openstack
 
 // FailureDomain holds the information for a failure domain
 type FailureDomain struct {
-	// Name defines the name of the OpenStackPlatformFailureDomainSpec
+	// Name defines the name of the FailureDomain
 	Name string `json:"name"`
 
 	// ComputeZone is the compute zone on which the nodes belonging to the

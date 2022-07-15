@@ -356,19 +356,19 @@ variable "openstack_machines_network_id" {
 variable "openstack_master_availability_zones" {
   type        = list(string)
   default     = [""]
-  description = "List of availability Zones to Schedule the masters on."
+  description = "List of availability Zones to schedule the masters on."
 }
 
 variable "openstack_master_root_volume_availability_zones" {
   type        = list(string)
   default     = [""]
-  description = "List of availability Zones to Schedule the masters root volumes on."
+  description = "List of availability Zones to schedule the masters root volumes on."
 }
 
 variable "openstack_master_subnets" {
   type        = list(string)
   default     = [""]
-  description = "List of subnets to Schedule the masters on."
+  description = "List of existing subnets to schedule the masters on."
 }
 
 variable "openstack_worker_server_group_names" {

@@ -32,25 +32,29 @@ func ValidateMachinePool(platform *openstack.Platform, machinePool *openstack.Ma
 
 func validateFailureDomainsMachinePool(platform *openstack.Platform, machinePool *openstack.MachinePool, fldPath *field.Path) (errs field.ErrorList) {
 	if machinePool.FailureDomainNames != nil {
-		var foundOne = false
+		var foundFailureDomain = false
 		for _, name := range machinePool.FailureDomainNames {
 			for _, domain := range platform.FailureDomains {
 				if domain.Name == name {
-					foundOne = true
+					foundFailureDomain = true
 					break
 				}
 			}
-			if !foundOne {
+			if !foundFailureDomain {
 				errs = append(errs, field.Invalid(fldPath.Child("failureDomainNames"), name, "failure domain not found"))
 			}
 		}
 
 		if machinePool.Zones != nil {
-			errs = append(errs, field.Invalid(fldPath.Child("zones"), machinePool.Zones, "zones cannot be specified when failureDomainNames is specified"))
+			errs = append(errs, field.Invalid(fldPath.Child("zones"), machinePool.Zones, "zones cannot be specified together with failureDomainNames"))
 		}
 		if machinePool.RootVolume != nil && machinePool.RootVolume.Zones != nil {
-			errs = append(errs, field.Invalid(fldPath.Child("zones"), machinePool.RootVolume.Zones, "zones cannot be specified when failureDomainNames is specified"))
+			errs = append(errs, field.Invalid(fldPath.Child("rootVolume", "zones"), machinePool.RootVolume.Zones, "zones cannot be specified together with failureDomainNames"))
 		}
 	}
+	// TODO(mandre)
+	// - Check that machinesSubnet is set
+	// - Check that subnets actually exist
+	// - Check that subnets have a matching CIDR in MachineNetwork
 	return errs
 }

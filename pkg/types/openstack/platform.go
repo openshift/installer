@@ -117,5 +117,5 @@ type Platform struct {
 
 	// FailureDomains configures failure domain information for the OpenStack platform
 	// +optional
-	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
+	FailureDomains []*FailureDomain `json:"failureDomains,omitempty"`
 }

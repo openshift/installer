@@ -44,14 +44,12 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	var subnets, zones []string
 	if len(mpool.FailureDomainNames) > 0 {
 		for _, name := range mpool.FailureDomainNames {
-			if len(platform.FailureDomains) > 0 {
-				for _, domain := range platform.FailureDomains {
-					if domain.Name == name {
-						zones = append(zones, domain.ComputeZone)
-						volumeAZs = append(volumeAZs, domain.StorageZone)
-						subnets = append(subnets, domain.Subnet)
-						break
-					}
+			for _, domain := range platform.FailureDomains {
+				if domain.Name == name {
+					zones = append(zones, domain.ComputeZone)
+					volumeAZs = append(volumeAZs, domain.StorageZone)
+					subnets = append(subnets, domain.Subnet)
+					break
 				}
 			}
 		}
