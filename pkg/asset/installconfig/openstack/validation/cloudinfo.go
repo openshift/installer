@@ -32,17 +32,18 @@ import (
 
 // CloudInfo caches data fetched from the user's openstack cloud
 type CloudInfo struct {
-	APIFIP            *floatingips.FloatingIP
-	ExternalNetwork   *networks.Network
-	Flavors           map[string]Flavor
-	IngressFIP        *floatingips.FloatingIP
-	MachinesSubnet    *subnets.Subnet
-	OSImage           *images.Image
-	ComputeZones      []string
-	VolumeZones       []string
-	VolumeTypes       []string
-	NetworkExtensions []extensions.Extension
-	Quotas            []quota.Quota
+	APIFIP                *floatingips.FloatingIP
+	ExternalNetwork       *networks.Network
+	Flavors               map[string]Flavor
+	IngressFIP            *floatingips.FloatingIP
+	MachinesSubnet        *subnets.Subnet
+	FailureDomainsSubnets []*subnets.Subnet
+	OSImage               *images.Image
+	ComputeZones          []string
+	VolumeZones           []string
+	VolumeTypes           []string
+	NetworkExtensions     []extensions.Extension
+	Quotas                []quota.Quota
 
 	clients *clients
 }
@@ -180,6 +181,16 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	ci.MachinesSubnet, err = ci.getSubnet(ic.OpenStack.MachinesSubnet)
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch machine subnet info")
+	}
+
+	for _, failureDomain := range ic.OpenStack.FailureDomains {
+		if failureDomain.Subnet != "" {
+			failureDomainSubnet, err := ci.getSubnet(failureDomain.Subnet)
+			if err != nil {
+				return errors.Wrap(err, "failed to fetch failure domain subnet info")
+			}
+			ci.FailureDomainsSubnets = append(ci.FailureDomainsSubnets, failureDomainSubnet)
+		}
 	}
 
 	ci.APIFIP, err = ci.getFloatingIP(ic.OpenStack.APIFloatingIP)

@@ -46,6 +46,12 @@ func validateFailureDomainsPlatform(p *openstack.Platform, c *types.InstallConfi
 	if controlPlaneFailureDomains != computeFailureDomains {
 		return errors.New("must specify failure domains for both control plane and compute")
 	}
+
+	if len(p.FailureDomains) > 0 {
+		if p.MachinesSubnet == "" {
+			return errors.New(("must specify a machinesSubnet when failure domains are specified"))
+		}
+	}
 	return nil
 }
 

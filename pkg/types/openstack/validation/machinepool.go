@@ -52,9 +52,5 @@ func validateFailureDomainsMachinePool(platform *openstack.Platform, machinePool
 			errs = append(errs, field.Invalid(fldPath.Child("rootVolume", "zones"), machinePool.RootVolume.Zones, "zones cannot be specified together with failureDomainNames"))
 		}
 	}
-	// TODO(mandre)
-	// - Check that machinesSubnet is set
-	// - Check that subnets actually exist
-	// - Check that subnets have a matching CIDR in MachineNetwork
 	return errs
 }

@@ -22,6 +22,9 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 	// validate BYO machinesSubnet usage
 	allErrs = append(allErrs, validateMachinesSubnet(p, n, ci, fldPath)...)
 
+	// validate failureDomains usage
+	allErrs = append(allErrs, validateFailureDomainsSubnets(p, n, ci, fldPath)...)
+
 	// validate the externalNetwork
 	allErrs = append(allErrs, validateExternalNetwork(p, ci, fldPath)...)
 
@@ -54,6 +57,27 @@ func validateMachinesSubnet(p *openstack.Platform, n *types.Networking, ci *Clou
 		}
 	}
 
+	return allErrs
+}
+
+// validateFailureDomainsSubnets validate the subnets defined in the failure domains have a CIDR in the MachineneNetwork and also have a valid UUID.
+func validateFailureDomainsSubnets(p *openstack.Platform, n *types.Networking, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
+	for _, subnet := range ci.FailureDomainsSubnets {
+		if !validUUIDv4(subnet.ID) {
+			allErrs = append(allErrs, field.InternalError(fldPath.Child("failureDomains"), errors.New("invalid subnet ID")))
+		} else {
+			foundSubnet := false
+			for _, network := range n.MachineNetwork {
+				if network.CIDR.String() == subnet.CIDR {
+					foundSubnet = true
+					break
+				}
+			}
+			if !foundSubnet {
+				allErrs = append(allErrs, field.InternalError(fldPath.Child("failureDomains"), fmt.Errorf("the CIDR %s is not found in the machineNetwork", subnet.CIDR)))
+			}
+		}
+	}
 	return allErrs
 }
 
