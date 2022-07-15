@@ -81,6 +81,8 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	zones, err := client.GetZones(context.TODO(), ic.GCP.ProjectID, fmt.Sprintf("region eq .*%s", ic.GCP.Region))
 	if err != nil {
 		return append(allErrs, field.InternalError(nil, err))
+	} else if len(zones) == 0 {
+		return append(allErrs, field.InternalError(nil, fmt.Errorf("failed to fetch instance types, this error usually occurs if the region is not found")))
 	}
 
 	// Default requirements need to be sufficient to support Control Plane instances.
