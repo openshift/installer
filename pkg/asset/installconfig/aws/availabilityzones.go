@@ -3,24 +3,24 @@ package aws
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/pkg/errors"
 )
 
 // availabilityZones retrieves a list of availability zones for the given region.
-func availabilityZones(ctx context.Context, session *session.Session, region string) ([]string, error) {
-	client := ec2.New(session, aws.NewConfig().WithRegion(region))
-	resp, err := client.DescribeAvailabilityZonesWithContext(ctx, &ec2.DescribeAvailabilityZonesInput{
-		Filters: []*ec2.Filter{
+func availabilityZones(ctx context.Context, cfg aws.Config, region string) ([]string, error) {
+	client := ec2.NewFromConfig(cfg)
+	resp, err := client.DescribeAvailabilityZones(ctx, &ec2.DescribeAvailabilityZonesInput{
+		Filters: []types.Filter{
 			{
 				Name:   aws.String("region-name"),
-				Values: []*string{aws.String(region)},
+				Values: []string{region},
 			},
 			{
 				Name:   aws.String("state"),
-				Values: []*string{aws.String("available")},
+				Values: []string{"available"},
 			},
 		},
 	})
@@ -30,8 +30,8 @@ func availabilityZones(ctx context.Context, session *session.Session, region str
 
 	zones := []string{}
 	for _, zone := range resp.AvailabilityZones {
-		if *zone.ZoneType == "availability-zone" {
-			zones = append(zones, *zone.ZoneName)
+		if aws.ToString(zone.ZoneType) == "availability-zone" {
+			zones = append(zones, aws.ToString(zone.ZoneName))
 		}
 	}
 

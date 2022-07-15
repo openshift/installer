@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"sort"
 
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -24,7 +24,7 @@ import (
 )
 
 type resourceRequirements struct {
-	minimumVCpus  int64
+	minimumVCpus  int32
 	minimumMemory int64
 }
 
@@ -407,7 +407,7 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 		return false
 	}
 	for _, vpc := range hostedZone.VPCs {
-		if aws.StringValue(vpc.VPCId) == vpcID {
+		if aws.ToString(vpc.VPCId) == vpcID {
 			return true
 		}
 	}

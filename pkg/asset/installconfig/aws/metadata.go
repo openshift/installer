@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 
@@ -15,6 +17,7 @@ import (
 // from external APIs).
 type Metadata struct {
 	session           *session.Session
+	config            *aws.Config
 	availabilityZones []string
 	privateSubnets    map[string]Subnet
 	publicSubnets     map[string]Subnet
@@ -54,20 +57,41 @@ func (m *Metadata) unlockedSession(ctx context.Context) (*session.Session, error
 	return m.session, nil
 }
 
+// Config holds an AWS config which can be used for AWS API calls
+// during asset generation.
+func (m *Metadata) Config(ctx context.Context) (*aws.Config, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	return m.unlockedConfig(ctx)
+}
+
+func (m *Metadata) unlockedConfig(ctx context.Context) (*aws.Config, error) {
+	if m.config == nil {
+		cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(m.Region), WithCustomEndpointsResolver(m.Region, m.Services))
+		if err != nil {
+			return nil, errors.Wrap(err, "loading AWS default config")
+		}
+		m.config = &cfg
+	}
+
+	return m.config, nil
+}
+
 // AvailabilityZones retrieves a list of availability zones for the configured region.
 func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	if len(m.availabilityZones) == 0 {
-		session, err := m.unlockedSession(ctx)
+		config, err := m.unlockedConfig(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		m.availabilityZones, err = availabilityZones(ctx, session, m.Region)
+		m.availabilityZones, err = availabilityZones(ctx, *config, m.Region)
 		if err != nil {
-			return nil, errors.Wrap(err, "creating AWS session")
+			return nil, err
 		}
 	}
 
@@ -113,12 +137,12 @@ func (m *Metadata) populateSubnets(ctx context.Context) error {
 		return errors.New("no subnets configured")
 	}
 
-	session, err := m.unlockedSession(ctx)
+	config, err := m.unlockedConfig(ctx)
 	if err != nil {
 		return err
 	}
 
-	m.vpc, m.privateSubnets, m.publicSubnets, err = subnets(ctx, session, m.Region, m.Subnets)
+	m.vpc, m.privateSubnets, m.publicSubnets, err = subnets(ctx, *config, m.Subnets)
 	return err
 }
 
@@ -147,12 +171,12 @@ func (m *Metadata) InstanceTypes(ctx context.Context) (map[string]InstanceType, 
 	defer m.mutex.Unlock()
 
 	if len(m.instanceTypes) == 0 {
-		session, err := m.unlockedSession(ctx)
+		config, err := m.unlockedConfig(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		m.instanceTypes, err = instanceTypes(ctx, session, m.Region)
+		m.instanceTypes, err = instanceTypes(ctx, *config)
 		if err != nil {
 			return nil, errors.Wrap(err, "listing instance types")
 		}

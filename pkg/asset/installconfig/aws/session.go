@@ -8,6 +8,9 @@ import (
 	"sync"
 
 	survey "github.com/AlecAivazis/survey/v2"
+	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	route53v2 "github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -23,13 +26,11 @@ import (
 	"github.com/openshift/installer/pkg/version"
 )
 
-var (
-	onceLoggers = map[string]*sync.Once{
-		credentials.SharedCredsProviderName: new(sync.Once),
-		credentials.EnvProviderName:         new(sync.Once),
-		"credentialsFromSession":            new(sync.Once),
-	}
-)
+var onceLoggers = map[string]*sync.Once{
+	credentials.SharedCredsProviderName: new(sync.Once),
+	credentials.EnvProviderName:         new(sync.Once),
+	"credentialsFromSession":            new(sync.Once),
+}
 
 // SessionOptions is a function that modifies the provided session.Option.
 type SessionOptions func(sess *session.Options)
@@ -49,6 +50,37 @@ func WithServiceEndpoints(region string, services []typesaws.ServiceEndpoint) Se
 		cfg := aws.NewConfig().WithEndpointResolver(resolver)
 		sess.Config.MergeIn(cfg)
 	}
+}
+
+// https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/endpoints/
+func WithCustomEndpointsResolver(region string, services []typesaws.ServiceEndpoint) config.LoadOptionsFunc {
+	return config.WithEndpointResolverWithOptions(GetCustomResolver(region, services))
+}
+
+func GetCustomResolver(region string, services []typesaws.ServiceEndpoint) awsv2.EndpointResolverWithOptions {
+	customResolver := awsv2.EndpointResolverWithOptionsFunc(
+		func(service, region string, options ...interface{}) (awsv2.Endpoint, error) {
+			if service == route53v2.ServiceID && (region == endpoints.CnNorth1RegionID || region == endpoints.CnNorthwest1RegionID) {
+				return awsv2.Endpoint{
+					PartitionID:   "aws",
+					URL:           "https://route53.amazonaws.com.cn",
+					SigningRegion: region,
+				}, nil
+			}
+			for _, endpoint := range services {
+				if endpoint.Name != service {
+					continue
+				}
+				return awsv2.Endpoint{
+					PartitionID:   "aws",
+					URL:           endpoint.URL,
+					SigningRegion: region,
+				}, nil
+			}
+			// returning EndpointNotFoundError will allow the service to fallback to it's default resolution
+			return awsv2.Endpoint{}, &awsv2.EndpointNotFoundError{}
+		})
+	return customResolver
 }
 
 // GetSession returns an AWS session by checking credentials
@@ -82,6 +114,7 @@ func GetSessionWithOptions(optFuncs ...SessionOptions) (*session.Session, error)
 		Name: "openshiftInstaller.OpenshiftInstallerUserAgentHandler",
 		Fn:   request.MakeAddToUserAgentHandler("OpenShift/4.x Installer", version.Raw),
 	})
+
 	return ssn, nil
 }
 
@@ -195,7 +228,7 @@ func getUserCredentials() error {
 		path = env
 	}
 	logrus.Infof("Writing AWS credentials to %q (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html)", path)
-	err = os.MkdirAll(filepath.Dir(path), 0700)
+	err = os.MkdirAll(filepath.Dir(path), 0o700)
 	if err != nil {
 		return err
 	}
@@ -218,7 +251,7 @@ func getUserCredentials() error {
 	creds.Section(profile).Key("aws_secret_access_key").SetValue(secretKey)
 
 	tempPath := path + ".tmp"
-	file, err := os.OpenFile(tempPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	file, err := os.OpenFile(tempPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
 	if err != nil {
 		return err
 	}
