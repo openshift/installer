@@ -39,30 +39,15 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		total = int32(*pool.Replicas)
 	}
 
+	numOfAZs := int32(len(mpool.Zones))
 	var machinesets []*clusterapi.MachineSet
-
-	var subnets, zones []string
-	if len(mpool.FailureDomainNames) > 0 {
-		for _, name := range mpool.FailureDomainNames {
-			for _, domain := range platform.FailureDomains {
-				if domain.Name == name {
-					zones = append(zones, domain.ComputeZone)
-					volumeAZs = append(volumeAZs, domain.StorageZone)
-					subnets = append(subnets, domain.Subnet)
-					break
-				}
-			}
-		}
-	} else {
-		zones = mpool.Zones
-	}
-	numOfAZs := int32(len(zones))
-	for idx, az := range zones {
+	var subnet string
+	for idx, az := range mpool.Zones {
 		replicas := int32(total / numOfAZs)
 		if int32(idx) < total%numOfAZs {
 			replicas++
 		}
-		provider, err := generateProvider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunkSupport, volumeAZs[idx%len(volumeAZs)], subnets[idx%len(subnets)])
+		provider, err := generateProvider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunkSupport, volumeAZs[idx%len(volumeAZs)], subnet)
 		if err != nil {
 			return nil, err
 		}
