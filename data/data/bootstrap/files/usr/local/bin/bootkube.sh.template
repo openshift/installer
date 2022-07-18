@@ -293,6 +293,9 @@ then
 		ADDITIONAL_FLAGS="${ADDITIONAL_FLAGS} --cloud-config-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml"
 	fi
 
+	# Dump out image reference file so MCO can consume multiple/additional image references
+	podman run --quiet --rm --net=none --entrypoint="cat" "${RELEASE_IMAGE_DIGEST}" "/release-manifests/image-references" > image-references
+
 	bootkube_podman_run \
 		--name mco-render \
 		--user 0 \
@@ -312,6 +315,7 @@ then
 			--haproxy-image="${HAPROXY_IMAGE}" \
 			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
 			--release-image="${RELEASE_IMAGE_DIGEST}" \
+			--image-references=assets/image-references \
 			${ADDITIONAL_FLAGS}
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
