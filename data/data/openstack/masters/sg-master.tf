@@ -5,12 +5,13 @@ resource "openstack_networking_secgroup_v2" "master" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_mcs" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 22623
   port_range_max    = 22623
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -30,34 +31,37 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_icmp" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ssh" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 22
   port_range_max    = 22
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_tcp" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 53
   port_range_max    = 53
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "udp"
   port_range_min    = 53
   port_range_max    = 53
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -75,131 +79,143 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_api" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_vxlan" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "udp"
   port_range_min    = 4789
   port_range_max    = 4789
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_geneve" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "udp"
   port_range_min    = 6081
   port_range_max    = 6081
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ike" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "udp"
   port_range_min    = 500
   port_range_max    = 500
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ike_nat_t" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "udp"
   port_range_min    = 4500
   port_range_max    = 4500
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_esp" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "esp"
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ovndb" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 6641
   port_range_max    = 6642
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 9000
   port_range_max    = 9999
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_udp" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "udp"
   port_range_min    = 9000
   port_range_max    = 9999
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 10259
   port_range_max    = 10259
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller_manager" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 10257
   port_range_max    = 10257
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 10250
   port_range_max    = 10250
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_etcd" {
+  count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 2379
   port_range_max    = 2380
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -229,12 +245,13 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp" {
+  count     = length(var.machine_v4_cidrs)
   direction = "ingress"
   ethertype = "IPv4"
   # Explicitly set the vrrp protocol number to prevent cases when the Neutron Plugin
   # is disabled and it cannot identify a number by name.
   protocol          = "112"
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -264,13 +281,13 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_router" {
-  count             = var.masters_schedulable ? 1 : 0
+  count             = var.masters_schedulable ? length(var.machine_v4_cidrs) : 0
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 1936
   port_range_max    = 1936
-  remote_ip_prefix  = var.machine_v4_cidrs[0]
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
