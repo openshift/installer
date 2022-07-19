@@ -71,10 +71,10 @@ func TestCheckHostsValidation(t *testing.T) {
 					ValidationsInfo:   `not a valid info`,
 				},
 			},
-			expectedResult: true,
+			expectedResult: false,
 			expectedLogs: []string{
-				`Checking for validation failures ----------------------------------------------`,
-				`Unable to verify validations`,
+				`Checking for validation failures ----------------------------------------------"`,
+				`Validation failure found for master-0.ostest.test.metalkube.org`,
 			},
 		},
 	}

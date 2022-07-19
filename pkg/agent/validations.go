@@ -73,8 +73,7 @@ func logValidationsStatus(errorMsg string, validations string, log *logrus.Logge
 	validationsInfo := common.ValidationsStatus{}
 	err := json.Unmarshal([]byte(validations), &validationsInfo)
 	if err != nil {
-		log.WithError(err).Error("Unable to verify validations")
-		return traces
+		return []validationTrace{{header: errorMsg, message: "unable to verify validations"}}
 	}
 
 	for category, validationResults := range validationsInfo {
@@ -120,6 +119,12 @@ func checkHostsValidations(cluster *models.Cluster, log *logrus.Logger) bool {
 
 	if !reflect.DeepEqual(currentValidations, previousValidations) {
 		previousValidations = currentValidations
+
+		if len(previousValidations) == 0 {
+			log.Info("Pre-installation validations are OK")
+			return true
+		}
+
 		log.Info("Checking for validation failures ----------------------------------------------")
 		for _, v := range previousValidations {
 			log.WithFields(logrus.Fields{
