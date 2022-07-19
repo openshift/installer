@@ -3,6 +3,7 @@ package manifests
 import (
 	"errors"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -68,7 +69,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 						Name:      "ocp-edge-cluster-0",
 						Namespace: "cluster-0",
 					},
-					SSHAuthorizedKey: "ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain",
+					SSHAuthorizedKey: strings.Trim(TestSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
 						Name: "pull-secret",
 					},

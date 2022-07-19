@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -51,7 +52,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 						ControlPlaneAgents: 3,
 						WorkerAgents:       5,
 					},
-					SSHPublicKey: "ssh-key",
+					SSHPublicKey: strings.Trim(TestSSHKey, "|\n\t"),
 				},
 			},
 		},

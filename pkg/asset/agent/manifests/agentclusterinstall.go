@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
@@ -54,7 +55,7 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 				ClusterDeploymentRef: corev1.LocalObjectReference{
 					Name: installConfig.Config.ObjectMeta.Name,
 				},
-				SSHPublicKey: installConfig.Config.SSHKey,
+				SSHPublicKey: strings.Trim(installConfig.Config.SSHKey, "|\n\t"),
 				ProvisionRequirements: hiveext.ProvisionRequirements{
 					ControlPlaneAgents: int(*installConfig.Config.ControlPlane.Replicas),
 				},

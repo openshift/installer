@@ -10,6 +10,9 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+var TestSSHKey = `|
+	ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain`
+
 // GetValidAgentPullSecret returns a valid agent pull secret
 func GetValidAgentPullSecret() *AgentPullSecret {
 	return &AgentPullSecret{
@@ -40,8 +43,7 @@ func GetValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 				},
 				BaseDomain: "testing.com",
 				PullSecret: "secret-agent",
-				SSHKey: `|
-				ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain`,
+				SSHKey:     TestSSHKey,
 				ControlPlane: &types.MachinePool{
 					Name:     "master",
 					Replicas: pointer.Int64Ptr(3),
