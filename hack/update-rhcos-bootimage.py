@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# Usage: ./hack/update-rhcos-bootimage.py https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.7/47.84.202109171532-0/x86_64/meta.json amd64
+# Usage: ./hack/update-rhcos-bootimage.py https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.7/47.84.202109171532-0/x86_64/meta.json amd64
 import codecs,os,sys,json,argparse
 import urllib.parse
 import urllib.request
 
 # An app running in the CI cluster exposes this public endpoint about ART RHCOS
 # builds.  Do not try to e.g. point to RHT-internal endpoints.
-RHCOS_RELEASES_APP = 'https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com'
+RHCOS_RELEASES_APP = 'https://rhcos.mirror.openshift.com'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("meta", action='store')
