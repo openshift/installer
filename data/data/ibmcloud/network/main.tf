@@ -87,4 +87,9 @@ module "vpc" {
   tags              = local.tags
   zones_master      = distinct(var.ibmcloud_master_availability_zones)
   zones_worker      = distinct(var.ibmcloud_worker_availability_zones)
+
+  preexisting_vpc       = var.ibmcloud_preexisting_vpc
+  cluster_vpc           = var.ibmcloud_vpc
+  control_plane_subnets = var.ibmcloud_control_plane_subnets
+  compute_subnets       = var.ibmcloud_compute_subnets
 }

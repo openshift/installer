@@ -1,10 +1,3 @@
-locals {
-  # NOTE: Defined in ./vpc.tf
-  # prefix     = var.cluster_id
-
-  subnet_cidr_blocks = concat(ibm_is_subnet.control_plane.*.ipv4_cidr_block, ibm_is_subnet.compute.*.ipv4_cidr_block)
-}
-
 # NOTE: Security group rules enforces network access based on OCP requirements
 # https://docs.openshift.com/container-platform/4.9/installing/installing_platform_agnostic/installing-platform-agnostic.html#installation-network-connectivity-user-infra_installing-platform-agnostic
 
@@ -20,7 +13,7 @@ resource "ibm_is_security_group" "cluster_wide" {
   name           = "${local.prefix}-sg-cluster-wide"
   resource_group = var.resource_group_id
   tags           = var.tags
-  vpc            = ibm_is_vpc.vpc.id
+  vpc            = local.vpc_id
 }
 
 # SSH
@@ -79,7 +72,7 @@ resource "ibm_is_security_group" "openshift_network" {
   name           = "${local.prefix}-sg-openshift-net"
   resource_group = var.resource_group_id
   tags           = var.tags
-  vpc            = ibm_is_vpc.vpc.id
+  vpc            = local.vpc_id
 }
 
 # Host level services - TCP
@@ -178,7 +171,7 @@ resource "ibm_is_security_group" "kubernetes_api_lb" {
   name           = "${local.prefix}-sg-kube-api-lb"
   resource_group = var.resource_group_id
   tags           = var.tags
-  vpc            = ibm_is_vpc.vpc.id
+  vpc            = local.vpc_id
 }
 
 # Kubernetes API LB - inbound
@@ -233,14 +226,14 @@ resource "ibm_is_security_group" "control_plane" {
   name           = "${local.prefix}-sg-control-plane"
   resource_group = var.resource_group_id
   tags           = var.tags
-  vpc            = ibm_is_vpc.vpc.id
+  vpc            = local.vpc_id
 }
 
 resource "ibm_is_security_group" "control_plane_internal" {
   name           = "${local.prefix}-sg-cp-internal"
   resource_group = var.resource_group_id
   tags           = var.tags
-  vpc            = ibm_is_vpc.vpc.id
+  vpc            = local.vpc_id
 }
 
 # etcd
