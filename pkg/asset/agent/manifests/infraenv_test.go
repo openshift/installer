@@ -68,7 +68,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 						Name:      "ocp-edge-cluster-0",
 						Namespace: "cluster-0",
 					},
-					SSHAuthorizedKey: "ssh-key",
+					SSHAuthorizedKey: "ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain",
 					PullSecretRef: &corev1.LocalObjectReference{
 						Name: "pull-secret",
 					},

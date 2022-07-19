@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/pkg/errors"
@@ -62,7 +63,7 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 					Name:      installConfig.Config.ObjectMeta.Name,
 					Namespace: installConfig.Config.ObjectMeta.Namespace,
 				},
-				SSHAuthorizedKey: installConfig.Config.SSHKey,
+				SSHAuthorizedKey: strings.Trim(installConfig.Config.SSHKey, "|\n\t"),
 				PullSecretRef: &corev1.LocalObjectReference{
 					Name: agentPullSecret.ResourceName(),
 				},

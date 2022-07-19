@@ -40,7 +40,8 @@ func GetValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 				},
 				BaseDomain: "testing.com",
 				PullSecret: "secret-agent",
-				SSHKey:     "ssh-key",
+				SSHKey: `|
+				ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain`,
 				ControlPlane: &types.MachinePool{
 					Name:     "master",
 					Replicas: pointer.Int64Ptr(3),
