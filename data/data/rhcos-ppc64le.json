@@ -1,5 +1,5 @@
 {
-    "baseURI": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.7-ppc64le/47.84.202206131039-0/ppc64le/",
+    "baseURI": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.7-ppc64le/47.84.202206131039-0/ppc64le/",
     "buildid": "47.84.202206131039-0",
     "images": {
         "live-initramfs": {
