@@ -45,7 +45,7 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 					Namespace: "cluster-0",
 				},
 				StringData: map[string]string{
-					".dockerconfigjson": "c2VjcmV0LWFnZW50",
+					".dockerconfigjson": TestSecret,
 				},
 			},
 		},

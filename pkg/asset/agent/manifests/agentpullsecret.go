@@ -1,7 +1,6 @@
 package manifests
 
 import (
-	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -59,7 +58,7 @@ func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
 				Namespace: installConfig.Config.Namespace,
 			},
 			StringData: map[string]string{
-				".dockerconfigjson": base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+				".dockerconfigjson": installConfig.Config.PullSecret,
 			},
 		}
 		a.Config = secret

@@ -10,8 +10,11 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-var TestSSHKey = `|
+var (
+	TestSSHKey = `|
 	ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain`
+	TestSecret = `'{"auths":{"cloud.openshift.com":{"auth":"b3BlUTA=","email":"test@redhat.com"}}}`
+)
 
 // GetValidAgentPullSecret returns a valid agent pull secret
 func GetValidAgentPullSecret() *AgentPullSecret {
@@ -26,7 +29,7 @@ func GetValidAgentPullSecret() *AgentPullSecret {
 				Namespace: "cluster-0",
 			},
 			StringData: map[string]string{
-				".dockerconfigjson": "c2VjcmV0LWFnZW50",
+				".dockerconfigjson": TestSecret,
 			},
 		},
 	}
@@ -42,7 +45,7 @@ func GetValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 					Namespace: "cluster-0",
 				},
 				BaseDomain: "testing.com",
-				PullSecret: "secret-agent",
+				PullSecret: TestSecret,
 				SSHKey:     TestSSHKey,
 				ControlPlane: &types.MachinePool{
 					Name:     "master",
