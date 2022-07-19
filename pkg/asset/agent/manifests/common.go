@@ -71,6 +71,6 @@ func GetValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 // GetValidReleaseimage returns a valid release image
 func GetValidReleaseimage() *releaseimage.Image {
 	return &releaseimage.Image{
-		PullSpec: "registry.ci.openshift.org/origin/release:4.11",
+		PullSpec: releaseimage.GetDefaultReleaseImageOriginal(),
 	}
 }

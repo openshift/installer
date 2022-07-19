@@ -54,3 +54,8 @@ func Default() (string, error) {
 	}
 	return pullspec, nil
 }
+
+// GetDefaultReleaseImageOriginal returns the default release image
+func GetDefaultReleaseImageOriginal() string {
+	return defaultReleaseImageOriginal
+}
