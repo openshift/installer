@@ -1,5 +1,5 @@
 {
-    "baseURI": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/",
+    "baseURI": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/",
     "buildid": "49.84.202205312214-0",
     "images": {
         "aws": {

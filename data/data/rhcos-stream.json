@@ -12,8 +12,8 @@
           "formats": {
             "vmdk.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-aws.aarch64.vmdk.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-aws.aarch64.vmdk.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-aws.aarch64.vmdk.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-aws.aarch64.vmdk.gz.sig",
                 "sha256": "f20fb6fb1895ca05ab5824f94b83b9a573aaacae26b9b3ef2fb25eb27ad10a5c",
                 "uncompressed-sha256": "cf39f2432d966b6ca2586f22ed34213aa350065e4acb49d29efdc0e20b8ec8c2"
               }
@@ -25,40 +25,40 @@
           "formats": {
             "4k.raw.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-metal4k.aarch64.raw.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-metal4k.aarch64.raw.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-metal4k.aarch64.raw.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-metal4k.aarch64.raw.gz.sig",
                 "sha256": "98e1be02723a48637d1a5868963f0c55158705c1dd7f9753ee1628433858ee72",
                 "uncompressed-sha256": "8a4a498d2fe20abd80539212a471c35aa055970d581be0511113228a01b07ca1"
               }
             },
             "iso": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live.aarch64.iso",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live.aarch64.iso.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live.aarch64.iso",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live.aarch64.iso.sig",
                 "sha256": "2cdf11767d02d6ccbf1acbcbc0a66d40882fa88fedd03c9b22ab1757a8133d0b"
               }
             },
             "pxe": {
               "kernel": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-kernel-aarch64",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-kernel-aarch64.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-kernel-aarch64",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-kernel-aarch64.sig",
                 "sha256": "7259ceb232fed0f35286c9561d4d1a1dd6cd266965dc9997eb956eeb9cd5c283"
               },
               "initramfs": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-initramfs.aarch64.img",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-initramfs.aarch64.img.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-initramfs.aarch64.img",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-initramfs.aarch64.img.sig",
                 "sha256": "f0cde74f08a995abc8f4bb6b16e952cd2b957f08f6036e44bfea38b424919c06"
               },
               "rootfs": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-rootfs.aarch64.img",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-rootfs.aarch64.img.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-rootfs.aarch64.img",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-live-rootfs.aarch64.img.sig",
                 "sha256": "b1d0ca75998a411f6c608030bdc583229d99ce2a1f58adbb4009a53ad6b4515c"
               }
             },
             "raw.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-metal.aarch64.raw.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-metal.aarch64.raw.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-metal.aarch64.raw.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-metal.aarch64.raw.gz.sig",
                 "sha256": "f774083ee0f463514cedaa0a22563969efdfac062037266625ee9fbd08795e4c",
                 "uncompressed-sha256": "bd3bc7399a7a2b9f7e685895df5a1b5ab7dc36665c95ef42184bbf317cefd405"
               }
@@ -70,8 +70,8 @@
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-openstack.aarch64.qcow2.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-openstack.aarch64.qcow2.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-openstack.aarch64.qcow2.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-openstack.aarch64.qcow2.gz.sig",
                 "sha256": "01c0485c72691b4175d2dfdd0963d7116002dd1fec9fd4131a741c29982c846d",
                 "uncompressed-sha256": "b3701b6a2bb20b7f89f94a6890f4ca8f25c32da8d2d36d423213d26d2b15f94a"
               }
@@ -83,8 +83,8 @@
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-qemu.aarch64.qcow2.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-qemu.aarch64.qcow2.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-qemu.aarch64.qcow2.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-aarch64/49.84.202205312214-0/aarch64/rhcos-49.84.202205312214-0-qemu.aarch64.qcow2.gz.sig",
                 "sha256": "9a09c4899c75aa2ced2b087684e328bf26af672bf2582ba363e1b06d56d05a6c",
                 "uncompressed-sha256": "117448d188429e98fc320188e4f98b3009f0513a293ed7a8a0b0bb7bd5c8fde8"
               }
@@ -170,40 +170,40 @@
           "formats": {
             "4k.raw.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-metal4k.ppc64le.raw.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-metal4k.ppc64le.raw.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-metal4k.ppc64le.raw.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-metal4k.ppc64le.raw.gz.sig",
                 "sha256": "5682f4e0c58f5a870c2e6abe933c5e1f0cdf26b724079be12bba132c93ba198e",
                 "uncompressed-sha256": "88bc9a7c2a0b41300eac5282ed69228550e1382d53c2b0c99780362aaf5a30e1"
               }
             },
             "iso": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live.ppc64le.iso",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live.ppc64le.iso.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live.ppc64le.iso",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live.ppc64le.iso.sig",
                 "sha256": "cef85855bca915c335cd7fc35722521cc21036e5a0ab3b9a7c6ec60ea3055f58"
               }
             },
             "pxe": {
               "kernel": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-kernel-ppc64le",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-kernel-ppc64le.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-kernel-ppc64le",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-kernel-ppc64le.sig",
                 "sha256": "44e70f6abe2bf6e828ce8f833323cdf44035de6f9cc041219a2ddc16036fa210"
               },
               "initramfs": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-initramfs.ppc64le.img",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-initramfs.ppc64le.img.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-initramfs.ppc64le.img",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-initramfs.ppc64le.img.sig",
                 "sha256": "8272e9278ec43a722f790ee515ade1f6df76d87a246b2caafd833bf2515dbce5"
               },
               "rootfs": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-rootfs.ppc64le.img",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-rootfs.ppc64le.img.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-rootfs.ppc64le.img",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-live-rootfs.ppc64le.img.sig",
                 "sha256": "d521ba71d76cd3dc15997ae9ec82d61f727177cf029ed68e450c5766e44b9f47"
               }
             },
             "raw.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-metal.ppc64le.raw.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-metal.ppc64le.raw.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-metal.ppc64le.raw.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-metal.ppc64le.raw.gz.sig",
                 "sha256": "29869dcf8535a4222074d1d403f822484a484aede0371a4d233889f51e1b4073",
                 "uncompressed-sha256": "84583207bbb4726801f4751d52c7e685cafa62def531d70359daae5ea39e0210"
               }
@@ -215,8 +215,8 @@
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-openstack.ppc64le.qcow2.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-openstack.ppc64le.qcow2.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-openstack.ppc64le.qcow2.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-openstack.ppc64le.qcow2.gz.sig",
                 "sha256": "701b10b6b101a6f9ac7825ae9c11c51c66aebae046a5763d2b0a3d4da1cd8fdc",
                 "uncompressed-sha256": "fd29bef0c53ed9b40f1ac93d1e9c3a02ced9117f54a74d837d34b082a9cd2d8c"
               }
@@ -228,8 +228,8 @@
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-qemu.ppc64le.qcow2.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-qemu.ppc64le.qcow2.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-qemu.ppc64le.qcow2.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-ppc64le/49.84.202206022045-0/ppc64le/rhcos-49.84.202206022045-0-qemu.ppc64le.qcow2.gz.sig",
                 "sha256": "dd7f0ce5095cc704e1d49137ec8809e249b681055818b4609c4d66bb8daea915",
                 "uncompressed-sha256": "2ab93629aa0b62e828a40498769f7f22771df724116ab532fb4c5f14d8392ee0"
               }
@@ -246,40 +246,40 @@
           "formats": {
             "4k.raw.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-metal4k.s390x.raw.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-metal4k.s390x.raw.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-metal4k.s390x.raw.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-metal4k.s390x.raw.gz.sig",
                 "sha256": "c4150a0011b9d3b8e2c77278863deec2e30fadff0f0bd3917d7f8f94fa35d042",
                 "uncompressed-sha256": "629bd9b5c98ad1a480715a90e42eed34c0f4df54113c9650cca9deb0c909c13b"
               }
             },
             "iso": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live.s390x.iso",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live.s390x.iso.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live.s390x.iso",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live.s390x.iso.sig",
                 "sha256": "90be0834bdd3451712235e77e57fc5f0139666cfe99320a14ab24d8d2981c0cc"
               }
             },
             "pxe": {
               "kernel": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-kernel-s390x",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-kernel-s390x.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-kernel-s390x",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-kernel-s390x.sig",
                 "sha256": "de91cc8ffbd3b35c1e1f33deed6c8393ffe95b558d60b79bd34792e595397f7c"
               },
               "initramfs": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-initramfs.s390x.img",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-initramfs.s390x.img.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-initramfs.s390x.img",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-initramfs.s390x.img.sig",
                 "sha256": "42c6fe5800dea068f576e4a152f63bad5a942d75f9fefb50c3f26a6f581f99c4"
               },
               "rootfs": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-rootfs.s390x.img",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-rootfs.s390x.img.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-rootfs.s390x.img",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-live-rootfs.s390x.img.sig",
                 "sha256": "e3746c195a8af7a6aa019a8cbaa8de296844e102e7c0f8ab37e9c8e04cfe1575"
               }
             },
             "raw.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-metal.s390x.raw.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-metal.s390x.raw.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-metal.s390x.raw.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-metal.s390x.raw.gz.sig",
                 "sha256": "8cf9d60521bc6566fb46edc4f542f5542d0780b465b2d7b986956f52e285a759",
                 "uncompressed-sha256": "54c2596a5a88c6f6a4e95ea08f36711aeb3dde67220633b2602daba5fc91bdac"
               }
@@ -291,8 +291,8 @@
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-openstack.s390x.qcow2.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-openstack.s390x.qcow2.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-openstack.s390x.qcow2.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-openstack.s390x.qcow2.gz.sig",
                 "sha256": "4e257f7e1747d59524f632edb03829735eb6cc28c6c4910c56c9c0048a0d313d",
                 "uncompressed-sha256": "f07a7ca77e4b321769df6d5b1a4c69b644151c61c48f1b634af52fb3800fd79c"
               }
@@ -304,8 +304,8 @@
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-qemu.s390x.qcow2.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-qemu.s390x.qcow2.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-qemu.s390x.qcow2.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9-s390x/49.84.202205311520-0/s390x/rhcos-49.84.202205311520-0-qemu.s390x.qcow2.gz.sig",
                 "sha256": "94e9bf0cc919e292db65679906da9d5dc8c6cf415678a6b726c5a22120214ed5",
                 "uncompressed-sha256": "cc1a504f1408ea886d41a3ac759056766922d48ebbb0e195514fd8e6f6e9eac6"
               }
@@ -322,8 +322,8 @@
           "formats": {
             "vmdk.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-aws.x86_64.vmdk.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-aws.x86_64.vmdk.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-aws.x86_64.vmdk.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-aws.x86_64.vmdk.gz.sig",
                 "sha256": "073f36b375e2d7c34319d9d82b81f1f2ddeb93cf87aa1b0ce369d4ff65035ab6",
                 "uncompressed-sha256": "a569b194ad1f5188e2c14c8c307d63178faaf51e1452a9591c63922e95d01f04"
               }
@@ -335,8 +335,8 @@
           "formats": {
             "vhd.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-azure.x86_64.vhd.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-azure.x86_64.vhd.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-azure.x86_64.vhd.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-azure.x86_64.vhd.gz.sig",
                 "sha256": "e0488c19fde53e4603b24f5309078853f816243383858234862b81918d8d6009",
                 "uncompressed-sha256": "237bfb6bd374553bdb47c0e8abc6cffe47ffb483e82cc1d673cb1b3e522aea1a"
               }
@@ -348,8 +348,8 @@
           "formats": {
             "vhd.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-azurestack.x86_64.vhd.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-azurestack.x86_64.vhd.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-azurestack.x86_64.vhd.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-azurestack.x86_64.vhd.gz.sig",
                 "sha256": "5949f0c24ca6f9b6c3aba55917776b0da052ebdc9a7974a7c9c6fe870a39bd69",
                 "uncompressed-sha256": "78a14aa3336b39177468d361c87f687c8d1257c97a0aa0155ebcdce0cd7bc85f"
               }
@@ -361,8 +361,8 @@
           "formats": {
             "tar.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-gcp.x86_64.tar.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-gcp.x86_64.tar.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-gcp.x86_64.tar.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-gcp.x86_64.tar.gz.sig",
                 "sha256": "55c42dbec081e8b0e0ec518f7dad5de788a542559a0ffa810d4ba060885a1ec5",
                 "uncompressed-sha256": "171a77c8a70d6418707895addf5b622b5d0428b6b2c24a338d36f5fc9e6d6622"
               }
@@ -374,8 +374,8 @@
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-ibmcloud.x86_64.qcow2.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-ibmcloud.x86_64.qcow2.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-ibmcloud.x86_64.qcow2.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-ibmcloud.x86_64.qcow2.gz.sig",
                 "sha256": "e6441e9113ab266b1a6862f965cf57fb1cdc8250b6c1e117b3a4ebcc4e761d9b",
                 "uncompressed-sha256": "0fa4b6ded8a9ed4225b890ca20a985a19338461b627543bdbfb9bcb0699bc9b4"
               }
@@ -387,40 +387,40 @@
           "formats": {
             "4k.raw.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-metal4k.x86_64.raw.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-metal4k.x86_64.raw.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-metal4k.x86_64.raw.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-metal4k.x86_64.raw.gz.sig",
                 "sha256": "38cf7a8974614a6b563c75adc017554088f505c2098478a5356979870bd40596",
                 "uncompressed-sha256": "6b6185cf3e6a8fad51179c56d5985ece6dd018dc314585b01464f5a16843e459"
               }
             },
             "iso": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live.x86_64.iso",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live.x86_64.iso.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live.x86_64.iso",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live.x86_64.iso.sig",
                 "sha256": "6fe00d44f735a36417e357a9c6f022a3dc176b079759aa4f0db1460f5be7eec0"
               }
             },
             "pxe": {
               "kernel": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-kernel-x86_64",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-kernel-x86_64.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-kernel-x86_64",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-kernel-x86_64.sig",
                 "sha256": "2f73cda50fa9cfcd14b9624cce3fa663c91341a8eafae22bb6bbc6357f83e679"
               },
               "initramfs": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-initramfs.x86_64.img",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-initramfs.x86_64.img.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-initramfs.x86_64.img",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-initramfs.x86_64.img.sig",
                 "sha256": "f940501ee04acad0ae3dae848b62350a3b2c138c71a26be21421fb2276af9a61"
               },
               "rootfs": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-rootfs.x86_64.img",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-rootfs.x86_64.img.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-rootfs.x86_64.img",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-live-rootfs.x86_64.img.sig",
                 "sha256": "ecfd4a511dafd54bd865b3a732485b390b0e7f92194890a19381958dc19a87cc"
               }
             },
             "raw.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-metal.x86_64.raw.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-metal.x86_64.raw.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-metal.x86_64.raw.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-metal.x86_64.raw.gz.sig",
                 "sha256": "f618b6fb39ada4cdc04435c99c5c0b01f1c6b5ec084ccf91753c3cfa863be8d7",
                 "uncompressed-sha256": "5ab12451c47d30aae96e26885e087dcb6b72d3db036a0672a2bd291ff809f28a"
               }
@@ -432,8 +432,8 @@
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-openstack.x86_64.qcow2.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-openstack.x86_64.qcow2.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-openstack.x86_64.qcow2.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-openstack.x86_64.qcow2.gz.sig",
                 "sha256": "d6248ff15a8f0bdb0b3d553da2742586d66809d8ad90323b840642fe6d68198d",
                 "uncompressed-sha256": "f16196b2f0768b44a332bf5fba41ef8ac70fd260e8c86979134db194c0c05445"
               }
@@ -445,8 +445,8 @@
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-qemu.x86_64.qcow2.gz",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-qemu.x86_64.qcow2.gz.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-qemu.x86_64.qcow2.gz",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-qemu.x86_64.qcow2.gz.sig",
                 "sha256": "f61e461b35ac0e5dd4e2453e86959226d3dcfe01bdf93a6963914ab361c76ddf",
                 "uncompressed-sha256": "6c177f02d723751174920f74b90cdd7dbb1cbe5688d24f6138dd3f8e7dc096d6"
               }
@@ -458,8 +458,8 @@
           "formats": {
             "ova": {
               "disk": {
-                "location": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-vmware.x86_64.ova",
-                "signature": "https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-vmware.x86_64.ova.sig",
+                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-vmware.x86_64.ova",
+                "signature": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.9/49.84.202205311501-0/x86_64/rhcos-49.84.202205311501-0-vmware.x86_64.ova.sig",
                 "sha256": "f0b9c1d515d1f61b23f8bbf968cb0e2645cb0a301867808b434eb8d7a8a329e5"
               }
             }
