@@ -11,8 +11,10 @@ import (
 )
 
 var (
+	// TestSSHKey provides a ssh key for unit tests
 	TestSSHKey = `|
 	ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain`
+	// TestSecret provides a ssh key for unit tests
 	TestSecret = `'{"auths":{"cloud.openshift.com":{"auth":"b3BlUTA=","email":"test@redhat.com"}}}`
 )
 
