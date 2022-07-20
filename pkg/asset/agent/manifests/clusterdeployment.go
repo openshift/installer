@@ -37,17 +37,15 @@ func (*ClusterDeployment) Name() string {
 func (*ClusterDeployment) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
-		&AgentPullSecret{},
 	}
 }
 
 // Generate generates the ClusterDeployment manifest.
 func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
 	installConfig := &agent.OptionalInstallConfig{}
-	agentPullSecret := &AgentPullSecret{}
-	dependencies.Get(installConfig, agentPullSecret)
+	dependencies.Get(installConfig)
 
-	if installConfig.Config != nil && agentPullSecret.Config != nil {
+	if installConfig.Config != nil {
 		clusterDeployment := &hivev1.ClusterDeployment{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ClusterDeployment",
@@ -61,7 +59,7 @@ func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
 				ClusterName: installConfig.Config.ObjectMeta.Name,
 				BaseDomain:  installConfig.Config.BaseDomain,
 				PullSecretRef: &corev1.LocalObjectReference{
-					Name: agentPullSecret.ResourceName(),
+					Name: "pull-secret",
 				},
 				ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
 					Group:   "extensions.hive.openshift.io",

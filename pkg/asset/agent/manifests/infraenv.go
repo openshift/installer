@@ -39,7 +39,6 @@ func (*InfraEnv) Name() string {
 func (*InfraEnv) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
-		&AgentPullSecret{},
 		&NMStateConfig{},
 	}
 }
@@ -48,9 +47,8 @@ func (*InfraEnv) Dependencies() []asset.Asset {
 func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 
 	installConfig := &agent.OptionalInstallConfig{}
-	agentPullSecret := &AgentPullSecret{}
 	nmStateConfig := &NMStateConfig{}
-	dependencies.Get(installConfig, agentPullSecret, nmStateConfig)
+	dependencies.Get(installConfig, nmStateConfig)
 
 	if installConfig.Config != nil && nmStateConfig != nil {
 		infraEnv := &aiv1beta1.InfraEnv{
@@ -65,7 +63,7 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 				},
 				SSHAuthorizedKey: strings.Trim(installConfig.Config.SSHKey, "|\n\t"),
 				PullSecretRef: &corev1.LocalObjectReference{
-					Name: agentPullSecret.ResourceName(),
+					Name: "pull-secret",
 				},
 				NMStateConfigLabelSelector: metav1.LabelSelector{
 					MatchLabels: nmStateConfig.Config[0].ObjectMeta.Labels,
