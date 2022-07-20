@@ -216,6 +216,12 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	}
 	o.managementSvc.Service.SetUserAgent(userAgentString)
 
+	// Attempt to retrieve the ResourceGroupID as soon as possible to validate ResourceGroupName
+	_, err = o.ResourceGroupID()
+	if err != nil {
+		return err
+	}
+
 	// ResourceControllerV2
 	rcAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
 	if err != nil {
@@ -326,6 +332,11 @@ func (o *ClusterUninstaller) ResourceGroupID() (string, error) {
 		return o.resourceGroupID, nil
 	}
 
+	// If no ResourceGroupName is available, raise an error
+	if o.ResourceGroupName == "" {
+		return "", errors.Errorf("No ResourceGroupName provided")
+	}
+
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 
@@ -336,7 +347,9 @@ func (o *ClusterUninstaller) ResourceGroupID() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(resources.Resources) > 1 {
+	if len(resources.Resources) == 0 {
+		return "", errors.Errorf("ResourceGroup '%q' not found", o.ResourceGroupName)
+	} else if len(resources.Resources) > 1 {
 		return "", errors.Errorf("Too many resource groups matched name %q", o.ResourceGroupName)
 	}
 
