@@ -72,4 +72,8 @@ type Platform struct {
 	// specified, it will be set according to the default storage policy
 	// of vsphere.
 	DiskType DiskType `json:"diskType,omitempty"`
+
+	// PowerOnTimeout is the number of seconds to allow the virtual machine to power on.
+	// When not specified, it will be set according to the vsphere terraform provider
+	PowerOnTimeout int64 `json:"powerOnTimeout,omitempty"`
 }

@@ -781,6 +781,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PreexistingFolder:   preexistingFolder,
 				DiskType:            installConfig.Config.Platform.VSphere.DiskType,
 				NetworkID:           networkID,
+				PowerOnTimeout:      installConfig.Config.VSphere.PowerOnTimeout,
 			},
 		)
 		if err != nil {

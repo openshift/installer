@@ -30,6 +30,7 @@ type config struct {
 	OvaFilePath       string          `json:"vsphere_ova_filepath"`
 	PreexistingFolder bool            `json:"vsphere_preexisting_folder"`
 	DiskType          vtypes.DiskType `json:"vsphere_disk_type"`
+	PowerOnTimeout    int64           `json:"vsphere_poweron_timeout"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -42,6 +43,7 @@ type TFVarsSources struct {
 	PreexistingFolder   bool
 	DiskType            vtypes.DiskType
 	NetworkID           string
+	PowerOnTimeout      int64
 }
 
 //TFVars generate vSphere-specific Terraform variables
@@ -76,6 +78,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		OvaFilePath:       cachedImage,
 		PreexistingFolder: sources.PreexistingFolder,
 		DiskType:          sources.DiskType,
+		PowerOnTimeout:    sources.PowerOnTimeout,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

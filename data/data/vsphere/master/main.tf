@@ -22,6 +22,7 @@ resource "vsphere_virtual_machine" "vm_master" {
   folder               = var.folder
   enable_disk_uuid     = "true"
   annotation           = local.description
+  poweron_timeout      = var.vsphere_poweron_timeout
 
   wait_for_guest_net_timeout  = "0"
   wait_for_guest_net_routable = "false"

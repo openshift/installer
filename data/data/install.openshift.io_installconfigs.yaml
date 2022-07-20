@@ -2965,6 +2965,12 @@ spec:
                     description: Password is the password for the user to use to connect
                       to the vCenter.
                     type: string
+                  powerOnTimeout:
+                    description: PowerOnTimeout is the number of seconds to allow
+                      the virtual machine to power on. When not specified, it will
+                      be set according to the vsphere terraform provider
+                    format: int64
+                    type: integer
                   resourcePool:
                     description: ResourcePool is the absolute path of the resource
                       pool where virtual machines will be created. The absolute path

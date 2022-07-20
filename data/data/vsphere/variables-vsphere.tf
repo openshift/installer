@@ -62,6 +62,11 @@ variable "vsphere_preexisting_folder" {
   description = "If false, creates a top-level folder with the name from vsphere_folder_rel_path."
 }
 
+variable "vsphere_poweron_timeout" {
+  type        = number
+  description = "Number of seconds to allow the virtual machine to power on."
+}
+
 ///////////
 // Control Plane machine variables
 ///////////
