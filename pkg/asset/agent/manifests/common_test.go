@@ -3,7 +3,6 @@ package manifests
 import (
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/openshift/installer/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +15,8 @@ var (
 	ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain`
 	// TestSecret provides a ssh key for unit tests
 	TestSecret = `'{"auths":{"cloud.openshift.com":{"auth":"b3BlUTA=","email":"test@redhat.com"}}}`
+	// TestReleaseImage provides a release image url for unit tests
+	TestReleaseImage = "registry.ci.openshift.org/origin/release:4.11"
 )
 
 // GetValidAgentPullSecret returns a valid agent pull secret
@@ -67,12 +68,5 @@ func GetValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 			},
 		},
 		Supplied: true,
-	}
-}
-
-// GetValidReleaseimage returns a valid release image
-func GetValidReleaseimage() *releaseimage.Image {
-	return &releaseimage.Image{
-		PullSpec: releaseimage.GetDefaultReleaseImageOriginal(),
 	}
 }

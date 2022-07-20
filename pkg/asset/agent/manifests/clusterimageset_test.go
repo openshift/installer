@@ -38,13 +38,15 @@ func TestClusterImageSet_Generate(t *testing.T) {
 				GetValidOptionalInstallConfig(),
 				&releaseimage.Image{},
 			},
-			expectedError: "invalid ClusterImageSet configuration: Spec.ReleaseImage: Forbidden: value must be equal to registry.ci.openshift.org/origin/release:4.11",
+			expectedError: "invalid ClusterImageSet configuration: Spec.ReleaseImage: Forbidden: value must be equal to " + TestReleaseImage,
 		},
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
 				GetValidOptionalInstallConfig(),
-				GetValidReleaseimage(),
+				&releaseimage.Image{
+					PullSpec: TestReleaseImage,
+				},
 			},
 			expectedConfig: &hivev1.ClusterImageSet{
 				ObjectMeta: v1.ObjectMeta{
@@ -52,7 +54,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 					Namespace: "cluster-0",
 				},
 				Spec: hivev1.ClusterImageSetSpec{
-					ReleaseImage: "registry.ci.openshift.org/origin/release:4.11",
+					ReleaseImage: TestReleaseImage,
 				},
 			},
 		},
