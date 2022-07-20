@@ -1859,8 +1859,13 @@ spec:
                         type: array
                     type: object
                   networkResourceGroupName:
-                    description: NetworkResourceGroupName specifies the network resource
-                      group that contains an existing VNet
+                    description: NetworkResourceGroupName is the name of an already existing
+                      network security group that contains the network security rules for an 
+                      existing VNet.
+                    type: string
+                  networkSecurityGroupName:
+                    description: NetworkSecurityGroupName specifies the network security 
+                      group that contains an existing network 
                     type: string
                   outboundType:
                     default: Loadbalancer

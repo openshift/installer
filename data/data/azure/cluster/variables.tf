@@ -54,6 +54,7 @@ variable "master_subnet_id" {
 
 variable "nsg_name" {
   type        = string
+  default     = null
   description = "The network security group for the subnet."
 }
 

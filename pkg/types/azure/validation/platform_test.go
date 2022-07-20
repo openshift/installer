@@ -22,6 +22,7 @@ func validPlatform() *azure.Platform {
 func validNetworkPlatform() *azure.Platform {
 	p := validPlatform()
 	p.NetworkResourceGroupName = "networkresourcegroup"
+	p.NetworkSecurityGroupName = "networksecuritygroup"
 	p.VirtualNetwork = "virtualnetwork"
 	p.ComputeSubnet = "computesubnet"
 	p.ControlPlaneSubnet = "controlplanesubnet"
@@ -114,6 +115,15 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expected: `^\[test-path\.networkResourceGroupName: Required value: must provide a network resource group when a virtual network is specified, test-path\.networkResourceGroupName: Required value: must provide a network resource group when supplying subnets\]$`,
+		},
+		{
+			name: "missing network security group",
+			platform: func() *azure.Platform {
+				p := validNetworkPlatform()
+				p.NetworkSecurityGroupName = ""
+				return p
+			}(),
+			expected: `^\[test-path\.networkSecurityGroupName: Required value: must provide a network security group when a virtual network is specified, test-path\.networkSecurityGroupName: Required value: must provide a network security group when supplying subnets\]$`,
 		},
 		{
 			name: "missing cloud name",

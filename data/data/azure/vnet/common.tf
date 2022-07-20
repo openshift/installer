@@ -24,8 +24,17 @@ data "azurerm_virtual_network" "preexisting_virtual_network" {
   name                = var.azure_virtual_network
 }
 
+data "azurerm_network_security_group" "preexisting_network_security_group" {
+  count = var.azure_preexisting_network ? 1 : 0
+
+  name                = var.azure_network_security_group_name
+  resource_group_name = var.azure_network_resource_group_name
+}
+
 // Only reference data sources which are guaranteed to exist at any time (above) in this locals{} block
 locals {
+  nsg_name = var.azure_preexisting_network ? data.azurerm_network_security_group.preexisting_network_security_group[0].name : azurerm_network_security_group.cluster[0].name
+
   master_subnet_cidr_v4 = var.use_ipv4 ? cidrsubnet(var.machine_v4_cidrs[0], 1, 0) : null  #master subnet is a smaller subnet within the vnet. i.e from /16 to /17
   master_subnet_cidr_v6 = var.use_ipv6 ? cidrsubnet(var.machine_v6_cidrs[0], 16, 0) : null #master subnet is a smaller subnet within the vnet. i.e from /48 to /64
 

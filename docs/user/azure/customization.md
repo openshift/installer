@@ -11,6 +11,7 @@ The following options are available when using Azure:
 * `defaultMachinePlatform` (optional object): Default [Azure-specific machine pool properties](#machine-pools) which applies to [machine pools](../customization.md#machine-pools) that do not define their own Azure-specific properties.
 * `resourceGroupName` (optional string):  The name of an already existing resource group where the cluster should be installed. If empty, a new resource group will created for the cluster.
 * `networkResourceGroupName` (optional string): The resource group where the Azure VNet is found.
+* `networkSecurityGroupName` (optional string): The name of an existing network security group with rules for the existing VNet.
 * `virtualNetwork` (optional string): The name of an existing VNet where the cluster infrastructure should be provisioned.
 * `controlPlaneSubnet` (optional string): An existing subnet which should be used for the cluster control plane.
 * `computeSubnet` (optional string): An existing subnet which should be used by cluster nodes.
@@ -40,7 +41,7 @@ If you're limiting the installer's Service Principal scope to the Resource Group
 
 ## Installing to Existing Networks & Subnetworks
 
-The installer can use an existing VNet and subnets when provisioning an OpenShift cluster. If one of `networkResourceGroupName`, `virtualNetwork`, `controlPlaneSubnet`, or `computeSubnet`is specified, all must be specified [(see example below)](#existing-vnet). The installer will use these existing networks when creating infrastructure such as virtual machines, load balancers, and DNS zones.
+The installer can use an existing VNet and subnets when provisioning an OpenShift cluster. If one of `networkResourceGroupName`, `networkSecurityGroupName`, `virtualNetwork`, `controlPlaneSubnet`, or `computeSubnet`is specified, all must be specified [(see example below)](#existing-vnet). The installer will use these existing networks when creating infrastructure such as virtual machines, load balancers, and DNS zones.
 
 ### Cluster Isolation
 
@@ -142,6 +143,7 @@ platform:
     region: centralus
     baseDomainResourceGroupName: os4-common
     networkResourceGroupName: example_vnet_rg
+    networkSecurityGroupName: example_vnet_nsg
     virtualNetwork: example_vnet
     controlPlaneSubnet: example_master_subnet
     computeSubnet: example_worker_subnet

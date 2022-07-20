@@ -52,6 +52,9 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		if p.NetworkResourceGroupName == "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("networkResourceGroupName"), "must provide a network resource group when a virtual network is specified"))
 		}
+		if p.NetworkSecurityGroupName == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("networkSecurityGroupName"), "must provide a network security group when a virtual network is specified"))
+		}
 	}
 	if (p.ComputeSubnet != "" || p.ControlPlaneSubnet != "") && (p.VirtualNetwork == "" || p.NetworkResourceGroupName == "") {
 		if p.VirtualNetwork == "" {
@@ -59,6 +62,9 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		}
 		if p.NetworkResourceGroupName == "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("networkResourceGroupName"), "must provide a network resource group when supplying subnets"))
+		}
+		if p.NetworkSecurityGroupName == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("networkSecurityGroupName"), "must provide a network security group when supplying subnets"))
 		}
 	}
 	if !validCloudNames[p.CloudName] {

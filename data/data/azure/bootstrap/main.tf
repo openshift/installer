@@ -235,7 +235,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
 }
 
 resource "azurerm_network_security_rule" "bootstrap_ssh_in" {
-  count = var.azure_private ? 0 : 1
+  count = var.azure_private ? 0 : (var.azure_preexisting_network ? 0 : 1)
 
   name                        = "bootstrap_ssh_in"
   priority                    = 103

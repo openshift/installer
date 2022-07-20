@@ -117,7 +117,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		image.ResourceID = imageID
 	}
 
-	networkResourceGroup, virtualNetwork, subnet, err := getNetworkInfo(platform, clusterID, role)
+	networkResourceGroup, networkSecurityGroup, virtualNetwork, subnet, err := getNetworkInfo(platform, clusterID, role)
 	if err != nil {
 		return nil, err
 	}
@@ -178,6 +178,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		Vnet:                  virtualNetwork,
 		ResourceGroup:         rg,
 		NetworkResourceGroup:  networkResourceGroup,
+		SecurityGroup:         networkSecurityGroup,
 		PublicLoadBalancer:    publicLB,
 		AcceleratedNetworking: getVMNetworkingType(mpool.VMNetworkingType),
 	}
@@ -194,18 +195,18 @@ func ConfigMasters(machines []machineapi.Machine, clusterID string) {
 	//TODO
 }
 
-func getNetworkInfo(platform *azure.Platform, clusterID, role string) (string, string, string, error) {
+func getNetworkInfo(platform *azure.Platform, clusterID, role string) (string, string, string, string, error) {
 	if platform.VirtualNetwork == "" {
-		return platform.ClusterResourceGroupName(clusterID), fmt.Sprintf("%s-vnet", clusterID), fmt.Sprintf("%s-%s-subnet", clusterID, role), nil
+		return platform.ClusterResourceGroupName(clusterID), fmt.Sprintf("%s-nsg", clusterID), fmt.Sprintf("%s-vnet", clusterID), fmt.Sprintf("%s-%s-subnet", clusterID, role), nil
 	}
 
 	switch role {
 	case "worker":
-		return platform.NetworkResourceGroupName, platform.VirtualNetwork, platform.ComputeSubnet, nil
+		return platform.NetworkResourceGroupName, platform.NetworkSecurityGroupName, platform.VirtualNetwork, platform.ComputeSubnet, nil
 	case "master":
-		return platform.NetworkResourceGroupName, platform.VirtualNetwork, platform.ControlPlaneSubnet, nil
+		return platform.NetworkResourceGroupName, platform.NetworkSecurityGroupName, platform.VirtualNetwork, platform.ControlPlaneSubnet, nil
 	default:
-		return "", "", "", fmt.Errorf("unrecognized machine role %s", role)
+		return "", "", "", "", fmt.Errorf("unrecognized machine role %s", role)
 	}
 }
 

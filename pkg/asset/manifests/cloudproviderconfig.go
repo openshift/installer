@@ -136,6 +136,9 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 
 		nsg := fmt.Sprintf("%s-nsg", clusterID.InfraID)
+		if installConfig.Config.Azure.NetworkSecurityGroupName != "" {
+			nsg = installConfig.Config.Azure.NetworkSecurityGroupName
+		}
 		nrg := installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID)
 		if installConfig.Config.Azure.NetworkResourceGroupName != "" {
 			nrg = installConfig.Config.Azure.NetworkResourceGroupName

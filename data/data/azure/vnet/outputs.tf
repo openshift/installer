@@ -31,7 +31,7 @@ output "internal_lb_ip_v6_address" {
 }
 
 output "nsg_name" {
-  value = azurerm_network_security_group.cluster.name
+  value = local.nsg_name
 }
 
 output "virtual_network_id" {

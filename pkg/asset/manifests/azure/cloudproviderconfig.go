@@ -43,13 +43,14 @@ func (params CloudProviderConfig) JSON() (string, error) {
 			// ref: https://github.com/kubernetes/kubernetes/blob/4b7c607ba47928a7be77fadef1550d6498397a4c/staging/src/k8s.io/legacy-cloud-providers/azure/auth/azure_auth.go#L69
 			UserAssignedIdentityID: "",
 		},
-		ResourceGroup:     params.ResourceGroupName,
-		Location:          params.GroupLocation,
-		SubnetName:        params.SubnetName,
-		SecurityGroupName: params.NetworkSecurityGroupName,
-		VnetName:          params.VirtualNetworkName,
-		VnetResourceGroup: params.NetworkResourceGroupName,
-		RouteTableName:    params.ResourcePrefix + "-node-routetable",
+		ResourceGroup:              params.ResourceGroupName,
+		Location:                   params.GroupLocation,
+		SubnetName:                 params.SubnetName,
+		SecurityGroupName:          params.NetworkSecurityGroupName,
+		SecurityGroupResourceGroup: params.NetworkResourceGroupName,
+		VnetName:                   params.VirtualNetworkName,
+		VnetResourceGroup:          params.NetworkResourceGroupName,
+		RouteTableName:             params.ResourcePrefix + "-node-routetable",
 		// client side rate limiting is problematic for scaling operations. We disable it by default.
 		// https://github.com/kubernetes-sigs/cloud-provider-azure/issues/247
 		// https://bugzilla.redhat.com/show_bug.cgi?id=1782516#c7

@@ -36,6 +36,7 @@ type config struct {
 	BaseDomainResourceGroupName     string            `json:"azure_base_domain_resource_group_name,omitempty"`
 	ResourceGroupName               string            `json:"azure_resource_group_name"`
 	NetworkResourceGroupName        string            `json:"azure_network_resource_group_name"`
+	NetworkSecurityGroupName        string            `json:"azure_network_security_group_name"`
 	VirtualNetwork                  string            `json:"azure_virtual_network"`
 	ControlPlaneSubnet              string            `json:"azure_control_plane_subnet"`
 	ComputeSubnet                   string            `json:"azure_compute_subnet"`
@@ -110,6 +111,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ResourceGroupName:               sources.ResourceGroupName,
 		BaseDomainResourceGroupName:     sources.BaseDomainResourceGroupName,
 		NetworkResourceGroupName:        masterConfig.NetworkResourceGroup,
+		NetworkSecurityGroupName:        masterConfig.SecurityGroup,
 		VirtualNetwork:                  masterConfig.Vnet,
 		ControlPlaneSubnet:              masterConfig.Subnet,
 		ComputeSubnet:                   workerConfig.Subnet,

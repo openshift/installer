@@ -50,6 +50,12 @@ type Platform struct {
 	// +optional
 	NetworkResourceGroupName string `json:"networkResourceGroupName,omitempty"`
 
+	// NetworkSecurityGroupName specifies the name of an existing network
+	// security group that contains the security rules for an existing VNet
+	//
+	// +optional
+	NetworkSecurityGroupName string `json:"networkSecurityGroupName,omitempty"`
+
 	// VirtualNetwork specifies the name of an existing VNet for the installer to use
 	//
 	// +optional

@@ -183,6 +183,9 @@ func Test_PrintFields(t *testing.T) {
     networkResourceGroupName <string>
       NetworkResourceGroupName specifies the network resource group that contains an existing VNet
 
+    networkSecurityGroupName <string>
+      NetworkSecurityGroupName specifies the name of an existing network security group that contains the security rules for an existing VNet
+
     outboundType <string>
       Default: "Loadbalancer"
       Valid Values: "","Loadbalancer","UserDefinedRouting"

@@ -135,6 +135,11 @@ variable "azure_network_resource_group_name" {
   description = "The name of the network resource group, either existing or to be created."
 }
 
+variable "azure_network_security_group_name" {
+  type        = string
+  description = "The name of the network security group, either existing or to be created."
+}
+
 variable "azure_virtual_network" {
   type        = string
   description = "The name of the virtual network, either existing or to be created."
