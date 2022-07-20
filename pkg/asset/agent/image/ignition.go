@@ -89,7 +89,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
 		&tls.AdminKubeConfigClientCertKey{},
-		&agentconfig.Asset{},
+		&agentconfig.AgentConfig{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
 	}
@@ -98,7 +98,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 // Generate generates the agent installer ignition.
 func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentManifests := &manifests.AgentManifests{}
-	agentConfigAsset := &agentconfig.Asset{}
+	agentConfigAsset := &agentconfig.AgentConfig{}
 	extraManifests := &manifests.ExtraManifests{}
 	dependencies.Get(agentManifests, agentConfigAsset, extraManifests)
 
@@ -302,7 +302,7 @@ func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesC
 // sets the hostname using "hostnamectl set-hostname" when the ISO boots.
 func addMacAddressToHostnameMappings(
 	config *igntypes.Config,
-	agentConfigAsset *agentconfig.Asset) {
+	agentConfigAsset *agentconfig.AgentConfig) {
 	if agentConfigAsset.Config == nil || len(agentConfigAsset.Config.Spec.Hosts) == 0 {
 		return
 	}
@@ -316,7 +316,7 @@ func addMacAddressToHostnameMappings(
 	}
 }
 
-func addHostConfig(config *igntypes.Config, agentConfig *agentconfig.Asset) error {
+func addHostConfig(config *igntypes.Config, agentConfig *agentconfig.AgentConfig) error {
 	confs, err := agentConfig.HostConfigFiles()
 	if err != nil {
 		return err

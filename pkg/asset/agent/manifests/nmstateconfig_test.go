@@ -2,16 +2,19 @@ package manifests
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/mock"
 )
 
@@ -21,11 +24,92 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		name           string
 		dependencies   []asset.Asset
 		expectedError  string
-		expectedConfig *aiv1beta1.NMStateConfig
+		expectedConfig []*aiv1beta1.NMStateConfig
 	}{
 		{
-			name:          "missing-config",
+			name: "missing-config",
+			dependencies: []asset.Asset{
+				&agentconfig.AgentConfig{},
+			},
 			expectedError: "missing configuration or manifest file",
+		},
+		{
+			name: "valid config",
+			dependencies: []asset.Asset{
+				getValidAgentConfig(),
+			},
+			expectedConfig: []*aiv1beta1.NMStateConfig{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "NMStateConfig",
+						APIVersion: "agent-install.openshift.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fmt.Sprint(getNMStateConfigName(getValidAgentConfig()), "-0"),
+						Namespace: getNMStateConfigNamespace(getValidAgentConfig()),
+						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidAgentConfig()),
+					},
+					Spec: aiv1beta1.NMStateConfigSpec{
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2s0",
+								MacAddress: "98:af:65:a5:8d:01",
+							},
+							{
+								Name:       "enp3s1",
+								MacAddress: "28:d2:44:d2:b2:1a",
+							},
+						},
+						NetConfig: aiv1beta1.NetConfig{
+							Raw: unmarshalJSON([]byte("interfaces:")),
+						},
+					},
+				},
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "NMStateConfig",
+						APIVersion: "agent-install.openshift.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fmt.Sprint(getNMStateConfigName(getValidAgentConfig()), "-1"),
+						Namespace: getNMStateConfigNamespace(getValidAgentConfig()),
+						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidAgentConfig()),
+					},
+					Spec: aiv1beta1.NMStateConfigSpec{
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2t0",
+								MacAddress: "98:af:65:a5:8d:02",
+							},
+						},
+						NetConfig: aiv1beta1.NetConfig{
+							Raw: unmarshalJSON([]byte("interfaces:")),
+						},
+					},
+				},
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "NMStateConfig",
+						APIVersion: "agent-install.openshift.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fmt.Sprint(getNMStateConfigName(getValidAgentConfig()), "-2"),
+						Namespace: getNMStateConfigNamespace(getValidAgentConfig()),
+						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidAgentConfig()),
+					},
+					Spec: aiv1beta1.NMStateConfigSpec{
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2u0",
+								MacAddress: "98:af:65:a5:8d:03",
+							},
+						},
+						NetConfig: aiv1beta1.NetConfig{
+							Raw: unmarshalJSON([]byte("interfaces:")),
+						},
+					},
+				},
+			},
 		},
 	}
 	for _, tc := range cases {
@@ -41,6 +125,23 @@ func TestNMStateConfig_Generate(t *testing.T) {
 				assert.Equal(t, tc.expectedError, err.Error())
 			} else {
 				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedConfig, asset.Config)
+				assert.NotEmpty(t, asset.Files())
+
+				configFile := asset.Files()[0]
+				assert.Equal(t, "cluster-manifests/nmstateconfig.yaml", configFile.Filename)
+
+				// Split up the file into multiple YAMLs if it contains NMStateConfig for more than one node
+				var decoder nmStateConfigYamlDecoder
+				yamlList, err := getMultipleYamls(configFile.Data, &decoder)
+
+				assert.NoError(t, err)
+				assert.Equal(t, len(tc.expectedConfig), len(yamlList))
+
+				for i := range tc.expectedConfig {
+					assert.Equal(t, tc.expectedConfig[i], yamlList[i])
+
+				}
 			}
 		})
 	}

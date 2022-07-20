@@ -50,7 +50,9 @@ spec:
         - name: enp2s0
           macAddress: 98:af:65:a5:8d:01
         - name: enp3s1
-          macAddress: 28:d2:44:d2:b2:1a`,
+          macAddress: 28:d2:44:d2:b2:1a
+      networkConfig:
+        interfaces:`,
 			expectedFound: true,
 			expectedConfig: &agent.Config{
 				ObjectMeta: metav1.ObjectMeta{
@@ -82,6 +84,9 @@ spec:
 									MacAddress: "28:d2:44:d2:b2:1a",
 								},
 							},
+							NetworkConfig: aiv1beta1.NetConfig{
+								Raw: unmarshalJSON([]byte("interfaces:")),
+							},
 						},
 					},
 				},
@@ -111,6 +116,8 @@ spec:
           macAddress: 98:af:65:a5:8d:01
         - name: enp3s1
           macAddress: 28:d2:44:d2:b2:1a
+      networkConfig:
+        interfaces:
     - hostname: control-1.example.org
       role: master
       interfaces:
@@ -148,6 +155,9 @@ spec:
 									Name:       "enp3s1",
 									MacAddress: "28:d2:44:d2:b2:1a",
 								},
+							},
+							NetworkConfig: aiv1beta1.NetConfig{
+								Raw: unmarshalJSON([]byte("interfaces:")),
 							},
 						},
 						{
@@ -345,7 +355,7 @@ spec:
 					tc.fetchError,
 				)
 
-			asset := &Asset{}
+			asset := &AgentConfig{}
 			found, err := asset.Load(fileFetcher)
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())

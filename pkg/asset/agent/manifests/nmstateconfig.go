@@ -14,10 +14,13 @@ import (
 	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	k8syaml "sigs.k8s.io/yaml"
 )
 
 var (
@@ -57,14 +60,66 @@ func (*NMStateConfig) Name() string {
 // the asset.
 func (*NMStateConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		// TODO - use the asset to provide input for nmstateconfig
+		&agentconfig.AgentConfig{},
 	}
 }
 
 // Generate generates the NMStateConfig manifest.
 func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 
-	// TODO - will generate nmstateconfig from the asset used to provide input
+	agentConfig := &agentconfig.AgentConfig{}
+	dependencies.Get(agentConfig)
+
+	nmStateConfigs := []*aiv1beta1.NMStateConfig{}
+	var data string
+
+	if agentConfig.Config != nil {
+		for i, host := range agentConfig.Config.Spec.Hosts {
+			nmStateConfig := aiv1beta1.NMStateConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "NMStateConfig",
+					APIVersion: "agent-install.openshift.io/v1beta1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf(getNMStateConfigName(agentConfig)+"-%d", i),
+					Namespace: getNMStateConfigNamespace(agentConfig),
+					Labels:    getNMStateConfigLabelsFromAgentConfig(agentConfig),
+				},
+				Spec: aiv1beta1.NMStateConfigSpec{
+					NetConfig: aiv1beta1.NetConfig{
+						Raw: []byte(host.NetworkConfig.Raw),
+					},
+				},
+			}
+			for _, hostInterface := range host.Interfaces {
+				intrfc := aiv1beta1.Interface{
+					Name:       hostInterface.Name,
+					MacAddress: hostInterface.MacAddress,
+				}
+				nmStateConfig.Spec.Interfaces = append(nmStateConfig.Spec.Interfaces, &intrfc)
+
+			}
+			nmStateConfigs = append(nmStateConfigs, &nmStateConfig)
+
+			// Marshal the nmStateConfig one at a time
+			// and add a yaml seperator with new line
+			// so as not to marshal the nmStateConfigs
+			// as a yaml list in the generated nmstateconfig.yaml
+			nmStateConfigData, err := k8syaml.Marshal(nmStateConfig)
+
+			if err != nil {
+				return errors.Wrap(err, "failed to marshal agent installer NMStateConfig")
+			}
+			data = fmt.Sprint(data, fmt.Sprint(string(nmStateConfigData), "---\n"))
+		}
+
+		n.Config = nmStateConfigs
+
+		n.File = &asset.File{
+			Filename: nmStateConfigFilename,
+			Data:     []byte(data),
+		}
+	}
 
 	return n.finish()
 }
