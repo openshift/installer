@@ -16,6 +16,7 @@ type fileHook struct {
 	file      io.Writer
 	formatter logrus.Formatter
 	level     logrus.Level
+	config    logConfig
 
 	truncateAtNewLine bool
 }
@@ -56,6 +57,22 @@ func (h *fileHook) Fire(entry *logrus.Entry) error {
 		msgs = strings.Split(orig, "\n")
 	}
 
+	level := logrus.InfoLevel
+	if h.config.Level != nil {
+		parsedLevel, err := logrus.ParseLevel(*h.config.Level)
+		if err == nil {
+			level = parsedLevel
+		} else {
+			logrus.Debugf("failed to parse level %s: %s", *h.config.Level, err.Error())
+		}
+	}
+
+	if h.config.Fields != nil && level <= entry.Level {
+		entrySet := entry.WithFields(*h.config.Fields)
+		entrySet.Level = entry.Level
+		entry = entrySet
+	}
+
 	for _, msg := range msgs {
 		// this makes it easier to call format on entry
 		// easy without creating a new one for each split message.
@@ -82,17 +99,25 @@ func setupFileHook(baseDir string) func() {
 	if err != nil {
 		logrus.Fatal(errors.Wrap(err, "failed to open log file"))
 	}
-
 	originalHooks := logrus.LevelHooks{}
 	for k, v := range logrus.StandardLogger().Hooks {
 		originalHooks[k] = v
 	}
-	logrus.AddHook(newFileHook(logfile, logrus.TraceLevel, &logrus.TextFormatter{
+
+	fileHook := newFileHook(logfile, logrus.TraceLevel, &logrus.TextFormatter{
 		DisableColors:          true,
 		DisableTimestamp:       false,
 		FullTimestamp:          true,
 		DisableLevelTruncation: false,
-	}))
+	})
+
+	config, err := readLogConfigFile(baseDir)
+	if err == nil {
+		fileHook.config = config
+	} else {
+		logrus.Debugf("failed to parse log-config.yaml: %s", err.Error())
+	}
+	logrus.AddHook(fileHook)
 
 	versionString, err := version.String()
 	if err != nil {

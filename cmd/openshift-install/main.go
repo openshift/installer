@@ -85,7 +85,7 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 		level = logrus.InfoLevel
 	}
 
-	logrus.AddHook(newFileHookWithNewlineTruncate(os.Stderr, level, &logrus.TextFormatter{
+	fileHook := newFileHookWithNewlineTruncate(os.Stderr, level, &logrus.TextFormatter{
 		// Setting ForceColors is necessary because logrus.TextFormatter determines
 		// whether or not to enable colors by looking at the output of the logger.
 		// In this case, the output is ioutil.Discard, which is not a terminal.
@@ -95,7 +95,13 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 		DisableTimestamp:       true,
 		DisableLevelTruncation: true,
 		DisableQuote:           true,
-	}))
+	})
+
+	config, err := readLogConfigFile(rootOpts.dir)
+	if err == nil {
+		fileHook.config = config
+	}
+	logrus.AddHook(fileHook)
 
 	if err != nil {
 		logrus.Fatal(errors.Wrap(err, "invalid log-level"))
