@@ -28,10 +28,29 @@ const (
 	imageDataType   = "image"
 )
 
-// getCacheDir returns a local path of the cache, where the installer should put the data:
+// GetFileFromCache returns path of the cached file if found, otherwise returns an empty string
+// or error
+func GetFileFromCache(fileName string, cacheDir string) (string, error) {
+
+	filePath := filepath.Join(cacheDir, fileName)
+
+	// If the file has already been cached, return its path
+	_, err := os.Stat(filePath)
+	if err == nil {
+		logrus.Debugf("The file was found in cache: %v. Reusing...", filePath)
+		return filePath, nil
+	}
+	if !os.IsNotExist(err) {
+		return "", err
+	}
+
+	return "", nil
+}
+
+// GetCacheDir returns a local path of the cache, where the installer should put the data:
 // <user_cache_dir>/openshift-installer/<dataType>_cache
 // If the directory doesn't exist, it will be automatically created.
-func getCacheDir(dataType string) (string, error) {
+func GetCacheDir(dataType string) (string, error) {
 	if dataType == "" {
 		return "", errors.Errorf("data type can't be an empty string")
 	}
@@ -192,23 +211,22 @@ func (u *urlWithIntegrity) uncompressedName() string {
 // and returns the local file path.
 func (u *urlWithIntegrity) download(dataType string) (string, error) {
 	fileName := u.uncompressedName()
-	cacheDir, err := getCacheDir(dataType)
+
+	cacheDir, err := GetCacheDir(dataType)
 	if err != nil {
 		return "", err
 	}
-	filePath := filepath.Join(cacheDir, fileName)
 
-	// If the file has already been cached, return its path
-	_, err = os.Stat(filePath)
-	if err == nil {
-		logrus.Debugf("The file was found in cache: %v. Reusing...", filePath)
-		return filePath, nil
-	}
-	if !os.IsNotExist(err) {
+	filePath, err := GetFileFromCache(fileName, cacheDir)
+	if err != nil {
 		return "", err
 	}
+	if filePath != "" {
+		// Found cached file
+		return filePath, nil
+	}
 
-	// Send a request
+	// Send a request to get the file
 	resp, err := http.Get(u.location.String())
 	if err != nil {
 		return "", err
@@ -220,6 +238,7 @@ func (u *urlWithIntegrity) download(dataType string) (string, error) {
 		return "", errors.Errorf("bad status: %s", resp.Status)
 	}
 
+	filePath = filepath.Join(cacheDir, fileName)
 	err = cacheFile(resp.Body, filePath, u.uncompressedSHA256)
 	if err != nil {
 		return "", err

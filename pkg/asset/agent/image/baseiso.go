@@ -8,9 +8,12 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/openshift/assisted-service/pkg/executer"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/sirupsen/logrus"
 )
 
 // BaseIso generates the base ISO file for the image
@@ -88,17 +91,39 @@ func getIsoFromReleasePayload() (string, error) {
 // Dependencies returns dependencies used by the asset.
 func (i *BaseIso) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&manifests.AgentManifests{},
 		&agent.OptionalInstallConfig{},
 	}
 }
 
 // Generate the baseIso
-func (i *BaseIso) Generate(p asset.Parents) error {
+func (i *BaseIso) Generate(dependencies asset.Parents) error {
 
 	// TODO - if image registry location is defined in InstallConfig,
 	// ic := &agent.OptionalInstallConfig{}
 	// p.Get(ic)
 	// use the GetIso function to get the BaseIso from the release payload
+	agentManifests := &manifests.AgentManifests{}
+	dependencies.Get(agentManifests)
+
+	var baseIsoFileName string
+	if agentManifests.ClusterImageSet != nil {
+		releaseImage := agentManifests.ClusterImageSet.Spec.ReleaseImage
+		pullSecret := agentManifests.GetPullSecretData()
+		// If we have the image registry location and 'oc' command is available then get from release payload
+		ocRelease := NewRelease(&executer.CommonExecuter{},
+			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaltRetryDelay})
+		log := logrus.New()
+
+		baseIsoFileName, err := ocRelease.GetBaseIso(log, releaseImage, pullSecret, "X86_64")
+		if err == nil {
+			log.Infof("got base iso image %s using oc command", baseIsoFileName)
+			i.File = &asset.File{Filename: baseIsoFileName}
+			return nil
+		}
+	}
+
+	// Download the Iso since it cannot be retrieved from the release payload
 	isoGetter := newGetIso(GetIsoPluggable)
 	baseIsoFileName, err := isoGetter.getter()
 	if err != nil {

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,6 +17,9 @@ func TestInfraBaseIso_Generate(t *testing.T) {
 	}
 
 	parents := asset.Parents{}
+	manifests := &manifests.AgentManifests{}
+	installConfig := &agent.OptionalInstallConfig{}
+	parents.Add(manifests, installConfig)
 
 	asset := &BaseIso{}
 	err := asset.Generate(parents)
