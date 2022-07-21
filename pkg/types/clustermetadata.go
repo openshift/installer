@@ -27,6 +27,8 @@ type ClusterMetadata struct {
 	ClusterPlatformMetadata `json:",inline"`
 	FeatureSet              configv1.FeatureSet          `json:"featureSet"`
 	CustomFeatureSet        *configv1.CustomFeatureGates `json:"customFeatureSet"`
+	// ReleaseImagePullSpec is the pull spec for the release image used to install the cluster.
+	ReleaseImagePullSpec string `json:"pullSpec"`
 }
 
 // ClusterPlatformMetadata contains metadata for platfrom.

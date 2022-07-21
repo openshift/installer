@@ -13,12 +13,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/data"
+	"github.com/openshift/installer/pkg/release/extract"
 	prov "github.com/openshift/installer/pkg/terraform/providers"
 )
 
 // unpack unpacks the platform-specific Terraform modules into the
 // given directory.
-func unpack(dir string, platform string, target string) (err error) {
+func unpack(dir, platform, target string) (err error) {
 	err = data.Unpack(dir, filepath.Join(platform, target))
 	if err != nil {
 		return err
@@ -110,10 +111,14 @@ func addFileToAllDirectories(name string, data []byte, dir string) error {
 }
 
 // UnpackTerraform unpacks the terraform binary and the specified provider binaries into the specified directory.
-func UnpackTerraform(dir string, stages []Stage) error {
-	// Unpack the terraform binary.
-	if err := prov.UnpackTerraformBinary(filepath.Join(dir, "bin")); err != nil {
-		return err
+func UnpackTerraform(dir, pullSpec string, stages []Stage) error {
+	opts := extract.ExtractOptions{
+		From:      pullSpec,
+		Directory: filepath.Join(dir, "bin"),
+	}
+
+	if err := opts.Extract("terraform"); err != nil {
+		return errors.Wrap(err, "error extracting terraform from release image")
 	}
 
 	// Unpack the providers.
@@ -123,9 +128,17 @@ func UnpackTerraform(dir string, stages []Stage) error {
 			if providers.Has(provider.Name) {
 				continue
 			}
-			if err := provider.Extract(filepath.Join(dir, "plugins")); err != nil {
-				return err
+
+			opts := extract.ExtractOptions{
+				From:      pullSpec,
+				Directory: filepath.Join(dir, "plugins", "openshift", "local", provider.Name),
+				//File:      fmt.Sprintf("%s_1.0.0_linux_amd64.zip", provider.Command), //TODO: What does this do? I want to control the output name, but this doesn't seem to.
 			}
+
+			if err := opts.Extract(provider.Command); err != nil {
+				return errors.Wrapf(err, "error extracting %s terraform provider from release image", provider.Name)
+			}
+
 			providers.Insert(provider.Name)
 		}
 	}

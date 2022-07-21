@@ -49,13 +49,17 @@ type Provider struct {
 	Name string
 	// Source of the provider.
 	Source string
+	// Command is the name of the binary--not the compressed archive.
+	// Command is used for extracting the provider from the release image.
+	Command string
 }
 
 // provider configures a provider built locally.
 func provider(name string) Provider {
 	return Provider{
-		Name:   name,
-		Source: fmt.Sprintf("openshift/local/%s", name),
+		Name:    name,
+		Source:  fmt.Sprintf("openshift/local/%s", name),
+		Command: fmt.Sprintf("terraform-provider-%s_1.0.0_linux_amd64.zip", name),
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
+	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/lineprinter"
 	"github.com/openshift/installer/pkg/metrics/timer"
@@ -38,7 +39,8 @@ func InitializeProvider(stages []Stage) infrastructure.Provider {
 // through each of the stages and applies the Terraform config for the stage.
 func (p *Provider) Provision(_ context.Context, dir string, parents asset.Parents) ([]*asset.File, error) {
 	tfVars := &tfvars.TerraformVariables{}
-	parents.Get(tfVars)
+	releaseImage := &releaseimage.Image{}
+	parents.Get(tfVars, releaseImage)
 	vars := tfVars.Files()
 
 	fileList := []*asset.File{}
@@ -53,7 +55,7 @@ func (p *Provider) Provision(_ context.Context, dir string, parents asset.Parent
 	}
 
 	defer os.RemoveAll(terraformDir)
-	if err = UnpackTerraform(terraformDirPath, p.stages); err != nil {
+	if err = UnpackTerraform(terraformDirPath, releaseImage.PullSpec, p.stages); err != nil {
 		return nil, fmt.Errorf("error unpacking terraform: %w", err)
 	}
 
