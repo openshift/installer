@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/openshift/installer/pkg/asset/agent/manifests"
-	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/stretchr/testify/assert"
 )
 

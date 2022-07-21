@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/sirupsen/logrus"
 )
@@ -93,15 +94,18 @@ func (i *BaseIso) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&manifests.AgentManifests{},
 		&agent.OptionalInstallConfig{},
+		&mirror.RegistriesConf{},
 	}
 }
 
 // Generate the baseIso
 func (i *BaseIso) Generate(dependencies asset.Parents) error {
 
+	log := logrus.New()
 	// TODO - if image registry location is defined in InstallConfig,
 	// ic := &agent.OptionalInstallConfig{}
 	// p.Get(ic)
+
 	// use the GetIso function to get the BaseIso from the release payload
 	agentManifests := &manifests.AgentManifests{}
 	dependencies.Get(agentManifests)
@@ -110,12 +114,15 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 	if agentManifests.ClusterImageSet != nil {
 		releaseImage := agentManifests.ClusterImageSet.Spec.ReleaseImage
 		pullSecret := agentManifests.GetPullSecretData()
+		registriesConf := &mirror.RegistriesConf{}
+		dependencies.Get(registriesConf)
+		log.Infof("got registriesConfig with %d entries", len(registriesConf.MirrorConfig))
+
 		// If we have the image registry location and 'oc' command is available then get from release payload
 		ocRelease := NewRelease(&executer.CommonExecuter{},
 			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaltRetryDelay})
-		log := logrus.New()
 
-		baseIsoFileName, err := ocRelease.GetBaseIso(log, releaseImage, pullSecret, "X86_64")
+		baseIsoFileName, err := ocRelease.GetBaseIso(log, releaseImage, pullSecret, registriesConf.MirrorConfig, "X86_64")
 		if err == nil {
 			log.Infof("got base iso image %s using oc command", baseIsoFileName)
 			i.File = &asset.File{Filename: baseIsoFileName}
