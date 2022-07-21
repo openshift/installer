@@ -29,10 +29,8 @@ You may run into a situation where you don't have the necessary API calls you ne
 Once your change to go-ovirt-client has been merged, you can start developing against it in this Terraform provider by running:
 
 ```
-go get github.com/ovirt/go-ovirt-client@main
+go get github.com/ovirt/go-ovirt-client/v2@<your commit hash>
 ```
-
-Remember, once this provider hits 1.0, your change will need to be released in order for your PR to be merged. Having it in the main branch will not be enough.
 
 ## Creating a resource
 

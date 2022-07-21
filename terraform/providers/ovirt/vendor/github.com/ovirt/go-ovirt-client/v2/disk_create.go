@@ -118,7 +118,6 @@ func (o *oVirtClient) buildDiskObjectForCreation(
 	}
 	diskBuilder := ovirtsdk4.NewDiskBuilder().
 		ProvisionedSize(int64(size)).
-		InitialSize(int64(size)).
 		StorageDomainsOfAny(storageDomain).
 		Format(ovirtsdk4.DiskFormat(format))
 	if params != nil {

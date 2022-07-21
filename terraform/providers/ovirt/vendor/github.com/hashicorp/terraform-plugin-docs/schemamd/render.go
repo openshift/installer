@@ -293,7 +293,9 @@ nameLoop:
 		}
 
 		for _, name := range sortedNames {
-			path := append(parents, name)
+			path := make([]string, len(parents), len(parents)+1)
+			copy(path, parents)
+			path = append(path, name)
 
 			if childBlock, ok := block.NestedBlocks[name]; ok {
 				nt, err := writeBlockType(w, path, childBlock)
@@ -473,36 +475,55 @@ func writeObjectChildren(w io.Writer, parents []string, ty cty.Type, group group
 }
 
 func writeNestedAttributeChildren(w io.Writer, parents []string, nestedAttributes *tfjson.SchemaNestedAttributeType, group groupFilter) error {
-	_, err := io.WriteString(w, group.nestedTitle+"\n\n")
-	if err != nil {
-		return err
-	}
-
 	sortedNames := []string{}
 	for n := range nestedAttributes.Attributes {
 		sortedNames = append(sortedNames, n)
 	}
 	sort.Strings(sortedNames)
-	nestedTypes := []nestedType{}
 
+	groups := map[int][]string{}
 	for _, name := range sortedNames {
 		att := nestedAttributes.Attributes[name]
-		path := append(parents, name)
 
-		nt, err := writeAttribute(w, path, att, group)
-		if err != nil {
-			return fmt.Errorf("unable to render attribute %q: %w", name, err)
+		for i, gf := range groupFilters {
+			if gf.filterAttribute(att) {
+				groups[i] = append(groups[i], name)
+			}
+		}
+	}
+
+	nestedTypes := []nestedType{}
+
+	for i, gf := range groupFilters {
+		names, ok := groups[i]
+		if !ok || len(names) == 0 {
+			continue
 		}
 
-		nestedTypes = append(nestedTypes, nt...)
+		_, err := io.WriteString(w, gf.nestedTitle+"\n\n")
+		if err != nil {
+			return err
+		}
+
+		for _, name := range names {
+			att := nestedAttributes.Attributes[name]
+			path := append(parents, name)
+
+			nt, err := writeAttribute(w, path, att, group)
+			if err != nil {
+				return fmt.Errorf("unable to render attribute %q: %w", name, err)
+			}
+
+			nestedTypes = append(nestedTypes, nt...)
+		}
+
+		_, err = io.WriteString(w, "\n")
+		if err != nil {
+			return err
+		}
 	}
 
-	_, err = io.WriteString(w, "\n")
-	if err != nil {
-		return err
-	}
-
-	err = writeNestedTypes(w, nestedTypes)
+	err := writeNestedTypes(w, nestedTypes)
 	if err != nil {
 		return err
 	}

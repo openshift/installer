@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	ovirtclient "github.com/ovirt/go-ovirt-client"
+	ovirtclient "github.com/ovirt/go-ovirt-client/v2"
 )
 
 var vmSchema = map[string]*schema.Schema{
@@ -189,6 +189,12 @@ var vmSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 		Description: "Enable or disable the serial console.",
 	},
+	"soundcard_enabled": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		ForceNew:    true,
+		Description: "Enable or disable the soundcard.",
+	},
 	"instance_type_id": {
 		Type:             schema.TypeString,
 		Optional:         true,
@@ -291,6 +297,7 @@ func (p *provider) vmCreate(
 		handleVMMemory,
 		handleVMMemoryPolicy,
 		handleVMSerialConsole,
+		handleSoundcardEnabled,
 		handleVMClone,
 		handleVMInstanceTypeID,
 		handleVMHugePages,
@@ -318,6 +325,23 @@ func (p *provider) vmCreate(
 	}
 
 	return vmResourceUpdate(vm, data)
+}
+
+func handleSoundcardEnabled(
+	_ ovirtclient.Client,
+	data *schema.ResourceData,
+	params ovirtclient.BuildableVMParameters,
+	diags diag.Diagnostics,
+) diag.Diagnostics {
+	// GetOkExists is necessary here due to GetOk check for default values (for soundcardEnabled=false, ok would be false, too)
+	// see: https://github.com/hashicorp/terraform/pull/15723
+	//nolint:staticcheck
+	soundcardEnabled, ok := data.GetOkExists("soundcard_enabled")
+	if !ok {
+		return diags
+	}
+	_ = params.WithSoundcardEnabled(soundcardEnabled.(bool))
+	return diags
 }
 
 func handleVMSerialConsole(

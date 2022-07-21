@@ -54,7 +54,9 @@ go generate
 go test -v -client=mock ./...
 ```
 
-If you don't specify `-client`, it will default to `all` and run each test against the mock backend as well as the live oVirt engine.  
+If you don't specify `-client`, it will default to `all` and run each test against the mock backend as well as the live oVirt engine.
+
+Some tests create disks during their execution. Since the mock backend can't deal with qcow images, we usually opt in for sparse raw format disks. This works well with network file storage, but may cause some test failures on other storage types, as our tests currently do not account for different types of storage domains. 
 
 Before you submit, we would like to ask you to run your tests against the live oVirt engine as we do not have one integrated with the CI at the moment. You can do so by running tests as follows:
 
