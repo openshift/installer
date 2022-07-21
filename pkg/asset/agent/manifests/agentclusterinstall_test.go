@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -37,22 +37,36 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
-				GetValidOptionalInstallConfig(),
+				getValidOptionalInstallConfig(),
 			},
 			expectedConfig: &hiveext.AgentClusterInstall{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "agent-cluster-install",
-					Namespace: "cluster-0",
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      getAgentClusterInstallName(getValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
 				},
 				Spec: hiveext.AgentClusterInstallSpec{
-					ClusterDeploymentRef: corev1.LocalObjectReference{
-						Name: "ocp-edge-cluster-0",
+					ImageSetRef: &hivev1.ClusterImageSetReference{
+						Name: "openshift-4.11",
 					},
+					ClusterDeploymentRef: corev1.LocalObjectReference{
+						Name: getClusterDeploymentName(getValidOptionalInstallConfig()),
+					},
+					Networking: hiveext.Networking{
+						ClusterNetwork: []hiveext.ClusterNetworkEntry{
+							{
+								CIDR:       "192.168.111.0/24",
+								HostPrefix: 23,
+							},
+						},
+						ServiceNetwork: []string{"172.30.0.0/16"},
+					},
+					SSHPublicKey: strings.Trim(TestSSHKey, "|\n\t"),
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
 						WorkerAgents:       5,
 					},
-					SSHPublicKey: strings.Trim(TestSSHKey, "|\n\t"),
+					APIVIP:     "192.168.122.10",
+					IngressVIP: "192.168.122.11",
 				},
 			},
 		},
@@ -172,7 +186,7 @@ spec:
     ssh-rsa AAAAmyKey`,
 			expectedFound: true,
 			expectedConfig: &hiveext.AgentClusterInstall{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-agent-cluster-install",
 					Namespace: "cluster0",
 				},

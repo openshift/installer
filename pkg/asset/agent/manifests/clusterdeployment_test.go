@@ -28,7 +28,6 @@ func TestClusterDeployment_Generate(t *testing.T) {
 		{
 			name: "missing config",
 			dependencies: []asset.Asset{
-				&AgentPullSecret{},
 				&agent.OptionalInstallConfig{},
 			},
 			expectedError: "missing configuration or manifest file",
@@ -36,8 +35,7 @@ func TestClusterDeployment_Generate(t *testing.T) {
 		{
 			name: "valid configurations",
 			dependencies: []asset.Asset{
-				GetValidAgentPullSecret(),
-				GetValidOptionalInstallConfig(),
+				getValidOptionalInstallConfig(),
 			},
 			expectedConfig: &hivev1.ClusterDeployment{
 				TypeMeta: metav1.TypeMeta{
@@ -45,20 +43,20 @@ func TestClusterDeployment_Generate(t *testing.T) {
 					APIVersion: "v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "ocp-edge-cluster-0",
-					Namespace: "cluster-0",
+					Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
 				},
 				Spec: hivev1.ClusterDeploymentSpec{
-					ClusterName: "ocp-edge-cluster-0",
+					ClusterName: getClusterDeploymentName(getValidOptionalInstallConfig()),
 					BaseDomain:  "testing.com",
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: "pull-secret",
+						Name: getPullSecretName(getValidOptionalInstallConfig()),
 					},
 					ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
 						Group:   "extensions.hive.openshift.io",
 						Version: "v1beta1",
 						Kind:    "AgentClusterInstall",
-						Name:    "ocp-edge-cluster-0",
+						Name:    getAgentClusterInstallName(getValidOptionalInstallConfig()),
 					},
 				},
 			},

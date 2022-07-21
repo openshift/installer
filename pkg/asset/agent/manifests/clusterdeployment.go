@@ -52,20 +52,20 @@ func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
 				APIVersion: "v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      installConfig.Config.ObjectMeta.Name,
-				Namespace: installConfig.Config.ObjectMeta.Namespace,
+				Name:      getClusterDeploymentName(installConfig),
+				Namespace: getObjectMetaNamespace(installConfig),
 			},
 			Spec: hivev1.ClusterDeploymentSpec{
-				ClusterName: installConfig.Config.ObjectMeta.Name,
+				ClusterName: getClusterDeploymentName(installConfig),
 				BaseDomain:  installConfig.Config.BaseDomain,
 				PullSecretRef: &corev1.LocalObjectReference{
-					Name: "pull-secret",
+					Name: getPullSecretName(installConfig),
 				},
 				ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
 					Group:   "extensions.hive.openshift.io",
 					Version: "v1beta1",
 					Kind:    "AgentClusterInstall",
-					Name:    installConfig.Config.ObjectMeta.Name,
+					Name:    getAgentClusterInstallName(installConfig),
 				},
 			},
 		}

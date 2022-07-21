@@ -33,7 +33,7 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
-				GetValidOptionalInstallConfig(),
+				getValidOptionalInstallConfig(),
 			},
 			expectedConfig: &corev1.Secret{
 				TypeMeta: v1.TypeMeta{
@@ -41,8 +41,8 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 					APIVersion: "v1",
 				},
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "pull-secret",
-					Namespace: "cluster-0",
+					Name:      getPullSecretName(getValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
 				},
 				StringData: map[string]string{
 					".dockerconfigjson": TestSecret,

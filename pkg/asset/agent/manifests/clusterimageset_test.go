@@ -13,7 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -35,7 +35,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 		{
 			name: "invalid ClusterImageSet configuration",
 			dependencies: []asset.Asset{
-				GetValidOptionalInstallConfig(),
+				getValidOptionalInstallConfig(),
 				&releaseimage.Image{},
 			},
 			expectedError: "invalid ClusterImageSet configuration: Spec.ReleaseImage: Forbidden: value must be equal to " + TestReleaseImage,
@@ -43,15 +43,15 @@ func TestClusterImageSet_Generate(t *testing.T) {
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
-				GetValidOptionalInstallConfig(),
+				getValidOptionalInstallConfig(),
 				&releaseimage.Image{
 					PullSpec: TestReleaseImage,
 				},
 			},
 			expectedConfig: &hivev1.ClusterImageSet{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "openshift-was not built correctly",
-					Namespace: "cluster-0",
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
 				},
 				Spec: hivev1.ClusterImageSetSpec{
 					ReleaseImage: TestReleaseImage,
@@ -111,7 +111,7 @@ spec:
   releaseImage: ` + currentRelease,
 			expectedFound: true,
 			expectedConfig: &hivev1.ClusterImageSet{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: "openshift-v4.10.0",
 				},
 				Spec: hivev1.ClusterImageSetSpec{

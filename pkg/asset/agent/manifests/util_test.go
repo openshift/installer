@@ -1,10 +1,13 @@
 package manifests
 
 import (
+	"net"
+
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
-	corev1 "k8s.io/api/core/v1"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 )
@@ -19,27 +22,10 @@ var (
 	TestReleaseImage = "registry.ci.openshift.org/origin/release:4.11"
 )
 
-// GetValidAgentPullSecret returns a valid agent pull secret
-func GetValidAgentPullSecret() *AgentPullSecret {
-	return &AgentPullSecret{
-		Config: &corev1.Secret{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Secret",
-				APIVersion: "v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "pull-secret",
-				Namespace: "cluster-0",
-			},
-			StringData: map[string]string{
-				".dockerconfigjson": TestSecret,
-			},
-		},
-	}
-}
-
 // GetValidOptionalInstallConfig returns a valid optional install config
-func GetValidOptionalInstallConfig() *agent.OptionalInstallConfig {
+func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
+	_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
+
 	return &agent.OptionalInstallConfig{
 		InstallConfig: installconfig.InstallConfig{
 			Config: &types.InstallConfig{
@@ -63,6 +49,23 @@ func GetValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 					{
 						Name:     "worker-machine-pool-2",
 						Replicas: pointer.Int64Ptr(3),
+					},
+				},
+				Networking: &types.Networking{
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       ipnet.IPNet{IPNet: *newCidr},
+							HostPrefix: 23,
+						},
+					},
+					ServiceNetwork: []ipnet.IPNet{
+						*ipnet.MustParseCIDR("172.30.0.0/16"),
+					},
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						APIVIP:     "192.168.122.10",
+						IngressVIP: "192.168.122.11",
 					},
 				},
 			},

@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -39,7 +38,6 @@ func (*InfraEnv) Name() string {
 func (*InfraEnv) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
-		&NMStateConfig{},
 	}
 }
 
@@ -47,27 +45,24 @@ func (*InfraEnv) Dependencies() []asset.Asset {
 func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 
 	installConfig := &agent.OptionalInstallConfig{}
-	nmStateConfig := &NMStateConfig{}
-	dependencies.Get(installConfig, nmStateConfig)
+	dependencies.Get(installConfig)
 
-	if installConfig.Config != nil && nmStateConfig != nil {
+	if installConfig.Config != nil {
 		infraEnv := &aiv1beta1.InfraEnv{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "infraEnv",
-				Namespace: installConfig.Config.Namespace,
+				Name:      getInfraEnvName(installConfig),
+				Namespace: getObjectMetaNamespace(installConfig),
 			},
 			Spec: aiv1beta1.InfraEnvSpec{
 				ClusterRef: &aiv1beta1.ClusterReference{
-					Name:      installConfig.Config.ObjectMeta.Name,
-					Namespace: installConfig.Config.ObjectMeta.Namespace,
+					Name:      getClusterDeploymentName(installConfig),
+					Namespace: getObjectMetaNamespace(installConfig),
 				},
 				SSHAuthorizedKey: strings.Trim(installConfig.Config.SSHKey, "|\n\t"),
 				PullSecretRef: &corev1.LocalObjectReference{
-					Name: "pull-secret",
+					Name: getPullSecretName(installConfig),
 				},
-				NMStateConfigLabelSelector: metav1.LabelSelector{
-					MatchLabels: nmStateConfig.Config[0].ObjectMeta.Labels,
-				},
+				NMStateConfigLabelSelector: getNMStateConfigLabelSelector(installConfig),
 			},
 		}
 		i.Config = infraEnv
@@ -124,32 +119,5 @@ func (i *InfraEnv) finish() error {
 		return errors.New("missing configuration or manifest file")
 	}
 
-	if err := i.validateInfraEnv().ToAggregate(); err != nil {
-		return errors.Wrapf(err, "invalid InfraEnv configuration")
-	}
-
 	return nil
-}
-
-func (i *InfraEnv) validateInfraEnv() field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if err := i.validateNMStateLabelSelector(); err != nil {
-		allErrs = append(allErrs, err...)
-	}
-
-	return allErrs
-}
-
-func (i *InfraEnv) validateNMStateLabelSelector() field.ErrorList {
-
-	var allErrs field.ErrorList
-
-	fieldPath := field.NewPath("Spec", "NMStateConfigLabelSelector", "MatchLabels")
-
-	if len(i.Config.Spec.NMStateConfigLabelSelector.MatchLabels) == 0 {
-		allErrs = append(allErrs, field.Required(fieldPath, "at least one label must be set"))
-	}
-
-	return allErrs
 }

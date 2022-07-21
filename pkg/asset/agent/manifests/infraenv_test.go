@@ -10,9 +10,7 @@ import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -32,50 +30,29 @@ func TestInfraEnv_Generate(t *testing.T) {
 			name: "missing-config",
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{},
-				&AgentPullSecret{},
-				&NMStateConfig{},
 			},
 			expectedError: "missing configuration or manifest file",
 		},
 		{
-			name: "invalid InfraEnv configuration",
-			dependencies: []asset.Asset{
-				GetValidOptionalInstallConfig(),
-				&AgentPullSecret{},
-				&NMStateConfig{Config: []*aiv1beta1.NMStateConfig{{}}},
-			},
-			expectedError: "invalid InfraEnv configuration: Spec.NMStateConfigLabelSelector.MatchLabels: Required value: at least one label must be set",
-		},
-		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
-				GetValidOptionalInstallConfig(),
-				&AgentPullSecret{},
-				&NMStateConfig{Config: []*aiv1beta1.NMStateConfig{
-					{
-						ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
-							"key": "val",
-						}},
-					},
-				}},
+				getValidOptionalInstallConfig(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "infraEnv",
-					Namespace: "cluster-0",
+					Name:      getInfraEnvName(getValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
 					ClusterRef: &aiv1beta1.ClusterReference{
-						Name:      "ocp-edge-cluster-0",
-						Namespace: "cluster-0",
+						Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
+						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
 					},
 					SSHAuthorizedKey: strings.Trim(TestSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: "pull-secret",
+						Name: getPullSecretName(getValidOptionalInstallConfig()),
 					},
-					NMStateConfigLabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{
-						"key": "val",
-					}},
+					NMStateConfigLabelSelector: getNMStateConfigLabelSelector(getValidOptionalInstallConfig()),
 				},
 			},
 		},
@@ -137,7 +114,7 @@ spec:
     ssh-rsa AAAAmyKey`,
 			expectedFound: true,
 			expectedConfig: &aiv1beta1.InfraEnv{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "infraEnv",
 					Namespace: "cluster0",
 				},
@@ -146,7 +123,7 @@ spec:
 						Name:      "ocp-edge-cluster-0",
 						Namespace: "cluster0",
 					},
-					NMStateConfigLabelSelector: v1.LabelSelector{
+					NMStateConfigLabelSelector: metav1.LabelSelector{
 						MatchLabels: map[string]string{
 							"cluster0-nmstate-label-name": "cluster0-nmstate-label-value",
 						},

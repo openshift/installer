@@ -54,8 +54,8 @@ func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
 				Kind:       "Secret",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      a.ResourceName(),
-				Namespace: installConfig.Config.Namespace,
+				Name:      getPullSecretName(installConfig),
+				Namespace: getObjectMetaNamespace(installConfig),
 			},
 			StringData: map[string]string{
 				".dockerconfigjson": installConfig.Config.PullSecret,
@@ -106,11 +106,6 @@ func (a *AgentPullSecret) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	return true, nil
-}
-
-// ResourceName return the name of the pull secret resource.
-func (a *AgentPullSecret) ResourceName() string {
-	return agentPullSecretName
 }
 
 func (a *AgentPullSecret) finish() error {

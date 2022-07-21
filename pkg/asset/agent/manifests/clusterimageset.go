@@ -58,7 +58,7 @@ func (a *ClusterImageSet) Generate(dependencies asset.Parents) error {
 		clusterImageSet := &hivev1.ClusterImageSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("openshift-%s", currentVersion),
-				Namespace: installConfig.Config.Namespace,
+				Namespace: getObjectMetaNamespace(installConfig),
 			},
 			Spec: hivev1.ClusterImageSetSpec{
 				ReleaseImage: releaseImage.PullSpec,
