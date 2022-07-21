@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/vsphere"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/openshift/installer/pkg/types"
 	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -61,6 +62,7 @@ func (m *Metadata) Dependencies() []asset.Asset {
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
 		&bootstrap.Bootstrap{},
+		&releaseimage.Image{},
 	}
 }
 
@@ -68,12 +70,14 @@ func (m *Metadata) Dependencies() []asset.Asset {
 func (m *Metadata) Generate(parents asset.Parents) (err error) {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
-	parents.Get(clusterID, installConfig)
+	releaseImage := &releaseimage.Image{}
+	parents.Get(clusterID, installConfig, releaseImage)
 
 	metadata := &types.ClusterMetadata{
-		ClusterName: installConfig.Config.ObjectMeta.Name,
-		ClusterID:   clusterID.UUID,
-		InfraID:     clusterID.InfraID,
+		ClusterName:          installConfig.Config.ObjectMeta.Name,
+		ClusterID:            clusterID.UUID,
+		InfraID:              clusterID.InfraID,
+		ReleaseImagePullSpec: releaseImage.PullSpec,
 	}
 
 	switch installConfig.Config.Platform.Name() {

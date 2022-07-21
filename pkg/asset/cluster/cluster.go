@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/quota"
+	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
@@ -60,6 +61,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.PlatformPermsCheck{},
 		&installconfig.PlatformProvisionCheck{},
 		&quota.PlatformQuotaCheck{},
+		&releaseimage.Image{},
 		&TerraformVariables{},
 		&password.KubeadminPassword{},
 	}
@@ -74,7 +76,8 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	terraformVariables := &TerraformVariables{}
-	parents.Get(clusterID, installConfig, terraformVariables)
+	releaseImage := &releaseimage.Image{}
+	parents.Get(clusterID, installConfig, releaseImage, terraformVariables)
 
 	if fs := installConfig.Config.FeatureSet; strings.HasSuffix(string(fs), "NoUpgrade") {
 		logrus.Warnf("FeatureSet %q is enabled. This FeatureSet does not allow upgrades and may affect the supportability of the cluster.", fs)
@@ -112,8 +115,20 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		return errors.Wrap(err, "cannot get absolute path of terraform directory")
 	}
 
-	defer os.RemoveAll(terraformDir)
-	terraform.UnpackTerraform(terraformDirPath, stages)
+	// We need to handle authentication for extracting binaries from the release image.
+	// The most straightforward way of doing this is writing a temporary file of the pull secret
+	// and setting REGISTRY_AUTH_FILE. Not sure if that is an acceptable solution per se.
+	// One installer consideration is that we would want to move this logic out of the cluster
+	// asset to make this functionality more accessible in the codebase.
+	fp := filepath.Join(terraformDirPath, "auth.json")
+	if err := os.WriteFile(fp, []byte(installConfig.Config.PullSecret), 0666); err != nil {
+		return err
+	}
+	os.Setenv("REGISTRY_AUTH_FILE", fp)
+
+	//TODO: for Debugging only
+	//defer os.RemoveAll(terraformDir)
+	terraform.UnpackTerraform(terraformDirPath, releaseImage.PullSpec, stages)
 
 	logrus.Infof("Creating infrastructure resources...")
 	switch platform {

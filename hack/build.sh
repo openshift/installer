@@ -39,7 +39,7 @@ export CGO_ENABLED=0
 make -C terraform all
 
 # Copy terraform parts to embedded mirror.
-copy_terraform_to_mirror
+#copy_terraform_to_mirror
 
 MODE="${MODE:-release}"
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"

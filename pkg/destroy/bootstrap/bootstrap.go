@@ -65,7 +65,7 @@ func Destroy(dir string) (err error) {
 	}
 
 	defer os.RemoveAll(terraformDirPath)
-	terraform.UnpackTerraform(terraformDirPath, tfStages)
+	terraform.UnpackTerraform(terraformDirPath, metadata.ReleaseImagePullSpec, tfStages)
 
 	for i := len(tfStages) - 1; i >= 0; i-- {
 		stage := tfStages[i]

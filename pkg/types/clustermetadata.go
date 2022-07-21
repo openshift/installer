@@ -25,6 +25,8 @@ type ClusterMetadata struct {
 	// InfraID is an ID that is used to identify cloud resources created by the installer.
 	InfraID                 string `json:"infraID"`
 	ClusterPlatformMetadata `json:",inline"`
+	// ReleaseImagePullSpec is the pull spec for the release image used to install the cluster.
+	ReleaseImagePullSpec string `json:"pullSpec"`
 }
 
 // ClusterPlatformMetadata contains metadata for platfrom.
