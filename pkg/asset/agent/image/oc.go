@@ -10,7 +10,6 @@ import (
 	"time"
 
 	operatorv1alpha1 "github.com/openshift/api/operator/v1alpha1"
-	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/assisted-service/pkg/executer"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/sirupsen/logrus"
@@ -20,19 +19,23 @@ import (
 )
 
 const (
-	MachineOsImageName = "machine-os-images"
-	CoreOsFileName     = "/coreos/coreos-x86_64.iso"
-	OcDefaultTries     = 5
+	machineOsImageName = "machine-os-images"
+	coreOsFileName     = "/coreos/coreos-%s.iso"
+	//OcDefaultTries is the number of times to execute the oc command on failues
+	OcDefaultTries = 5
+	// OcDefaultRetryDelay is the time between retries
 	OcDefaltRetryDelay = time.Second * 5
 )
 
+// Config is used to set up the retries for extracting the base ISO
 type Config struct {
 	MaxTries   uint
 	RetryDelay time.Duration
 }
 
+// Release is the interface to use the oc command to the get image info
 type Release interface {
-	GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig, platformType models.PlatformType) (string, error)
+	GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig, architecture string) (string, error)
 }
 
 type release struct {
@@ -40,6 +43,7 @@ type release struct {
 	config   Config
 }
 
+// NewRelease is used to set up the executor to run oc commands
 func NewRelease(executer executer.Executer, config Config) Release {
 	return &release{executer: executer, config: config}
 }
@@ -47,14 +51,14 @@ func NewRelease(executer executer.Executer, config Config) Release {
 const (
 	templateGetImage             = "oc adm release info --image-for=%s --insecure=%t %s"
 	templateImageExtract         = "oc image extract --file=%s --path /:/%s --confirm %s"
-	templateImageExtractWithIcsp = "oc image extract --file=%s --path /:/%s --confirm -icsp-file=%s %s"
+	templateImageExtractWithIcsp = "oc image extract --file=%s --path /:/%s --confirm --icsp-file=%s %s"
 )
 
 // Get the CoreOS ISO from the releaseImage
-func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig, platformType models.PlatformType) (string, error) {
+func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig, architecture string) (string, error) {
 
 	// Get the machine-os-images pullspec from the release and use that to get the CoreOS ISO
-	image, err := r.getImageFromRelease(log, MachineOsImageName, releaseImage, pullSecret)
+	image, err := r.getImageFromRelease(log, machineOsImageName, releaseImage, pullSecret)
 	if err != nil {
 		return "", err
 	}
@@ -64,8 +68,9 @@ func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSe
 		return "", err
 	}
 
+	filename := fmt.Sprintf(coreOsFileName, architecture)
 	// Check if file is already cached
-	filePath, err := GetFileFromCache(CoreOsFileName, cacheDir)
+	filePath, err := GetFileFromCache(filename, cacheDir)
 	if err != nil {
 		return "", err
 	}
@@ -74,7 +79,7 @@ func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSe
 		return filePath, nil
 	}
 
-	path, err := r.extractFileFromImage(log, image, cacheDir, pullSecret, mirrorConfig, platformType)
+	path, err := r.extractFileFromImage(log, image, filename, cacheDir, pullSecret, mirrorConfig)
 	if err != nil {
 		return "", err
 	}
@@ -93,8 +98,7 @@ func (r *release) getImageFromRelease(log logrus.FieldLogger, imageName, release
 	return image, nil
 }
 
-func (r *release) extractFileFromImage(log logrus.FieldLogger, image, cacheDir, pullSecret string, mirrorConfig []mirror.RegistriesConfig, platformType models.PlatformType) (string, error) {
-	file := CoreOsFileName
+func (r *release) extractFileFromImage(log logrus.FieldLogger, image, file, cacheDir, pullSecret string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
 
 	var cmd string
 	if len(mirrorConfig) > 0 {
@@ -143,11 +147,11 @@ func execute(log logrus.FieldLogger, executer executer.Executer, pullSecret stri
 
 	if exitCode == 0 {
 		return strings.TrimSpace(stdout), nil
-	} else {
-		err = fmt.Errorf("command '%s' exited with non-zero exit code %d: %s\n%s", executeCommand, exitCode, stdout, stderr)
-		log.Error(err)
-		return "", err
 	}
+
+	err = fmt.Errorf("command '%s' exited with non-zero exit code %d: %s\n%s", executeCommand, exitCode, stdout, stderr)
+	log.Error(err)
+	return "", err
 }
 
 // Create a temporary file containing the ImageContentPolicySources

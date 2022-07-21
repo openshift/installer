@@ -22,6 +22,10 @@ type BaseIso struct {
 	File *asset.File
 }
 
+const (
+	archName = "x86_64"
+)
+
 var (
 	baseIsoFilename = ""
 )
@@ -61,7 +65,6 @@ func downloadIso() (string, error) {
 
 	// Defaults to using the x86_64 baremetal ISO for all platforms
 	// archName := arch.RpmArch(string(config.ControlPlane.Architecture))
-	archName := "x86_64"
 	streamArch, err := st.GetArchitecture(archName)
 	if err != nil {
 		return "", err
@@ -115,14 +118,14 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 		releaseImage := agentManifests.ClusterImageSet.Spec.ReleaseImage
 		pullSecret := agentManifests.GetPullSecretData()
 		registriesConf := &mirror.RegistriesConf{}
-		dependencies.Get(registriesConf)
+		dependencies.Get(agentManifests, registriesConf)
 		log.Infof("got registriesConfig with %d entries", len(registriesConf.MirrorConfig))
 
 		// If we have the image registry location and 'oc' command is available then get from release payload
 		ocRelease := NewRelease(&executer.CommonExecuter{},
 			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaltRetryDelay})
 
-		baseIsoFileName, err := ocRelease.GetBaseIso(log, releaseImage, pullSecret, registriesConf.MirrorConfig, "X86_64")
+		baseIsoFileName, err := ocRelease.GetBaseIso(log, releaseImage, pullSecret, registriesConf.MirrorConfig, archName)
 		if err == nil {
 			log.Infof("got base iso image %s using oc command", baseIsoFileName)
 			i.File = &asset.File{Filename: baseIsoFileName}
