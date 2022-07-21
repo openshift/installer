@@ -159,23 +159,6 @@ spec:
 		  wrongField: wrongValue`,
 			expectedError: "failed to unmarshal cluster-manifests/infraenv.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
 		},
-		{
-			name: "empty-NMStateLabelSelector",
-			data: `
-metadata:
-  name: infraEnv
-  namespace: cluster0
-spec:
-  clusterRef:
-    name: ocp-edge-cluster-0
-    namespace: cluster0
-  nmStateConfigLabelSelector: 
-  pullSecretRef:
-    name: pull-secret
-  sshAuthorizedKey: |
-    ssh-rsa AAAAmyKey`,
-			expectedError: "invalid InfraEnv configuration: Spec.NMStateConfigLabelSelector.MatchLabels: Required value: at least one label must be set",
-		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
