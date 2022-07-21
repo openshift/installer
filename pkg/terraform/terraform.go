@@ -34,11 +34,6 @@ func newTFExec(datadir string, terraformDir string) (*tfexec.Terraform, error) {
 	tf.SetStderr(lpError)
 	tf.SetLogger(newPrintfer())
 
-	// Opt in to the beta of v3.0 of the azurerm terraform provider.
-	// Note that it would have been nice to use tf.SetEnv. Unfortunately, that prevents the environment variables from
-	// the OS from being used.
-	os.Setenv("ARM_THREEPOINTZERO_BETA", "true")
-
 	// Set the Terraform data dir to be the same as the terraformDir so that
 	// files we unpack are contained and, more importantly, we can ensure the
 	// provider binaries unpacked in the Terraform data dir have the same permission

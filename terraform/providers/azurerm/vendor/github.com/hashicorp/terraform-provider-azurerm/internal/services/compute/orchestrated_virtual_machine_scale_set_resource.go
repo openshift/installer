@@ -9,16 +9,15 @@ import (
 
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/zones"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-07-01/compute"
+	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/location"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/parse"
 	computeValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
@@ -48,7 +47,9 @@ func resourceOrchestratedVirtualMachineScaleSet() *pluginsdk.Resource {
 			Delete: pluginsdk.DefaultTimeout(60 * time.Minute),
 		},
 
-		// TODO: remove support the the legacy Orchestrated Virtual Machine Scale Set in 3.0
+		// The plan was to remove support the the legacy Orchestrated Virtual Machine Scale Set in 3.0.
+		// Turns out it's still in use
+		// TODO: Revisit in 4.0
 		// TODO: exposing requireGuestProvisionSignal once it's available
 		// https://github.com/Azure/azure-rest-api-specs/pull/7246
 
@@ -190,15 +191,9 @@ func resourceOrchestratedVirtualMachineScaleSet() *pluginsdk.Resource {
 				Default:  false,
 			},
 
-			"termination_notification": OrchestratedVirtualMachineScaleSetTerminateNotificationSchema(),
+			"termination_notification": OrchestratedVirtualMachineScaleSetTerminationNotificationSchema(),
 
-			"zones": func() *schema.Schema {
-				if !features.ThreePointOhBeta() {
-					return azure.SchemaZones()
-				}
-
-				return commonschema.ZonesMultipleOptionalForceNew()
-			}(),
+			"zones": commonschema.ZonesMultipleOptionalForceNew(),
 
 			"tags": tags.Schema(),
 
@@ -250,13 +245,9 @@ func resourceOrchestratedVirtualMachineScaleSetCreate(d *pluginsdk.ResourceData,
 		},
 	}
 
-	if features.ThreePointOhBeta() {
-		zones := zones.Expand(d.Get("zones").(*schema.Set).List())
-		if len(zones) > 0 {
-			props.Zones = &zones
-		}
-	} else {
-		props.Zones = azure.ExpandZones(d.Get("zones").([]interface{}))
+	zones := zones.Expand(d.Get("zones").(*schema.Set).List())
+	if len(zones) > 0 {
+		props.Zones = &zones
 	}
 
 	virtualMachineProfile := compute.VirtualMachineScaleSetVMProfile{

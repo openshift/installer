@@ -8,7 +8,9 @@ The most common source of these addresses outside of Terraform Core
 is JSON representation of state, plan, or schemas as obtained
 via [`hashicorp/terraform-exec`](https://github.com/hashicorp/terraform-exec).
 
-## Example
+## Parsing Provider Addresses
+
+### Example
 
 ```go
 p, err := ParseRawProviderSourceString("hashicorp/aws")
@@ -23,7 +25,7 @@ if err != nil {
 // }
 ```
 
-## Legacy address
+### Legacy address
 
 A legacy address is by itself (without more context) ambiguous.
 For example `aws` may represent either the official `hashicorp/aws`
@@ -36,7 +38,7 @@ the address was produced by an affected version.
 If you do not have that context you should parse the string via
 `ParseRawProviderSourceString` and then check `addr.IsLegacy()`.
 
-### What to do with a legacy address?
+#### What to do with a legacy address?
 
 Ask the Registry API whether and where the provider was moved to
 
@@ -70,7 +72,7 @@ If you cache results (which you should), ensure you have invalidation
 mechanism in place because target (migrated) namespace may change.
 Hard-coding migrations anywhere in code is strongly discouraged.
 
-### `terraform` provider
+#### `terraform` provider
 
 Like any other legacy address `terraform` is also ambiguous. Such address may
 (most unlikely) represent a custom-built provider called `terraform`,
@@ -86,3 +88,24 @@ i.e. assume all of its logic including schema is contained within
 Terraform Core.
 
 In such case you should just use `NewBuiltInProvider("terraform")`.
+
+## Parsing Module Addresses
+
+### Example
+
+```go
+registry, err := ParseRawModuleSourceRegistry("hashicorp/subnets/cidr")
+if err != nil {
+	// deal with error
+}
+
+// registry == ModuleSourceRegistry{
+//   PackageAddr: ModuleRegistryPackage{
+//     Host:         svchost.Hostname("registry.terraform.io"),
+//     Namespace:    "hashicorp",
+//     Name:         "subnets",
+//     TargetSystem: "cidr",
+//   },
+//   Subdir: "",
+// },
+```
