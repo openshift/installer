@@ -17,21 +17,6 @@ func Validate(ic *types.InstallConfig) error {
 		return field.Required(field.NewPath("platform", "nutanix"), "nutanix validation requires a nutanix platform configuration")
 	}
 
-	p := ic.Platform.Nutanix
-	nc, err := nutanixtypes.CreateNutanixClient(context.TODO(),
-		p.PrismCentral.Endpoint.Address,
-		strconv.Itoa(int(p.PrismCentral.Endpoint.Port)),
-		p.PrismCentral.Username,
-		p.PrismCentral.Password)
-
-	// validate whether a prism element with the UUID actually exists
-	for _, pe := range p.PrismElements {
-		_, err = nc.V3.GetCluster(pe.UUID)
-		if err != nil {
-			return field.InternalError(field.NewPath("platform", "nutanix", "prismElements"), errors.Wrapf(err, "prism element UUID %s does not correspond to a valid prism element in Prism", pe.UUID))
-		}
-	}
-
 	return nil
 }
 
@@ -51,6 +36,14 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 		p.PrismCentral.Password)
 	if err != nil {
 		return field.InternalError(field.NewPath("platform", "nutanix"), errors.Wrapf(err, "unable to connect to Prism Central %q", p.PrismCentral.Endpoint.Address))
+	}
+
+	// validate whether a prism element with the UUID actually exists
+	for _, pe := range p.PrismElements {
+		_, err = nc.V3.GetCluster(pe.UUID)
+		if err != nil {
+			return field.InternalError(field.NewPath("platform", "nutanix", "prismElements"), errors.Wrapf(err, "prism element UUID %s does not correspond to a valid prism element in Prism", pe.UUID))
+		}
 	}
 
 	// validate whether a subnet with the UUID actually exists
