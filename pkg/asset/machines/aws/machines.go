@@ -114,10 +114,18 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 	}
 
 	if subnet == "" {
-		config.Subnet.Filters = []machineapi.Filter{{
-			Name:   "tag:Name",
-			Values: []string{fmt.Sprintf("%s-private-%s", clusterID, zone)},
-		}}
+		switch role {
+		case "worker":
+			config.Subnet.Filters = []machineapi.Filter{{
+				Name:   "tag:Name",
+				Values: []string{fmt.Sprintf("%s-public-%s", clusterID, zone)},
+			}}
+		default:
+			config.Subnet.Filters = []machineapi.Filter{{
+				Name:   "tag:Name",
+				Values: []string{fmt.Sprintf("%s-private-%s", clusterID, zone)},
+			}}
+		}
 	} else {
 		config.Subnet.ID = pointer.StringPtr(subnet)
 	}

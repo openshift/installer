@@ -12,7 +12,8 @@ resource "aws_route_table" "private_routes" {
 }
 
 resource "aws_route" "to_nat_gw" {
-  count = var.private_subnets == null ? length(var.availability_zones) : 0
+  #count = var.private_subnets == null ? length(var.availability_zones) : 0
+  count = 0
 
   route_table_id         = aws_route_table.private_routes[count.index].id
   destination_cidr_block = "0.0.0.0/0"
