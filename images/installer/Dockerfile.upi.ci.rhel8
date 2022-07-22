@@ -18,13 +18,13 @@ COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshif
 
 RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc && \
     sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" >/etc/yum.repos.d/azure-cli.repo' && \
-    sh -c 'echo -e "[google-cloud-sdk]\nname=Google Cloud SDK\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg\n       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-sdk.repo'
+    sh -c 'echo -e "[google-cloud-cli]\nname=Google Cloud CLI\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg\n       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-sdk.repo'
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
       azure-cli \
       gettext \
-      google-cloud-sdk \
+      google-cloud-cli \
       gzip \
       jq \
       unzip \
@@ -51,9 +51,11 @@ RUN curl -sSL "${ALIYUN_URI}" --output /tmp/aliyun-cli-linux-latest-amd64.tgz &&
   tar --directory=/bin/ -xvf /tmp/aliyun-cli-linux-latest-amd64.tgz && \
   rm -f /tmp/aliyun-cli-linux-latest-amd64.tgz
 
-# Not packaged for Python 2, but required by gcloud.  See https://cloud.google.com/sdk/crypto
-RUN pip-2 install pyopenssl
+# Not packaged, but required by gcloud. See https://cloud.google.com/sdk/crypto
+RUN pip-3 install cryptography
+
 ENV CLOUDSDK_PYTHON=/usr/bin/python
+ENV CLOUDSDK_PYTHON_SITEPACKAGES=1
 
 ENV TERRAFORM_VERSION=1.0.11
 RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
