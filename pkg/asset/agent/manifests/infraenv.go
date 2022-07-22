@@ -62,7 +62,9 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 				PullSecretRef: &corev1.LocalObjectReference{
 					Name: getPullSecretName(installConfig),
 				},
-				NMStateConfigLabelSelector: getNMStateConfigLabelSelector(installConfig),
+				NMStateConfigLabelSelector: metav1.LabelSelector{
+					MatchLabels: getNMStateConfigLabels(installConfig),
+				},
 			},
 		}
 		i.Config = infraEnv

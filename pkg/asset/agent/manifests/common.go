@@ -4,7 +4,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/version"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func getAgentClusterInstallName(ic *agent.OptionalInstallConfig) string {
@@ -20,18 +19,16 @@ func getInfraEnvName(ic *agent.OptionalInstallConfig) string {
 }
 
 func getPullSecretName(ic *agent.OptionalInstallConfig) string {
-	return ic.Config.ObjectMeta.Name + "pull-secret"
+	return ic.Config.ObjectMeta.Name + "-pull-secret"
 }
 
 func getObjectMetaNamespace(ic *agent.OptionalInstallConfig) string {
-	return ic.Config.ObjectMeta.Namespace
+	return ic.Config.Namespace
 }
 
-func getNMStateConfigLabelSelector(ic *agent.OptionalInstallConfig) metav1.LabelSelector {
-	return metav1.LabelSelector{
-		MatchLabels: map[string]string{
-			"infraenvs.agent-install.openshift.io": getInfraEnvName(ic),
-		},
+func getNMStateConfigLabels(ic *agent.OptionalInstallConfig) map[string]string {
+	return map[string]string{
+		"infraenvs.agent-install.openshift.io": getInfraEnvName(ic),
 	}
 }
 

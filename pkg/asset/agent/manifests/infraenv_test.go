@@ -52,7 +52,9 @@ func TestInfraEnv_Generate(t *testing.T) {
 					PullSecretRef: &corev1.LocalObjectReference{
 						Name: getPullSecretName(getValidOptionalInstallConfig()),
 					},
-					NMStateConfigLabelSelector: getNMStateConfigLabelSelector(getValidOptionalInstallConfig()),
+					NMStateConfigLabelSelector: metav1.LabelSelector{
+						MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig()),
+					},
 				},
 			},
 		},

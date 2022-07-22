@@ -12,8 +12,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/ipnet"
-	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
-	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/validate"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -108,15 +106,13 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			},
 		}
 
-		// set APIVIP and IngressVIP only for non SNO cluster with Baremetal and Vsphere platforms
+		apiVIP, ingressVIP := getVIPs(&installConfig.Config.Platform)
+
+		// set APIVIP and IngressVIP only for non SNO cluster for Baremetal and Vsphere platforms
 		// SNO cluster is determined by number of ControlPlaneAgents which should be 1
-		if (int(*installConfig.Config.ControlPlane.Replicas) > 1) &&
-			(installConfig.Config.Platform.Name() == baremetaltypes.Name ||
-				installConfig.Config.Platform.Name() == vspheretypes.Name) {
-			apiVIP, ingressVIP := getVIPs(&installConfig.Config.Platform)
+		if int(*installConfig.Config.ControlPlane.Replicas) > 1 && apiVIP != "" && ingressVIP != "" {
 			agentClusterInstall.Spec.APIVIP = apiVIP
 			agentClusterInstall.Spec.IngressVIP = ingressVIP
-
 		}
 
 		a.Config = agentClusterInstall
