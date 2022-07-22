@@ -67,6 +67,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.2
+	github.com/thedevsaddam/retry v0.0.0-20200324223450-9769a859cc6d
 	github.com/ulikunitz/xz v0.5.10
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.27.4

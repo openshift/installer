@@ -769,6 +769,9 @@ github.com/spf13/pflag
 # github.com/stretchr/testify v1.7.2
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
+# github.com/thedevsaddam/retry v0.0.0-20200324223450-9769a859cc6d
+## explicit; go 1.13
+github.com/thedevsaddam/retry
 # github.com/ulikunitz/xz v0.5.10
 ## explicit; go 1.12
 github.com/ulikunitz/xz
