@@ -120,4 +120,11 @@ module "dns" {
   cluster_domain             = var.cluster_domain
   load_balancer_hostname     = module.loadbalancer.lb_hostname
   load_balancer_int_hostname = module.loadbalancer.lb_int_hostname
+  cluster_id                 = var.cluster_id
+  vpc_id                     = module.vpc.vpc_id
+  vpc_subnet_id              = module.vpc.vpc_subnet_id
+  vpc_zone                   = var.powervs_vpc_zone
+  ssh_key                    = var.powervs_ssh_key
+  publish_strategy           = var.powervs_publish_strategy
+  # dns_vm_image_name        = @FUTURE
 }

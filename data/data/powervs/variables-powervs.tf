@@ -39,6 +39,16 @@ variable "powervs_cloud_instance_id" {
   description = "The cloud instance ID of your account"
 }
 
+variable "powervs_publish_strategy" {
+  type        = string
+  description = "The cluster publishing strategy, either Internal or External"
+  default     = "External"
+  validation {
+    condition     = var.powervs_publish_strategy == "External" || var.powervs_publish_strategy == "Internal"
+    error_message = "The powervs_publish_strategy value must be \"External\" or \"Internal\"."
+  }
+}
+
 ################################################################
 # Configure storage
 ################################################################
