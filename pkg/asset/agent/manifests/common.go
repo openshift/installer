@@ -3,6 +3,7 @@ package manifests
 import (
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/version"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,6 +33,11 @@ func getNMStateConfigLabelSelector(ic *agent.OptionalInstallConfig) metav1.Label
 			"infraenvs.agent-install.openshift.io": getInfraEnvName(ic),
 		},
 	}
+}
+
+func getClusterImageSetReferenceName() string {
+	versionString, _ := version.Version()
+	return "openshift-" + versionString
 }
 
 // getVIPs returns a string representation of the platform's API VIP and Ingress VIP.

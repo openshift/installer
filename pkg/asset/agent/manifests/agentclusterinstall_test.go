@@ -46,7 +46,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				},
 				Spec: hiveext.AgentClusterInstallSpec{
 					ImageSetRef: &hivev1.ClusterImageSetReference{
-						Name: "openshift-4.11",
+						Name: getClusterImageSetReferenceName(),
 					},
 					ClusterDeploymentRef: corev1.LocalObjectReference{
 						Name: getClusterDeploymentName(getValidOptionalInstallConfig()),
