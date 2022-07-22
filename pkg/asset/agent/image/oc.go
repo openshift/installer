@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -87,9 +88,16 @@ func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSe
 }
 
 func (r *release) getImageFromRelease(log logrus.FieldLogger, imageName, releaseImage, pullSecret string) (string, error) {
+	// This requires the 'oc' command so make sure its available
+	_, err := exec.LookPath("oc")
+	if err != nil {
+		log.Warning("\"oc\" command to extract ISO from release payload was not found, an attempt will be made to download the ISO")
+		return "", err
+	}
+
 	cmd := fmt.Sprintf(templateGetImage, imageName, true, releaseImage)
 
-	log.Infof("Fetching image from OCP release (%s)", cmd)
+	log.Debugf("Fetching image from OCP release (%s)", cmd)
 	image, err := execute(log, r.executer, pullSecret, cmd)
 	if err != nil {
 		return "", err
@@ -102,7 +110,7 @@ func (r *release) extractFileFromImage(log logrus.FieldLogger, image, file, cach
 
 	var cmd string
 	if len(mirrorConfig) > 0 {
-		log.Infof("Using mirror configuration")
+		log.Debugf("Using mirror configuration")
 		icspFile, err := getIcspFileFromRegistriesConfig(log, mirrorConfig)
 		if err != nil {
 			return "", err
@@ -113,14 +121,14 @@ func (r *release) extractFileFromImage(log logrus.FieldLogger, image, file, cach
 		cmd = fmt.Sprintf(templateImageExtract, file, cacheDir, image)
 	}
 
-	log.Infof("extracting %s to %s, %s", file, cacheDir, cmd)
+	log.Debugf("extracting %s to %s, %s", file, cacheDir, cmd)
 	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, execute, log, r.executer, pullSecret, cmd)
 	if err != nil {
 		return "", err
 	}
 	// set path
 	path := filepath.Join(cacheDir, file)
-	log.Infof("Successfully extracted %s binary from the release to: %s", file, path)
+	log.Infof("Successfully extracted %s ISO from the release to: %s", file, path)
 	return path, nil
 }
 
@@ -162,7 +170,7 @@ func getIcspFileFromRegistriesConfig(log logrus.FieldLogger, mirrorConfig []mirr
 		return "", err
 	}
 	if contents == nil {
-		log.Infof("No registry entries to build ICSP file")
+		log.Debugf("No registry entries to build ICSP file")
 		return "", nil
 	}
 
@@ -170,7 +178,7 @@ func getIcspFileFromRegistriesConfig(log logrus.FieldLogger, mirrorConfig []mirr
 	if err != nil {
 		return "", err
 	}
-	log.Infof("Building ICSP file from registries.conf with contents %s", contents)
+	log.Debugf("Building ICSP file from registries.conf with contents %s", contents)
 	if _, err := icspFile.Write(contents); err != nil {
 		icspFile.Close()
 		os.Remove(icspFile.Name())

@@ -23,6 +23,7 @@ type BaseIso struct {
 }
 
 const (
+	// TODO - add support for other architectures
 	archName = "x86_64"
 )
 
@@ -119,15 +120,15 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 		pullSecret := agentManifests.GetPullSecretData()
 		registriesConf := &mirror.RegistriesConf{}
 		dependencies.Get(agentManifests, registriesConf)
-		log.Infof("got registriesConfig with %d entries", len(registriesConf.MirrorConfig))
 
 		// If we have the image registry location and 'oc' command is available then get from release payload
 		ocRelease := NewRelease(&executer.CommonExecuter{},
 			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay})
 
+		log.Info("Extracting base ISO from release payload")
 		baseIsoFileName, err := ocRelease.GetBaseIso(log, releaseImage, pullSecret, registriesConf.MirrorConfig, archName)
 		if err == nil {
-			log.Infof("got base iso image %s using oc command", baseIsoFileName)
+			log.Debugf("retrieved base iso image %s from release payload", baseIsoFileName)
 			i.File = &asset.File{Filename: baseIsoFileName}
 			return nil
 		}
