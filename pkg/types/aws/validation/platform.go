@@ -35,7 +35,7 @@ func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 	}
 
 	allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
-	allErrs = append(allErrs, validateUserTags(p.UserTags, p.ExperimentalPropagateUserTag, fldPath.Child("userTags"))...)
+	allErrs = append(allErrs, validateUserTags(p.UserTags, p.PropagateUserTag, fldPath.Child("userTags"))...)
 
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)

@@ -292,6 +292,187 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				Publish:    types.ExternalPublishingStrategy,
 			},
 		},
+		{
+			name: "experimentalPropagateUserTags takes precedence",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  aws:
+    region: us-east-1
+    experimentalPropagateUserTags: false
+    propagateUserTags: true
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				BaseDomain: "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					},
+					NetworkType:    "OpenShiftSDN",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64Ptr(3),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64Ptr(3),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						Region:                       "us-east-1",
+						ExperimentalPropagateUserTag: pointer.BoolPtr(false),
+						PropagateUserTag:             false,
+					},
+				},
+				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:    types.ExternalPublishingStrategy,
+			},
+		},
+		{
+			name: "missing experimentalPropagateUserTags",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  aws:
+    region: us-east-1
+    propagateUserTags: true
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				BaseDomain: "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					},
+					NetworkType:    "OpenShiftSDN",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64Ptr(3),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64Ptr(3),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						Region:                       "us-east-1",
+						ExperimentalPropagateUserTag: nil,
+						PropagateUserTag:             true,
+					},
+				},
+				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:    types.ExternalPublishingStrategy,
+			},
+		},
+		{
+			name: "support only experimental - backport test",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  aws:
+    region: us-east-1
+    experimentalPropagateUsertags: true
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				BaseDomain: "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					},
+					NetworkType:    "OpenShiftSDN",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64Ptr(3),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64Ptr(3),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						Region:                       "us-east-1",
+						ExperimentalPropagateUserTag: pointer.BoolPtr(true),
+						PropagateUserTag:             true,
+					},
+				},
+				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:    types.ExternalPublishingStrategy,
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
