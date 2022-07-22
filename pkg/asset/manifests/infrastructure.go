@@ -214,19 +214,24 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		nutanixPlatform := installConfig.Config.Nutanix
 
 		// Retrieve the prism element name
-		nc, err := nutanix.CreateNutanixClient(context.Background(),
-			nutanixPlatform.PrismCentral.Endpoint.Address,
-			strconv.Itoa(int(nutanixPlatform.PrismCentral.Endpoint.Port)),
-			nutanixPlatform.PrismCentral.Username,
-			nutanixPlatform.PrismCentral.Password)
-		if err != nil {
-			return errors.Wrapf(err, "unable to connect to Prism Central %s", nutanixPlatform.PrismCentral.Endpoint.Address)
+		var peName string
+		if len(nutanixPlatform.PrismElements[0].Name) == 0 {
+			nc, err := nutanix.CreateNutanixClient(context.Background(),
+				nutanixPlatform.PrismCentral.Endpoint.Address,
+				strconv.Itoa(int(nutanixPlatform.PrismCentral.Endpoint.Port)),
+				nutanixPlatform.PrismCentral.Username,
+				nutanixPlatform.PrismCentral.Password)
+			if err != nil {
+				return errors.Wrapf(err, "unable to connect to Prism Central %s", nutanixPlatform.PrismCentral.Endpoint.Address)
+			}
+			pe, err := nc.V3.GetCluster(nutanixPlatform.PrismElements[0].UUID)
+			if err != nil {
+				return errors.Wrapf(err, "fail to find the Prism Element (cluster) with uuid %s", nutanixPlatform.PrismElements[0].UUID)
+			}
+			peName = *pe.Spec.Name
+		} else {
+			peName = nutanixPlatform.PrismElements[0].Name
 		}
-		pe, err := nc.V3.GetCluster(nutanixPlatform.PrismElements[0].UUID)
-		if err != nil {
-			return errors.Wrapf(err, "fail to find the Prism Element (cluster) with uuid %s", nutanixPlatform.PrismElements[0].UUID)
-		}
-		peName := *pe.Spec.Name
 
 		config.Spec.PlatformSpec.Type = configv1.NutanixPlatformType
 		config.Spec.PlatformSpec.Nutanix = &configv1.NutanixPlatformSpec{
