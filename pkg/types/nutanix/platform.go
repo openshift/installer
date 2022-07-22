@@ -57,6 +57,9 @@ type PrismElement struct {
 
 	// Endpoint holds the address and port of the Prism Element
 	Endpoint PrismEndpoint `json:"endpoint"`
+
+	// Name is prism endpoint Name
+	Name string `json:"name",omitempty`
 }
 
 // PrismEndpoint holds the endpoint address and port to access the Nutanix Prism Central or Element (cluster)
