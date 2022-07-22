@@ -24,7 +24,7 @@ const (
 	//OcDefaultTries is the number of times to execute the oc command on failues
 	OcDefaultTries = 5
 	// OcDefaultRetryDelay is the time between retries
-	OcDefaltRetryDelay = time.Second * 5
+	OcDefaultRetryDelay = time.Second * 5
 )
 
 // Config is used to set up the retries for extracting the base ISO
@@ -162,7 +162,7 @@ func getIcspFileFromRegistriesConfig(log logrus.FieldLogger, mirrorConfig []mirr
 		return "", err
 	}
 	if contents == nil {
-		log.Infof("No ImageContentSources in install-config to build ICSP file")
+		log.Infof("No registry entries to build ICSP file")
 		return "", nil
 	}
 
@@ -170,7 +170,7 @@ func getIcspFileFromRegistriesConfig(log logrus.FieldLogger, mirrorConfig []mirr
 	if err != nil {
 		return "", err
 	}
-	log.Infof("Building ICSP file from install-config with contents %s", contents)
+	log.Infof("Building ICSP file from registries.conf with contents %s", contents)
 	if _, err := icspFile.Write(contents); err != nil {
 		icspFile.Close()
 		os.Remove(icspFile.Name())

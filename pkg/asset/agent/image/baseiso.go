@@ -123,7 +123,7 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 
 		// If we have the image registry location and 'oc' command is available then get from release payload
 		ocRelease := NewRelease(&executer.CommonExecuter{},
-			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaltRetryDelay})
+			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay})
 
 		baseIsoFileName, err := ocRelease.GetBaseIso(log, releaseImage, pullSecret, registriesConf.MirrorConfig, archName)
 		if err == nil {
