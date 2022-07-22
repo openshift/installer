@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -23,35 +24,31 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 		expectedConfig *corev1.Secret
 	}{
 		{
-			name:          "missing-config",
+			name: "missing install config",
+			dependencies: []asset.Asset{
+				&agent.OptionalInstallConfig{},
+			},
 			expectedError: "missing configuration or manifest file",
 		},
-		// {
-		// 	name: "default",
-		// 	dependencies: []asset.Asset{
-		// 		&agent.OptionalInstallConfig{
-		// 			Config: &types.InstallConfig{
-		// 				ObjectMeta: v1.ObjectMeta{
-		// 					Namespace: "cluster-0",
-		// 				},
-		// 				PullSecret: "secret-agent",
-		// 			},
-		// 		},
-		// 	},
-		// 	expectedConfig: &corev1.Secret{
-		// 		TypeMeta: v1.TypeMeta{
-		// 			Kind:       "Secret",
-		// 			APIVersion: "v1",
-		// 		},
-		// 		ObjectMeta: v1.ObjectMeta{
-		// 			Name:      "pull-secret",
-		// 			Namespace: "cluster-0",
-		// 		},
-		// 		StringData: map[string]string{
-		// 			".dockerconfigjson": "c2VjcmV0LWFnZW50",
-		// 		},
-		// 	},
-		// },
+		{
+			name: "valid configuration",
+			dependencies: []asset.Asset{
+				getValidOptionalInstallConfig(),
+			},
+			expectedConfig: &corev1.Secret{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "Secret",
+					APIVersion: "v1",
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Name:      getPullSecretName(getValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+				},
+				StringData: map[string]string{
+					".dockerconfigjson": TestSecret,
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

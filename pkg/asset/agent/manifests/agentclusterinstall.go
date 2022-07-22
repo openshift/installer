@@ -2,13 +2,20 @@ package manifests
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"strings"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/validate"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -39,42 +46,87 @@ func (*AgentClusterInstall) Dependencies() []asset.Asset {
 
 // Generate generates the AgentClusterInstall manifest.
 func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
-	// installConfig := &agent.OptionalInstallConfig{}
-	// dependencies.Get(installConfig)
+	installConfig := &agent.OptionalInstallConfig{}
+	dependencies.Get(installConfig)
 
-	// agentClusterInstall := &hiveext.AgentClusterInstall{
-	// 	ObjectMeta: metav1.ObjectMeta{
-	// 		Name:      "agent-cluster-install",
-	// 		Namespace: installConfig.Config.Namespace,
-	// 	},
-	// 	Spec: hiveext.AgentClusterInstallSpec{
-	// 		ClusterDeploymentRef: corev1.LocalObjectReference{
-	// 			Name: installConfig.Config.ObjectMeta.Name,
-	// 		},
-	// 		SSHPublicKey: installConfig.Config.SSHKey,
-	// 		ProvisionRequirements: hiveext.ProvisionRequirements{
-	// 			ControlPlaneAgents: int(*installConfig.Config.ControlPlane.Replicas),
-	// 		},
-	// 	},
-	// }
+	if installConfig.Config != nil {
+		var numberOfWorkers int = 0
+		for _, compute := range installConfig.Config.Compute {
+			numberOfWorkers = numberOfWorkers + int(*compute.Replicas)
+		}
 
-	// var numberOfWorkers int = 0
-	// for _, compute := range installConfig.Config.Compute {
-	// 	numberOfWorkers = numberOfWorkers + int(*compute.Replicas)
-	// }
-	// agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents = numberOfWorkers
-	// a.Config = agentClusterInstall
+		clusterNetwork := []hiveext.ClusterNetworkEntry{}
+		for _, cn := range installConfig.Config.Networking.ClusterNetwork {
+			_, cidr, err := net.ParseCIDR(cn.CIDR.String())
+			if err != nil {
+				return errors.Wrap(err, "failed to parse ClusterNetwork CIDR")
+			}
+			err = validate.SubnetCIDR(cidr)
+			if err != nil {
+				return errors.Wrap(err, "failed to validate ClusterNetwork CIDR")
+			}
 
-	// agentClusterInstallData, err := yaml.Marshal(agentClusterInstall)
-	// if err != nil {
-	// 	return errors.Wrap(err, "failed to marshal agent installer AgentClusterInstall")
-	// }
+			entry := hiveext.ClusterNetworkEntry{
+				CIDR:       cidr.String(),
+				HostPrefix: cn.HostPrefix,
+			}
+			clusterNetwork = append(clusterNetwork, entry)
+		}
 
-	// a.File = &asset.File{
-	// 	Filename: agentClusterInstallFilename,
-	// 	Data:     agentClusterInstallData,
-	// }
+		serviceNetwork := []string{}
+		for _, sn := range installConfig.Config.Networking.ServiceNetwork {
+			cidr, err := ipnet.ParseCIDR(sn.String())
+			if err != nil {
+				return errors.Wrap(err, "failed to parse ServiceNetwork CIDR")
+			}
+			serviceNetwork = append(serviceNetwork, cidr.String())
+		}
 
+		agentClusterInstall := &hiveext.AgentClusterInstall{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      getAgentClusterInstallName(installConfig),
+				Namespace: getObjectMetaNamespace(installConfig),
+			},
+			Spec: hiveext.AgentClusterInstallSpec{
+				ImageSetRef: &hivev1.ClusterImageSetReference{
+					Name: getClusterImageSetReferenceName(),
+				},
+				ClusterDeploymentRef: corev1.LocalObjectReference{
+					Name: getClusterDeploymentName(installConfig),
+				},
+				Networking: hiveext.Networking{
+					ClusterNetwork: clusterNetwork,
+					ServiceNetwork: serviceNetwork,
+				},
+				SSHPublicKey: strings.Trim(installConfig.Config.SSHKey, "|\n\t"),
+				ProvisionRequirements: hiveext.ProvisionRequirements{
+					ControlPlaneAgents: int(*installConfig.Config.ControlPlane.Replicas),
+					WorkerAgents:       numberOfWorkers,
+				},
+			},
+		}
+
+		apiVIP, ingressVIP := getVIPs(&installConfig.Config.Platform)
+
+		// set APIVIP and IngressVIP only for non SNO cluster for Baremetal and Vsphere platforms
+		// SNO cluster is determined by number of ControlPlaneAgents which should be 1
+		if int(*installConfig.Config.ControlPlane.Replicas) > 1 && apiVIP != "" && ingressVIP != "" {
+			agentClusterInstall.Spec.APIVIP = apiVIP
+			agentClusterInstall.Spec.IngressVIP = ingressVIP
+		}
+
+		a.Config = agentClusterInstall
+
+		agentClusterInstallData, err := yaml.Marshal(agentClusterInstall)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal agent installer AgentClusterInstall")
+		}
+
+		a.File = &asset.File{
+			Filename: agentClusterInstallFilename,
+			Data:     agentClusterInstallData,
+		}
+	}
 	return a.finish()
 }
 

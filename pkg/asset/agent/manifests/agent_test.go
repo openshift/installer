@@ -82,7 +82,7 @@ func TestAgentManifests_Generate(t *testing.T) {
 				&ClusterDeployment{},
 				&ClusterImageSet{},
 			},
-			ExpectedError: "invalid agent configuration: Spec.NMStateConfigLabelSelector.MatchLabels: Required value: infraEnv and fake-nmState.NMStateConfig labels do not match",
+			ExpectedError: "invalid agent configuration: Spec.NMStateConfigLabelSelector.MatchLabels: Required value: infraEnv and fake-nmState.NMStateConfig labels do not match. Expected: map[missing-label:missing-label] Found: map[]",
 		},
 	}
 	for _, tt := range tests {

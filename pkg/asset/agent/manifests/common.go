@@ -1,62 +1,53 @@
 package manifests
 
-// import (
-// 	"github.com/openshift/installer/pkg/asset/agent"
-// 	"github.com/openshift/installer/pkg/asset/installconfig"
-// 	"github.com/openshift/installer/pkg/types"
-// 	corev1 "k8s.io/api/core/v1"
-// 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-// 	"k8s.io/utils/pointer"
-// )
+import (
+	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/version"
+)
 
-// // GetValidAgentPullSecret returns a valid agent pull secret
-// func GetValidAgentPullSecret() *AgentPullSecret {
-// 	return &AgentPullSecret{
-// 		Config: &corev1.Secret{
-// 			TypeMeta: metav1.TypeMeta{
-// 				Kind:       "Secret",
-// 				APIVersion: "v1",
-// 			},
-// 			ObjectMeta: metav1.ObjectMeta{
-// 				Name:      "pull-secret",
-// 				Namespace: "cluster-0",
-// 			},
-// 			StringData: map[string]string{
-// 				".dockerconfigjson": "c2VjcmV0LWFnZW50",
-// 			},
-// 		},
-// 	}
-// }
+func getAgentClusterInstallName(ic *agent.OptionalInstallConfig) string {
+	return ic.Config.ObjectMeta.Name
+}
 
-// // GetValidOptionalInstallConfig returns a valid optional install config
-// func GetValidOptionalInstallConfig() *agent.OptionalInstallConfig {
-// 	return &agent.OptionalInstallConfig{
-// 		InstallConfig: installconfig.InstallConfig{
-// 			Config: &types.InstallConfig{
-// 				ObjectMeta: metav1.ObjectMeta{
-// 					Name:      "ocp-edge-cluster-0",
-// 					Namespace: "cluster-0",
-// 				},
-// 				BaseDomain: "testing.com",
-// 				PullSecret: "secret-agent",
-// 				SSHKey:     "ssh-key",
-// 				ControlPlane: &types.MachinePool{
-// 					Name:     "master",
-// 					Replicas: pointer.Int64Ptr(3),
-// 					Platform: types.MachinePoolPlatform{},
-// 				},
-// 				Compute: []types.MachinePool{
-// 					{
-// 						Name:     "worker-machine-pool-1",
-// 						Replicas: pointer.Int64Ptr(2),
-// 					},
-// 					{
-// 						Name:     "worker-machine-pool-2",
-// 						Replicas: pointer.Int64Ptr(3),
-// 					},
-// 				},
-// 			},
-// 		},
-// 		Supplied: true,
-// 	}
-// }
+func getClusterDeploymentName(ic *agent.OptionalInstallConfig) string {
+	return ic.Config.ObjectMeta.Name
+}
+
+func getInfraEnvName(ic *agent.OptionalInstallConfig) string {
+	return ic.Config.ObjectMeta.Name
+}
+
+func getPullSecretName(ic *agent.OptionalInstallConfig) string {
+	return ic.Config.ObjectMeta.Name + "-pull-secret"
+}
+
+func getObjectMetaNamespace(ic *agent.OptionalInstallConfig) string {
+	return ic.Config.Namespace
+}
+
+func getNMStateConfigLabels(ic *agent.OptionalInstallConfig) map[string]string {
+	return map[string]string{
+		"infraenvs.agent-install.openshift.io": getInfraEnvName(ic),
+	}
+}
+
+func getClusterImageSetReferenceName() string {
+	versionString, _ := version.Version()
+	return "openshift-" + versionString
+}
+
+// getVIPs returns a string representation of the platform's API VIP and Ingress VIP.
+// It returns an empty string if the platform does not configure a VIP
+func getVIPs(p *types.Platform) (string, string) {
+	switch {
+	case p == nil:
+		return "", ""
+	case p.BareMetal != nil:
+		return p.BareMetal.APIVIP, p.BareMetal.IngressVIP
+	case p.VSphere != nil:
+		return p.VSphere.APIVIP, p.VSphere.IngressVIP
+	default:
+		return "", ""
+	}
+}

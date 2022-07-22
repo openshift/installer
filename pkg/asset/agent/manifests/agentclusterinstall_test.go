@@ -2,17 +2,20 @@ package manifests
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -25,54 +28,48 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		expectedConfig *hiveext.AgentClusterInstall
 	}{
 		{
-			name:          "missing-config",
+			name: "missing install config",
+			dependencies: []asset.Asset{
+				&agent.OptionalInstallConfig{},
+			},
 			expectedError: "missing configuration or manifest file",
 		},
-		// {
-		// 	name: "default",
-		// 	dependencies: []asset.Asset{
-		// 		&agent.OptionalInstallConfig{
-		// 			Config: &types.InstallConfig{
-		// 				ObjectMeta: v1.ObjectMeta{
-		// 					Name:      "ocp-edge-cluster-0",
-		// 					Namespace: "cluster-0",
-		// 				},
-		// 				SSHKey: "ssh-key",
-		// 				ControlPlane: &types.MachinePool{
-		// 					Name:     "master",
-		// 					Replicas: pointer.Int64Ptr(3),
-		// 					Platform: types.MachinePoolPlatform{},
-		// 				},
-		// 				Compute: []types.MachinePool{
-		// 					{
-		// 						Name:     "worker-machine-pool-1",
-		// 						Replicas: pointer.Int64Ptr(2),
-		// 					},
-		// 					{
-		// 						Name:     "worker-machine-pool-2",
-		// 						Replicas: pointer.Int64Ptr(3),
-		// 					},
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	expectedConfig: &hiveext.AgentClusterInstall{
-		// 		ObjectMeta: v1.ObjectMeta{
-		// 			Name:      "agent-cluster-install",
-		// 			Namespace: "cluster-0",
-		// 		},
-		// 		Spec: hiveext.AgentClusterInstallSpec{
-		// 			ClusterDeploymentRef: corev1.LocalObjectReference{
-		// 				Name: "ocp-edge-cluster-0",
-		// 			},
-		// 			ProvisionRequirements: hiveext.ProvisionRequirements{
-		// 				ControlPlaneAgents: 3,
-		// 				WorkerAgents:       5,
-		// 			},
-		// 			SSHPublicKey: "ssh-key",
-		// 		},
-		// 	},
-		// },
+		{
+			name: "valid configuration",
+			dependencies: []asset.Asset{
+				getValidOptionalInstallConfig(),
+			},
+			expectedConfig: &hiveext.AgentClusterInstall{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      getAgentClusterInstallName(getValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+				},
+				Spec: hiveext.AgentClusterInstallSpec{
+					ImageSetRef: &hivev1.ClusterImageSetReference{
+						Name: getClusterImageSetReferenceName(),
+					},
+					ClusterDeploymentRef: corev1.LocalObjectReference{
+						Name: getClusterDeploymentName(getValidOptionalInstallConfig()),
+					},
+					Networking: hiveext.Networking{
+						ClusterNetwork: []hiveext.ClusterNetworkEntry{
+							{
+								CIDR:       "192.168.111.0/24",
+								HostPrefix: 23,
+							},
+						},
+						ServiceNetwork: []string{"172.30.0.0/16"},
+					},
+					SSHPublicKey: strings.Trim(TestSSHKey, "|\n\t"),
+					ProvisionRequirements: hiveext.ProvisionRequirements{
+						ControlPlaneAgents: 3,
+						WorkerAgents:       5,
+					},
+					APIVIP:     "192.168.122.10",
+					IngressVIP: "192.168.122.11",
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -189,7 +186,7 @@ spec:
     ssh-rsa AAAAmyKey`,
 			expectedFound: true,
 			expectedConfig: &hiveext.AgentClusterInstall{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-agent-cluster-install",
 					Namespace: "cluster0",
 				},

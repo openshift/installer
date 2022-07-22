@@ -8,16 +8,16 @@ import (
 	"github.com/golang/mock/gomock"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 func TestClusterImageSet_Generate(t *testing.T) {
-
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -25,26 +25,39 @@ func TestClusterImageSet_Generate(t *testing.T) {
 		expectedConfig *hivev1.ClusterImageSet
 	}{
 		{
-			name:          "missing-config",
+			name: "missing install config",
+			dependencies: []asset.Asset{
+				&agent.OptionalInstallConfig{},
+				&releaseimage.Image{},
+			},
 			expectedError: "missing configuration or manifest file",
 		},
-		// {
-		// 	name: "default",
-		// 	dependencies: []asset.Asset{
-		// 		&releaseimage.Image{
-		// 			PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.nightly-2022-06-04-014713",
-		// 		},
-		// 	},
-		// 	expectedConfig: &hivev1.ClusterImageSet{
-		// 		ObjectMeta: v1.ObjectMeta{
-		// 			Name:      "openshift-was not built correctly",
-		// 			Namespace: "",
-		// 		},
-		// 		Spec: hivev1.ClusterImageSetSpec{
-		// 			ReleaseImage: "registry.ci.openshift.org/ocp/release:4.11.0-0.nightly-2022-06-04-014713",
-		// 		},
-		// 	},
-		// },
+		{
+			name: "invalid ClusterImageSet configuration",
+			dependencies: []asset.Asset{
+				getValidOptionalInstallConfig(),
+				&releaseimage.Image{},
+			},
+			expectedError: "invalid ClusterImageSet configuration: Spec.ReleaseImage: Forbidden: value must be equal to " + TestReleaseImage,
+		},
+		{
+			name: "valid configuration",
+			dependencies: []asset.Asset{
+				getValidOptionalInstallConfig(),
+				&releaseimage.Image{
+					PullSpec: TestReleaseImage,
+				},
+			},
+			expectedConfig: &hivev1.ClusterImageSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "openshift-was not built correctly",
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+				},
+				Spec: hivev1.ClusterImageSetSpec{
+					ReleaseImage: TestReleaseImage,
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -98,7 +111,7 @@ spec:
   releaseImage: ` + currentRelease,
 			expectedFound: true,
 			expectedConfig: &hivev1.ClusterImageSet{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: "openshift-v4.10.0",
 				},
 				Spec: hivev1.ClusterImageSetSpec{

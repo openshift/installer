@@ -3,16 +3,18 @@ package manifests
 import (
 	"errors"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/mock"
 )
 
@@ -25,41 +27,37 @@ func TestInfraEnv_Generate(t *testing.T) {
 		expectedConfig *aiv1beta1.InfraEnv
 	}{
 		{
-			name:          "missing-config",
+			name: "missing-config",
+			dependencies: []asset.Asset{
+				&agent.OptionalInstallConfig{},
+			},
 			expectedError: "missing configuration or manifest file",
 		},
-		// {
-		// 	name: "default",
-		// 	dependencies: []asset.Asset{
-		// 		&agent.OptionalInstallConfig{
-		// 			Config: &types.InstallConfig{
-		// 				ObjectMeta: v1.ObjectMeta{
-		// 					Name:      "ocp-edge-cluster-0",
-		// 					Namespace: "cluster-0",
-		// 				},
-		// 				PullSecret: "secret-agent",
-		// 				SSHKey:     "ssh-key",
-		// 			},
-		// 		},
-		// 		&AgentPullSecret{},
-		// 	},
-		// 	expectedConfig: &aiv1beta1.InfraEnv{
-		// 		ObjectMeta: v1.ObjectMeta{
-		// 			Name:      "infraEnv",
-		// 			Namespace: "cluster-0",
-		// 		},
-		// 		Spec: aiv1beta1.InfraEnvSpec{
-		// 			ClusterRef: &aiv1beta1.ClusterReference{
-		// 				Name:      "ocp-edge-cluster-0",
-		// 				Namespace: "cluster-0",
-		// 			},
-		// 			SSHAuthorizedKey: "ssh-key",
-		// 			PullSecretRef: &corev1.LocalObjectReference{
-		// 				Name: "pull-secret",
-		// 			},
-		// 		},
-		// 	},
-		// },
+		{
+			name: "valid configuration",
+			dependencies: []asset.Asset{
+				getValidOptionalInstallConfig(),
+			},
+			expectedConfig: &aiv1beta1.InfraEnv{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      getInfraEnvName(getValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+				},
+				Spec: aiv1beta1.InfraEnvSpec{
+					ClusterRef: &aiv1beta1.ClusterReference{
+						Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
+						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					},
+					SSHAuthorizedKey: strings.Trim(TestSSHKey, "|\n\t"),
+					PullSecretRef: &corev1.LocalObjectReference{
+						Name: getPullSecretName(getValidOptionalInstallConfig()),
+					},
+					NMStateConfigLabelSelector: metav1.LabelSelector{
+						MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig()),
+					},
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -118,7 +116,7 @@ spec:
     ssh-rsa AAAAmyKey`,
 			expectedFound: true,
 			expectedConfig: &aiv1beta1.InfraEnv{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "infraEnv",
 					Namespace: "cluster0",
 				},
@@ -127,7 +125,7 @@ spec:
 						Name:      "ocp-edge-cluster-0",
 						Namespace: "cluster0",
 					},
-					NMStateConfigLabelSelector: v1.LabelSelector{
+					NMStateConfigLabelSelector: metav1.LabelSelector{
 						MatchLabels: map[string]string{
 							"cluster0-nmstate-label-name": "cluster0-nmstate-label-value",
 						},
@@ -162,23 +160,6 @@ spec:
 		spec:
 		  wrongField: wrongValue`,
 			expectedError: "failed to unmarshal cluster-manifests/infraenv.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
-		},
-		{
-			name: "empty-NMStateLabelSelector",
-			data: `
-metadata:
-  name: infraEnv
-  namespace: cluster0
-spec:
-  clusterRef:
-    name: ocp-edge-cluster-0
-    namespace: cluster0
-  nmStateConfigLabelSelector: 
-  pullSecretRef:
-    name: pull-secret
-  sshAuthorizedKey: |
-    ssh-rsa AAAAmyKey`,
-			expectedError: "invalid InfraEnv configuration: Spec.NMStateConfigLabelSelector.MatchLabels: Required value: at least one label must be set",
 		},
 	}
 	for _, tc := range cases {

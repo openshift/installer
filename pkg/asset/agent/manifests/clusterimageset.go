@@ -9,7 +9,9 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
+	"github.com/openshift/installer/pkg/version"
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 )
@@ -35,7 +37,7 @@ func (*ClusterImageSet) Name() string {
 // the asset.
 func (*ClusterImageSet) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		// &releaseimage.Image{},
+		&releaseimage.Image{},
 		&agent.OptionalInstallConfig{},
 	}
 }
@@ -43,35 +45,37 @@ func (*ClusterImageSet) Dependencies() []asset.Asset {
 // Generate generates the ClusterImageSet manifest.
 func (a *ClusterImageSet) Generate(dependencies asset.Parents) error {
 
-	// releaseImage := &releaseimage.Image{}
-	// installConfig := &agent.OptionalInstallConfig{}
-	// dependencies.Get(releaseImage, installConfig)
+	releaseImage := &releaseimage.Image{}
+	installConfig := &agent.OptionalInstallConfig{}
+	dependencies.Get(releaseImage, installConfig)
 
-	// currentVersion, err := version.Version()
-	// if err != nil {
-	// 	return err
-	// }
+	currentVersion, err := version.Version()
+	if err != nil {
+		return err
+	}
 
-	// clusterImageSet := &hivev1.ClusterImageSet{
-	// 	ObjectMeta: v1.ObjectMeta{
-	// 		Name:      fmt.Sprintf("openshift-%s", currentVersion),
-	// 		Namespace: installConfig.Config.Namespace,
-	// 	},
-	// 	Spec: hivev1.ClusterImageSetSpec{
-	// 		ReleaseImage: releaseImage.PullSpec,
-	// 	},
-	// }
-	// a.Config = clusterImageSet
+	if installConfig.Config != nil {
+		clusterImageSet := &hivev1.ClusterImageSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("openshift-%s", currentVersion),
+				Namespace: getObjectMetaNamespace(installConfig),
+			},
+			Spec: hivev1.ClusterImageSetSpec{
+				ReleaseImage: releaseImage.PullSpec,
+			},
+		}
+		a.Config = clusterImageSet
 
-	// configData, err := yaml.Marshal(clusterImageSet)
-	// if err != nil {
-	// 	return errors.Wrap(err, "failed to marshal agent cluster image set")
-	// }
+		configData, err := yaml.Marshal(clusterImageSet)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal agent cluster image set")
+		}
 
-	// a.File = &asset.File{
-	// 	Filename: clusterImageSetFilename,
-	// 	Data:     configData,
-	// }
+		a.File = &asset.File{
+			Filename: clusterImageSetFilename,
+			Data:     configData,
+		}
+	}
 
 	return a.finish()
 }
