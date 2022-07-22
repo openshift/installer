@@ -83,8 +83,7 @@ resource "aws_eip" "nat_eip" {
 }
 
 resource "aws_nat_gateway" "nat_gw" {
-  #count = var.public_subnets == null ? length(var.availability_zones) : 0
-  count = 0
+  count = var.public_subnets == null ? length(var.availability_zones) : 0
 
   allocation_id = aws_eip.nat_eip[count.index].id
   subnet_id     = aws_subnet.public_subnet[count.index].id
