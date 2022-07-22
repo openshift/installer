@@ -30,6 +30,12 @@ func TestGetIcspContents(t *testing.T) {
 			expectedConfig: "apiVersion: operator.openshift.io/v1alpha1\nkind: ImageContentSourcePolicy\nmetadata:\n  creationTimestamp: null\n  name: image-policy\nspec:\n  repositoryDigestMirrors:\n  - mirrors:\n    - virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\n    source: registry.ci.openshift.org/ocp/release\n  - mirrors:\n    - virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\n    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev\n",
 			expectedError:  "",
 		},
+		{
+			name:           "empty-config",
+			mirrorConfig:   []mirror.RegistriesConfig{},
+			expectedConfig: "apiVersion: operator.openshift.io/v1alpha1\nkind: ImageContentSourcePolicy\nmetadata:\n  creationTimestamp: null\n  name: image-policy\nspec:\n  repositoryDigestMirrors: []\n",
+			expectedError:  "",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
