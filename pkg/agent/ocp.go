@@ -66,52 +66,21 @@ func NewClusterOpenShiftAPIClient(ctx context.Context, assetDir string) (*Cluste
 // AreClusterOperatorsInitialized Waits for all Openshift cluster operators to initialize
 func (ocp *ClusterOpenShiftAPIClient) AreClusterOperatorsInitialized() (bool, error) {
 
+	failing := configv1.ClusterStatusConditionType("Failing")
+
 	operators, err := ocp.ConfigClient.ConfigV1().ClusterOperators().List(ocp.ctx, metav1.ListOptions{})
 	if err != nil {
 		return false, errors.Wrap(err, "Listing ClusterOperator objects")
 	}
 
-	for _, operator := range operators.Items {
-		for _, condition := range operator.Status.Conditions {
-			if condition.Type == configv1.OperatorUpgradeable {
-				// continue
-				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
-			} else if condition.Type == configv1.OperatorAvailable && condition.Status == configv1.ConditionTrue {
-				// continue
-				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
-			} else if (condition.Type == configv1.OperatorDegraded || condition.Type == configv1.OperatorProgressing) && condition.Status == configv1.ConditionFalse {
-				// continue
-				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
-			}
-			if condition.Type == configv1.OperatorDegraded {
-				logrus.Errorf("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
-			} else {
-				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
-			}
-		}
-	}
+	operator := operators.Items[0]
 
-	failing := configv1.ClusterStatusConditionType("Failing")
-	var lastError string
-
-	cv, err := ocp.ConfigClient.ConfigV1().ClusterVersions().Get(ocp.ctx, "", metav1.GetOptions{})
-	if err != nil {
-		logrus.Debug(errors.Wrap(err, "Unable to retrieve cluster version object"))
-		return false, nil
-	}
-
-	if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) &&
-		cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, failing) &&
-		cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, configv1.OperatorProgressing) {
-		logrus.Info("Cluster operators initialized")
+	if cov1helpers.IsStatusConditionTrue(operator.Status.Conditions, configv1.OperatorAvailable) &&
+		cov1helpers.IsStatusConditionFalse(operator.Status.Conditions, failing) &&
+		cov1helpers.IsStatusConditionFalse(operator.Status.Conditions, configv1.OperatorProgressing) {
 		return true, nil
 	}
-	if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, failing) {
-		lastError = cov1helpers.FindStatusCondition(cv.Status.Conditions, failing).Message
-	} else if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorProgressing) {
-		lastError = cov1helpers.FindStatusCondition(cv.Status.Conditions, configv1.OperatorProgressing).Message
-	}
-	logrus.Debugf("Still waiting for the cluster operators to initialize: %s", lastError)
+
 	return false, nil
 }
 

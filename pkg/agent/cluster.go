@@ -255,16 +255,16 @@ func (czero *Cluster) IsInstallComplete() (bool, error) {
 		return true, nil
 	}
 
-	if !czero.installHistory.ClusterOperatorsInitialized {
-		initialized, err := czero.API.OpenShift.AreClusterOperatorsInitialized()
-		if initialized && err == nil {
-			czero.installHistory.ClusterOperatorsInitialized = true
-		}
-		if err != nil {
-			return false, errors.Wrap(err, "Error while initializing cluster operators")
-		}
+	// if !czero.installHistory.ClusterOperatorsInitialized {
+	// 	initialized, err := czero.API.OpenShift.AreClusterOperatorsInitialized()
+	// 	if initialized && err == nil {
+	// 		czero.installHistory.ClusterOperatorsInitialized = true
+	// 	}
+	// 	if err != nil {
+	// 		return false, errors.Wrap(err, "Error while initializing cluster operators")
+	// 	}
 
-	}
+	// }
 
 	if !czero.installHistory.ClusterConsoleRouteCreated {
 		route, err := czero.API.OpenShift.IsConsoleRouteAvaiable()
@@ -288,8 +288,7 @@ func (czero *Cluster) IsInstallComplete() (bool, error) {
 		}
 	}
 
-	if czero.installHistory.ClusterOperatorsInitialized &&
-		czero.installHistory.ClusterConsoleRouteCreated &&
+	if czero.installHistory.ClusterConsoleRouteCreated &&
 		czero.installHistory.ClusterConsoleRouteURLCreated {
 		czero.installHistory.ClusterInstallComplete = true
 		return true, nil
