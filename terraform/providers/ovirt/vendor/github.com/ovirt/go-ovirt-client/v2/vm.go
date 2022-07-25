@@ -532,6 +532,9 @@ type VM interface {
 
 	// SerialConsole returns true if the VM has a serial console.
 	SerialConsole() bool
+
+	// SoundcardEnabled returns true if a soundcard for the VM is enabled.
+	SoundcardEnabled() bool
 }
 
 // VMSearchParameters declares the parameters that can be passed to a VM search. Each parameter
@@ -694,6 +697,9 @@ type OptionalVMParameters interface {
 
 	// SerialConsole returns if a serial console should be created or not.
 	SerialConsole() *bool
+
+	// SoundcardEnabled returns if a soundcard should be created or not.
+	SoundcardEnabled() *bool
 }
 
 // BuildableVMParameters is a variant of OptionalVMParameters that can be changed using the supplied
@@ -766,6 +772,9 @@ type BuildableVMParameters interface {
 
 	// WithSerialConsole adds or removes a serial console to the VM.
 	WithSerialConsole(serialConsole bool) BuildableVMParameters
+
+	// WithSoundcardEnabled enables or disables a soundcard for the VM.
+	WithSoundcardEnabled(soundcardEnabled bool) BuildableVMParameters
 }
 
 // VMCPUParams contain the CPU parameters for a VM.
@@ -1538,7 +1547,8 @@ type vmParams struct {
 	os    VMOSParameters
 	osSet bool
 
-	serialConsole *bool
+	serialConsole    *bool
+	soundcardEnabled *bool
 }
 
 func (v *vmParams) SerialConsole() *bool {
@@ -1547,6 +1557,15 @@ func (v *vmParams) SerialConsole() *bool {
 
 func (v *vmParams) WithSerialConsole(serialConsole bool) BuildableVMParameters {
 	v.serialConsole = &serialConsole
+	return v
+}
+
+func (v *vmParams) SoundcardEnabled() *bool {
+	return v.soundcardEnabled
+}
+
+func (v *vmParams) WithSoundcardEnabled(soundcardEnabled bool) BuildableVMParameters {
+	v.soundcardEnabled = &soundcardEnabled
 	return v
 }
 
@@ -1808,24 +1827,29 @@ func (v vmParams) Comment() string {
 type vm struct {
 	client Client
 
-	id              VMID
-	name            string
-	comment         string
-	clusterID       ClusterID
-	templateID      TemplateID
-	status          VMStatus
-	cpu             *vmCPU
-	memory          int64
-	tagIDs          []TagID
-	hugePages       *VMHugePages
-	initialization  Initialization
-	hostID          *HostID
-	placementPolicy *vmPlacementPolicy
-	memoryPolicy    *memoryPolicy
-	instanceTypeID  *InstanceTypeID
-	vmType          VMType
-	os              *vmOS
-	serialConsole   bool
+	id               VMID
+	name             string
+	comment          string
+	clusterID        ClusterID
+	templateID       TemplateID
+	status           VMStatus
+	cpu              *vmCPU
+	memory           int64
+	tagIDs           []TagID
+	hugePages        *VMHugePages
+	initialization   Initialization
+	hostID           *HostID
+	placementPolicy  *vmPlacementPolicy
+	memoryPolicy     *memoryPolicy
+	instanceTypeID   *InstanceTypeID
+	vmType           VMType
+	os               *vmOS
+	serialConsole    bool
+	soundcardEnabled bool
+}
+
+func (v *vm) SoundcardEnabled() bool {
+	return v.soundcardEnabled
 }
 
 func (v *vm) SerialConsole() bool {
@@ -1951,6 +1975,7 @@ func (v *vm) withName(name string) *vm {
 		v.vmType,
 		v.os,
 		v.serialConsole,
+		v.soundcardEnabled,
 	}
 }
 
@@ -1977,6 +2002,7 @@ func (v *vm) withComment(comment string) *vm {
 		v.vmType,
 		v.os,
 		v.serialConsole,
+		v.soundcardEnabled,
 	}
 }
 
@@ -2102,6 +2128,7 @@ func convertSDKVM(sdkObject *ovirtsdk.Vm, client Client, logger Logger, action s
 		vmInstanceTypeIDConverter,
 		vmTypeConverter,
 		vmOSConverter,
+		vmSoundcardEnabledConverter,
 	}
 	for _, converter := range vmConverters {
 		if err := converter(sdkObject, vmObject); err != nil {
@@ -2139,6 +2166,15 @@ func vmSerialConsoleConverter(object *ovirtsdk.Vm, v *vm, logger Logger, action 
 		return newFieldNotFound("serial console", "enabled")
 	}
 	v.serialConsole = enabled
+	return nil
+}
+
+func vmSoundcardEnabledConverter(object *ovirtsdk.Vm, v *vm) error {
+	soundcardEnabled, ok := object.SoundcardEnabled()
+	if !ok {
+		return newFieldNotFound("vm", "soundcard enabled")
+	}
+	v.soundcardEnabled = soundcardEnabled
 	return nil
 }
 

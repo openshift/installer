@@ -48,6 +48,7 @@ resource "ovirt_vm" "master" {
 
   huge_pages        = var.ovirt_master_hugepages > 0 ? var.ovirt_master_hugepages : null
   serial_console    = var.ovirt_master_vm_type == "high_performance" ? true : null
+  soundcard_enabled = var.ovirt_master_vm_type == "high_performance" ? false : null
   memory_ballooning = var.ovirt_master_vm_type == "high_performance" ? false : null
   cpu_mode          = var.ovirt_master_vm_type == "high_performance" ? "host_passthrough" : null
 

@@ -158,6 +158,7 @@ func createSDKVM(
 		vmTypeCreator,
 		vmOSCreator,
 		vmSerialConsoleCreator,
+		vmSoundcardEnabledCreator,
 	}
 
 	for _, part := range parts {
@@ -202,6 +203,14 @@ func vmSerialConsoleCreator(params OptionalVMParameters, builder *ovirtsdk.VmBui
 		return
 	}
 	builder.ConsoleBuilder(ovirtsdk.NewConsoleBuilder().Enabled(*serial))
+}
+
+func vmSoundcardEnabledCreator(params OptionalVMParameters, builder *ovirtsdk.VmBuilder) {
+	soundcardEnabled := params.SoundcardEnabled()
+	if soundcardEnabled == nil {
+		return
+	}
+	builder.SoundcardEnabled(*soundcardEnabled)
 }
 
 func vmOSCreator(params OptionalVMParameters, builder *ovirtsdk.VmBuilder) {
@@ -397,6 +406,11 @@ func (m *mockClient) createVM(
 		console = *serialConsole
 	}
 
+	soundcardEnabled := true
+	if isEnabled := params.SoundcardEnabled(); isEnabled != nil {
+		soundcardEnabled = *isEnabled
+	}
+
 	vm := &vm{
 		m,
 		VMID(id),
@@ -417,6 +431,7 @@ func (m *mockClient) createVM(
 		vmType,
 		m.createVMOS(params),
 		console,
+		soundcardEnabled,
 	}
 	m.vms[VMID(id)] = vm
 	return vm

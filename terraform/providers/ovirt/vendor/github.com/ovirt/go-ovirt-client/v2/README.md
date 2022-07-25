@@ -7,7 +7,7 @@ This library provides an easy-to-use overlay for the automatically generated [Go
 To use this library you will have to include it as a Go module dependency:
 
 ```
-go get github.com/ovirt/go-ovirt-client
+go get github.com/ovirt/go-ovirt-client github.com/ovirt/go-ovirt-client-log/v3
 ```
 
 You can then create a client instance like this:
@@ -18,13 +18,13 @@ package main
 import (
 	"crypto/x509"
 
-	"github.com/ovirt/go-client-log"
-	"github.com/ovirt/go-ovirt-client"
+	ovirtclient "github.com/ovirt/go-ovirt-client/v2"
+	ovirtclientlog "github.com/ovirt/go-ovirt-client-log/v3"
 )
 
 func main() {
 	// Create a logger that logs to the standard Go log here:
-	logger := ovirtclientlog.NewGoLogLogger(nil)
+	logger := ovirtclientlog.NewGoLogger()
 
 	// Create an ovirtclient.TLSProvider implementation. This allows for simple
 	// TLS configuration.
@@ -122,7 +122,7 @@ import (
 	"os"
 	"testing"
 
-	ovirtclient "github.com/ovirt/go-ovirt-client"
+	ovirtclient "github.com/ovirt/go-ovirt-client/v2"
 	ovirtclientlog "github.com/ovirt/go-ovirt-client-log/v3"
 )
 
