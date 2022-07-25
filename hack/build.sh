@@ -5,13 +5,40 @@ set -ex
 # shellcheck disable=SC2068
 version() { IFS="."; printf "%03d%03d%03d\\n" $@; unset IFS;}
 
-minimum_go_version=1.16
+# Copy the terraform binary and providers to the mirror to be embedded in the installer binary.
+copy_terraform_to_mirror() {
+  TARGET_OS_ARCH=$(go env GOOS)_$(go env GOARCH)
+
+  # Clean the mirror, but preserve the README file.
+  rm -rf "${PWD}"/pkg/terraform/providers/mirror/*/
+
+  # Copy local terraform providers into data
+  find "${PWD}/terraform/bin/${TARGET_OS_ARCH}/" -maxdepth 1 -name "terraform-provider-*.zip" -exec bash -c '
+      providerName="$(basename "$1" | cut -d '-' -f 3 | cut -d '.' -f 1)"
+      targetOSArch="$2"
+      dstDir="${PWD}/pkg/terraform/providers/mirror/openshift/local/$providerName"
+      mkdir -p "$dstDir"
+      echo "Copying $providerName provider to mirror"
+      cp "$1" "$dstDir/terraform-provider-${providerName}_1.0.0_${targetOSArch}.zip"
+    ' shell {} "${TARGET_OS_ARCH}" \;
+
+  mkdir -p "${PWD}/pkg/terraform/providers/mirror/terraform/"
+  cp "${PWD}/terraform/bin/${TARGET_OS_ARCH}/terraform" "${PWD}/pkg/terraform/providers/mirror/terraform/"
+}
+
+minimum_go_version=1.17
 current_go_version=$(go version | cut -d " " -f 3)
 
 if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version")" ]; then
      echo "Go version should be greater or equal to $minimum_go_version"
      exit 1
 fi
+
+# build terraform binaries before setting environment variables since it messes up make
+make -C terraform all
+
+# Copy terraform parts to embedded mirror.
+copy_terraform_to_mirror
 
 MODE="${MODE:-release}"
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
@@ -29,7 +56,8 @@ release)
 	TAGS="${TAGS} release"
 	if test "${SKIP_GENERATION}" != y
 	then
-		go generate ./data
+		# this step has to be run natively, even when cross-compiling
+		GOOS='' GOARCH='' go generate ./data
 	fi
 	;;
 dev)
@@ -41,12 +69,6 @@ esac
 
 if (echo "${TAGS}" | grep -q 'libvirt')
 then
-	export CGO_ENABLED=1
-fi
-if test "$(go env GOARCH)" = "arm64"
-then
-	# https://github.com/golang/go/issues/40492
-	LDFLAGS="${LDFLAGS} -linkmode external"
 	export CGO_ENABLED=1
 fi
 

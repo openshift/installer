@@ -1,10 +1,11 @@
 package baremetal
 
 import (
+	"testing"
+
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestTemplatingIPv4(t *testing.T) {

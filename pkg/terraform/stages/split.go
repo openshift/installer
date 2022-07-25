@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -17,10 +19,16 @@ import (
 type StageOption func(*SplitStage)
 
 // NewStage creates a new split stage.
-func NewStage(platform, name string, opts ...StageOption) SplitStage {
+// The default behavior is the following. The behavior can be changed by providing StageOptions.
+// - The resources of the stage will not be deleted as part of destroying the bootstrap.
+// - The IP addresses for the bootstrap and control plane VMs will be output from the stage as bootstrap_ip and
+//   control_plane_ips, respectively. Only one stage for the platform should output a particular variable. This will
+//   likely be the same stage that creates the VM.
+func NewStage(platform, name string, providers []providers.Provider, opts ...StageOption) SplitStage {
 	s := SplitStage{
-		platform: platform,
-		name:     name,
+		platform:  platform,
+		name:      name,
+		providers: providers,
 	}
 	for _, opt := range opts {
 		opt(&s)
@@ -28,22 +36,19 @@ func NewStage(platform, name string, opts ...StageOption) SplitStage {
 	return s
 }
 
-// WithNormalDestroy returns an option for specifying that a split stage should use the normal destroy process.
-func WithNormalDestroy() StageOption {
-	return WithCustomDestroy(normalDestroy)
+// WithNormalBootstrapDestroy returns an option for specifying that a split stage should use the normal bootstrap
+// destroy process. The normal process is to fully delete all of the resources created in the stage.
+func WithNormalBootstrapDestroy() StageOption {
+	return WithCustomBootstrapDestroy(normalDestroy)
 }
 
-// WithCustomDestroy returns an option for specifying that a split stage should use a custom destroy process.
-func WithCustomDestroy(destroy DestroyFunc) StageOption {
+// WithCustomBootstrapDestroy returns an option for specifying that a split stage should use a custom bootstrap
+// destroy process.
+func WithCustomBootstrapDestroy(destroy DestroyFunc) StageOption {
 	return func(s *SplitStage) {
 		s.destroyWithBootstrap = true
 		s.destroy = destroy
 	}
-}
-
-// WithNormalExtractHostAddresses returns an option for specifying that a split stage should use the normal extract host addresses process.
-func WithNormalExtractHostAddresses() StageOption {
-	return WithCustomExtractHostAddresses(normalExtractHostAddresses)
 }
 
 // WithCustomExtractHostAddresses returns an option for specifying that a split stage should use a custom extract host addresses process.
@@ -57,13 +62,14 @@ func WithCustomExtractHostAddresses(extractHostAddresses ExtractFunc) StageOptio
 type SplitStage struct {
 	platform             string
 	name                 string
+	providers            []providers.Provider
 	destroyWithBootstrap bool
 	destroy              DestroyFunc
 	extractHostAddresses ExtractFunc
 }
 
 // DestroyFunc is a function for destroying the stage.
-type DestroyFunc func(s SplitStage, directory string, extraArgs []string) error
+type DestroyFunc func(s SplitStage, directory string, terraformDir string, varFiles []string) error
 
 // ExtractFunc is a function for extracting host addresses.
 type ExtractFunc func(s SplitStage, directory string, ic *types.InstallConfig) (string, int, []string, error)
@@ -71,6 +77,11 @@ type ExtractFunc func(s SplitStage, directory string, ic *types.InstallConfig) (
 // Name implements pkg/terraform/Stage.Name
 func (s SplitStage) Name() string {
 	return s.name
+}
+
+// Providers is the list of providers that are used for the stage.
+func (s SplitStage) Providers() []providers.Provider {
+	return s.providers
 }
 
 // StateFilename implements pkg/terraform/Stage.StateFilename
@@ -89,8 +100,8 @@ func (s SplitStage) DestroyWithBootstrap() bool {
 }
 
 // Destroy implements pkg/terraform/Stage.Destroy
-func (s SplitStage) Destroy(directory string, extraArgs []string) error {
-	return s.destroy(s, directory, extraArgs)
+func (s SplitStage) Destroy(directory string, terraformDir string, varFiles []string) error {
+	return s.destroy(s, directory, terraformDir, varFiles)
 }
 
 // ExtractHostAddresses implements pkg/terraform/Stage.ExtractHostAddresses
@@ -101,27 +112,37 @@ func (s SplitStage) ExtractHostAddresses(directory string, ic *types.InstallConf
 	return normalExtractHostAddresses(s, directory, ic)
 }
 
-func normalExtractHostAddresses(s SplitStage, directory string, _ *types.InstallConfig) (string, int, []string, error) {
+// GetTerraformOutputs reads the terraform outputs file for the stage and parses it into a map of outputs.
+func GetTerraformOutputs(s SplitStage, directory string) (map[string]interface{}, error) {
 	outputsFilePath := filepath.Join(directory, s.OutputsFilename())
 	if _, err := os.Stat(outputsFilePath); err != nil {
-		return "", 0, nil, errors.Wrapf(err, "could not find outputs file %q", outputsFilePath)
+		return nil, errors.Wrapf(err, "could not find outputs file %q", outputsFilePath)
 	}
 
 	outputsFile, err := ioutil.ReadFile(outputsFilePath)
 	if err != nil {
-		return "", 0, nil, errors.Wrapf(err, "failed to read outputs file %q", outputsFilePath)
+		return nil, errors.Wrapf(err, "failed to read outputs file %q", outputsFilePath)
 	}
 
 	outputs := map[string]interface{}{}
 	if err := json.Unmarshal(outputsFile, &outputs); err != nil {
-		return "", 0, nil, errors.Wrapf(err, "could not unmarshal outputs file %q", outputsFilePath)
+		return nil, errors.Wrapf(err, "could not unmarshal outputs file %q", outputsFilePath)
+	}
+
+	return outputs, nil
+}
+
+func normalExtractHostAddresses(s SplitStage, directory string, _ *types.InstallConfig) (string, int, []string, error) {
+	outputs, err := GetTerraformOutputs(s, directory)
+	if err != nil {
+		return "", 0, nil, err
 	}
 
 	var bootstrap string
 	if bootstrapRaw, ok := outputs["bootstrap_ip"]; ok {
 		bootstrap, ok = bootstrapRaw.(string)
 		if !ok {
-			return "", 0, nil, errors.Errorf("could not read bootstrap IP from outputs file %q", outputsFilePath)
+			return "", 0, nil, errors.New("could not read bootstrap IP from terraform outputs")
 		}
 	}
 
@@ -129,13 +150,13 @@ func normalExtractHostAddresses(s SplitStage, directory string, _ *types.Install
 	if mastersRaw, ok := outputs["control_plane_ips"]; ok {
 		mastersSlice, ok := mastersRaw.([]interface{})
 		if !ok {
-			return "", 0, nil, errors.Errorf("could not read control plane IPs from outputs file %q", outputsFilePath)
+			return "", 0, nil, errors.New("could not read control plane IPs from terraform outputs")
 		}
 		masters = make([]string, len(mastersSlice))
 		for i, ipRaw := range mastersSlice {
 			ip, ok := ipRaw.(string)
 			if !ok {
-				return "", 0, nil, errors.Errorf("could not read control plane IPs from outputs file %q", outputsFilePath)
+				return "", 0, nil, errors.New("could not read control plane IPs from terraform outputs")
 			}
 			masters[i] = ip
 		}
@@ -144,6 +165,10 @@ func normalExtractHostAddresses(s SplitStage, directory string, _ *types.Install
 	return bootstrap, 0, masters, nil
 }
 
-func normalDestroy(s SplitStage, directory string, extraArgs []string) error {
-	return errors.Wrap(terraform.Destroy(directory, s.platform, s, extraArgs...), "terraform destroy")
+func normalDestroy(s SplitStage, directory string, terraformDir string, varFiles []string) error {
+	opts := make([]tfexec.DestroyOption, len(varFiles))
+	for i, varFile := range varFiles {
+		opts[i] = tfexec.VarFile(varFile)
+	}
+	return errors.Wrap(terraform.Destroy(directory, s.platform, s, terraformDir, opts...), "terraform destroy")
 }

@@ -153,3 +153,18 @@ func (mr *MockFinderMockRecorder) NetworkList(arg0, arg1 interface{}) *gomock.Ca
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NetworkList", reflect.TypeOf((*MockFinder)(nil).NetworkList), arg0, arg1)
 }
+
+// ResourcePool mocks base method
+func (m *MockFinder) ResourcePool(arg0 context.Context, arg1 string) (*object.ResourcePool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResourcePool", arg0, arg1)
+	ret0, _ := ret[0].(*object.ResourcePool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResourcePool indicates an expected call of ResourcePool
+func (mr *MockFinderMockRecorder) ResourcePool(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourcePool", reflect.TypeOf((*MockFinder)(nil).ResourcePool), arg0, arg1)
+}

@@ -1,0 +1,275 @@
+# Terraform-provider-openstack jobs
+- job:
+    name: terraform-provider-openstack-unittest-foo
+    parent: golang-test-main
+    description: |
+      Run terraform-provider-openstack unit test
+    run: .zuul/playbooks/terraform-provider-openstack-unittest/run.yaml
+    nodeset: ubuntu-xenial-ut
+    vars:
+      go_version: '1.14'
+
+## ========== terraform-provider-openstack + openstack jobs ==============
+
+### parent job
+- job:
+    name: terraform-provider-openstack-acceptance-test-foo
+    parent: golang-test-main
+    description: |
+      Run terraform-provider-openstack acceptance test against master OpenStack
+    run: .zuul/playbooks/terraform-provider-openstack-acceptance-test/run.yaml
+    nodeset: ubuntu-focal
+    timeout: 21600
+    vars:
+      go_version: '1.14'
+
+### job that runs with admin creds
+- job:
+    name: terraform-provider-openstack-acceptance-test-admin-foo
+    parent: golang-test-main
+    description: |
+      Run terraform-provider-openstack acceptance test against master OpenStack with admin creds
+    run: .zuul/playbooks/terraform-provider-openstack-acceptance-test-admin/run.yaml
+    nodeset: ubuntu-focal
+    timeout: 21600
+    vars:
+      go_version: '1.14'
+
+### son job against stein branch of OpenStack
+- job:
+    name: terraform-provider-openstack-acceptance-test-stein-foo
+    parent: terraform-provider-openstack-acceptance-test-foo
+    description: |
+      Run terraform-provider-openstack acceptance test against stein branch of OpenStack
+    vars:
+      global_env:
+        OS_BRANCH: stable/stein
+### grandson job pinned v1.19.0 against stein branch of OpenStack
+- job:
+    name: terraform-provider-openstack-v1.19.0-acceptance-test-stein-foo
+    parent: terraform-provider-openstack-acceptance-test-stein-foo
+    description: |
+      Run terraform-provider-openstack of v1.19.0 acceptance test against stein branch of OpenStack
+    override-checkout: v1.19.0
+    tags:
+      - Category:Cloud
+      - Project:terraform-provider-openstack/terraform-provider-openstack
+      - Application:terraform-provider-openstack@v1.19.0
+      - Application:OpenStack@stein
+      - Application:Go@1.12.1
+      - Arch:x86_64
+      - OS:ubuntu-xenial
+      - BuildType:Integration test
+
+### son job against rocky branch of OpenStack
+- job:
+    name: terraform-provider-openstack-acceptance-test-rocky-foo
+    parent: terraform-provider-openstack-acceptance-test-foo
+    description: |
+      Run terraform-provider-openstack acceptance test against rocky branch of OpenStack
+    vars:
+      global_env:
+        OS_BRANCH: stable/rocky
+### grandson job pinned v1.19.0 against rocky branch of OpenStack
+- job:
+    name: terraform-provider-openstack-v1.19.0-acceptance-test-rocky-foo
+    parent: terraform-provider-openstack-acceptance-test-rocky-foo
+    description: |
+      Run terraform-provider-openstack of v1.19.0 acceptance test against rocky branch of OpenStack
+    override-checkout: v1.19.0
+    tags:
+      - Category:Cloud
+      - Project:terraform-provider-openstack/terraform-provider-openstack
+      - Application:terraform-provider-openstack@v1.19.0
+      - Application:OpenStack@rocky
+      - Application:Go@1.12.1
+      - Arch:x86_64
+      - OS:ubuntu-xenial
+      - BuildType:Integration test
+
+### son job against queens branch of OpenStack
+- job:
+    name: terraform-provider-openstack-acceptance-test-queens-foo
+    parent: terraform-provider-openstack-acceptance-test-foo
+    description: |
+      Run terraform-provider-openstack acceptance test against queens branch of OpenStack
+    vars:
+      global_env:
+        OS_BRANCH: stable/queens
+### grandson job pinned v1.19.0 against queens branch of OpenStack
+- job:
+    name: terraform-provider-openstack-v1.19.0-acceptance-test-queens-foo
+    parent: terraform-provider-openstack-acceptance-test-queens-foo
+    description: |
+      Run terraform-provider-openstack of v1.19.0 acceptance test against queens branch of OpenStack
+    override-checkout: v1.19.0
+    tags:
+      - Category:Cloud
+      - Project:terraform-provider-openstack/terraform-provider-openstack
+      - Application:terraform-provider-openstack@v1.19.0
+      - Application:OpenStack@queens
+      - Application:Go@1.12.1
+      - Arch:x86_64
+      - OS:ubuntu-xenial
+      - BuildType:Integration test
+
+### son job against pike branch of OpenStack
+- job:
+    name: terraform-provider-openstack-acceptance-test-pike-foo
+    parent: terraform-provider-openstack-acceptance-test-foo
+    description: |
+      Run terraform-provider-openstack acceptance test against pike branch of OpenStack
+    vars:
+      global_env:
+        OS_BRANCH: stable/pike
+### grandson job pinned v1.19.0 against pike branch of OpenStack
+- job:
+    name: terraform-provider-openstack-v1.19.0-acceptance-test-pike-foo
+    parent: terraform-provider-openstack-acceptance-test-pike-foo
+    description: |
+      Run terraform-provider-openstack of v1.19.0 acceptance test against pike branch of OpenStack
+    override-checkout: v1.19.0
+    tags:
+      - Category:Cloud
+      - Project:terraform-provider-openstack/terraform-provider-openstack
+      - Application:terraform-provider-openstack@v1.19.0
+      - Application:OpenStack@pike
+      - Application:Go@1.12.1
+      - Arch:x86_64
+      - OS:ubuntu-xenial
+      - BuildType:Integration test
+
+### son job against ocata branch of OpenStack
+- job:
+    name: terraform-provider-openstack-acceptance-test-ocata-foo
+    parent: terraform-provider-openstack-acceptance-test-foo
+    description: |
+      Run terraform-provider-openstack acceptance test against ocata branch of OpenStack
+    vars:
+      global_env:
+        OS_BRANCH: stable/ocata
+### grandson job pinned v1.19.0 against ocata branch of OpenStack
+- job:
+    name: terraform-provider-openstack-v1.19.0-acceptance-test-ocata-foo
+    parent: terraform-provider-openstack-acceptance-test-ocata-foo
+    description: |
+      Run terraform-provider-openstack of v1.19.0 acceptance test against ocata branch of OpenStack
+    override-checkout: v1.19.0
+    tags:
+      - Category:Cloud
+      - Project:terraform-provider-openstack/terraform-provider-openstack
+      - Application:terraform-provider-openstack@v1.19.0
+      - Application:OpenStack@ocata
+      - Application:Go@1.12.1
+      - Arch:x86_64
+      - OS:ubuntu-xenial
+      - BuildType:Integration test
+
+- job:
+    name: terraform-provider-openstack-acceptance-test-designate-foo
+    parent: golang-test-main
+    description: |
+      Run terraform-provider-openstack designate acceptance test on master branch
+    run: .zuul/playbooks/terraform-provider-openstack-acceptance-test-designate/run.yaml
+    nodeset: ubuntu-focal
+    vars:
+      go_version: '1.14'
+
+- job:
+    name: terraform-provider-openstack-acceptance-test-trove-foo
+    parent: golang-test-main
+    description: |
+      Run terraform-provider-openstack trove acceptance test on master branch
+    run: .zuul/playbooks/terraform-provider-openstack-acceptance-test-trove/run.yaml
+    nodeset: ubuntu-focal
+    vars:
+      go_version: '1.14'
+
+- job:
+    name: terraform-provider-openstack-acceptance-test-lbaas-foo
+    parent: golang-test-main
+    description: |
+      Run terraform-provider-openstack lbaas acceptance test on master branch
+    run: .zuul/playbooks/terraform-provider-openstack-acceptance-test-lbaas/run.yaml
+    timeout: 25200 # 7h
+    nodeset: ubuntu-focal
+    vars:
+      go_version: '1.14'
+
+- job:
+    name: terraform-provider-openstack-acceptance-test-fwaas-foo
+    parent: golang-test-main
+    description: |
+      Run terraform-provider-openstack fwaas acceptance test on master branch
+    run: .zuul/playbooks/terraform-provider-openstack-acceptance-test-fwaas/run.yaml
+    nodeset: ubuntu-focal
+    vars:
+      go_version: '1.14'
+
+### son job against wallaby branch of OpenStack that enables BlockStorageV2
+- job:
+    name: terraform-provider-openstack-acceptance-test-blockstorageV2-foo
+    parent: terraform-provider-openstack-acceptance-test-foo
+    description: |
+      Run terraform-provider-openstack acceptance test against wallaby branch of OpenStack with BlockStorageV2 enabled
+    # NOTE: BlockStorage v2 APIs are available until stable/wallaby only.
+    override-checkout: stable/wallaby
+    vars:
+      global_env:
+        OS_BRANCH: stable/wallaby
+        OS_BLOCKSTORAGE_V2: 1
+
+### son job against wallaby branch of OpenStack that enables BlockStorageV2 with admin rights
+- job:
+    name: terraform-provider-openstack-acceptance-test-blockstorageV2-admin-foo
+    parent: terraform-provider-openstack-acceptance-test-admin-foo
+    description: |
+      Run terraform-provider-openstack acceptance test against wallaby branch of OpenStack with BlockstorageV2 enabled
+    # NOTE: BlockStorage v2 APIs are available until stable/wallaby only.
+    override-checkout: stable/wallaby
+    vars:
+      global_env:
+        OS_BRANCH: stable/wallaby
+        OS_BLOCKSTORAGE_V2: 1
+
+
+- project:
+    name: terraform-provider-openstack/terraform-provider-openstack
+    check:
+      jobs:
+        - terraform-provider-openstack-unittest-foo
+        - terraform-provider-openstack-acceptance-test-foo
+        - terraform-provider-openstack-acceptance-test-admin-foo
+    recheck-ocata:
+      jobs:
+        - terraform-provider-openstack-acceptance-test-ocata-foo
+    recheck-pike:
+      jobs:
+        - terraform-provider-openstack-acceptance-test-pike-foo
+    recheck-queens:
+      jobs:
+        - terraform-provider-openstack-acceptance-test-queens-foo
+    recheck-rocky:
+      jobs:
+        - terraform-provider-openstack-acceptance-test-rocky-foo
+    recheck-stein:
+      jobs:
+        - terraform-provider-openstack-acceptance-test-stein-foo
+    recheck-trove:
+      jobs:
+        - terraform-provider-openstack-acceptance-test-trove-foo
+    recheck-designate:
+      jobs:
+        - terraform-provider-openstack-acceptance-test-designate-foo
+    recheck-lbaas:
+      jobs:
+        - terraform-provider-openstack-acceptance-test-lbaas-foo
+    recheck-fwaas:
+      jobs:
+        - terraform-provider-openstack-acceptance-test-fwaas-foo
+    recheck-bsv2:
+      jobs:
+        - terraform-provider-openstack-acceptance-test-blockstorageV2-foo
+    recheck-bsv2-admin:
+      jobs:
+        - terraform-provider-openstack-acceptance-test-blockstorageV2-admin-foo

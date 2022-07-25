@@ -11,6 +11,8 @@ RemainAfterExit=yes
 
 Restart=on-failure
 RestartSec=10
+# Used in startironic.sh to indicate a fatal failure
+RestartPreventExitStatus=42
 TimeoutStartSec=600
 
 [Install]

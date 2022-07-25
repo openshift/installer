@@ -21,7 +21,11 @@ func (o *ClusterUninstaller) listInstances() (cloudResources, error) {
 	defer cancel()
 
 	options := o.vpcSvc.NewListInstancesOptions()
-	options.SetVPCName(fmt.Sprintf("%s-vpc", o.InfraID))
+	if len(o.UserProvidedVPC) > 0 {
+		options.SetVPCName(o.UserProvidedVPC)
+	} else {
+		options.SetVPCName(fmt.Sprintf("%s-vpc", o.InfraID))
+	}
 	resources, _, err := o.vpcSvc.ListInstancesWithContext(ctx, options)
 	if err != nil {
 		return nil, err

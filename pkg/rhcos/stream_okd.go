@@ -1,3 +1,4 @@
+//go:build okd
 // +build okd
 
 package rhcos

@@ -2,6 +2,10 @@ variable "cluster_id" {
   type = string
 }
 
+variable "private_zone_id" {
+  type = string
+}
+
 variable "resource_group_id" {
   type = string
 }
@@ -30,16 +34,12 @@ variable "slb_internal_ip" {
   description = "Internal SLB IP address."
 }
 
-variable "master_count" {
-  type = number
-}
-
-variable "master_ips" {
-  type = map(string)
-}
-
 variable "tags" {
   type        = map(string)
-  default     = {}
   description = "Tags to be applied to created resources."
+}
+
+variable "publish_strategy" {
+  type        = string
+  description = "The publishing strategy for endpoints like load balancers"
 }

@@ -18,7 +18,7 @@ resource "azurestack_network_interface" "master" {
     private_ip_address_allocation = "Dynamic"
     load_balancer_backend_address_pools_ids = concat(
       [var.ilb_backend_pool_v4_id],
-      ! var.private ? [var.elb_backend_pool_v4_id] : null
+      ! var.private ? [var.elb_backend_pool_v4_id] : []
     )
   }
 }
@@ -55,7 +55,7 @@ resource "azurestack_virtual_machine" "master" {
     name              = "${var.cluster_id}-master-${count.index}_OSDisk" # os disk name needs to match cluster-api convention
     create_option     = "FromImage"
     disk_size_gb      = min(var.os_volume_size, 1023)
-    managed_disk_type = "Standard_LRS"
+    managed_disk_type = var.os_volume_type
   }
 
   boot_diagnostics {

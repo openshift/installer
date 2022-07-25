@@ -33,7 +33,7 @@ accessible over the external network which may not be desirable.
       on this network.
   * ***NTP***
     * A time source must be accessible from this network.
-  * ***Reserved VIPs (Virtual IPs)*** - 3 IP addresses must be reserved on this
+  * ***Reserved VIPs (Virtual IPs)*** - 2 IP addresses must be reserved on this
 	network for use by the cluster. These Virtual IPs are managed using VRRP
 	(v2 for IPv4 and v3 for IPv6). Specifically, these IPs will serve the
     following purposes:
@@ -233,6 +233,7 @@ should be used to build the cluster. The number of assets must be at least great
 | `bootMACAddress` | | The MAC address of the NIC the host will use to boot on the provisioning network. It must be unique. |
 | `rootDeviceHints` | | How to choose the target disk for the OS during provisioning - for more details see [upstream docs](https://github.com/metal3-io/baremetal-operator/blob/master/docs/api.md). |
 | `bootMode` | `UEFI` | Choose `legacy` (BIOS) or `UEFI` mode for booting. Use `UEFISecureBoot` to enable UEFI and secure boot on the server. Only some drivers support UEFI secure boot (notably, IPMI does not). |
+| `networkConfig` | | Yaml block describing the desired host networking settings. Must be compatible with NMState (for more details see https://nmstate.io/) |
 
 The `bmc` parameter for each host is a set of values for accessing the
 baseboard management controller in the host.
@@ -310,14 +311,13 @@ You can view the Ironic logs by sshing to the bootstrap VM, and
 examining the logs of the `ironic` service, `journalctl -u ironic`. You
 may also view the logs of the individual containers:
 
-  - `podman logs ipa-downloader`
   - `podman logs coreos-downloader`
-  - `podman logs ironic-api`
-  - `podman logs ironic-conductor`
+  - `podman logs dnsmasq`
+  - `podman logs image-customization`
+  - `podman logs ironic`
   - `podman logs ironic-inspector`
-  - `podman logs ironic-dnsmasq`
-  - `podman logs ironic-deploy-ramdisk-logs`
-  - `podman logs ironic-inspector-ramdisk-logs`
+  - `podman logs ironic-ramdisk-logs`
+  - `podman logs httpd`
 
 
 ### Control Plane

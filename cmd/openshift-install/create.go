@@ -27,6 +27,7 @@ import (
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/logging"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
@@ -44,6 +45,13 @@ type target struct {
 	command *cobra.Command
 	assets  []asset.WritableAsset
 }
+
+const (
+	exitCodeInstallConfigError = iota + 3
+	exitCodeInfrastructureFailed
+	exitCodeBootstrapFailed
+	exitCodeInstallFailed
+)
 
 // each target is a variable to preserve the order when creating subcommands and still
 // allow other functions to directly access each target individually.
@@ -113,19 +121,22 @@ var (
 
 				timer.StartTimer("Bootstrap Complete")
 				if err := waitForBootstrapComplete(ctx, config); err != nil {
-					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
-						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
+					bundlePath, gatherErr := runGatherBootstrapCmd(rootOpts.dir)
+					if gatherErr != nil {
+						logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
 					}
-					bundlePath, err2 := runGatherBootstrapCmd(rootOpts.dir)
-					if err2 != nil {
-						logrus.Error("Attempted to gather debug logs after installation failure: ", err2)
+					if err := logClusterOperatorConditions(ctx, config); err != nil {
+						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err)
 					}
 					logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
 					logrus.Error(err.Error())
-					if err2 := service.AnalyzeGatherBundle(bundlePath); err2 != nil {
-						logrus.Error("Attempted to analyze the debug logs after installation failure: ", err2)
+					if gatherErr == nil {
+						if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
+							logrus.Error("Attempted to analyze the debug logs after installation failure: ", err)
+						}
+						logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
 					}
-					logrus.Fatal("Bootstrap failed to complete")
+					logrus.Exit(exitCodeBootstrapFailed)
 				}
 				timer.StopTimer("Bootstrap Complete")
 				timer.StartTimer("Bootstrap Destroy")
@@ -148,7 +159,8 @@ var (
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
 					logTroubleshootingLink()
-					logrus.Fatal(err)
+					logrus.Error(err)
+					logrus.Exit(exitCodeInstallFailed)
 				}
 				timer.StopTimer(timer.TotalTimeElapsed)
 				timer.LogSummary()
@@ -262,8 +274,18 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 		cleanup := setupFileHook(rootOpts.dir)
 		defer cleanup()
 
+		cluster.InstallDir = rootOpts.dir
+
 		err := runner(rootOpts.dir)
 		if err != nil {
+			if strings.Contains(err.Error(), asset.InstallConfigError) {
+				logrus.Error(err)
+				logrus.Exit(exitCodeInstallConfigError)
+			}
+			if strings.Contains(err.Error(), asset.ClusterCreationError) {
+				logrus.Error(err)
+				logrus.Exit(exitCodeInfrastructureFailed)
+			}
 			logrus.Fatal(err)
 		}
 		if cmd.Name() != "cluster" {
@@ -328,7 +350,10 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 	discovery := client.Discovery()
 
 	apiTimeout := 20 * time.Minute
-	logrus.Infof("Waiting up to %v for the Kubernetes API at %s...", apiTimeout, config.Host)
+
+	untilTime := time.Now().Add(apiTimeout)
+	logrus.Infof("Waiting up to %v (until %v) for the Kubernetes API at %s...",
+		apiTimeout, untilTime.Format(time.Kitchen), config.Host)
 
 	apiContext, cancel := context.WithTimeout(ctx, apiTimeout)
 	defer cancel()
@@ -377,7 +402,19 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 // completed.
 func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) *clusterCreateError {
 	timeout := 30 * time.Minute
-	logrus.Infof("Waiting up to %v for bootstrapping to complete...", timeout)
+
+	// Wait longer for baremetal, due to length of time it takes to boot
+	if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
+		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
+			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
+				timeout = 60 * time.Minute
+			}
+		}
+	}
+
+	untilTime := time.Now().Add(timeout)
+	logrus.Infof("Waiting up to %v (until %v) for bootstrapping to complete...",
+		timeout, untilTime.Format(time.Kitchen))
 
 	waitCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -428,7 +465,9 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 		}
 	}
 
-	logrus.Infof("Waiting up to %v for the cluster at %s to initialize...", timeout, config.Host)
+	untilTime := time.Now().Add(timeout)
+	logrus.Infof("Waiting up to %v (until %v) for the cluster at %s to initialize...",
+		timeout, untilTime.Format(time.Kitchen), config.Host)
 	cc, err := configclient.NewForConfig(config)
 	if err != nil {
 		return errors.Wrap(err, "failed to create a config client")
@@ -452,7 +491,9 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 					logrus.Warnf("Expected a ClusterVersion object but got a %q object instead", event.Object.GetObjectKind().GroupVersionKind())
 					return false, nil
 				}
-				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) {
+				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) &&
+					cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, failing) &&
+					cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, configv1.OperatorProgressing) {
 					timer.StopTimer("Cluster Operators")
 					return true, nil
 				}
@@ -497,7 +538,10 @@ func waitForConsole(ctx context.Context, config *rest.Config) (string, error) {
 	}
 
 	consoleRouteTimeout := 10 * time.Minute
-	logrus.Infof("Waiting up to %v for the openshift-console route to be created...", consoleRouteTimeout)
+	untilTime := time.Now().Add(consoleRouteTimeout)
+	logrus.Infof("Waiting up to %v (until %v) for the openshift-console route to be created...",
+		consoleRouteTimeout, untilTime.Format(time.Kitchen))
+
 	consoleRouteContext, cancel := context.WithTimeout(ctx, consoleRouteTimeout)
 	defer cancel()
 	// Poll quickly but only log when the response
@@ -550,7 +594,7 @@ func logComplete(directory, consoleURL string) error {
 		return err
 	}
 	logrus.Info("Install complete!")
-	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=%s'", kubeconfig)
+	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run\n    export KUBECONFIG=%s", kubeconfig)
 	logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
 	logrus.Infof("Login to the console with user: %q, and password: %q", "kubeadmin", pw)
 	return nil

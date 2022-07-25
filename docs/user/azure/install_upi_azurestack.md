@@ -47,6 +47,11 @@ We'll be providing the compute machines ourselves, so we set compute replicas to
 
 Azure Stack is not supported by the interactive wizard, but you can use public Azure credentials to create an install config with [the usual approach](install.md#create-configuration) and then edit according to the example above.
 
+### Additional Trust Bundle for Internal Certificate Authorities (Optional)
+
+If your Azure Stack environment uses an internal CA, add the necessary certificate bundle in .pem format to the [`additionalTrustBundle`](../customization.md#additional-trust-bundle). You will also need to [update the cluster proxy
+manifest][proxy-ca] and [add the CA to the ignition shim][ign-ca] in later steps.
+
 ## Credentials
 
 Both Azure and Azure Stack credentials are stored by the installer at `~/.azure/osServicePrincipal.json`. The installer will request the required information if no credentials are found.
@@ -224,6 +229,24 @@ stringData:
   azure_region: <$REGION>
 ```
 
+### Set Cluster to use the Internal Certificate Authority (Optional)
+
+If your Azure Stack environment uses an internal CA, update `.spec.trustedCA.name` to use `user-ca-bundle` in `./manifests/cluster-proxy-01-config.yaml`:
+
+```shell
+$ cat manifests/cluster-proxy-01-config.yaml 
+apiVersion: config.openshift.io/v1
+kind: Proxy
+metadata:
+  creationTimestamp: null
+  name: cluster
+spec:
+  trustedCA:
+    name: user-ca-bundle
+status: {}
+```
+
+You will also need to update the ignition shim to include the CA.
 ## Create ignition configs
 
 Now we can create the bootstrap ignition configs:
@@ -276,7 +299,7 @@ storage blob.
 First, download and decompress the VHD, note that the decompressed file is 16GB:
 
 ```sh
-$ export COMPRESSED_VHD_URL=$(curl -s https://raw.githubusercontent.com/openshift/installer/release-4.9/data/data/rhcos-amd64.json | jq -r '(.baseURI + .images.azurestack.path)')
+$ export COMPRESSED_VHD_URL=$(openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.azurestack.formats."vhd.gz".disk.location')
 $ $ curl -O -L $COMPRESSED_VHD_URL 
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
@@ -389,9 +412,28 @@ Copy the [`04_bootstrap.json`](../../../upi/azurestack/04_bootstrap.json) ARM te
 
 Create the deployment using the `az` client:
 
+### Create the Bootstrap Ignition Shim
+
+If your Azure Stack environment uses a public certificate authority, you can create the ignition shim like this:
+
 ```sh
 export BOOTSTRAP_URL=$(az storage blob url --account-name "${INFRA_ID}sa" --account-key "$ACCOUNT_KEY" -c "files" -n "bootstrap.ign" -o tsv)
 export BOOTSTRAP_IGNITION=$(jq -rcnM --arg v "3.2.0" --arg url "$BOOTSTRAP_URL" '{ignition:{version:$v,config:{replace:{source:$url}}}}' | base64 | tr -d '\n')
+```
+
+### Create the Bootstrap Ignition Shim with an Internal Certificate Authority (Optional)
+
+If your Azure Stack environments uses an internal CA, you will need to add the PEM encoded bundle to the bootstrap ignition
+shim so that your bootstrap VM will be able to pull the bootstrap ignition from the storage account. Assuming your CA
+is in a file called `CA.pem` you can add the bundle to the shim like this:
+
+```sh
+export CA="data:text/plain;charset=utf-8;base64,$(cat CA.pem |base64 |tr -d '\n')"
+export BOOTSTRAP_URL=$(az storage blob url --account-name "${INFRA_ID}sa" --account-key "$ACCOUNT_KEY" -c "files" -n "bootstrap.ign" -o tsv)
+export BOOTSTRAP_IGNITION=$(jq -rcnM --arg v "3.2.0" --arg url "$BOOTSTRAP_URL" --arg cert "$CA" '{ignition:{version:$v,security:{tls:{certificateAuthorities:[{source:$cert}]}},config:{replace:{source:$url}}}}' | base64 | tr -d '\n')
+```
+
+### Deploy the Bootstrap VM
 
 az deployment group create --verbose -g "$RESOURCE_GROUP" \
   --template-file "04_bootstrap.json" \
@@ -470,7 +512,7 @@ You can also take advantage of the built in cluster scaling mechanisms and the m
 
 In this example, we'll manually launch three instances via the provided ARM template. Additional instances can be launched by editing the `06_workers.json` file.
 
-Copy the [`06_workers.json`](../../../upi/azure/06_workers.json) ARM template locally.
+Copy the [`06_workers.json`](../../../upi/azurestack/06_workers.json) ARM template locally.
 
 Create the deployment using the `az` client:
 
@@ -588,7 +630,8 @@ DEBUG Route found in openshift-console namespace: console
 DEBUG Route found in openshift-console namespace: downloads
 DEBUG OpenShift console route is created
 INFO Install complete!
-INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=${PWD}/auth/kubeconfig'
+INFO To access the cluster as the system:admin user when using 'oc', run
+    export KUBECONFIG=${PWD}/auth/kubeconfig
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.cluster.basedomain.com
 INFO Login to the console with user: kubeadmin, password: REDACTED
 ```
@@ -607,3 +650,5 @@ INFO Login to the console with user: kubeadmin, password: REDACTED
 [kubernetes-service-load-balancers-exclude-masters]: https://github.com/kubernetes/kubernetes/issues/65618
 [manual-credentials]: https://docs.openshift.com/container-platform/4.8/installing/installing_azure/manually-creating-iam-azure.html
 [azure-vhd-utils]: https://github.com/microsoft/azure-vhd-utils
+[proxy-ca]: #set-cluster-to-use-the-internal-certificate-authority-optional
+[ign-ca]: #create-the-bootstrap-ignition-shim-with-an-internal-certificate-authority-optional

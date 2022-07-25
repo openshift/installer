@@ -2,15 +2,26 @@ variable "resource_pool" {
   type = string
 }
 
+variable "bootstrap_moid" {
+  type    = string
+  default = ""
+}
+
+variable "control_plane_ips" {
+  type    = list(string)
+  default = []
+}
+
+variable "control_plane_moids" {
+  type    = list(string)
+  default = []
+}
+
 variable "folder" {
   type = string
 }
 
 variable "datastore" {
-  type = string
-}
-
-variable "network" {
   type = string
 }
 

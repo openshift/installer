@@ -31,7 +31,12 @@ type Platform struct {
 	// ARMEndpoint is the endpoint for the Azure API when installing on Azure Stack.
 	ARMEndpoint string `json:"armEndpoint,omitempty"`
 
-	// BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found.
+	// ClusterOSImage is the url of a storage blob in the Azure Stack environment containing an RHCOS VHD. This field is required for Azure Stack and not applicable to Azure.
+	ClusterOSImage string `json:"clusterOSImage,omitempty"`
+
+	// BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found. This field is optional when creating a private cluster, otherwise required.
+	//
+	// +optional
 	BaseDomainResourceGroupName string `json:"baseDomainResourceGroupName,omitempty"`
 
 	// DefaultMachinePlatform is the default configuration used when

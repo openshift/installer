@@ -15,8 +15,9 @@ type configurationObject struct {
 }
 
 type metadata struct {
-	Name      string `json:"name,omitempty"`
-	Namespace string `json:"namespace,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Name        string            `json:"name,omitempty"`
+	Namespace   string            `json:"namespace,omitempty"`
 }
 
 func configMap(namespace, name string, data genericData) *configurationObject {

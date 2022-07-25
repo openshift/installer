@@ -25,6 +25,8 @@ resource "ibm_is_instance" "master_node" {
     security_groups = var.control_plane_security_group_id_list
   }
 
+  dedicated_host = length(var.control_plane_dedicated_host_id_list) > 0 ? var.control_plane_dedicated_host_id_list[count.index % local.zone_count] : null
+
   vpc  = var.vpc_id
   zone = var.control_plane_subnet_zone_list[count.index % local.zone_count]
   keys = []

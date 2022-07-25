@@ -8,6 +8,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 )
@@ -15,6 +16,13 @@ import (
 const (
 	defaultRegion         = "cn-hangzhou"
 	defaultAcceptLanguage = "en-US"
+)
+
+var unsupportedRegions = sets.NewString(
+	// Nanjing is a local cloud
+	"cn-nanjing",
+	// Dubai does not support private zone service
+	"me-east-1",
 )
 
 // Platform collects AlibabaCloud-specific configuration.
@@ -29,19 +37,8 @@ func Platform() (*alibabacloud.Platform, error) {
 		return nil, err
 	}
 
-	client, err = NewClient(region)
-	if err != nil {
-		return nil, err
-	}
-
-	resourceGroup, err := selectResourceGroup(client)
-	if err != nil {
-		return nil, err
-	}
-
 	return &alibabacloud.Platform{
-		Region:          region,
-		ResourceGroupID: resourceGroup,
+		Region: region,
 	}, nil
 }
 
@@ -52,12 +49,24 @@ func selectRegion(client *Client) (string, error) {
 	}
 	regions := regionsResponse.Regions.Region
 
-	longRegions := make([]string, 0, len(regions))
-	shortRegions := make([]string, 0, len(regions))
+	var defaultLongRegion string
+	longRegions := []string{}
+	shortRegions := []string{}
 	for _, location := range regions {
-		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", location.RegionId, location.LocalName))
+		if unsupportedRegions.Has(location.RegionId) {
+			continue
+		}
+		longRegion := fmt.Sprintf("%s (%s)", location.RegionId, location.LocalName)
+		longRegions = append(longRegions, longRegion)
 		shortRegions = append(shortRegions, location.RegionId)
+		if location.RegionId == defaultRegion {
+			defaultLongRegion = longRegion
+		}
 	}
+	if defaultLongRegion == "" {
+		return "", errors.Errorf("installer bug: invalid default alibabacloud region %q", defaultRegion)
+	}
+
 	var regionTransform survey.Transformer = func(ans interface{}) interface{} {
 		switch v := ans.(type) {
 		case core.OptionAnswer:
@@ -77,7 +86,7 @@ func selectRegion(client *Client) (string, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The Alibaba Cloud region to be used for installation.",
-				Default: defaultRegion,
+				Default: defaultLongRegion,
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
@@ -95,39 +104,4 @@ func selectRegion(client *Client) (string, error) {
 		return "", err
 	}
 	return selectedRegion, nil
-}
-
-func selectResourceGroup(client *Client) (string, error) {
-	groupsResponse, err := client.ListResourceGroups()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to list resource groups")
-	}
-
-	groups := groupsResponse.ResourceGroups.ResourceGroup
-
-	if len(groups) == 0 {
-		return "", errors.Wrap(err, "resource group not found")
-	}
-
-	var options []string
-	names := make(map[string]string)
-
-	for _, group := range groups {
-		option := fmt.Sprintf("%s (%s)", group.Name, group.Id)
-		names[option] = group.Id
-		options = append(options, option)
-	}
-	sort.Strings(options)
-
-	var selectedResourceGroup string
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Select{
-				Message: "Resource Group",
-				Help:    "The resource group where the cluster will be provisioned.",
-				Options: options,
-			},
-		},
-	}, &selectedResourceGroup)
-	return names[selectedResourceGroup], err
 }

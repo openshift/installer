@@ -91,11 +91,18 @@ func (c *Client) MakeRequest(r *rest.Request, respV interface{}) (*gohttp.Respon
 		return new(gohttp.Response), err
 	}
 	if err != nil {
-		if resp.StatusCode == 401 && c.TokenRefresher != nil {
+		if (resp.StatusCode == 401 || resp.StatusCode == 403) && c.TokenRefresher != nil {
 			log.Println("Authentication failed. Trying token refresh")
 			c.headerLock.Lock()
 			defer c.headerLock.Unlock()
-			_, err := c.TokenRefresher.RefreshToken()
+			var err error
+			if c.Config.BluemixAPIKey != "" {
+				log.Println("Retrying authentication using API Key")
+				err = c.TokenRefresher.AuthenticateAPIKey(c.Config.BluemixAPIKey)
+			} else {
+				log.Println("Retrying authentication using Refresh Token")
+				_, err = c.TokenRefresher.RefreshToken()
+			}
 			switch err.(type) {
 			case nil:
 				restClient.DefaultHeader = getDefaultAuthHeaders(c.ServiceName, c.Config)

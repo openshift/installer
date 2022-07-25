@@ -6,9 +6,17 @@ variable "region_id" {
   type = string
 }
 
+variable "vpc_id" {
+  type = string
+}
+
+variable "vswitch_ids" {
+  type = list(string)
+}
+
 variable "zone_ids" {
   type        = list(string)
-  description = "The availability zones in which to create the masters."
+  description = "The availability zones in which to create the masters, workers and bootstrap node."
 }
 
 variable "nat_gateway_zone_id" {
@@ -26,6 +34,10 @@ variable "resource_group_id" {
 
 variable "tags" {
   type        = map(string)
-  default     = {}
   description = "Tags to be applied to created resources."
+}
+
+variable "publish_strategy" {
+  type        = string
+  description = "The publishing strategy for endpoints like load balancers"
 }

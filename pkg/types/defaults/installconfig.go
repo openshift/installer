@@ -12,8 +12,10 @@ import (
 	ibmclouddefaults "github.com/openshift/installer/pkg/types/ibmcloud/defaults"
 	libvirtdefaults "github.com/openshift/installer/pkg/types/libvirt/defaults"
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
+	nutanixdefaults "github.com/openshift/installer/pkg/types/nutanix/defaults"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	ovirtdefaults "github.com/openshift/installer/pkg/types/ovirt/defaults"
+	powervsdefaults "github.com/openshift/installer/pkg/types/powervs/defaults"
 	vspheredefaults "github.com/openshift/installer/pkg/types/vsphere/defaults"
 )
 
@@ -23,7 +25,6 @@ var (
 	defaultClusterNetwork = ipnet.MustParseCIDR("10.128.0.0/14")
 	defaultHostPrefix     = 23
 	defaultNetworkType    = string(operv1.NetworkTypeOpenShiftSDN)
-	defaultOKDNetworkType = string(operv1.NetworkTypeOVNKubernetes)
 )
 
 // SetInstallConfigDefaults sets the defaults for the install config.
@@ -40,10 +41,15 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 				{CIDR: *libvirtdefaults.DefaultMachineCIDR},
 			}
 		}
+		if c.Platform.PowerVS != nil {
+			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+				{CIDR: *powervsdefaults.DefaultMachineCIDR},
+			}
+		}
 	}
 	if c.Networking.NetworkType == "" {
-		if c.IsOKD() {
-			c.Networking.NetworkType = defaultOKDNetworkType
+		if c.IsOKD() || c.IsSingleNodeOpenShift() {
+			c.Networking.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
 		} else {
 			c.Networking.NetworkType = defaultNetworkType
 		}
@@ -79,6 +85,10 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	if c.CredentialsMode == "" {
 		if c.Platform.Azure != nil && c.Platform.Azure.CloudName == azure.StackCloud {
 			c.CredentialsMode = types.ManualCredentialsMode
+		} else if c.Platform.Nutanix != nil {
+			c.CredentialsMode = types.ManualCredentialsMode
+		} else if c.Platform.PowerVS != nil {
+			c.CredentialsMode = types.ManualCredentialsMode
 		}
 	}
 
@@ -105,7 +115,12 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		for i := range c.Compute {
 			ovirtdefaults.SetComputeDefaults(c.Platform.Ovirt, &c.Compute[i])
 		}
+	case c.Platform.PowerVS != nil:
+		powervsdefaults.SetPlatformDefaults(c.Platform.PowerVS)
 	case c.Platform.None != nil:
 		nonedefaults.SetPlatformDefaults(c.Platform.None)
+	case c.Platform.Nutanix != nil:
+		nutanixdefaults.SetPlatformDefaults(c.Platform.Nutanix)
 	}
+
 }

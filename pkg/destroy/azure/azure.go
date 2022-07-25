@@ -39,7 +39,6 @@ type ClusterUninstaller struct {
 
 	InfraID                     string
 	ResourceGroupName           string
-	ClusterName                 string
 	BaseDomainResourceGroupName string
 
 	Logger logrus.FieldLogger
@@ -102,7 +101,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		ResourceGroupName:           group,
 		Logger:                      logger,
 		BaseDomainResourceGroupName: metadata.Azure.BaseDomainResourceGroupName,
-		ClusterName:                 metadata.ClusterName,
 		CloudName:                   cloudName,
 	}, nil
 }
@@ -222,7 +220,6 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 
 	recordsClient := azurestackdns.NewRecordSetsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
 	recordsClient.Authorizer = o.Authorizer
-	clusterName := o.ClusterName
 
 	var errs []error
 
@@ -250,7 +247,7 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 		}
 	}
 
-	clusterTag := fmt.Sprintf("kubernetes.io_cluster.%s", clusterName)
+	clusterTag := fmt.Sprintf("kubernetes.io_cluster.%s", o.InfraID)
 	for _, zone := range allZones.List() {
 		for recordPages, err := recordsClient.ListByDNSZone(ctx, rgName, zone, to.Int32Ptr(100), ""); recordPages.NotDone(); err = recordPages.NextWithContext(ctx) {
 			if err != nil {
@@ -468,17 +465,11 @@ func deleteResourceGroup(ctx context.Context, client resources.GroupsClient, log
 	defer cancel()
 
 	delFuture, err := client.Delete(ctx, name)
-	if err != nil {
-		if wasNotFound(delFuture.Response()) {
-			logger.Debug("already deleted")
-			return nil
-		}
-		return err
+	if err == nil {
+		err = delFuture.WaitForCompletionRef(ctx, client.Client)
 	}
-
-	err = delFuture.WaitForCompletionRef(ctx, client.Client)
 	if err != nil {
-		if wasNotFound(delFuture.Response()) {
+		if isNotFoundError(err) {
 			logger.Debug("already deleted")
 			return nil
 		}
@@ -490,6 +481,30 @@ func deleteResourceGroup(ctx context.Context, client resources.GroupsClient, log
 
 func wasNotFound(resp *http.Response) bool {
 	return resp != nil && resp.StatusCode == http.StatusNotFound
+}
+
+func isNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var dErr autorest.DetailedError
+	errors.As(err, &dErr)
+
+	if dErr.StatusCode == http.StatusNotFound {
+		return true
+	}
+
+	if dErr.StatusCode == 0 {
+		serviceErr, ok := dErr.Original.(*azureenv.ServiceError)
+		if ok {
+			if strings.HasSuffix(serviceErr.Code, "NotFound") {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func isAuthError(err error) bool {

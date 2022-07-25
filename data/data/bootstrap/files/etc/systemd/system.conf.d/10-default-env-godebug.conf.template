@@ -1,2 +1,0 @@
-[Manager]
-DefaultEnvironment=GODEBUG=x509ignoreCN=0

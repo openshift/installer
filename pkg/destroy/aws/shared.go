@@ -181,6 +181,7 @@ func (o *ClusterUninstaller) cleanSharedRoute53(ctx context.Context, session *se
 	if err != nil {
 		return err
 	}
+	logger = logger.WithField("id", id)
 
 	switch resourceType {
 	case "hostedzone":
@@ -202,7 +203,6 @@ func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, client *
 	if err != nil {
 		return err
 	}
-	logger = logger.WithField("id", publicZoneID)
 
 	var lastError error
 	err = client.ListResourceRecordSetsPagesWithContext(
@@ -218,22 +218,20 @@ func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, client *
 				if len(name) == len(dottedClusterDomain) {
 					continue
 				}
-				recordSetLogger := logger.WithField(
-					"recordset",
-					fmt.Sprintf("%s (%s)", aws.StringValue(recordSet.Name), aws.StringValue(recordSet.Type)),
-				)
+				recordsetFields := logrus.Fields{"recordset": fmt.Sprintf("%s (%s)", aws.StringValue(recordSet.Name), aws.StringValue(recordSet.Type))}
 				// delete any matching record sets in the public hosted zone
 				if publicZoneID != "" {
-					if err := deleteMatchingRecordSetInPublicZone(ctx, client, publicZoneID, recordSet, logger); err != nil {
+					publicZoneLogger := logger.WithField("id", publicZoneID)
+					if err := deleteMatchingRecordSetInPublicZone(ctx, client, publicZoneID, recordSet, publicZoneLogger); err != nil {
 						if lastError != nil {
-							logger.Debug(lastError)
+							publicZoneLogger.Debug(lastError)
 						}
 						lastError = errors.Wrapf(err, "deleting record set matching %#v from public zone %s", recordSet, publicZoneID)
 						// do not delete the record set in the private zone if the delete failed in the public zone;
 						// otherwise the record set in the public zone will get leaked
 						continue
 					}
-					recordSetLogger.Debug("Deleted from public zone")
+					publicZoneLogger.WithFields(recordsetFields).Debug("Deleted from public zone")
 				}
 				// delete the record set
 				if err := deleteRoute53RecordSet(ctx, client, id, recordSet, logger); err != nil {
@@ -242,7 +240,7 @@ func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, client *
 					}
 					lastError = errors.Wrapf(err, "deleting record set %#v from zone %s", recordSet, id)
 				}
-				recordSetLogger.Debug("Deleted")
+				logger.WithFields(recordsetFields).Debug("Deleted from public zone")
 			}
 			return !lastPage
 		},

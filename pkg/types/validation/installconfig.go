@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	dockerref "github.com/containers/image/docker/reference"
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
@@ -35,10 +36,14 @@ import (
 	ibmcloudvalidation "github.com/openshift/installer/pkg/types/ibmcloud/validation"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	libvirtvalidation "github.com/openshift/installer/pkg/types/libvirt/validation"
+	"github.com/openshift/installer/pkg/types/nutanix"
+	nutanixvalidation "github.com/openshift/installer/pkg/types/nutanix/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	ovirtvalidation "github.com/openshift/installer/pkg/types/ovirt/validation"
+	"github.com/openshift/installer/pkg/types/powervs"
+	powervsvalidation "github.com/openshift/installer/pkg/types/powervs/validation"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	vspherevalidation "github.com/openshift/installer/pkg/types/vsphere/validation"
 	"github.com/openshift/installer/pkg/validate"
@@ -87,6 +92,9 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		// FIX-ME: As soon bz#1915122 get resolved remove the limitation of 14 chars for the clustername
 		nameErr = validate.ClusterNameMaxLength(c.ObjectMeta.Name, 14)
 	}
+	if c.Platform.VSphere != nil || c.Platform.BareMetal != nil || c.Platform.Nutanix != nil {
+		nameErr = validate.OnPremClusterName(c.ObjectMeta.Name)
+	}
 	if nameErr != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, nameErr.Error()))
 	}
@@ -101,7 +109,7 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		}
 	}
 	if c.Networking != nil {
-		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)
+		allErrs = append(allErrs, validateNetworking(c.Networking, c.IsSingleNodeOpenShift(), field.NewPath("networking"))...)
 		allErrs = append(allErrs, validateNetworkingIPVersion(c.Networking, &c.Platform)...)
 		allErrs = append(allErrs, validateNetworkingForPlatform(c.Networking, &c.Platform, field.NewPath("networking"))...)
 	} else {
@@ -125,10 +133,13 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
 	}
 	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform)...)
+	if c.Capabilities != nil {
+		allErrs = append(allErrs, validateCapabilities(c.Capabilities, field.NewPath("capabilities"))...)
+	}
 
 	if c.Publish == types.InternalPublishingStrategy {
 		switch platformName := c.Platform.Name(); platformName {
-		case aws.Name, azure.Name, gcp.Name:
+		case aws.Name, azure.Name, gcp.Name, alibabacloud.Name:
 		default:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("publish"), c.Publish, fmt.Sprintf("Internal publish strategy is not supported on %q platform", platformName)))
 		}
@@ -287,10 +298,14 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 	return allErrs
 }
 
-func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorList {
+func validateNetworking(n *types.Networking, singleNodeOpenShift bool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if n.NetworkType == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("networkType"), "network provider type required"))
+	}
+
+	if singleNodeOpenShift && n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType OpenShiftSDN is currently not supported on Single Node OpenShift"))
 	}
 
 	if len(n.MachineNetwork) > 0 {
@@ -487,6 +502,9 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 			return openstackvalidation.ValidatePlatform(platform.OpenStack, network, f, c)
 		})
 	}
+	if platform.PowerVS != nil {
+		validate(powervs.Name, platform.PowerVS, func(f *field.Path) field.ErrorList { return powervsvalidation.ValidatePlatform(platform.PowerVS, f) })
+	}
 	if platform.VSphere != nil {
 		validate(vsphere.Name, platform.VSphere, func(f *field.Path) field.ErrorList { return vspherevalidation.ValidatePlatform(platform.VSphere, f) })
 	}
@@ -498,6 +516,11 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 	if platform.Ovirt != nil {
 		validate(ovirt.Name, platform.Ovirt, func(f *field.Path) field.ErrorList {
 			return ovirtvalidation.ValidatePlatform(platform.Ovirt, f)
+		})
+	}
+	if platform.Nutanix != nil {
+		validate(nutanix.Name, platform.Nutanix, func(f *field.Path) field.ErrorList {
+			return nutanixvalidation.ValidatePlatform(platform.Nutanix, f)
 		})
 	}
 	return allErrs
@@ -566,9 +589,14 @@ func validateNamedRepository(r string) error {
 		// in an error. Instead we will check whether the input is
 		// a valid hostname as a workaround.
 		if err == dockerref.ErrNameNotCanonical {
-			_, err := url.ParseRequestURI(r)
+			// If the hostname string contains a port, lets attempt
+			// to split them
+			host, _, err := net.SplitHostPort(r)
 			if err != nil {
-				return fmt.Errorf("the repository provided is invalid")
+				host = r
+			}
+			if err = validate.Host(host); err != nil {
+				return errors.Wrap(err, "the repository provided is invalid")
 			}
 			return nil
 		}
@@ -602,7 +630,7 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 	}
 	allErrs := field.ErrorList{}
 
-	allowedAzureModes := []types.CredentialsMode{types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode}
+	allowedAzureModes := []types.CredentialsMode{types.PassthroughCredentialsMode, types.ManualCredentialsMode}
 	if platform.Azure != nil && platform.Azure.CloudName == azure.StackCloud {
 		allowedAzureModes = []types.CredentialsMode{types.ManualCredentialsMode}
 	}
@@ -615,6 +643,8 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 		azure.Name:        allowedAzureModes,
 		gcp.Name:          {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
 		ibmcloud.Name:     {types.ManualCredentialsMode},
+		powervs.Name:      {types.ManualCredentialsMode},
+		nutanix.Name:      {types.ManualCredentialsMode},
 	}
 	if validModes, ok := validPlatformCredentialsModes[platform.Name()]; ok {
 		validModesSet := sets.NewString()
@@ -690,6 +720,34 @@ func validateFIPSconfig(c *types.InstallConfig) field.ErrorList {
 		re := regexp.MustCompile(`^ecdsa-sha2-nistp\d{3}$|^ssh-rsa$`)
 		if !re.MatchString(sshKeyType) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, fmt.Sprintf("SSH key type %s unavailable when FIPS is enabled. Please use rsa or ecdsa.", sshKeyType)))
+		}
+	}
+	return allErrs
+}
+
+// validateCapabilities checks if additional, optional OpenShift components are specified in the
+// install-config to be included in the installation.
+func validateCapabilities(c *types.Capabilities, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	allCapabilitySets := sets.NewString()
+	allAvailableCapabilities := sets.NewString()
+	// Create sets of all capability sets and *all* available capabilities across those capability sets
+	for baselineSet, capabilities := range configv1.ClusterVersionCapabilitySets {
+		allCapabilitySets.Insert(string(baselineSet))
+		for _, capability := range capabilities {
+			allAvailableCapabilities.Insert(string(capability))
+		}
+	}
+
+	if !allCapabilitySets.Has(string(c.BaselineCapabilitySet)) {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("baselineCapabilitySet"), c.BaselineCapabilitySet, allCapabilitySets.List()))
+	}
+
+	// Check to see the validity of additionalEnabledCapabilities specified by the user
+	for i, capability := range c.AdditionalEnabledCapabilities {
+		if !allAvailableCapabilities.Has(string(capability)) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("additionalEnabledCapabilities").Index(i), capability, allAvailableCapabilities.List()))
 		}
 	}
 	return allErrs

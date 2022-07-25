@@ -38,10 +38,10 @@ func (o *ClusterUninstaller) listCloudControllerBackendServices(instanceGroups [
 	})
 }
 
-// listCloudControllerTargetPools returns target pools created by the cloud controller.
-// It list all target pools matching the cloud controller name convention that contain
-// only cluster instances.
-func (o *ClusterUninstaller) listCloudControllerTargetPools() ([]cloudResource, error) {
+// listCloudControllerTargetPools returns target pools created by the cloud controller or owned by the cloud controller.
+// It lists all target pools matching the cloud controller name convention that contain
+// only cluster instances or cluster instances that were owned by the cluster.
+func (o *ClusterUninstaller) listCloudControllerTargetPools(instances []cloudResource) ([]cloudResource, error) {
 	filter := "name eq \"a[0-9a-f]{30,50}\""
 	return o.listTargetPoolsWithFilter("items(name,instances),nextPageToken", filter, func(pool *compute.TargetPool) bool {
 		if len(pool.Instances) == 0 {
@@ -50,7 +50,18 @@ func (o *ClusterUninstaller) listCloudControllerTargetPools() ([]cloudResource, 
 		for _, instanceURL := range pool.Instances {
 			name, _ := o.getInstanceNameAndZone(instanceURL)
 			if !o.isClusterResource(name) {
-				return false
+				foundClusterResource := false
+				for _, instance := range instances {
+					if instance.name == name {
+						foundClusterResource = true
+						break
+					}
+				}
+
+				if !foundClusterResource {
+					o.Logger.Debugf("Invalid instance %s in target pool %s, target pool will not be destroyed", name, pool.Name)
+					return false
+				}
 			}
 		}
 		return true
@@ -160,8 +171,14 @@ func (o *ClusterUninstaller) discoverCloudControllerResources() error {
 	}
 	o.insertPendingItems("instancegroup", instanceGroups)
 
+	// Get a list of known cluster instances
+	instances, err := o.listInstances()
+	if err != nil {
+		return err
+	}
+
 	// Target pool related items
-	pools, err := o.listCloudControllerTargetPools()
+	pools, err := o.listCloudControllerTargetPools(instances)
 	if err != nil {
 		return err
 	}

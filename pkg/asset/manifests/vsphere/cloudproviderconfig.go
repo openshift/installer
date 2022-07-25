@@ -30,6 +30,7 @@ func CloudProviderConfig(folderPath string, p *vspheretypes.Platform) (string, e
 	printIfNotEmpty(buf, "datacenter", p.Datacenter)
 	printIfNotEmpty(buf, "default-datastore", p.DefaultDatastore)
 	printIfNotEmpty(buf, "folder", folderPath)
+	printIfNotEmpty(buf, "resourcepool-path", p.ResourcePool)
 	fmt.Fprintln(buf, "")
 
 	fmt.Fprintf(buf, "[VirtualCenter %q]\n", p.VCenter)

@@ -176,6 +176,7 @@ var permissions = map[PermissionGroup][]string{
 	PermissionDeleteBase: {
 		"autoscaling:DescribeAutoScalingGroups",
 		"ec2:DeleteNetworkInterface",
+		"ec2:DeletePlacementGroup",
 		"ec2:DeleteTags",
 		"ec2:DeleteVolume",
 		"elasticloadbalancing:DeleteTargetGroup",

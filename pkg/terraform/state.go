@@ -1,61 +1,32 @@
 package terraform
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/pkg/errors"
-
-	tfexec "github.com/openshift/installer/pkg/terraform/exec"
 )
 
-// State in local sparse representation of terraform state that includes
-// the fields important to installer.
-type State struct {
-	Resources []StateResource `json:"resources"`
-}
+// StateFilename is the default name of the terraform state file.
+const StateFilename = "terraform.tfstate"
 
-// StateResource is local sparse representation of terraform state resource that includes
-// the fields most important to installer.
-type StateResource struct {
-	Module    string                  `json:"module"`
-	Name      string                  `json:"name"`
-	Type      string                  `json:"type"`
-	Instances []StateResourceInstance `json:"instances"`
-}
-
-// StateResourceInstance is an instance of terraform state resource.
-type StateResourceInstance struct {
-	Attributes map[string]interface{} `json:"attributes"`
-}
-
-// ErrResourceNotFound is an error that instructs that requested resource was not found.
-var ErrResourceNotFound = errors.New("resource not found")
-
-// LookupResource finds a resource for a given module, type and name from the state.
-// If module is "root", it is treated as ""
-// If no resource is found for the triplet, ErrResourceNotFound error is returned.
-func LookupResource(state *State, module, t, name string) (*StateResource, error) {
-	if module == "root" {
-		module = ""
-	}
-	for idx, r := range state.Resources {
-		if module == r.Module && t == r.Type && name == r.Name {
-			return &state.Resources[idx], nil
-		}
-	}
-	return nil, ErrResourceNotFound
-}
-
-// ReadState returns that terraform state from the file.
-func ReadState(file string) (*State, error) {
-	sfRaw, err := tfexec.ReadState(file)
+// Outputs reads the terraform state file and returns the outputs of the stage as json.
+func Outputs(dir string, terraformDir string) ([]byte, error) {
+	tf, err := newTFExec(dir, terraformDir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read %q", file)
+		return nil, err
 	}
 
-	var tfstate State
-	if err := json.Unmarshal(sfRaw, &tfstate); err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal %q", file)
+	tfoutput, err := tf.Output(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read terraform state file")
 	}
-	return &tfstate, nil
+
+	outputs := make(map[string]interface{}, len(tfoutput))
+	for key, value := range tfoutput {
+		outputs[key] = value.Value
+	}
+
+	data, err := json.Marshal(outputs)
+	return data, errors.Wrap(err, "could not marshal outputs")
 }

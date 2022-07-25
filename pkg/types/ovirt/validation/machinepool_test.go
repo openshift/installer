@@ -26,6 +26,7 @@ func TestValidateMachinePool(t *testing.T) {
 				CPU: &ovirt.CPU{
 					Cores:   0,
 					Sockets: 1,
+					Threads: 1,
 				},
 			},
 			valid: false,
@@ -36,6 +37,7 @@ func TestValidateMachinePool(t *testing.T) {
 				CPU: &ovirt.CPU{
 					Cores:   1,
 					Sockets: 0,
+					Threads: 1,
 				},
 			},
 			valid: false,
@@ -69,6 +71,7 @@ func TestValidateMachinePool(t *testing.T) {
 				CPU: &ovirt.CPU{
 					Sockets: 1,
 					Cores:   4,
+					Threads: 1,
 				},
 				InstanceTypeID: "85c65199-2df1-43bf-94f6-7e1567e6b238",
 			},

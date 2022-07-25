@@ -1,3 +1,7 @@
+output "resource_group_id" {
+  value = module.resource_group.resource_group_id
+}
+
 output "vpc_id" {
   value = module.vpc.vpc_id
 }
@@ -15,5 +19,9 @@ output "sg_master_id" {
 }
 
 output "control_plane_ips" {
-  value = values(module.master.master_ecs_private_ips)
+  value = module.master.master_ecs_private_ips
+}
+
+output "master_ecs_ids" {
+  value = module.master.master_ecs_ids
 }

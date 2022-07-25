@@ -13,6 +13,8 @@ data "aws_route53_zone" "public" {
   count = local.public_endpoints ? 1 : 0
 
   name = var.base_domain
+
+  depends_on = [aws_route53_record.api_external_internal_zone_alias, aws_route53_record.api_external_internal_zone_cname]
 }
 
 data "aws_route53_zone" "int" {
@@ -35,8 +37,6 @@ resource "aws_route53_zone" "new_int" {
     },
     var.tags,
   )
-
-  depends_on = [aws_route53_record.api_external_alias, aws_route53_record.api_external_cname]
 }
 
 resource "aws_route53_record" "api_external_alias" {

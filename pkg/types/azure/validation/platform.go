@@ -40,8 +40,7 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		}
 	}
 	if p.DefaultMachinePlatform != nil {
-		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
-		allErrs = append(allErrs, ValidateDefaultDiskType(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
+		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, "", p, fldPath.Child("defaultMachinePlatform"))...)
 	}
 	if p.VirtualNetwork != "" {
 		if p.ComputeSubnet == "" {
@@ -79,6 +78,9 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 	default:
 		if p.ARMEndpoint != "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), fmt.Sprintf("ARM endpoint must not be set when the cloud name is %s", cloud)))
+		}
+		if p.ClusterOSImage != "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), fmt.Sprintf("clusterOSImage must not be set when the cloud name is %s", cloud)))
 		}
 	}
 

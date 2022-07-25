@@ -93,6 +93,12 @@ EOF
   default = ""
 }
 
+variable "aws_master_instance_metadata_authentication" {
+  type        = string
+  default     = "optional"
+  description = "The session tokens requirement, also referred to as Instance Metadata Service Version 2 (IMDSv2). Values are optional or required. Defaults to optional."
+}
+
 variable "aws_region" {
   type        = string
   description = "The target AWS region for the cluster."
@@ -135,11 +141,6 @@ variable "aws_internal_zone" {
 variable "aws_publish_strategy" {
   type        = string
   description = "The cluster publishing strategy, either Internal or External"
-}
-
-variable "aws_skip_region_validation" {
-  type        = bool
-  description = "This decides if the AWS provider should validate if the region is known."
 }
 
 variable "aws_ignition_bucket" {

@@ -7,36 +7,31 @@ type Platform struct {
 	Region string `json:"region"`
 
 	// ResourceGroupName is the name of an already existing resource group where the
-	// cluster should be installed. This resource group should only be used for
-	// this specific cluster and the cluster components will assume ownership of
-	// all resources in the resource group. Destroying the cluster using installer
-	// will delete this resource group.
-	//
-	// This resource group must be empty with no other resources when trying to
-	// use it for creating a cluster. If empty, a new resource group will be created
+	// cluster should be installed. If empty, a new resource group will be created
 	// for the cluster.
 	// +optional
 	ResourceGroupName string `json:"resourceGroupName,omitempty"`
 
-	// VPCResourceGroupName specifies the resource group containing an existing
-	// VPC. This must be defined if `VPC` is defined.
+	// VPCName is the name of an already existing VPC where the cluster should be
+	// installed.
 	// +optional
-	VPCResourceGroupName string `json:"vpcResourceGroupName,omitempty"`
+	VPCName string `json:"vpcName,omitempty"`
+
+	// ControlPlaneSubnets are the names of already existing subnets where the
+	// cluster control plane nodes should be created.
+	// +optional
+	ControlPlaneSubnets []string `json:"controlPlaneSubnets,omitempty"`
+
+	// ComputeSubnets are the names of already existing subnets where the cluster
+	// compute nodes should be created.
+	// +optional
+	ComputeSubnets []string `json:"computeSubnets,omitempty"`
 
 	// DefaultMachinePlatform is the default configuration used when installing
 	// on IBM Cloud for machine pools which do not define their own platform
 	// configuration.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
-
-	// VPC is the ID of an existing VPC network. Leave unset and the installer
-	// will create a new VPC network on your behalf.
-	VPC string `json:"vpc,omitempty"`
-
-	// Subnets is a list of existing subnet IDs. Leave unset and the installer
-	// will create new subnets in the VPC network on your behalf.
-	// +optional
-	Subnets []string `json:"subnets,omitempty"`
 }
 
 // ClusterResourceGroupName returns the name of the resource group for the cluster.
@@ -45,4 +40,12 @@ func (p *Platform) ClusterResourceGroupName(infraID string) string {
 		return p.ResourceGroupName
 	}
 	return infraID
+}
+
+// GetVPCName returns the user provided name of the VPC for the cluster.
+func (p *Platform) GetVPCName() string {
+	if len(p.VPCName) > 0 {
+		return p.VPCName
+	}
+	return ""
 }

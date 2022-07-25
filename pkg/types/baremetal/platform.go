@@ -2,6 +2,7 @@ package baremetal
 
 import (
 	"github.com/openshift/installer/pkg/ipnet"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 // BMC stores the information about a baremetal host's management controller.
@@ -39,6 +40,7 @@ type Host struct {
 	HardwareProfile string           `json:"hardwareProfile"`
 	RootDeviceHints *RootDeviceHints `json:"rootDeviceHints,omitempty"`
 	BootMode        BootMode         `json:"bootMode,omitempty"`
+	NetworkConfig   *apiextv1.JSON   `json:"networkConfig,omitempty"`
 }
 
 // IsMaster checks if the current host is a master
@@ -188,4 +190,16 @@ type Platform struct {
 	//
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty" validate:"omitempty,osimageuri,urlexist"`
+
+	// BootstrapExternalStaticIP is the static IP address of the bootstrap node.
+	// This can be useful in environments without a DHCP server.
+	// +kubebuilder:validation:Format=ip
+	// +optional
+	BootstrapExternalStaticIP string `json:"bootstrapExternalStaticIP,omitempty"`
+
+	// BootstrapExternalStaticGateway is the static network gateway of the bootstrap node.
+	// This can be useful in environments without a DHCP server.
+	// +kubebuilder:validation:Format=ip
+	// +optional
+	BootstrapExternalStaticGateway string `json:"bootstrapExternalStaticGateway,omitempty"`
 }

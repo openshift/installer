@@ -9,28 +9,33 @@ resource "google_service_account" "master-node-sa" {
 }
 
 resource "google_project_iam_member" "master-compute-admin" {
-  role   = "roles/compute.instanceAdmin"
-  member = "serviceAccount:${google_service_account.master-node-sa.email}"
+  project = var.project_id
+  role    = "roles/compute.instanceAdmin"
+  member  = "serviceAccount:${google_service_account.master-node-sa.email}"
 }
 
 resource "google_project_iam_member" "master-network-admin" {
-  role   = "roles/compute.networkAdmin"
-  member = "serviceAccount:${google_service_account.master-node-sa.email}"
+  project = var.project_id
+  role    = "roles/compute.networkAdmin"
+  member  = "serviceAccount:${google_service_account.master-node-sa.email}"
 }
 
 resource "google_project_iam_member" "master-compute-security" {
-  role   = "roles/compute.securityAdmin"
-  member = "serviceAccount:${google_service_account.master-node-sa.email}"
+  project = var.project_id
+  role    = "roles/compute.securityAdmin"
+  member  = "serviceAccount:${google_service_account.master-node-sa.email}"
 }
 
 resource "google_project_iam_member" "master-storage-admin" {
-  role   = "roles/storage.admin"
-  member = "serviceAccount:${google_service_account.master-node-sa.email}"
+  project = var.project_id
+  role    = "roles/storage.admin"
+  member  = "serviceAccount:${google_service_account.master-node-sa.email}"
 }
 
 resource "google_project_iam_member" "master-service-account-user" {
-  role   = "roles/iam.serviceAccountUser"
-  member = "serviceAccount:${google_service_account.master-node-sa.email}"
+  project = var.project_id
+  role    = "roles/iam.serviceAccountUser"
+  member  = "serviceAccount:${google_service_account.master-node-sa.email}"
 }
 
 resource "google_compute_instance" "master" {

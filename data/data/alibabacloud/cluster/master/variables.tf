@@ -11,9 +11,14 @@ variable "vpc_id" {
   description = "The VPC ID of the master ECS."
 }
 
-variable "vswitch_ids" {
+variable "zone_ids" {
   type        = list(string)
-  description = "The VSwitch IDs of the master ECS. Example: [vsw-xxx1, vsw-xxx2, vsw-xxx3]"
+  description = "The availability zones in which to create the masters. The length of this list must match instance_count."
+}
+
+variable "az_to_vswitch_id" {
+  type        = map(string)
+  description = "Map from availability zone ID to the ID of the VSwitch in that availability zone"
 }
 
 variable "sg_id" {
@@ -23,6 +28,14 @@ variable "sg_id" {
 
 variable "slb_ids" {
   type = list(string)
+}
+
+variable "slb_group_length" {
+  description = "The length of the 'slb_ids' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
+}
+
+variable "instance_count" {
+  type = string
 }
 
 variable "instance_type" {
@@ -42,8 +55,7 @@ variable "system_disk_size" {
 
 variable "system_disk_category" {
   type        = string
-  description = "The system disk category of the master ECS.Valid values are cloud_efficiency, cloud_ssd, cloud_essd. Default value is cloud_essd."
-  default     = "cloud_essd"
+  description = "The system disk category of the master ECS. Valid values are cloud_efficiency, cloud_ssd, cloud_essd."
 }
 
 variable "role_name" {
@@ -57,6 +69,10 @@ variable "user_data_ign" {
 
 variable "tags" {
   type        = map(string)
-  default     = {}
   description = "Tags to be applied to created resources."
+}
+
+variable "publish_strategy" {
+  type        = string
+  description = "The cluster publishing strategy, either Internal or External"
 }

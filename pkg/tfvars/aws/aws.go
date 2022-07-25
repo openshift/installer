@@ -4,41 +4,40 @@ package aws
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
+	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
-	"github.com/pkg/errors"
-	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
-
-	configaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
+	"github.com/pkg/errors"
 )
 
 type config struct {
-	AMI                     string            `json:"aws_ami"`
-	AMIRegion               string            `json:"aws_ami_region"`
-	CustomEndpoints         map[string]string `json:"custom_endpoints,omitempty"`
-	ExtraTags               map[string]string `json:"aws_extra_tags,omitempty"`
-	BootstrapInstanceType   string            `json:"aws_bootstrap_instance_type,omitempty"`
-	MasterInstanceType      string            `json:"aws_master_instance_type,omitempty"`
-	MasterAvailabilityZones []string          `json:"aws_master_availability_zones"`
-	WorkerAvailabilityZones []string          `json:"aws_worker_availability_zones"`
-	IOPS                    int64             `json:"aws_master_root_volume_iops"`
-	Size                    int64             `json:"aws_master_root_volume_size,omitempty"`
-	Type                    string            `json:"aws_master_root_volume_type,omitempty"`
-	Encrypted               bool              `json:"aws_master_root_volume_encrypted"`
-	KMSKeyID                string            `json:"aws_master_root_volume_kms_key_id,omitempty"`
-	Region                  string            `json:"aws_region,omitempty"`
-	VPC                     string            `json:"aws_vpc,omitempty"`
-	PrivateSubnets          []string          `json:"aws_private_subnets,omitempty"`
-	PublicSubnets           *[]string         `json:"aws_public_subnets,omitempty"`
-	InternalZone            string            `json:"aws_internal_zone,omitempty"`
-	PublishStrategy         string            `json:"aws_publish_strategy,omitempty"`
-	SkipRegionCheck         bool              `json:"aws_skip_region_validation"`
-	IgnitionBucket          string            `json:"aws_ignition_bucket"`
-	BootstrapIgnitionStub   string            `json:"aws_bootstrap_stub_ignition"`
-	MasterIAMRoleName       string            `json:"aws_master_iam_role_name,omitempty"`
-	WorkerIAMRoleName       string            `json:"aws_worker_iam_role_name,omitempty"`
+	AMI                          string            `json:"aws_ami"`
+	AMIRegion                    string            `json:"aws_ami_region"`
+	CustomEndpoints              map[string]string `json:"custom_endpoints,omitempty"`
+	ExtraTags                    map[string]string `json:"aws_extra_tags,omitempty"`
+	BootstrapInstanceType        string            `json:"aws_bootstrap_instance_type,omitempty"`
+	MasterInstanceType           string            `json:"aws_master_instance_type,omitempty"`
+	MasterAvailabilityZones      []string          `json:"aws_master_availability_zones"`
+	WorkerAvailabilityZones      []string          `json:"aws_worker_availability_zones"`
+	IOPS                         int64             `json:"aws_master_root_volume_iops"`
+	Size                         int64             `json:"aws_master_root_volume_size,omitempty"`
+	Type                         string            `json:"aws_master_root_volume_type,omitempty"`
+	Encrypted                    bool              `json:"aws_master_root_volume_encrypted"`
+	KMSKeyID                     string            `json:"aws_master_root_volume_kms_key_id,omitempty"`
+	Region                       string            `json:"aws_region,omitempty"`
+	VPC                          string            `json:"aws_vpc,omitempty"`
+	PrivateSubnets               []string          `json:"aws_private_subnets,omitempty"`
+	PublicSubnets                *[]string         `json:"aws_public_subnets,omitempty"`
+	InternalZone                 string            `json:"aws_internal_zone,omitempty"`
+	PublishStrategy              string            `json:"aws_publish_strategy,omitempty"`
+	IgnitionBucket               string            `json:"aws_ignition_bucket"`
+	BootstrapIgnitionStub        string            `json:"aws_bootstrap_stub_ignition"`
+	MasterIAMRoleName            string            `json:"aws_master_iam_role_name,omitempty"`
+	WorkerIAMRoleName            string            `json:"aws_worker_iam_role_name,omitempty"`
+	MasterMetadataAuthentication string            `json:"aws_master_instance_metadata_authentication,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -52,7 +51,7 @@ type TFVarsSources struct {
 
 	AMIID, AMIRegion string
 
-	MasterConfigs, WorkerConfigs []*v1beta1.AWSMachineProviderConfig
+	MasterConfigs, WorkerConfigs []*machinev1beta1.AWSMachineProviderConfig
 
 	IgnitionBucket, IgnitionPresignedURL string
 
@@ -60,7 +59,11 @@ type TFVarsSources struct {
 
 	MasterIAMRoleName, WorkerIAMRoleName string
 
+	MasterMetadataAuthentication string
+
 	Architecture types.Architecture
+
+	Proxy *types.Proxy
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
@@ -128,13 +131,12 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PrivateSubnets:          sources.PrivateSubnets,
 		InternalZone:            sources.InternalZone,
 		PublishStrategy:         string(sources.Publish),
-		SkipRegionCheck:         !configaws.IsKnownRegion(masterConfig.Placement.Region, sources.Architecture),
 		IgnitionBucket:          sources.IgnitionBucket,
 		MasterIAMRoleName:       sources.MasterIAMRoleName,
 		WorkerIAMRoleName:       sources.WorkerIAMRoleName,
 	}
 
-	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundle(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle)
+	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle, sources.Proxy)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create stub Ignition config for bootstrap")
 	}
@@ -174,6 +176,10 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	} else {
 		cfg.AMI = sources.AMIID
 		cfg.AMIRegion = sources.AMIRegion
+	}
+
+	if masterConfig.MetadataServiceOptions.Authentication != "" {
+		cfg.MasterMetadataAuthentication = strings.ToLower(string(masterConfig.MetadataServiceOptions.Authentication))
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

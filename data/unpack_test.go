@@ -3,19 +3,14 @@ package data
 import (
 	"bytes"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestUnpack(t *testing.T) {
-	path, err := ioutil.TempDir("", "installer-data-test-")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(path)
+	path := t.TempDir()
 
-	err = Unpack(path, ".")
+	err := Unpack(path, ".")
 	if err != nil {
 		t.Fatal(err)
 	}

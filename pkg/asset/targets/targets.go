@@ -35,7 +35,6 @@ var (
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.CVOOverrides{},
 		&bootkube.KubeSystemConfigmapRootCA{},
-		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
@@ -57,6 +56,7 @@ var (
 	SingleNodeIgnitionConfig = []asset.WritableAsset{
 		&kubeconfig.AdminClient{},
 		&password.KubeadminPassword{},
+		&machine.Worker{},
 		&bootstrap.SingleNodeBootstrapInPlace{},
 		&cluster.Metadata{},
 	}

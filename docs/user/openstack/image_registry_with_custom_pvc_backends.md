@@ -36,7 +36,7 @@ metadata:
 spec:
   accessModes:
   - ReadWriteOnce
-  volumeMode: Block
+  volumeMode: Filesystem
   resources:
     requests:
       storage: 100Gi

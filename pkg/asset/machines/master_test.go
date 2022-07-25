@@ -1,9 +1,14 @@
 package machines
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/ghodss/yaml"
+	"github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
@@ -13,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/baremetal"
 )
 
 func TestMasterGenerateMachineConfigs(t *testing.T) {
@@ -67,18 +73,10 @@ spec:
   config:
     ignition:
       version: 3.2.0
-    storage:
-      files:
-      - contents:
-          source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
-        mode: 384
-        overwrite: true
-        path: /etc/pivot/kernel-args
-        user:
-          name: root
   extensions: null
   fips: false
-  kernelArguments: null
+  kernelArguments:
+  - nosmt
   kernelType: ""
   osImageURL: ""
 `},
@@ -98,18 +96,10 @@ spec:
   config:
     ignition:
       version: 3.2.0
-    storage:
-      files:
-      - contents:
-          source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
-        mode: 384
-        overwrite: true
-        path: /etc/pivot/kernel-args
-        user:
-          name: root
   extensions: null
   fips: false
-  kernelArguments: null
+  kernelArguments:
+  - nosmt
   kernelType: ""
   osImageURL: ""
 `, `apiVersion: machineconfiguration.openshift.io/v1
@@ -243,4 +233,99 @@ func TestControlPlaneIsNotModified(t *testing.T) {
 	if installConfig.Config.ControlPlane.Platform.AWS.Type != "" {
 		t.Fatalf("control plance in the install config has been modified")
 	}
+}
+
+func TestBaremetalGeneratedAssetFiles(t *testing.T) {
+	parents := asset.Parents{}
+	installConfig := installconfig.InstallConfig{
+		Config: &types.InstallConfig{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-cluster",
+			},
+			Platform: types.Platform{
+				BareMetal: &baremetal.Platform{
+					Hosts: []*baremetal.Host{
+						{
+							Name: "master-0",
+							Role: "master",
+							BMC: baremetal.BMC{
+								Username: "usr-0",
+								Password: "pwd-0",
+							},
+							NetworkConfig: networkConfig("interfaces:"),
+						},
+						{
+							Name: "worker-0",
+							Role: "worker",
+							BMC: baremetal.BMC{
+								Username: "usr-1",
+								Password: "pwd-1",
+							},
+						},
+					},
+				},
+			},
+			ControlPlane: &types.MachinePool{
+				Replicas: pointer.Int64Ptr(1),
+				Platform: types.MachinePoolPlatform{
+					BareMetal: &baremetal.MachinePool{},
+				},
+			},
+			Compute: []types.MachinePool{
+				{
+					Replicas: pointer.Int64Ptr(1),
+					Platform: types.MachinePoolPlatform{},
+				},
+			},
+		},
+	}
+
+	parents.Add(
+		&installconfig.ClusterID{
+			UUID:    "test-uuid",
+			InfraID: "test-infra-id",
+		},
+		&installConfig,
+		(*rhcos.Image)(pointer.StringPtr("test-image")),
+		&machine.Master{
+			File: &asset.File{
+				Filename: "master-ignition",
+				Data:     []byte("test-ignition"),
+			},
+		},
+	)
+	master := &Master{}
+	assert.NoError(t, master.Generate(parents))
+
+	assert.Len(t, master.HostFiles, 2)
+	verifyHost(t, master.HostFiles[0], "openshift/99_openshift-cluster-api_hosts-0.yaml", "master-0")
+	verifyHost(t, master.HostFiles[1], "openshift/99_openshift-cluster-api_hosts-1.yaml", "worker-0")
+
+	assert.Len(t, master.SecretFiles, 2)
+	verifySecret(t, master.SecretFiles[0], "openshift/99_openshift-cluster-api_host-bmc-secrets-0.yaml", "master-0-bmc-secret", "map[password:[112 119 100 45 48] username:[117 115 114 45 48]]")
+	verifySecret(t, master.SecretFiles[1], "openshift/99_openshift-cluster-api_host-bmc-secrets-1.yaml", "worker-0-bmc-secret", "map[password:[112 119 100 45 49] username:[117 115 114 45 49]]")
+
+	assert.Len(t, master.NetworkConfigSecretFiles, 1)
+	verifySecret(t, master.NetworkConfigSecretFiles[0], "openshift/99_openshift-cluster-api_host-network-config-secrets-0.yaml", "master-0-network-config-secret", "map[nmstate:[105 110 116 101 114 102 97 99 101 115 58 32 110 117 108 108 10]]")
+}
+
+func verifyHost(t *testing.T, a *asset.File, eFilename, eName string) {
+	assert.Equal(t, a.Filename, eFilename)
+	var host v1alpha1.BareMetalHost
+	assert.NoError(t, yaml.Unmarshal(a.Data, &host))
+	assert.Equal(t, eName, host.Name)
+}
+
+func verifySecret(t *testing.T, a *asset.File, eFilename, eName, eData string) {
+	assert.Equal(t, a.Filename, eFilename)
+	var secret corev1.Secret
+	assert.NoError(t, yaml.Unmarshal(a.Data, &secret))
+	assert.Equal(t, eName, secret.Name)
+	assert.Equal(t, eData, fmt.Sprintf("%v", secret.Data))
+}
+
+func networkConfig(config string) *v1.JSON {
+	var nc v1.JSON
+	yaml.Unmarshal([]byte(config), &nc)
+	return &nc
 }

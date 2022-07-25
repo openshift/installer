@@ -1,29 +1,25 @@
 output "vpc_id" {
-  value = alicloud_vpc.vpc.id
+  value = local.vpc_id
 }
 
 output "vswitch_ids" {
-  value = alicloud_vswitch.vswitchs.*.id
+  value = local.vswitch_ids
 }
 
-output "gw_id" {
-  value = alicloud_nat_gateway.nat_gateway.id
-}
-
-output "eip_id" {
-  value = alicloud_eip_address.eip.id
-}
-
-output "eip_ip" {
-  value = alicloud_eip_address.eip.ip_address
+output "az_to_vswitch_id" {
+  value = zipmap(data.alicloud_vswitches.vswitches.vswitches.*.zone_id, data.alicloud_vswitches.vswitches.vswitches.*.id)
 }
 
 output "slb_ids" {
-  value = [alicloud_slb_load_balancer.slb_external.id, alicloud_slb_load_balancer.slb_internal.id]
+  value = concat(alicloud_slb_load_balancer.slb_external[*].id, [alicloud_slb_load_balancer.slb_internal.id])
+}
+
+output "slb_group_length" {
+  value = length(concat(alicloud_slb_load_balancer.slb_external[*].id, [alicloud_slb_load_balancer.slb_internal.id]))
 }
 
 output "slb_external_ip" {
-  value = alicloud_slb_load_balancer.slb_external.address
+  value = local.is_external ? alicloud_slb_load_balancer.slb_external[0].address : null
 }
 
 output "slb_internal_ip" {

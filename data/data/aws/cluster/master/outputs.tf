@@ -1,3 +1,3 @@
 output "ip_addresses" {
-  value = aws_network_interface.master.*.private_ips[0]
+  value = [for m in aws_network_interface.master : tolist(m.private_ips)[0]]
 }

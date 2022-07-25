@@ -18,9 +18,9 @@ provider "google" {
 }
 
 resource "google_storage_bucket" "ignition" {
-  name               = "${var.cluster_id}-bootstrap-ignition"
-  location           = var.gcp_region
-  bucket_policy_only = true
+  name                        = "${var.cluster_id}-bootstrap-ignition"
+  location                    = var.gcp_region
+  uniform_bucket_level_access = true
 }
 
 resource "google_storage_bucket_object" "ignition" {

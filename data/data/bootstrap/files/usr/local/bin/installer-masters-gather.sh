@@ -25,16 +25,19 @@ done
 
 echo "Gathering master journals ..."
 mkdir -p "${ARTIFACTS}/journals"
-for service in kubelet crio machine-config-master-firstboot machine-config-daemon-host pivot openshift-azure-routes openshift-gcp-routes
+for service in crio kubelet machine-config-daemon-host machine-config-daemon-firstboot openshift-azure-routes openshift-gcp-routes pivot sssd
 do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/journals/${service}.log"
 done
+
+journalctl --no-pager | gzip > "${ARTIFACTS}/journals/journal.log.gz"
 
 echo "Gathering master networking ..."
 mkdir -p "${ARTIFACTS}/network"
 ip addr >& "${ARTIFACTS}/network/ip-addr.txt"
 ip route >& "${ARTIFACTS}/network/ip-route.txt"
 hostname >& "${ARTIFACTS}/network/hostname.txt"
+netstat -anp >& "${ARTIFACTS}/network/netstat.txt"
 cp -r /etc/resolv.conf "${ARTIFACTS}/network/"
 
 echo "Gathering master containers ..."

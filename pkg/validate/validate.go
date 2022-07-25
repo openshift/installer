@@ -279,3 +279,11 @@ func Host(v string) error {
 	}
 	return validateSubdomain(v)
 }
+
+// OnPremClusterName verifies if the cluster name contains a '.' and returns an error if it does.
+func OnPremClusterName(v string) error {
+	if strings.Contains(v, ".") {
+		return errors.New("cluster name must not contain '.'")
+	}
+	return ClusterName(v)
+}

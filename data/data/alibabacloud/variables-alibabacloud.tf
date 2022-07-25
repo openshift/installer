@@ -11,9 +11,31 @@ variable "ali_region_id" {
   description = "The target Alibaba Cloud region for the cluster."
 }
 
-variable "ali_zone_ids" {
+variable "ali_vpc_id" {
+  type = string
+}
+
+variable "ali_vswitch_ids" {
+  type = list(string)
+}
+
+variable "ali_publish_strategy" {
+  type        = string
+  description = "The cluster publishing strategy, either Internal or External"
+}
+
+variable "ali_private_zone_id" {
+  type = string
+}
+
+variable "ali_master_availability_zone_ids" {
   type        = list(string)
-  description = "The availability zones in which to create the masters."
+  description = "The availability zones in which to create the masters. The length of this list must match master_count."
+}
+
+variable "ali_worker_availability_zone_ids" {
+  type        = list(string)
+  description = "The availability zones to provision for workers. Worker instances are created by the machine-API operator, but this variable controls their supporting VSwitches."
 }
 
 variable "ali_nat_gateway_zone_id" {
@@ -47,8 +69,7 @@ variable "ali_system_disk_size" {
 
 variable "ali_system_disk_category" {
   type        = string
-  description = "The system disk category of the master ECS.Valid values are cloud_efficiency, cloud_ssd, cloud_essd. Default value is cloud_essd."
-  default     = "cloud_essd"
+  description = "The system disk category of the master ECS. Valid values are cloud_efficiency, cloud_ssd, cloud_essd."
 }
 
 variable "ali_extra_tags" {
@@ -59,7 +80,6 @@ variable "ali_extra_tags" {
 
 Example: `{ "key" = "value", "foo" = "bar" }`
 EOF
-  default = {}
 }
 
 variable "ali_ignition_bucket" {
@@ -73,4 +93,10 @@ variable "ali_bootstrap_stub_ignition" {
 The stub Ignition configuration used to boot the bootstrap ECS instance. This already points to the presigned URL for the OSS bucket
 specified in ‘ali_ignition_bucket’.
 EOF
+}
+
+variable "ali_bootstrap_lb" {
+  type        = bool
+  description = "Setting this to false allows the bootstrap resources to be removed from the cluster load balancers."
+  default     = true
 }

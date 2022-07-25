@@ -34,18 +34,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// Supporting mocking out functions for testing
+// Supporting mocking out functions for testing.
 var newController = controller.New
 var getGvk = apiutil.GVKForObject
 
 // project represents other forms that the we can use to
-// send/receive a given resource (metadata-only, unstructured, etc)
+// send/receive a given resource (metadata-only, unstructured, etc).
 type objectProjection int
 
 const (
-	// projectAsNormal doesn't change the object from the form given
+	// projectAsNormal doesn't change the object from the form given.
 	projectAsNormal objectProjection = iota
-	// projectAsMetadata turns this into an metadata-only watch
+	// projectAsMetadata turns this into an metadata-only watch.
 	projectAsMetadata
 )
 
@@ -61,7 +61,7 @@ type Builder struct {
 	name             string
 }
 
-// ControllerManagedBy returns a new controller builder that will be started by the provided Manager
+// ControllerManagedBy returns a new controller builder that will be started by the provided Manager.
 func ControllerManagedBy(m manager.Manager) *Builder {
 	return &Builder{mgr: m}
 }
@@ -77,7 +77,7 @@ type ForInput struct {
 // For defines the type of Object being *reconciled*, and configures the ControllerManagedBy to respond to create / delete /
 // update events by *reconciling the object*.
 // This is the equivalent of calling
-// Watches(&source.Kind{Type: apiType}, &handler.EnqueueRequestForObject{})
+// Watches(&source.Kind{Type: apiType}, &handler.EnqueueRequestForObject{}).
 func (blder *Builder) For(object client.Object, opts ...ForOption) *Builder {
 	if blder.forInput.object != nil {
 		blder.forInput.err = fmt.Errorf("For(...) should only be called once, could not assign multiple objects for reconciliation")
@@ -101,7 +101,7 @@ type OwnsInput struct {
 
 // Owns defines types of Objects being *generated* by the ControllerManagedBy, and configures the ControllerManagedBy to respond to
 // create / delete / update events by *reconciling the owner object*.  This is the equivalent of calling
-// Watches(&source.Kind{Type: <ForType-forInput>}, &handler.EnqueueRequestForOwner{OwnerType: apiType, IsController: true})
+// Watches(&source.Kind{Type: <ForType-forInput>}, &handler.EnqueueRequestForOwner{OwnerType: apiType, IsController: true}).
 func (blder *Builder) Owns(object client.Object, opts ...OwnsOption) *Builder {
 	input := OwnsInput{object: object}
 	for _, opt := range opts {
@@ -164,13 +164,13 @@ func (blder *Builder) Named(name string) *Builder {
 	return blder
 }
 
-// Complete builds the Application ControllerManagedBy.
+// Complete builds the Application Controller.
 func (blder *Builder) Complete(r reconcile.Reconciler) error {
 	_, err := blder.Build(r)
 	return err
 }
 
-// Build builds the Application ControllerManagedBy and returns the Controller it created.
+// Build builds the Application Controller and returns the Controller it created.
 func (blder *Builder) Build(r reconcile.Reconciler) (controller.Controller, error) {
 	if r == nil {
 		return nil, fmt.Errorf("must provide a non-nil Reconciler")
@@ -305,7 +305,7 @@ func (blder *Builder) doController(r reconcile.Reconciler) error {
 	}
 
 	// Setup the logger.
-	if ctrlOptions.Log == nil {
+	if ctrlOptions.Log.GetSink() == nil {
 		ctrlOptions.Log = blder.mgr.GetLogger()
 	}
 	ctrlOptions.Log = ctrlOptions.Log.WithValues("reconciler group", gvk.Group, "reconciler kind", gvk.Kind)

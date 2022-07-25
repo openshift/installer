@@ -1,5 +1,6 @@
 variable "elb_backend_pool_v4_id" {
   type        = string
+  default     = null
   description = "The external load balancer backend pool id. used to attach the bootstrap NIC"
 }
 

@@ -34,16 +34,19 @@ done
 
 echo "Gathering bootstrap journals ..."
 mkdir -p "${ARTIFACTS}/bootstrap/journals"
-for service in release-image release-image-download crio-configure bootkube kubelet crio approve-csr ironic master-bmh-update
+for service in approve-csr bootkube crio crio-configure ironic kubelet master-bmh-update release-image release-image-download sssd
 do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/bootstrap/journals/${service}.log"
 done
+
+journalctl --no-pager | gzip > "${ARTIFACTS}/bootstrap/journals/journal.log.gz"
 
 echo "Gathering bootstrap networking ..."
 mkdir -p "${ARTIFACTS}/bootstrap/network"
 ip addr >& "${ARTIFACTS}/bootstrap/network/ip-addr.txt"
 ip route >& "${ARTIFACTS}/bootstrap/network/ip-route.txt"
 hostname >& "${ARTIFACTS}/bootstrap/network/hostname.txt"
+netstat -anp >& "${ARTIFACTS}/bootstrap/network/netstat.txt"
 cp -r /etc/resolv.conf "${ARTIFACTS}/bootstrap/network/"
 
 echo "Gathering bootstrap containers ..."

@@ -70,12 +70,6 @@ resource "azurestack_storage_blob" "ignition" {
   type                   = "block"
 }
 
-data "ignition_config" "redirect" {
-  replace {
-    source = "${azurestack_storage_blob.ignition.url}${data.azurestack_storage_account_sas.ignition.sas}"
-  }
-}
-
 resource "azurestack_public_ip" "bootstrap_public_ip_v4" {
   count = var.azure_private ? 0 : 1
 
@@ -105,7 +99,7 @@ resource "azurestack_network_interface" "bootstrap" {
     public_ip_address_id          = var.azure_private ? null : azurestack_public_ip.bootstrap_public_ip_v4[0].id
     load_balancer_backend_address_pools_ids = concat(
       [var.ilb_backend_pool_v4_id],
-      ! var.azure_private ? [var.elb_backend_pool_v4_id] : null
+      ! var.azure_private ? [var.elb_backend_pool_v4_id] : []
     )
   }
 }
@@ -115,7 +109,7 @@ resource "azurestack_virtual_machine" "bootstrap" {
   location              = var.azure_region
   resource_group_name   = var.resource_group_name
   network_interface_ids = [azurestack_network_interface.bootstrap.id]
-  vm_size               = var.azure_bootstrap_vm_type
+  vm_size               = var.azure_master_vm_type
   availability_set_id   = var.availability_set_id
 
   os_profile {
@@ -125,7 +119,10 @@ resource "azurestack_virtual_machine" "bootstrap" {
     # isn't installed in RHCOS. As a result, this password is never set. It is
     # included here because it is required by the Azure ARM API.
     admin_password = "NotActuallyApplied!"
-    custom_data    = base64encode(data.ignition_config.redirect.rendered)
+
+    custom_data = base64encode(replace(var.azure_bootstrap_ignition_stub,
+      var.azure_bootstrap_ignition_url_placeholder,
+    "${azurestack_storage_blob.ignition.url}${data.azurestack_storage_account_sas.ignition.sas}"))
   }
 
   os_profile_linux_config {
@@ -140,7 +137,7 @@ resource "azurestack_virtual_machine" "bootstrap" {
     name              = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
     create_option     = "FromImage"
     disk_size_gb      = 100
-    managed_disk_type = "Standard_LRS"
+    managed_disk_type = var.azure_master_root_volume_type
   }
 
   boot_diagnostics {

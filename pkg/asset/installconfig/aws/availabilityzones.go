@@ -30,7 +30,9 @@ func availabilityZones(ctx context.Context, session *session.Session, region str
 
 	zones := []string{}
 	for _, zone := range resp.AvailabilityZones {
-		zones = append(zones, *zone.ZoneName)
+		if *zone.ZoneType == "availability-zone" {
+			zones = append(zones, *zone.ZoneName)
+		}
 	}
 
 	if len(zones) == 0 {

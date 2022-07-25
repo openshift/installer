@@ -12,7 +12,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	configaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
@@ -23,8 +22,10 @@ import (
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -86,8 +87,10 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return config.Platform.AWS.AMIID, nil
 		}
 		region := config.Platform.AWS.Region
-		if !configaws.IsKnownRegion(config.Platform.AWS.Region, config.ControlPlane.Architecture) {
-			region = "us-east-1"
+		if !rhcos.AMIRegions(config.ControlPlane.Architecture).Has(region) {
+			const globalResourceRegion = "us-east-1"
+			logrus.Debugf("No AMI found in %s. Using AMI from %s.", region, globalResourceRegion)
+			region = globalResourceRegion
 		}
 		osimage, err := st.GetAMI(archName, region)
 		if err != nil {
@@ -127,6 +130,9 @@ func osImage(config *types.InstallConfig) (string, error) {
 		return "", fmt.Errorf("%s: No openstack build found", st.FormatPrefix(archName))
 	case azure.Name:
 		ext := streamArch.RHELCoreOSExtensions
+		if config.Platform.Azure.CloudName == azure.StackCloud {
+			return config.Platform.Azure.ClusterOSImage, nil
+		}
 		if ext == nil {
 			return "", fmt.Errorf("%s: No azure build found", st.FormatPrefix(archName))
 		}
@@ -140,14 +146,8 @@ func osImage(config *types.InstallConfig) (string, error) {
 		if oi := config.Platform.BareMetal.ClusterOSImage; oi != "" {
 			return oi, nil
 		}
-
-		// Note that baremetal IPI currently uses the OpenStack image
-		// because this contains the necessary ironic config drive
-		// ignition support, which isn't enabled in the UPI BM images
-		if a, ok := streamArch.Artifacts["openstack"]; ok {
-			return rhcos.FindArtifactURL(a)
-		}
-		return "", fmt.Errorf("%s: No openstack build found", st.FormatPrefix(archName))
+		// Use image from release payload
+		return "", nil
 	case vsphere.Name:
 		// Check for image URL override
 		if config.Platform.VSphere.ClusterOSImage != "" {
@@ -164,8 +164,30 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return "", err
 		}
 		return osimage, nil
+	case powervs.Name:
+		// Check for image URL override
+		if config.Platform.PowerVS.ClusterOSImage != "" {
+			return config.Platform.PowerVS.ClusterOSImage, nil
+		}
+
+		if streamArch.Images.PowerVS != nil {
+			vpcRegion := powervs.Regions[config.Platform.PowerVS.Region].VPCRegion
+			img := streamArch.Images.PowerVS.Regions[vpcRegion]
+			logrus.Debug("Power VS using image ", img.Object)
+			return fmt.Sprintf("%s/%s", img.Bucket, img.Object), nil
+		}
+
+		return "", fmt.Errorf("%s: No Power VS build found", st.FormatPrefix(archName))
 	case none.Name:
 		return "", nil
+	case nutanix.Name:
+		if config.Platform.Nutanix != nil && config.Platform.Nutanix.ClusterOSImage != "" {
+			return config.Platform.Nutanix.ClusterOSImage, nil
+		}
+		if a, ok := streamArch.Artifacts["nutanix"]; ok {
+			return rhcos.FindArtifactURL(a)
+		}
+		return "", fmt.Errorf("%s: No nutanix build found", st.FormatPrefix(archName))
 	default:
 		return "", fmt.Errorf("invalid platform %v", config.Platform.Name())
 	}

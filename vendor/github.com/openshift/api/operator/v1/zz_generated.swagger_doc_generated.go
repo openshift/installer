@@ -421,11 +421,24 @@ func (DNSNodePlacement) SwaggerDoc() map[string]string {
 	return map_DNSNodePlacement
 }
 
+var map_DNSOverTLSConfig = map[string]string{
+	"":           "DNSOverTLSConfig describes optional DNSTransportConfig fields that should be captured.",
+	"serverName": "serverName is the upstream server to connect to when forwarding DNS queries. This is required when Transport is set to \"TLS\". ServerName will be validated against the DNS naming conventions in RFC 1123 and should match the TLS certificate installed in the upstream resolver(s).",
+	"caBundle":   "caBundle references a ConfigMap that must contain either a single CA Certificate or a CA Bundle. This allows cluster administrators to provide their own CA or CA bundle for validating the certificate of upstream resolvers.\n\n1. The configmap must contain a `ca-bundle.crt` key. 2. The value must be a PEM encoded CA certificate or CA bundle. 3. The administrator must create this configmap in the openshift-config namespace. 4. The upstream server certificate must contain a Subject Alternative Name (SAN) that matches ServerName.",
+}
+
+func (DNSOverTLSConfig) SwaggerDoc() map[string]string {
+	return map_DNSOverTLSConfig
+}
+
 var map_DNSSpec = map[string]string{
-	"":                "DNSSpec is the specification of the desired behavior of the DNS.",
-	"servers":         "servers is a list of DNS resolvers that provide name query delegation for one or more subdomains outside the scope of the cluster domain. If servers consists of more than one Server, longest suffix match will be used to determine the Server.\n\nFor example, if there are two Servers, one for \"foo.com\" and another for \"a.foo.com\", and the name query is for \"www.a.foo.com\", it will be routed to the Server with Zone \"a.foo.com\".\n\nIf this field is nil, no servers are created.",
-	"nodePlacement":   "nodePlacement provides explicit control over the scheduling of DNS pods.\n\nGenerally, it is useful to run a DNS pod on every node so that DNS queries are always handled by a local DNS pod instead of going over the network to a DNS pod on another node.  However, security policies may require restricting the placement of DNS pods to specific nodes. For example, if a security policy prohibits pods on arbitrary nodes from communicating with the API, a node selector can be specified to restrict DNS pods to nodes that are permitted to communicate with the API.  Conversely, if running DNS pods on nodes with a particular taint is desired, a toleration can be specified for that taint.\n\nIf unset, defaults are used. See nodePlacement for more details.",
-	"managementState": "managementState indicates whether the DNS operator should manage cluster DNS",
+	"":                  "DNSSpec is the specification of the desired behavior of the DNS.",
+	"servers":           "servers is a list of DNS resolvers that provide name query delegation for one or more subdomains outside the scope of the cluster domain. If servers consists of more than one Server, longest suffix match will be used to determine the Server.\n\nFor example, if there are two Servers, one for \"foo.com\" and another for \"a.foo.com\", and the name query is for \"www.a.foo.com\", it will be routed to the Server with Zone \"a.foo.com\".\n\nIf this field is nil, no servers are created.",
+	"upstreamResolvers": "upstreamResolvers defines a schema for configuring CoreDNS to proxy DNS messages to upstream resolvers for the case of the default (\".\") server\n\nIf this field is not specified, the upstream used will default to /etc/resolv.conf, with policy \"sequential\"",
+	"nodePlacement":     "nodePlacement provides explicit control over the scheduling of DNS pods.\n\nGenerally, it is useful to run a DNS pod on every node so that DNS queries are always handled by a local DNS pod instead of going over the network to a DNS pod on another node.  However, security policies may require restricting the placement of DNS pods to specific nodes. For example, if a security policy prohibits pods on arbitrary nodes from communicating with the API, a node selector can be specified to restrict DNS pods to nodes that are permitted to communicate with the API.  Conversely, if running DNS pods on nodes with a particular taint is desired, a toleration can be specified for that taint.\n\nIf unset, defaults are used. See nodePlacement for more details.",
+	"managementState":   "managementState indicates whether the DNS operator should manage cluster DNS",
+	"operatorLogLevel":  "operatorLogLevel controls the logging level of the DNS Operator. Valid values are: \"Normal\", \"Debug\", \"Trace\". Defaults to \"Normal\". setting operatorLogLevel: Trace will produce extremely verbose logs.",
+	"logLevel":          "logLevel describes the desired logging verbosity for CoreDNS. Any one of the following values may be specified: * Normal logs errors from upstream resolvers. * Debug logs errors, NXDOMAIN responses, and NODATA responses. * Trace logs errors and all responses.\n Setting logLevel: Trace will produce extremely verbose logs.\nValid values are: \"Normal\", \"Debug\", \"Trace\". Defaults to \"Normal\".",
 }
 
 func (DNSSpec) SwaggerDoc() map[string]string {
@@ -443,10 +456,21 @@ func (DNSStatus) SwaggerDoc() map[string]string {
 	return map_DNSStatus
 }
 
+var map_DNSTransportConfig = map[string]string{
+	"":          "DNSTransportConfig groups related configuration parameters used for configuring forwarding to upstream resolvers that support DNS-over-TLS.",
+	"transport": "transport allows cluster administrators to opt-in to using a DNS-over-TLS connection between cluster DNS and an upstream resolver(s). Configuring TLS as the transport at this level without configuring a CABundle will result in the system certificates being used to verify the serving certificate of the upstream resolver(s).\n\nPossible values: \"\" (empty) - This means no explicit choice has been made and the platform chooses the default which is subject to change over time. The current default is \"Cleartext\". \"Cleartext\" - Cluster admin specified cleartext option. This results in the same functionality as an empty value but may be useful when a cluster admin wants to be more explicit about the transport, or wants to switch from \"TLS\" to \"Cleartext\" explicitly. \"TLS\" - This indicates that DNS queries should be sent over a TLS connection. If Transport is set to TLS, you MUST also set ServerName. If a port is not included with the upstream IP, port 853 will be tried by default per RFC 7858 section 3.1; https://datatracker.ietf.org/doc/html/rfc7858#section-3.1.",
+	"tls":       "tls contains the additional configuration options to use when Transport is set to \"TLS\".",
+}
+
+func (DNSTransportConfig) SwaggerDoc() map[string]string {
+	return map_DNSTransportConfig
+}
+
 var map_ForwardPlugin = map[string]string{
-	"":          "ForwardPlugin defines a schema for configuring the CoreDNS forward plugin.",
-	"upstreams": "upstreams is a list of resolvers to forward name queries for subdomains of Zones. Each instance of CoreDNS performs health checking of Upstreams. When a healthy upstream returns an error during the exchange, another resolver is tried from Upstreams. The Upstreams are selected in the order specified in Policy. Each upstream is represented by an IP address or IP:port if the upstream listens on a port other than 53.\n\nA maximum of 15 upstreams is allowed per ForwardPlugin.",
-	"policy":    "policy is used to determine the order in which upstream servers are selected for querying. Any one of the following values may be specified:\n\n* \"Random\" picks a random upstream server for each query. * \"RoundRobin\" picks upstream servers in a round-robin order, moving to the next server for each new query. * \"Sequential\" tries querying upstream servers in a sequential order until one responds, starting with the first server for each new query.\n\nThe default value is \"Random\"",
+	"":                "ForwardPlugin defines a schema for configuring the CoreDNS forward plugin.",
+	"upstreams":       "upstreams is a list of resolvers to forward name queries for subdomains of Zones. Each instance of CoreDNS performs health checking of Upstreams. When a healthy upstream returns an error during the exchange, another resolver is tried from Upstreams. The Upstreams are selected in the order specified in Policy. Each upstream is represented by an IP address or IP:port if the upstream listens on a port other than 53.\n\nA maximum of 15 upstreams is allowed per ForwardPlugin.",
+	"policy":          "policy is used to determine the order in which upstream servers are selected for querying. Any one of the following values may be specified:\n\n* \"Random\" picks a random upstream server for each query. * \"RoundRobin\" picks upstream servers in a round-robin order, moving to the next server for each new query. * \"Sequential\" tries querying upstream servers in a sequential order until one responds, starting with the first server for each new query.\n\nThe default value is \"Random\"",
+	"transportConfig": "transportConfig is used to configure the transport type, server name, and optional custom CA or CA bundle to use when forwarding DNS requests to an upstream resolver.\n\nThe default value is \"\" (empty) which results in a standard cleartext connection being used when forwarding DNS requests to an upstream resolver.",
 }
 
 func (ForwardPlugin) SwaggerDoc() map[string]string {
@@ -462,6 +486,28 @@ var map_Server = map[string]string{
 
 func (Server) SwaggerDoc() map[string]string {
 	return map_Server
+}
+
+var map_Upstream = map[string]string{
+	"":        "Upstream can either be of type SystemResolvConf, or of type Network.\n\n* For an Upstream of type SystemResolvConf, no further fields are necessary:\n  The upstream will be configured to use /etc/resolv.conf.\n* For an Upstream of type Network, a NetworkResolver field needs to be defined\n  with an IP address or IP:port if the upstream listens on a port other than 53.",
+	"type":    "Type defines whether this upstream contains an IP/IP:port resolver or the local /etc/resolv.conf. Type accepts 2 possible values: SystemResolvConf or Network.\n\n* When SystemResolvConf is used, the Upstream structure does not require any further fields to be defined:\n  /etc/resolv.conf will be used\n* When Network is used, the Upstream structure must contain at least an Address",
+	"address": "Address must be defined when Type is set to Network. It will be ignored otherwise. It must be a valid ipv4 or ipv6 address.",
+	"port":    "Port may be defined when Type is set to Network. It will be ignored otherwise. Port must be between 65535",
+}
+
+func (Upstream) SwaggerDoc() map[string]string {
+	return map_Upstream
+}
+
+var map_UpstreamResolvers = map[string]string{
+	"":                "UpstreamResolvers defines a schema for configuring the CoreDNS forward plugin in the specific case of the default (\".\") server. It defers from ForwardPlugin in the default values it accepts: * At least one upstream should be specified. * the default policy is Sequential",
+	"upstreams":       "Upstreams is a list of resolvers to forward name queries for the \".\" domain. Each instance of CoreDNS performs health checking of Upstreams. When a healthy upstream returns an error during the exchange, another resolver is tried from Upstreams. The Upstreams are selected in the order specified in Policy.\n\nA maximum of 15 upstreams is allowed per ForwardPlugin. If no Upstreams are specified, /etc/resolv.conf is used by default",
+	"policy":          "Policy is used to determine the order in which upstream servers are selected for querying. Any one of the following values may be specified:\n\n* \"Random\" picks a random upstream server for each query. * \"RoundRobin\" picks upstream servers in a round-robin order, moving to the next server for each new query. * \"Sequential\" tries querying upstream servers in a sequential order until one responds, starting with the first server for each new query.\n\nThe default value is \"Sequential\"",
+	"transportConfig": "transportConfig is used to configure the transport type, server name, and optional custom CA or CA bundle to use when forwarding DNS requests to an upstream resolver.\n\nThe default value is \"\" (empty) which results in a standard cleartext connection being used when forwarding DNS requests to an upstream resolver.",
+}
+
+func (UpstreamResolvers) SwaggerDoc() map[string]string {
+	return map_UpstreamResolvers
 }
 
 var map_Etcd = map[string]string{
@@ -482,7 +528,8 @@ func (EtcdList) SwaggerDoc() map[string]string {
 }
 
 var map_AWSClassicLoadBalancerParameters = map[string]string{
-	"": "AWSClassicLoadBalancerParameters holds configuration parameters for an AWS Classic load balancer.",
+	"":                      "AWSClassicLoadBalancerParameters holds configuration parameters for an AWS Classic load balancer.",
+	"connectionIdleTimeout": "connectionIdleTimeout specifies the maximum time period that a connection may be idle before the load balancer closes the connection.  The value must be parseable as a time duration value; see <https://pkg.go.dev/time#ParseDuration>.  A nil or zero value means no opinion, in which case a default value is used.  The default value for this field is 60s.  This default is subject to change.",
 }
 
 func (AWSClassicLoadBalancerParameters) SwaggerDoc() map[string]string {
@@ -572,8 +619,11 @@ func (HTTPCompressionPolicy) SwaggerDoc() map[string]string {
 }
 
 var map_HostNetworkStrategy = map[string]string{
-	"":         "HostNetworkStrategy holds parameters for the HostNetwork endpoint publishing strategy.",
-	"protocol": "protocol specifies whether the IngressController expects incoming connections to use plain TCP or whether the IngressController expects PROXY protocol.\n\nPROXY protocol can be used with load balancers that support it to communicate the source addresses of client connections when forwarding those connections to the IngressController.  Using PROXY protocol enables the IngressController to report those source addresses instead of reporting the load balancer's address in HTTP headers and logs.  Note that enabling PROXY protocol on the IngressController will cause connections to fail if you are not using a load balancer that uses PROXY protocol to forward connections to the IngressController.  See http://www.haproxy.org/download/2.2/doc/proxy-protocol.txt for information about PROXY protocol.\n\nThe following values are valid for this field:\n\n* The empty string. * \"TCP\". * \"PROXY\".\n\nThe empty string specifies the default, which is TCP without PROXY protocol.  Note that the default is subject to change.",
+	"":          "HostNetworkStrategy holds parameters for the HostNetwork endpoint publishing strategy.",
+	"protocol":  "protocol specifies whether the IngressController expects incoming connections to use plain TCP or whether the IngressController expects PROXY protocol.\n\nPROXY protocol can be used with load balancers that support it to communicate the source addresses of client connections when forwarding those connections to the IngressController.  Using PROXY protocol enables the IngressController to report those source addresses instead of reporting the load balancer's address in HTTP headers and logs.  Note that enabling PROXY protocol on the IngressController will cause connections to fail if you are not using a load balancer that uses PROXY protocol to forward connections to the IngressController.  See http://www.haproxy.org/download/2.2/doc/proxy-protocol.txt for information about PROXY protocol.\n\nThe following values are valid for this field:\n\n* The empty string. * \"TCP\". * \"PROXY\".\n\nThe empty string specifies the default, which is TCP without PROXY protocol.  Note that the default is subject to change.",
+	"httpPort":  "httpPort is the port on the host which should be used to listen for HTTP requests. This field should be set when port 80 is already in use. The value should not coincide with the NodePort range of the cluster. When the value is 0 or is not specified it defaults to 80.",
+	"httpsPort": "httpsPort is the port on the host which should be used to listen for HTTPS requests. This field should be set when port 443 is already in use. The value should not coincide with the NodePort range of the cluster. When the value is 0 or is not specified it defaults to 443.",
+	"statsPort": "statsPort is the port on the host where the stats from the router are published. The value should not coincide with the NodePort range of the cluster. If an external load balancer is configured to forward connections to this IngressController, the load balancer should use this port for health checks. The load balancer can send HTTP probes on this port on a given node, with the path /healthz/ready to determine if the ingress controller is ready to receive traffic on the node. For proper operation the load balancer must not forward traffic to a node until the health check reports ready. The load balancer should also stop forwarding requests within a maximum of 45 seconds after /healthz/ready starts reporting not-ready. Probing every 5 to 10 seconds, with a 5-second timeout and with a threshold of two successful or failed requests to become healthy or unhealthy respectively, are well-tested values. When the value is 0 or is not specified it defaults to 1936.",
 }
 
 func (HostNetworkStrategy) SwaggerDoc() map[string]string {
@@ -672,7 +722,7 @@ var map_IngressControllerSpec = map[string]string{
 	"":                           "IngressControllerSpec is the specification of the desired behavior of the IngressController.",
 	"domain":                     "domain is a DNS name serviced by the ingress controller and is used to configure multiple features:\n\n* For the LoadBalancerService endpoint publishing strategy, domain is\n  used to configure DNS records. See endpointPublishingStrategy.\n\n* When using a generated default certificate, the certificate will be valid\n  for domain and its subdomains. See defaultCertificate.\n\n* The value is published to individual Route statuses so that end-users\n  know where to target external DNS records.\n\ndomain must be unique among all IngressControllers, and cannot be updated.\n\nIf empty, defaults to ingress.config.openshift.io/cluster .spec.domain.",
 	"httpErrorCodePages":         "httpErrorCodePages specifies a configmap with custom error pages. The administrator must create this configmap in the openshift-config namespace. This configmap should have keys in the format \"error-page-<error code>.http\", where <error code> is an HTTP error code. For example, \"error-page-503.http\" defines an error page for HTTP 503 responses. Currently only error pages for 503 and 404 responses can be customized. Each value in the configmap should be the full response, including HTTP headers. Eg- https://raw.githubusercontent.com/openshift/router/fadab45747a9b30cc3f0a4b41ad2871f95827a93/images/router/haproxy/conf/error-page-503.http If this field is empty, the ingress controller uses the default error pages.",
-	"replicas":                   "replicas is the desired number of ingress controller replicas. If unset, defaults to 2.",
+	"replicas":                   "replicas is the desired number of ingress controller replicas. If unset, the default depends on the value of the defaultPlacement field in the cluster config.openshift.io/v1/ingresses status.\n\nThe value of replicas is set based on the value of a chosen field in the Infrastructure CR. If defaultPlacement is set to ControlPlane, the chosen field will be controlPlaneTopology. If it is set to Workers the chosen field will be infrastructureTopology. Replicas will then be set to 1 or 2 based whether the chosen field's value is SingleReplica or HighlyAvailable, respectively.\n\nThese defaults are subject to change.",
 	"endpointPublishingStrategy": "endpointPublishingStrategy is used to publish the ingress controller endpoints to other networks, enable load balancer integrations, etc.\n\nIf unset, the default is based on infrastructure.config.openshift.io/cluster .status.platform:\n\n  AWS:          LoadBalancerService (with External scope)\n  Azure:        LoadBalancerService (with External scope)\n  GCP:          LoadBalancerService (with External scope)\n  IBMCloud:     LoadBalancerService (with External scope)\n  AlibabaCloud: LoadBalancerService (with External scope)\n  Libvirt:      HostNetwork\n\nAny other platform types (including None) default to HostNetwork.\n\nendpointPublishingStrategy cannot be updated.",
 	"defaultCertificate":         "defaultCertificate is a reference to a secret containing the default certificate served by the ingress controller. When Routes don't specify their own certificate, defaultCertificate is used.\n\nThe secret must contain the following keys and data:\n\n  tls.crt: certificate file contents\n  tls.key: key file contents\n\nIf unset, a wildcard certificate is automatically generated and used. The certificate is valid for the ingress controller domain (and subdomains) and the generated certificate's CA will be automatically integrated with the cluster's trust store.\n\nIf a wildcard certificate is used and shared by multiple HTTP/2 enabled routes (which implies ALPN) then clients (i.e., notably browsers) are at liberty to reuse open connections. This means a client can reuse a connection to another route and that is likely to fail. This behaviour is generally known as connection coalescing.\n\nThe in-use certificate (whether generated or user-specified) will be automatically integrated with OpenShift's built-in OAuth server.",
 	"namespaceSelector":          "namespaceSelector is used to filter the set of namespaces serviced by the ingress controller. This is useful for implementing shards.\n\nIf unset, the default is no filtering.",
@@ -702,6 +752,8 @@ var map_IngressControllerStatus = map[string]string{
 	"conditions":                 "conditions is a list of conditions and their status.\n\nAvailable means the ingress controller deployment is available and servicing route and ingress resources (i.e, .status.availableReplicas equals .spec.replicas)\n\nThere are additional conditions which indicate the status of other ingress controller features and capabilities.\n\n  * LoadBalancerManaged\n  - True if the following conditions are met:\n    * The endpoint publishing strategy requires a service load balancer.\n  - False if any of those conditions are unsatisfied.\n\n  * LoadBalancerReady\n  - True if the following conditions are met:\n    * A load balancer is managed.\n    * The load balancer is ready.\n  - False if any of those conditions are unsatisfied.\n\n  * DNSManaged\n  - True if the following conditions are met:\n    * The endpoint publishing strategy and platform support DNS.\n    * The ingress controller domain is set.\n    * dns.config.openshift.io/cluster configures DNS zones.\n  - False if any of those conditions are unsatisfied.\n\n  * DNSReady\n  - True if the following conditions are met:\n    * DNS is managed.\n    * DNS records have been successfully created.\n  - False if any of those conditions are unsatisfied.",
 	"tlsProfile":                 "tlsProfile is the TLS connection configuration that is in effect.",
 	"observedGeneration":         "observedGeneration is the most recent generation observed.",
+	"namespaceSelector":          "namespaceSelector is the actual namespaceSelector in use.",
+	"routeSelector":              "routeSelector is the actual routeSelector in use.",
 }
 
 func (IngressControllerStatus) SwaggerDoc() map[string]string {
@@ -719,6 +771,8 @@ var map_IngressControllerTuningOptions = map[string]string{
 	"serverFinTimeout":            "serverFinTimeout defines how long a connection will be held open while waiting for the server/backend response to the client closing the connection.\n\nIf unset, the default timeout is 1s",
 	"tunnelTimeout":               "tunnelTimeout defines how long a tunnel connection (including websockets) will be held open while the tunnel is idle.\n\nIf unset, the default timeout is 1h",
 	"tlsInspectDelay":             "tlsInspectDelay defines how long the router can hold data to find a matching route.\n\nSetting this too short can cause the router to fall back to the default certificate for edge-terminated or reencrypt routes even when a better matching certificate could be used.\n\nIf unset, the default inspect delay is 5s",
+	"healthCheckInterval":         "healthCheckInterval defines how long the router waits between two consecutive health checks on its configured backends.  This value is applied globally as a default for all routes, but may be overridden per-route by the route annotation \"router.openshift.io/haproxy.health.check.interval\".\n\nSetting this to less than 5s can cause excess traffic due to too frequent TCP health checks and accompanying SYN packet storms.  Alternatively, setting this too high can result in increased latency, due to backend servers that are no longer available, but haven't yet been detected as such.\n\nAn empty or zero healthCheckInterval means no opinion and IngressController chooses a default, which is subject to change over time. Currently the default healthCheckInterval value is 5s.\n\nCurrently the minimum allowed value is 1s and the maximum allowed value is 2147483647ms (24.85 days).  Both are subject to change over time.",
+	"maxConnections":              "maxConnections defines the maximum number of simultaneous connections that can be established per HAProxy process. Increasing this value allows each ingress controller pod to handle more connections but at the cost of additional system resources being consumed.\n\nPermitted values are: empty, 0, -1, and the range 2000-2000000.\n\nIf this field is empty or 0, the IngressController will use the default value of 20000, but the default is subject to change in future releases.\n\nIf the value is -1 then HAProxy will dynamically compute a maximum value based on the available ulimits in the running container. Selecting -1 (i.e., auto) will result in a large value being computed (~520000 on OpenShift >=4.10 clusters) and therefore each HAProxy process will incur significant memory usage compared to the current default of 20000.\n\nSetting a value that is greater than the current operating system limit will prevent the HAProxy process from starting.\n\nIf you choose a discrete value (e.g., 750000) and the router pod is migrated to a new node, there's no guarantee that that new node has identical ulimits configured. In such a scenario the pod would fail to start. If you have nodes with different ulimits configured (e.g., different tuned profiles) and you choose a discrete value then the guidance is to use -1 and let the value be computed dynamically at runtime.\n\nYou can monitor memory usage for router containers with the following metric: 'container_memory_working_set_bytes{container=\"router\",namespace=\"openshift-ingress\"}'.\n\nYou can monitor memory usage of individual HAProxy processes in router containers with the following metric: 'container_memory_working_set_bytes{container=\"router\",namespace=\"openshift-ingress\"}/container_processes{container=\"router\",namespace=\"openshift-ingress\"}'.",
 }
 
 func (IngressControllerTuningOptions) SwaggerDoc() map[string]string {
@@ -748,7 +802,7 @@ func (LoggingDestination) SwaggerDoc() map[string]string {
 
 var map_NodePlacement = map[string]string{
 	"":             "NodePlacement describes node scheduling configuration for an ingress controller.",
-	"nodeSelector": "nodeSelector is the node selector applied to ingress controller deployments.\n\nIf unset, the default is:\n\n  kubernetes.io/os: linux\n  node-role.kubernetes.io/worker: ''\n\nIf set, the specified selector is used and replaces the default.",
+	"nodeSelector": "nodeSelector is the node selector applied to ingress controller deployments.\n\nIf set, the specified selector is used and replaces the default.\n\nIf unset, the default depends on the value of the defaultPlacement field in the cluster config.openshift.io/v1/ingresses status.\n\nWhen defaultPlacement is Workers, the default is:\n\n  kubernetes.io/os: linux\n  node-role.kubernetes.io/worker: ''\n\nWhen defaultPlacement is ControlPlane, the default is:\n\n  kubernetes.io/os: linux\n  node-role.kubernetes.io/master: ''\n\nThese defaults are subject to change.",
 	"tolerations":  "tolerations is a list of tolerations applied to ingress controller deployments.\n\nThe default is an empty list.\n\nSee https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/",
 }
 
@@ -775,7 +829,7 @@ func (PrivateStrategy) SwaggerDoc() map[string]string {
 
 var map_ProviderLoadBalancerParameters = map[string]string{
 	"":     "ProviderLoadBalancerParameters holds desired load balancer information specific to the underlying infrastructure provider.",
-	"type": "type is the underlying infrastructure provider for the load balancer. Allowed values are \"AWS\", \"Azure\", \"BareMetal\", \"GCP\", \"OpenStack\", and \"VSphere\".",
+	"type": "type is the underlying infrastructure provider for the load balancer. Allowed values are \"AWS\", \"Azure\", \"BareMetal\", \"GCP\", \"Nutanix\", \"OpenStack\", and \"VSphere\".",
 	"aws":  "aws provides configuration settings that are specific to AWS load balancers.\n\nIf empty, defaults will be applied. See specific aws fields for details about their defaults.",
 	"gcp":  "gcp provides configuration settings that are specific to GCP load balancers.\n\nIf empty, defaults will be applied. See specific gcp fields for details about their defaults.",
 }
@@ -894,7 +948,7 @@ var map_DefaultNetworkDefinition = map[string]string{
 	"":                    "DefaultNetworkDefinition represents a single network plugin's configuration. type must be specified, along with exactly one \"Config\" that matches the type.",
 	"type":                "type is the type of network All NetworkTypes are supported except for NetworkTypeRaw",
 	"openshiftSDNConfig":  "openShiftSDNConfig configures the openshift-sdn plugin",
-	"ovnKubernetesConfig": "oVNKubernetesConfig configures the ovn-kubernetes plugin. This is currently not implemented.",
+	"ovnKubernetesConfig": "ovnKubernetesConfig configures the ovn-kubernetes plugin.",
 	"kuryrConfig":         "KuryrConfig configures the kuryr plugin",
 }
 
@@ -910,6 +964,15 @@ var map_ExportNetworkFlows = map[string]string{
 
 func (ExportNetworkFlows) SwaggerDoc() map[string]string {
 	return map_ExportNetworkFlows
+}
+
+var map_GatewayConfig = map[string]string{
+	"":               "GatewayConfig holds node gateway-related parsed config file parameters and command-line overrides",
+	"routingViaHost": "RoutingViaHost allows pod egress traffic to exit via the ovn-k8s-mp0 management port into the host before sending it out. If this is not set, traffic will always egress directly from OVN to outside without touching the host stack. Setting this to true means hardware offload will not be supported. Default is false if GatewayConfig is specified.",
+}
+
+func (GatewayConfig) SwaggerDoc() map[string]string {
+	return map_GatewayConfig
 }
 
 var map_HybridOverlayConfig = map[string]string{
@@ -944,7 +1007,7 @@ var map_KuryrConfig = map[string]string{
 	"daemonProbesPort":             "The port kuryr-daemon will listen for readiness and liveness requests.",
 	"controllerProbesPort":         "The port kuryr-controller will listen for readiness and liveness requests.",
 	"openStackServiceNetwork":      "openStackServiceNetwork contains the CIDR of network from which to allocate IPs for OpenStack Octavia's Amphora VMs. Please note that with Amphora driver Octavia uses two IPs from that network for each loadbalancer - one given by OpenShift and second for VRRP connections. As the first one is managed by OpenShift's and second by Neutron's IPAMs, those need to come from different pools. Therefore `openStackServiceNetwork` needs to be at least twice the size of `serviceNetwork`, and whole `serviceNetwork` must be overlapping with `openStackServiceNetwork`. cluster-network-operator will then make sure VRRP IPs are taken from the ranges inside `openStackServiceNetwork` that are not overlapping with `serviceNetwork`, effectivly preventing conflicts. If not set cluster-network-operator will use `serviceNetwork` expanded by decrementing the prefix size by 1.",
-	"enablePortPoolsPrepopulation": "enablePortPoolsPrepopulation when true will make Kuryr prepopulate each newly created port pool with a minimum number of ports. Kuryr uses Neutron port pooling to fight the fact that it takes a significant amount of time to create one. Instead of creating it when pod is being deployed, Kuryr keeps a number of ports ready to be attached to pods. By default port prepopulation is disabled.",
+	"enablePortPoolsPrepopulation": "enablePortPoolsPrepopulation when true will make Kuryr prepopulate each newly created port pool with a minimum number of ports. Kuryr uses Neutron port pooling to fight the fact that it takes a significant amount of time to create one. It creates a number of ports when the first pod that is configured to use the dedicated network for pods is created in a namespace, and keeps them ready to be attached to pods. Port prepopulation is disabled by default.",
 	"poolMaxPorts":                 "poolMaxPorts sets a maximum number of free ports that are being kept in a port pool. If the number of ports exceeds this setting, free ports will get deleted. Setting 0 will disable this upper bound, effectively preventing pools from shrinking and this is the default value. For more information about port pools see enablePortPoolsPrepopulation setting.",
 	"poolMinPorts":                 "poolMinPorts sets a minimum number of free ports that should be kept in a port pool. If the number of ports is lower than this setting, new ports will get created and added to pool. The default is 1. For more information about port pools see enablePortPoolsPrepopulation setting.",
 	"poolBatchPorts":               "poolBatchPorts sets a number of ports that should be created in a single batch request to extend the port pool. The default is 3. For more information about port pools see enablePortPoolsPrepopulation setting.",
@@ -953,6 +1016,26 @@ var map_KuryrConfig = map[string]string{
 
 func (KuryrConfig) SwaggerDoc() map[string]string {
 	return map_KuryrConfig
+}
+
+var map_MTUMigration = map[string]string{
+	"":        "MTUMigration MTU contains infomation about MTU migration.",
+	"network": "network contains information about MTU migration for the default network. Migrations are only allowed to MTU values lower than the machine's uplink MTU by the minimum appropriate offset.",
+	"machine": "machine contains MTU migration configuration for the machine's uplink. Needs to be migrated along with the default network MTU unless the current uplink MTU already accommodates the default network MTU.",
+}
+
+func (MTUMigration) SwaggerDoc() map[string]string {
+	return map_MTUMigration
+}
+
+var map_MTUMigrationValues = map[string]string{
+	"":     "MTUMigrationValues contains the values for a MTU migration.",
+	"to":   "to is the MTU to migrate to.",
+	"from": "from is the MTU to migrate from.",
+}
+
+func (MTUMigrationValues) SwaggerDoc() map[string]string {
+	return map_MTUMigrationValues
 }
 
 var map_NetFlowConfig = map[string]string{
@@ -981,7 +1064,8 @@ func (NetworkList) SwaggerDoc() map[string]string {
 
 var map_NetworkMigration = map[string]string{
 	"":            "NetworkMigration represents the cluster network configuration.",
-	"networkType": "networkType is the target type of network migration The supported values are OpenShiftSDN, OVNKubernetes",
+	"networkType": "networkType is the target type of network migration. Set this to the target network type to allow changing the default network. If unset, the operation of changing cluster default network plugin will be rejected. The supported values are OpenShiftSDN, OVNKubernetes",
+	"mtu":         "mtu contains the MTU migration configuration. Set this to allow changing the MTU values for the default network. If unset, the operation of changing the MTU for the default network will be rejected.",
 }
 
 func (NetworkMigration) SwaggerDoc() map[string]string {
@@ -1000,7 +1084,7 @@ var map_NetworkSpec = map[string]string{
 	"disableNetworkDiagnostics": "disableNetworkDiagnostics specifies whether or not PodNetworkConnectivityCheck CRs from a test pod to every node, apiserver and LB should be disabled or not. If unset, this property defaults to 'false' and network diagnostics is enabled. Setting this to 'true' would reduce the additional load of the pods performing the checks.",
 	"kubeProxyConfig":           "kubeProxyConfig lets us configure desired proxy configuration. If not specified, sensible defaults will be chosen by OpenShift directly. Not consumed by all network providers - currently only openshift-sdn.",
 	"exportNetworkFlows":        "exportNetworkFlows enables and configures the export of network flow metadata from the pod network by using protocols NetFlow, SFlow or IPFIX. Currently only supported on OVN-Kubernetes plugin. If unset, flows will not be exported to any collector.",
-	"migration":                 "migration enables and configures the cluster network migration. Setting this to the target network type to allow changing the default network. If unset, the operation of changing cluster default network plugin will be rejected.",
+	"migration":                 "migration enables and configures the cluster network migration. The migration procedure allows to change the network type and the MTU.",
 }
 
 func (NetworkSpec) SwaggerDoc() map[string]string {
@@ -1022,6 +1106,7 @@ var map_OVNKubernetesConfig = map[string]string{
 	"hybridOverlayConfig": "HybridOverlayConfig configures an additional overlay network for peers that are not using OVN.",
 	"ipsecConfig":         "ipsecConfig enables and configures IPsec for pods on the pod network within the cluster.",
 	"policyAuditConfig":   "policyAuditConfig is the configuration for network policy audit events. If unset, reported defaults are used.",
+	"gatewayConfig":       "gatewayConfig holds the configuration for node gateway options.",
 }
 
 func (OVNKubernetesConfig) SwaggerDoc() map[string]string {

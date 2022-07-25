@@ -50,6 +50,10 @@ Parameters:
   InternalServiceTargetGroupArn:
     Description: ARN for internal service load balancer target group.
     Type: String
+  BootstrapInstanceType:
+    Description: Instance type for the bootstrap EC2 instance
+    Default: "i3.large"
+    Type: String
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -158,7 +162,7 @@ Resources:
     Properties:
       ImageId: !Ref RhcosAmi
       IamInstanceProfile: !Ref BootstrapInstanceProfile
-      InstanceType: "i3.large"
+      InstanceType: !Ref BootstrapInstanceType
       NetworkInterfaces:
       - AssociatePublicIpAddress: "true"
         DeviceIndex: "0"

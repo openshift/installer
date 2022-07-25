@@ -22,8 +22,7 @@ The following `install-config.yaml` properties are available:
 * `additionalTrustBundle` (optional string): a PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted certificate store.
     This trust bundle may also be used when [a proxy has been configured](#proxy).
 * `baseDomain` (required string): The base domain to which the cluster should belong.
-* `publish` (optional string): This controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
-    Valid values are `External` (the default) and `Internal`.
+* `capabilities` (optional [capabilities](#capabilities)): Capabilities configures the installation of optional core cluster components.
 * `controlPlane` (optional [machine-pool](#machine-pools)): The configuration for the machines that comprise the control plane.
 * `compute` (optional array of [machine-pools](#machine-pools)): The configuration for the machines that comprise the compute nodes.
 * `fips` (optional boolean): Enables FIPS mode (default false).
@@ -45,7 +44,7 @@ The following `install-config.yaml` properties are available:
             The default is 10.0.0.0/16 for all platforms other than libvirt.
             For libvirt, the default is 192.168.126.0/24.
     * `networkType` (optional string): The type of network to install.
-        The default is [OpenShiftSDN][openshift-sdn].
+        The default is [OVNKubernetes][ovn-kubernetes] for Single Node OpenShift and [OpenShiftSDN][openshift-sdn] for all other platforms.
     * `serviceNetwork` (optional array of [IP networks](#ip-networks)): The IP address pools for services.
         The default is 172.30.0.0/16.
 * `platform` (required object): The configuration for the specific platform upon which to perform the installation.
@@ -60,9 +59,15 @@ The following `install-config.yaml` properties are available:
     * `httpProxy` (optional string): The URL of the proxy for HTTP requests.
     * `httpsProxy` (optional string): The URL of the proxy for HTTPS requests.
     * `noProxy` (optional string): A comma-separated list of domains and [CIDRs][cidr-notation] for which the proxy should not be used.
+* `publish` (optional string): This controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
+    Valid values are `External` (the default) and `Internal`.
 * `pullSecret` (required string): The secret to use when pulling images.
 * `sshKey` (optional string): The public Secure Shell (SSH) key to provide access to instances.
 
+### Capabilities
+
+* `baselineCapabilitySet` (optional string): Selects an initial set of optional capabilities to enable. The default value is `vCurrent` (the default). Aadditional valid values can be found [here](https://pkg.go.dev/github.com/openshift/api/config/v1#ClusterVersionCapabilitySet).
+* `additionalEnabledCapabilities` (optional array of strings): Extends the set of managed capabilities beyond the baseline defined in `baselineCapabilitySet`. Default is an empty set. Valid values can be found [here](https://pkg.go.dev/github.com/openshift/api/config/v1#ClusterVersionCapability).
 ### IP networks
 
 IP networks are represented as strings using [Classless Inter-Domain Routing (CIDR) notation][cidr-notation] with a traditional IP address or network number, followed by the "/" (slash) character, followed by a decimal value between 0 and 32 that describes the number of significant bits.
@@ -108,6 +113,23 @@ metadata:
 platform: ...
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
+```
+
+### Custom capabilities
+
+An example install config where the user can specify a custom list of capabilities than a default set deployed by the installer. In this example, the user requested to use `None`, an empty set, as the baseline capability set but specified that the `openshift-samples` to be installed.
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: test-cluster
+platform: ...
+capabilities:
+  baselineCapabilitySet: None
+  additionalEnabledCapabilities:
+  - openshift-samples
+sshKey: ...
 ```
 
 ### Custom machine pools
@@ -578,6 +600,7 @@ An example `worker.ign` is shown below. It has been modified to increase the HTT
 [machine-config-pool]: https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfigController.md#machinepool
 [machine-config]: https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfiguration.md
 [master-machine-config-pool]: https://github.com/openshift/machine-config-operator/blob/master/manifests/master.machineconfigpool.yaml
+[ovn-kubernetes]: https://github.com/openshift/ovn-kubernetes
 [openshift-sdn]: https://github.com/openshift/sdn
 [proxy]: https://github.com/openshift/api/blob/f2a771e1a90ceb4e65f1ca2c8b11fc1ac6a66da8/config/v1/types_proxy.go#L11
 [proxy-trusted-ca]: https://github.com/openshift/api/blob/f2a771e1a90ceb4e65f1ca2c8b11fc1ac6a66da8/config/v1/types_proxy.go#L44-L69

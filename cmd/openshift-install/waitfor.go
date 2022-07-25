@@ -55,7 +55,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 				logrus.Info("openshift-install gather bootstrap --help")
 				logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
 				logrus.Error(err.Error())
-				logrus.Fatal("Bootstrap failed to complete")
+				logrus.Exit(exitCodeBootstrapFailed)
 			}
 
 			logrus.Info("It is now safe to remove the bootstrap resources")
@@ -89,7 +89,8 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
 				}
 				logTroubleshootingLink()
-				logrus.Fatal(err)
+				logrus.Error(err)
+				logrus.Exit(exitCodeInstallFailed)
 			}
 			timer.StopTimer(timer.TotalTimeElapsed)
 			timer.LogSummary()

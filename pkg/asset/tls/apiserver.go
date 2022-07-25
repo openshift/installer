@@ -127,6 +127,11 @@ func (c *KubeAPIServerLocalhostSignerCertKey) Generate(parents asset.Parents) er
 	return c.SelfSignedCertKey.Generate(cfg, "kube-apiserver-localhost-signer")
 }
 
+// Load reads the asset files from disk.
+func (c *KubeAPIServerLocalhostSignerCertKey) Load(f asset.FileFetcher) (bool, error) {
+	return c.loadCertKey(f, "kube-apiserver-localhost-signer")
+}
+
 // Name returns the human-friendly name of the asset.
 func (c *KubeAPIServerLocalhostSignerCertKey) Name() string {
 	return "Certificate (kube-apiserver-localhost-signer)"
@@ -222,6 +227,11 @@ func (c *KubeAPIServerServiceNetworkSignerCertKey) Generate(parents asset.Parent
 	}
 
 	return c.SelfSignedCertKey.Generate(cfg, "kube-apiserver-service-network-signer")
+}
+
+// Load reads the asset files from disk.
+func (c *KubeAPIServerServiceNetworkSignerCertKey) Load(f asset.FileFetcher) (bool, error) {
+	return c.loadCertKey(f, "kube-apiserver-service-network-signer")
 }
 
 // Name returns the human-friendly name of the asset.
@@ -330,6 +340,11 @@ func (c *KubeAPIServerLBSignerCertKey) Generate(parents asset.Parents) error {
 	}
 
 	return c.SelfSignedCertKey.Generate(cfg, "kube-apiserver-lb-signer")
+}
+
+// Load reads the asset files from disk.
+func (c *KubeAPIServerLBSignerCertKey) Load(f asset.FileFetcher) (bool, error) {
+	return c.loadCertKey(f, "kube-apiserver-lb-signer")
 }
 
 // Name returns the human-friendly name of the asset.

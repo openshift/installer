@@ -8,7 +8,7 @@ locals {
   description = "Created By OpenShift Installer"
 
   public_endpoints = var.aws_publish_strategy == "External" ? true : false
-  volume_type      = "gp2"
+  volume_type      = "gp3"
   volume_size      = 30
   volume_iops      = local.volume_type == "io1" ? 100 : 0
 }
@@ -16,7 +16,7 @@ locals {
 provider "aws" {
   region = var.aws_region
 
-  skip_region_validation = var.aws_skip_region_validation
+  skip_region_validation = true
 
   endpoints {
     ec2     = lookup(var.custom_endpoints, "ec2", null)
@@ -34,7 +34,6 @@ data "aws_ebs_default_kms_key" "current" {}
 
 resource "aws_s3_bucket" "ignition" {
   bucket = var.aws_ignition_bucket
-  acl    = "private"
 
   tags = merge(
     {
@@ -46,6 +45,11 @@ resource "aws_s3_bucket" "ignition" {
   lifecycle {
     ignore_changes = all
   }
+}
+
+resource "aws_s3_bucket_acl" ignition {
+  bucket = aws_s3_bucket.ignition.id
+  acl    = "private"
 }
 
 resource "aws_s3_bucket_object" "ignition" {
@@ -171,7 +175,11 @@ resource "aws_instance" "bootstrap" {
     local.tags,
   )
 
-  depends_on = [aws_s3_bucket_object.ignition]
+  depends_on = [
+    aws_s3_bucket_object.ignition,
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1859153
+    aws_iam_instance_profile.bootstrap,
+  ]
 }
 
 resource "aws_lb_target_group_attachment" "bootstrap" {

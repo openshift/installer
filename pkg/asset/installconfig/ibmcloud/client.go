@@ -23,6 +23,8 @@ import (
 type API interface {
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
+	GetDedicatedHostByName(ctx context.Context, name string, region string) (*vpcv1.DedicatedHost, error)
+	GetDedicatedHostProfiles(ctx context.Context, region string) ([]vpcv1.DedicatedHostProfile, error)
 	GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error)
 	GetDNSZoneIDByName(ctx context.Context, name string) (string, error)
 	GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error)
@@ -30,17 +32,21 @@ type API interface {
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
+	GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error)
 	GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error)
 	GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error)
+	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	GetVPCZonesForRegion(ctx context.Context, region string) ([]string, error)
+	SetVPCServiceURLForRegion(ctx context.Context, region string) error
 }
 
 // Client makes calls to the IBM Cloud API.
 type Client struct {
+	APIKey string
+
 	managementAPI *resourcemanagerv2.ResourceManagerV2
 	controllerAPI *resourcecontrollerv2.ResourceControllerV2
 	vpcAPI        *vpcv1.VpcV1
-	Authenticator *core.IamAuthenticator
 }
 
 // cisServiceID is the Cloud Internet Services' catalog service ID.
@@ -80,12 +86,9 @@ type EncryptionKeyResponse struct{}
 // NewClient initializes a client with a session.
 func NewClient() (*Client, error) {
 	apiKey := os.Getenv("IC_API_KEY")
-	authenticator := &core.IamAuthenticator{
-		ApiKey: apiKey,
-	}
 
 	client := &Client{
-		Authenticator: authenticator,
+		APIKey: apiKey,
 	}
 
 	if err := client.loadSDKServices(); err != nil {
@@ -115,15 +118,19 @@ func (c *Client) loadSDKServices() error {
 // GetAuthenticatorAPIKeyDetails gets detailed information on the API key used
 // for authentication to the IBM Cloud APIs
 func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
+	authenticator, err := NewIamAuthenticator(c.APIKey)
+	if err != nil {
+		return nil, err
+	}
 	iamIdentityService, err := iamidentityv1.NewIamIdentityV1(&iamidentityv1.IamIdentityV1Options{
-		Authenticator: c.Authenticator,
+		Authenticator: authenticator,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	options := iamIdentityService.NewGetAPIKeysDetailsOptions()
-	options.SetIamAPIKey(c.Authenticator.ApiKey)
+	options.SetIamAPIKey(c.APIKey)
 	details, _, err := iamIdentityService.GetAPIKeysDetailsWithContext(ctx, options)
 	if err != nil {
 		return nil, err
@@ -145,12 +152,54 @@ func (c *Client) GetCISInstance(ctx context.Context, crnstr string) (*resourceco
 	return resourceInstance, nil
 }
 
+// GetDedicatedHostByName gets dedicated host by name.
+func (c *Client) GetDedicatedHostByName(ctx context.Context, name string, region string) (*vpcv1.DedicatedHost, error) {
+	err := c.SetVPCServiceURLForRegion(ctx, region)
+	if err != nil {
+		return nil, err
+	}
+
+	options := c.vpcAPI.NewListDedicatedHostsOptions()
+	dhosts, _, err := c.vpcAPI.ListDedicatedHostsWithContext(ctx, options)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list dedicated hosts")
+	}
+
+	for _, dhost := range dhosts.DedicatedHosts {
+		if *dhost.Name == name {
+			return &dhost, nil
+		}
+	}
+
+	return nil, fmt.Errorf("dedicated host %q not found", name)
+}
+
+// GetDedicatedHostProfiles gets a list of profiles supported in a region.
+func (c *Client) GetDedicatedHostProfiles(ctx context.Context, region string) ([]vpcv1.DedicatedHostProfile, error) {
+	err := c.SetVPCServiceURLForRegion(ctx, region)
+	if err != nil {
+		return nil, err
+	}
+
+	profilesOptions := c.vpcAPI.NewListDedicatedHostProfilesOptions()
+	profiles, _, err := c.vpcAPI.ListDedicatedHostProfilesWithContext(ctx, profilesOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles.Profiles, nil
+}
+
 // GetDNSRecordsByName gets DNS records in specific Cloud Internet Services instance
 // by its CRN, zone ID, and DNS record name.
 func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error) {
+	authenticator, err := NewIamAuthenticator(c.APIKey)
+	if err != nil {
+		return nil, err
+	}
 	// Set CIS DNS record service
 	dnsService, err := dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
-		Authenticator:  c.Authenticator,
+		Authenticator:  authenticator,
 		Crn:            core.StringPtr(crnstr),
 		ZoneIdentifier: core.StringPtr(zoneID),
 	})
@@ -201,9 +250,13 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
 
 	var allZones []DNSZoneResponse
 	for _, instance := range listResourceInstancesResponse.Resources {
+		authenticator, err := NewIamAuthenticator(c.APIKey)
+		if err != nil {
+			return nil, err
+		}
 		crnstr := instance.CRN
 		zonesService, err := zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
-			Authenticator: c.Authenticator,
+			Authenticator: authenticator,
 			Crn:           crnstr,
 		})
 		if err != nil {
@@ -289,6 +342,25 @@ func (c *Client) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet,
 	return subnet, err
 }
 
+// GetSubnetByName gets a subnet by its Name.
+func (c *Client) GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	c.SetVPCServiceURLForRegion(ctx, region)
+	listSubnetsOptions := c.vpcAPI.NewListSubnetsOptions()
+	subnetCollection, detailedResponse, err := c.vpcAPI.ListSubnetsWithContext(ctx, listSubnetsOptions)
+	if detailedResponse.GetStatusCode() == http.StatusNotFound {
+		return nil, err
+	}
+	for _, subnet := range subnetCollection.Subnets {
+		if subnetName == *subnet.Name {
+			return &subnet, nil
+		}
+	}
+	return nil, &VPCResourceNotFoundError{}
+}
+
 // GetVSIProfiles gets a list of all VSI profiles.
 func (c *Client) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error) {
 	listInstanceProfilesOptions := c.vpcAPI.NewListInstanceProfilesOptions()
@@ -327,6 +399,27 @@ func (c *Client) GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error) {
 	return nil, &VPCResourceNotFoundError{}
 }
 
+// GetVPCs gets all VPCs in a region
+func (c *Client) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	err := c.SetVPCServiceURLForRegion(ctx, region)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to set vpc api service url")
+	}
+
+	allVPCs := []vpcv1.VPC{}
+	if vpcs, detailedResponse, err := c.vpcAPI.ListVpcs(c.vpcAPI.NewListVpcsOptions()); err != nil {
+		if detailedResponse.GetStatusCode() != http.StatusNotFound {
+			return nil, err
+		}
+	} else if vpcs != nil {
+		allVPCs = append(allVPCs, vpcs.Vpcs...)
+	}
+	return allVPCs, nil
+}
+
 // GetVPCZonesForRegion gets the supported zones for a VPC region.
 func (c *Client) GetVPCZonesForRegion(ctx context.Context, region string) ([]string, error) {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
@@ -356,8 +449,12 @@ func (c *Client) getVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {
 }
 
 func (c *Client) loadResourceManagementAPI() error {
+	authenticator, err := NewIamAuthenticator(c.APIKey)
+	if err != nil {
+		return err
+	}
 	options := &resourcemanagerv2.ResourceManagerV2Options{
-		Authenticator: c.Authenticator,
+		Authenticator: authenticator,
 	}
 	resourceManagerV2Service, err := resourcemanagerv2.NewResourceManagerV2(options)
 	if err != nil {
@@ -368,8 +465,12 @@ func (c *Client) loadResourceManagementAPI() error {
 }
 
 func (c *Client) loadResourceControllerAPI() error {
+	authenticator, err := NewIamAuthenticator(c.APIKey)
+	if err != nil {
+		return err
+	}
 	options := &resourcecontrollerv2.ResourceControllerV2Options{
-		Authenticator: c.Authenticator,
+		Authenticator: authenticator,
 	}
 	resourceControllerV2Service, err := resourcecontrollerv2.NewResourceControllerV2(options)
 	if err != nil {
@@ -380,12 +481,30 @@ func (c *Client) loadResourceControllerAPI() error {
 }
 
 func (c *Client) loadVPCV1API() error {
+	authenticator, err := NewIamAuthenticator(c.APIKey)
+	if err != nil {
+		return err
+	}
 	vpcService, err := vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
-		Authenticator: c.Authenticator,
+		Authenticator: authenticator,
 	})
 	if err != nil {
 		return err
 	}
 	c.vpcAPI = vpcService
+	return nil
+}
+
+// SetVPCServiceURLForRegion will set the VPC Service URL to a specific IBM Cloud Region, in order to access Region scoped resources
+func (c *Client) SetVPCServiceURLForRegion(ctx context.Context, region string) error {
+	regionOptions := c.vpcAPI.NewGetRegionOptions(region)
+	vpcRegion, _, err := c.vpcAPI.GetRegionWithContext(ctx, regionOptions)
+	if err != nil {
+		return err
+	}
+	err = c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *vpcRegion.Endpoint))
+	if err != nil {
+		return err
+	}
 	return nil
 }

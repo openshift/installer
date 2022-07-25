@@ -1,19 +1,15 @@
 # See the OWNERS_ALIASES docs: https://git.k8s.io/community/contributors/guide/owners.md#OWNERS_ALIASES
 
 aliases:
-  installer-approvers:
+  installer-team:
+    - AnnaZivkovic
+    - barbacbd
     - jhixson74
     - jstuever
     - patrickdillon
-    - staebler
-    - sdodson
-    - smarterclayton
-    - wking
-  installer-reviewers:
-    - jhixson74
-    - jstuever
-    - patrickdillon
+    - r4f4
     - rna-afk
+    - sadasu
   libvirt-approvers:
     - praveenkumar
     - cfergeau
@@ -22,20 +18,31 @@ aliases:
     - cfergeau
   openstack-approvers:
     - EmilienM
-    - adduarte
-    - iamemilio
+    - MaysaMacedo
+    - dulek
+    - gryf
     - mandre
     - mdbooth
     - pierreprinetti
     - stephenfin
   openstack-reviewers:
     - EmilienM
-    - adduarte
-    - iamemilio
+    - MaysaMacedo
+    - dulek
+    - gryf
     - mandre
     - mdbooth
     - pierreprinetti
     - stephenfin
+  powervs-approvers:
+    - clnperez
+    - mkumatag
+    - Prashanth684
+  powervs-reviewers:
+    - clnperez
+    - mkumatag
+    - Prashanth684
+    - mjturek
   vsphere-approvers:
     - dav1x
     - jcpowermac
@@ -47,17 +54,20 @@ aliases:
     - patrickdillon
     - jstuever
   baremetal-approvers:
-    - dhellmann
+    - andfasano
+    - dtantsur
+    - elfosardo
     - hardys
-    - kirankt
-    - stbenjam
+    - iurygregory
+    - sadasu
   baremetal-reviewers:
-    - ardaguclu
+    - andfasano
     - celebdor
-    - dhellmann
+    - dtantsur
+    - elfosardo
     - hardys
-    - kirankt
-    - stbenjam
+    - iurygregory
+    - sadasu
   aws-approvers:
     - jstuever
     - patrickdillon
@@ -78,24 +88,31 @@ aliases:
     - jhixson74
     - m1kola
   ovirt-approvers:
-    - rgolangh
-    - Gal-Zaidman
-    - eslutsky
     - janosdebugs
+    - eslutsky
+    - mmartinv
+    - bkhizgiy
   ovirt-reviewers:
-    - rgolangh
-    - Gal-Zaidman
-    - eslutsky
     - janosdebugs
+    - eslutsky
+    - mmartinv
+    - bkhizgiy
   ibmcloud-approvers:
     - bobbyradford
     - hasueki
   ibmcloud-reviewers:
     - bobbyradford
     - hasueki
+  nutanix-approvers:
+    - thunderboltsid
+    - yanhua121
+    - adiantum
+  nutanix-reviewers:
+    - thunderboltsid
+    - yanhua121
+    - adiantum
   # Keep in sync with the `coreos-approvers` and `coreos-reviewers` lists in https://github.com/openshift/release/blob/master/OWNERS_ALIASES
   coreos-approvers:
-    - miabbott
     - cgwalters
     - bgilbert
     - dustymabe
@@ -110,8 +127,11 @@ aliases:
     - jmarrero
     - aaradhak
     - ravanelli
+    - gursewak1997
+    - prestist
+    - marmijo
+    - RishabhSaini
   coreos-reviewers:
-    - miabbott
     - cgwalters
     - bgilbert
     - dustymabe
@@ -126,3 +146,7 @@ aliases:
     - jmarrero
     - aaradhak
     - ravanelli
+    - gursewak1997
+    - prestist
+    - marmijo
+    - RishabhSaini

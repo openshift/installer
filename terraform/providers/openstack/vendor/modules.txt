@@ -1,0 +1,460 @@
+# github.com/agext/levenshtein v1.2.2
+## explicit
+github.com/agext/levenshtein
+# github.com/apparentlymart/go-textseg v1.0.0
+## explicit
+github.com/apparentlymart/go-textseg/textseg
+# github.com/apparentlymart/go-textseg/v13 v13.0.0
+## explicit; go 1.16
+github.com/apparentlymart/go-textseg/v13/textseg
+# github.com/davecgh/go-spew v1.1.1
+## explicit
+github.com/davecgh/go-spew/spew
+# github.com/fatih/color v1.7.0
+## explicit
+github.com/fatih/color
+# github.com/golang/protobuf v1.4.2
+## explicit; go 1.9
+github.com/golang/protobuf/proto
+github.com/golang/protobuf/protoc-gen-go/descriptor
+github.com/golang/protobuf/ptypes
+github.com/golang/protobuf/ptypes/any
+github.com/golang/protobuf/ptypes/duration
+github.com/golang/protobuf/ptypes/empty
+github.com/golang/protobuf/ptypes/timestamp
+# github.com/google/go-cmp v0.5.6
+## explicit; go 1.8
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
+# github.com/gophercloud/gophercloud v0.23.1-0.20211129155426-97dea84b37a5
+## explicit; go 1.13
+github.com/gophercloud/gophercloud
+github.com/gophercloud/gophercloud/openstack
+github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/quotasets
+github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/schedulerhints
+github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/volumeactions
+github.com/gophercloud/gophercloud/openstack/blockstorage/v1/volumes
+github.com/gophercloud/gophercloud/openstack/blockstorage/v2/snapshots
+github.com/gophercloud/gophercloud/openstack/blockstorage/v2/volumes
+github.com/gophercloud/gophercloud/openstack/blockstorage/v3/qos
+github.com/gophercloud/gophercloud/openstack/blockstorage/v3/snapshots
+github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes
+github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumetypes
+github.com/gophercloud/gophercloud/openstack/common/extensions
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/aggregates
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/attachinterfaces
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/availabilityzones
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/bootfromvolume
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/floatingips
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/hypervisors
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/keypairs
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/quotasets
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/schedulerhints
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/secgroups
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/shelveunshelve
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/startstop
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tags
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/volumeattach
+github.com/gophercloud/gophercloud/openstack/compute/v2/flavors
+github.com/gophercloud/gophercloud/openstack/compute/v2/images
+github.com/gophercloud/gophercloud/openstack/compute/v2/servers
+github.com/gophercloud/gophercloud/openstack/containerinfra/v1/certificates
+github.com/gophercloud/gophercloud/openstack/containerinfra/v1/clusters
+github.com/gophercloud/gophercloud/openstack/containerinfra/v1/clustertemplates
+github.com/gophercloud/gophercloud/openstack/db/v1/configurations
+github.com/gophercloud/gophercloud/openstack/db/v1/databases
+github.com/gophercloud/gophercloud/openstack/db/v1/datastores
+github.com/gophercloud/gophercloud/openstack/db/v1/instances
+github.com/gophercloud/gophercloud/openstack/db/v1/users
+github.com/gophercloud/gophercloud/openstack/dns/v2/recordsets
+github.com/gophercloud/gophercloud/openstack/dns/v2/transfer/accept
+github.com/gophercloud/gophercloud/openstack/dns/v2/transfer/request
+github.com/gophercloud/gophercloud/openstack/dns/v2/zones
+github.com/gophercloud/gophercloud/openstack/identity/v2/tenants
+github.com/gophercloud/gophercloud/openstack/identity/v2/tokens
+github.com/gophercloud/gophercloud/openstack/identity/v3/applicationcredentials
+github.com/gophercloud/gophercloud/openstack/identity/v3/endpoints
+github.com/gophercloud/gophercloud/openstack/identity/v3/extensions/ec2credentials
+github.com/gophercloud/gophercloud/openstack/identity/v3/extensions/ec2tokens
+github.com/gophercloud/gophercloud/openstack/identity/v3/extensions/oauth1
+github.com/gophercloud/gophercloud/openstack/identity/v3/groups
+github.com/gophercloud/gophercloud/openstack/identity/v3/projects
+github.com/gophercloud/gophercloud/openstack/identity/v3/roles
+github.com/gophercloud/gophercloud/openstack/identity/v3/services
+github.com/gophercloud/gophercloud/openstack/identity/v3/tokens
+github.com/gophercloud/gophercloud/openstack/identity/v3/users
+github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata
+github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport
+github.com/gophercloud/gophercloud/openstack/imageservice/v2/images
+github.com/gophercloud/gophercloud/openstack/imageservice/v2/members
+github.com/gophercloud/gophercloud/openstack/keymanager/v1/acls
+github.com/gophercloud/gophercloud/openstack/keymanager/v1/containers
+github.com/gophercloud/gophercloud/openstack/keymanager/v1/orders
+github.com/gophercloud/gophercloud/openstack/keymanager/v1/secrets
+github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/l7policies
+github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/listeners
+github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/loadbalancers
+github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/monitors
+github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/pools
+github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/quotas
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/dns
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/external
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/extradhcpopts
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/firewalls
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/policies
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/routerinsertion
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/rules
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/addressscopes
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/portforwarding
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas/members
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas/monitors
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas/pools
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas/vips
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/l7policies
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/listeners
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/loadbalancers
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/monitors
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/pools
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/mtu
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/portsbinding
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/portsecurity
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/provider
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/qos/policies
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/qos/rules
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/quotas
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/rbacpolicies
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/rules
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/subnetpools
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/trunks
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vlantransparent
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vpnaas/endpointgroups
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vpnaas/ikepolicies
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vpnaas/ipsecpolicies
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vpnaas/services
+github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vpnaas/siteconnections
+github.com/gophercloud/gophercloud/openstack/networking/v2/networks
+github.com/gophercloud/gophercloud/openstack/networking/v2/ports
+github.com/gophercloud/gophercloud/openstack/networking/v2/subnets
+github.com/gophercloud/gophercloud/openstack/objectstorage/v1/accounts
+github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers
+github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects
+github.com/gophercloud/gophercloud/openstack/objectstorage/v1/swauth
+github.com/gophercloud/gophercloud/openstack/orchestration/v1/stacks
+github.com/gophercloud/gophercloud/openstack/sharedfilesystems/apiversions
+github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/availabilityzones
+github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/errors
+github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/messages
+github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/securityservices
+github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/sharenetworks
+github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/shares
+github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/snapshots
+github.com/gophercloud/gophercloud/openstack/utils
+github.com/gophercloud/gophercloud/pagination
+# github.com/gophercloud/utils v0.0.0-20210909165623-d7085207ff6d
+## explicit; go 1.15
+github.com/gophercloud/utils/client
+github.com/gophercloud/utils/env
+github.com/gophercloud/utils/gnocchi
+github.com/gophercloud/utils/internal
+github.com/gophercloud/utils/openstack/clientconfig
+github.com/gophercloud/utils/openstack/compute/v2/flavors
+github.com/gophercloud/utils/openstack/imageservice/v2/images
+github.com/gophercloud/utils/terraform/auth
+github.com/gophercloud/utils/terraform/hashcode
+github.com/gophercloud/utils/terraform/mutexkv
+# github.com/hashicorp/errwrap v1.0.0
+## explicit
+github.com/hashicorp/errwrap
+# github.com/hashicorp/go-checkpoint v0.5.0
+## explicit
+github.com/hashicorp/go-checkpoint
+# github.com/hashicorp/go-cleanhttp v0.5.2
+## explicit; go 1.13
+github.com/hashicorp/go-cleanhttp
+# github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
+## explicit; go 1.12
+github.com/hashicorp/go-cty/cty
+github.com/hashicorp/go-cty/cty/convert
+github.com/hashicorp/go-cty/cty/gocty
+github.com/hashicorp/go-cty/cty/json
+github.com/hashicorp/go-cty/cty/msgpack
+github.com/hashicorp/go-cty/cty/set
+# github.com/hashicorp/go-hclog v0.16.1
+## explicit; go 1.13
+github.com/hashicorp/go-hclog
+# github.com/hashicorp/go-multierror v1.1.1
+## explicit; go 1.13
+github.com/hashicorp/go-multierror
+# github.com/hashicorp/go-plugin v1.4.1
+## explicit; go 1.13
+github.com/hashicorp/go-plugin
+github.com/hashicorp/go-plugin/internal/plugin
+# github.com/hashicorp/go-uuid v1.0.2
+## explicit
+github.com/hashicorp/go-uuid
+# github.com/hashicorp/go-version v1.3.0
+## explicit
+github.com/hashicorp/go-version
+# github.com/hashicorp/hc-install v0.3.1
+## explicit; go 1.16
+github.com/hashicorp/hc-install
+github.com/hashicorp/hc-install/checkpoint
+github.com/hashicorp/hc-install/errors
+github.com/hashicorp/hc-install/fs
+github.com/hashicorp/hc-install/internal/build
+github.com/hashicorp/hc-install/internal/httpclient
+github.com/hashicorp/hc-install/internal/pubkey
+github.com/hashicorp/hc-install/internal/releasesjson
+github.com/hashicorp/hc-install/internal/src
+github.com/hashicorp/hc-install/internal/validators
+github.com/hashicorp/hc-install/internal/version
+github.com/hashicorp/hc-install/product
+github.com/hashicorp/hc-install/releases
+github.com/hashicorp/hc-install/src
+# github.com/hashicorp/hcl/v2 v2.3.0
+## explicit
+github.com/hashicorp/hcl/v2
+github.com/hashicorp/hcl/v2/ext/customdecode
+github.com/hashicorp/hcl/v2/hclsyntax
+# github.com/hashicorp/logutils v1.0.0
+## explicit
+github.com/hashicorp/logutils
+# github.com/hashicorp/terraform-exec v0.15.0
+## explicit; go 1.14
+github.com/hashicorp/terraform-exec/internal/version
+github.com/hashicorp/terraform-exec/tfexec
+# github.com/hashicorp/terraform-json v0.13.0
+## explicit; go 1.13
+github.com/hashicorp/terraform-json
+# github.com/hashicorp/terraform-plugin-go v0.5.0
+## explicit; go 1.16
+github.com/hashicorp/terraform-plugin-go/tfprotov5
+github.com/hashicorp/terraform-plugin-go/tfprotov5/internal/fromproto
+github.com/hashicorp/terraform-plugin-go/tfprotov5/internal/tfplugin5
+github.com/hashicorp/terraform-plugin-go/tfprotov5/internal/toproto
+github.com/hashicorp/terraform-plugin-go/tfprotov5/tf5server
+github.com/hashicorp/terraform-plugin-go/tfprotov6
+github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/fromproto
+github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/tfplugin6
+github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/toproto
+github.com/hashicorp/terraform-plugin-go/tfprotov6/tf6server
+github.com/hashicorp/terraform-plugin-go/tftypes
+# github.com/hashicorp/terraform-plugin-log v0.2.0
+## explicit; go 1.16
+github.com/hashicorp/terraform-plugin-log/internal/logging
+github.com/hashicorp/terraform-plugin-log/tflog
+github.com/hashicorp/terraform-plugin-log/tfsdklog
+# github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.0
+## explicit; go 1.16
+github.com/hashicorp/terraform-plugin-sdk/v2/diag
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/structure
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation
+github.com/hashicorp/terraform-plugin-sdk/v2/internal/addrs
+github.com/hashicorp/terraform-plugin-sdk/v2/internal/configs/configschema
+github.com/hashicorp/terraform-plugin-sdk/v2/internal/configs/hcl2shim
+github.com/hashicorp/terraform-plugin-sdk/v2/internal/helper/hashcode
+github.com/hashicorp/terraform-plugin-sdk/v2/internal/plans/objchange
+github.com/hashicorp/terraform-plugin-sdk/v2/internal/plugin/convert
+github.com/hashicorp/terraform-plugin-sdk/v2/internal/plugintest
+github.com/hashicorp/terraform-plugin-sdk/v2/internal/tfdiags
+github.com/hashicorp/terraform-plugin-sdk/v2/meta
+github.com/hashicorp/terraform-plugin-sdk/v2/plugin
+github.com/hashicorp/terraform-plugin-sdk/v2/terraform
+# github.com/hashicorp/terraform-registry-address v0.0.0-20210412075316-9b2996cce896
+## explicit; go 1.14
+github.com/hashicorp/terraform-registry-address
+# github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734
+## explicit; go 1.12
+github.com/hashicorp/terraform-svchost
+# github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
+## explicit
+github.com/hashicorp/yamux
+# github.com/mattn/go-colorable v0.1.4
+## explicit
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.10
+## explicit; go 1.14
+github.com/mattn/go-isatty
+# github.com/mitchellh/copystructure v1.2.0
+## explicit; go 1.15
+github.com/mitchellh/copystructure
+# github.com/mitchellh/go-homedir v1.1.0
+## explicit
+github.com/mitchellh/go-homedir
+# github.com/mitchellh/go-testing-interface v1.14.1
+## explicit; go 1.14
+github.com/mitchellh/go-testing-interface
+# github.com/mitchellh/go-wordwrap v1.0.0
+## explicit
+github.com/mitchellh/go-wordwrap
+# github.com/mitchellh/mapstructure v1.1.2
+## explicit
+github.com/mitchellh/mapstructure
+# github.com/mitchellh/reflectwalk v1.0.2
+## explicit
+github.com/mitchellh/reflectwalk
+# github.com/oklog/run v1.0.0
+## explicit
+github.com/oklog/run
+# github.com/terraform-provider-openstack/terraform-provider-openstack v1.46.0
+## explicit; go 1.17
+github.com/terraform-provider-openstack/terraform-provider-openstack
+github.com/terraform-provider-openstack/terraform-provider-openstack/openstack
+# github.com/vmihailenco/msgpack v4.0.4+incompatible
+## explicit
+github.com/vmihailenco/msgpack
+github.com/vmihailenco/msgpack/codes
+# github.com/zclconf/go-cty v1.9.1
+## explicit; go 1.12
+github.com/zclconf/go-cty/cty
+github.com/zclconf/go-cty/cty/convert
+github.com/zclconf/go-cty/cty/function
+github.com/zclconf/go-cty/cty/function/stdlib
+github.com/zclconf/go-cty/cty/gocty
+github.com/zclconf/go-cty/cty/json
+github.com/zclconf/go-cty/cty/set
+# golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
+## explicit; go 1.17
+golang.org/x/crypto/cast5
+golang.org/x/crypto/openpgp
+golang.org/x/crypto/openpgp/armor
+golang.org/x/crypto/openpgp/elgamal
+golang.org/x/crypto/openpgp/errors
+golang.org/x/crypto/openpgp/packet
+golang.org/x/crypto/openpgp/s2k
+# golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
+## explicit; go 1.11
+golang.org/x/net/context
+golang.org/x/net/http/httpguts
+golang.org/x/net/http2
+golang.org/x/net/http2/hpack
+golang.org/x/net/idna
+golang.org/x/net/internal/timeseries
+golang.org/x/net/trace
+# golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
+## explicit; go 1.17
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# golang.org/x/text v0.3.5
+## explicit; go 1.11
+golang.org/x/text/encoding
+golang.org/x/text/encoding/charmap
+golang.org/x/text/encoding/internal
+golang.org/x/text/encoding/internal/identifier
+golang.org/x/text/secure/bidirule
+golang.org/x/text/transform
+golang.org/x/text/unicode/bidi
+golang.org/x/text/unicode/norm
+# google.golang.org/appengine v1.6.6
+## explicit; go 1.11
+google.golang.org/appengine
+google.golang.org/appengine/datastore
+google.golang.org/appengine/datastore/internal/cloudkey
+google.golang.org/appengine/datastore/internal/cloudpb
+google.golang.org/appengine/internal
+google.golang.org/appengine/internal/app_identity
+google.golang.org/appengine/internal/base
+google.golang.org/appengine/internal/datastore
+google.golang.org/appengine/internal/log
+google.golang.org/appengine/internal/modules
+google.golang.org/appengine/internal/remote_api
+# google.golang.org/genproto v0.0.0-20200711021454-869866162049
+## explicit; go 1.11
+google.golang.org/genproto/googleapis/rpc/status
+# google.golang.org/grpc v1.32.0
+## explicit; go 1.11
+google.golang.org/grpc
+google.golang.org/grpc/attributes
+google.golang.org/grpc/backoff
+google.golang.org/grpc/balancer
+google.golang.org/grpc/balancer/base
+google.golang.org/grpc/balancer/grpclb/state
+google.golang.org/grpc/balancer/roundrobin
+google.golang.org/grpc/binarylog/grpc_binarylog_v1
+google.golang.org/grpc/codes
+google.golang.org/grpc/connectivity
+google.golang.org/grpc/credentials
+google.golang.org/grpc/encoding
+google.golang.org/grpc/encoding/proto
+google.golang.org/grpc/grpclog
+google.golang.org/grpc/health
+google.golang.org/grpc/health/grpc_health_v1
+google.golang.org/grpc/internal
+google.golang.org/grpc/internal/backoff
+google.golang.org/grpc/internal/balancerload
+google.golang.org/grpc/internal/binarylog
+google.golang.org/grpc/internal/buffer
+google.golang.org/grpc/internal/channelz
+google.golang.org/grpc/internal/credentials
+google.golang.org/grpc/internal/envconfig
+google.golang.org/grpc/internal/grpclog
+google.golang.org/grpc/internal/grpcrand
+google.golang.org/grpc/internal/grpcsync
+google.golang.org/grpc/internal/grpcutil
+google.golang.org/grpc/internal/resolver/dns
+google.golang.org/grpc/internal/resolver/passthrough
+google.golang.org/grpc/internal/serviceconfig
+google.golang.org/grpc/internal/status
+google.golang.org/grpc/internal/syscall
+google.golang.org/grpc/internal/transport
+google.golang.org/grpc/keepalive
+google.golang.org/grpc/metadata
+google.golang.org/grpc/peer
+google.golang.org/grpc/reflection
+google.golang.org/grpc/reflection/grpc_reflection_v1alpha
+google.golang.org/grpc/resolver
+google.golang.org/grpc/serviceconfig
+google.golang.org/grpc/stats
+google.golang.org/grpc/status
+google.golang.org/grpc/tap
+# google.golang.org/protobuf v1.25.0
+## explicit; go 1.9
+google.golang.org/protobuf/encoding/prototext
+google.golang.org/protobuf/encoding/protowire
+google.golang.org/protobuf/internal/descfmt
+google.golang.org/protobuf/internal/descopts
+google.golang.org/protobuf/internal/detrand
+google.golang.org/protobuf/internal/encoding/defval
+google.golang.org/protobuf/internal/encoding/messageset
+google.golang.org/protobuf/internal/encoding/tag
+google.golang.org/protobuf/internal/encoding/text
+google.golang.org/protobuf/internal/errors
+google.golang.org/protobuf/internal/fieldsort
+google.golang.org/protobuf/internal/filedesc
+google.golang.org/protobuf/internal/filetype
+google.golang.org/protobuf/internal/flags
+google.golang.org/protobuf/internal/genid
+google.golang.org/protobuf/internal/impl
+google.golang.org/protobuf/internal/mapsort
+google.golang.org/protobuf/internal/pragma
+google.golang.org/protobuf/internal/set
+google.golang.org/protobuf/internal/strs
+google.golang.org/protobuf/internal/version
+google.golang.org/protobuf/proto
+google.golang.org/protobuf/reflect/protoreflect
+google.golang.org/protobuf/reflect/protoregistry
+google.golang.org/protobuf/runtime/protoiface
+google.golang.org/protobuf/runtime/protoimpl
+google.golang.org/protobuf/types/descriptorpb
+google.golang.org/protobuf/types/known/anypb
+google.golang.org/protobuf/types/known/durationpb
+google.golang.org/protobuf/types/known/emptypb
+google.golang.org/protobuf/types/known/timestamppb
+# gopkg.in/yaml.v2 v2.4.0
+## explicit; go 1.15
+gopkg.in/yaml.v2

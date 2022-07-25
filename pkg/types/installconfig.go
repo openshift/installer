@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -13,10 +16,11 @@ import (
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -36,8 +40,11 @@ var (
 		aws.Name,
 		azure.Name,
 		gcp.Name,
+		ibmcloud.Name,
+		nutanix.Name,
 		openstack.Name,
 		ovirt.Name,
+		powervs.Name,
 		vsphere.Name,
 	}
 	// HiddenPlatformNames is a slice with all the
@@ -45,7 +52,6 @@ var (
 	// to the user in the interactive wizard.
 	HiddenPlatformNames = []string{
 		baremetal.Name,
-		ibmcloud.Name,
 		none.Name,
 	}
 
@@ -143,17 +149,23 @@ type InstallConfig struct {
 	// For each of the following platforms, the field can set to the specified values. For all other platforms, the
 	// field must not be set.
 	// AWS: "Mint", "Passthrough", "Manual"
-	// Azure: "Mint", "Passthrough", "Manual"
+	// Azure: "Passthrough", "Manual"
 	// AzureStack: "Manual"
 	// GCP: "Mint", "Passthrough", "Manual"
 	// IBMCloud: "Manual"
 	// AlibabaCloud: "Manual"
+	// PowerVS: "Manual"
+	// Nutanix: "Manual"
 	// +optional
 	CredentialsMode CredentialsMode `json:"credentialsMode,omitempty"`
 
 	// BootstrapInPlace is the configuration for installing a single node
 	// with bootstrap in place installation.
 	BootstrapInPlace *BootstrapInPlace `json:"bootstrapInPlace,omitempty"`
+
+	// Capabilities configures the installation of optional core cluster components.
+	// +optional
+	Capabilities *Capabilities `json:"capabilities,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
@@ -164,6 +176,12 @@ func (c *InstallConfig) ClusterDomain() string {
 // IsOKD returns true if community-only modifications are enabled
 func (c *InstallConfig) IsOKD() bool {
 	return OKD
+}
+
+// IsSingleNodeOpenShift returns true if the install-config has been configured for
+// bootstrapInPlace
+func (c *InstallConfig) IsSingleNodeOpenShift() bool {
+	return c.BootstrapInPlace != nil
 }
 
 // Platform is the configuration for the specific platform upon which to perform
@@ -205,6 +223,10 @@ type Platform struct {
 	// +optional
 	OpenStack *openstack.Platform `json:"openstack,omitempty"`
 
+	// PowerVS is the configuration used when installing on Power VS.
+	// +optional
+	PowerVS *powervs.Platform `json:"powervs,omitempty"`
+
 	// VSphere is the configuration used when installing on vSphere.
 	// +optional
 	VSphere *vsphere.Platform `json:"vsphere,omitempty"`
@@ -212,6 +234,10 @@ type Platform struct {
 	// Ovirt is the configuration used when installing on oVirt.
 	// +optional
 	Ovirt *ovirt.Platform `json:"ovirt,omitempty"`
+
+	// Nutanix is the configuration used when installing on Nutanix.
+	// +optional
+	Nutanix *nutanix.Platform `json:"nutanix,omitempty"`
 }
 
 // Name returns a string representation of the platform (e.g. "aws" if
@@ -243,6 +269,10 @@ func (p *Platform) Name() string {
 		return vsphere.Name
 	case p.Ovirt != nil:
 		return ovirt.Name
+	case p.PowerVS != nil:
+		return powervs.Name
+	case p.Nutanix != nil:
+		return nutanix.Name
 	default:
 		return ""
 	}
@@ -250,17 +280,18 @@ func (p *Platform) Name() string {
 
 // Networking defines the pod network provider in the cluster.
 type Networking struct {
-	// NetworkType is the type of network to install. The default is OpenShiftSDN
-	//
-	// +kubebuilder:default=OpenShiftSDN
+	// NetworkType is the type of network to install.
+	// The default value is OVNKubernetes for Single Node OpenShift
+	// and OpenShiftSDN for all other platforms.
 	// +optional
 	NetworkType string `json:"networkType,omitempty"`
 
 	// MachineNetwork is the list of IP address pools for machines.
 	// This field replaces MachineCIDR, and if set MachineCIDR must
 	// be empty or match the first entry in the list.
-	// Default is 10.0.0.0/16 for all platforms other than libvirt.
+	// Default is 10.0.0.0/16 for all platforms other than libvirt and Power VS.
 	// For libvirt, the default is 192.168.126.0/24.
+	// For Power VS, the default is 192.168.0.0/16.
 	//
 	// +optional
 	MachineNetwork []MachineNetworkEntry `json:"machineNetwork,omitempty"`
@@ -281,8 +312,8 @@ type Networking struct {
 
 	// Deprecated types, scheduled to be removed
 
-	// Deprecated name for MachineCIDRs. If set, MachineCIDRs must
-	// be empty or the first index must match.
+	// Deprecated way to configure an IP address pool for machines.
+	// Replaced by MachineNetwork which allows for multiple pools.
 	// +optional
 	DeprecatedMachineCIDR *ipnet.IPNet `json:"machineCIDR,omitempty"`
 
@@ -290,7 +321,8 @@ type Networking struct {
 	// +optional
 	DeprecatedType string `json:"type,omitempty"`
 
-	// Deprecated name for ServiceNetwork
+	// Deprecated way to configure an IP address pool for services.
+	// Replaced by ServiceNetwork which allows for multiple pools.
 	// +optional
 	DeprecatedServiceCIDR *ipnet.IPNet `json:"serviceCIDR,omitempty"`
 
@@ -370,6 +402,21 @@ const (
 type BootstrapInPlace struct {
 	// InstallationDisk is the target disk drive for coreos-installer
 	InstallationDisk string `json:"installationDisk"`
+}
+
+// Capabilities selects the managed set of optional, core cluster components.
+type Capabilities struct {
+	// baselineCapabilitySet selects an initial set of
+	// optional capabilities to enable, which can be extended via
+	// additionalEnabledCapabilities. The default is vCurrent.
+	// +optional
+	BaselineCapabilitySet configv1.ClusterVersionCapabilitySet `json:"baselineCapabilitySet,omitempty"`
+
+	// additionalEnabledCapabilities extends the set of managed
+	// capabilities beyond the baseline defined in
+	// baselineCapabilitySet. The default is an empty set.
+	// +optional
+	AdditionalEnabledCapabilities []configv1.ClusterVersionCapability `json:"additionalEnabledCapabilities,omitempty"`
 }
 
 // WorkerMachinePool retrieves the worker MachinePool from InstallConfig.Compute

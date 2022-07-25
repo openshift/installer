@@ -1,3 +1,8 @@
+variable "resource_group_id" {
+  type        = string
+  description = "The resource group ID of the bootstrap ECS and security group."
+}
+
 variable "vpc_id" {
   type        = string
   description = "The VPC id of the bootstrap ECS."

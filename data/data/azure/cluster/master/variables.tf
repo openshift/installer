@@ -16,6 +16,17 @@ variable "vm_size" {
   type = string
 }
 
+variable "disk_encryption_set_id" {
+  type        = string
+  default     = null
+  description = "The ID of the Disk Encryption Set which should be used to encrypt OS disk."
+}
+
+variable "encryption_at_host_enabled" {
+  type        = bool
+  description = "Enables encryption at the VM host."
+}
+
 variable "vm_image" {
   type        = string
   description = "The resource id of the vm image used for masters."
@@ -77,9 +88,9 @@ variable "tags" {
   description = "tags to be applied to created resources."
 }
 
-variable "storage_account" {
+variable "storage_account_name" {
   type        = any
-  description = "the storage account for the cluster. It can be used for boot diagnostics."
+  description = "the name of the storage account for the cluster. It can be used for boot diagnostics."
 }
 
 variable "ignition" {
@@ -116,5 +127,18 @@ When false, Standard LB will be used for egress to the Internet.
 
 This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
 conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
+EOF
+}
+
+variable "ultra_ssd_enabled" {
+  type = bool
+  description = "Determines if the control plane should have UltraSSD Enabled."
+}
+
+variable "vm_networking_type" {
+  type = bool
+  description = <<EOF
+networking_type specifies whether to enable accelerated networking. Accelerated networking
+enables single root I/O virtualization (SR-IOV) to a VM, greatly improving its networking performance.
 EOF
 }

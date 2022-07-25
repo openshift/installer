@@ -1,12 +1,5 @@
-locals {
-  # NOTE: Defined in ./vpc.tf
-  # prefix     = var.cluster_id
-
-  subnet_cidr_blocks = concat(ibm_is_subnet.control_plane.*.ipv4_cidr_block, ibm_is_subnet.compute.*.ipv4_cidr_block)
-}
-
 # NOTE: Security group rules enforces network access based on OCP requirements
-# https://docs.openshift.com/container-platform/4.8/installing/installing_platform_agnostic/installing-platform-agnostic.html#installation-network-connectivity-user-infra_installing-platform-agnostic
+# https://docs.openshift.com/container-platform/4.9/installing/installing_platform_agnostic/installing-platform-agnostic.html#installation-network-connectivity-user-infra_installing-platform-agnostic
 
 # NOTE: Security group limitations
 # 5 per network interface (NIC) on a virtual server instance
@@ -17,10 +10,10 @@ locals {
 ############################################
 
 resource "ibm_is_security_group" "cluster_wide" {
-  name           = "${local.prefix}-security-group-cluster-wide"
+  name           = "${local.prefix}-sg-cluster-wide"
   resource_group = var.resource_group_id
   tags           = var.tags
-  vpc            = ibm_is_vpc.vpc.id
+  vpc            = local.vpc_id
 }
 
 # SSH
@@ -76,10 +69,10 @@ resource "ibm_is_security_group_rule" "cluster_wide_outbound" {
 ############################################
 
 resource "ibm_is_security_group" "openshift_network" {
-  name           = "${local.prefix}-security-group-openshift-network"
+  name           = "${local.prefix}-sg-openshift-net"
   resource_group = var.resource_group_id
   tags           = var.tags
-  vpc            = ibm_is_vpc.vpc.id
+  vpc            = local.vpc_id
 }
 
 # Host level services - TCP
@@ -112,6 +105,33 @@ resource "ibm_is_security_group_rule" "openshift_network_kube_default_ports_inbo
   tcp {
     port_min = 10250
     port_max = 10250
+  }
+}
+
+# Due to limtation of only 5 SGs per interface and only 5 remotes per SG
+# we stick the IPsec rules here in openshift_network since this SG is added
+# to all nodes.
+# There is a max of 50 rules per SG, so if we have more subnets this will break.
+
+# IPsec IKE - port 500
+resource "ibm_is_security_group_rule" "openshift_network_ipsec_ike_500_inbound" {
+  group     = ibm_is_security_group.openshift_network.id
+  direction = "inbound"
+  remote    = ibm_is_security_group.openshift_network.id
+  udp {
+    port_min = 500
+    port_max = 500
+  }
+}
+
+# IPsec IKE NAT-T - port 4500
+resource "ibm_is_security_group_rule" "openshift_network_ipsec_ike_nat_t_4500_inbound" {
+  group     = ibm_is_security_group.openshift_network.id
+  direction = "inbound"
+  remote    = ibm_is_security_group.openshift_network.id
+  udp {
+    port_min = 4500
+    port_max = 4500
   }
 }
 
@@ -148,10 +168,10 @@ resource "ibm_is_security_group_rule" "openshift_network_node_ports_udp_inbound"
 ############################################
 
 resource "ibm_is_security_group" "kubernetes_api_lb" {
-  name           = "${local.prefix}-security-group-kubernetes-api-lb"
+  name           = "${local.prefix}-sg-kube-api-lb"
   resource_group = var.resource_group_id
   tags           = var.tags
-  vpc            = ibm_is_vpc.vpc.id
+  vpc            = local.vpc_id
 }
 
 # Kubernetes API LB - inbound
@@ -203,17 +223,17 @@ resource "ibm_is_security_group_rule" "kubernetes_api_lb_machine_config_outbound
 ############################################
 
 resource "ibm_is_security_group" "control_plane" {
-  name           = "${local.prefix}-security-group-control-plane"
+  name           = "${local.prefix}-sg-control-plane"
   resource_group = var.resource_group_id
   tags           = var.tags
-  vpc            = ibm_is_vpc.vpc.id
+  vpc            = local.vpc_id
 }
 
 resource "ibm_is_security_group" "control_plane_internal" {
-  name           = "${local.prefix}-security-group-control-plane-internal"
+  name           = "${local.prefix}-sg-cp-internal"
   resource_group = var.resource_group_id
   tags           = var.tags
-  vpc            = ibm_is_vpc.vpc.id
+  vpc            = local.vpc_id
 }
 
 # etcd
@@ -235,17 +255,6 @@ resource "ibm_is_security_group_rule" "control_plane_internal_kube_default_ports
   tcp {
     port_min = 10257
     port_max = 10259
-  }
-}
-
-# Cluster policy controller port
-resource "ibm_is_security_group_rule" "control_plane_internal_cluster_policy_controller_ports_inbound" {
-  group     = ibm_is_security_group.control_plane_internal.id
-  direction = "inbound"
-  remote    = ibm_is_security_group.control_plane_internal.id
-  tcp {
-    port_min = 10357
-    port_max = 10357
   }
 }
 

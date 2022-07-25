@@ -1,16 +1,16 @@
 package ibmcloud
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strings"
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
+	"github.com/pkg/errors"
+
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/ibmcloud/validation"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -19,58 +19,14 @@ const (
 
 // Platform collects IBM Cloud-specific configuration.
 func Platform() (*ibmcloud.Platform, error) {
-	client, err := NewClient()
-	if err != nil {
-		return nil, err
-	}
-
-	resourceGroup, err := selectResourceGroup(context.TODO(), client)
-	if err != nil {
-		return nil, err
-	}
-
 	region, err := selectRegion()
 	if err != nil {
 		return nil, err
 	}
 
 	return &ibmcloud.Platform{
-		ResourceGroupName: resourceGroup,
-		Region:            region,
+		Region: region,
 	}, nil
-}
-
-func selectResourceGroup(ctx context.Context, client *Client) (string, error) {
-	groups, err := client.GetResourceGroups(ctx)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to list resource groups")
-	}
-
-	var options []string
-	names := make(map[string]string)
-
-	for _, group := range groups {
-		option := fmt.Sprintf("%s (%s)", *group.Name, *group.ID)
-		names[option] = *group.Name
-		options = append(options, option)
-	}
-	sort.Strings(options)
-
-	options = append(options, createNew)
-	names[createNew] = ""
-
-	var selectedResourceGroup string
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Select{
-				Message: "Resource Group",
-				Help:    "The resource group where the cluster will be provisioned.",
-				Options: options,
-				Default: createNew,
-			},
-		},
-	}, &selectedResourceGroup)
-	return names[selectedResourceGroup], err
 }
 
 func selectRegion() (string, error) {

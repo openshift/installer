@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	alibabacloudprovider "github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis/alibabacloudprovider/v1beta1"
+	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
@@ -17,43 +17,63 @@ type Auth struct {
 }
 
 type config struct {
-	Auth                  `json:",inline"`
-	Region                string            `json:"ali_region_id"`
-	ZoneIDs               []string          `json:"ali_zone_ids"`
-	NatGatewayZoneID      string            `json:"ali_nat_gateway_zone_id"`
-	ResourceGroupID       string            `json:"ali_resource_group_id"`
-	BootstrapInstanceType string            `json:"ali_bootstrap_instance_type"`
-	MasterInstanceType    string            `json:"ali_master_instance_type"`
-	ImageID               string            `json:"ali_image_id"`
-	SystemDiskSize        int               `json:"ali_system_disk_size"`
-	SystemDiskCategory    string            `json:"ali_system_disk_category"`
-	ExtraTags             map[string]string `json:"ali_extra_tags,omitempty"`
-	IgnitionBucket        string            `json:"ali_ignition_bucket"`
-	BootstrapIgnitionStub string            `json:"ali_bootstrap_stub_ignition"`
+	Auth                      `json:",inline"`
+	Region                    string            `json:"ali_region_id"`
+	VpcID                     string            `json:"ali_vpc_id"`
+	VSwitchIDs                []string          `json:"ali_vswitch_ids"`
+	MasterAvailabilityZoneIDs []string          `json:"ali_master_availability_zone_ids"`
+	WorkerAvailabilityZoneIDs []string          `json:"ali_worker_availability_zone_ids"`
+	PrivateZoneID             string            `json:"ali_private_zone_id"`
+	NatGatewayZoneID          string            `json:"ali_nat_gateway_zone_id"`
+	ResourceGroupID           string            `json:"ali_resource_group_id"`
+	BootstrapInstanceType     string            `json:"ali_bootstrap_instance_type"`
+	MasterInstanceType        string            `json:"ali_master_instance_type"`
+	ImageID                   string            `json:"ali_image_id"`
+	SystemDiskSize            int               `json:"ali_system_disk_size"`
+	SystemDiskCategory        string            `json:"ali_system_disk_category"`
+	ExtraTags                 map[string]string `json:"ali_extra_tags"`
+	IgnitionBucket            string            `json:"ali_ignition_bucket"`
+	BootstrapIgnitionStub     string            `json:"ali_bootstrap_stub_ignition"`
+	PublishStrategy           string            `json:"ali_publish_strategy"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
 	Auth                  Auth
+	VpcID                 string
+	VSwitchIDs            []string
+	PrivateZoneID         string
 	ResourceGroupID       string
 	BaseDomain            string
 	NatGatewayZoneID      string
-	MasterConfigs         []*alibabacloudprovider.AlibabaCloudMachineProviderConfig
-	WorkerConfigs         []*alibabacloudprovider.AlibabaCloudMachineProviderConfig
+	MasterConfigs         []*machinev1.AlibabaCloudMachineProviderConfig
+	WorkerConfigs         []*machinev1.AlibabaCloudMachineProviderConfig
 	IgnitionBucket        string
 	IgnitionPresignedURL  string
 	Publish               types.PublishingStrategy
 	AdditionalTrustBundle string
 	Architecture          types.Architecture
+	Proxy                 *types.Proxy
 }
 
 // TFVars generates AlibabaCloud-specific Terraform variables launching the cluster.
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	masterConfig := sources.MasterConfigs[0]
 
-	zoneIDs := make([]string, len(sources.MasterConfigs))
-	for i, c := range sources.MasterConfigs {
-		zoneIDs[i] = c.ZoneID
+	masterAvailabilityZoneIDs := make([]string, len(sources.MasterConfigs))
+	for i, masterConfig := range sources.MasterConfigs {
+		masterAvailabilityZoneIDs[i] = masterConfig.ZoneID
+	}
+
+	workerAvailabilityZones := map[string]bool{}
+	for _, workerConfig := range sources.WorkerConfigs {
+		if !workerAvailabilityZones[workerConfig.ZoneID] {
+			workerAvailabilityZones[workerConfig.ZoneID] = true
+		}
+	}
+	workerAvailabilityZoneIDs := make([]string, 0, len(workerAvailabilityZones))
+	for zoneID := range workerAvailabilityZones {
+		workerAvailabilityZoneIDs = append(workerAvailabilityZoneIDs, zoneID)
 	}
 
 	tags := make(map[string]string, len(masterConfig.Tags))
@@ -62,21 +82,26 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	cfg := &config{
-		Auth:                  sources.Auth,
-		Region:                masterConfig.RegionID,
-		ZoneIDs:               zoneIDs,
-		NatGatewayZoneID:      sources.NatGatewayZoneID,
-		ResourceGroupID:       sources.ResourceGroupID,
-		BootstrapInstanceType: masterConfig.InstanceType,
-		MasterInstanceType:    masterConfig.InstanceType,
-		ImageID:               masterConfig.ImageID,
-		SystemDiskSize:        masterConfig.SystemDiskSize,
-		SystemDiskCategory:    masterConfig.SystemDiskCategory,
-		ExtraTags:             tags,
-		IgnitionBucket:        sources.IgnitionBucket,
+		Auth:                      sources.Auth,
+		Region:                    masterConfig.RegionID,
+		MasterAvailabilityZoneIDs: masterAvailabilityZoneIDs,
+		WorkerAvailabilityZoneIDs: workerAvailabilityZoneIDs,
+		VpcID:                     sources.VpcID,
+		VSwitchIDs:                sources.VSwitchIDs,
+		PrivateZoneID:             sources.PrivateZoneID,
+		NatGatewayZoneID:          sources.NatGatewayZoneID,
+		ResourceGroupID:           sources.ResourceGroupID,
+		BootstrapInstanceType:     masterConfig.InstanceType,
+		MasterInstanceType:        masterConfig.InstanceType,
+		ImageID:                   masterConfig.ImageID,
+		SystemDiskSize:            int(masterConfig.SystemDisk.Size),
+		SystemDiskCategory:        masterConfig.SystemDisk.Category,
+		ExtraTags:                 tags,
+		IgnitionBucket:            sources.IgnitionBucket,
+		PublishStrategy:           string(sources.Publish),
 	}
 
-	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundle(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle)
+	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle, sources.Proxy)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create stub Ignition config for bootstrap")
 	}

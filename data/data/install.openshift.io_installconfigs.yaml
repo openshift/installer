@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.7.0
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: installconfigs.install.openshift.io
 spec:
@@ -43,6 +43,33 @@ spec:
                 type: string
             required:
             - installationDisk
+            type: object
+          capabilities:
+            description: Capabilities configures the installation of optional core
+              cluster components.
+            properties:
+              additionalEnabledCapabilities:
+                description: additionalEnabledCapabilities extends the set of managed
+                  capabilities beyond the baseline defined in baselineCapabilitySet.
+                  The default is an empty set.
+                items:
+                  description: ClusterVersionCapability enumerates optional, core
+                    cluster components.
+                  enum:
+                  - openshift-samples
+                  - baremetal
+                  - marketplace
+                  type: string
+                type: array
+              baselineCapabilitySet:
+                description: baselineCapabilitySet selects an initial set of optional
+                  capabilities to enable, which can be extended via additionalEnabledCapabilities.
+                  The default is vCurrent.
+                enum:
+                - None
+                - v4.11
+                - vCurrent
+                type: string
             type: object
           compute:
             description: Compute is the configuration for the machines that comprise
@@ -124,13 +151,35 @@ spec:
                             for the instance profile of the machine. Leave unset to
                             have the installer create the IAM Role on your behalf.
                           type: string
+                        metadataService:
+                          description: EC2MetadataOptions defines metadata service
+                            interaction options for EC2 instances in the machine pool.
+                          properties:
+                            authentication:
+                              description: Authentication determines whether or not
+                                the host requires the use of authentication when interacting
+                                with the metadata service. When using authentication,
+                                this enforces v2 interaction method (IMDSv2) with
+                                the metadata service. When omitted, this means the
+                                user has no opinion and the value is left to the platform
+                                to choose a good default, which is subject to change
+                                over time. The current default is optional. At this
+                                point this field represents `HttpTokens` parameter
+                                from `InstanceMetadataOptionsRequest` structure in
+                                AWS EC2 API https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_InstanceMetadataOptionsRequest.html
+                              enum:
+                              - Required
+                              - Optional
+                              type: string
+                          type: object
                         rootVolume:
                           description: EC2RootVolume defines the root volume for EC2
                             instances in the machine pool.
                           properties:
                             iops:
                               description: IOPS defines the amount of provisioned
-                                IOPS. This is only valid for type io1.
+                                IOPS. (KiB/s). IOPS may only be set for io1, io2,
+                                & gp3 volume types.
                               minimum: 0
                               type: integer
                             kmsKeyARN:
@@ -165,9 +214,33 @@ spec:
                       description: Azure is the configuration used when installing
                         on Azure.
                       properties:
+                        encryptionAtHost:
+                          description: EncryptionAtHost enables encryption at the
+                            VM host.
+                          type: boolean
                         osDisk:
                           description: OSDisk defines the storage for instance.
                           properties:
+                            diskEncryptionSet:
+                              description: DiskEncryptionSet defines a disk encryption
+                                set.
+                              properties:
+                                name:
+                                  description: Name is the name of the disk encryption
+                                    set.
+                                  type: string
+                                resourceGroup:
+                                  description: ResourceGroup defines the Azure resource
+                                    group used by the disk encryption set.
+                                  type: string
+                                subscriptionId:
+                                  description: SubscriptionID defines the Azure subscription
+                                    the disk encryption set is in.
+                                  type: string
+                              required:
+                              - name
+                              - resourceGroup
+                              type: object
                             diskSizeGB:
                               description: DiskSizeGB defines the size of disk in
                                 GB.
@@ -175,10 +248,9 @@ spec:
                               minimum: 0
                               type: integer
                             diskType:
-                              description: DiskType defines the type of disk. The
-                                valid values are Standard_LRS, Premium_LRS, StandardSSD_LRS
-                                For control plane nodes, the valid values are Premium_LRS
-                                and StandardSSD_LRS. Default is Premium_LRS
+                              description: DiskType defines the type of disk. For
+                                control plane nodes, the valid values are Premium_LRS
+                                and StandardSSD_LRS. Default is Premium_LRS.
                               enum:
                               - Standard_LRS
                               - Premium_LRS
@@ -187,9 +259,47 @@ spec:
                           required:
                           - diskSizeGB
                           type: object
+                        osImage:
+                          description: OSImage defines the image to use for the OS.
+                          properties:
+                            offer:
+                              description: Offer is the offer of the image.
+                              type: string
+                            publisher:
+                              description: Publisher is the publisher of the image.
+                              type: string
+                            sku:
+                              description: SKU is the SKU of the image.
+                              type: string
+                            version:
+                              description: Version is the version of the image.
+                              type: string
+                          required:
+                          - offer
+                          - publisher
+                          - sku
+                          - version
+                          type: object
                         type:
                           description: InstanceType defines the azure instance type.
                             eg. Standard_DS_V2
+                          type: string
+                        ultraSSDCapability:
+                          description: ultraSSDCapability defines if the instance
+                            should use Ultra SSD disks.
+                          enum:
+                          - Enabled
+                          - Disabled
+                          type: string
+                        vmNetworkingType:
+                          description: 'VMNetworkingType specifies whether to enable
+                            accelerated networking. Accelerated networking enables
+                            single root I/O virtualization (SR-IOV) to a VM, greatly
+                            improving its networking performance. eg. values: "Accelerated",
+                            "Basic"'
+                          enum:
+                          - Accelerated
+                          - Basic
                           type: string
                         zones:
                           description: Zones is list of availability zones that can
@@ -216,10 +326,9 @@ spec:
                               maximum: 65536
                               minimum: 16
                               type: integer
-                            DiskType:
-                              description: DiskType defines the type of disk. The
-                                valid values are pd-standard and pd-ssd For control
-                                plane nodes, the valid value is pd-ssd.
+                            diskType:
+                              description: DiskType defines the type of disk. For
+                                control plane nodes, the valid value is pd-ssd.
                               enum:
                               - pd-ssd
                               - pd-standard
@@ -292,6 +401,25 @@ spec:
                                 managed encryption key will be used.
                               type: string
                           type: object
+                        dedicatedHosts:
+                          description: DedicatedHosts is the configuration for the
+                            machine's dedicated host and profile.
+                          items:
+                            description: DedicatedHost stores the configuration for
+                              the machine's dedicated host platform.
+                            properties:
+                              name:
+                                description: Name is the name of the dedicated host
+                                  to provision the machine on. If specified, machines
+                                  will be created on pre-existing dedicated host.
+                                type: string
+                              profile:
+                                description: Profile is the profile ID for the dedicated
+                                  host. If specified, new dedicated host will be created
+                                  for machines.
+                                type: string
+                            type: object
+                          type: array
                         type:
                           description: InstanceType is the VSI machine profile.
                           type: string
@@ -305,6 +433,38 @@ spec:
                     libvirt:
                       description: Libvirt is the configuration used when installing
                         on libvirt.
+                      type: object
+                    nutanix:
+                      description: Nutanix is the configuration used when installing
+                        on Nutanix.
+                      properties:
+                        coresPerSocket:
+                          description: 'NumCoresPerSocket is the number of cores per
+                            socket in a vm. The number of vCPUs on the vm will be
+                            NumCPUs times NumCoresPerSocket. For example: 4 CPUs and
+                            4 Cores per socket will result in 16 VPUs. The AHV scheduler
+                            treats socket and core allocation exactly the same so
+                            there is no benefit to configuring cores over CPUs.'
+                          format: int64
+                          type: integer
+                        cpus:
+                          description: NumCPUs is the total number of virtual processor
+                            cores to assign a vm.
+                          format: int64
+                          type: integer
+                        memoryMiB:
+                          description: Memory is the size of a VM's memory in MiB.
+                          format: int64
+                          type: integer
+                        osDisk:
+                          description: OSDisk defines the storage for instance.
+                          properties:
+                            diskSizeGiB:
+                              description: DiskSizeGiB defines the size of disk in
+                                GiB.
+                              format: int64
+                              type: integer
+                          type: object
                       type: object
                     openstack:
                       description: OpenStack is the configuration used when installing
@@ -396,6 +556,15 @@ spec:
                           - none
                           - resize_and_pin
                           type: string
+                        clone:
+                          description: "Clone makes sure that the disks are cloned
+                            from the template and are not linked. Defaults to true
+                            for high performance and server VM types, false for desktop
+                            types. \n Note: this option is not documented in the OpenShift
+                            documentation. This is intentional as it has sane defaults
+                            that shouldn't be changed unless needed for debugging
+                            or resolving issues in cooperation with Red Hat support."
+                          type: boolean
                         cpu:
                           description: CPU defines the VM CPU.
                           properties:
@@ -409,10 +578,24 @@ spec:
                                 VM. Total CPUs is (Sockets * Cores)
                               format: int32
                               type: integer
+                            threads:
+                              description: Threads is the number of CPU threads.
+                              format: int32
+                              type: integer
                           required:
                           - cores
                           - sockets
+                          - threads
                           type: object
+                        format:
+                          description: Format is the disk format that the disks are
+                            in. Can be "cow" or "raw". "raw" disables several features
+                            that may be needed, such as incremental backups.
+                          enum:
+                          - ""
+                          - raw
+                          - cow
+                          type: string
                         hugepages:
                           description: Hugepages is the size of a VM's hugepages to
                             use in KiBs.
@@ -441,6 +624,10 @@ spec:
                           required:
                           - sizeGB
                           type: object
+                        sparse:
+                          description: Sparse indicates that sparse provisioning should
+                            be used and disks should be not preallocated.
+                          type: boolean
                         vmType:
                           description: VMType defines the workload type of the VM.
                           enum:
@@ -449,6 +636,41 @@ spec:
                           - server
                           - high_performance
                           type: string
+                      type: object
+                    powervs:
+                      description: PowerVS is the configuration used when installing
+                        on IBM Power VS.
+                      properties:
+                        memoryGiB:
+                          description: memoryGiB is the size of a virtual machine's
+                            memory, in GiB.
+                          format: int32
+                          type: integer
+                        procType:
+                          description: ProcType defines the processor sharing model
+                            for the instance. Must be one of {Capped, Dedicated, Shared}.
+                          enum:
+                          - Dedicated
+                          - Shared
+                          - Capped
+                          - ""
+                          type: string
+                        processors:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Processors defines the processing units for
+                            the instance.
+                          x-kubernetes-int-or-string: true
+                        sysType:
+                          description: SysType defines the system type for instance.
+                          type: string
+                        volumeIDs:
+                          description: VolumeIDs is the list of volumes attached to
+                            the instance.
+                          items:
+                            type: string
+                          type: array
                       type: object
                     vsphere:
                       description: VSphere is the configuration used when installing
@@ -567,13 +789,35 @@ spec:
                           the instance profile of the machine. Leave unset to have
                           the installer create the IAM Role on your behalf.
                         type: string
+                      metadataService:
+                        description: EC2MetadataOptions defines metadata service interaction
+                          options for EC2 instances in the machine pool.
+                        properties:
+                          authentication:
+                            description: Authentication determines whether or not
+                              the host requires the use of authentication when interacting
+                              with the metadata service. When using authentication,
+                              this enforces v2 interaction method (IMDSv2) with the
+                              metadata service. When omitted, this means the user
+                              has no opinion and the value is left to the platform
+                              to choose a good default, which is subject to change
+                              over time. The current default is optional. At this
+                              point this field represents `HttpTokens` parameter from
+                              `InstanceMetadataOptionsRequest` structure in AWS EC2
+                              API https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_InstanceMetadataOptionsRequest.html
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                        type: object
                       rootVolume:
                         description: EC2RootVolume defines the root volume for EC2
                           instances in the machine pool.
                         properties:
                           iops:
                             description: IOPS defines the amount of provisioned IOPS.
-                              This is only valid for type io1.
+                              (KiB/s). IOPS may only be set for io1, io2, & gp3 volume
+                              types.
                             minimum: 0
                             type: integer
                           kmsKeyARN:
@@ -608,19 +852,42 @@ spec:
                     description: Azure is the configuration used when installing on
                       Azure.
                     properties:
+                      encryptionAtHost:
+                        description: EncryptionAtHost enables encryption at the VM
+                          host.
+                        type: boolean
                       osDisk:
                         description: OSDisk defines the storage for instance.
                         properties:
+                          diskEncryptionSet:
+                            description: DiskEncryptionSet defines a disk encryption
+                              set.
+                            properties:
+                              name:
+                                description: Name is the name of the disk encryption
+                                  set.
+                                type: string
+                              resourceGroup:
+                                description: ResourceGroup defines the Azure resource
+                                  group used by the disk encryption set.
+                                type: string
+                              subscriptionId:
+                                description: SubscriptionID defines the Azure subscription
+                                  the disk encryption set is in.
+                                type: string
+                            required:
+                            - name
+                            - resourceGroup
+                            type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
                             format: int32
                             minimum: 0
                             type: integer
                           diskType:
-                            description: DiskType defines the type of disk. The valid
-                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS
-                              For control plane nodes, the valid values are Premium_LRS
-                              and StandardSSD_LRS. Default is Premium_LRS
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid values are Premium_LRS and StandardSSD_LRS.
+                              Default is Premium_LRS.
                             enum:
                             - Standard_LRS
                             - Premium_LRS
@@ -629,9 +896,46 @@ spec:
                         required:
                         - diskSizeGB
                         type: object
+                      osImage:
+                        description: OSImage defines the image to use for the OS.
+                        properties:
+                          offer:
+                            description: Offer is the offer of the image.
+                            type: string
+                          publisher:
+                            description: Publisher is the publisher of the image.
+                            type: string
+                          sku:
+                            description: SKU is the SKU of the image.
+                            type: string
+                          version:
+                            description: Version is the version of the image.
+                            type: string
+                        required:
+                        - offer
+                        - publisher
+                        - sku
+                        - version
+                        type: object
                       type:
                         description: InstanceType defines the azure instance type.
                           eg. Standard_DS_V2
+                        type: string
+                      ultraSSDCapability:
+                        description: ultraSSDCapability defines if the instance should
+                          use Ultra SSD disks.
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
+                      vmNetworkingType:
+                        description: 'VMNetworkingType specifies whether to enable
+                          accelerated networking. Accelerated networking enables single
+                          root I/O virtualization (SR-IOV) to a VM, greatly improving
+                          its networking performance. eg. values: "Accelerated", "Basic"'
+                        enum:
+                        - Accelerated
+                        - Basic
                         type: string
                       zones:
                         description: Zones is list of availability zones that can
@@ -657,10 +961,9 @@ spec:
                             maximum: 65536
                             minimum: 16
                             type: integer
-                          DiskType:
-                            description: DiskType defines the type of disk. The valid
-                              values are pd-standard and pd-ssd For control plane
-                              nodes, the valid value is pd-ssd.
+                          diskType:
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid value is pd-ssd.
                             enum:
                             - pd-ssd
                             - pd-standard
@@ -733,6 +1036,25 @@ spec:
                               managed encryption key will be used.
                             type: string
                         type: object
+                      dedicatedHosts:
+                        description: DedicatedHosts is the configuration for the machine's
+                          dedicated host and profile.
+                        items:
+                          description: DedicatedHost stores the configuration for
+                            the machine's dedicated host platform.
+                          properties:
+                            name:
+                              description: Name is the name of the dedicated host
+                                to provision the machine on. If specified, machines
+                                will be created on pre-existing dedicated host.
+                              type: string
+                            profile:
+                              description: Profile is the profile ID for the dedicated
+                                host. If specified, new dedicated host will be created
+                                for machines.
+                              type: string
+                          type: object
+                        type: array
                       type:
                         description: InstanceType is the VSI machine profile.
                         type: string
@@ -746,6 +1068,37 @@ spec:
                   libvirt:
                     description: Libvirt is the configuration used when installing
                       on libvirt.
+                    type: object
+                  nutanix:
+                    description: Nutanix is the configuration used when installing
+                      on Nutanix.
+                    properties:
+                      coresPerSocket:
+                        description: 'NumCoresPerSocket is the number of cores per
+                          socket in a vm. The number of vCPUs on the vm will be NumCPUs
+                          times NumCoresPerSocket. For example: 4 CPUs and 4 Cores
+                          per socket will result in 16 VPUs. The AHV scheduler treats
+                          socket and core allocation exactly the same so there is
+                          no benefit to configuring cores over CPUs.'
+                        format: int64
+                        type: integer
+                      cpus:
+                        description: NumCPUs is the total number of virtual processor
+                          cores to assign a vm.
+                        format: int64
+                        type: integer
+                      memoryMiB:
+                        description: Memory is the size of a VM's memory in MiB.
+                        format: int64
+                        type: integer
+                      osDisk:
+                        description: OSDisk defines the storage for instance.
+                        properties:
+                          diskSizeGiB:
+                            description: DiskSizeGiB defines the size of disk in GiB.
+                            format: int64
+                            type: integer
+                        type: object
                     type: object
                   openstack:
                     description: OpenStack is the configuration used when installing
@@ -837,6 +1190,15 @@ spec:
                         - none
                         - resize_and_pin
                         type: string
+                      clone:
+                        description: "Clone makes sure that the disks are cloned from
+                          the template and are not linked. Defaults to true for high
+                          performance and server VM types, false for desktop types.
+                          \n Note: this option is not documented in the OpenShift
+                          documentation. This is intentional as it has sane defaults
+                          that shouldn't be changed unless needed for debugging or
+                          resolving issues in cooperation with Red Hat support."
+                        type: boolean
                       cpu:
                         description: CPU defines the VM CPU.
                         properties:
@@ -850,10 +1212,24 @@ spec:
                               Total CPUs is (Sockets * Cores)
                             format: int32
                             type: integer
+                          threads:
+                            description: Threads is the number of CPU threads.
+                            format: int32
+                            type: integer
                         required:
                         - cores
                         - sockets
+                        - threads
                         type: object
+                      format:
+                        description: Format is the disk format that the disks are
+                          in. Can be "cow" or "raw". "raw" disables several features
+                          that may be needed, such as incremental backups.
+                        enum:
+                        - ""
+                        - raw
+                        - cow
+                        type: string
                       hugepages:
                         description: Hugepages is the size of a VM's hugepages to
                           use in KiBs.
@@ -882,6 +1258,10 @@ spec:
                         required:
                         - sizeGB
                         type: object
+                      sparse:
+                        description: Sparse indicates that sparse provisioning should
+                          be used and disks should be not preallocated.
+                        type: boolean
                       vmType:
                         description: VMType defines the workload type of the VM.
                         enum:
@@ -890,6 +1270,41 @@ spec:
                         - server
                         - high_performance
                         type: string
+                    type: object
+                  powervs:
+                    description: PowerVS is the configuration used when installing
+                      on IBM Power VS.
+                    properties:
+                      memoryGiB:
+                        description: memoryGiB is the size of a virtual machine's
+                          memory, in GiB.
+                        format: int32
+                        type: integer
+                      procType:
+                        description: ProcType defines the processor sharing model
+                          for the instance. Must be one of {Capped, Dedicated, Shared}.
+                        enum:
+                        - Dedicated
+                        - Shared
+                        - Capped
+                        - ""
+                        type: string
+                      processors:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: Processors defines the processing units for the
+                          instance.
+                        x-kubernetes-int-or-string: true
+                      sysType:
+                        description: SysType defines the system type for instance.
+                        type: string
+                      volumeIDs:
+                        description: VolumeIDs is the list of volumes attached to
+                          the instance.
+                        items:
+                          type: string
+                        type: array
                     type: object
                   vsphere:
                     description: VSphere is the configuration used when installing
@@ -941,9 +1356,9 @@ spec:
               \"Manual\": CredentialsRequests must be handled manually by the user
               \n For each of the following platforms, the field can set to the specified
               values. For all other platforms, the field must not be set. AWS: \"Mint\",
-              \"Passthrough\", \"Manual\" Azure: \"Mint\", \"Passthrough\", \"Manual\"
-              AzureStack: \"Manual\" GCP: \"Mint\", \"Passthrough\", \"Manual\" IBMCloud:
-              \"Manual\" AlibabaCloud: \"Manual\""
+              \"Passthrough\", \"Manual\" Azure: \"Passthrough\", \"Manual\" AzureStack:
+              \"Manual\" GCP: \"Mint\", \"Passthrough\", \"Manual\" IBMCloud: \"Manual\"
+              AlibabaCloud: \"Manual\" PowerVS: \"Manual\" Nutanix: \"Manual\""
             enum:
             - ""
             - Mint
@@ -1040,15 +1455,15 @@ spec:
                   type: object
                 type: array
               machineCIDR:
-                description: Deprecated name for MachineCIDRs. If set, MachineCIDRs
-                  must be empty or the first index must match.
+                description: Deprecated way to configure an IP address pool for machines.
+                  Replaced by MachineNetwork which allows for multiple pools.
                 type: Any
               machineNetwork:
                 description: MachineNetwork is the list of IP address pools for machines.
                   This field replaces MachineCIDR, and if set MachineCIDR must be
                   empty or match the first entry in the list. Default is 10.0.0.0/16
-                  for all platforms other than libvirt. For libvirt, the default is
-                  192.168.126.0/24.
+                  for all platforms other than libvirt and Power VS. For libvirt,
+                  the default is 192.168.126.0/24. For Power VS, the default is 192.168.0.0/16.
                 items:
                   description: MachineNetworkEntry is a single IP address block for
                     node IP blocks.
@@ -1062,12 +1477,13 @@ spec:
                   type: object
                 type: array
               networkType:
-                default: OpenShiftSDN
                 description: NetworkType is the type of network to install. The default
-                  is OpenShiftSDN
+                  value is OVNKubernetes for Single Node OpenShift and OpenShiftSDN
+                  for all other platforms.
                 type: string
               serviceCIDR:
-                description: Deprecated name for ServiceNetwork
+                description: Deprecated way to configure an IP address pool for services.
+                  Replaced by ServiceNetwork which allows for multiple pools.
                 type: Any
               serviceNetwork:
                 description: 'ServiceNetwork is the list of IP address pools for services.
@@ -1122,13 +1538,22 @@ spec:
                           type: string
                         type: array
                     type: object
+                  privateZoneID:
+                    description: PrivateZoneID is the ID of an existing private zone
+                      into which to add DNS records for the cluster's internal API.
+                      An existing private zone can only be used when also using existing
+                      VPC. The private zone must be associated with the VPC containing
+                      the subnets. Leave the private zone unset to have the installer
+                      create the private zone on your behalf.
+                    type: string
                   region:
                     description: Region specifies the Alibaba Cloud region where the
                       cluster will be created.
                     type: string
                   resourceGroupID:
                     description: ResourceGroupID is the ID of an already existing
-                      resource group where the cluster should be installed.
+                      resource group where the cluster should be installed. If empty,
+                      the installer will create a new resource group for the cluster.
                     type: string
                   tags:
                     additionalProperties:
@@ -1137,9 +1562,21 @@ spec:
                       will add as tags to all resources that it creates. Resources
                       created by the cluster itself may not include these tags.
                     type: object
+                  vpcID:
+                    description: VpcID is the ID of an already existing VPC where
+                      the cluster should be installed. If empty, the installer will
+                      create a new VPC for the cluster.
+                    type: string
+                  vswitchIDs:
+                    description: VSwitchIDs is the ID list of already existing VSwitches
+                      where cluster resources will be created. The existing VSwitches
+                      can only be used when also using existing VPC. If empty, the
+                      installer will create new VSwitches for the cluster.
+                    items:
+                      type: string
+                    type: array
                 required:
                 - region
-                - resourceGroupID
                 type: object
               aws:
                 description: AWS is the configuration used when installing on AWS.
@@ -1164,13 +1601,35 @@ spec:
                           the instance profile of the machine. Leave unset to have
                           the installer create the IAM Role on your behalf.
                         type: string
+                      metadataService:
+                        description: EC2MetadataOptions defines metadata service interaction
+                          options for EC2 instances in the machine pool.
+                        properties:
+                          authentication:
+                            description: Authentication determines whether or not
+                              the host requires the use of authentication when interacting
+                              with the metadata service. When using authentication,
+                              this enforces v2 interaction method (IMDSv2) with the
+                              metadata service. When omitted, this means the user
+                              has no opinion and the value is left to the platform
+                              to choose a good default, which is subject to change
+                              over time. The current default is optional. At this
+                              point this field represents `HttpTokens` parameter from
+                              `InstanceMetadataOptionsRequest` structure in AWS EC2
+                              API https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_InstanceMetadataOptionsRequest.html
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                        type: object
                       rootVolume:
                         description: EC2RootVolume defines the root volume for EC2
                           instances in the machine pool.
                         properties:
                           iops:
                             description: IOPS defines the amount of provisioned IOPS.
-                              This is only valid for type io1.
+                              (KiB/s). IOPS may only be set for io1, io2, & gp3 volume
+                              types.
                             minimum: 0
                             type: integer
                           kmsKeyARN:
@@ -1202,10 +1661,10 @@ spec:
                         type: array
                     type: object
                   experimentalPropagateUserTags:
-                    description: ExperimentalPropagateUserTags is an experimental
-                      flag that directs in-cluster operators to include the specified
-                      user tags in the tags of the AWS resources that the operators
-                      create.
+                    description: The field is deprecated. ExperimentalPropagateUserTags
+                      is an experimental flag that directs in-cluster operators to
+                      include the specified user tags in the tags of the AWS resources
+                      that the operators create.
                     type: boolean
                   hostedZone:
                     description: HostedZone is the ID of an existing hosted zone into
@@ -1215,6 +1674,11 @@ spec:
                       the subnets. Leave the hosted zone unset to have the installer
                       create the hosted zone on your behalf.
                     type: string
+                  propagateUserTags:
+                    description: PropagateUserTags is a flag that directs in-cluster
+                      operators to include the specified user tags in the tags of
+                      the AWS resources that the operators create.
+                    type: boolean
                   region:
                     description: Region specifies the AWS region where the cluster
                       will be created.
@@ -1269,6 +1733,8 @@ spec:
                   baseDomainResourceGroupName:
                     description: BaseDomainResourceGroupName specifies the resource
                       group where the Azure DNS zone for the base domain is found.
+                      This field is optional when creating a private cluster, otherwise
+                      required.
                     type: string
                   cloudName:
                     description: cloudName is the name of the Azure cloud environment
@@ -1281,6 +1747,11 @@ spec:
                     - AzureChinaCloud
                     - AzureGermanCloud
                     - AzureStackCloud
+                    type: string
+                  clusterOSImage:
+                    description: ClusterOSImage is the url of a storage blob in the
+                      Azure Stack environment containing an RHCOS VHD. This field
+                      is required for Azure Stack and not applicable to Azure.
                     type: string
                   computeSubnet:
                     description: ComputeSubnet specifies an existing subnet for use
@@ -1295,19 +1766,42 @@ spec:
                       used when installing on Azure for machine pools which do not
                       define their own platform configuration.
                     properties:
+                      encryptionAtHost:
+                        description: EncryptionAtHost enables encryption at the VM
+                          host.
+                        type: boolean
                       osDisk:
                         description: OSDisk defines the storage for instance.
                         properties:
+                          diskEncryptionSet:
+                            description: DiskEncryptionSet defines a disk encryption
+                              set.
+                            properties:
+                              name:
+                                description: Name is the name of the disk encryption
+                                  set.
+                                type: string
+                              resourceGroup:
+                                description: ResourceGroup defines the Azure resource
+                                  group used by the disk encryption set.
+                                type: string
+                              subscriptionId:
+                                description: SubscriptionID defines the Azure subscription
+                                  the disk encryption set is in.
+                                type: string
+                            required:
+                            - name
+                            - resourceGroup
+                            type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
                             format: int32
                             minimum: 0
                             type: integer
                           diskType:
-                            description: DiskType defines the type of disk. The valid
-                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS
-                              For control plane nodes, the valid values are Premium_LRS
-                              and StandardSSD_LRS. Default is Premium_LRS
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid values are Premium_LRS and StandardSSD_LRS.
+                              Default is Premium_LRS.
                             enum:
                             - Standard_LRS
                             - Premium_LRS
@@ -1316,9 +1810,46 @@ spec:
                         required:
                         - diskSizeGB
                         type: object
+                      osImage:
+                        description: OSImage defines the image to use for the OS.
+                        properties:
+                          offer:
+                            description: Offer is the offer of the image.
+                            type: string
+                          publisher:
+                            description: Publisher is the publisher of the image.
+                            type: string
+                          sku:
+                            description: SKU is the SKU of the image.
+                            type: string
+                          version:
+                            description: Version is the version of the image.
+                            type: string
+                        required:
+                        - offer
+                        - publisher
+                        - sku
+                        - version
+                        type: object
                       type:
                         description: InstanceType defines the azure instance type.
                           eg. Standard_DS_V2
+                        type: string
+                      ultraSSDCapability:
+                        description: ultraSSDCapability defines if the instance should
+                          use Ultra SSD disks.
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
+                      vmNetworkingType:
+                        description: 'VMNetworkingType specifies whether to enable
+                          accelerated networking. Accelerated networking enables single
+                          root I/O virtualization (SR-IOV) to a VM, greatly improving
+                          its networking performance. eg. values: "Accelerated", "Basic"'
+                        enum:
+                        - Accelerated
+                        - Basic
                         type: string
                       zones:
                         description: Zones is list of availability zones that can
@@ -1368,6 +1899,18 @@ spec:
                 properties:
                   apiVIP:
                     description: APIVIP is the VIP to use for internal API communication
+                    format: ip
+                    type: string
+                  bootstrapExternalStaticGateway:
+                    description: BootstrapExternalStaticGateway is the static network
+                      gateway of the bootstrap node. This can be useful in environments
+                      without a DHCP server.
+                    format: ip
+                    type: string
+                  bootstrapExternalStaticIP:
+                    description: BootstrapExternalStaticIP is the static IP address
+                      of the bootstrap node. This can be useful in environments without
+                      a DHCP server.
                     format: ip
                     type: string
                   bootstrapOSImage:
@@ -1448,6 +1991,8 @@ spec:
                           type: string
                         name:
                           type: string
+                        networkConfig:
+                          x-kubernetes-preserve-unknown-fields: true
                         role:
                           type: string
                         rootDeviceHints:
@@ -1592,10 +2137,9 @@ spec:
                             maximum: 65536
                             minimum: 16
                             type: integer
-                          DiskType:
-                            description: DiskType defines the type of disk. The valid
-                              values are pd-standard and pd-ssd For control plane
-                              nodes, the valid value is pd-ssd.
+                          diskType:
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid value is pd-ssd.
                             enum:
                             - pd-ssd
                             - pd-standard
@@ -1683,6 +2227,18 @@ spec:
                 description: IBMCloud is the configuration used when installing on
                   IBM Cloud.
                 properties:
+                  computeSubnets:
+                    description: ComputeSubnets are the names of already existing
+                      subnets where the cluster compute nodes should be created.
+                    items:
+                      type: string
+                    type: array
+                  controlPlaneSubnets:
+                    description: ControlPlaneSubnets are the names of already existing
+                      subnets where the cluster control plane nodes should be created.
+                    items:
+                      type: string
+                    type: array
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on IBM Cloud for machine pools which do
@@ -1699,6 +2255,25 @@ spec:
                               managed encryption key will be used.
                             type: string
                         type: object
+                      dedicatedHosts:
+                        description: DedicatedHosts is the configuration for the machine's
+                          dedicated host and profile.
+                        items:
+                          description: DedicatedHost stores the configuration for
+                            the machine's dedicated host platform.
+                          properties:
+                            name:
+                              description: Name is the name of the dedicated host
+                                to provision the machine on. If specified, machines
+                                will be created on pre-existing dedicated host.
+                              type: string
+                            profile:
+                              description: Profile is the profile ID for the dedicated
+                                host. If specified, new dedicated host will be created
+                                for machines.
+                              type: string
+                          type: object
+                        type: array
                       type:
                         description: InstanceType is the VSI machine profile.
                         type: string
@@ -1714,31 +2289,13 @@ spec:
                       will be created.
                     type: string
                   resourceGroupName:
-                    description: "ResourceGroupName is the name of an already existing
-                      resource group where the cluster should be installed. This resource
-                      group should only be used for this specific cluster and the
-                      cluster components will assume ownership of all resources in
-                      the resource group. Destroying the cluster using installer will
-                      delete this resource group. \n This resource group must be empty
-                      with no other resources when trying to use it for creating a
-                      cluster. If empty, a new resource group will be created for
-                      the cluster."
+                    description: ResourceGroupName is the name of an already existing
+                      resource group where the cluster should be installed. If empty,
+                      a new resource group will be created for the cluster.
                     type: string
-                  subnets:
-                    description: Subnets is a list of existing subnet IDs. Leave unset
-                      and the installer will create new subnets in the VPC network
-                      on your behalf.
-                    items:
-                      type: string
-                    type: array
-                  vpc:
-                    description: VPC is the ID of an existing VPC network. Leave unset
-                      and the installer will create a new VPC network on your behalf.
-                    type: string
-                  vpcResourceGroupName:
-                    description: VPCResourceGroupName specifies the resource group
-                      containing an existing VPC. This must be defined if `VPC` is
-                      defined.
+                  vpcName:
+                    description: VPCName is the name of an already existing VPC where
+                      the cluster should be installed.
                     type: string
                 required:
                 - region
@@ -1791,6 +2348,134 @@ spec:
               none:
                 description: None is the empty configuration used when installing
                   on an unsupported platform.
+                type: object
+              nutanix:
+                description: Nutanix is the configuration used when installing on
+                  Nutanix.
+                properties:
+                  apiVIP:
+                    description: APIVIP is the virtual IP address for the api endpoint
+                    type: string
+                  clusterOSImage:
+                    description: ClusterOSImage overrides the url provided in rhcos.json
+                      to download the RHCOS Image
+                    type: string
+                  defaultMachinePlatform:
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on Nutanix for machine pools which do not
+                      define their own platform configuration.
+                    properties:
+                      coresPerSocket:
+                        description: 'NumCoresPerSocket is the number of cores per
+                          socket in a vm. The number of vCPUs on the vm will be NumCPUs
+                          times NumCoresPerSocket. For example: 4 CPUs and 4 Cores
+                          per socket will result in 16 VPUs. The AHV scheduler treats
+                          socket and core allocation exactly the same so there is
+                          no benefit to configuring cores over CPUs.'
+                        format: int64
+                        type: integer
+                      cpus:
+                        description: NumCPUs is the total number of virtual processor
+                          cores to assign a vm.
+                        format: int64
+                        type: integer
+                      memoryMiB:
+                        description: Memory is the size of a VM's memory in MiB.
+                        format: int64
+                        type: integer
+                      osDisk:
+                        description: OSDisk defines the storage for instance.
+                        properties:
+                          diskSizeGiB:
+                            description: DiskSizeGiB defines the size of disk in GiB.
+                            format: int64
+                            type: integer
+                        type: object
+                    type: object
+                  ingressVIP:
+                    description: IngressVIP is the virtual IP address for ingress
+                    type: string
+                  prismCentral:
+                    description: PrismCentral is the endpoint (address and port) and
+                      credentials to connect to the Prism Central.
+                    properties:
+                      endpoint:
+                        description: Endpoint holds the address and port of the Prism
+                          Central
+                        properties:
+                          address:
+                            description: address is the endpoint address (DNS name
+                              or IP address) of the Nutanix Prism Central or Element
+                              (cluster)
+                            type: string
+                          port:
+                            description: port is the port number to access the Nutanix
+                              Prism Central or Element (cluster)
+                            format: int32
+                            type: integer
+                        required:
+                        - address
+                        - port
+                        type: object
+                      password:
+                        description: Password is the password for the user to connect
+                          to the Prism Central
+                        type: string
+                      username:
+                        description: Username is the name of the user to connect to
+                          the Prism Central
+                        type: string
+                    required:
+                    - endpoint
+                    - password
+                    - username
+                    type: object
+                  prismElements:
+                    description: PrismElements holds a list of Prism Elements (clusters).
+                      A Prism Element encompasses all Nutanix resources (VMs, subnets,
+                      etc.) used to host the OpenShift cluster. Currently only a single
+                      Prism Element may be defined.
+                    items:
+                      description: PrismElement holds the uuid, endpoint of the Prism
+                        Element (cluster)
+                      properties:
+                        endpoint:
+                          description: Endpoint holds the address and port of the
+                            Prism Element
+                          properties:
+                            address:
+                              description: address is the endpoint address (DNS name
+                                or IP address) of the Nutanix Prism Central or Element
+                                (cluster)
+                              type: string
+                            port:
+                              description: port is the port number to access the Nutanix
+                                Prism Central or Element (cluster)
+                              format: int32
+                              type: integer
+                          required:
+                          - address
+                          - port
+                          type: object
+                        uuid:
+                          description: UUID is the UUID of the Prism Element (cluster)
+                          type: string
+                      required:
+                      - endpoint
+                      - uuid
+                      type: object
+                    type: array
+                  subnetUUIDs:
+                    description: SubnetUUIDs identifies the network subnets to be
+                      used by the cluster. Currently we only support one subnet for
+                      an OpenShift cluster.
+                    items:
+                      type: string
+                    type: array
+                required:
+                - prismCentral
+                - prismElements
+                - subnetUUIDs
                 type: object
               openstack:
                 description: OpenStack is the configuration used when installing on
@@ -2004,6 +2689,15 @@ spec:
                         - none
                         - resize_and_pin
                         type: string
+                      clone:
+                        description: "Clone makes sure that the disks are cloned from
+                          the template and are not linked. Defaults to true for high
+                          performance and server VM types, false for desktop types.
+                          \n Note: this option is not documented in the OpenShift
+                          documentation. This is intentional as it has sane defaults
+                          that shouldn't be changed unless needed for debugging or
+                          resolving issues in cooperation with Red Hat support."
+                        type: boolean
                       cpu:
                         description: CPU defines the VM CPU.
                         properties:
@@ -2017,10 +2711,24 @@ spec:
                               Total CPUs is (Sockets * Cores)
                             format: int32
                             type: integer
+                          threads:
+                            description: Threads is the number of CPU threads.
+                            format: int32
+                            type: integer
                         required:
                         - cores
                         - sockets
+                        - threads
                         type: object
+                      format:
+                        description: Format is the disk format that the disks are
+                          in. Can be "cow" or "raw". "raw" disables several features
+                          that may be needed, such as incremental backups.
+                        enum:
+                        - ""
+                        - raw
+                        - cow
+                        type: string
                       hugepages:
                         description: Hugepages is the size of a VM's hugepages to
                           use in KiBs.
@@ -2049,6 +2757,10 @@ spec:
                         required:
                         - sizeGB
                         type: object
+                      sparse:
+                        description: Sparse indicates that sparse provisioning should
+                          be used and disks should be not preallocated.
+                        type: boolean
                       vmType:
                         description: VMType defines the workload type of the VM.
                         enum:
@@ -2088,6 +2800,97 @@ spec:
                 - ingress_vip
                 - ovirt_cluster_id
                 - ovirt_storage_domain_id
+                type: object
+              powervs:
+                description: PowerVS is the configuration used when installing on
+                  Power VS.
+                properties:
+                  clusterOSImage:
+                    description: ClusterOSImage is a pre-created Power VS boot image
+                      that overrides the default image for cluster nodes.
+                    type: string
+                  defaultMachinePlatform:
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on Power VS for machine pools which do
+                      not define their own platform configuration.
+                    properties:
+                      memoryGiB:
+                        description: memoryGiB is the size of a virtual machine's
+                          memory, in GiB.
+                        format: int32
+                        type: integer
+                      procType:
+                        description: ProcType defines the processor sharing model
+                          for the instance. Must be one of {Capped, Dedicated, Shared}.
+                        enum:
+                        - Dedicated
+                        - Shared
+                        - Capped
+                        - ""
+                        type: string
+                      processors:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: Processors defines the processing units for the
+                          instance.
+                        x-kubernetes-int-or-string: true
+                      sysType:
+                        description: SysType defines the system type for instance.
+                        type: string
+                      volumeIDs:
+                        description: VolumeIDs is the list of volumes attached to
+                          the instance.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  powervsResourceGroup:
+                    description: PowerVSResourceGroup is the resource group in which
+                      Power VS resources will be created.
+                    type: string
+                  pvsNetworkName:
+                    description: PVSNetworkName specifies an existing network within
+                      the Power VS Service Instance.
+                    type: string
+                  region:
+                    description: Region specifies the IBM Cloud colo region where
+                      the cluster will be created.
+                    type: string
+                  serviceInstanceID:
+                    description: ServiceInstanceID is the ID of the Power IAAS instance
+                      created from the IBM Cloud Catalog
+                    type: string
+                  subnets:
+                    description: Subnets specifies existing subnets (by ID) where
+                      cluster resources will be created.  Leave unset to have the
+                      installer create subnets in a new VPC on your behalf.
+                    items:
+                      type: string
+                    type: array
+                  userID:
+                    description: UserID is the login for the user's IBM Cloud account.
+                    type: string
+                  vpc:
+                    description: VPC is a VPC inside IBM Cloud. Needed in order to
+                      create VPC Load Balancers.
+                    type: string
+                  vpcRegion:
+                    description: VPCRegion specifies the IBM Cloud region in which
+                      to create VPC resources. Leave unset to allow installer to select
+                      the closest VPC region.
+                    type: string
+                  zone:
+                    description: Zone specifies the IBM Cloud colo region where the
+                      cluster will be created. At this time, only single-zone clusters
+                      are supported.
+                    type: string
+                required:
+                - powervsResourceGroup
+                - region
+                - serviceInstanceID
+                - userID
+                - zone
                 type: object
               vsphere:
                 description: VSphere is the configuration used when installing on
@@ -2141,8 +2944,15 @@ spec:
                         type: object
                     type: object
                   diskType:
-                    description: Disk Type Thin specifies if thin disks should be
-                      use instead of thick
+                    description: DiskType is the name of the disk provisioning type,
+                      valid values are thin, thick, and eagerZeroedThick. When not
+                      specified, it will be set according to the default storage policy
+                      of vsphere.
+                    enum:
+                    - ""
+                    - thin
+                    - thick
+                    - eagerZeroedThick
                     type: string
                   folder:
                     description: Folder is the absolute path of the folder that will
@@ -2159,6 +2969,11 @@ spec:
                   password:
                     description: Password is the password for the user to use to connect
                       to the vCenter.
+                    type: string
+                  resourcePool:
+                    description: ResourcePool is the absolute path of the resource
+                      pool where virtual machines will be created. The absolute path
+                      is of the form /<datacenter>/host/<cluster>/Resources/<resourcepool>.
                     type: string
                   username:
                     description: Username is the name of the user to use to connect

@@ -128,11 +128,13 @@ func TestValidatePlatform(t *testing.T) {
 				Region: "us-east-1",
 				DefaultMachinePlatform: &aws.MachinePool{
 					EC2RootVolume: aws.EC2RootVolume{
+						Type: "io1",
 						IOPS: -10,
+						Size: 128,
 					},
 				},
 			},
-			expected: `^test-path\.defaultMachinePlatform\.iops: Invalid value: -10: Storage IOPS must be positive$`,
+			expected: `^test-path.*iops: Invalid value: -10: iops must be a positive number$`,
 		},
 		{
 			name: "invalid userTags, Name key",

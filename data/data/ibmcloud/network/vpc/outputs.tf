@@ -12,11 +12,11 @@ output "control_plane_security_group_id_list" {
 }
 
 output "control_plane_subnet_id_list" {
-  value = ibm_is_subnet.control_plane.*.id
+  value = local.control_plane_subnets[*].id
 }
 
 output "control_plane_subnet_zone_list" {
-  value = ibm_is_subnet.control_plane.*.zone
+  value = local.control_plane_subnets[*].zone
 }
 
 output "lb_kubernetes_api_public_hostname" {
@@ -57,5 +57,5 @@ output "lb_pool_machine_config_id" {
 }
 
 output "vpc_id" {
-  value = ibm_is_vpc.vpc.id
+  value = local.vpc_id
 }

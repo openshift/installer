@@ -21,6 +21,7 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/version"
@@ -50,6 +51,7 @@ type ClusterUninstaller struct {
 	iamPolicyManagementSvc *iampolicymanagementv1.IamPolicyManagementV1
 	zonesSvc               *zonesv1.ZonesV1
 	dnsRecordsSvc          *dnsrecordsv1.DnsRecordsV1
+	maxRetryAttempt        int
 
 	resourceGroupID string
 	cosInstanceID   string
@@ -73,7 +75,31 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		UserProvidedSubnets: metadata.ClusterPlatformMetadata.IBMCloud.Subnets,
 		UserProvidedVPC:     metadata.ClusterPlatformMetadata.IBMCloud.VPC,
 		pendingItemTracker:  newPendingItemTracker(),
+		maxRetryAttempt:     30,
 	}, nil
+}
+
+// Retry ...
+func (o *ClusterUninstaller) Retry(funcToRetry func() (error, bool)) error {
+	var err error
+	var stopRetry bool
+	retryGap := 10
+	for i := 0; i < o.maxRetryAttempt; i++ {
+		if i > 0 {
+			time.Sleep(time.Duration(retryGap) * time.Second)
+		}
+		// Call function which required retry, retry is decided by function itself
+		err, stopRetry = funcToRetry()
+		if stopRetry {
+			break
+		}
+
+		if (i + 1) < o.maxRetryAttempt {
+			o.Logger.Infof("UNEXPECTED RESULT, Re-attempting execution .., attempt=%d, retry-gap=%d, max-retry-Attempts=%d, stopRetry=%t, error=%v", i+1,
+				retryGap, o.maxRetryAttempt, stopRetry, err)
+		}
+	}
+	return err
 }
 
 // Run is the entrypoint to start the uninstall process
@@ -99,7 +125,7 @@ func (o *ClusterUninstaller) destroyCluster() error {
 		{name: "Stop instances", execute: o.stopInstances},
 	}, {
 		{name: "Instances", execute: o.destroyInstances},
-		{name: "IAM Authorizations", execute: o.destroyIAMAuthorizations},
+		{name: "Disks", execute: o.destroyDisks},
 	}, {
 		{name: "Load Balancers", execute: o.destroyLoadBalancers},
 	}, {
@@ -111,10 +137,13 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "Floating IPs", execute: o.destroyFloatingIPs},
 	}, {
+		{name: "Dedicated Hosts", execute: o.destroyDedicatedHosts},
 		{name: "VPCs", execute: o.destroyVPCs},
 	}, {
 		{name: "Cloud Object Storage Instances", execute: o.destroyCOSInstances},
+		{name: "Dedicated Host Groups", execute: o.destroyDedicatedHostGroups},
 		{name: "DNS Records", execute: o.destroyDNSRecords},
+		{name: "IAM Authorizations", execute: o.destroyIAMAuthorizations},
 		{name: "Resource Groups", execute: o.destroyResourceGroups},
 	}}
 
@@ -171,20 +200,16 @@ func (o *ClusterUninstaller) executeStageFunction(f struct {
 
 func (o *ClusterUninstaller) loadSDKServices() error {
 	apiKey := os.Getenv("IC_API_KEY")
-	authenticator := &core.IamAuthenticator{
-		ApiKey: apiKey,
-	}
-
-	err := authenticator.Validate()
-	if err != nil {
-		return err
-	}
 
 	userAgentString := fmt.Sprintf("OpenShift/4.x Destroyer/%s", version.Raw)
 
 	// ResourceManagerV2
+	rmAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	if err != nil {
+		return err
+	}
 	o.managementSvc, err = resourcemanagerv2.NewResourceManagerV2(&resourcemanagerv2.ResourceManagerV2Options{
-		Authenticator: authenticator,
+		Authenticator: rmAuthenticator,
 	})
 	if err != nil {
 		return err
@@ -192,8 +217,12 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	o.managementSvc.Service.SetUserAgent(userAgentString)
 
 	// ResourceControllerV2
+	rcAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	if err != nil {
+		return err
+	}
 	o.controllerSvc, err = resourcecontrollerv2.NewResourceControllerV2(&resourcecontrollerv2.ResourceControllerV2Options{
-		Authenticator: authenticator,
+		Authenticator: rcAuthenticator,
 	})
 	if err != nil {
 		return err
@@ -201,55 +230,73 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	o.controllerSvc.Service.SetUserAgent(userAgentString)
 
 	// IamPolicyManagementV1
+	ipmAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	if err != nil {
+		return err
+	}
 	o.iamPolicyManagementSvc, err = iampolicymanagementv1.NewIamPolicyManagementV1(&iampolicymanagementv1.IamPolicyManagementV1Options{
-		Authenticator: authenticator,
+		Authenticator: ipmAuthenticator,
 	})
 	if err != nil {
 		return err
 	}
 	o.iamPolicyManagementSvc.Service.SetUserAgent(userAgentString)
 
-	// ZonesV1
-	o.zonesSvc, err = zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
-		Authenticator: authenticator,
-		Crn:           core.StringPtr(o.CISInstanceCRN),
-	})
-	if err != nil {
-		return err
-	}
-	o.zonesSvc.Service.SetUserAgent(userAgentString)
-
-	// Get the Zone ID
-	options := o.zonesSvc.NewListZonesOptions()
-	resources, _, err := o.zonesSvc.ListZonesWithContext(o.Context, options)
-	if err != nil {
-		return err
-	}
-
-	zoneID := ""
-	for _, zone := range resources.Result {
-		if strings.Contains(o.BaseDomain, *zone.Name) {
-			zoneID = *zone.ID
+	if len(o.CISInstanceCRN) > 0 {
+		// ZonesV1
+		zAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+		if err != nil {
+			return err
 		}
-	}
-	if zoneID == "" || err != nil {
-		return errors.Errorf("Could not determine DNS zone ID from base domain %q", o.BaseDomain)
-	}
+		o.zonesSvc, err = zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
+			Authenticator: zAuthenticator,
+			Crn:           core.StringPtr(o.CISInstanceCRN),
+		})
+		if err != nil {
+			return err
+		}
+		o.zonesSvc.Service.SetUserAgent(userAgentString)
 
-	// DnsRecordsV1
-	o.dnsRecordsSvc, err = dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
-		Authenticator:  authenticator,
-		Crn:            core.StringPtr(o.CISInstanceCRN),
-		ZoneIdentifier: core.StringPtr(zoneID),
-	})
-	if err != nil {
-		return err
+		// Get the Zone ID
+		options := o.zonesSvc.NewListZonesOptions()
+		resources, _, err := o.zonesSvc.ListZonesWithContext(o.Context, options)
+		if err != nil {
+			return err
+		}
+
+		zoneID := ""
+		for _, zone := range resources.Result {
+			if strings.Contains(o.BaseDomain, *zone.Name) {
+				zoneID = *zone.ID
+			}
+		}
+		if zoneID == "" || err != nil {
+			return errors.Errorf("Could not determine DNS zone ID from base domain %q", o.BaseDomain)
+		}
+
+		// DnsRecordsV1
+		dnsAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+		if err != nil {
+			return err
+		}
+		o.dnsRecordsSvc, err = dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
+			Authenticator:  dnsAuthenticator,
+			Crn:            core.StringPtr(o.CISInstanceCRN),
+			ZoneIdentifier: core.StringPtr(zoneID),
+		})
+		if err != nil {
+			return err
+		}
+		o.dnsRecordsSvc.Service.SetUserAgent(userAgentString)
 	}
-	o.dnsRecordsSvc.Service.SetUserAgent(userAgentString)
 
 	// VpcV1
+	vpcAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	if err != nil {
+		return err
+	}
 	o.vpcSvc, err = vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
-		Authenticator: authenticator,
+		Authenticator: vpcAuthenticator,
 	})
 	if err != nil {
 		return err
@@ -383,4 +430,8 @@ func (t pendingItemTracker) deletePendingItems(itemType string, items []cloudRes
 
 func isErrorStatus(code int64) bool {
 	return code != 0 && (code < 200 || code >= 300)
+}
+
+func (o *ClusterUninstaller) clusterLabelFilter() string {
+	return fmt.Sprintf("kubernetes-io-cluster-%s:owned", o.InfraID)
 }

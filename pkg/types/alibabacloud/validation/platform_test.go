@@ -14,8 +14,7 @@ import (
 
 func validPlatform() *alibabacloud.Platform {
 	return &alibabacloud.Platform{
-		Region:          "cn-hangzhou",
-		ResourceGroupID: "test-resource-group",
+		Region: "cn-hangzhou",
 	}
 }
 
@@ -82,6 +81,36 @@ func TestValidatePlatform(t *testing.T) {
 				ResourceGroupID: "test-resource-group",
 			},
 			expected:   `^test-path\.region: Required value: region must be specified$`,
+			networking: validNetworking(),
+		},
+		{
+			name: "invalid vpc ID for existing VSwitches",
+			platform: &alibabacloud.Platform{
+				Region:     "cn-hangzhou",
+				VpcID:      "",
+				VSwitchIDs: []string{"vsw-test"},
+			},
+			expected:   `^test-path\.vpcID: Required value: when using existing VSwitches, an existing VPC must be used$`,
+			networking: validNetworking(),
+		},
+		{
+			name: "duplicate VSwitch ID",
+			platform: &alibabacloud.Platform{
+				Region:     "cn-hangzhou",
+				VpcID:      "vpc-test",
+				VSwitchIDs: []string{"vsw-test", "vsw-test"},
+			},
+			expected:   `^test-path\.vswitchIDs\[1\]: Duplicate value: \"vsw-test\"$`,
+			networking: validNetworking(),
+		},
+		{
+			name: "invalid vpc ID for existing private zones",
+			platform: &alibabacloud.Platform{
+				Region:        "cn-hangzhou",
+				VpcID:         "",
+				PrivateZoneID: "pvtz-test",
+			},
+			expected:   `^test-path\.vpcID: Required value: when using existing privatezones, an existing VPC must be used$`,
 			networking: validNetworking(),
 		},
 		{

@@ -2,22 +2,47 @@ package azure
 
 import (
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"
+	typesazure "github.com/openshift/installer/pkg/types/azure"
 )
-
-const azure string = "azure"
-const azurestack string = "azurestack"
 
 // PlatformStages are the stages to run to provision the infrastructure in Azure.
 var PlatformStages = []terraform.Stage{
-	stages.NewStage(azure, "vnet"),
-	stages.NewStage(azure, "bootstrap", stages.WithNormalDestroy()),
-	stages.NewStage(azure, "cluster"),
+	stages.NewStage(
+		typesazure.Name,
+		"vnet",
+		[]providers.Provider{providers.AzureRM, providers.Random},
+	),
+	stages.NewStage(
+		typesazure.Name,
+		"bootstrap",
+		[]providers.Provider{providers.AzureRM, providers.Ignition, providers.Local},
+		stages.WithNormalBootstrapDestroy(),
+	),
+	stages.NewStage(
+		typesazure.Name,
+		"cluster",
+		[]providers.Provider{providers.AzureRM},
+	),
 }
 
 // StackPlatformStages are the stages to run to provision the infrastructure in Azure Stack.
 var StackPlatformStages = []terraform.Stage{
-	stages.NewStage(azurestack, "vnet"),
-	stages.NewStage(azurestack, "bootstrap", stages.WithNormalDestroy()),
-	stages.NewStage(azurestack, "cluster"),
+	stages.NewStage(
+		typesazure.StackTerraformName,
+		"vnet",
+		[]providers.Provider{providers.AzureStack, providers.Random},
+	),
+	stages.NewStage(
+		typesazure.StackTerraformName,
+		"bootstrap",
+		[]providers.Provider{providers.AzureStack, providers.Ignition, providers.Local},
+		stages.WithNormalBootstrapDestroy(),
+	),
+	stages.NewStage(
+		typesazure.StackTerraformName,
+		"cluster",
+		[]providers.Provider{providers.AzureStack},
+	),
 }

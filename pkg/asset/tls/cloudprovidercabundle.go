@@ -33,7 +33,7 @@ func (a *CloudProviderCABundle) Generate(deps asset.Parents) error {
 	if ic.Config.Platform.Name() != awstypes.Name {
 		return nil
 	}
-	if !awstypes.C2SRegions.Has(ic.Config.Platform.AWS.Region) {
+	if !awstypes.IsSecretRegion(ic.Config.Platform.AWS.Region) {
 		return nil
 	}
 

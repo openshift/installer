@@ -3,9 +3,12 @@
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
-- [Preparing your OpenShift Cluster to use SR-IOV Networks](#preparing-your-openshift-cluster-to-use-sr-iov-networks)
 - [Creating SR-IOV Networks for Worker Nodes](#creating-sr-iov-networks-for-worker-nodes)
 - [Creating SR-IOV Worker Nodes in IPI](#creating-sr-iov-worker-nodes-in-ipi)
+- [Install the SRIOV Network Operator and configure a network device](#install-the-sriov-network-operator-and-configure-a-network-device)
+- [Attach the OVS HW offload network](#attach-the-ovs-hw-offload-network)
+- [Deploy a testpmd pod](#deploy-a-testpmd-pod)
+- [Deploy a testpmd pod with OVS Hardware Offload](#deploy-a-testpmd-pod-with-ovs-hardware-offload)
 - [Creating SR-IOV Worker Nodes in UPI](#creating-sr-iov-worker-nodes-in-upi)
 
 ## Prerequisites
@@ -22,80 +25,7 @@ in OpenShift, and that your tenant has access to them. Your OpenStack cluster mu
 For all clusters that use single-root input/output virtualization (SR-IOV), RHOSP compute nodes require a flavor that supports [huge pages][huge-pages].
 Deploying worker nodes with SR-IOV networks is supported as a post-install operation for both IPI and UPI workflows. After you verify that your OpenStack cluster can support SR-IOV in OpenShift and you install an OpenShift cluster that meets the [minimum requirements](README.md#openstack-requirements), use the following steps and examples to create worker nodes with SR-IOV NICs.
 
-## Preparing your OpenShift Cluster to use SR-IOV Networks
-
-Before you use single root I/O virtualization (SR-IOV) on a cluster that runs on Red Hat OpenStack Platform (RHOSP), make the RHOSP metadata service mountable as a drive and enable the No-IOMMU Operator for the virtual function I/O (VFIO) driver.
-
-### Enabling the RHOSP metadata service as a mountable drive
-
-Create a machine config in your worker machine pool that makes the OpenStack metadata service available as a mountable drive. This machine config enables the SR-IOV operator to get the UUID of networks from OpenStack.
-
-```yaml
-kind: MachineConfig
-apiVersion: machineconfiguration.openshift.io/v1
-metadata:
-  name: 20-mount-config
-  labels:
-    machineconfiguration.openshift.io/role: worker
-spec:
-  osImageURL: ''
-  config:
-    ignition:
-      version: 2.2.0
-    systemd:
-      units:
-        - name: create-mountpoint-var-config.service
-          enabled: true
-          contents: |
-            [Unit]
-            Description=Create mountpoint /var/config
-            Before=kubelet.service
-
-            [Service]
-            ExecStart=/bin/mkdir -p /var/config
-
-            [Install]
-            WantedBy=var-config.mount
-
-        - name: var-config.mount
-          enabled: true
-          contents: |
-            [Unit]
-            Before=local-fs.target
-            [Mount]
-            Where=/var/config
-            What=/dev/disk/by-label/config-2
-            [Install]
-            WantedBy=local-fs.target
-```
-
-### Enabling the No-IOMMU feature for the RHOSP VFIO driver
-
-Apply a machine config to your worker machine pool that enables the No-IOMMU feature for the Red Hat OpenStack Platform (RHOSP) virtual function I/O (VFIO) driver.
-
-```yaml
-kind: MachineConfig
-apiVersion: machineconfiguration.openshift.io/v1
-metadata:
-  name: 99-vfio-noiommu
-  labels:
-    machineconfiguration.openshift.io/role: worker
-spec:
-  osImageURL: ''
-  config:
-    ignition:
-      version: 2.2.0
-    storage:
-      files:
-      - filesystem: root
-        path: "/etc/modprobe.d/vfio-noiommu.conf"
-        contents:
-          source: data:text/plain;charset=utf-8;base64,b3B0aW9ucyB2ZmlvIGVuYWJsZV91bnNhZmVfbm9pb21tdV9tb2RlPTEK
-          verification: {}
-        mode: 0644
-```
-
-If you need to configure your deployment for real-time or low latency workloads, install the [performance addon operator][performance-addon-operator]. If services on a node need to use the performance addon operator or DPDK, that node needs [additional configuration to support hugepages][huge-pages-perf-addon].
+If you need to configure your deployment for real-time or low latency workloads, you'll need to create a [PerformanceProfile][performance-profile].
 
 After your OpenShift control plane is running, you must install the SR-IOV Network Operator. To install the Operator, you will need access to an account on your OpenShift cluster that has `cluster-admin` privileges. After you log in to the account, [install the Operator][sriov-operator]. Then, [configure your SR-IOV network device][configure-sriov-network-device].
 
@@ -126,7 +56,7 @@ When editing an existing machineSet (or a copy of one) to create SR-IOV worker n
  - `nicType: direct`
  - `portSecurity:false`
 
-The SR-IOV Operator requires a config drive to be mounted to each instance using SR-IOV VFs, so always set `configDrive: true`. Note that security groups or allowedAddressPairs can not be set on a port if `portSecurity` is disabled. If you are using a network with port security disabled, then allowed address pairs and security groups cannot be used for any port in that network. Setting security groups on the instance will apply that security group to all ports attached to it, be aware of this when using networks with port security disabled. Right now, trunking is not enabled on ports defined in the `ports` list, only the ports created by entries in the `networks` or `subnets` lists. The name of the port will be `<machine-name>-<nameSuffix>`, and the `nameSuffix` is required field in the port definition. Optionally, you can add tags to ports by adding them to the `tags` list. The following example shows how a machineset can be created that creates SR-IOV capable ports on the `Radio` and `Uplink` networks and subnets that were defined in a previous example:
+Note that security groups or allowedAddressPairs can not be set on a port if `portSecurity` is disabled. If you are using a network with port security disabled, then allowed address pairs and security groups cannot be used for any port in that network. Setting security groups on the instance will apply that security group to all ports attached to it, be aware of this when using networks with port security disabled. Right now, trunking is not enabled on ports defined in the `ports` list, only the ports created by entries in the `networks` or `subnets` lists. The name of the port will be `<machine-name>-<nameSuffix>`, and the `nameSuffix` is required field in the port definition. Optionally, you can add tags to ports by adding them to the `tags` list. The following example shows how a machineset can be created that creates SR-IOV capable ports on the `Radio` and `Uplink` networks and subnets that were defined in a previous example:
 
 
 ```yaml
@@ -200,7 +130,26 @@ spec:
           userDataSecret:
             name: <node_role>-user-data
           availabilityZone: <optional_openstack_availability_zone>
-          configDrive: true
+```
+
+If your port is leveraging OVS Hardware Offload, then its configuration must be the following, so
+the port in Neutron will be created with the right capabilites:
+
+```yaml
+(...)
+          ports:
+          - fixedIPs:
+            - subnetID: <radio_subnet_uuid>
+            nameSuffix: sriov
+            networkID: <radio_network_uuid>
+            portSecurity: false
+            profile:
+              capabilities: '[switchdev]'
+            tags:
+            - sriov
+            - radio
+            vnicType: direct
+(...)
 ```
 
 After you finish editing your machineSet, upload it to your OpenShift cluster:
@@ -249,7 +198,6 @@ spec:
           flavor: <nova_flavor>
           image: <glance_image_name_or_location>
           kind: OpenstackProviderSpec
-          configDrive: True
           ports:
             - allowedAddressPairs:
               - ipAddress: <api_vip_port_IP>
@@ -277,6 +225,153 @@ spec:
           trunk: false
           userDataSecret:
             name: worker-user-data
+```
+
+Once the workers are deployed, you must label them as SR-IOV capable:
+
+```bash
+oc label node <node-name> feature.node.kubernetes.io/network-sriov.capable="true"
+```
+
+## Install the SRIOV Network Operator and configure a network device
+
+You must install the SR-IOV Network Operator. To install the Operator, you will need access to an account on your OpenShift cluster that has `cluster-admin` privileges. After you log in to the account, [install the Operator][operator].
+
+Then, [configure your SR-IOV network device][device]. Note that only `netFilter` needs to be used from the `nicSelector`, as we'll give the Neutron network ID used for SR-IOV traffic.
+
+Example of `SriovNetworkNodePolicy` named `sriov1`:
+
+```
+apiVersion: sriovnetwork.openshift.io/v1
+kind: SriovNetworkNodePolicy
+metadata:
+  name: sriov1
+  namespace: openshift-sriov-network-operator
+spec:
+  deviceType: vfio-pci
+  isRdma: false
+  nicSelector:
+    netFilter: openstack/NetworkID:9144121f-bf90-4891-b061-323e4cd990ed
+  nodeSelector:
+    feature.node.kubernetes.io/network-sriov.capable: 'true'
+  numVfs: 1
+  priority: 99
+  resourceName: sriov1
+```
+
+Note: If the network device plugged to the network is not from Intel and is from Mellanox, then `deviceType` must be set to `netdevice` and `isRdma` set to `true`. 
+
+The SR-IOV network operator will automatically discover the devices connected on that network for each worker, and make them available for use by the CNF pods later.
+
+## Attach the OVS HW offload network
+
+This step can be skipped when not doing OVS Hardware offload.
+For OVS Hardware Offload, the network has to be attached via a host-device.
+
+Create a file named `network.yaml`:
+
+```yaml
+spec:
+  additionalNetworks:
+  - name: hwoffload1
+    namespace: cnf
+    rawCNIConfig: '{ "cniVersion": "0.3.1", "name": "hwoffload1", "type": "host-device","pciBusId": "0000:00:05.0", "ipam": {}}'
+    type: Raw
+```
+
+And then run:
+
+```sh
+oc patch network.operator cluster --patch "$(cat network.yaml)" --type=merge
+```
+
+It usually takes about 15 seconds to apply the configuration.
+
+Note: `0000:00:05.0` is the PCI Bus ID that corresponds to the device connected to OVS HW Offload, this can be discovered by running `oc describe SriovNetworkNodeState -n openshift-sriov-network-operator`.
+
+
+## Deploy a testpmd pod
+
+This pod is an example of how we can create a container that uses the hugepages, the reserved CPUs and the SR-IOV port:
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testpmd-sriov
+  namespace: mynamespace
+spec:
+  containers:
+  - name: testpmd
+    command: ["sleep", "99999"]
+    image: registry.redhat.io/openshift4/dpdk-base-rhel8:v4.9
+    securityContext:
+      capabilities:
+        add: ["IPC_LOCK","SYS_ADMIN"]
+      privileged: true
+      runAsUser: 0
+    resources:
+      requests:
+        memory: 1000Mi
+        hugepages-1Gi: 1Gi
+        cpu: '2'
+        openshift.io/sriov1: 1
+      limits:
+        hugepages-1Gi: 1Gi
+        cpu: '2'
+        memory: 1000Mi
+        openshift.io/sriov1: 1
+    volumeMounts:
+      - mountPath: /dev/hugepages
+        name: hugepage
+        readOnly: False
+  volumes:
+  - name: hugepage
+    emptyDir:
+      medium: HugePages
+```
+
+More examples are documented [here][pods].
+
+## Deploy a testpmd pod with OVS Hardware Offload
+
+The same example as before, except this time we use the network for OVS Hardware Offload:
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testpmd-sriov
+  namespace: mynamespace
+  annotations:
+    k8s.v1.cni.cncf.io/networks: hwoffload1
+spec:
+  containers:
+  - name: testpmd
+    command: ["sleep", "99999"]
+    image: registry.redhat.io/openshift4/dpdk-base-rhel8:v4.9
+    securityContext:
+      capabilities:
+        add: ["IPC_LOCK","SYS_ADMIN"]
+      privileged: true
+      runAsUser: 0
+    resources:
+      requests:
+        memory: 1000Mi
+        hugepages-1Gi: 1Gi
+        cpu: '2'
+      limits:
+        hugepages-1Gi: 1Gi
+        cpu: '2'
+        memory: 1000Mi
+    volumeMounts:
+      - mountPath: /dev/hugepages
+        name: hugepage
+        readOnly: False
+  volumes:
+  - name: hugepage
+    emptyDir:
+      medium: HugePages
 ```
 
 ## Creating SR-IOV Worker Nodes in UPI
@@ -388,7 +483,6 @@ Next, create a file called `compute-nodes.yaml` with this Ansible script:
       userdata: "{{ lookup('file', 'worker.ign') | string }}"
       security_groups: []
       nics:  "{{ [ 'port-name=' + os_port_worker + '-' + item.0|string ] + worker_nics }}"
-      config_drive: yes
     with_indexed_items: "{{ worker_list }}"
 ```
 
@@ -442,11 +536,13 @@ Make sure to follow the documentation to [approve the CSRs][approve-csr-upi] for
 [wait-for-install-complete]: install_upi.md#wait-for-the-openshift-installation-to-complete
 [approve-csr-upi]: install_upi.md#approve-the-worker-csrs
 [machine-pool-customizations]: customization.md#machine-pools
-[sriov-operator]: https://docs.openshift.com/container-platform/4.7/networking/hardware_networks/installing-sriov-operator.html
-[configure-sriov-network-device]: https://docs.openshift.com/container-platform/4.7/virt/virtual_machines/vm_networking/virt-configuring-sriov-device-for-vms.html
-[supported-nics]: https://docs.openshift.com/container-platform/4.7/networking/hardware_networks/about-sriov.html#supported-devices_about-sriov
-[osp-sriov-install]: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.1/html-single/network_functions_virtualization_planning_and_configuration_guide/index#assembly_sriov_parameters
-[openstack-machine-sets]: https://docs.openshift.com/container-platform/4.7/machine_management/creating_machinesets/creating-machineset-osp.html
-[performance-addon-operator]: https://docs.openshift.com/container-platform/4.7/scalability_and_performance/cnf-performance-addon-operator-for-low-latency-nodes.html#about_hyperthreading_for_low_latency_and_real_time_applications_cnf-master
-[huge-pages]: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.1/html/configuring_the_compute_service_for_instance_creation/configuring-compute-nodes-for-performance#configuring-huge-pages-on-compute-nodes-osp
-[huge-pages-perf-addon]: https://docs.openshift.com/container-platform/4.7/scalability_and_performance/what-huge-pages-do-and-how-they-are-consumed-by-apps.html
+[sriov-operator]: https://docs.openshift.com/container-platform/4.10/networking/hardware_networks/installing-sriov-operator.html
+[configure-sriov-network-device]: https://docs.openshift.com/container-platform/4.10/networking/hardware_networks/configuring-sriov-device.html
+[supported-nics]: https://docs.openshift.com/container-platform/4.10/networking/hardware_networks/about-sriov.html#supported-devices_about-sriov
+[osp-sriov-install]: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.2/html-single/network_functions_virtualization_planning_and_configuration_guide/index#assembly_sriov_parameters
+[openstack-machine-sets]: https://docs.openshift.com/container-platform/4.10/machine_management/creating_machinesets/creating-machineset-osp.html
+[performance-profile]: https://docs.openshift.com/container-platform/4.10/scalability_and_performance/cnf-performance-addon-operator-for-low-latency-nodes.html#about_hyperthreading_for_low_latency_and_real_time_applications_cnf-master
+[huge-pages]: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.2/html-single/network_functions_virtualization_planning_and_configuration_guide/index#c_ovsdpdk-instance-extra-specs
+[operator]: https://docs.openshift.com/container-platform/4.10/networking/hardware_networks/installing-sriov-operator.html
+[device]: https://docs.openshift.com/container-platform/4.10/networking/hardware_networks/configuring-sriov-device.html
+[pods]: https://docs.openshift.com/container-platform/4.10/networking/hardware_networks/add-pod.html

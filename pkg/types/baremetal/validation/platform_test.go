@@ -10,6 +10,8 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/baremetal/defaults"
+
+	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -261,6 +263,39 @@ func TestValidatePlatform(t *testing.T) {
 			name:     "provisioningNetwork_invalid",
 			platform: platform().ProvisioningNetwork("Invalid").build(),
 			expected: `Unsupported value: "Invalid": supported values: "Disabled", "Managed", "Unmanaged"`,
+		},
+		{
+			name:     "networkConfig_invalid",
+			platform: platform().Hosts(host1().NetworkConfig("Not a valid yaml content")).build(),
+			expected: ".*Invalid value.*Not a valid yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type map\\[string\\]interface \\{\\}",
+		},
+		{
+			name: "networkConfig_valid_yml",
+			platform: platform().Hosts(host1().NetworkConfig(`
+interfaces:
+- name: eth1
+  type: ethernet
+  state: up
+- name: linux-br0
+  type: linux-bridge
+  state: up
+  bridge:
+    options:
+      group-forward-mask: 0
+      mac-ageing-time: 300
+      multicast-snooping: true
+      stp:
+        enabled: true
+        forward-delay: 15
+        hello-time: 2
+        max-age: 20
+        priority: 32768
+      port:
+        - name: eth1
+          stp-hairpin-mode: false
+          stp-path-cost: 100
+          stp-priority: 32`)).build(),
+			expected: "",
 		},
 	}
 
@@ -595,6 +630,17 @@ func TestValidateProvisioning(t *testing.T) {
 				ClusterProvisioningIP("192.168.0.2").build(),
 			expected: "Invalid value: \"192.168.0.2\": provisioning network is disabled, IP expected to be in one of the machine networks: 192.168.111.0/24",
 		},
+		{
+			name:   "not_supported_bmc_driver_provisioning_network_disabled",
+			config: installConfig().Network(networking().Network("192.168.111.0/24")).build(),
+			platform: platform().
+				ProvisioningNetwork(baremetal.DisabledProvisioningNetwork).
+				ClusterProvisioningIP("192.168.111.2").
+				BootstrapProvisioningIP("192.168.111.3").
+				Hosts(host1().BMCAddress("ipmi://192.168.111.1")).
+				build(),
+			expected: "baremetal.Hosts\\[0\\].BMC: Invalid value: \"ipmi://192.168.111.1\": driver ipmi requires provisioning network",
+		},
 	}
 
 	for _, tc := range cases {
@@ -728,6 +774,11 @@ func (hb *hostBuilder) BMCPassword(value string) *hostBuilder {
 
 func (hb *hostBuilder) Role(value string) *hostBuilder {
 	hb.Host.Role = value
+	return hb
+}
+
+func (hb *hostBuilder) NetworkConfig(value string) *hostBuilder {
+	yaml.Unmarshal([]byte(value), &hb.Host.NetworkConfig)
 	return hb
 }
 

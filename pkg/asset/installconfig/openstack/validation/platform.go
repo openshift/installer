@@ -1,8 +1,10 @@
 package validation
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"net"
 	"net/url"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -91,11 +93,40 @@ func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Pa
 }
 
 func validateVIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
-	if p.APIVIP != "" && p.IngressVIP != "" {
-		if p.APIVIP == p.IngressVIP {
+	apiVIP := net.ParseIP(p.APIVIP)
+	ingressVIP := net.ParseIP(p.IngressVIP)
+
+	if apiVIP != nil && ingressVIP != nil {
+		if apiVIP.Equal(ingressVIP) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, "ingressVIP can not be the same as apiVIP"))
 		}
 	}
+
+	// If the subnet is not found in the CloudInfo object, abandon validation
+	if ci.MachinesSubnet != nil {
+		for _, allocationPool := range ci.MachinesSubnet.AllocationPools {
+			start := net.ParseIP(allocationPool.Start)
+			end := net.ParseIP(allocationPool.End)
+
+			// If the allocation pool is undefined, abandon validation
+			if start == nil || end == nil {
+				continue
+			}
+
+			if apiVIP != nil {
+				if bytes.Compare(start, apiVIP) <= 0 && bytes.Compare(end, apiVIP) >= 0 {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, "apiVIP can not fall in a MachineNetwork allocation pool"))
+				}
+			}
+
+			if ingressVIP != nil {
+				if bytes.Compare(start, ingressVIP) <= 0 && bytes.Compare(end, ingressVIP) >= 0 {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, "ingressVIP can not fall in a MachineNetwork allocation pool"))
+				}
+			}
+		}
+	}
+
 	return allErrs
 }
 

@@ -50,6 +50,7 @@ function cluster_bootstrap_gather() {
     queue resources/events.json oc --request-timeout=5s get events --all-namespaces -o json
     queue resources/kubeapiserver.json oc --request-timeout=5s get kubeapiserver -o json
     queue resources/kubecontrollermanager.json oc --request-timeout=5s get kubecontrollermanager -o json
+    queue resources/machines.json oc --request-timeout=5s get machines --all-namespaces -o json
     queue resources/machineconfigpools.json oc --request-timeout=5s get machineconfigpools -o json
     queue resources/machineconfigs.json oc --request-timeout=5s get machineconfigs -o json
     queue resources/namespaces.json oc --request-timeout=5s get namespaces -o json

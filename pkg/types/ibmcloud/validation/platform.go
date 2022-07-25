@@ -19,6 +19,7 @@ var (
 		"jp-osa":   "Japan (Osaka)",
 		"au-syd":   "Australia (Sydney)",
 		"ca-tor":   "Canada (Toronto)",
+		"br-sao":   "Brazil (Sao Paulo)",
 	}
 
 	regionShortNames = func() []string {
@@ -42,26 +43,19 @@ func ValidatePlatform(p *ibmcloud.Platform, fldPath *field.Path) field.ErrorList
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, regionShortNames))
 	}
 
-	allErrs = append(allErrs, validateVPCConfig(p, fldPath)...)
+	if p.VPCName != "" {
+		if p.ControlPlaneSubnets == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("controlPlaneSubnets"), "must provided at least one control plane subnet when a VPC is specified"))
+		}
+		if p.ComputeSubnets == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("computeSubnets"), "must provide at least one compute subnet when a VPC is specified"))
+		}
+	} else if p.ControlPlaneSubnets != nil || p.ComputeSubnets != nil {
+		allErrs = append(allErrs, field.Required(fldPath.Child("vpcName"), "must provide a VPC name when supplying subnets"))
+	}
 
 	if p.DefaultMachinePlatform != nil {
-		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
-	}
-	return allErrs
-}
-
-func validateVPCConfig(p *ibmcloud.Platform, path *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-	if p.VPC != "" || len(p.Subnets) > 0 || p.VPCResourceGroupName != "" {
-		if p.VPC == "" {
-			allErrs = append(allErrs, field.Required(path.Child("vpc"), "vpc is required when specifying subnets or vpcResourceGroupName"))
-		}
-		if len(p.Subnets) == 0 {
-			allErrs = append(allErrs, field.Required(path.Child("subnets"), "subnets is required when specifying vpc or vpcResourceGroupName"))
-		}
-		if p.VPCResourceGroupName == "" {
-			allErrs = append(allErrs, field.Required(path.Child("vpcResourceGroupName"), "vpcResourceGroupName is required when specifying vpc or subnets"))
-		}
+		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 	return allErrs
 }

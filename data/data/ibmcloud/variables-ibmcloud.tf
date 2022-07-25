@@ -11,7 +11,7 @@ variable "ibmcloud_api_key" {
 
 variable "ibmcloud_bootstrap_instance_type" {
   type        = string
-  description = "Instance type for the bootstrap node. Example: `bx2d-4x16`"
+  description = "Instance type for the bootstrap node. Example: `bx2-4x16`"
 }
 
 variable "ibmcloud_cis_crn" {
@@ -26,12 +26,17 @@ variable "ibmcloud_region" {
 
 variable "ibmcloud_master_instance_type" {
   type        = string
-  description = "Instance type for the master node(s). Example: `bx2d-4x16`"
+  description = "Instance type for the master node(s). Example: `bx2-4x16`"
 }
 
 variable "ibmcloud_master_availability_zones" {
   type        = list(string)
   description = "The availability zones in which to create the masters. The length of this list must match master_count."
+}
+
+variable "ibmcloud_worker_availability_zones" {
+  type        = list(string)
+  description = "The availability zones to provision for workers. Worker instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, dedicated hosts, etc.)."
 }
 
 variable "ibmcloud_image_filepath" {
@@ -42,6 +47,42 @@ variable "ibmcloud_image_filepath" {
 #######################################
 # Top-level module variables (optional)
 #######################################
+
+variable "ibmcloud_preexisting_vpc" {
+  type        = bool
+  description = "Specifies whether an existing VPC should be used or a new one created for installation."
+  default     = false
+}
+
+variable "ibmcloud_vpc" {
+  type        = string
+  description = "The name of an existing cluster VPC."
+  default     = null
+}
+
+variable "ibmcloud_control_plane_subnets" {
+  type        = list(string)
+  description = "The names of the existing subnets for the control plane."
+  default     = []
+}
+
+variable "ibmcloud_compute_subnets" {
+  type        = list(string)
+  description = "The names of the existing subnets for the compute plane."
+  default     = []
+}
+
+variable "ibmcloud_master_dedicated_hosts" {
+  type        = list(map(string))
+  description = "(optional) The list of dedicated hosts in which to create the control plane nodes."
+  default     = []
+}
+
+variable "ibmcloud_worker_dedicated_hosts" {
+  type        = list(map(string))
+  description = "(optional) The list of dedicated hosts in which to create the compute nodes."
+  default     = []
+}
 
 variable "ibmcloud_extra_tags" {
   type        = list(string)

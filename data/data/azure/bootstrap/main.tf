@@ -19,8 +19,13 @@ provider "azurerm" {
   environment     = var.azure_environment
 }
 
+data "azurerm_storage_account" "storage_account" {
+  name                = var.storage_account_name
+  resource_group_name = var.resource_group_name
+}
+
 data "azurerm_storage_account_sas" "ignition" {
-  connection_string = var.storage_account.primary_connection_string
+  connection_string = data.azurerm_storage_account.storage_account.primary_connection_string
   https_only        = true
 
   resource_types {
@@ -48,19 +53,21 @@ data "azurerm_storage_account_sas" "ignition" {
     process = false
     write   = false
     update  = false
+    filter  = false
+    tag     = false
   }
 }
 
 resource "azurerm_storage_container" "ignition" {
   name                  = "ignition"
-  storage_account_name  = var.storage_account.name
+  storage_account_name  = var.storage_account_name
   container_access_type = "private"
 }
 
 resource "azurerm_storage_blob" "ignition" {
   name                   = "bootstrap.ign"
   source                 = var.ignition_bootstrap_file
-  storage_account_name   = var.storage_account.name
+  storage_account_name   = var.storage_account_name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "Block"
 }
@@ -188,13 +195,14 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
   location              = var.azure_region
   resource_group_name   = var.resource_group_name
   network_interface_ids = [azurerm_network_interface.bootstrap.id]
-  size                  = var.azure_bootstrap_vm_type
+  size                  = var.azure_master_vm_type
   admin_username        = "core"
   # The password is normally applied by WALA (the Azure agent), but this
   # isn't installed in RHCOS. As a result, this password is never set. It is
   # included here because it is required by the Azure ARM API.
   admin_password                  = "NotActuallyApplied!"
   disable_password_authentication = false
+  encryption_at_host_enabled      = var.azure_master_encryption_at_host_enabled
 
   identity {
     type         = "UserAssigned"
@@ -202,10 +210,11 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
   }
 
   os_disk {
-    name                 = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
-    caching              = "ReadWrite"
-    storage_account_type = "Premium_LRS"
-    disk_size_gb         = 100
+    name                   = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
+    caching                = "ReadWrite"
+    storage_account_type   = var.azure_master_root_volume_type
+    disk_size_gb           = 100
+    disk_encryption_set_id = var.azure_master_disk_encryption_set_id
   }
 
   source_image_id = var.vm_image
@@ -214,7 +223,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
   custom_data   = base64encode(data.ignition_config.redirect.rendered)
 
   boot_diagnostics {
-    storage_account_uri = var.storage_account.primary_blob_endpoint
+    storage_account_uri = data.azurerm_storage_account.storage_account.primary_blob_endpoint
   }
 
   depends_on = [

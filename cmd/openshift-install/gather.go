@@ -23,6 +23,10 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/asset/tls"
+	serialgather "github.com/openshift/installer/pkg/gather"
+	_ "github.com/openshift/installer/pkg/gather/aws"
+	_ "github.com/openshift/installer/pkg/gather/azure"
+	_ "github.com/openshift/installer/pkg/gather/gcp"
 	"github.com/openshift/installer/pkg/gather/service"
 	"github.com/openshift/installer/pkg/gather/ssh"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
@@ -45,14 +49,12 @@ to debug the installation failures`,
 	return cmd
 }
 
-var (
-	gatherBootstrapOpts struct {
-		bootstrap    string
-		masters      []string
-		sshKeys      []string
-		skipAnalysis bool
-	}
-)
+var gatherBootstrapOpts struct {
+	bootstrap    string
+	masters      []string
+	sshKeys      []string
+	skipAnalysis bool
+}
 
 func newGatherBootstrapCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -66,11 +68,14 @@ func newGatherBootstrapCmd() *cobra.Command {
 			if err != nil {
 				logrus.Fatal(err)
 			}
+
 			if !gatherBootstrapOpts.skipAnalysis {
 				if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
 					logrus.Fatal(err)
 				}
 			}
+
+			logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
 		},
 	}
 	cmd.PersistentFlags().StringVar(&gatherBootstrapOpts.bootstrap, "bootstrap", "", "Hostname or IP of the bootstrap host")
@@ -135,33 +140,59 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 		return "", errors.New("must provide both bootstrap host address and at least one control plane host address when providing one")
 	}
 
-	return logGatherBootstrap(bootstrap, port, masters, directory)
+	return gatherBootstrap(bootstrap, port, masters, directory)
 }
 
-func logGatherBootstrap(bootstrap string, port int, masters []string, directory string) (string, error) {
+func gatherBootstrap(bootstrap string, port int, masters []string, directory string) (string, error) {
+	gatherID := time.Now().Format("20060102150405")
+
+	serialLogBundle := filepath.Join(directory, fmt.Sprintf("serial-log-bundle-%s.tar.gz", gatherID))
+	serialLogBundlePath, err := filepath.Abs(serialLogBundle)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to stat log file")
+	}
+
+	consoleGather, err := serialgather.New(logrus.StandardLogger(), serialLogBundlePath, bootstrap, masters, directory)
+	if err != nil {
+		logrus.Infof("Skipping VM console logs gather: %s", err.Error())
+	} else {
+		logrus.Info("Pulling VM console logs")
+		if err := consoleGather.Run(); err != nil {
+			logrus.Infof("Failed to gather VM console logs: %s", err.Error())
+		}
+	}
+
 	logrus.Info("Pulling debug logs from the bootstrap machine")
 	client, err := ssh.NewClient("core", net.JoinHostPort(bootstrap, strconv.Itoa(port)), gatherBootstrapOpts.sshKeys)
 	if err != nil {
-		if errors.Is(err, syscall.ECONNREFUSED) {
+		if errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, syscall.ETIMEDOUT) {
 			return "", errors.Wrap(err, "failed to connect to the bootstrap machine")
 		}
 		return "", errors.Wrap(err, "failed to create SSH client")
 	}
 
-	gatherID := time.Now().Format("20060102150405")
 	if err := ssh.Run(client, fmt.Sprintf("/usr/local/bin/installer-gather.sh --id %s %s", gatherID, strings.Join(masters, " "))); err != nil {
 		return "", errors.Wrap(err, "failed to run remote command")
 	}
-	file := filepath.Join(directory, fmt.Sprintf("log-bundle-%s.tar.gz", gatherID))
+
+	file := filepath.Join(directory, fmt.Sprintf("cluster-log-bundle-%s.tar.gz", gatherID))
 	if err := ssh.PullFileTo(client, fmt.Sprintf("/home/core/log-bundle-%s.tar.gz", gatherID), file); err != nil {
 		return "", errors.Wrap(err, "failed to pull log file from remote")
 	}
-	path, err := filepath.Abs(file)
+
+	clusterLogBundlePath, err := filepath.Abs(file)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to stat log file")
 	}
-	logrus.Infof("Bootstrap gather logs captured here %q", path)
-	return path, nil
+
+	logBundlePath := filepath.Join(filepath.Dir(clusterLogBundlePath), fmt.Sprintf("log-bundle-%s.tar.gz", gatherID))
+	archives := map[string]string{serialLogBundlePath: "serial", clusterLogBundlePath: ""}
+	err = serialgather.CombineArchives(logBundlePath, archives)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to combine archives")
+	}
+
+	return logBundlePath, nil
 }
 
 func logClusterOperatorConditions(ctx context.Context, config *rest.Config) error {
@@ -184,7 +215,7 @@ func logClusterOperatorConditions(ctx context.Context, config *rest.Config) erro
 			} else if (condition.Type == configv1.OperatorDegraded || condition.Type == configv1.OperatorProgressing) && condition.Status == configv1.ConditionFalse {
 				continue
 			}
-			if condition.Type == configv1.OperatorDegraded {
+			if condition.Type == configv1.OperatorAvailable || condition.Type == configv1.OperatorDegraded {
 				logrus.Errorf("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
 			} else {
 				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)

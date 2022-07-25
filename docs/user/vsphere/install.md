@@ -83,7 +83,8 @@ INFO Destroying the bootstrap resources...
 INFO Waiting up to 30m0s for the cluster at https://api.mycluster.example.com:6443 to initialize...
 INFO Waiting up to 10m0s for the openshift-console route to be created...
 INFO Install complete!
-INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/home/user/auth/kubeconfig'
+INFO To access the cluster as the system:admin user when using 'oc', run
+    export KUBECONFIG=/home/user/auth/kubeconfig
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.mycluster.example.com
 INFO Login to the console with user: kubeadmin, password: 5char-5char-5char-5char
 ```
@@ -100,4 +101,4 @@ The OpenShift console is available via the kubeadmin login provided by the insta
 
 ![OpenShift web console](images/install_console.png)
 
-[cloud-install]: https://cloud.redhat.com/openshift/create
+[cloud-install]: https://console.redhat.com/openshift/create

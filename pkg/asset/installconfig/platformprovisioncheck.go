@@ -11,8 +11,10 @@ import (
 	bmconfig "github.com/openshift/installer/pkg/asset/installconfig/baremetal"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
+	nutanixconfig "github.com/openshift/installer/pkg/asset/installconfig/nutanix"
 	osconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -22,8 +24,10 @@ import (
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -53,7 +57,8 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		return awsconfig.ValidateForProvisioning(session, ic.Config, ic.AWS)
+		client := awsconfig.NewClient(session)
+		return awsconfig.ValidateForProvisioning(client, ic.Config, ic.AWS)
 	case azure.Name:
 		dnsConfig, err := ic.Azure.DNSConfig()
 		if err != nil {
@@ -69,7 +74,15 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		}
 		return azconfig.ValidateForProvisioning(client, ic.Config)
 	case baremetal.Name:
+		err = bmconfig.ValidateBaremetalPlatformSet(ic.Config)
+		if err != nil {
+			return err
+		}
 		err = bmconfig.ValidateProvisioning(ic.Config)
+		if err != nil {
+			return err
+		}
+		err = bmconfig.ValidateStaticBootstrapNetworking(ic.Config)
 		if err != nil {
 			return err
 		}
@@ -112,11 +125,19 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 		err = alibabacloudconfig.ValidateForProvisioning(client, ic.Config, ic.AlibabaCloud)
+	case powervs.Name:
+		client, err := powervsconfig.NewClient()
 		if err != nil {
 			return err
 		}
+		err = powervsconfig.ValidatePreExistingPublicDNS(client, ic.Config, ic.PowerVS)
 	case libvirt.Name, none.Name:
 		// no special provisioning requirements to check
+	case nutanix.Name:
+		err = nutanixconfig.ValidateForProvisioning(ic.Config)
+		if err != nil {
+			return err
+		}
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
 	}

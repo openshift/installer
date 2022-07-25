@@ -8,7 +8,7 @@ data "alicloud_instances" "master_data" {
 }
 
 resource "alicloud_instance" "master" {
-  count             = length(var.vswitch_ids)
+  count             = var.instance_count
   resource_group_id = var.resource_group_id
 
   host_name                  = "${local.prefix}-master-${count.index}"
@@ -17,7 +17,7 @@ resource "alicloud_instance" "master" {
   image_id                   = var.image_id
   internet_max_bandwidth_out = 0
 
-  vswitch_id      = var.vswitch_ids[count.index]
+  vswitch_id      = var.az_to_vswitch_id[var.zone_ids[count.index]]
   security_groups = [var.sg_id]
   role_name       = var.role_name
 
@@ -33,13 +33,4 @@ resource "alicloud_instance" "master" {
     },
     var.tags,
   )
-}
-
-resource "alicloud_slb_backend_server" "slb_attachment_masters" {
-  count            = "${length(var.slb_ids) * length(alicloud_instance.master.*.id)}"
-  load_balancer_id = "${element(var.slb_ids, ceil(count.index / length(alicloud_instance.master.*.id)))}"
-  backend_servers {
-    server_id = "${element(alicloud_instance.master.*.id, count.index)}"
-    weight    = 90
-  }
 }

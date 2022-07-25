@@ -8,6 +8,15 @@ spec:
   upstream: https://amd64.origin.releases.ci.openshift.org/graph
   channel: stable-4
 {{- else }}
-  channel: stable-4.10
+  channel: stable-4.11
 {{- end }}
   clusterID: {{.CVOClusterID}}
+{{- if .CVOCapabilities }}
+  capabilities:
+    baselineCapabilitySet: {{.CVOCapabilities.BaselineCapabilitySet}}
+    {{- if .CVOCapabilities.AdditionalEnabledCapabilities}}
+    additionalEnabledCapabilities: {{range .CVOCapabilities.AdditionalEnabledCapabilities}}
+    - {{.}}
+    {{- end}}
+    {{- end}}
+{{- end }}

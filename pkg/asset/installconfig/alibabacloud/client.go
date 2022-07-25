@@ -136,15 +136,7 @@ func askCredentials() (auth.Credential, error) {
 }
 
 func (client *Client) doActionWithSetDomain(request requests.AcsRequest, response responses.AcsResponse) (err error) {
-	endpoint, err := endpoints.Resolve(&endpoints.ResolveParam{
-		Product:  strings.ToLower(request.GetProduct()),
-		RegionId: strings.ToLower(client.RegionID),
-	})
-
-	if err != nil {
-		endpoint = defaultEndpoint()[strings.ToLower(request.GetProduct())]
-	}
-
+	endpoint := client.getEndpoint(request)
 	request.SetDomain(endpoint)
 	err = client.DoAction(request, response)
 	return
@@ -198,11 +190,25 @@ func (client *Client) DescribeAvailableInstanceType(zoneID string, instanceType 
 	return
 }
 
+// DescribeAvailableZoneByInstanceType queries available zone by instance type of ECS.
+func (client *Client) DescribeAvailableZoneByInstanceType(instanceType string) (response *ecs.DescribeAvailableResourceResponse, err error) {
+	request := ecs.CreateDescribeAvailableResourceRequest()
+	request.RegionId = client.RegionID
+	request.DestinationResource = "InstanceType"
+	request.InstanceType = instanceType
+	response = &ecs.DescribeAvailableResourceResponse{
+		BaseResponse: &responses.BaseResponse{},
+	}
+	err = client.doActionWithSetDomain(request, response)
+	return
+}
+
 // ListResourceGroups gets the list of resource groups.
-func (client *Client) ListResourceGroups() (response *resourcemanager.ListResourceGroupsResponse, err error) {
+func (client *Client) ListResourceGroups(resourceGroupID string) (response *resourcemanager.ListResourceGroupsResponse, err error) {
 	request := resourcemanager.CreateListResourceGroupsRequest()
 	request.Status = "OK"
 	request.Scheme = "https"
+	request.QueryParams["ResourceGroupId"] = resourceGroupID
 	response = &resourcemanager.ListResourceGroupsResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
@@ -222,9 +228,8 @@ func (client *Client) ListPrivateZoneRegions() (response *pvtz.DescribeRegionsRe
 }
 
 // ListDNSDomain get the list of domains.
-func (client *Client) ListDNSDomain(baseDomain string) (response *alidns.DescribeDomainsResponse, err error) {
+func (client *Client) ListDNSDomain() (response *alidns.DescribeDomainsResponse, err error) {
 	request := alidns.CreateDescribeDomainsRequest()
-	request.KeyWord = baseDomain
 	response = &alidns.DescribeDomainsResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
@@ -232,12 +237,51 @@ func (client *Client) ListDNSDomain(baseDomain string) (response *alidns.Describ
 	return
 }
 
+// ListPrivateZonesByName gets the list of privatezones with the specified name.
+func (client *Client) ListPrivateZonesByName(zoneName string) (response *pvtz.DescribeZonesResponse, err error) {
+	return client.ListPrivateZones(zoneName, "")
+}
+
+// ListPrivateZonesByVPC gets the list of privatezones attached to the specified VPC.
+func (client *Client) ListPrivateZonesByVPC(queryVpcID string) (response *pvtz.DescribeZonesResponse, err error) {
+	return client.ListPrivateZones("", queryVpcID)
+}
+
 // ListPrivateZones gets the list of privatzones.
-func (client *Client) ListPrivateZones(zoneName string) (response *pvtz.DescribeZonesResponse, err error) {
+func (client *Client) ListPrivateZones(zoneName string, queryVpcID string) (response *pvtz.DescribeZonesResponse, err error) {
 	request := pvtz.CreateDescribeZonesRequest()
 	request.Lang = "en"
+	request.SearchMode = "EXACT"
 	request.Keyword = zoneName
+	request.QueryVpcId = queryVpcID
+
 	response = &pvtz.DescribeZonesResponse{
+		BaseResponse: &responses.BaseResponse{},
+	}
+	err = client.doActionWithSetDomain(request, response)
+	return
+}
+
+// ListVpcs gets the list of VPCs.
+func (client *Client) ListVpcs(vpcID string) (response *vpc.DescribeVpcsResponse, err error) {
+	request := vpc.CreateDescribeVpcsRequest()
+	request.RegionId = client.RegionID
+	request.VpcId = vpcID
+
+	response = &vpc.DescribeVpcsResponse{
+		BaseResponse: &responses.BaseResponse{},
+	}
+	err = client.doActionWithSetDomain(request, response)
+	return
+}
+
+// ListVSwitches gets the list of VSwitches.
+func (client *Client) ListVSwitches(vswitchID string) (response *vpc.DescribeVSwitchesResponse, err error) {
+	request := vpc.CreateDescribeVSwitchesRequest()
+	request.RegionId = client.RegionID
+	request.VSwitchId = vswitchID
+
+	response = &vpc.DescribeVSwitchesResponse{
 		BaseResponse: &responses.BaseResponse{},
 	}
 	err = client.doActionWithSetDomain(request, response)
@@ -262,12 +306,71 @@ func (client *Client) GetOSSObjectSignURL(bucketName string, objectName string) 
 	return
 }
 
+// GetAvailableZonesByInstanceType returns a list of available zones with the specified instance type is
+// available and stock
+func (client *Client) GetAvailableZonesByInstanceType(instanceType string) ([]string, error) {
+	response, err := client.DescribeAvailableZoneByInstanceType(instanceType)
+	if err != nil {
+		return nil, err
+	}
+
+	var zones []string
+
+	for _, zone := range response.AvailableZones.AvailableZone {
+		if zone.Status == "Available" && zone.StatusCategory == "WithStock" {
+			zones = append(zones, zone.ZoneId)
+		}
+	}
+	return zones, nil
+}
+
+func (client *Client) getEndpoint(request requests.AcsRequest) string {
+	productName := strings.ToLower(request.GetProduct())
+	regionID := strings.ToLower(client.RegionID)
+
+	if additionEndpoint, ok := additionEndpoint(productName, regionID); ok {
+		return additionEndpoint
+	}
+
+	endpoint, err := endpoints.Resolve(&endpoints.ResolveParam{
+		LocationProduct:      request.GetLocationServiceCode(),
+		LocationEndpointType: request.GetLocationEndpointType(),
+		Product:              productName,
+		RegionId:             regionID,
+		CommonApi:            client.ProcessCommonRequest,
+	})
+
+	if err != nil {
+		endpoint = defaultEndpoint()[productName]
+	}
+
+	return endpoint
+}
+
 func defaultEndpoint() map[string]string {
 	return map[string]string{
 		"pvtz":            "pvtz.aliyuncs.com",
 		"resourcemanager": "resourcemanager.aliyuncs.com",
 		"ecs":             "ecs.aliyuncs.com",
 	}
+}
+
+func additionEndpoint(productName string, regionID string) (string, bool) {
+	endpoints := map[string]map[string]string{
+		"ecs": {
+			"cn-wulanchabu":  "ecs.cn-wulanchabu.aliyuncs.com",
+			"cn-guangzhou":   "ecs.cn-guangzhou.aliyuncs.com",
+			"ap-southeast-6": "ecs.ap-southeast-6.aliyuncs.com",
+			"cn-heyuan":      "ecs.cn-heyuan.aliyuncs.com",
+			"cn-chengdu":     "ecs.cn-chengdu.aliyuncs.com",
+		},
+	}
+	if regionEndpoints, ok := endpoints[productName]; ok {
+		if endpoint, ok := regionEndpoints[regionID]; ok {
+			return endpoint, true
+		}
+	}
+	return "", false
 }
 
 func storeCredentials(accessKeyID string, accessKeySecret string) (err error) {

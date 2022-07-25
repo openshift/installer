@@ -19,12 +19,11 @@ ETCD_ENDPOINTS=
 bootkube_podman_run() {
     # we run all commands in the host-network to prevent IP conflicts with
     # end-user infrastructure.
-    podman run --quiet --net=host "${@}"
+    podman run --quiet --net=host --rm "${@}"
 }
 
 wait_for_etcd_cluster() {
     until bootkube_podman_run \
-        --rm \
         --name etcdctl \
         --env ETCDCTL_API=3 \
         --volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
@@ -109,6 +108,9 @@ if [ ! -f etcd-bootstrap.done ]
 then
     record_service_stage_start "etcd-bootstrap"
 	echo "Rendering CEO Manifests..."
+
+	rm --recursive --force etcd-bootstrap
+
 	bootkube_podman_run \
 		--name etcd-render \
 		--volume "$PWD:/assets:z" \
@@ -337,6 +339,7 @@ then
 	copy_static_resources_for openstack
 	copy_static_resources_for ovirt
 	copy_static_resources_for vsphere
+	copy_static_resources_for nutanix
 
 	cp mco-bootstrap/manifests/* manifests/
 
@@ -398,7 +401,6 @@ run_cluster_bootstrap() {
 	record_service_stage_start "cb-bootstrap"
 	bootkube_podman_run \
         --name cluster-bootstrap \
-        --rm \
         --volume "$PWD:/assets:z" \
         --volume /etc/kubernetes:/etc/kubernetes:z \
         "${CLUSTER_BOOTSTRAP_IMAGE}" \

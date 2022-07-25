@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -41,8 +42,8 @@ func validatePlatform(client API, ic *types.InstallConfig, path *field.Path) fie
 		allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
 	}
 
-	if ic.Platform.IBMCloud.VPC != "" {
-		allErrs = append(allErrs, validateNetworking(client, ic, path)...)
+	if ic.Platform.IBMCloud.VPCName != "" {
+		allErrs = append(allErrs, validateExistingVPC(client, ic, path)...)
 	}
 
 	if ic.Platform.IBMCloud.DefaultMachinePlatform != nil {
@@ -55,24 +56,100 @@ func validateMachinePool(client API, platform *ibmcloud.Platform, machinePool *i
 	allErrs := field.ErrorList{}
 
 	if machinePool.InstanceType != "" {
-		allErrs = append(allErrs, validateMachinePoolType(client, machinePool.InstanceType, path)...)
+		allErrs = append(allErrs, validateMachinePoolType(client, machinePool.InstanceType, path.Child("type"))...)
 	}
 
 	if len(machinePool.Zones) > 0 {
-		allErrs = append(allErrs, validateMachinePoolZones(client, platform.Region, machinePool.Zones, path)...)
+		allErrs = append(allErrs, validateMachinePoolZones(client, platform.Region, machinePool.Zones, path.Child("zones"))...)
 	}
 
 	if machinePool.BootVolume != nil {
-		allErrs = append(allErrs, validateMachinePoolBootVolume(client, *machinePool.BootVolume, path)...)
+		allErrs = append(allErrs, validateMachinePoolBootVolume(client, *machinePool.BootVolume, path.Child("bootVolume"))...)
+	}
+
+	if len(machinePool.DedicatedHosts) > 0 {
+		allErrs = append(allErrs, validateMachinePoolDedicatedHosts(client, machinePool.DedicatedHosts, machinePool.InstanceType, machinePool.Zones, platform.Region, path.Child("dedicatedHosts"))...)
 	}
 
 	return allErrs
 }
 
+func validateMachinePoolDedicatedHosts(client API, dhosts []ibmcloud.DedicatedHost, machineType string, zones []string, region string, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Get list of supported profiles in region
+	dhostProfiles, err := client.GetDedicatedHostProfiles(context.TODO(), region)
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(path, err))
+	}
+
+	for i, dhost := range dhosts {
+		if dhost.Name != "" {
+			// Check if host with name exists
+			dh, err := client.GetDedicatedHostByName(context.TODO(), dhost.Name, region)
+			if err != nil {
+				allErrs = append(allErrs, field.InternalError(path.Index(i).Child("name"), err))
+			}
+
+			if dh != nil {
+				// Check if instance is provisionable on host
+				if !*dh.InstancePlacementEnabled || !*dh.Provisionable {
+					allErrs = append(allErrs, field.Invalid(path.Index(i).Child("name"), dhost.Name, "dedicated host is unable to provision instances"))
+				}
+
+				// Check if host is in zone
+				if *dh.Zone.Name != zones[i] {
+					allErrs = append(allErrs, field.Invalid(path.Index(i).Child("name"), dhost.Name, fmt.Sprintf("dedicated host not in zone %s", zones[i])))
+				}
+
+				// Check if host profile supports machine type
+				if !isInstanceProfileInList(machineType, dh.SupportedInstanceProfiles) {
+					allErrs = append(allErrs, field.Invalid(path.Index(i).Child("name"), dhost.Name, fmt.Sprintf("dedicated host does not support machine type %s", machineType)))
+				}
+			}
+		} else {
+			// Check if host profile is supported in region
+			if !isDedicatedHostProfileInList(dhost.Profile, dhostProfiles) {
+				allErrs = append(allErrs, field.Invalid(path.Index(i).Child("profile"), dhost.Profile, fmt.Sprintf("dedicated host profile not supported in region %s", region)))
+			}
+
+			// Check if host profile supports machine type
+			for _, profile := range dhostProfiles {
+				if *profile.Name == dhost.Profile {
+					if !isInstanceProfileInList(machineType, profile.SupportedInstanceProfiles) {
+						allErrs = append(allErrs, field.Invalid(path.Index(i).Child("profile"), dhost.Profile, fmt.Sprintf("dedicated host profile does not support machine type %s", machineType)))
+						break
+					}
+				}
+			}
+		}
+	}
+
+	return allErrs
+}
+
+func isInstanceProfileInList(profile string, list []vpcv1.InstanceProfileReference) bool {
+	for _, each := range list {
+		if *each.Name == profile {
+			return true
+		}
+	}
+	return false
+}
+
+func isDedicatedHostProfileInList(profile string, list []vpcv1.DedicatedHostProfile) bool {
+	for _, each := range list {
+		if *each.Name == profile {
+			return true
+		}
+	}
+	return false
+}
+
 func validateMachinePoolType(client API, machineType string, path *field.Path) field.ErrorList {
 	vsiProfiles, err := client.GetVSIProfiles(context.TODO())
 	if err != nil {
-		return field.ErrorList{field.InternalError(path.Child("type"), err)}
+		return field.ErrorList{field.InternalError(path, err)}
 	}
 
 	for _, profile := range vsiProfiles {
@@ -81,19 +158,19 @@ func validateMachinePoolType(client API, machineType string, path *field.Path) f
 		}
 	}
 
-	return field.ErrorList{field.NotFound(path.Child("type"), machineType)}
+	return field.ErrorList{field.NotFound(path, machineType)}
 }
 
 func validateMachinePoolZones(client API, region string, zones []string, path *field.Path) field.ErrorList {
 	regionalZones, err := client.GetVPCZonesForRegion(context.TODO(), region)
 	if err != nil {
-		return field.ErrorList{field.InternalError(path.Child("zones"), err)}
+		return field.ErrorList{field.InternalError(path, err)}
 	}
 
 	for idx, zone := range zones {
 		validZones := sets.NewString(regionalZones...)
 		if !validZones.Has(zone) {
-			return field.ErrorList{field.Invalid(path.Child("zones").Index(idx), zone, fmt.Sprintf("zone must be in region %q", region))}
+			return field.ErrorList{field.Invalid(path.Index(idx), zone, fmt.Sprintf("zone must be in region %q", region))}
 		}
 	}
 	return nil
@@ -109,11 +186,11 @@ func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, p
 	// Make sure the encryptionKey exists
 	key, err := client.GetEncryptionKey(context.TODO(), bootVolume.EncryptionKey)
 	if err != nil {
-		return field.ErrorList{field.InternalError(path.Child("bootVolume").Child("encryptionKey"), err)}
+		return field.ErrorList{field.InternalError(path.Child("encryptionKey"), err)}
 	}
 
 	if key == nil {
-		return field.ErrorList{field.NotFound(path.Child("bootVolume").Child("encryptionKey"), bootVolume.EncryptionKey)}
+		return field.ErrorList{field.NotFound(path.Child("encryptionKey"), bootVolume.EncryptionKey)}
 	}
 
 	return allErrs
@@ -145,37 +222,87 @@ func validateResourceGroup(client API, ic *types.InstallConfig, path *field.Path
 	return allErrs
 }
 
-func validateNetworking(client API, ic *types.InstallConfig, path *field.Path) field.ErrorList {
+func validateExistingVPC(client API, ic *types.InstallConfig, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	platform := ic.Platform.IBMCloud
 
-	_, err := client.GetVPC(context.TODO(), platform.VPC)
+	if ic.IBMCloud.VPCName == "" {
+		return allErrs
+	}
+
+	if ic.IBMCloud.ResourceGroupName == "" {
+		return append(allErrs, field.NotFound(path.Child("resourceGroupName"), ic.IBMCloud.ResourceGroupName))
+	}
+
+	vpcs, err := client.GetVPCs(context.TODO(), ic.IBMCloud.Region)
 	if err != nil {
-		if errors.Is(err, &VPCResourceNotFoundError{}) {
-			allErrs = append(allErrs, field.NotFound(path.Child("vpc"), platform.VPC))
-		} else {
-			allErrs = append(allErrs, field.InternalError(path.Child("vpc"), err))
+		return append(allErrs, field.InternalError(path.Child("vpcName"), err))
+	}
+
+	found := false
+	for _, vpc := range vpcs {
+		if *vpc.Name == ic.IBMCloud.VPCName {
+			if *vpc.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *vpc.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
+				return append(allErrs, field.Invalid(path.Child("vpcName"), ic.IBMCloud.VPCName, fmt.Sprintf("vpc is not in provided ResourceGroup: %s", ic.IBMCloud.ResourceGroupName)))
+			}
+			found = true
+			allErrs = append(allErrs, validateExistingSubnets(client, ic, path, *vpc.ID)...)
+			break
 		}
 	}
 
-	allErrs = append(allErrs, validateSubnets(client, ic, platform.Subnets, path)...)
-
+	if !found {
+		allErrs = append(allErrs, field.NotFound(path.Child("vpcName"), ic.IBMCloud.VPCName))
+	}
 	return allErrs
 }
 
-func validateSubnets(client API, ic *types.InstallConfig, subnets []string, path *field.Path) field.ErrorList {
+func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Path, vpcID string) field.ErrorList {
 	allErrs := field.ErrorList{}
-	zones, err := client.GetVPCZonesForRegion(context.TODO(), ic.Platform.IBMCloud.Region)
-	if err != nil {
-		allErrs = append(allErrs, field.InternalError(path.Child("subnets"), err))
-	}
-	validZones := sets.NewString(zones...)
-	for idx, subnet := range subnets {
-		subnetPath := path.Child("subnets").Index(idx)
-		allErrs = append(allErrs, validateSubnetZone(client, subnet, validZones, subnetPath)...)
+
+	if len(ic.IBMCloud.ControlPlaneSubnets) == 0 {
+		allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), ic.IBMCloud.ControlPlaneSubnets, fmt.Sprintf("controlPlaneSubnets cannot be empty when providing a vpcName: %s", ic.IBMCloud.VPCName)))
+	} else {
+		for _, controlPlaneSubnet := range ic.IBMCloud.ControlPlaneSubnets {
+			subnet, err := client.GetSubnetByName(context.TODO(), controlPlaneSubnet, ic.IBMCloud.Region)
+			if err != nil {
+				if errors.Is(err, &VPCResourceNotFoundError{}) {
+					allErrs = append(allErrs, field.NotFound(path.Child("controlPlaneSubnets"), controlPlaneSubnet))
+				} else {
+					allErrs = append(allErrs, field.InternalError(path.Child("controlPlaneSubnets"), err))
+				}
+			} else {
+				if *subnet.VPC.ID != vpcID {
+					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), controlPlaneSubnet, fmt.Sprintf("controlPlaneSubnets contains subnet: %s, not found in expected vpcID: %s", controlPlaneSubnet, vpcID)))
+				}
+				if *subnet.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
+					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), controlPlaneSubnet, fmt.Sprintf("controlPlaneSubnets contains subnet: %s, not found in expected resourceGroupName: %s", controlPlaneSubnet, ic.IBMCloud.ResourceGroupName)))
+				}
+			}
+		}
 	}
 
-	// TODO: IBM[#80]: additional subnet validation
+	if len(ic.IBMCloud.ComputeSubnets) == 0 {
+		allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), ic.IBMCloud.ComputeSubnets, fmt.Sprintf("computeSubnets cannot be empty when providing a vpcName: %s", ic.IBMCloud.VPCName)))
+	} else {
+		for _, computeSubnet := range ic.IBMCloud.ComputeSubnets {
+			subnet, err := client.GetSubnetByName(context.TODO(), computeSubnet, ic.IBMCloud.Region)
+			if err != nil {
+				if errors.Is(err, &VPCResourceNotFoundError{}) {
+					allErrs = append(allErrs, field.NotFound(path.Child("computeSubnets"), computeSubnet))
+				} else {
+					allErrs = append(allErrs, field.InternalError(path.Child("computeSubnets"), err))
+				}
+			} else {
+				if *subnet.VPC.ID != vpcID {
+					allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), computeSubnet, fmt.Sprintf("computeSubnets contains subnet: %s, not found in expected vpcID: %s", computeSubnet, vpcID)))
+				}
+				if *subnet.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
+					allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), computeSubnet, fmt.Sprintf("computeSubnets contains subnet: %s, not found in expected resourceGroupName: %s", computeSubnet, ic.IBMCloud.ResourceGroupName)))
+				}
+			}
+		}
+	}
+
 	return allErrs
 }
 

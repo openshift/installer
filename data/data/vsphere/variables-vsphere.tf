@@ -22,6 +22,11 @@ variable "vsphere_cluster" {
   description = "This is the name of the vSphere cluster."
 }
 
+variable "vsphere_resource_pool" {
+  type        = string
+  description = "This is the absolute path to the vSphere resource pool."
+}
+
 variable "vsphere_datacenter" {
   type        = string
   description = "This is the name of the vSphere data center."
@@ -44,7 +49,7 @@ variable "vsphere_template" {
 
 variable "vsphere_network" {
   type        = string
-  description = "This is the name of the publicly accessible network for cluster ingress and access."
+  description = "This is the Managed Object ID of the publicly accessible network for cluster ingress and access."
 }
 
 variable "vsphere_folder" {
@@ -77,6 +82,5 @@ variable "vsphere_control_plane_cores_per_socket" {
   type = number
 }
 variable "vsphere_disk_type" {
-  type    = string
-  default = "eagerZeroedThick"
+  type = string
 }

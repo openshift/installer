@@ -9,6 +9,8 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -17,8 +19,10 @@ import (
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -58,7 +62,7 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 		}
 
 		// Add delete permissions for non-C2S installs.
-		if !aws.C2SRegions.Has(ic.Config.AWS.Region) {
+		if !aws.IsSecretRegion(ic.Config.AWS.Region) {
 			permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteBase)
 			if usingExistingVPC {
 				permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteSharedNetworking)
@@ -87,7 +91,16 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 		}
 	case ibmcloud.Name:
 		// TODO: IBM[#90]: platformpermscheck
-	case azure.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name, alibabacloud.Name:
+	case powervs.Name:
+		bxCli, err := powervsconfig.NewBxClient()
+		if err != nil {
+			return err
+		}
+		err = bxCli.ValidateAccountPermissions()
+		if err != nil {
+			return err
+		}
+	case azure.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name, alibabacloud.Name, nutanix.Name:
 		// no permissions to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)

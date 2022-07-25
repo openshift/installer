@@ -10,8 +10,9 @@ import (
 	"strings"
 
 	"github.com/apparentlymart/go-cidr/cidr"
+	"github.com/ghodss/yaml"
 	"github.com/go-playground/validator/v10"
-	"github.com/metal3-io/baremetal-operator/pkg/bmc"
+	"github.com/metal3-io/baremetal-operator/pkg/hardwareutils/bmc"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -325,6 +326,20 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 	return nil
 }
 
+// ensure that the NetworkConfig field contains a valid Yaml string
+func validateNetworkConfig(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
+	for idx, host := range hosts {
+		if host.NetworkConfig != nil {
+			networkConfig := make(map[string]interface{})
+			err := yaml.Unmarshal(host.NetworkConfig.Raw, &networkConfig)
+			if err != nil {
+				errors = append(errors, field.Invalid(fldPath.Index(idx).Child("networkConfig"), host.NetworkConfig, fmt.Sprintf("Not a valid yaml: %s", err.Error())))
+			}
+		}
+	}
+	return
+}
+
 // ensure that the bootMode field contains a valid value
 func validateBootMode(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
 	for idx, host := range hosts {
@@ -342,6 +357,21 @@ func validateBootMode(hosts []*baremetal.Host, fldPath *field.Path) (errors fiel
 			errors = append(errors, field.NotSupported(fldPath.Index(idx).Child("bootMode"), host.BootMode, valid))
 		}
 	}
+	return
+}
+
+// validateProvisioningNetworkDisabledSupported validates hosts bmc address support provisioning network is disabled
+func validateProvisioningNetworkDisabledSupported(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
+	for idx, host := range hosts {
+		accessDetails, err := bmc.NewAccessDetails(host.BMC.Address, host.BMC.DisableCertificateVerification)
+		if err != nil {
+			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("BMC"), host.BMC.Address, err.Error()))
+		} else if accessDetails.RequiresProvisioningNetwork() {
+			msg := fmt.Sprintf("driver %s requires provisioning network", accessDetails.Driver())
+			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("BMC"), host.BMC.Address, msg))
+		}
+	}
+
 	return
 }
 
@@ -404,6 +434,7 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 	allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
 
 	allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath.Child("Hosts"))...)
+	allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath.Child("Hosts"))...)
 
 	return allErrs
 }
@@ -417,6 +448,8 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 	// will be run on the external network. Users must provide IP's on the
 	// machine networks to host those services.
 	case baremetal.DisabledProvisioningNetwork:
+		allErrs = validateProvisioningNetworkDisabledSupported(p.Hosts, fldPath.Child("Hosts"))
+
 		// If set, ensure bootstrapProvisioningIP is in one of the machine networks
 		if p.BootstrapProvisioningIP != "" {
 			if err := validateIPinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {

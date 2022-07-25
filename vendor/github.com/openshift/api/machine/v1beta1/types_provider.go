@@ -144,6 +144,15 @@ const (
 	// ExternalRemediationRequestAvailable is set on machinehealthchecks when MachineHealthCheck controller uses external remediation.
 	// ExternalRemediationRequestAvailable is set to false if creating external remediation request fails.
 	ExternalRemediationRequestAvailable ConditionType = "ExternalRemediationRequestAvailable"
+	// MachineDrained is set on a machine to indicate that the machine has been drained. When an error occurs during
+	// the drain process, the condition will be added with a false status and details of the error.
+	MachineDrained ConditionType = "Drained"
+	// MachineDrainable is set on a machine to indicate whether or not the machine can be drained, or, whether some
+	// deletion hook is blocking the drain operation.
+	MachineDrainable ConditionType = "Drainable"
+	// MachineTerminable is set on a machine to indicate whether or not the machine can be terminated, or, whether some
+	// deletion hook is blocking the termination operation.
+	MachineTerminable ConditionType = "Terminable"
 )
 
 const (
@@ -165,6 +174,12 @@ const (
 	ExternalRemediationTemplateNotFound = "ExternalRemediationTemplateNotFound"
 	// ExternalRemediationRequestCreationFailed is the reason used when a machine health check fails to create external remediation request.
 	ExternalRemediationRequestCreationFailed = "ExternalRemediationRequestCreationFailed"
+	// MachineHookPresent indicates that a machine lifecycle hook is blocking part of the lifecycle of the machine.
+	// This should be used with the `Drainable` and `Terminable` machine condition types.
+	MachineHookPresent = "HookPresent"
+	// MachineDrainError indicates an error occurred when draining the machine.
+	// This should be used with the `Drained` condition type.
+	MachineDrainError = "DrainError"
 )
 
 // Condition defines an observation of a Machine API resource operational state.

@@ -30,6 +30,7 @@ import (
 	awssession "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/version"
 )
 
@@ -101,8 +102,7 @@ func (o *ClusterUninstaller) validate() error {
 	if len(o.Filters) == 0 {
 		return errors.Errorf("you must specify at least one tag filter")
 	}
-	switch r := o.Region; r {
-	case "us-iso-east-1":
+	if r := o.Region; awstypes.IsSecretRegion(r) {
 		return errors.Errorf("cannot destroy cluster in region %q", r)
 	}
 	return nil
@@ -452,7 +452,7 @@ func (o *ClusterUninstaller) findIAMUsers(ctx context.Context, search *iamUserSe
 func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, iamClient *iam.IAM, deleted sets.String) (sets.String, error) {
 	resources := sets.NewString()
 	o.Logger.Debug("search for IAM instance profiles")
-	for _, profileType := range []string{"master", "worker"} {
+	for _, profileType := range []string{"master", "worker", "bootstrap"} {
 		profile := fmt.Sprintf("%s-%s-profile", o.ClusterID, profileType)
 		response, err := iamClient.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{InstanceProfileName: &profile})
 		if err != nil {
@@ -539,6 +539,7 @@ func (search *iamRoleSearch) find(ctx context.Context) (arns []string, names []s
 		ctx,
 		&iam.ListRolesInput{},
 		func(results *iam.ListRolesOutput, lastPage bool) bool {
+			search.logger.Debugf("iterating over a page of %d IAM roles", len(results.Roles))
 			for _, role := range results.Roles {
 				if _, ok := search.unmatched[*role.Arn]; ok {
 					continue
@@ -598,6 +599,7 @@ func (search *iamUserSearch) arns(ctx context.Context) ([]string, error) {
 		ctx,
 		&iam.ListUsersInput{},
 		func(results *iam.ListUsersOutput, lastPage bool) bool {
+			search.logger.Debugf("iterating over a page of %d IAM users", len(results.Users))
 			for _, user := range results.Users {
 				if _, ok := search.unmatched[*user.Arn]; ok {
 					continue
@@ -760,6 +762,8 @@ func deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logge
 		return deleteEC2InternetGateway(ctx, client, id, logger)
 	case "natgateway":
 		return deleteEC2NATGateway(ctx, client, id, logger)
+	case "placement-group":
+		return deleteEC2PlacementGroup(ctx, client, id, logger)
 	case "route-table":
 		return deleteEC2RouteTable(ctx, client, id, logger)
 	case "security-group":
@@ -778,6 +782,8 @@ func deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logge
 		return deleteEC2VPCEndpoint(ctx, client, id, logger)
 	case "vpc-peering-connection":
 		return deleteEC2VPCPeeringConnection(ctx, client, id, logger)
+	case "vpc-endpoint-service":
+		return deleteEC2VPCEndpointService(ctx, client, id, logger)
 	default:
 		return errors.Errorf("unrecognized EC2 resource type %s", resourceType)
 	}
@@ -994,6 +1000,29 @@ func deleteEC2NATGatewaysByVPC(ctx context.Context, client *ec2.EC2, vpc string,
 		return lastError
 	}
 	return err
+}
+
+func deleteEC2PlacementGroup(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
+	response, err := client.DescribePlacementGroupsWithContext(ctx, &ec2.DescribePlacementGroupsInput{
+		GroupIds: []*string{aws.String(id)},
+	})
+	if err != nil {
+		if err.(awserr.Error).Code() == "InvalidPlacementGroup.Unknown" {
+			return nil
+		}
+		return err
+	}
+
+	for _, placementGroup := range response.PlacementGroups {
+		if _, err := client.DeletePlacementGroupWithContext(ctx, &ec2.DeletePlacementGroupInput{
+			GroupName: placementGroup.GroupName,
+		}); err != nil {
+			return err
+		}
+	}
+
+	logger.Info("Deleted")
+	return nil
 }
 
 func deleteEC2RouteTable(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
@@ -1411,6 +1440,20 @@ func deleteEC2VPCPeeringConnection(ctx context.Context, client *ec2.EC2, id stri
 	return nil
 }
 
+func deleteEC2VPCEndpointService(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
+	_, err := client.DeleteVpcEndpointServiceConfigurationsWithContext(ctx, &ec2.DeleteVpcEndpointServiceConfigurationsInput{
+		ServiceIds: aws.StringSlice([]string{id}),
+	})
+	if err != nil {
+		if err.(awserr.Error).Code() == "InvalidVpcEndpointService.NotFound" {
+			return nil
+		}
+		return errors.Wrapf(err, "cannot delete VPC Endpoint Service %s", id)
+	}
+	logger.Info("Deleted")
+	return nil
+}
+
 func deleteElasticLoadBalancing(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
@@ -1459,6 +1502,7 @@ func deleteElasticLoadBalancerClassicByVPC(ctx context.Context, client *elb.ELB,
 		ctx,
 		&elb.DescribeLoadBalancersInput{},
 		func(results *elb.DescribeLoadBalancersOutput, lastPage bool) bool {
+			logger.Debugf("iterating over a page of %d v1 load balancers", len(results.LoadBalancerDescriptions))
 			for _, lb := range results.LoadBalancerDescriptions {
 				lbLogger := logger.WithField("classic load balancer", *lb.LoadBalancerName)
 
@@ -1520,6 +1564,7 @@ func deleteElasticLoadBalancerV2ByVPC(ctx context.Context, client *elbv2.ELBV2, 
 		ctx,
 		&elbv2.DescribeLoadBalancersInput{},
 		func(results *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
+			logger.Debugf("iterating over a page of %d v2 load balancers", len(results.LoadBalancers))
 			for _, lb := range results.LoadBalancers {
 				if lb.VpcId == nil {
 					logger.WithField("load balancer", *lb.LoadBalancerArn).Warn("load balancer does not have a VPC ID so could not determine whether it should be deleted")

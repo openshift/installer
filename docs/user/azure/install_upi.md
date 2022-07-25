@@ -48,7 +48,6 @@ Some data from the install configuration file will be used on later steps. Expor
 ```sh
 export CLUSTER_NAME=`yq -r .metadata.name install-config.yaml`
 export AZURE_REGION=`yq -r .platform.azure.region install-config.yaml`
-export SSH_KEY=`yq -r .sshKey install-config.yaml | xargs`
 export BASE_DOMAIN=`yq -r .baseDomain install-config.yaml`
 export BASE_DOMAIN_RESOURCE_GROUP=`yq -r .platform.azure.baseDomainResourceGroupName install-config.yaml`
 ```
@@ -195,22 +194,9 @@ export ACCOUNT_KEY=`az storage account keys list -g $RESOURCE_GROUP --account-na
 Given the size of the RHCOS VHD, it's not possible to run the deployments with this file stored locally on your machine.
 We must copy and store it in a storage container instead. To do so, first create a blob storage container and then copy the VHD.
 
-Choose the RHCOS version you'd like to use and export the URL of its VHD to an environment variable. For example, to use the latest release available for the 4.3 version, use:
-
-```sh
-export VHD_URL=`curl -s https://raw.githubusercontent.com/openshift/installer/release-4.3/data/data/rhcos.json | jq -r .azure.url`
-```
-
-If you'd just like to use the latest _development_ version available (master branch), use:
-
-```sh
-export VHD_URL=`curl -s https://raw.githubusercontent.com/openshift/installer/master/data/data/rhcos.json | jq -r .azure.url`
-```
-
-Copy the chosen VHD to a blob:
-
 ```sh
 az storage container create --name vhd --account-name ${CLUSTER_NAME}sa
+export VHD_URL=$(openshift-install coreos print-stream-json | jq -r '.architectures.x86_64."rhel-coreos-extensions"."azure-disk".url')
 az storage blob copy start --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY --destination-blob "rhcos.vhd" --destination-container vhd --source-uri "$VHD_URL"
 ```
 
@@ -230,7 +216,7 @@ done
 Create a blob storage container and upload the generated `bootstrap.ign` file:
 
 ```sh
-az storage container create --name files --account-name ${CLUSTER_NAME}sa --public-access blob
+az storage container create --name files --account-name ${CLUSTER_NAME}sa
 az storage blob upload --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c "files" -f "bootstrap.ign" -n "bootstrap.ign"
 ```
 
@@ -343,13 +329,13 @@ Copy the [`04_bootstrap.json`](../../../upi/azure/04_bootstrap.json) ARM templat
 Create the deployment using the `az` client:
 
 ```sh
-export BOOTSTRAP_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c "files" -n "bootstrap.ign" -o tsv`
+bootstrap_url_expiry=`date -u -d "10 hours" '+%Y-%m-%dT%H:%MZ'`
+export BOOTSTRAP_URL=`az storage blob generate-sas -c 'files' -n 'bootstrap.ign' --https-only --full-uri --permissions r --expiry $bootstrap_url_expiry --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -o tsv`
 export BOOTSTRAP_IGNITION=`jq -rcnM --arg v "3.1.0" --arg url $BOOTSTRAP_URL '{ignition:{version:$v,config:{replace:{source:$url}}}}' | base64 | tr -d '\n'`
 
 az deployment group create -g $RESOURCE_GROUP \
   --template-file "04_bootstrap.json" \
   --parameters bootstrapIgnition="$BOOTSTRAP_IGNITION" \
-  --parameters sshKeyData="$SSH_KEY" \
   --parameters baseName="$INFRA_ID"
 ```
 
@@ -365,8 +351,6 @@ export MASTER_IGNITION=`cat master.ign | base64 | tr -d '\n'`
 az deployment group create -g $RESOURCE_GROUP \
   --template-file "05_masters.json" \
   --parameters masterIgnition="$MASTER_IGNITION" \
-  --parameters sshKeyData="$SSH_KEY" \
-  --parameters privateDNSZoneName="${CLUSTER_NAME}.${BASE_DOMAIN}" \
   --parameters baseName="$INFRA_ID"
 ```
 
@@ -430,7 +414,6 @@ export WORKER_IGNITION=`cat worker.ign | base64 | tr -d '\n'`
 az deployment group create -g $RESOURCE_GROUP \
   --template-file "06_workers.json" \
   --parameters workerIgnition="$WORKER_IGNITION" \
-  --parameters sshKeyData="$SSH_KEY" \
   --parameters baseName="$INFRA_ID"
 ```
 
@@ -545,7 +528,8 @@ DEBUG Route found in openshift-console namespace: console
 DEBUG Route found in openshift-console namespace: downloads
 DEBUG OpenShift console route is created
 INFO Install complete!
-INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=${PWD}/auth/kubeconfig'
+INFO To access the cluster as the system:admin user when using 'oc', run
+    export KUBECONFIG=${PWD}/auth/kubeconfig
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.cluster.basedomain.com
 INFO Login to the console with user: kubeadmin, password: REDACTED
 ```

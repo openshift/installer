@@ -3,14 +3,17 @@ package terraform
 import (
 	"regexp"
 
-	"github.com/pkg/errors"
-
 	"github.com/openshift/installer/pkg/diagnostics"
 )
 
-// Diagnose accepts an error from terraform runs and tries to diagnose the
+// diagnoseApplyError accepts an error from terraform runs and tries to diagnose the
 // underlying cause.
-func Diagnose(message string) error {
+func diagnoseApplyError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	message := err.Error()
 	for _, cand := range conditions {
 		if cand.match.MatchString(message) {
 			return &diagnostics.Err{
@@ -21,7 +24,7 @@ func Diagnose(message string) error {
 		}
 	}
 
-	return errors.New("failed to complete the change")
+	return err
 }
 
 type condition struct {

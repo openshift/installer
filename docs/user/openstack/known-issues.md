@@ -2,6 +2,14 @@
 
 We have been tracking a few issues and FAQs from our users, and are documenting them here along with the known workarounds and solutions. For issues that still have open bugs, we have attached the links to where the engineering team is tracking their progress. As changes occur, we will update both this document and the issue trackers with the latest information.
 
+## HTTPS CommonName deprecation
+
+With OpenShift v4.10, HTTPS certificates must include the names for the server in the `Subject Alternative Names` field. Legacy certificates will be rejected with the following error message:
+
+> x509: certificate relies on legacy Common Name field, use SANs instead
+
+In order to validate your OpenStack infrastructure prior to installation or upgrade to v4.10, please refer to the [dedicated instructions](invalid-https-certificates.md).
+
 ## Resources With Duplicate Names
 
 Since the installer requires the *Name* of your external network and Red Hat Core OS image, if you have other networks or images with the same name, it will choose one randomly from the set. This is not a reliable way to run the installer. We highly recommend that you resolve this with your cluster administrator by creating unique names for your resources in openstack.
@@ -157,3 +165,18 @@ $ rm -f openshift/99_openshift-cluster-api_worker-machineset-*.yaml
 ```
 [bugzilla-upi]: https://bugzilla.redhat.com/show_bug.cgi?id=1927244
 [manifests-removal]:../openstack/install_upi.md#remove-machines-and-machinesets
+
+## Limitations of creating external load balancers using pre-defined FIPs
+
+On most clouds, the default policy prevents non-admin users from creating                                     
+a floating IP that has a specific address. Such policies cause the cloud provider
+to fail handling floating IP assignment to load balancers if a floating IP address
+is present in the service specification.
+
+You can pre-create a floating IP and pass the address of it in the service
+specification if using the external cloud provider. The in-tree cloud
+provider does not support this.
+Alternatively, you can [relax the Neutron policy][policy-change-steps]
+to allow non-admin users to create FIPs with a specific IP address.
+
+[policy-change-steps]: https://access.redhat.com/solutions/6069071

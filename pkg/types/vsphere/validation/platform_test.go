@@ -152,6 +152,23 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expectedError: `^test-path\.vCenter: Invalid value: "https://test-center": must be the domain name or IP address of the vCenter$`,
 		},
+		{
+			name: "Valid diskType",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.DiskType = "eagerZeroedThick"
+				return p
+			}(),
+		},
+		{
+			name: "Invalid diskType",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.DiskType = "invalidDiskType"
+				return p
+			}(),
+			expectedError: `^test-path\.diskType: Invalid value: "invalidDiskType": diskType must be one of \[eagerZeroedThick thick thin\]$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

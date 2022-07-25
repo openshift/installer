@@ -17,6 +17,7 @@ import (
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
+	icpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/types"
 	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -26,8 +27,10 @@ import (
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -147,7 +150,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 
 		zoneID, err := client.GetDNSZoneIDByName(context.TODO(), installConfig.Config.BaseDomain)
 		if err != nil {
-			return errors.Wrap(err, "failed ot get DNS zone ID")
+			return errors.Wrap(err, "failed to get DNS zone ID")
 		}
 
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
@@ -158,7 +161,26 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		config.Spec.PrivateZone = &configv1.DNSZone{
 			ID: zoneID,
 		}
-	case libvirttypes.Name, openstacktypes.Name, baremetaltypes.Name, nonetypes.Name, vspheretypes.Name, ovirttypes.Name:
+	case powervstypes.Name:
+		client, err := icpowervs.NewClient()
+		if err != nil {
+			return errors.Wrap(err, "failed to get IBM PowerVS client")
+		}
+
+		zoneID, err := client.GetDNSZoneIDByName(context.TODO(), installConfig.Config.BaseDomain)
+		if err != nil {
+			return errors.Wrap(err, "failed to get DNS zone ID")
+		}
+
+		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+			config.Spec.PublicZone = &configv1.DNSZone{
+				ID: zoneID,
+			}
+		}
+		config.Spec.PrivateZone = &configv1.DNSZone{
+			ID: zoneID,
+		}
+	case libvirttypes.Name, openstacktypes.Name, baremetaltypes.Name, nonetypes.Name, vspheretypes.Name, ovirttypes.Name, nutanixtypes.Name:
 	default:
 		return errors.New("invalid Platform")
 	}

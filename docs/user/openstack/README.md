@@ -18,6 +18,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Nova Metadata Service](#nova-metadata-service)
     - [Glance Service](#glance-service)
   - [OpenStack Credentials](#openstack-credentials)
+    - [OpenStack credentials update](#openstack-credentials-update)
     - [Self Signed OpenStack CA certificates](#self-signed-openstack-ca-certificates)
   - [Standalone Single-Node Development Environment](#standalone-single-node-development-environment)
   - [Running The Installer](#running-the-installer)
@@ -48,6 +49,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Reconfiguring cloud provider](#reconfiguring-cloud-provider)
       - [Modifying cloud provider options](#modifying-cloud-provider-options)
       - [Refreshing a CA Certificate](#refreshing-a-ca-certificate)
+    - [Control Plane node migration](#control-plane-node-migration)
   - [Reporting Issues](#reporting-issues)
 
 ## Reference Documents
@@ -61,6 +63,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
 - [Learn about the OpenShift on OpenStack networking infrastructure design](../../design/openstack/networking-infrastructure.md)
 - [Deploying OpenShift bare-metal workers](deploy_baremetal_workers.md)
 - [Deploying OpenShift single root I/O virtualization (SRIOV) workers](deploy_sriov_workers.md)
+- [Deploying OpenShift with OVS-DPDK](ovs-dpdk.md)
 - [Provider Networks](provider_networks.md)
 
 ## OpenStack Requirements
@@ -245,6 +248,18 @@ clouds:
 The file can contain information about several clouds. For instance, the example above describes two clouds: `shiftstack` and `dev-evn`.
 In order to determine which cloud to use, the user can either specify it in the `install-config.yaml` file under `platform.openstack.cloud` or with `OS_CLOUD` environment variable. If both are omitted, then the cloud name defaults to `openstack`.
 
+### OpenStack credentials update
+
+To update the OpenStack credentials on a running OpenShift cluster, upload the new `clouds.yaml` to the `openstack-credentials` secret in the `kube-system` namespace.
+
+For example:
+
+```
+oc set data -n kube-system secret/openstack-credentials clouds.yaml="$(<path/to/clouds.yaml)"
+```
+
+Please note that the credentials MUST be in the `openstack` stanza of `clouds`.
+
 ### Self Signed OpenStack CA certificates
 
 If your OpenStack cluster uses self signed CA certificates for endpoint authentication, add the `cacert` key to your `clouds.yaml`. Its value should be a valid path to your CA cert, and the file should be readable by the user who runs the installer. The path can be either absolute, or relative to the current working directory while running the installer.
@@ -404,7 +419,8 @@ Look for a message like this to verify that your install succeeded:
 
 ```txt
 INFO Install complete!
-INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/home/stack/ostest/auth/kubeconfig'
+INFO To access the cluster as the system:admin user when using 'oc', run
+    export KUBECONFIG=/home/stack/ostest/auth/kubeconfig
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.ostest.shiftstack.com
 INFO Login to the console with user: kubeadmin, password: xxx
 ```
@@ -677,6 +693,69 @@ If you need to modify the direct cloud provider options, then edit the `config` 
 #### Refreshing a CA Certificate
 
 If you ran the installer with a [custom CA certificate](#self-signed-openstack-ca-certificates), then this certificate can be changed while the cluster is running. To change your certificate, edit the value of the `ca-cert.pem` key in the `cloud-provider-config` configmap with a valid PEM certificate.
+
+## Control Plane node migration
+
+This script moves one node from its host to a different host.
+
+Requirements:
+* environment variable `OS_CLOUD` pointing to a `clouds` entry with admin credentials in `clouds.yaml`
+* environment variable `KUBECONFIG` pointing to admin OpenShift credentials
+
+```
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+if [ $# -lt 1 ]; then
+	echo "Usage: '$0 node_name'"
+	exit 64
+fi
+
+# Check for admin OpenStack credentials
+openstack server list --all-projects >/dev/null || { >&2 echo "The script needs OpenStack admin credentials. Exiting"; exit 77; }
+
+# Check for admin OpenShift credentials
+oc adm top node >/dev/null || { >&2 echo "The script needs OpenShift admin credentials. Exiting"; exit 77; }
+
+set -x
+
+declare -r node_name="$1"
+declare server_id
+server_id="$(openstack server list --all-projects -f value -c ID -c Name | grep "$node_name" | cut -d' ' -f1)"
+readonly server_id
+
+# Drain the node
+oc adm cordon "$node_name"
+oc adm drain "$node_name" --delete-emptydir-data --ignore-daemonsets --force
+
+# Power off the server
+oc debug "node/${node_name}" -- chroot /host shutdown -h 1
+
+# Verify the server is shutoff
+until openstack server show "$server_id" -f value -c status | grep -q 'SHUTOFF'; do sleep 5; done
+
+# Migrate the node
+openstack server migrate --wait "$server_id"
+
+# Resize VM
+openstack server resize confirm "$server_id"
+
+# Wait for the resize confirm to finish
+until openstack server show "$server_id" -f value -c status | grep -q 'SHUTOFF'; do sleep 5; done
+
+# Restart VM
+openstack server start "$server_id"
+
+# Wait for the node to show up as Ready:
+until oc get node "$node_name" | grep -q "^${node_name}[[:space:]]\+Ready"; do sleep 5; done
+
+# Uncordon the node
+oc adm uncordon "$node_name"
+
+# Wait for cluster operators to stabilize
+until oc get co -o go-template='statuses: {{ range .items }}{{ range .status.conditions }}{{ if eq .type "Degraded" }}{{ if ne .status "False" }}DEGRADED{{ end }}{{ else if eq .type "Progressing"}}{{ if ne .status "False" }}PROGRESSING{{ end }}{{ else if eq .type "Available"}}{{ if ne .status "True" }}NOTAVAILABLE{{ end }}{{ end }}{{ end }}{{ end }}' | grep -qv '\(DEGRADED\|PROGRESSING\|NOTAVAILABLE\)'; do sleep 5; done
+```
 
 ## Reporting Issues
 

@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"sort"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -20,7 +21,6 @@ import (
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
-	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
 )
 
 type resourceRequirements struct {
@@ -81,17 +81,8 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 
 func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorList {
 	// accept AMI from the rhcos stream metadata
-	switch config.ControlPlane.Architecture {
-	case types.ArchitectureAMD64:
-		if sets.NewString(rhcos.AMIRegionsX86_64...).Has(config.Platform.AWS.Region) {
-			return nil
-		}
-	case types.ArchitectureARM64:
-		if sets.NewString(rhcos.AMIRegionsAARCH64...).Has(config.Platform.AWS.Region) {
-			return nil
-		}
-	default:
-		return field.ErrorList{field.NotSupported(field.NewPath("controlPlane", "architecture"), config.ControlPlane.Architecture, awsvalidation.ValidArchitectureValues)}
+	if rhcos.AMIRegions(config.ControlPlane.Architecture).Has(config.Platform.AWS.Region) {
+		return nil
 	}
 
 	// accept AMI specified at the platform level
@@ -276,29 +267,25 @@ func validateDuplicateSubnetZones(fldPath *field.Path, subnets map[string]Subnet
 
 func validateServiceEndpoints(fldPath *field.Path, region string, services []awstypes.ServiceEndpoint) field.ErrorList {
 	allErrs := field.ErrorList{}
-	// For each provided service endpoint, verify we can resolve and connect with net.Dial.
+	ec2Endpoint := ""
 	for id, service := range services {
-		// Ignore e2e.local from unit tests.
-		if service.URL == "e2e.local" {
-			continue
-		}
-		URL, err := url.Parse(service.URL)
+		err := validateEndpointAccessibility(service.URL)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(id).Child("url"), service.URL, err.Error()))
 			continue
 		}
-		port := URL.Port()
-		if port == "" {
-			port = "https"
+		if service.Name == ec2.ServiceName {
+			ec2Endpoint = service.URL
 		}
-		conn, err := net.Dial("tcp", net.JoinHostPort(URL.Hostname(), port))
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(id).Child("url"), service.URL, err.Error()))
-			continue
-		}
-		conn.Close()
 	}
-	if _, partitionFound := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region); partitionFound {
+
+	if partition, partitionFound := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region); partitionFound {
+		if _, ok := partition.Regions()[region]; !ok && ec2Endpoint == "" {
+			err := validateRegion(region)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("region"), region, err.Error()))
+			}
+		}
 		return allErrs
 	}
 
@@ -313,8 +300,32 @@ func validateServiceEndpoints(fldPath *field.Path, region string, services []aws
 	if err := utilerrors.NewAggregate(errs); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath, services, err.Error()))
 	}
-
 	return allErrs
+}
+
+func validateRegion(region string) error {
+	ses, err := GetSessionWithOptions(func(sess *session.Options) {
+		sess.Config.Region = aws.String(region)
+	})
+	if err != nil {
+		return err
+	}
+	ec2Session := ec2.New(ses)
+	return validateEndpointAccessibility(ec2Session.Endpoint)
+}
+
+func validateEndpointAccessibility(endpointURL string) error {
+	// For each provided service endpoint, verify we can resolve and connect with net.Dial.
+	// Ignore e2e.local from unit tests.
+	if endpointURL == "e2e.local" {
+		return nil
+	}
+	_, err := url.Parse(endpointURL)
+	if err != nil {
+		return err
+	}
+	_, err = http.Head(endpointURL)
+	return err
 }
 
 var requiredServices = []string{
@@ -328,79 +339,64 @@ var requiredServices = []string{
 }
 
 // ValidateForProvisioning validates if the install config is valid for provisioning the cluster.
-func ValidateForProvisioning(session *session.Session, ic *types.InstallConfig, metadata *Metadata) error {
-	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, validateExistingHostedZone(session, ic, metadata)...)
-	return allErrs.ToAggregate()
-}
-
-func validateExistingHostedZone(session *session.Session, ic *types.InstallConfig, metadata *Metadata) field.ErrorList {
-	if ic.AWS.HostedZone == "" {
+func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Metadata) error {
+	if ic.Publish == types.InternalPublishingStrategy && ic.AWS.HostedZone == "" {
 		return nil
 	}
 
-	// validate that the hosted zone exists
-	hostedZonePath := field.NewPath("aws", "hostedZone")
-	client := route53.New(session)
-	zone, err := client.GetHostedZone(&route53.GetHostedZoneInput{Id: aws.String(ic.AWS.HostedZone)})
-	if err != nil {
-		return field.ErrorList{
-			field.Invalid(hostedZonePath, ic.AWS.HostedZone, "cannot find hosted zone"),
+	var zoneName string
+	var zonePath *field.Path
+	var zone *route53.HostedZone
+
+	errors := field.ErrorList{}
+	allErrs := field.ErrorList{}
+
+	if ic.AWS.HostedZone != "" {
+		zoneName = ic.AWS.HostedZone
+		zonePath = field.NewPath("aws", "hostedZone")
+		zoneOutput, err := client.GetHostedZone(zoneName)
+		if err != nil {
+			return field.ErrorList{
+				field.Invalid(zonePath, zoneName, "cannot find hosted zone"),
+			}.ToAggregate()
 		}
+
+		if errors = validateHostedZone(zoneOutput, zonePath, zoneName, metadata); len(errors) > 0 {
+			allErrs = append(allErrs, errors...)
+		}
+
+		zone = zoneOutput.HostedZone
+	} else {
+		zoneName = ic.BaseDomain
+		zonePath = field.NewPath("baseDomain")
+		baseDomainOutput, err := client.GetBaseDomain(zoneName)
+		if err != nil {
+			return field.ErrorList{
+				field.Invalid(zonePath, zoneName, "cannot find base domain"),
+			}.ToAggregate()
+		}
+
+		zone = baseDomainOutput
 	}
 
+	if errors = client.ValidateZoneRecords(zone, zoneName, zonePath, ic); len(errors) > 0 {
+		allErrs = append(allErrs, errors...)
+	}
+
+	return allErrs.ToAggregate()
+}
+
+func validateHostedZone(hostedZoneOutput *route53.GetHostedZoneOutput, hostedZonePath *field.Path, hostedZoneName string, metadata *Metadata) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	// validate that the hosted zone is associated with the VPC containing the existing subnets for the cluster
 	vpcID, err := metadata.VPC(context.TODO())
 	if err == nil {
-		if !isHostedZoneAssociatedWithVPC(zone, vpcID) {
-			allErrs = append(allErrs, field.Invalid(hostedZonePath, ic.AWS.HostedZone, "hosted zone is not associated with the VPC"))
+		if !isHostedZoneAssociatedWithVPC(hostedZoneOutput, vpcID) {
+			allErrs = append(allErrs, field.Invalid(hostedZonePath, hostedZoneName, "hosted zone is not associated with the VPC"))
 		}
 	} else {
-		allErrs = append(allErrs, field.Invalid(hostedZonePath, ic.AWS.HostedZone, "no VPC found"))
-	}
-
-	dottedClusterDomain := ic.ClusterDomain() + "."
-
-	// validate that the domain of the hosted zone is the cluster domain or a parent of the cluster domain
-	if !isHostedZoneDomainParentOfClusterDomain(zone.HostedZone, dottedClusterDomain) {
-		allErrs = append(allErrs, field.Invalid(hostedZonePath, ic.AWS.HostedZone,
-			fmt.Sprintf("hosted zone domain %q is not a parent of the cluster domain %q", *zone.HostedZone.Name, dottedClusterDomain)))
-	}
-
-	// validate that the hosted zone does not already have any record sets for the cluster domain
-	var problematicRecords []string
-	if err := client.ListResourceRecordSetsPages(
-		&route53.ListResourceRecordSetsInput{HostedZoneId: zone.HostedZone.Id},
-		func(out *route53.ListResourceRecordSetsOutput, lastPage bool) bool {
-			for _, recordSet := range out.ResourceRecordSets {
-				name := aws.StringValue(recordSet.Name)
-				// skip record sets that are not sub-domains of the cluster domain. Such record sets may exist for
-				// hosted zones that are used for other clusters or other purposes.
-				if !strings.HasSuffix(name, dottedClusterDomain) {
-					continue
-				}
-				// skip record sets that are the cluster domain. Record sets for the cluster domain are fine. If the
-				// hosted zone has the name of the cluster domain, then there will be NS and SOA record sets for the
-				// cluster domain.
-				if len(name) == len(dottedClusterDomain) {
-					continue
-				}
-				problematicRecords = append(problematicRecords, fmt.Sprintf("%s (%s)", name, aws.StringValue(recordSet.Type)))
-			}
-			return !lastPage
-		},
-	); err != nil {
-		allErrs = append(allErrs, field.InternalError(hostedZonePath,
-			errors.Wrapf(err, "could not list record sets for hosted zone %q", ic.AWS.HostedZone)))
-	}
-	if len(problematicRecords) > 0 {
-		detail := fmt.Sprintf(
-			"hosted zone already has record sets for the domain of the cluster: [%s]",
-			strings.Join(problematicRecords, ", "),
-		)
-		allErrs = append(allErrs, field.Invalid(hostedZonePath, ic.AWS.HostedZone, detail))
+		allErrs = append(allErrs, field.Invalid(hostedZonePath, hostedZoneName, "no VPC found"))
 	}
 
 	return allErrs
@@ -416,11 +412,4 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 		}
 	}
 	return false
-}
-
-func isHostedZoneDomainParentOfClusterDomain(hostedZone *route53.HostedZone, dottedClusterDomain string) bool {
-	if *hostedZone.Name == dottedClusterDomain {
-		return true
-	}
-	return strings.HasSuffix(dottedClusterDomain, "."+*hostedZone.Name)
 }

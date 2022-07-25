@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
@@ -20,8 +21,10 @@ import (
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -83,6 +86,12 @@ func validGCPPlatform() *gcp.Platform {
 func validIBMCloudPlatform() *ibmcloud.Platform {
 	return &ibmcloud.Platform{
 		Region: "us-south",
+	}
+}
+
+func validPowerVSPlatform() *powervs.Platform {
+	return &powervs.Platform{
+		Region: "dal",
 	}
 }
 
@@ -151,6 +160,21 @@ func validOpenStackPlatform() *openstack.Platform {
 		DefaultMachinePlatform: &openstack.MachinePool{
 			FlavorName: "test-flavor",
 		},
+	}
+}
+
+func validNutanixPlatform() *nutanix.Platform {
+	return &nutanix.Platform{
+		PrismCentral: nutanix.PrismCentral{
+			Endpoint: nutanix.PrismEndpoint{Address: "test-pc", Port: 8080},
+			Username: "test-username-pc",
+			Password: "test-password-pc",
+		},
+		PrismElements: []nutanix.PrismElement{{
+			UUID:     "test-pe-uuid",
+			Endpoint: nutanix.PrismEndpoint{Address: "test-pe", Port: 8081},
+		}},
+		SubnetUUIDs: []string{"test-subnet"},
 	}
 }
 
@@ -524,7 +548,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, openstack, ovirt, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, nutanix, openstack, ovirt, powervs, vsphere\)$`,
 		},
 		{
 			name: "multiple platforms",
@@ -555,7 +579,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, openstack, ovirt, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, nutanix, openstack, ovirt, powervs, vsphere\)$`,
 		},
 		{
 			name: "invalid libvirt platform",
@@ -567,7 +591,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt.URI = ""
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, openstack, ovirt, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
+			expectedError: `^\[platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, nutanix, openstack, ovirt, powervs, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
 		},
 		{
 			name: "valid none platform",
@@ -728,7 +752,19 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.VSphere.Folder = "my-folder"
 				return c
 			}(),
-			expectedError: `^platform\.vsphere.folder: Invalid value: \"my-folder\": folder must be absolute path: expected prefix /test-datacenter/vm/$`,
+			expectedError: `^platform\.vsphere\.folder: Invalid value: \"my-folder\": folder must be absolute path: expected prefix /test-datacenter/vm/$`,
+		},
+		{
+			name: "invalid vsphere resource pool",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.ResourcePool = "my-resource-pool"
+				return c
+			}(),
+			expectedError: `^platform\.vsphere\.resourcePool: Invalid value: \"my-resource-pool\": resourcePool must be absolute path: expected prefix /test-datacenter/host/<cluster>/Resources/$`,
 		},
 		{
 			name: "empty proxy settings",
@@ -1062,6 +1098,50 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^\Qplatform.ibmcloud.region: Required value: region must be specified\E$`,
 		},
 		{
+			name: "valid powervs platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					PowerVS: validPowerVSPlatform(),
+				}
+				return c
+			}(),
+		},
+		{
+			name: "valid powervs platform manual credential mod",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					PowerVS: validPowerVSPlatform(),
+				}
+				c.CredentialsMode = types.ManualCredentialsMode
+				return c
+			}(),
+		},
+		{
+			name: "invalid powervs platform mint credential mod",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					PowerVS: validPowerVSPlatform(),
+				}
+				c.CredentialsMode = types.MintCredentialsMode
+				return c
+			}(),
+			expectedError: `^credentialsMode: Unsupported value: "Mint": supported values: "Manual"$`,
+		},
+		{
+			name: "invalid powervs platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					PowerVS: &powervs.Platform{},
+				}
+				return c
+			}(),
+			expectedError: `^\Qplatform.powervs.region: Required value: region must be specified\E$`,
+		},
+		{
 			name: "valid azurestack platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -1092,7 +1172,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}}
 				return c
 			}(),
-			expectedError: `^imageContentSources\[0\]\.source: Invalid value: "ocp/release-x\.y": the repository provided is invalid$`,
+			expectedError: `^imageContentSources\[0\]\.source: Invalid value: "ocp/release-x\.y": the repository provided is invalid: a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, \'\-\' or \'\.\', and must start and end with an alphanumeric character \(e.g. \'example\.com\', regex used for validation is \'\[a\-z0\-9\]\(\[\-a\-z0\-9\]\*\[a\-z0\-9\]\)\?\(\\\.\[a\-z0\-9\]\(\[\-a\-z0\-9\]\*\[a\-z0\-9\]\)\?\)\*\'\)`,
 		},
 		{
 			name: "release image source's mirror is not valid",
@@ -1104,7 +1184,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}}
 				return c
 			}(),
-			expectedError: `^imageContentSources\[0\]\.mirrors\[0\]: Invalid value: "ocp/openshift-x.y": the repository provided is invalid$`,
+			expectedError: `^imageContentSources\[0\]\.mirrors\[0\]: Invalid value: "ocp/openshift-x\.y": the repository provided is invalid: a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, \'\-\' or \'\.\', and must start and end with an alphanumeric character \(e.g. \'example\.com\', regex used for validation is \'\[a\-z0\-9\]\(\[\-a\-z0\-9\]\*\[a\-z0\-9\]\)\?\(\\\.\[a\-z0\-9\]\(\[\-a\-z0\-9\]\*\[a\-z0\-9\]\)\?\)\*\'\)`,
 		},
 		{
 			name: "release image source's mirror is valid",
@@ -1386,6 +1466,104 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Publish = types.InternalPublishingStrategy
 				return c
 			}(),
+		}, {
+			name: "valid nutanix platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Nutanix: validNutanixPlatform(),
+				}
+				return c
+			}(),
+		}, {
+			name: "invalid nutanix platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Nutanix: validNutanixPlatform(),
+				}
+				c.Platform.Nutanix.PrismCentral.Endpoint.Address = ""
+				return c
+			}(),
+			expectedError: `^platform\.nutanix\.prismCentral\.endpoint\.address: Required value: must specify the Prism Central endpoint address$`,
+		},
+		{
+			name: "invalid credentials mode for nutanix",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Nutanix: validNutanixPlatform(),
+				}
+				c.CredentialsMode = types.PassthroughCredentialsMode
+				return c
+			}(),
+			expectedError: `credentialsMode: Unsupported value: "Passthrough": supported values: "Manual"$`,
+		},
+		{
+			name: "valid credentials mode for nutanix",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Nutanix: validNutanixPlatform(),
+				}
+				c.CredentialsMode = types.ManualCredentialsMode
+				return c
+			}(),
+		},
+		{
+			name: "valid baseline capability set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11"}
+				return c
+			}(),
+		},
+		{
+			name: "invalid empty string baseline capability set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: ""}
+				return c
+			}(),
+			expectedError: `capabilities.baselineCapabilitySet: Unsupported value: "": supported values: .*`,
+		},
+		{
+			name: "invalid baseline capability set specified",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "vNotValid"}
+				return c
+			}(),
+			expectedError: `capabilities.baselineCapabilitySet: Unsupported value: "vNotValid": supported values: .*`,
+		},
+		{
+			name: "valid additional enabled capability specified",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11",
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"openshift-samples"}}
+				return c
+			}(),
+		},
+		{
+			name: "invalid empty additional enabled capability specified",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11",
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{""}}
+				return c
+			}(),
+			expectedError: `capabilities.additionalEnabledCapabilities\[0\]: Unsupported value: "": supported values: .*`,
+		},
+		{
+			name: "invalid additional enabled capability specified",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11",
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"not-valid"}}
+				return c
+			}(),
+			expectedError: `capabilities.additionalEnabledCapabilities\[0\]: Unsupported value: "not-valid": supported values: .*`,
 		},
 	}
 	for _, tc := range cases {

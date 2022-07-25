@@ -1,3 +1,3 @@
 output "privatezone_id" {
-  value = alicloud_pvtz_zone.pvtz.id
+  value = local.private_zone_id
 }

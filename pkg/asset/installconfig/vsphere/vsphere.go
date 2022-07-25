@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
-	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -31,15 +30,7 @@ type vCenterClient struct {
 	Password   string
 	Client     *vim25.Client
 	RestClient *rest.Client
-}
-
-// networkNamer declares an interface for the object.Common.Name() function.
-// This is needed because find.NetworkList() returns the interface object.NetworkReference.
-// All of the types that implement object.NetworkReference (OpaqueNetwork,
-// DistributedVirtualPortgroup, & DistributedVirtualSwitch) and perhaps all
-// types in general embed object.Common.
-type networkNamer interface {
-	Name() string
+	Logout     ClientLogout
 }
 
 // Platform collects vSphere-specific configuration.
@@ -48,6 +39,7 @@ func Platform() (*vsphere.Platform, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer vCenter.Logout()
 
 	finder := NewFinder(vCenter.Client)
 	ctx := context.TODO()
@@ -67,7 +59,7 @@ func Platform() (*vsphere.Platform, error) {
 		return nil, err
 	}
 
-	network, err := getNetwork(ctx, dcPath, finder, vCenter.Client)
+	network, err := getNetwork(ctx, dc, cluster, finder, vCenter.Client)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +129,7 @@ func getClients() (*vCenterClient, error) {
 
 	// There is a noticeable delay when creating the client, so let the user know what's going on.
 	logrus.Infof("Connecting to vCenter %s", vcenter)
-	vim25Client, restClient, err := vspheretypes.CreateVSphereClients(context.TODO(),
+	vim25Client, restClient, logoutFunction, err := CreateVSphereClients(context.TODO(),
 		vcenter,
 		username,
 		password)
@@ -154,6 +146,7 @@ func getClients() (*vCenterClient, error) {
 		Password:   password,
 		Client:     vim25Client,
 		RestClient: restClient,
+		Logout:     logoutFunction,
 	}, nil
 }
 
@@ -289,11 +282,12 @@ func getDataStore(ctx context.Context, path string, finder Finder, client *vim25
 	return selectedDataStore, nil
 }
 
-func getNetwork(ctx context.Context, path string, finder Finder, client *vim25.Client) (string, error) {
+func getNetwork(ctx context.Context, datacenter string, cluster string, finder Finder, client *vim25.Client) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	networks, err := finder.NetworkList(ctx, formatPath(path))
+	// Get a list of networks from the previously selected Datacenter and Cluster
+	networks, err := GetClusterNetworks(ctx, finder, datacenter, cluster)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to list networks")
 	}
@@ -303,9 +297,12 @@ func getNetwork(ctx context.Context, path string, finder Finder, client *vim25.C
 		return "", errors.New("did not find any networks")
 	}
 	if len(networks) == 1 {
-		n := networks[0].(networkNamer)
-		logrus.Infof("Defaulting to only available network: %s", n.Name())
-		return n.Name(), nil
+		n, err := GetNetworkName(ctx, client, networks[0])
+		if err != nil {
+			return "", errors.Wrap(err, "unable to get network name")
+		}
+		logrus.Infof("Defaulting to only available network: %s", n)
+		return n, nil
 	}
 
 	validNetworkTypes := sets.NewString(
@@ -317,8 +314,12 @@ func getNetwork(ctx context.Context, path string, finder Finder, client *vim25.C
 	var networkChoices []string
 	for _, network := range networks {
 		if validNetworkTypes.Has(network.Reference().Type) {
-			n := network.(networkNamer)
-			networkChoices = append(networkChoices, n.Name())
+			// TODO Below results in an API call. Can it be eliminated somehow?
+			n, err := GetNetworkName(ctx, client, network)
+			if err != nil {
+				return "", errors.Wrap(err, "unable to get network name")
+			}
+			networkChoices = append(networkChoices, n)
 		}
 	}
 	if len(networkChoices) == 0 {

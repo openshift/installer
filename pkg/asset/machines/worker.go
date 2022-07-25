@@ -7,37 +7,30 @@ import (
 	"path/filepath"
 	"strings"
 
-	alibabacloudapi "github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis"
-	alibabacloudprovider "github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis/alibabacloudprovider/v1beta1"
 	"github.com/ghodss/yaml"
-	baremetalapi "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis"
-	baremetalprovider "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
-	machineapi "github.com/openshift/api/machine/v1beta1"
-	gcpapi "github.com/openshift/cluster-api-provider-gcp/pkg/apis"
-	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
+	machinev1 "github.com/openshift/api/machine/v1"
+	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
+	baremetalapi "github.com/openshift/cluster-api-provider-baremetal/pkg/apis"
+	baremetalprovider "github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
 	ibmcloudapi "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis"
-	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1"
+	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 	libvirtapi "github.com/openshift/cluster-api-provider-libvirt/pkg/apis"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	vsphereproviderapi "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider"
-	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
-	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
-	azureapi "sigs.k8s.io/cluster-api-provider-azure/pkg/apis"
-	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/machines/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
@@ -46,8 +39,10 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
+	"github.com/openshift/installer/pkg/asset/machines/nutanix"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/ovirt"
+	"github.com/openshift/installer/pkg/asset/machines/powervs"
 	"github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
@@ -62,8 +57,10 @@ import (
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -73,6 +70,16 @@ const (
 
 	// workerUserDataFileName is the filename used for the worker user-data secret.
 	workerUserDataFileName = "99_openshift-cluster-api_worker-user-data-secret.yaml"
+
+	// decimalRootVolumeSize is the size in GB we use for some platforms.
+	// See below.
+	decimalRootVolumeSize = 120
+
+	// powerOfTwoRootVolumeSize is the size in GB we use for other platforms.
+	// The reasons for the specific choices between these two may boil down
+	// to which section of code the person adding a platform was copy-pasting from.
+	// https://github.com/openshift/openshift-docs/blob/main/modules/installation-requirements-user-infra.adoc#minimum-resource-requirements
+	powerOfTwoRootVolumeSize = 128
 )
 
 var (
@@ -84,17 +91,9 @@ var (
 func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 	return awstypes.MachinePool{
 		EC2RootVolume: awstypes.EC2RootVolume{
-			Type: "gp2",
-			Size: 120,
+			Type: "gp3",
+			Size: decimalRootVolumeSize,
 		},
-	}
-}
-
-func defaultAlibabaCloudMachinePoolPlatform() alibabacloudtypes.MachinePool {
-	return alibabacloudtypes.MachinePool{
-		InstanceType:       "ecs.g6.large",
-		SystemDiskCategory: alibabacloudtypes.DefaultDiskCategory,
-		SystemDiskSize:     120,
 	}
 }
 
@@ -105,7 +104,7 @@ func defaultLibvirtMachinePoolPlatform() libvirttypes.MachinePool {
 func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
 	return azuretypes.MachinePool{
 		OSDisk: azuretypes.OSDisk{
-			DiskSizeGB: 128,
+			DiskSizeGB: powerOfTwoRootVolumeSize,
 			DiskType:   azuretypes.DefaultDiskType,
 		},
 	}
@@ -115,7 +114,7 @@ func defaultGCPMachinePoolPlatform() gcptypes.MachinePool {
 	return gcptypes.MachinePool{
 		InstanceType: "n1-standard-4",
 		OSDisk: gcptypes.OSDisk{
-			DiskSizeGB: 128,
+			DiskSizeGB: powerOfTwoRootVolumeSize,
 			DiskType:   "pd-ssd",
 		},
 	}
@@ -123,7 +122,7 @@ func defaultGCPMachinePoolPlatform() gcptypes.MachinePool {
 
 func defaultIBMCloudMachinePoolPlatform() ibmcloudtypes.MachinePool {
 	return ibmcloudtypes.MachinePool{
-		InstanceType: "bx2d-4x16",
+		InstanceType: "bx2-4x16",
 	}
 }
 
@@ -142,10 +141,11 @@ func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 		CPU: &ovirttypes.CPU{
 			Cores:   4,
 			Sockets: 1,
+			Threads: 1,
 		},
 		MemoryMB: 16348,
 		OSDisk: &ovirttypes.Disk{
-			SizeGB: 120,
+			SizeGB: decimalRootVolumeSize,
 		},
 		VMType:            ovirttypes.VMTypeServer,
 		AutoPinningPolicy: ovirttypes.AutoPinningNone,
@@ -154,20 +154,40 @@ func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 
 func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
 	return vspheretypes.MachinePool{
-		NumCPUs:           2,
-		NumCoresPerSocket: 2,
-		MemoryMiB:         8192,
+		NumCPUs:           4,
+		NumCoresPerSocket: 4,
+		MemoryMiB:         16384,
 		OSDisk: vspheretypes.OSDisk{
-			DiskSizeGB: 120,
+			DiskSizeGB: decimalRootVolumeSize,
 		},
 	}
 }
 
-func awsDefaultWorkerMachineTypes(region string, arch types.Architecture) []string {
+func defaultPowerVSMachinePoolPlatform() powervstypes.MachinePool {
+	return powervstypes.MachinePool{
+		MemoryGiB:  32,
+		Processors: intstr.FromString("0.5"),
+		ProcType:   machinev1.PowerVSProcessorTypeShared,
+		SysType:    "s922",
+	}
+}
+
+func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
+	return nutanixtypes.MachinePool{
+		NumCPUs:           4,
+		NumCoresPerSocket: 1,
+		MemoryMiB:         16384,
+		OSDisk: nutanixtypes.OSDisk{
+			DiskSizeGiB: decimalRootVolumeSize,
+		},
+	}
+}
+
+func awsDefaultMachineTypes(region string, arch types.Architecture) []string {
 	classes := awsdefaults.InstanceClasses(region, arch)
 	types := make([]string, len(classes))
 	for i, c := range classes {
-		types[i] = fmt.Sprintf("%s.large", c)
+		types[i] = fmt.Sprintf("%s.xlarge", c)
 	}
 	return types
 }
@@ -208,6 +228,8 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	wign := &machine.Worker{}
 	dependencies.Get(clusterID, installConfig, rhcosImage, wign)
 
+	workerUserDataSecretName := "worker-user-data"
+
 	machineConfigs := []*mcfgv1.MachineConfig{}
 	machineSets := []runtime.Object{}
 	var err error
@@ -236,19 +258,43 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 		switch ic.Platform.Name() {
 		case alibabacloudtypes.Name:
-			mpool := defaultAlibabaCloudMachinePoolPlatform()
+			client, err := installConfig.AlibabaCloud.Client()
+			if err != nil {
+				return err
+			}
+			vswitchMaps, err := installConfig.AlibabaCloud.VSwitchMaps()
+			if err != nil {
+				return errors.Wrap(err, "failed to get VSwitchs map")
+			}
+
+			mpool := alibabacloudtypes.DefaultWorkerMachinePoolPlatform()
 			mpool.ImageID = string(*rhcosImage)
 			mpool.Set(ic.Platform.AlibabaCloud.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.AlibabaCloud)
 			if len(mpool.Zones) == 0 {
-				azs, err := alibabacloud.GetAvailabilityZones(ic.Platform.AlibabaCloud.Region)
-				if err != nil {
-					return errors.Wrap(err, "failed to fetch availability zones")
+				if len(vswitchMaps) > 0 {
+					for zone := range vswitchMaps {
+						mpool.Zones = append(mpool.Zones, zone)
+					}
+				} else {
+					azs, err := client.GetAvailableZonesByInstanceType(mpool.InstanceType)
+					if err != nil || len(azs) == 0 {
+						return errors.Wrap(err, "failed to fetch availability zones")
+					}
+					mpool.Zones = azs
 				}
-				mpool.Zones = azs
 			}
+
 			pool.Platform.AlibabaCloud = &mpool
-			sets, err := alibabacloud.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data", installConfig.Config.Platform.AlibabaCloud.Tags)
+			sets, err := alibabacloud.MachineSets(
+				clusterID.InfraID,
+				ic,
+				&pool,
+				"worker",
+				workerUserDataSecretName,
+				installConfig.Config.Platform.AlibabaCloud.Tags,
+				vswitchMaps,
+			)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -293,10 +339,10 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				}
 			}
 			if mpool.InstanceType == "" {
-				mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultWorkerMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture), mpool.Zones)
+				mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture), mpool.Zones)
 				if err != nil {
 					logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
-					mpool.InstanceType = awsDefaultWorkerMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture)[0]
+					mpool.InstanceType = awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture)[0]
 				}
 			}
 			// if the list of zones is the default we need to try to filter the list in case there are some zones where the instance might not be available
@@ -314,7 +360,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				subnets,
 				&pool,
 				"worker",
-				"worker-user-data",
+				workerUserDataSecretName,
 				installConfig.Config.Platform.AWS.UserTags,
 			)
 			if err != nil {
@@ -331,12 +377,20 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			)
 			mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Azure)
+
+			session, err := installConfig.Azure.Session()
+			if err != nil {
+				return errors.Wrap(err, "failed to fetch session")
+			}
+
+			// Default to current subscription if one was not specified
+			if mpool.OSDisk.DiskEncryptionSet != nil && mpool.OSDisk.DiskEncryptionSet.SubscriptionID == "" {
+				mpool.OSDisk.DiskEncryptionSet.SubscriptionID = session.Credentials.SubscriptionID
+			}
+
+			client := icazure.NewClient(session)
 			if len(mpool.Zones) == 0 {
-				session, err := installConfig.Azure.Session()
-				if err != nil {
-					return errors.Wrap(err, "failed to fetch session for availability zones")
-				}
-				azs, err := azure.AvailabilityZones(session, ic.Platform.Azure.Region, mpool.InstanceType)
+				azs, err := client.GetAvailabilityZones(context.TODO(), ic.Platform.Azure.Region, mpool.InstanceType)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
@@ -349,7 +403,13 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 
 			pool.Platform.Azure = &mpool
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+
+			capabilities, err := client.GetVMCapabilities(context.TODO(), mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+			if err != nil {
+				return err
+			}
+
+			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName, capabilities)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -361,7 +421,11 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.BareMetal.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.BareMetal)
 			pool.Platform.BareMetal = &mpool
-			sets, err := baremetal.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+
+			// Use managed user data secret, since images used by MachineSet
+			// are always up to date
+			workerUserDataSecretName = "worker-user-data-managed"
+			sets, err := baremetal.MachineSets(clusterID.InfraID, ic, &pool, "", "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -380,7 +444,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				mpool.Zones = azs
 			}
 			pool.Platform.GCP = &mpool
-			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -399,7 +463,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				mpool.Zones = azs
 			}
 			pool.Platform.IBMCloud = &mpool
-			sets, err := ibmcloud.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data")
+			sets, err := ibmcloud.MachineSets(clusterID.InfraID, ic, &pool, "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -411,7 +475,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Libvirt)
 			pool.Platform.Libvirt = &mpool
-			sets, err := libvirt.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data")
+			sets, err := libvirt.MachineSets(clusterID.InfraID, ic, &pool, "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -426,7 +490,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data", nil)
+			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName, nil)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -440,7 +504,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			pool.Platform.VSphere = &mpool
 			templateName := clusterID.InfraID + "-rhcos"
 
-			sets, err := vsphere.MachineSets(clusterID.InfraID, ic, &pool, templateName, "worker", "worker-user-data")
+			sets, err := vsphere.MachineSets(clusterID.InfraID, ic, &pool, templateName, "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -455,20 +519,46 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-			sets, err := ovirt.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data")
+			sets, err := ovirt.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects for ovirt provider")
 			}
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
+		case powervstypes.Name:
+			mpool := defaultPowerVSMachinePoolPlatform()
+			mpool.Set(ic.Platform.PowerVS.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.PowerVS)
+			pool.Platform.PowerVS = &mpool
+			sets, err := powervs.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data")
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects for powervs provider")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		case nonetypes.Name:
+		case nutanixtypes.Name:
+			mpool := defaultNutanixMachinePoolPlatform()
+			mpool.Set(ic.Platform.Nutanix.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.Nutanix)
+			pool.Platform.Nutanix = &mpool
+			imageName := nutanixtypes.RHCOSImageName(clusterID.InfraID)
+
+			sets, err := nutanix.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		default:
 			return fmt.Errorf("invalid Platform")
 		}
 	}
 
-	data, err := userDataSecret("worker-user-data", wign.File.Data)
+	data, err := userDataSecret(workerUserDataSecretName, wign.File.Data)
 	if err != nil {
 		return errors.Wrap(err, "failed to create user-data secret for worker machines")
 	}
@@ -536,34 +626,39 @@ func (w *Worker) Load(f asset.FileFetcher) (found bool, err error) {
 }
 
 // MachineSets returns MachineSet manifest structures.
-func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
+func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	scheme := runtime.NewScheme()
-	alibabacloudapi.AddToScheme(scheme)
-	awsapi.AddToScheme(scheme)
-	azureapi.AddToScheme(scheme)
 	baremetalapi.AddToScheme(scheme)
-	gcpapi.AddToScheme(scheme)
 	ibmcloudapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
-	vsphereproviderapi.AddToScheme(scheme)
+	scheme.AddKnownTypes(machinev1beta1.SchemeGroupVersion,
+		&machinev1beta1.AWSMachineProviderConfig{},
+		&machinev1beta1.VSphereMachineProviderSpec{},
+		&machinev1beta1.AzureMachineProviderSpec{},
+		&machinev1beta1.GCPMachineProviderSpec{},
+	)
+	machinev1.Install(scheme)
+	scheme.AddKnownTypes(machinev1.GroupVersion,
+		&machinev1.AlibabaCloudMachineProviderConfig{},
+		&machinev1.NutanixMachineProviderConfig{},
+		&machinev1.PowerVSMachineProviderConfig{},
+	)
+	machinev1beta1.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
-		alibabacloudprovider.SchemeGroupVersion,
-		awsprovider.SchemeGroupVersion,
-		azureprovider.SchemeGroupVersion,
 		baremetalprovider.SchemeGroupVersion,
-		gcpprovider.SchemeGroupVersion,
 		ibmcloudprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
+		machinev1.GroupVersion,
 		openstackprovider.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
-		vsphereprovider.SchemeGroupVersion,
+		machinev1beta1.SchemeGroupVersion,
 	)
 
-	machineSets := []machineapi.MachineSet{}
+	machineSets := []machinev1beta1.MachineSet{}
 	for i, file := range w.MachineSetFiles {
-		machineSet := &machineapi.MachineSet{}
+		machineSet := &machinev1beta1.MachineSet{}
 		err := yaml.Unmarshal(file.Data, &machineSet)
 		if err != nil {
 			return machineSets, errors.Wrapf(err, "unmarshal worker %d", i)

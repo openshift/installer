@@ -9,6 +9,7 @@ import (
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -36,6 +37,10 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 		}
 	case openstack.Name:
 		if err := convertOpenStack(config); err != nil {
+			return err
+		}
+	case aws.Name:
+		if err := convertAWS(config); err != nil {
 			return err
 		}
 	}
@@ -135,5 +140,14 @@ func convertOpenStack(config *types.InstallConfig) error {
 		config.Platform.OpenStack.DefaultMachinePlatform.FlavorName = config.Platform.OpenStack.DeprecatedFlavorName
 	}
 
+	return nil
+}
+
+// convertAWS upconverts deprecated fields in the AWS platform.
+func convertAWS(config *types.InstallConfig) error {
+	// Deprecated ExperimentalPropagateUserTag takes precedence when set
+	if config.Platform.AWS.ExperimentalPropagateUserTag != nil {
+		config.Platform.AWS.PropagateUserTag = *config.Platform.AWS.ExperimentalPropagateUserTag
+	}
 	return nil
 }

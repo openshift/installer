@@ -88,13 +88,26 @@ resource "azurerm_storage_blob" "rhcos_image" {
   storage_container_name = azurerm_storage_container.vhd.name
   type                   = "Page"
   source_uri             = var.azure_image_url
-  metadata               = map("source_uri", var.azure_image_url)
+  metadata               = tomap({ source_uri = var.azure_image_url })
 }
 
 resource "azurerm_image" "cluster" {
   name                = var.cluster_id
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.azure_region
+
+  os_disk {
+    os_type  = "Linux"
+    os_state = "Generalized"
+    blob_uri = azurerm_storage_blob.rhcos_image.url
+  }
+}
+
+resource "azurerm_image" "clustergen2" {
+  name                = "${var.cluster_id}-gen2"
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.azure_region
+  hyper_v_generation  = "V2"
 
   os_disk {
     os_type  = "Linux"

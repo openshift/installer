@@ -53,6 +53,21 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expectedErrMsg: `^test-path\.coresPerSocket: Invalid value: 8: cores per socket must be less than number of CPUs$`,
 		},
+		{
+			name: "numCPUs not a multiple of cores per socket",
+			pool: &vsphere.MachinePool{
+				NumCPUs:           7,
+				NumCoresPerSocket: 4,
+			},
+			expectedErrMsg: `^test-path.cpus: Invalid value: 7: numCPUs specified should be a multiple of cores per socket$`,
+		},
+		{
+			name: "numCPUs not a multiple of default cores per socket",
+			pool: &vsphere.MachinePool{
+				NumCPUs: 7,
+			},
+			expectedErrMsg: `^test-path.cpus: Invalid value: 7: numCPUs specified should be a multiple of cores per socket which is by default 4$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

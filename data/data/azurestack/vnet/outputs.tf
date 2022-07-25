@@ -44,5 +44,5 @@ output "storage_account" {
 }
 
 output "availability_set_id" {
-  value = azurestack_availability_set.master_availability_set.id
+  value = azurestack_availability_set.cluster_availability_set.id
 }

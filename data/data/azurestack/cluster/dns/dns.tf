@@ -4,8 +4,6 @@ locals {
 }
 
 resource "azurestack_dns_a_record" "api_external_v4" {
-  count = ! var.private ? 1 : 0
-
   name                = "api.${local.cluster_name}"
   zone_name           = var.base_domain
   resource_group_name = var.base_domain_resource_group_name

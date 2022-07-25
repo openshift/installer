@@ -31,6 +31,9 @@ func Test_PrintFields(t *testing.T) {
     bootstrapInPlace <object>
       BootstrapInPlace is the configuration for installing a single node with bootstrap in place installation.
 
+    capabilities <object>
+      Capabilities configures the installation of optional core cluster components.
+
     compute <[]object>
       Compute is the configuration for the machines that comprise the compute nodes.
       MachinePool is a pool of machines to be installed.
@@ -43,7 +46,7 @@ func Test_PrintFields(t *testing.T) {
       CredentialsMode is used to explicitly set the mode with which CredentialRequests are satisfied. 
  If this field is set, then the installer will not attempt to query the cloud permissions before attempting installation. If the field is not set or empty, then the installer will perform its normal verification that the credentials provided are sufficient to perform an installation. 
  There are three possible values for this field, but the valid values are dependent upon the platform being used. "Mint": create new credentials with a subset of the overall permissions for each CredentialsRequest "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest "Manual": CredentialsRequests must be handled manually by the user 
- For each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set. AWS: "Mint", "Passthrough", "Manual" Azure: "Mint", "Passthrough", "Manual" AzureStack: "Manual" GCP: "Mint", "Passthrough", "Manual" IBMCloud: "Manual" AlibabaCloud: "Manual"
+ For each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set. AWS: "Mint", "Passthrough", "Manual" Azure: "Passthrough", "Manual" AzureStack: "Manual" GCP: "Mint", "Passthrough", "Manual" IBMCloud: "Manual" AlibabaCloud: "Manual" PowerVS: "Manual" Nutanix: "Manual"
 
     fips <boolean>
       Default: false
@@ -108,11 +111,17 @@ func Test_PrintFields(t *testing.T) {
     none <object>
       None is the empty configuration used when installing on an unsupported platform.
 
+    nutanix <object>
+      Nutanix is the configuration used when installing on Nutanix.
+
     openstack <object>
       OpenStack is the configuration used when installing on OpenStack.
 
     ovirt <object>
       Ovirt is the configuration used when installing on oVirt.
+
+    powervs <object>
+      PowerVS is the configuration used when installing on Power VS.
 
     vsphere <object>
       VSphere is the configuration used when installing on vSphere.`,
@@ -126,10 +135,13 @@ func Test_PrintFields(t *testing.T) {
       DefaultMachinePlatform is the default configuration used when installing on AWS for machine pools which do not define their own platform configuration.
 
     experimentalPropagateUserTags <boolean>
-      ExperimentalPropagateUserTags is an experimental flag that directs in-cluster operators to include the specified user tags in the tags of the AWS resources that the operators create.
+      The field is deprecated. ExperimentalPropagateUserTags is an experimental flag that directs in-cluster operators to include the specified user tags in the tags of the AWS resources that the operators create.
 
     hostedZone <string>
       HostedZone is the ID of an existing hosted zone into which to add DNS records for the cluster's internal API. An existing hosted zone can only be used when also using existing subnets. The hosted zone must be associated with the VPC containing the subnets. Leave the hosted zone unset to have the installer create the hosted zone on your behalf.
+
+    propagateUserTags <boolean>
+      PropagateUserTags is a flag that directs in-cluster operators to include the specified user tags in the tags of the AWS resources that the operators create.
 
     region <string> -required-
       Region specifies the AWS region where the cluster will be created.
@@ -150,11 +162,14 @@ func Test_PrintFields(t *testing.T) {
       ARMEndpoint is the endpoint for the Azure API when installing on Azure Stack.
 
     baseDomainResourceGroupName <string>
-      BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found.
+      BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found. This field is optional when creating a private cluster, otherwise required.
 
     cloudName <string>
       Valid Values: "","AzurePublicCloud","AzureUSGovernmentCloud","AzureChinaCloud","AzureGermanCloud","AzureStackCloud"
       cloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK with the appropriate Azure API endpoints. If empty, the value is equal to "AzurePublicCloud".
+
+    clusterOSImage <string>
+      ClusterOSImage is the url of a storage blob in the Azure Stack environment containing an RHCOS VHD. This field is required for Azure Stack and not applicable to Azure.
 
     computeSubnet <string>
       ComputeSubnet specifies an existing subnet for use by compute nodes
@@ -237,6 +252,8 @@ KIND:     InstallConfig
 VERSION:  v1
 
 RESOURCE: <string>
+  Default: "External"
+  Valid Values: "","External","Internal"
   Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed. When no strategy is specified, the strategy is "External".
 		`,
 	}, {

@@ -1,233 +1,97 @@
-# cloud.google.com/go v0.65.0 => cloud.google.com/go v0.57.0
-## explicit
-cloud.google.com/go
+# cloud.google.com/go v0.81.0
+## explicit; go 1.11
 cloud.google.com/go/compute/metadata
-cloud.google.com/go/iam
-cloud.google.com/go/internal
-cloud.google.com/go/internal/optional
-cloud.google.com/go/internal/trace
-cloud.google.com/go/internal/version
-cloud.google.com/go/longrunning
-cloud.google.com/go/longrunning/autogen
 cloud.google.com/go/monitoring/apiv3
-# cloud.google.com/go/bigtable v1.5.0
-cloud.google.com/go/bigtable
-cloud.google.com/go/bigtable/internal/option
-# cloud.google.com/go/storage v1.11.0
-cloud.google.com/go/storage
-# github.com/AlecAivazis/survey/v2 v2.2.12
-## explicit
+# github.com/AlecAivazis/survey/v2 v2.3.5
+## explicit; go 1.13
 github.com/AlecAivazis/survey/v2
 github.com/AlecAivazis/survey/v2/core
 github.com/AlecAivazis/survey/v2/terminal
-# github.com/AliyunContainerService/cluster-api-provider-alibabacloud v0.0.0-20211029124254-b90c759235e9
-## explicit
-github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis
-github.com/AliyunContainerService/cluster-api-provider-alibabacloud/pkg/apis/alibabacloudprovider/v1beta1
 # github.com/Azure/azure-sdk-for-go v51.2.0+incompatible
 ## explicit
-github.com/Azure/azure-sdk-for-go/profiles/2017-03-09/resources/mgmt/resources
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/compute/mgmt/compute
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions
-github.com/Azure/azure-sdk-for-go/profiles/2019-03-01/compute/mgmt/compute
-github.com/Azure/azure-sdk-for-go/profiles/2019-03-01/network/mgmt/network
-github.com/Azure/azure-sdk-for-go/profiles/2019-03-01/storage/mgmt/storage
-github.com/Azure/azure-sdk-for-go/services/advisor/mgmt/2020-01-01/advisor
-github.com/Azure/azure-sdk-for-go/services/analysisservices/mgmt/2017-08-01/analysisservices
-github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2019-12-01/apimanagement
-github.com/Azure/azure-sdk-for-go/services/appconfiguration/mgmt/2020-06-01/appconfiguration
-github.com/Azure/azure-sdk-for-go/services/appinsights/mgmt/2015-05-01/insights
-github.com/Azure/azure-sdk-for-go/services/appplatform/mgmt/2020-07-01/appplatform
-github.com/Azure/azure-sdk-for-go/services/attestation/mgmt/2018-09-01/attestation
-github.com/Azure/azure-sdk-for-go/services/azurestackhci/mgmt/2020-10-01/azurestackhci
-github.com/Azure/azure-sdk-for-go/services/batch/mgmt/2020-03-01/batch
-github.com/Azure/azure-sdk-for-go/services/cdn/mgmt/2019-04-15/cdn
-github.com/Azure/azure-sdk-for-go/services/cognitiveservices/mgmt/2017-04-18/cognitiveservices
+github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/storage/mgmt/storage
+github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute
+github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering
 github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2017-03-30/compute
-github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2017-12-01/compute
-github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute
-github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-01/compute
-github.com/Azure/azure-sdk-for-go/services/containerinstance/mgmt/2019-12-01/containerinstance
-github.com/Azure/azure-sdk-for-go/services/containerregistry/mgmt/2019-05-01/containerregistry
-github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-08-01/containerservice
-github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-12-01/containerservice
-github.com/Azure/azure-sdk-for-go/services/costmanagement/mgmt/2019-10-01/costmanagement
-github.com/Azure/azure-sdk-for-go/services/databricks/mgmt/2018-04-01/databricks
-github.com/Azure/azure-sdk-for-go/services/datafactory/mgmt/2018-06-01/datafactory
-github.com/Azure/azure-sdk-for-go/services/datalake/analytics/mgmt/2016-11-01/account
-github.com/Azure/azure-sdk-for-go/services/datalake/store/2016-11-01/filesystem
-github.com/Azure/azure-sdk-for-go/services/datalake/store/mgmt/2016-11-01/account
-github.com/Azure/azure-sdk-for-go/services/datamigration/mgmt/2018-04-19/datamigration
-github.com/Azure/azure-sdk-for-go/services/datashare/mgmt/2019-11-01/datashare
-github.com/Azure/azure-sdk-for-go/services/devspaces/mgmt/2019-04-01/devspaces
-github.com/Azure/azure-sdk-for-go/services/devtestlabs/mgmt/2016-05-15/dtl
-github.com/Azure/azure-sdk-for-go/services/digitaltwins/mgmt/2020-10-31/digitaltwins
+github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-12-01/compute
 github.com/Azure/azure-sdk-for-go/services/dns/mgmt/2016-04-01/dns
-github.com/Azure/azure-sdk-for-go/services/dns/mgmt/2018-05-01/dns
-github.com/Azure/azure-sdk-for-go/services/frontdoor/mgmt/2020-01-01/frontdoor
 github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac
-github.com/Azure/azure-sdk-for-go/services/hdinsight/mgmt/2018-06-01/hdinsight
-github.com/Azure/azure-sdk-for-go/services/healthcareapis/mgmt/2019-09-16/healthcareapis
-github.com/Azure/azure-sdk-for-go/services/iotcentral/mgmt/2018-09-01/iotcentral
-github.com/Azure/azure-sdk-for-go/services/iothub/mgmt/2020-03-01/devices
-github.com/Azure/azure-sdk-for-go/services/keyvault/2016-10-01/keyvault
-github.com/Azure/azure-sdk-for-go/services/keyvault/mgmt/2019-09-01/keyvault
-github.com/Azure/azure-sdk-for-go/services/kusto/mgmt/2020-09-18/kusto
-github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic
-github.com/Azure/azure-sdk-for-go/services/machinelearningservices/mgmt/2020-04-01/machinelearningservices
-github.com/Azure/azure-sdk-for-go/services/managedservices/mgmt/2019-06-01/managedservices
-github.com/Azure/azure-sdk-for-go/services/maps/mgmt/2018-05-01/maps
-github.com/Azure/azure-sdk-for-go/services/mariadb/mgmt/2018-06-01/mariadb
 github.com/Azure/azure-sdk-for-go/services/marketplaceordering/mgmt/2015-06-01/marketplaceordering
-github.com/Azure/azure-sdk-for-go/services/mediaservices/mgmt/2020-05-01/media
-github.com/Azure/azure-sdk-for-go/services/msi/mgmt/2018-11-30/msi
-github.com/Azure/azure-sdk-for-go/services/mysql/mgmt/2020-01-01/mysql
-github.com/Azure/azure-sdk-for-go/services/netapp/mgmt/2019-10-01/netapp
 github.com/Azure/azure-sdk-for-go/services/network/mgmt/2017-10-01/network
 github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network
-github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-05-01/network
-github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-07-01/network
-github.com/Azure/azure-sdk-for-go/services/notificationhubs/mgmt/2017-04-01/notificationhubs
-github.com/Azure/azure-sdk-for-go/services/operationalinsights/mgmt/2020-08-01/operationalinsights
-github.com/Azure/azure-sdk-for-go/services/postgresql/mgmt/2020-01-01/postgresql
-github.com/Azure/azure-sdk-for-go/services/powerbidedicated/mgmt/2017-10-01/powerbidedicated
-github.com/Azure/azure-sdk-for-go/services/preview/alertsmanagement/mgmt/2019-06-01-preview/alertsmanagement
-github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-09-01-preview/authorization
-github.com/Azure/azure-sdk-for-go/services/preview/automation/mgmt/2018-06-30-preview/automation
-github.com/Azure/azure-sdk-for-go/services/preview/blueprint/mgmt/2018-11-01-preview/blueprint
-github.com/Azure/azure-sdk-for-go/services/preview/botservice/mgmt/2018-07-12/botservice
-github.com/Azure/azure-sdk-for-go/services/preview/cosmos-db/mgmt/2020-04-01-preview/documentdb
-github.com/Azure/azure-sdk-for-go/services/preview/customproviders/mgmt/2018-09-01-preview/customproviders
-github.com/Azure/azure-sdk-for-go/services/preview/desktopvirtualization/mgmt/2019-12-10-preview/desktopvirtualization
 github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns
-github.com/Azure/azure-sdk-for-go/services/preview/eventgrid/mgmt/2020-04-01-preview/eventgrid
-github.com/Azure/azure-sdk-for-go/services/preview/eventhub/mgmt/2018-01-01-preview/eventhub
-github.com/Azure/azure-sdk-for-go/services/preview/hardwaresecuritymodules/mgmt/2018-10-31-preview/hardwaresecuritymodules
-github.com/Azure/azure-sdk-for-go/services/preview/maintenance/mgmt/2018-06-01-preview/maintenance
-github.com/Azure/azure-sdk-for-go/services/preview/mixedreality/mgmt/2019-02-28/mixedreality
-github.com/Azure/azure-sdk-for-go/services/preview/monitor/mgmt/2019-06-01/insights
-github.com/Azure/azure-sdk-for-go/services/preview/operationsmanagement/mgmt/2015-11-01-preview/operationsmanagement
-github.com/Azure/azure-sdk-for-go/services/preview/policyinsights/mgmt/2019-10-01-preview/policyinsights
-github.com/Azure/azure-sdk-for-go/services/preview/portal/mgmt/2019-01-01-preview/portal
-github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2018-03-01-preview/managementgroups
-github.com/Azure/azure-sdk-for-go/services/preview/security/mgmt/v3.0/security
-github.com/Azure/azure-sdk-for-go/services/preview/securityinsight/mgmt/2019-01-01-preview/securityinsight
-github.com/Azure/azure-sdk-for-go/services/preview/servicebus/mgmt/2018-01-01-preview/servicebus
-github.com/Azure/azure-sdk-for-go/services/preview/servicefabric/mgmt/2018-02-01-preview/servicefabric
-github.com/Azure/azure-sdk-for-go/services/preview/servicefabricmesh/mgmt/2018-09-01-preview/servicefabricmesh
-github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-03-01-preview/sql
-github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/v3.0/sql
-github.com/Azure/azure-sdk-for-go/services/preview/sqlvirtualmachine/mgmt/2017-03-01-preview/sqlvirtualmachine
-github.com/Azure/azure-sdk-for-go/services/preview/synapse/2019-06-01-preview/managedvirtualnetwork
-github.com/Azure/azure-sdk-for-go/services/preview/synapse/2020-02-01-preview/accesscontrol
-github.com/Azure/azure-sdk-for-go/services/preview/synapse/mgmt/2019-06-01-preview/synapse
 github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns
-github.com/Azure/azure-sdk-for-go/services/provisioningservices/mgmt/2018-01-22/iothub
-github.com/Azure/azure-sdk-for-go/services/recoveryservices/mgmt/2016-06-01/recoveryservices
-github.com/Azure/azure-sdk-for-go/services/recoveryservices/mgmt/2018-07-10/siterecovery
-github.com/Azure/azure-sdk-for-go/services/recoveryservices/mgmt/2019-05-13/backup
-github.com/Azure/azure-sdk-for-go/services/redis/mgmt/2020-06-01/redis
-github.com/Azure/azure-sdk-for-go/services/relay/mgmt/2017-04-01/relay
-github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2016-02-01/resources
 github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2016-06-01/subscriptions
-github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2016-09-01/locks
 github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-02-01/resources
 github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources
-github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-07-01/managedapplications
-github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-09-01/policy
-github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-11-01/subscriptions
-github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2020-06-01/resources
-github.com/Azure/azure-sdk-for-go/services/search/mgmt/2020-03-13/search
-github.com/Azure/azure-sdk-for-go/services/servicebus/mgmt/2017-04-01/servicebus
-github.com/Azure/azure-sdk-for-go/services/signalr/mgmt/2018-10-01/signalr
-github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2017-10-01/storage
-github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2019-06-01/storage
-github.com/Azure/azure-sdk-for-go/services/storagecache/mgmt/2020-03-01/storagecache
-github.com/Azure/azure-sdk-for-go/services/storagesync/mgmt/2020-03-01/storagesync
-github.com/Azure/azure-sdk-for-go/services/streamanalytics/mgmt/2016-03-01/streamanalytics
-github.com/Azure/azure-sdk-for-go/services/timeseriesinsights/mgmt/2020-05-15/timeseriesinsights
-github.com/Azure/azure-sdk-for-go/services/trafficmanager/mgmt/2018-04-01/trafficmanager
-github.com/Azure/azure-sdk-for-go/services/web/mgmt/2020-06-01/web
-github.com/Azure/azure-sdk-for-go/storage
+github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2016-01-01/storage
 github.com/Azure/azure-sdk-for-go/version
-# github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
-github.com/Azure/go-ansiterm
-github.com/Azure/go-ansiterm/winterm
+# github.com/Azure/azure-sdk-for-go/sdk/azcore v0.21.1
+## explicit; go 1.16
+github.com/Azure/azure-sdk-for-go/sdk/azcore
+github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/pipeline
+github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/pollers
+github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/pollers/loc
+github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/pollers/op
+github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared
+github.com/Azure/azure-sdk-for-go/sdk/azcore/policy
+github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime
+github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming
+github.com/Azure/azure-sdk-for-go/sdk/azcore/to
+# github.com/Azure/azure-sdk-for-go/sdk/internal v0.9.2
+## explicit; go 1.16
+github.com/Azure/azure-sdk-for-go/sdk/internal/diag
+github.com/Azure/azure-sdk-for-go/sdk/internal/errorinfo
+github.com/Azure/azure-sdk-for-go/sdk/internal/log
+github.com/Azure/azure-sdk-for-go/sdk/internal/uuid
+# github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v0.3.0
+## explicit; go 1.16
+github.com/Azure/azure-sdk-for-go/sdk/storage/azblob
+github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/internal
 # github.com/Azure/go-autorest v14.2.0+incompatible
+## explicit
 github.com/Azure/go-autorest
 # github.com/Azure/go-autorest/autorest v0.11.18
-## explicit
+## explicit; go 1.12
 github.com/Azure/go-autorest/autorest
 github.com/Azure/go-autorest/autorest/azure
 # github.com/Azure/go-autorest/autorest/adal v0.9.13
-## explicit
+## explicit; go 1.12
 github.com/Azure/go-autorest/autorest/adal
 # github.com/Azure/go-autorest/autorest/azure/auth v0.4.1
-## explicit
+## explicit; go 1.12
 github.com/Azure/go-autorest/autorest/azure/auth
-# github.com/Azure/go-autorest/autorest/azure/cli v0.4.2
+# github.com/Azure/go-autorest/autorest/azure/cli v0.3.1
+## explicit; go 1.12
 github.com/Azure/go-autorest/autorest/azure/cli
 # github.com/Azure/go-autorest/autorest/date v0.3.0
+## explicit; go 1.12
 github.com/Azure/go-autorest/autorest/date
 # github.com/Azure/go-autorest/autorest/to v0.4.0
-## explicit
+## explicit; go 1.12
 github.com/Azure/go-autorest/autorest/to
 # github.com/Azure/go-autorest/autorest/validation v0.3.1
+## explicit; go 1.12
 github.com/Azure/go-autorest/autorest/validation
 # github.com/Azure/go-autorest/logger v0.2.1
+## explicit; go 1.12
 github.com/Azure/go-autorest/logger
 # github.com/Azure/go-autorest/tracing v0.6.0
+## explicit; go 1.12
 github.com/Azure/go-autorest/tracing
-# github.com/Azure/go-ntlmssp v0.0.0-20191115210519-2b2be6cc8ed4
-## explicit
-github.com/Azure/go-ntlmssp
 # github.com/BurntSushi/toml v0.3.1
+## explicit
 github.com/BurntSushi/toml
-# github.com/ChrisTrenkamp/goxpath v0.0.0-20190607011252-c5096ec8773d
-## explicit
-github.com/ChrisTrenkamp/goxpath
-github.com/ChrisTrenkamp/goxpath/internal/execxp
-github.com/ChrisTrenkamp/goxpath/internal/execxp/findutil
-github.com/ChrisTrenkamp/goxpath/internal/execxp/intfns
-github.com/ChrisTrenkamp/goxpath/internal/xsort
-github.com/ChrisTrenkamp/goxpath/lexer
-github.com/ChrisTrenkamp/goxpath/parser
-github.com/ChrisTrenkamp/goxpath/parser/pathexpr
-github.com/ChrisTrenkamp/goxpath/tree
-github.com/ChrisTrenkamp/goxpath/tree/xmltree
-github.com/ChrisTrenkamp/goxpath/tree/xmltree/xmlbuilder
-github.com/ChrisTrenkamp/goxpath/tree/xmltree/xmlele
-github.com/ChrisTrenkamp/goxpath/tree/xmltree/xmlnode
-github.com/ChrisTrenkamp/goxpath/xconst
-# github.com/IBM-Cloud/bluemix-go v0.0.0-20210611051827-cdc80c935c05
-## explicit
+# github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
+## explicit; go 1.13
 github.com/IBM-Cloud/bluemix-go
-github.com/IBM-Cloud/bluemix-go/api/account/accountv1
 github.com/IBM-Cloud/bluemix-go/api/account/accountv2
-github.com/IBM-Cloud/bluemix-go/api/certificatemanager
-github.com/IBM-Cloud/bluemix-go/api/cis/cisv1
-github.com/IBM-Cloud/bluemix-go/api/container/containerv1
-github.com/IBM-Cloud/bluemix-go/api/container/containerv2
-github.com/IBM-Cloud/bluemix-go/api/functions
-github.com/IBM-Cloud/bluemix-go/api/globalsearch/globalsearchv2
-github.com/IBM-Cloud/bluemix-go/api/globaltagging/globaltaggingv3
-github.com/IBM-Cloud/bluemix-go/api/hpcs
-github.com/IBM-Cloud/bluemix-go/api/iam/iamv1
-github.com/IBM-Cloud/bluemix-go/api/iampap/iampapv1
-github.com/IBM-Cloud/bluemix-go/api/iampap/iampapv2
-github.com/IBM-Cloud/bluemix-go/api/iamuum/iamuumv1
-github.com/IBM-Cloud/bluemix-go/api/iamuum/iamuumv2
-github.com/IBM-Cloud/bluemix-go/api/icd/icdv4
-github.com/IBM-Cloud/bluemix-go/api/mccp/mccpv2
-github.com/IBM-Cloud/bluemix-go/api/resource/resourcev1/catalog
-github.com/IBM-Cloud/bluemix-go/api/resource/resourcev1/controller
 github.com/IBM-Cloud/bluemix-go/api/resource/resourcev2/controllerv2
-github.com/IBM-Cloud/bluemix-go/api/resource/resourcev2/managementv2
-github.com/IBM-Cloud/bluemix-go/api/schematics
-github.com/IBM-Cloud/bluemix-go/api/usermanagement/usermanagementv2
 github.com/IBM-Cloud/bluemix-go/authentication
 github.com/IBM-Cloud/bluemix-go/bmxerror
 github.com/IBM-Cloud/bluemix-go/client
@@ -239,9 +103,10 @@ github.com/IBM-Cloud/bluemix-go/models
 github.com/IBM-Cloud/bluemix-go/rest
 github.com/IBM-Cloud/bluemix-go/session
 github.com/IBM-Cloud/bluemix-go/trace
-github.com/IBM-Cloud/bluemix-go/utils
-# github.com/IBM-Cloud/power-go-client v1.0.55
+# github.com/IBM-Cloud/power-go-client v1.1.5
+## explicit; go 1.17
 github.com/IBM-Cloud/power-go-client/clients/instance
+github.com/IBM-Cloud/power-go-client/errors
 github.com/IBM-Cloud/power-go-client/helpers
 github.com/IBM-Cloud/power-go-client/ibmpisession
 github.com/IBM-Cloud/power-go-client/power/client
@@ -250,193 +115,68 @@ github.com/IBM-Cloud/power-go-client/power/client/bluemix_service_instances
 github.com/IBM-Cloud/power-go-client/power/client/catalog
 github.com/IBM-Cloud/power-go-client/power/client/hardware_platforms
 github.com/IBM-Cloud/power-go-client/power/client/iaas_service_broker
+github.com/IBM-Cloud/power-go-client/power/client/internal_storage_regions
 github.com/IBM-Cloud/power-go-client/power/client/open_stacks
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_cloud_connections
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_events
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_images
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_instances
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_jobs
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_networks
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_p_vm_instances
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_placement_groups
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_s_a_p
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_service_d_h_c_p
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_snapshots
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_storage_capacity
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_system_pools
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tasks
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tenants
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tenants_ssh_keys
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_v_p_n_connections
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_v_p_n_policies
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volumes
 github.com/IBM-Cloud/power-go-client/power/client/service_bindings
 github.com/IBM-Cloud/power-go-client/power/client/service_instances
 github.com/IBM-Cloud/power-go-client/power/client/storage_types
 github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
 github.com/IBM-Cloud/power-go-client/power/models
-github.com/IBM-Cloud/power-go-client/utils
-# github.com/IBM-Cloud/terraform-provider-ibm v1.26.2 => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
-## explicit
-github.com/IBM-Cloud/terraform-provider-ibm/ibm
-github.com/IBM-Cloud/terraform-provider-ibm/ibm/internal/hashcode
-github.com/IBM-Cloud/terraform-provider-ibm/ibm/internal/mutexkv
-github.com/IBM-Cloud/terraform-provider-ibm/version
-# github.com/IBM/apigateway-go-sdk v0.0.0-20210714141226-a5d5d49caaca
-github.com/IBM/apigateway-go-sdk/apigatewaycontrollerapiv1
-github.com/IBM/apigateway-go-sdk/common
-# github.com/IBM/appconfiguration-go-admin-sdk v0.1.0
-github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1
-github.com/IBM/appconfiguration-go-admin-sdk/common
-# github.com/IBM/container-registry-go-sdk v0.0.13
-github.com/IBM/container-registry-go-sdk/common
-github.com/IBM/container-registry-go-sdk/containerregistryv1
-# github.com/IBM/go-sdk-core v1.1.0
-github.com/IBM/go-sdk-core/core
-# github.com/IBM/go-sdk-core/v3 v3.3.1
-github.com/IBM/go-sdk-core/v3/core
-# github.com/IBM/go-sdk-core/v4 v4.10.0
+# github.com/IBM/go-sdk-core/v4 v4.9.0
+## explicit; go 1.12
 github.com/IBM/go-sdk-core/v4/core
-# github.com/IBM/go-sdk-core/v5 v5.4.3
-## explicit
+# github.com/IBM/go-sdk-core/v5 v5.9.5
+## explicit; go 1.14
 github.com/IBM/go-sdk-core/v5/core
-# github.com/IBM/ibm-cos-sdk-go v1.7.0
-github.com/IBM/ibm-cos-sdk-go/aws
-github.com/IBM/ibm-cos-sdk-go/aws/arn
-github.com/IBM/ibm-cos-sdk-go/aws/awserr
-github.com/IBM/ibm-cos-sdk-go/aws/awsutil
-github.com/IBM/ibm-cos-sdk-go/aws/client
-github.com/IBM/ibm-cos-sdk-go/aws/client/metadata
-github.com/IBM/ibm-cos-sdk-go/aws/corehandlers
-github.com/IBM/ibm-cos-sdk-go/aws/credentials
-github.com/IBM/ibm-cos-sdk-go/aws/credentials/endpointcreds
-github.com/IBM/ibm-cos-sdk-go/aws/credentials/ibmiam
-github.com/IBM/ibm-cos-sdk-go/aws/credentials/ibmiam/token
-github.com/IBM/ibm-cos-sdk-go/aws/credentials/ibmiam/tokenmanager
-github.com/IBM/ibm-cos-sdk-go/aws/credentials/processcreds
-github.com/IBM/ibm-cos-sdk-go/aws/defaults
-github.com/IBM/ibm-cos-sdk-go/aws/endpoints
-github.com/IBM/ibm-cos-sdk-go/aws/request
-github.com/IBM/ibm-cos-sdk-go/aws/session
-github.com/IBM/ibm-cos-sdk-go/aws/signer
-github.com/IBM/ibm-cos-sdk-go/aws/signer/ibmiam
-github.com/IBM/ibm-cos-sdk-go/aws/signer/v4
-github.com/IBM/ibm-cos-sdk-go/internal/ini
-github.com/IBM/ibm-cos-sdk-go/internal/s3shared
-github.com/IBM/ibm-cos-sdk-go/internal/s3shared/arn
-github.com/IBM/ibm-cos-sdk-go/internal/s3shared/s3err
-github.com/IBM/ibm-cos-sdk-go/internal/sdkio
-github.com/IBM/ibm-cos-sdk-go/internal/sdkmath
-github.com/IBM/ibm-cos-sdk-go/internal/sdkrand
-github.com/IBM/ibm-cos-sdk-go/internal/shareddefaults
-github.com/IBM/ibm-cos-sdk-go/internal/strings
-github.com/IBM/ibm-cos-sdk-go/internal/sync/singleflight
-github.com/IBM/ibm-cos-sdk-go/private/checksum
-github.com/IBM/ibm-cos-sdk-go/private/protocol
-github.com/IBM/ibm-cos-sdk-go/private/protocol/json/jsonutil
-github.com/IBM/ibm-cos-sdk-go/private/protocol/query
-github.com/IBM/ibm-cos-sdk-go/private/protocol/query/queryutil
-github.com/IBM/ibm-cos-sdk-go/private/protocol/rest
-github.com/IBM/ibm-cos-sdk-go/private/protocol/restxml
-github.com/IBM/ibm-cos-sdk-go/private/protocol/xml/xmlutil
-github.com/IBM/ibm-cos-sdk-go/service/s3
-# github.com/IBM/ibm-cos-sdk-go-config v1.2.0
-github.com/IBM/ibm-cos-sdk-go-config/common
-github.com/IBM/ibm-cos-sdk-go-config/resourceconfigurationv1
-# github.com/IBM/keyprotect-go-client v0.7.0
-github.com/IBM/keyprotect-go-client
-github.com/IBM/keyprotect-go-client/iam
 # github.com/IBM/networking-go-sdk v0.14.0
-## explicit
-github.com/IBM/networking-go-sdk/cachingapiv1
-github.com/IBM/networking-go-sdk/cisipapiv1
+## explicit; go 1.14
 github.com/IBM/networking-go-sdk/common
-github.com/IBM/networking-go-sdk/custompagesv1
-github.com/IBM/networking-go-sdk/directlinkproviderv2
-github.com/IBM/networking-go-sdk/directlinkv1
-github.com/IBM/networking-go-sdk/dnsrecordbulkv1
 github.com/IBM/networking-go-sdk/dnsrecordsv1
-github.com/IBM/networking-go-sdk/dnssvcsv1
-github.com/IBM/networking-go-sdk/edgefunctionsapiv1
-github.com/IBM/networking-go-sdk/globalloadbalancermonitorv1
-github.com/IBM/networking-go-sdk/globalloadbalancerpoolsv0
-github.com/IBM/networking-go-sdk/globalloadbalancerv1
-github.com/IBM/networking-go-sdk/pageruleapiv1
-github.com/IBM/networking-go-sdk/rangeapplicationsv1
-github.com/IBM/networking-go-sdk/routingv1
-github.com/IBM/networking-go-sdk/sslcertificateapiv1
-github.com/IBM/networking-go-sdk/transitgatewayapisv1
-github.com/IBM/networking-go-sdk/useragentblockingrulesv1
-github.com/IBM/networking-go-sdk/wafrulegroupsapiv1
-github.com/IBM/networking-go-sdk/wafrulepackagesapiv1
-github.com/IBM/networking-go-sdk/wafrulesapiv1
-github.com/IBM/networking-go-sdk/zonefirewallaccessrulesv1
-github.com/IBM/networking-go-sdk/zonelockdownv1
-github.com/IBM/networking-go-sdk/zoneratelimitsv1
-github.com/IBM/networking-go-sdk/zonessettingsv1
 github.com/IBM/networking-go-sdk/zonesv1
 # github.com/IBM/platform-services-go-sdk v0.18.16
-## explicit
-github.com/IBM/platform-services-go-sdk/catalogmanagementv1
+## explicit; go 1.12
 github.com/IBM/platform-services-go-sdk/common
-github.com/IBM/platform-services-go-sdk/enterprisemanagementv1
-github.com/IBM/platform-services-go-sdk/globaltaggingv1
 github.com/IBM/platform-services-go-sdk/iamidentityv1
 github.com/IBM/platform-services-go-sdk/iampolicymanagementv1
 github.com/IBM/platform-services-go-sdk/resourcecontrollerv2
 github.com/IBM/platform-services-go-sdk/resourcemanagerv2
-# github.com/IBM/push-notifications-go-sdk v0.0.0-20210310100607-5790b96c47f5
-github.com/IBM/push-notifications-go-sdk/common
-github.com/IBM/push-notifications-go-sdk/pushservicev1
-# github.com/IBM/schematics-go-sdk v0.0.2
-github.com/IBM/schematics-go-sdk/common
-github.com/IBM/schematics-go-sdk/schematicsv1
-# github.com/IBM/secrets-manager-go-sdk v0.1.19
-github.com/IBM/secrets-manager-go-sdk/common
-github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1
-# github.com/IBM/vpc-go-sdk v1.0.1 => github.com/IBM/vpc-go-sdk v0.7.0
-## explicit
+# github.com/IBM/vpc-go-sdk v0.20.0
+## explicit; go 1.16
 github.com/IBM/vpc-go-sdk/common
-github.com/IBM/vpc-go-sdk/vpcclassicv1
 github.com/IBM/vpc-go-sdk/vpcv1
-# github.com/MakeNowJust/heredoc v1.0.0
-github.com/MakeNowJust/heredoc
-# github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667
-## explicit
 # github.com/PaesslerAG/gval v1.0.0
+## explicit
 github.com/PaesslerAG/gval
 # github.com/PaesslerAG/jsonpath v0.1.1
+## explicit
 github.com/PaesslerAG/jsonpath
 # github.com/PuerkitoBio/purell v1.1.1
+## explicit
 github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
-github.com/PuerkitoBio/urlesc
-# github.com/ScaleFT/sshkeys v0.0.0-20200327173127-6142f742bca5
-github.com/ScaleFT/sshkeys
-# github.com/Shopify/sarama v1.27.2
-github.com/Shopify/sarama
-# github.com/agext/levenshtein v1.2.3
-github.com/agext/levenshtein
-# github.com/alibabacloud-go/cs-20151215/v2 v2.4.4
-github.com/alibabacloud-go/cs-20151215/v2/client
-# github.com/alibabacloud-go/darabonba-openapi v0.1.5
-github.com/alibabacloud-go/darabonba-openapi/client
-# github.com/alibabacloud-go/debug v0.0.0-20190504072949-9472017b5c68
-github.com/alibabacloud-go/debug/debug
-# github.com/alibabacloud-go/endpoint-util v1.1.0
-github.com/alibabacloud-go/endpoint-util/service
-# github.com/alibabacloud-go/openapi-util v0.0.7
-github.com/alibabacloud-go/openapi-util/service
-# github.com/alibabacloud-go/tea v1.1.15
-github.com/alibabacloud-go/tea/tea
-github.com/alibabacloud-go/tea/utils
-# github.com/alibabacloud-go/tea-roa v1.2.8
-github.com/alibabacloud-go/tea-roa/client
-# github.com/alibabacloud-go/tea-roa-utils v1.1.5
-github.com/alibabacloud-go/tea-roa-utils/service
-# github.com/alibabacloud-go/tea-rpc v1.1.8
-github.com/alibabacloud-go/tea-rpc/client
-# github.com/alibabacloud-go/tea-rpc-utils v1.1.2
-github.com/alibabacloud-go/tea-rpc-utils/service
-# github.com/alibabacloud-go/tea-utils v1.3.9
-github.com/alibabacloud-go/tea-utils/service
-# github.com/aliyun/alibaba-cloud-sdk-go v1.61.1154
 ## explicit
+github.com/PuerkitoBio/urlesc
+# github.com/aliyun/alibaba-cloud-sdk-go v1.61.1264
+## explicit; go 1.13
 github.com/aliyun/alibaba-cloud-sdk-go/sdk
 github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth
 github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials
@@ -447,91 +187,22 @@ github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors
 github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests
 github.com/aliyun/alibaba-cloud-sdk-go/sdk/responses
 github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils
-github.com/aliyun/alibaba-cloud-sdk-go/services/adb
 github.com/aliyun/alibaba-cloud-sdk-go/services/alidns
-github.com/aliyun/alibaba-cloud-sdk-go/services/alikafka
-github.com/aliyun/alibaba-cloud-sdk-go/services/bssopenapi
-github.com/aliyun/alibaba-cloud-sdk-go/services/cassandra
-github.com/aliyun/alibaba-cloud-sdk-go/services/cbn
-github.com/aliyun/alibaba-cloud-sdk-go/services/cdn
-github.com/aliyun/alibaba-cloud-sdk-go/services/cloudapi
-github.com/aliyun/alibaba-cloud-sdk-go/services/cms
-github.com/aliyun/alibaba-cloud-sdk-go/services/cr
-github.com/aliyun/alibaba-cloud-sdk-go/services/cr_ee
-github.com/aliyun/alibaba-cloud-sdk-go/services/cs
-github.com/aliyun/alibaba-cloud-sdk-go/services/dcdn
-github.com/aliyun/alibaba-cloud-sdk-go/services/ddosbgp
-github.com/aliyun/alibaba-cloud-sdk-go/services/ddoscoo
-github.com/aliyun/alibaba-cloud-sdk-go/services/dds
-github.com/aliyun/alibaba-cloud-sdk-go/services/drds
-github.com/aliyun/alibaba-cloud-sdk-go/services/eci
 github.com/aliyun/alibaba-cloud-sdk-go/services/ecs
-github.com/aliyun/alibaba-cloud-sdk-go/services/edas
-github.com/aliyun/alibaba-cloud-sdk-go/services/elasticsearch
-github.com/aliyun/alibaba-cloud-sdk-go/services/emr
-github.com/aliyun/alibaba-cloud-sdk-go/services/ess
-github.com/aliyun/alibaba-cloud-sdk-go/services/gpdb
-github.com/aliyun/alibaba-cloud-sdk-go/services/hbase
-github.com/aliyun/alibaba-cloud-sdk-go/services/location
-github.com/aliyun/alibaba-cloud-sdk-go/services/market
-github.com/aliyun/alibaba-cloud-sdk-go/services/maxcompute
-github.com/aliyun/alibaba-cloud-sdk-go/services/ots
-github.com/aliyun/alibaba-cloud-sdk-go/services/polardb
 github.com/aliyun/alibaba-cloud-sdk-go/services/pvtz
-github.com/aliyun/alibaba-cloud-sdk-go/services/r-kvstore
 github.com/aliyun/alibaba-cloud-sdk-go/services/ram
-github.com/aliyun/alibaba-cloud-sdk-go/services/rds
 github.com/aliyun/alibaba-cloud-sdk-go/services/resourcemanager
 github.com/aliyun/alibaba-cloud-sdk-go/services/slb
-github.com/aliyun/alibaba-cloud-sdk-go/services/sls
-github.com/aliyun/alibaba-cloud-sdk-go/services/smartag
-github.com/aliyun/alibaba-cloud-sdk-go/services/sts
+github.com/aliyun/alibaba-cloud-sdk-go/services/tag
 github.com/aliyun/alibaba-cloud-sdk-go/services/vpc
-github.com/aliyun/alibaba-cloud-sdk-go/services/yundun_bastionhost
-github.com/aliyun/alibaba-cloud-sdk-go/services/yundun_dbaudit
-# github.com/aliyun/aliyun-datahub-sdk-go v0.1.5
-github.com/aliyun/aliyun-datahub-sdk-go/datahub
-github.com/aliyun/aliyun-datahub-sdk-go/datahub/pbmodel
-github.com/aliyun/aliyun-datahub-sdk-go/datahub/util
-# github.com/aliyun/aliyun-log-go-sdk v0.1.21
-github.com/aliyun/aliyun-log-go-sdk
-# github.com/aliyun/aliyun-mns-go-sdk v0.0.0-20210305050620-d1b5875bda58
-github.com/aliyun/aliyun-mns-go-sdk
 # github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
 ## explicit
 github.com/aliyun/aliyun-oss-go-sdk/oss
-# github.com/aliyun/aliyun-tablestore-go-sdk v4.1.3+incompatible
-github.com/aliyun/aliyun-tablestore-go-sdk/tablestore
-github.com/aliyun/aliyun-tablestore-go-sdk/tablestore/otsprotocol
-github.com/aliyun/aliyun-tablestore-go-sdk/tablestore/search
-# github.com/aliyun/credentials-go v1.1.2
-github.com/aliyun/credentials-go/credentials
-github.com/aliyun/credentials-go/credentials/request
-github.com/aliyun/credentials-go/credentials/response
-github.com/aliyun/credentials-go/credentials/utils
-# github.com/aliyun/fc-go-sdk v0.0.0-20200925033337-c013428cbe21
-github.com/aliyun/fc-go-sdk
-# github.com/aliyun/terraform-provider-alicloud v1.132.0
-## explicit
-github.com/aliyun/terraform-provider-alicloud/alicloud
-github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity
-# github.com/andybalholm/brotli v1.0.1
-github.com/andybalholm/brotli
-# github.com/antchfx/xpath v1.1.2
-## explicit
-# github.com/apache/openwhisk-client-go v0.0.0-20200201143223-a804fb82d105
-github.com/apache/openwhisk-client-go/whisk
-github.com/apache/openwhisk-client-go/wski18n
-# github.com/apparentlymart/go-cidr v1.1.0 => github.com/apparentlymart/go-cidr v1.0.1
+# github.com/apparentlymart/go-cidr v1.1.0
 ## explicit
 github.com/apparentlymart/go-cidr/cidr
-# github.com/apparentlymart/go-textseg/v12 v12.0.0
-github.com/apparentlymart/go-textseg/v12/textseg
-# github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2
-github.com/armon/circbuf
-# github.com/armon/go-radix v1.0.0
-github.com/armon/go-radix
 # github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
+## explicit; go 1.13
 github.com/asaskevich/govalidator
 # github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 ## explicit
@@ -541,8 +212,8 @@ github.com/awalterschulze/gographviz/internal/errors
 github.com/awalterschulze/gographviz/internal/lexer
 github.com/awalterschulze/gographviz/internal/parser
 github.com/awalterschulze/gographviz/internal/token
-# github.com/aws/aws-sdk-go v1.35.20 => github.com/aws/aws-sdk-go v1.32.3
-## explicit
+# github.com/aws/aws-sdk-go v1.43.19
+## explicit; go 1.11
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
 github.com/aws/aws-sdk-go/aws/awserr
@@ -554,8 +225,8 @@ github.com/aws/aws-sdk-go/aws/credentials
 github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds
 github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
 github.com/aws/aws-sdk-go/aws/credentials/processcreds
+github.com/aws/aws-sdk-go/aws/credentials/ssocreds
 github.com/aws/aws-sdk-go/aws/credentials/stscreds
-github.com/aws/aws-sdk-go/aws/crr
 github.com/aws/aws-sdk-go/aws/csm
 github.com/aws/aws-sdk-go/aws/defaults
 github.com/aws/aws-sdk-go/aws/ec2metadata
@@ -565,7 +236,9 @@ github.com/aws/aws-sdk-go/aws/session
 github.com/aws/aws-sdk-go/aws/signer/v4
 github.com/aws/aws-sdk-go/internal/context
 github.com/aws/aws-sdk-go/internal/ini
-github.com/aws/aws-sdk-go/internal/s3err
+github.com/aws/aws-sdk-go/internal/s3shared
+github.com/aws/aws-sdk-go/internal/s3shared/arn
+github.com/aws/aws-sdk-go/internal/s3shared/s3err
 github.com/aws/aws-sdk-go/internal/sdkio
 github.com/aws/aws-sdk-go/internal/sdkmath
 github.com/aws/aws-sdk-go/internal/sdkrand
@@ -586,284 +259,107 @@ github.com/aws/aws-sdk-go/private/protocol/rest
 github.com/aws/aws-sdk-go/private/protocol/restjson
 github.com/aws/aws-sdk-go/private/protocol/restxml
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
-github.com/aws/aws-sdk-go/private/signer/v2
-github.com/aws/aws-sdk-go/service/accessanalyzer
-github.com/aws/aws-sdk-go/service/acm
-github.com/aws/aws-sdk-go/service/acmpca
-github.com/aws/aws-sdk-go/service/amplify
-github.com/aws/aws-sdk-go/service/apigateway
-github.com/aws/aws-sdk-go/service/apigatewayv2
-github.com/aws/aws-sdk-go/service/applicationautoscaling
-github.com/aws/aws-sdk-go/service/applicationinsights
-github.com/aws/aws-sdk-go/service/appmesh
-github.com/aws/aws-sdk-go/service/appstream
-github.com/aws/aws-sdk-go/service/appsync
-github.com/aws/aws-sdk-go/service/athena
-github.com/aws/aws-sdk-go/service/autoscaling
-github.com/aws/aws-sdk-go/service/autoscalingplans
-github.com/aws/aws-sdk-go/service/backup
-github.com/aws/aws-sdk-go/service/batch
-github.com/aws/aws-sdk-go/service/budgets
-github.com/aws/aws-sdk-go/service/cloud9
-github.com/aws/aws-sdk-go/service/cloudformation
-github.com/aws/aws-sdk-go/service/cloudfront
-github.com/aws/aws-sdk-go/service/cloudhsmv2
-github.com/aws/aws-sdk-go/service/cloudsearch
-github.com/aws/aws-sdk-go/service/cloudtrail
-github.com/aws/aws-sdk-go/service/cloudwatch
-github.com/aws/aws-sdk-go/service/cloudwatchevents
-github.com/aws/aws-sdk-go/service/cloudwatchlogs
-github.com/aws/aws-sdk-go/service/codeartifact
-github.com/aws/aws-sdk-go/service/codebuild
-github.com/aws/aws-sdk-go/service/codecommit
-github.com/aws/aws-sdk-go/service/codedeploy
-github.com/aws/aws-sdk-go/service/codepipeline
-github.com/aws/aws-sdk-go/service/codestarnotifications
-github.com/aws/aws-sdk-go/service/cognitoidentity
-github.com/aws/aws-sdk-go/service/cognitoidentityprovider
-github.com/aws/aws-sdk-go/service/configservice
-github.com/aws/aws-sdk-go/service/costandusagereportservice
-github.com/aws/aws-sdk-go/service/databasemigrationservice
-github.com/aws/aws-sdk-go/service/dataexchange
-github.com/aws/aws-sdk-go/service/datapipeline
-github.com/aws/aws-sdk-go/service/datasync
-github.com/aws/aws-sdk-go/service/dax
-github.com/aws/aws-sdk-go/service/devicefarm
-github.com/aws/aws-sdk-go/service/directconnect
-github.com/aws/aws-sdk-go/service/directoryservice
-github.com/aws/aws-sdk-go/service/dlm
-github.com/aws/aws-sdk-go/service/docdb
-github.com/aws/aws-sdk-go/service/dynamodb
 github.com/aws/aws-sdk-go/service/ec2
-github.com/aws/aws-sdk-go/service/ecr
-github.com/aws/aws-sdk-go/service/ecs
 github.com/aws/aws-sdk-go/service/efs
-github.com/aws/aws-sdk-go/service/eks
-github.com/aws/aws-sdk-go/service/elasticache
-github.com/aws/aws-sdk-go/service/elasticbeanstalk
-github.com/aws/aws-sdk-go/service/elasticsearchservice
-github.com/aws/aws-sdk-go/service/elastictranscoder
 github.com/aws/aws-sdk-go/service/elb
 github.com/aws/aws-sdk-go/service/elbv2
-github.com/aws/aws-sdk-go/service/emr
-github.com/aws/aws-sdk-go/service/firehose
-github.com/aws/aws-sdk-go/service/fms
-github.com/aws/aws-sdk-go/service/forecastservice
-github.com/aws/aws-sdk-go/service/fsx
-github.com/aws/aws-sdk-go/service/gamelift
-github.com/aws/aws-sdk-go/service/glacier
-github.com/aws/aws-sdk-go/service/globalaccelerator
-github.com/aws/aws-sdk-go/service/glue
-github.com/aws/aws-sdk-go/service/greengrass
-github.com/aws/aws-sdk-go/service/guardduty
 github.com/aws/aws-sdk-go/service/iam
 github.com/aws/aws-sdk-go/service/iam/iamiface
-github.com/aws/aws-sdk-go/service/imagebuilder
-github.com/aws/aws-sdk-go/service/inspector
-github.com/aws/aws-sdk-go/service/iot
-github.com/aws/aws-sdk-go/service/iotanalytics
-github.com/aws/aws-sdk-go/service/iotevents
-github.com/aws/aws-sdk-go/service/kafka
-github.com/aws/aws-sdk-go/service/kinesis
-github.com/aws/aws-sdk-go/service/kinesisanalytics
-github.com/aws/aws-sdk-go/service/kinesisanalyticsv2
-github.com/aws/aws-sdk-go/service/kinesisvideo
-github.com/aws/aws-sdk-go/service/kms
-github.com/aws/aws-sdk-go/service/lakeformation
-github.com/aws/aws-sdk-go/service/lambda
-github.com/aws/aws-sdk-go/service/lexmodelbuildingservice
-github.com/aws/aws-sdk-go/service/licensemanager
-github.com/aws/aws-sdk-go/service/lightsail
-github.com/aws/aws-sdk-go/service/macie
-github.com/aws/aws-sdk-go/service/managedblockchain
-github.com/aws/aws-sdk-go/service/marketplacecatalog
-github.com/aws/aws-sdk-go/service/mediaconnect
-github.com/aws/aws-sdk-go/service/mediaconvert
-github.com/aws/aws-sdk-go/service/medialive
-github.com/aws/aws-sdk-go/service/mediapackage
-github.com/aws/aws-sdk-go/service/mediastore
-github.com/aws/aws-sdk-go/service/mediastoredata
-github.com/aws/aws-sdk-go/service/mq
-github.com/aws/aws-sdk-go/service/neptune
-github.com/aws/aws-sdk-go/service/networkmanager
-github.com/aws/aws-sdk-go/service/opsworks
-github.com/aws/aws-sdk-go/service/organizations
-github.com/aws/aws-sdk-go/service/outposts
-github.com/aws/aws-sdk-go/service/personalize
-github.com/aws/aws-sdk-go/service/pinpoint
-github.com/aws/aws-sdk-go/service/pricing
-github.com/aws/aws-sdk-go/service/qldb
-github.com/aws/aws-sdk-go/service/quicksight
-github.com/aws/aws-sdk-go/service/ram
-github.com/aws/aws-sdk-go/service/rds
-github.com/aws/aws-sdk-go/service/redshift
-github.com/aws/aws-sdk-go/service/resourcegroups
 github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi
 github.com/aws/aws-sdk-go/service/route53
-github.com/aws/aws-sdk-go/service/route53domains
-github.com/aws/aws-sdk-go/service/route53resolver
 github.com/aws/aws-sdk-go/service/s3
-github.com/aws/aws-sdk-go/service/s3/internal/arn
 github.com/aws/aws-sdk-go/service/s3/s3iface
 github.com/aws/aws-sdk-go/service/s3/s3manager
-github.com/aws/aws-sdk-go/service/s3control
-github.com/aws/aws-sdk-go/service/sagemaker
-github.com/aws/aws-sdk-go/service/secretsmanager
-github.com/aws/aws-sdk-go/service/securityhub
-github.com/aws/aws-sdk-go/service/serverlessapplicationrepository
-github.com/aws/aws-sdk-go/service/servicecatalog
-github.com/aws/aws-sdk-go/service/servicediscovery
 github.com/aws/aws-sdk-go/service/servicequotas
-github.com/aws/aws-sdk-go/service/ses
-github.com/aws/aws-sdk-go/service/sfn
-github.com/aws/aws-sdk-go/service/shield
-github.com/aws/aws-sdk-go/service/simpledb
-github.com/aws/aws-sdk-go/service/sns
-github.com/aws/aws-sdk-go/service/sqs
-github.com/aws/aws-sdk-go/service/ssm
-github.com/aws/aws-sdk-go/service/storagegateway
+github.com/aws/aws-sdk-go/service/sso
+github.com/aws/aws-sdk-go/service/sso/ssoiface
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
-github.com/aws/aws-sdk-go/service/swf
-github.com/aws/aws-sdk-go/service/synthetics
-github.com/aws/aws-sdk-go/service/transfer
-github.com/aws/aws-sdk-go/service/waf
-github.com/aws/aws-sdk-go/service/wafregional
-github.com/aws/aws-sdk-go/service/wafv2
-github.com/aws/aws-sdk-go/service/worklink
-github.com/aws/aws-sdk-go/service/workmail
-github.com/aws/aws-sdk-go/service/workspaces
-github.com/aws/aws-sdk-go/service/xray
-# github.com/beevik/etree v1.1.0
-github.com/beevik/etree
+# github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f
+## explicit
 # github.com/beorn7/perks v1.0.1
+## explicit; go 1.11
 github.com/beorn7/perks/quantile
-# github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
-github.com/bgentry/go-netrc/netrc
-# github.com/bgentry/speakeasy v0.1.0
-github.com/bgentry/speakeasy
-# github.com/blang/semver v3.5.1+incompatible
-github.com/blang/semver
-# github.com/bmatcuk/doublestar v1.3.2
-github.com/bmatcuk/doublestar
-# github.com/btubbs/datetime v0.1.1
-## explicit
-github.com/btubbs/datetime
-# github.com/c4milo/gotoolkit v0.0.0-20190525173301-67483a18c17a
-## explicit
-github.com/c4milo/gotoolkit
-# github.com/cenkalti/backoff v2.2.1+incompatible
-github.com/cenkalti/backoff
 # github.com/cespare/xxhash/v2 v2.1.1
+## explicit; go 1.11
 github.com/cespare/xxhash/v2
-# github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-github.com/chzyer/readline
 # github.com/clarketm/json v1.14.1
 ## explicit
 github.com/clarketm/json
-# github.com/cloudfoundry/jibber_jabber v0.0.0-20151120183258-bcc4c8345a21
-github.com/cloudfoundry/jibber_jabber
 # github.com/containers/image v3.0.2+incompatible
 ## explicit
 github.com/containers/image/docker/reference
 github.com/containers/image/pkg/sysregistriesv2
 github.com/containers/image/types
-# github.com/coreos/go-json v0.0.0-20200220154158-5ae607161559
-github.com/coreos/go-json
 # github.com/coreos/go-semver v0.3.0
+## explicit
 github.com/coreos/go-semver/semver
-# github.com/coreos/go-systemd/v22 v22.0.0
+# github.com/coreos/go-systemd/v22 v22.3.2
+## explicit; go 1.12
 github.com/coreos/go-systemd/v22/unit
 # github.com/coreos/ignition/v2 v2.9.0
-## explicit
+## explicit; go 1.11
 github.com/coreos/ignition/v2/config/shared/errors
 github.com/coreos/ignition/v2/config/shared/validations
 github.com/coreos/ignition/v2/config/util
-github.com/coreos/ignition/v2/config/v3_1/types
 github.com/coreos/ignition/v2/config/v3_2/types
-github.com/coreos/ignition/v2/config/validate
-# github.com/coreos/stream-metadata-go v0.1.3
-## explicit
+# github.com/coreos/stream-metadata-go v0.1.8
+## explicit; go 1.15
 github.com/coreos/stream-metadata-go/arch
 github.com/coreos/stream-metadata-go/stream
 github.com/coreos/stream-metadata-go/stream/rhcos
 # github.com/coreos/vcontext v0.0.0-20201120045928-b0e13dab675c
-github.com/coreos/vcontext/json
+## explicit; go 1.11
 github.com/coreos/vcontext/path
 github.com/coreos/vcontext/report
 github.com/coreos/vcontext/tree
-github.com/coreos/vcontext/validate
 # github.com/davecgh/go-spew v1.1.1
+## explicit
 github.com/davecgh/go-spew/spew
-# github.com/dchest/bcrypt_pbkdf v0.0.0-20150205184540-83f37f9c154a
-github.com/dchest/bcrypt_pbkdf
-# github.com/deckarep/golang-set v1.7.1
-github.com/deckarep/golang-set
-# github.com/denverdino/aliyungo v0.0.0-20210518071019-eb3bbb144d8a
-github.com/denverdino/aliyungo/cdn
-github.com/denverdino/aliyungo/common
-github.com/denverdino/aliyungo/cs
-github.com/denverdino/aliyungo/ecs
-github.com/denverdino/aliyungo/util
-# github.com/dgrijalva/jwt-go v3.2.0+incompatible
-github.com/dgrijalva/jwt-go
-# github.com/dimchansky/utfbom v1.1.1
+# github.com/dimchansky/utfbom v1.1.0
+## explicit
 github.com/dimchansky/utfbom
-# github.com/dmacvicar/terraform-provider-libvirt v0.6.4-0.20201216193629-2b60d7626ff8
+# github.com/evanphx/json-patch v4.12.0+incompatible
 ## explicit
-github.com/dmacvicar/terraform-provider-libvirt/libvirt
-github.com/dmacvicar/terraform-provider-libvirt/libvirt/helper/suppress
-# github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
-github.com/dustinkirkland/golang-petname
-# github.com/dylanmei/iso8601 v0.1.0
-github.com/dylanmei/iso8601
-# github.com/eapache/go-resiliency v1.2.0
-github.com/eapache/go-resiliency/breaker
-# github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21
-github.com/eapache/go-xerial-snappy
-# github.com/eapache/queue v1.1.0
-github.com/eapache/queue
-# github.com/evanphx/json-patch v4.11.0+incompatible
 github.com/evanphx/json-patch
-# github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d
-github.com/exponent-io/jsonpath
-# github.com/fatih/camelcase v1.0.0
-github.com/fatih/camelcase
-# github.com/fatih/color v1.10.0
-## explicit
+# github.com/fatih/color v1.12.0
+## explicit; go 1.13
 github.com/fatih/color
 # github.com/form3tech-oss/jwt-go v3.2.3+incompatible
+## explicit
 github.com/form3tech-oss/jwt-go
-# github.com/fsnotify/fsnotify v1.4.9
+# github.com/fsnotify/fsnotify v1.5.1
+## explicit; go 1.13
 github.com/fsnotify/fsnotify
-# github.com/gammazero/deque v0.0.0-20190130191400-2afb3858e9c7
-github.com/gammazero/deque
-# github.com/gammazero/workerpool v0.0.0-20190406235159-88d534f22b56
-github.com/gammazero/workerpool
 # github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 ## explicit
 github.com/ghodss/yaml
-# github.com/go-errors/errors v1.0.1
-github.com/go-errors/errors
-# github.com/go-kit/kit v0.10.0
-github.com/go-kit/kit/log
-github.com/go-kit/kit/log/level
-# github.com/go-logfmt/logfmt v0.5.0
-github.com/go-logfmt/logfmt
-# github.com/go-logr/logr v0.4.0
+# github.com/go-logr/logr v1.2.2
+## explicit; go 1.16
 github.com/go-logr/logr
-# github.com/go-openapi/analysis v0.19.5
+# github.com/go-openapi/analysis v0.21.2
+## explicit; go 1.13
 github.com/go-openapi/analysis
-github.com/go-openapi/analysis/internal
-# github.com/go-openapi/errors v0.19.8 => github.com/go-openapi/errors v0.19.2
+github.com/go-openapi/analysis/internal/debug
+github.com/go-openapi/analysis/internal/flatten/normalize
+github.com/go-openapi/analysis/internal/flatten/operations
+github.com/go-openapi/analysis/internal/flatten/replace
+github.com/go-openapi/analysis/internal/flatten/schutils
+github.com/go-openapi/analysis/internal/flatten/sortref
+# github.com/go-openapi/errors v0.20.2
+## explicit; go 1.14
 github.com/go-openapi/errors
 # github.com/go-openapi/jsonpointer v0.19.5
+## explicit; go 1.13
 github.com/go-openapi/jsonpointer
-# github.com/go-openapi/jsonreference v0.19.5
+# github.com/go-openapi/jsonreference v0.19.6
+## explicit; go 1.13
 github.com/go-openapi/jsonreference
-# github.com/go-openapi/loads v0.19.4
+# github.com/go-openapi/loads v0.21.1
+## explicit; go 1.13
 github.com/go-openapi/loads
-# github.com/go-openapi/runtime v0.19.11
+# github.com/go-openapi/runtime v0.23.0
+## explicit; go 1.15
 github.com/go-openapi/runtime
 github.com/go-openapi/runtime/client
 github.com/go-openapi/runtime/logger
@@ -872,164 +368,103 @@ github.com/go-openapi/runtime/middleware/denco
 github.com/go-openapi/runtime/middleware/header
 github.com/go-openapi/runtime/middleware/untyped
 github.com/go-openapi/runtime/security
-# github.com/go-openapi/spec v0.19.9 => github.com/go-openapi/spec v0.19.4
+github.com/go-openapi/runtime/yamlpc
+# github.com/go-openapi/spec v0.20.4
+## explicit; go 1.13
 github.com/go-openapi/spec
-# github.com/go-openapi/strfmt v0.20.1
+# github.com/go-openapi/strfmt v0.21.2
+## explicit; go 1.13
 github.com/go-openapi/strfmt
-# github.com/go-openapi/swag v0.19.14
+# github.com/go-openapi/swag v0.21.1
+## explicit; go 1.11
 github.com/go-openapi/swag
-# github.com/go-openapi/validate v0.20.1 => github.com/go-openapi/validate v0.19.8
+# github.com/go-openapi/validate v0.20.3
+## explicit; go 1.14
 github.com/go-openapi/validate
-# github.com/go-playground/locales v0.13.0
+# github.com/go-playground/locales v0.14.0
+## explicit; go 1.13
 github.com/go-playground/locales
 github.com/go-playground/locales/currency
-# github.com/go-playground/universal-translator v0.17.0
+# github.com/go-playground/universal-translator v0.18.0
+## explicit; go 1.13
 github.com/go-playground/universal-translator
 # github.com/go-playground/validator/v10 v10.2.0
-## explicit
+## explicit; go 1.13
 github.com/go-playground/validator/v10
-# github.com/go-stack/stack v1.8.0
+# github.com/go-stack/stack v1.8.1
+## explicit; go 1.17
 github.com/go-stack/stack
-# github.com/gobuffalo/flect v0.2.2
+# github.com/gobuffalo/flect v0.2.3
+## explicit; go 1.13
 github.com/gobuffalo/flect
-# github.com/gofrs/uuid v3.2.0+incompatible
-github.com/gofrs/uuid
-# github.com/gogap/errors v0.0.0-20160523102334-149c546090d0
-github.com/gogap/errors
-# github.com/gogap/stack v0.0.0-20150131034635-fef68dddd4f8
-github.com/gogap/stack
 # github.com/gogo/protobuf v1.3.2
-github.com/gogo/protobuf/gogoproto
+## explicit; go 1.15
 github.com/gogo/protobuf/proto
-github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/sortkeys
+# github.com/golang-jwt/jwt v3.2.2+incompatible
+## explicit
+github.com/golang-jwt/jwt
 # github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
+## explicit
 github.com/golang/groupcache/lru
 # github.com/golang/mock v1.6.0
-## explicit
+## explicit; go 1.11
 github.com/golang/mock/gomock
 github.com/golang/mock/mockgen
 github.com/golang/mock/mockgen/model
 # github.com/golang/protobuf v1.5.2
-## explicit
-github.com/golang/protobuf/internal/gengogrpc
+## explicit; go 1.9
+github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
-github.com/golang/protobuf/protoc-gen-go
-github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
-github.com/golang/protobuf/ptypes/empty
-github.com/golang/protobuf/ptypes/struct
 github.com/golang/protobuf/ptypes/timestamp
-github.com/golang/protobuf/ptypes/wrappers
-# github.com/golang/snappy v0.0.1
-github.com/golang/snappy
-# github.com/google/btree v1.0.1
-github.com/google/btree
-# github.com/google/go-cmp v0.5.5
-## explicit
+# github.com/google/go-cmp v0.5.8
+## explicit; go 1.13
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-querystring v1.1.0
-github.com/google/go-querystring/query
 # github.com/google/gofuzz v1.2.0
+## explicit; go 1.12
 github.com/google/gofuzz
 github.com/google/gofuzz/bytesource
-# github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible
-## explicit
-# github.com/google/renameio v1.0.0
-github.com/google/renameio
-# github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
-github.com/google/shlex
 # github.com/google/uuid v1.2.0
 ## explicit
 github.com/google/uuid
 # github.com/googleapis/gax-go/v2 v2.0.5
+## explicit
 github.com/googleapis/gax-go/v2
 # github.com/googleapis/gnostic v0.5.5
+## explicit; go 1.12
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
 github.com/googleapis/gnostic/jsonschema
 github.com/googleapis/gnostic/openapiv2
-# github.com/gophercloud/gophercloud v0.17.0
-## explicit
+# github.com/gophercloud/gophercloud v0.24.0
+## explicit; go 1.14
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/openstack
-github.com/gophercloud/gophercloud/openstack/baremetal/httpbasic
-github.com/gophercloud/gophercloud/openstack/baremetal/noauth
-github.com/gophercloud/gophercloud/openstack/baremetal/v1/allocations
-github.com/gophercloud/gophercloud/openstack/baremetal/v1/drivers
-github.com/gophercloud/gophercloud/openstack/baremetal/v1/nodes
-github.com/gophercloud/gophercloud/openstack/baremetal/v1/ports
-github.com/gophercloud/gophercloud/openstack/baremetalintrospection/httpbasic
-github.com/gophercloud/gophercloud/openstack/baremetalintrospection/noauth
-github.com/gophercloud/gophercloud/openstack/baremetalintrospection/v1/introspection
 github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/availabilityzones
-github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/quotasets
-github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/schedulerhints
-github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/volumeactions
-github.com/gophercloud/gophercloud/openstack/blockstorage/v1/volumes
-github.com/gophercloud/gophercloud/openstack/blockstorage/v2/snapshots
-github.com/gophercloud/gophercloud/openstack/blockstorage/v2/volumes
 github.com/gophercloud/gophercloud/openstack/blockstorage/v3/snapshots
 github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes
 github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumetypes
 github.com/gophercloud/gophercloud/openstack/common/extensions
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/aggregates
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/attachinterfaces
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/availabilityzones
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/bootfromvolume
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/floatingips
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/hypervisors
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/keypairs
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/quotasets
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/schedulerhints
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/secgroups
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/shelveunshelve
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/startstop
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tags
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks
-github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/volumeattach
 github.com/gophercloud/gophercloud/openstack/compute/v2/flavors
-github.com/gophercloud/gophercloud/openstack/compute/v2/images
 github.com/gophercloud/gophercloud/openstack/compute/v2/servers
-github.com/gophercloud/gophercloud/openstack/containerinfra/v1/certificates
-github.com/gophercloud/gophercloud/openstack/containerinfra/v1/clusters
-github.com/gophercloud/gophercloud/openstack/containerinfra/v1/clustertemplates
-github.com/gophercloud/gophercloud/openstack/db/v1/configurations
-github.com/gophercloud/gophercloud/openstack/db/v1/databases
-github.com/gophercloud/gophercloud/openstack/db/v1/datastores
-github.com/gophercloud/gophercloud/openstack/db/v1/instances
-github.com/gophercloud/gophercloud/openstack/db/v1/users
-github.com/gophercloud/gophercloud/openstack/dns/v2/recordsets
-github.com/gophercloud/gophercloud/openstack/dns/v2/zones
 github.com/gophercloud/gophercloud/openstack/identity/v2/tenants
 github.com/gophercloud/gophercloud/openstack/identity/v2/tokens
-github.com/gophercloud/gophercloud/openstack/identity/v3/applicationcredentials
-github.com/gophercloud/gophercloud/openstack/identity/v3/endpoints
-github.com/gophercloud/gophercloud/openstack/identity/v3/extensions/ec2credentials
 github.com/gophercloud/gophercloud/openstack/identity/v3/extensions/ec2tokens
 github.com/gophercloud/gophercloud/openstack/identity/v3/extensions/oauth1
-github.com/gophercloud/gophercloud/openstack/identity/v3/groups
-github.com/gophercloud/gophercloud/openstack/identity/v3/projects
-github.com/gophercloud/gophercloud/openstack/identity/v3/roles
-github.com/gophercloud/gophercloud/openstack/identity/v3/services
 github.com/gophercloud/gophercloud/openstack/identity/v3/tokens
-github.com/gophercloud/gophercloud/openstack/identity/v3/users
 github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata
 github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport
 github.com/gophercloud/gophercloud/openstack/imageservice/v2/images
-github.com/gophercloud/gophercloud/openstack/imageservice/v2/members
-github.com/gophercloud/gophercloud/openstack/keymanager/v1/acls
-github.com/gophercloud/gophercloud/openstack/keymanager/v1/containers
-github.com/gophercloud/gophercloud/openstack/keymanager/v1/orders
-github.com/gophercloud/gophercloud/openstack/keymanager/v1/secrets
 github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/apiversions
 github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/l7policies
 github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/listeners
@@ -1038,490 +473,157 @@ github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/monitors
 github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/pools
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/dns
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/external
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/extradhcpopts
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/firewalls
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/policies
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/routerinsertion
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/rules
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/addressscopes
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas/members
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas/monitors
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas/pools
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas/vips
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/l7policies
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/listeners
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/loadbalancers
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/monitors
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/pools
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/mtu
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/portsbinding
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/portsecurity
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/provider
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/qos/policies
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/qos/rules
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/quotas
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/rbacpolicies
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/rules
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/subnetpools
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/trunks
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vlantransparent
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vpnaas/endpointgroups
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vpnaas/ikepolicies
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vpnaas/ipsecpolicies
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vpnaas/services
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vpnaas/siteconnections
 github.com/gophercloud/gophercloud/openstack/networking/v2/networks
 github.com/gophercloud/gophercloud/openstack/networking/v2/ports
 github.com/gophercloud/gophercloud/openstack/networking/v2/subnets
 github.com/gophercloud/gophercloud/openstack/objectstorage/v1/accounts
 github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers
 github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects
-github.com/gophercloud/gophercloud/openstack/objectstorage/v1/swauth
-github.com/gophercloud/gophercloud/openstack/orchestration/v1/stacks
-github.com/gophercloud/gophercloud/openstack/sharedfilesystems/apiversions
-github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/availabilityzones
-github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/errors
-github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/messages
-github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/securityservices
-github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/sharenetworks
 github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/shares
 github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/snapshots
 github.com/gophercloud/gophercloud/openstack/utils
 github.com/gophercloud/gophercloud/pagination
-# github.com/gophercloud/utils v0.0.0-20210323225332-7b186010c04f
-## explicit
-github.com/gophercloud/utils/client
+# github.com/gophercloud/utils v0.0.0-20220307143606-8e7800759d16
+## explicit; go 1.15
 github.com/gophercloud/utils/env
 github.com/gophercloud/utils/gnocchi
 github.com/gophercloud/utils/internal
-github.com/gophercloud/utils/openstack/baremetal/v1/nodes
 github.com/gophercloud/utils/openstack/clientconfig
 github.com/gophercloud/utils/openstack/compute/v2/availabilityzones
 github.com/gophercloud/utils/openstack/compute/v2/flavors
 github.com/gophercloud/utils/openstack/imageservice/v2/images
 github.com/gophercloud/utils/openstack/networking/v2/networks
-github.com/gophercloud/utils/terraform/auth
-github.com/gophercloud/utils/terraform/mutexkv
-# github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
-github.com/gregjones/httpcache
-github.com/gregjones/httpcache/diskcache
 # github.com/h2non/filetype v1.0.12
-## explicit
+## explicit; go 1.13
 github.com/h2non/filetype/matchers
 github.com/h2non/filetype/matchers/isobmff
 github.com/h2non/filetype/types
-# github.com/hashicorp/aws-sdk-go-base v0.4.0
-github.com/hashicorp/aws-sdk-go-base
-# github.com/hashicorp/errwrap v1.0.0
-github.com/hashicorp/errwrap
-# github.com/hashicorp/go-azure-helpers v0.16.5
-## explicit
-github.com/hashicorp/go-azure-helpers/authentication
-github.com/hashicorp/go-azure-helpers/resourceproviders
-github.com/hashicorp/go-azure-helpers/response
-github.com/hashicorp/go-azure-helpers/sender
-github.com/hashicorp/go-azure-helpers/storage
-# github.com/hashicorp/go-cleanhttp v0.5.1
+# github.com/hashicorp/go-cleanhttp v0.5.2
+## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-getter v1.4.2-0.20200106182914-9813cbd4eb02
-github.com/hashicorp/go-getter
-github.com/hashicorp/go-getter/helper/url
-# github.com/hashicorp/go-hclog v0.14.1
-github.com/hashicorp/go-hclog
-# github.com/hashicorp/go-multierror v1.1.0
-github.com/hashicorp/go-multierror
-# github.com/hashicorp/go-plugin v1.3.0 => github.com/hashicorp/go-plugin v1.2.2
-## explicit
-github.com/hashicorp/go-plugin
-github.com/hashicorp/go-plugin/internal/plugin
-# github.com/hashicorp/go-retryablehttp v0.6.6
+# github.com/hashicorp/go-retryablehttp v0.7.0
+## explicit; go 1.13
 github.com/hashicorp/go-retryablehttp
-# github.com/hashicorp/go-safetemp v1.0.0
-github.com/hashicorp/go-safetemp
-# github.com/hashicorp/go-uuid v1.0.2
-github.com/hashicorp/go-uuid
-# github.com/hashicorp/go-version v1.3.0
+# github.com/hashicorp/go-version v1.5.0
 ## explicit
 github.com/hashicorp/go-version
-# github.com/hashicorp/hcl v1.0.0
-github.com/hashicorp/hcl
-github.com/hashicorp/hcl/hcl/ast
-github.com/hashicorp/hcl/hcl/parser
-github.com/hashicorp/hcl/hcl/printer
-github.com/hashicorp/hcl/hcl/scanner
-github.com/hashicorp/hcl/hcl/strconv
-github.com/hashicorp/hcl/hcl/token
-github.com/hashicorp/hcl/json/parser
-github.com/hashicorp/hcl/json/scanner
-github.com/hashicorp/hcl/json/token
-# github.com/hashicorp/hcl/v2 v2.6.0
-github.com/hashicorp/hcl/v2
-github.com/hashicorp/hcl/v2/ext/customdecode
-github.com/hashicorp/hcl/v2/ext/dynblock
-github.com/hashicorp/hcl/v2/ext/tryfunc
-github.com/hashicorp/hcl/v2/ext/typeexpr
-github.com/hashicorp/hcl/v2/gohcl
-github.com/hashicorp/hcl/v2/hcldec
-github.com/hashicorp/hcl/v2/hcled
-github.com/hashicorp/hcl/v2/hclparse
-github.com/hashicorp/hcl/v2/hclsyntax
-github.com/hashicorp/hcl/v2/hclwrite
-github.com/hashicorp/hcl/v2/json
-# github.com/hashicorp/hil v0.0.0-20190212132231-97b3a9cdfa93
-github.com/hashicorp/hil
-github.com/hashicorp/hil/ast
-github.com/hashicorp/hil/parser
-github.com/hashicorp/hil/scanner
 # github.com/hashicorp/logutils v1.0.0
 ## explicit
 github.com/hashicorp/logutils
-# github.com/hashicorp/terraform v0.13.4 => github.com/openshift/terraform v0.12.20-openshift-4
-## explicit
-github.com/hashicorp/terraform/addrs
-github.com/hashicorp/terraform/backend
-github.com/hashicorp/terraform/backend/init
-github.com/hashicorp/terraform/backend/local
-github.com/hashicorp/terraform/builtin/providers/terraform
-github.com/hashicorp/terraform/builtin/provisioners/chef
-github.com/hashicorp/terraform/builtin/provisioners/file
-github.com/hashicorp/terraform/builtin/provisioners/habitat
-github.com/hashicorp/terraform/builtin/provisioners/local-exec
-github.com/hashicorp/terraform/builtin/provisioners/puppet
-github.com/hashicorp/terraform/builtin/provisioners/puppet/bolt
-github.com/hashicorp/terraform/builtin/provisioners/remote-exec
-github.com/hashicorp/terraform/builtin/provisioners/salt-masterless
-github.com/hashicorp/terraform/command
-github.com/hashicorp/terraform/command/cliconfig
-github.com/hashicorp/terraform/command/clistate
-github.com/hashicorp/terraform/command/format
-github.com/hashicorp/terraform/command/jsonconfig
-github.com/hashicorp/terraform/command/jsonplan
-github.com/hashicorp/terraform/command/jsonprovider
-github.com/hashicorp/terraform/command/jsonstate
-github.com/hashicorp/terraform/command/webbrowser
-github.com/hashicorp/terraform/communicator
-github.com/hashicorp/terraform/communicator/remote
-github.com/hashicorp/terraform/communicator/shared
-github.com/hashicorp/terraform/communicator/ssh
-github.com/hashicorp/terraform/communicator/winrm
-github.com/hashicorp/terraform/config
-github.com/hashicorp/terraform/configs
-github.com/hashicorp/terraform/configs/configload
-github.com/hashicorp/terraform/configs/configschema
-github.com/hashicorp/terraform/configs/configupgrade
-github.com/hashicorp/terraform/configs/hcl2shim
-github.com/hashicorp/terraform/dag
-github.com/hashicorp/terraform/experiments
-github.com/hashicorp/terraform/helper/didyoumean
-github.com/hashicorp/terraform/helper/experiment
-github.com/hashicorp/terraform/helper/hashcode
-github.com/hashicorp/terraform/helper/hilmapstructure
-github.com/hashicorp/terraform/helper/logging
-github.com/hashicorp/terraform/helper/plugin
-github.com/hashicorp/terraform/helper/schema
-github.com/hashicorp/terraform/helper/slowmessage
-github.com/hashicorp/terraform/helper/structure
-github.com/hashicorp/terraform/helper/validation
-github.com/hashicorp/terraform/helper/wrappedreadline
-github.com/hashicorp/terraform/helper/wrappedstreams
-github.com/hashicorp/terraform/httpclient
-github.com/hashicorp/terraform/internal/earlyconfig
-github.com/hashicorp/terraform/internal/initwd
-github.com/hashicorp/terraform/internal/modsdir
-github.com/hashicorp/terraform/lang
-github.com/hashicorp/terraform/lang/blocktoattr
-github.com/hashicorp/terraform/lang/funcs
-github.com/hashicorp/terraform/moduledeps
-github.com/hashicorp/terraform/plans
-github.com/hashicorp/terraform/plans/internal/planproto
-github.com/hashicorp/terraform/plans/objchange
-github.com/hashicorp/terraform/plans/planfile
-github.com/hashicorp/terraform/plugin
-github.com/hashicorp/terraform/plugin/convert
-github.com/hashicorp/terraform/plugin/discovery
-github.com/hashicorp/terraform/providers
-github.com/hashicorp/terraform/provisioners
-github.com/hashicorp/terraform/registry
-github.com/hashicorp/terraform/registry/regsrc
-github.com/hashicorp/terraform/registry/response
-github.com/hashicorp/terraform/repl
-github.com/hashicorp/terraform/state
-github.com/hashicorp/terraform/states
-github.com/hashicorp/terraform/states/statefile
-github.com/hashicorp/terraform/states/statemgr
-github.com/hashicorp/terraform/terraform
-github.com/hashicorp/terraform/version
-# github.com/hashicorp/terraform-config-inspect v0.0.0-20200806211835-c481b8bfa41e
-github.com/hashicorp/terraform-config-inspect/tfconfig
-# github.com/hashicorp/terraform-json v0.6.0
+# github.com/hashicorp/terraform-exec v0.16.1
+## explicit; go 1.17
+github.com/hashicorp/terraform-exec/internal/version
+github.com/hashicorp/terraform-exec/tfexec
+# github.com/hashicorp/terraform-json v0.14.0
+## explicit; go 1.13
 github.com/hashicorp/terraform-json
-# github.com/hashicorp/terraform-plugin-sdk v1.16.0 => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
-## explicit
-github.com/hashicorp/terraform-plugin-sdk/acctest
-github.com/hashicorp/terraform-plugin-sdk/helper/customdiff
-github.com/hashicorp/terraform-plugin-sdk/helper/encryption
-github.com/hashicorp/terraform-plugin-sdk/helper/hashcode
-github.com/hashicorp/terraform-plugin-sdk/helper/logging
-github.com/hashicorp/terraform-plugin-sdk/helper/mutexkv
-github.com/hashicorp/terraform-plugin-sdk/helper/pathorcontents
-github.com/hashicorp/terraform-plugin-sdk/helper/resource
-github.com/hashicorp/terraform-plugin-sdk/helper/schema
-github.com/hashicorp/terraform-plugin-sdk/helper/structure
-github.com/hashicorp/terraform-plugin-sdk/helper/validation
-github.com/hashicorp/terraform-plugin-sdk/httpclient
-github.com/hashicorp/terraform-plugin-sdk/internal/addrs
-github.com/hashicorp/terraform-plugin-sdk/internal/command/format
-github.com/hashicorp/terraform-plugin-sdk/internal/configs
-github.com/hashicorp/terraform-plugin-sdk/internal/configs/configload
-github.com/hashicorp/terraform-plugin-sdk/internal/configs/configschema
-github.com/hashicorp/terraform-plugin-sdk/internal/configs/hcl2shim
-github.com/hashicorp/terraform-plugin-sdk/internal/dag
-github.com/hashicorp/terraform-plugin-sdk/internal/earlyconfig
-github.com/hashicorp/terraform-plugin-sdk/internal/flatmap
-github.com/hashicorp/terraform-plugin-sdk/internal/helper/config
-github.com/hashicorp/terraform-plugin-sdk/internal/helper/didyoumean
-github.com/hashicorp/terraform-plugin-sdk/internal/helper/plugin
-github.com/hashicorp/terraform-plugin-sdk/internal/httpclient
-github.com/hashicorp/terraform-plugin-sdk/internal/initwd
-github.com/hashicorp/terraform-plugin-sdk/internal/lang
-github.com/hashicorp/terraform-plugin-sdk/internal/lang/blocktoattr
-github.com/hashicorp/terraform-plugin-sdk/internal/lang/funcs
-github.com/hashicorp/terraform-plugin-sdk/internal/modsdir
-github.com/hashicorp/terraform-plugin-sdk/internal/moduledeps
-github.com/hashicorp/terraform-plugin-sdk/internal/plans
-github.com/hashicorp/terraform-plugin-sdk/internal/plans/objchange
-github.com/hashicorp/terraform-plugin-sdk/internal/plugin/convert
-github.com/hashicorp/terraform-plugin-sdk/internal/plugin/discovery
-github.com/hashicorp/terraform-plugin-sdk/internal/providers
-github.com/hashicorp/terraform-plugin-sdk/internal/provisioners
-github.com/hashicorp/terraform-plugin-sdk/internal/registry
-github.com/hashicorp/terraform-plugin-sdk/internal/registry/regsrc
-github.com/hashicorp/terraform-plugin-sdk/internal/registry/response
-github.com/hashicorp/terraform-plugin-sdk/internal/states
-github.com/hashicorp/terraform-plugin-sdk/internal/states/statefile
-github.com/hashicorp/terraform-plugin-sdk/internal/vault/helper/pgpkeys
-github.com/hashicorp/terraform-plugin-sdk/internal/vault/sdk/helper/compressutil
-github.com/hashicorp/terraform-plugin-sdk/internal/vault/sdk/helper/jsonutil
-github.com/hashicorp/terraform-plugin-sdk/internal/version
-github.com/hashicorp/terraform-plugin-sdk/meta
-github.com/hashicorp/terraform-plugin-sdk/plugin
-github.com/hashicorp/terraform-plugin-sdk/terraform
-github.com/hashicorp/terraform-plugin-sdk/tfdiags
-github.com/hashicorp/terraform-plugin-sdk/tfplugin5
-# github.com/hashicorp/terraform-plugin-test v1.3.0
-github.com/hashicorp/terraform-plugin-test
-# github.com/hashicorp/terraform-provider-kubernetes v1.13.3
-## explicit
-github.com/hashicorp/terraform-provider-kubernetes/kubernetes
-# github.com/hashicorp/terraform-provider-vsphere v1.24.3 => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
-## explicit
-github.com/hashicorp/terraform-provider-vsphere/vsphere
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/administrationroles
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/clustercomputeresource
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/computeresource
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/contentlibrary
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datacenter
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datastore
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/dvportgroup
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/envbrowse
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/network
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/nsx
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/ovfdeploy
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/provider
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/resourcepool
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/spbm
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/storagepod
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/utils
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/vappcontainer
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/virtualdisk
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/virtualmachine
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/vsansystem
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/virtualdevice
-github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/vmworkflow
-# github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734
-github.com/hashicorp/terraform-svchost
-github.com/hashicorp/terraform-svchost/auth
-github.com/hashicorp/terraform-svchost/disco
-# github.com/hashicorp/vault v1.3.0
-## explicit
-# github.com/hashicorp/yamux v0.0.0-20200609203250-aecfd211c9ce
-github.com/hashicorp/yamux
-# github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c
-## explicit
-# github.com/hokaccha/go-prettyjson v0.0.0-20170213120834-e6b9231a2b1c
-github.com/hokaccha/go-prettyjson
-# github.com/hooklift/iso9660 v1.0.0
-github.com/hooklift/iso9660
-# github.com/imdario/mergo v0.3.11
+# github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0
+## explicit; go 1.17
+github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging
+# github.com/imdario/mergo v0.3.12
+## explicit; go 1.13
 github.com/imdario/mergo
 # github.com/inconshreveable/mousetrap v1.0.0
+## explicit
 github.com/inconshreveable/mousetrap
-# github.com/jcmturner/gofork v1.0.0
-github.com/jcmturner/gofork/encoding/asn1
-github.com/jcmturner/gofork/x/crypto/pbkdf2
-# github.com/jen20/awspolicyequivalence v1.1.0
-github.com/jen20/awspolicyequivalence
-# github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
-github.com/jinzhu/copier
 # github.com/jmespath/go-jmespath v0.4.0
+## explicit; go 1.14
 github.com/jmespath/go-jmespath
 # github.com/josharian/intern v1.0.0
+## explicit; go 1.5
 github.com/josharian/intern
-# github.com/json-iterator/go v1.1.11
+# github.com/json-iterator/go v1.1.12
+## explicit; go 1.12
 github.com/json-iterator/go
-# github.com/jstemmer/go-junit-report v0.9.1
-github.com/jstemmer/go-junit-report
-github.com/jstemmer/go-junit-report/formatter
-github.com/jstemmer/go-junit-report/parser
-# github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
-github.com/kardianos/osext
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
+## explicit
 github.com/kballard/go-shellquote
-# github.com/keybase/go-crypto v0.0.0-20200123153347-de78d2cb44f4
-github.com/keybase/go-crypto/brainpool
-github.com/keybase/go-crypto/cast5
-github.com/keybase/go-crypto/curve25519
-github.com/keybase/go-crypto/ed25519
-github.com/keybase/go-crypto/ed25519/internal/edwards25519
-github.com/keybase/go-crypto/openpgp
-github.com/keybase/go-crypto/openpgp/armor
-github.com/keybase/go-crypto/openpgp/ecdh
-github.com/keybase/go-crypto/openpgp/elgamal
-github.com/keybase/go-crypto/openpgp/errors
-github.com/keybase/go-crypto/openpgp/packet
-github.com/keybase/go-crypto/openpgp/s2k
-github.com/keybase/go-crypto/rsa
-# github.com/klauspost/compress v1.11.8
-github.com/klauspost/compress/flate
-github.com/klauspost/compress/fse
-github.com/klauspost/compress/gzip
-github.com/klauspost/compress/huff0
-github.com/klauspost/compress/snappy
-github.com/klauspost/compress/zlib
-github.com/klauspost/compress/zstd
-github.com/klauspost/compress/zstd/internal/xxhash
+# github.com/kdomanski/iso9660 v0.2.1
+## explicit; go 1.14
+github.com/kdomanski/iso9660
 # github.com/kr/fs v0.1.0
+## explicit
 github.com/kr/fs
-# github.com/kr/pretty v0.2.1
-github.com/kr/pretty
-# github.com/kr/text v0.2.0
-github.com/kr/text
 # github.com/leodido/go-urn v1.2.1
+## explicit; go 1.13
 github.com/leodido/go-urn
 # github.com/libvirt/libvirt-go v5.10.0+incompatible
 ## explicit
 github.com/libvirt/libvirt-go
-# github.com/libvirt/libvirt-go-xml v5.10.0+incompatible
-github.com/libvirt/libvirt-go-xml
-# github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de
-github.com/liggitt/tabwriter
-# github.com/mailru/easyjson v0.7.6
+# github.com/mailru/easyjson v0.7.7
+## explicit; go 1.12
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-# github.com/masterzen/simplexml v0.0.0-20190410153822-31eea3082786
-## explicit
-github.com/masterzen/simplexml/dom
-# github.com/masterzen/winrm v0.0.0-20190308153735-1d17eaf15943
-## explicit
-github.com/masterzen/winrm
-github.com/masterzen/winrm/soap
 # github.com/mattn/go-colorable v0.1.8
+## explicit; go 1.13
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
+## explicit; go 1.12
 github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369
+## explicit; go 1.9
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/metal3-io/baremetal-operator v0.0.0-20210706141527-5240e42f012a => github.com/openshift/baremetal-operator v0.0.0-20210706141527-5240e42f012a
-## explicit
-github.com/metal3-io/baremetal-operator/pkg/bmc
+# github.com/metal3-io/baremetal-operator v0.0.0-20220128094204-28771f489634 => github.com/openshift/baremetal-operator v0.0.0-20220128094204-28771f489634
+## explicit; go 1.17
 github.com/metal3-io/baremetal-operator/pkg/hardware
-# github.com/metal3-io/baremetal-operator/apis v0.0.0 => github.com/openshift/baremetal-operator/apis v0.0.0-20210706141527-5240e42f012a
-## explicit
+# github.com/metal3-io/baremetal-operator/apis v0.0.0 => github.com/openshift/baremetal-operator/apis v0.0.0-20220128094204-28771f489634
+## explicit; go 1.17
 github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1
-# github.com/metal3-io/cluster-api-provider-baremetal v0.0.0 => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
-## explicit
-github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis
-github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1
+# github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0 => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20220128094204-28771f489634
+## explicit; go 1.17
+github.com/metal3-io/baremetal-operator/pkg/hardwareutils/bmc
 # github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
-github.com/mgutz/ansi
-# github.com/minsikl/netscaler-nitro-go v0.0.0-20170827154432-5b14ce3643e3
-github.com/minsikl/netscaler-nitro-go/client
-github.com/minsikl/netscaler-nitro-go/datatypes
-github.com/minsikl/netscaler-nitro-go/op
-# github.com/mitchellh/cli v1.1.1
 ## explicit
-github.com/mitchellh/cli
-# github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
-github.com/mitchellh/colorstring
-# github.com/mitchellh/copystructure v1.0.0
-github.com/mitchellh/copystructure
+github.com/mgutz/ansi
 # github.com/mitchellh/go-homedir v1.1.0
+## explicit
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/go-linereader v0.0.0-20190213213312-1b945b3263eb
-github.com/mitchellh/go-linereader
 # github.com/mitchellh/go-testing-interface v1.14.1
+## explicit; go 1.14
 github.com/mitchellh/go-testing-interface
-# github.com/mitchellh/go-wordwrap v1.0.0
-github.com/mitchellh/go-wordwrap
-# github.com/mitchellh/hashstructure v1.0.0
-github.com/mitchellh/hashstructure
-# github.com/mitchellh/mapstructure v1.3.3
+# github.com/mitchellh/mapstructure v1.5.0
+## explicit; go 1.14
 github.com/mitchellh/mapstructure
-# github.com/mitchellh/panicwrap v1.0.0
-github.com/mitchellh/panicwrap
-# github.com/mitchellh/reflectwalk v1.0.1
-github.com/mitchellh/reflectwalk
-# github.com/moby/spdystream v0.2.0
-github.com/moby/spdystream
-github.com/moby/spdystream/spdy
-# github.com/moby/term v0.0.0-20201216013528-df9cb8a40635
-github.com/moby/term
-github.com/moby/term/windows
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
+## explicit
 github.com/modern-go/concurrent
-# github.com/modern-go/reflect2 v1.0.1
+# github.com/modern-go/reflect2 v1.0.2
+## explicit; go 1.12
 github.com/modern-go/reflect2
-# github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00
-github.com/monochromegane/go-gitignore
-# github.com/nicksnyder/go-i18n v1.10.0
-github.com/nicksnyder/go-i18n/i18n
-github.com/nicksnyder/go-i18n/i18n/bundle
-github.com/nicksnyder/go-i18n/i18n/language
-github.com/nicksnyder/go-i18n/i18n/translation
-# github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
-github.com/nu7hatch/gouuid
-# github.com/oklog/run v1.1.0
-github.com/oklog/run
+# github.com/nutanix-cloud-native/prism-go-client v0.2.0
+## explicit; go 1.16
+github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix
+github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix/v3
+github.com/nutanix-cloud-native/prism-go-client/pkg/utils
 # github.com/oklog/ulid v1.3.1
+## explicit
 github.com/oklog/ulid
 # github.com/opencontainers/go-digest v1.0.0
+## explicit; go 1.13
 github.com/opencontainers/go-digest
 # github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6
+## explicit
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift-metal3/terraform-provider-ironic v0.2.6
-## explicit
-github.com/openshift-metal3/terraform-provider-ironic/ironic
-# github.com/openshift/api v0.0.0-20211021122928-16dd969d5550
-## explicit
+# github.com/openshift/api v0.0.0-20220504105152-6f735e7109c8
+## explicit; go 1.16
 github.com/openshift/api/config/v1
+github.com/openshift/api/machine/v1
 github.com/openshift/api/machine/v1beta1
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
 github.com/openshift/api/route/v1
-# github.com/openshift/client-go v0.0.0-20210409155308-a8e62c60e930 => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c
-## explicit
+# github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3
+## explicit; go 1.16
 github.com/openshift/client-go/config/clientset/versioned
 github.com/openshift/client-go/config/clientset/versioned/scheme
 github.com/openshift/client-go/config/clientset/versioned/typed/config/v1
@@ -1534,596 +636,108 @@ github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1
 github.com/openshift/cloud-credential-operator/pkg/aws
 github.com/openshift/cloud-credential-operator/version
 # github.com/openshift/cluster-api v0.0.0-20190805113604-f8de78af80fc
+## explicit
 github.com/openshift/cluster-api/pkg/apis/machine/common
 github.com/openshift/cluster-api/pkg/apis/machine/v1beta1
-# github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5
-## explicit
-github.com/openshift/cluster-api-provider-gcp/pkg/apis
-github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1
-# github.com/openshift/cluster-api-provider-ibmcloud v0.0.0-20210702173623-676faba9895d
-## explicit
+# github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e
+## explicit; go 1.17
+github.com/openshift/cluster-api-provider-baremetal/pkg/apis
+github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1
+# github.com/openshift/cluster-api-provider-ibmcloud v0.0.1-0.20220201105455-8014e5e894b0
+## explicit; go 1.17
 github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis
-github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1beta1
+github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1
 # github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 ## explicit
 github.com/openshift/cluster-api-provider-libvirt/pkg/apis
 github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1
-# github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210817084941-2262c7c6cece
-## explicit
+# github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
+## explicit; go 1.17
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
-# github.com/openshift/library-go v0.0.0-20210408164723-7a65fdb398e2
-## explicit
+# github.com/openshift/library-go v0.0.0-20220121154930-b7889002d63e
+## explicit; go 1.17
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/route/routeapihelpers
-# github.com/openshift/machine-api-operator v0.2.1-0.20210505133115-b7ef098180db
-## explicit
-github.com/openshift/machine-api-operator/pkg/apis/machine
-github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1
-github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider
-github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1
 # github.com/openshift/machine-config-operator v0.0.0 => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
-## explicit
+## explicit; go 1.13
 github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1
+# github.com/opentracing/opentracing-go v1.2.0
+## explicit; go 1.14
+github.com/opentracing/opentracing-go
+github.com/opentracing/opentracing-go/ext
+github.com/opentracing/opentracing-go/log
 # github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c
-## explicit
+## explicit; go 1.12
 github.com/ovirt/go-ovirt
-# github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20211019085223-db1ac552ec57
-## explicit
-github.com/ovirt/terraform-provider-ovirt/ovirt
-# github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db
-## explicit
-github.com/packer-community/winrmcp/winrmcp
 # github.com/pborman/uuid v1.2.0
 ## explicit
 github.com/pborman/uuid
-# github.com/pelletier/go-toml v1.8.0
-github.com/pelletier/go-toml
-# github.com/peterbourgon/diskv v2.0.1+incompatible
-github.com/peterbourgon/diskv
-# github.com/pierrec/lz4 v2.6.1+incompatible
-github.com/pierrec/lz4
-github.com/pierrec/lz4/internal/xxh32
-# github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
-github.com/pkg/browser
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
 # github.com/pkg/sftp v1.10.1
-## explicit
+## explicit; go 1.12
 github.com/pkg/sftp
 # github.com/pmezard/go-difflib v1.0.0
-github.com/pmezard/go-difflib/difflib
-# github.com/posener/complete v1.2.3
-github.com/posener/complete
-github.com/posener/complete/cmd
-github.com/posener/complete/cmd/install
-# github.com/prometheus/client_golang v1.9.0
 ## explicit
+github.com/pmezard/go-difflib/difflib
+# github.com/prometheus/client_golang v1.11.1
+## explicit; go 1.13
 github.com/prometheus/client_golang/prometheus
+github.com/prometheus/client_golang/prometheus/collectors
 github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_golang/prometheus/push
 # github.com/prometheus/client_model v0.2.0
+## explicit; go 1.9
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.15.0
-## explicit
+# github.com/prometheus/common v0.28.0
+## explicit; go 1.13
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 github.com/prometheus/common/model
-# github.com/prometheus/procfs v0.2.0
+# github.com/prometheus/procfs v0.6.0
+## explicit; go 1.13
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
-github.com/rcrowley/go-metrics
-# github.com/rickb777/date v1.12.5-0.20200422084442-6300e543c4d9
-github.com/rickb777/date/period
-# github.com/rickb777/plural v1.2.0
-github.com/rickb777/plural
-# github.com/robfig/cron v1.2.0
-github.com/robfig/cron
-# github.com/russross/blackfriday v1.5.2
-github.com/russross/blackfriday
 # github.com/satori/go.uuid v1.2.0
-github.com/satori/go.uuid
-# github.com/satori/uuid v1.2.0
 ## explicit
-github.com/satori/uuid
-# github.com/shopspring/decimal v1.2.0
-github.com/shopspring/decimal
-# github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
+# github.com/shurcooL/httpfs v0.0.0-20171119174359-809beceb2371
 ## explicit
 github.com/shurcooL/httpfs/vfsutil
 # github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 ## explicit
 github.com/shurcooL/vfsgen
 # github.com/sirupsen/logrus v1.8.1
-## explicit
+## explicit; go 1.13
 github.com/sirupsen/logrus
 github.com/sirupsen/logrus/hooks/test
-# github.com/softlayer/softlayer-go v1.0.3
-github.com/softlayer/softlayer-go/config
-github.com/softlayer/softlayer-go/datatypes
-github.com/softlayer/softlayer-go/filter
-github.com/softlayer/softlayer-go/helpers/hardware
-github.com/softlayer/softlayer-go/helpers/location
-github.com/softlayer/softlayer-go/helpers/network
-github.com/softlayer/softlayer-go/helpers/order
-github.com/softlayer/softlayer-go/helpers/product
-github.com/softlayer/softlayer-go/helpers/virtual
-github.com/softlayer/softlayer-go/services
-github.com/softlayer/softlayer-go/session
-github.com/softlayer/softlayer-go/sl
-# github.com/softlayer/xmlrpc v0.0.0-20200409220501-5f089df7cb7e
-github.com/softlayer/xmlrpc
-# github.com/spf13/afero v1.3.5
-github.com/spf13/afero
-github.com/spf13/afero/mem
-# github.com/spf13/cobra v1.1.1
-## explicit
+# github.com/spf13/cobra v1.2.1
+## explicit; go 1.14
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
+## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/stoewer/go-strcase v1.2.0
-github.com/stoewer/go-strcase
-# github.com/stretchr/testify v1.7.0
-## explicit
+# github.com/stretchr/testify v1.7.2
+## explicit; go 1.13
 github.com/stretchr/testify/assert
-# github.com/terraform-provider-openstack/terraform-provider-openstack v1.37.0
-## explicit
-github.com/terraform-provider-openstack/terraform-provider-openstack/openstack
-# github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20200807230610-d5346d47e3af => github.com/openshift/terraform-provider-aws v1.60.1-0.20210622193531-7d13cfbb1a8c
-## explicit
-github.com/terraform-providers/terraform-provider-aws/aws
-github.com/terraform-providers/terraform-provider-aws/aws/internal/flatmap
-github.com/terraform-providers/terraform-provider-aws/aws/internal/keyvaluetags
-github.com/terraform-providers/terraform-provider-aws/aws/internal/naming
-github.com/terraform-providers/terraform-provider-aws/aws/internal/service/apigatewayv2/waiter
-github.com/terraform-providers/terraform-provider-aws/aws/internal/service/batch/equivalency
-github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ec2/waiter
-github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ecs/waiter
-github.com/terraform-providers/terraform-provider-aws/aws/internal/service/eks/token
-github.com/terraform-providers/terraform-provider-aws/aws/internal/service/guardduty/waiter
-github.com/terraform-providers/terraform-provider-aws/aws/internal/service/iam/waiter
-github.com/terraform-providers/terraform-provider-aws/aws/internal/service/kms/waiter
-github.com/terraform-providers/terraform-provider-aws/aws/internal/service/secretsmanager/waiter
-github.com/terraform-providers/terraform-provider-aws/aws/internal/service/servicediscovery/waiter
-github.com/terraform-providers/terraform-provider-aws/aws/internal/service/workspaces/waiter
-# github.com/terraform-providers/terraform-provider-azurerm v1.44.1-0.20200911233120-57b2bfc9d42c => github.com/openshift/terraform-provider-azurerm v1.44.1-0.20210224232508-7509319df0f4
-## explicit
-github.com/terraform-providers/terraform-provider-azurerm/azurerm
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/azuresdkhacks
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/common
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/identity
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/location
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/locks
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/provider
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/resourceid
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/resourceproviders
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/sdk
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/advisor
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/advisor/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/analysisservices
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/analysisservices/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/analysisservices/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/schemaz
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appconfiguration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appconfiguration/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appconfiguration/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appconfiguration/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/applicationinsights
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/applicationinsights/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/applicationinsights/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/applicationinsights/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/attestation
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/attestation/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/attestation/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/attestation/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/authorization
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/authorization/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/authorization/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/automation
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/automation/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/automation/helper
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/automation/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/automation/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/azurestackhci
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/azurestackhci/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/azurestackhci/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/azurestackhci/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/batch
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/batch/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/batch/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/blueprints
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/blueprints/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/blueprints/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/blueprints/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/bot
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/bot/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/bot/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/bot/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cdn
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cdn/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cdn/deliveryruleactions
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cdn/deliveryruleconditions
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cdn/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cdn/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cdn/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cognitive
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cognitive/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cognitive/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cognitive/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/containers
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/containers/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/containers/kubernetes
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/containers/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/containers/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cosmos
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cosmos/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cosmos/common
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cosmos/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cosmos/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/cosmos/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/costmanagement
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/costmanagement/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/costmanagement/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/customproviders
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/customproviders/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/customproviders/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/customproviders/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/databasemigration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/databasemigration/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/databasemigration/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/databricks
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/databricks/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/databricks/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datafactory
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datafactory/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datafactory/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datafactory/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datafactory/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datalake
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datalake/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datalake/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datalake/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datashare
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datashare/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datashare/helper
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datashare/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/datashare/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/desktopvirtualization
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/desktopvirtualization/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/desktopvirtualization/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/desktopvirtualization/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/desktopvirtualization/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/devspace
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/devspace/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/devspace/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/devspace/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/devtestlabs
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/devtestlabs/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/devtestlabs/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/devtestlabs/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/digitaltwins
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/digitaltwins/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/digitaltwins/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/digitaltwins/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/dns
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/dns/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/dns/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/dns/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventgrid
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventgrid/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventgrid/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/firewall
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/firewall/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/firewall/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/firewall/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/frontdoor
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/frontdoor/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/frontdoor/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/frontdoor/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/frontdoor/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hdinsight
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hdinsight/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hdinsight/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hdinsight/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/healthcare
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/healthcare/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/healthcare/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hpccache
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hpccache/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hpccache/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hpccache/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hsm
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hsm/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hsm/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/hsm/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iotcentral
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iotcentral/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iotcentral/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iotcentral/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iothub
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iothub/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iothub/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iothub/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iottimeseriesinsights
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iottimeseriesinsights/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iottimeseriesinsights/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iottimeseriesinsights/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/iottimeseriesinsights/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/keyvault
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/keyvault/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/keyvault/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/keyvault/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/keyvault/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/kusto
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/kusto/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/kusto/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/lighthouse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/lighthouse/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/lighthouse/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/lighthouse/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/loadbalancer
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/loadbalancer/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/loadbalancer/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/loadbalancer/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/loganalytics
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/loganalytics/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/loganalytics/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/loganalytics/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/loganalytics/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/logic
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/logic/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/logic/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/logic/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/machinelearning
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/machinelearning/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/machinelearning/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/machinelearning/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/maintenance
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/maintenance/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/maintenance/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/maintenance/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managedapplications
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managedapplications/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managedapplications/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managedapplications/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managementgroup
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managementgroup/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managementgroup/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managementgroup/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/maps
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/maps/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/maps/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/maps/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mariadb
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mariadb/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mariadb/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mariadb/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/media
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/media/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/media/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mixedreality
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mixedreality/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mixedreality/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/monitor
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/monitor/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/monitor/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/monitor/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/msi
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/msi/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/msi/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/msi/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/msi/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mssql
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mssql/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mssql/helper
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mssql/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mssql/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mysql
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mysql/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mysql/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mysql/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/netapp
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/netapp/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/netapp/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/network
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/network/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/network/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/network/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/network/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/notificationhub
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/notificationhub/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/notificationhub/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/policy
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/policy/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/policy/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/policy/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/portal
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/portal/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/portal/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/portal/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/postgres
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/postgres/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/postgres/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/postgres/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/powerbi
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/powerbi/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/powerbi/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/powerbi/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/privatedns
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/privatedns/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/privatedns/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/privatedns/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/recoveryservices
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/recoveryservices/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/redis
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/redis/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/redis/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/redis/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/relay
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/relay/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/relay/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/relay/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/resource
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/resource/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/resource/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/resource/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/search
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/search/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/search/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/securitycenter
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/securitycenter/azuresdkhacks
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/securitycenter/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/securitycenter/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/securitycenter/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/securitycenter/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/sentinel
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/sentinel/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/sentinel/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/servicebus
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/servicebus/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/servicebus/migration
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/servicebus/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/servicebus/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/servicefabric
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/servicefabric/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/servicefabric/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/servicefabricmesh
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/servicefabricmesh/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/servicefabricmesh/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/signalr
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/signalr/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/signalr/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/springcloud
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/springcloud/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/springcloud/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/springcloud/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/sql
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/sql/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/sql/helper
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/sql/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/storage
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/storage/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/storage/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/storage/shim
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/storage/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/streamanalytics
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/streamanalytics/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/streamanalytics/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/streamanalytics/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/subscription
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/subscription/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/subscription/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/synapse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/synapse/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/synapse/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/synapse/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/trafficmanager
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/trafficmanager/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/trafficmanager/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/web
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/web/client
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/web/parse
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/web/validate
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/base64
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/schema
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/set
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/state
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/suppress
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts
-github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils
-github.com/terraform-providers/terraform-provider-azurerm/version
-# github.com/terraform-providers/terraform-provider-azurestack v0.10.0 => github.com/openshift/terraform-provider-azurestack v0.10.0-openshift
-## explicit
-github.com/terraform-providers/terraform-provider-azurestack/azurestack
-github.com/terraform-providers/terraform-provider-azurestack/azurestack/helpers/azure
-# github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
-## explicit
-github.com/terraform-providers/terraform-provider-google/google
-github.com/terraform-providers/terraform-provider-google/version
-# github.com/terraform-providers/terraform-provider-ignition/v2 v2.1.0 => github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.0
-## explicit
-github.com/terraform-providers/terraform-provider-ignition/v2/ignition
-# github.com/terraform-providers/terraform-provider-local v1.4.0
-## explicit
-github.com/terraform-providers/terraform-provider-local/local
-# github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
-## explicit
-github.com/terraform-providers/terraform-provider-random/random
-# github.com/tjfoc/gmsm v1.3.2
-github.com/tjfoc/gmsm/sm3
-# github.com/tombuildsstuff/giovanni v0.15.1
-github.com/tombuildsstuff/giovanni/storage/2019-12-12/blob/accounts
-github.com/tombuildsstuff/giovanni/storage/2019-12-12/blob/blobs
-github.com/tombuildsstuff/giovanni/storage/2019-12-12/blob/containers
-github.com/tombuildsstuff/giovanni/storage/2019-12-12/datalakestore/filesystems
-github.com/tombuildsstuff/giovanni/storage/2019-12-12/datalakestore/paths
-github.com/tombuildsstuff/giovanni/storage/2019-12-12/file/directories
-github.com/tombuildsstuff/giovanni/storage/2019-12-12/file/files
-github.com/tombuildsstuff/giovanni/storage/2019-12-12/file/shares
-github.com/tombuildsstuff/giovanni/storage/2019-12-12/queue/queues
-github.com/tombuildsstuff/giovanni/storage/2019-12-12/table/entities
-github.com/tombuildsstuff/giovanni/storage/2019-12-12/table/tables
-github.com/tombuildsstuff/giovanni/storage/accesscontrol
-github.com/tombuildsstuff/giovanni/storage/internal/endpoints
-github.com/tombuildsstuff/giovanni/storage/internal/metadata
-github.com/tombuildsstuff/giovanni/version
-# github.com/ulikunitz/xz v0.5.8 => github.com/ulikunitz/xz v0.5.7
-## explicit
+# github.com/ulikunitz/xz v0.5.8
+## explicit; go 1.12
 github.com/ulikunitz/xz
 github.com/ulikunitz/xz/internal/hash
 github.com/ulikunitz/xz/internal/xlog
 github.com/ulikunitz/xz/lzma
-# github.com/valyala/bytebufferpool v1.0.0
-github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.22.0
-github.com/valyala/fasthttp
-github.com/valyala/fasthttp/fasthttputil
-github.com/valyala/fasthttp/stackless
 # github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 ## explicit
 github.com/vincent-petithory/dataurl
-# github.com/vmihailenco/msgpack/v4 v4.3.12
-github.com/vmihailenco/msgpack/v4
-github.com/vmihailenco/msgpack/v4/codes
-# github.com/vmihailenco/tagparser v0.1.1
-github.com/vmihailenco/tagparser
-github.com/vmihailenco/tagparser/internal
-github.com/vmihailenco/tagparser/internal/parser
-# github.com/vmware/govmomi v0.24.0
-## explicit
+# github.com/vmware/govmomi v0.27.4
+## explicit; go 1.14
 github.com/vmware/govmomi
-github.com/vmware/govmomi/event
 github.com/vmware/govmomi/find
-github.com/vmware/govmomi/govc/cli
-github.com/vmware/govmomi/govc/flags
-github.com/vmware/govmomi/govc/importx
+github.com/vmware/govmomi/history
 github.com/vmware/govmomi/internal
-github.com/vmware/govmomi/license
 github.com/vmware/govmomi/list
 github.com/vmware/govmomi/nfc
 github.com/vmware/govmomi/object
@@ -2133,15 +747,19 @@ github.com/vmware/govmomi/pbm/methods
 github.com/vmware/govmomi/pbm/types
 github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
-github.com/vmware/govmomi/session/cache
 github.com/vmware/govmomi/session/keepalive
+github.com/vmware/govmomi/simulator
+github.com/vmware/govmomi/simulator/esx
+github.com/vmware/govmomi/simulator/internal
+github.com/vmware/govmomi/simulator/vpx
 github.com/vmware/govmomi/task
+github.com/vmware/govmomi/toolbox/hgfs
+github.com/vmware/govmomi/toolbox/process
+github.com/vmware/govmomi/toolbox/vix
+github.com/vmware/govmomi/units
 github.com/vmware/govmomi/vapi/internal
-github.com/vmware/govmomi/vapi/library
-github.com/vmware/govmomi/vapi/library/finder
 github.com/vmware/govmomi/vapi/rest
 github.com/vmware/govmomi/vapi/tags
-github.com/vmware/govmomi/vapi/vcenter
 github.com/vmware/govmomi/view
 github.com/vmware/govmomi/vim25
 github.com/vmware/govmomi/vim25/debug
@@ -2151,27 +769,12 @@ github.com/vmware/govmomi/vim25/progress
 github.com/vmware/govmomi/vim25/soap
 github.com/vmware/govmomi/vim25/types
 github.com/vmware/govmomi/vim25/xml
-github.com/vmware/govmomi/vmdk
-# github.com/wxnacy/wgo v1.0.4
-## explicit
-github.com/wxnacy/wgo/arrays
-# github.com/xanzy/ssh-agent v0.2.1
-github.com/xanzy/ssh-agent
-# github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
-github.com/xlab/treeprint
-# github.com/zclconf/go-cty v1.6.1
-## explicit
+# github.com/zclconf/go-cty v1.10.0
+## explicit; go 1.12
 github.com/zclconf/go-cty/cty
-github.com/zclconf/go-cty/cty/convert
-github.com/zclconf/go-cty/cty/function
-github.com/zclconf/go-cty/cty/function/stdlib
-github.com/zclconf/go-cty/cty/gocty
-github.com/zclconf/go-cty/cty/json
-github.com/zclconf/go-cty/cty/msgpack
 github.com/zclconf/go-cty/cty/set
-# github.com/zclconf/go-cty-yaml v1.0.2
-github.com/zclconf/go-cty-yaml
-# go.mongodb.org/mongo-driver v1.5.1
+# go.mongodb.org/mongo-driver v1.8.3
+## explicit; go 1.10
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
 go.mongodb.org/mongo-driver/bson/bsonoptions
@@ -2179,7 +782,8 @@ go.mongodb.org/mongo-driver/bson/bsonrw
 go.mongodb.org/mongo-driver/bson/bsontype
 go.mongodb.org/mongo-driver/bson/primitive
 go.mongodb.org/mongo-driver/x/bsonx/bsoncore
-# go.opencensus.io v0.22.5
+# go.opencensus.io v0.23.0
+## explicit; go 1.13
 go.opencensus.io
 go.opencensus.io/internal
 go.opencensus.io/internal/tagencoding
@@ -2197,122 +801,85 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5
-go.starlark.net/internal/compile
-go.starlark.net/internal/spell
-go.starlark.net/resolve
-go.starlark.net/starlark
-go.starlark.net/starlarkstruct
-go.starlark.net/syntax
-# golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-## explicit
+# golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
+## explicit; go 1.17
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
-golang.org/x/crypto/cast5
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
+golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
+golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/internal/subtle
-golang.org/x/crypto/md4
-golang.org/x/crypto/openpgp
-golang.org/x/crypto/openpgp/armor
-golang.org/x/crypto/openpgp/elgamal
-golang.org/x/crypto/openpgp/errors
-golang.org/x/crypto/openpgp/packet
-golang.org/x/crypto/openpgp/s2k
-golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/pkcs12
 golang.org/x/crypto/pkcs12/internal/rc2
-golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-golang.org/x/crypto/ssh/knownhosts
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/lint v0.0.0-20200302205851-738671d3881b
-## explicit
+# golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
+## explicit; go 1.11
 golang.org/x/lint
-golang.org/x/lint/golint
 # golang.org/x/mod v0.4.2
+## explicit; go 1.12
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20210520170846-37e1c6afe023
+# golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4
+## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
-golang.org/x/net/html
-golang.org/x/net/html/atom
-golang.org/x/net/html/charset
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-golang.org/x/net/internal/socks
 golang.org/x/net/internal/timeseries
-golang.org/x/net/proxy
-golang.org/x/net/publicsuffix
 golang.org/x/net/trace
 golang.org/x/net/websocket
-# golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
-## explicit
+# golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
+## explicit; go 1.11
 golang.org/x/oauth2
+golang.org/x/oauth2/authhandler
 golang.org/x/oauth2/google
+golang.org/x/oauth2/google/internal/externalaccount
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
-## explicit
+# golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
+## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
+# golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
+## explicit; go 1.17
 golang.org/x/term
-# golang.org/x/text v0.3.6
+# golang.org/x/text v0.3.7
+## explicit; go 1.17
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
-golang.org/x/text/encoding/htmlindex
 golang.org/x/text/encoding/internal
 golang.org/x/text/encoding/internal/identifier
-golang.org/x/text/encoding/japanese
-golang.org/x/text/encoding/korean
-golang.org/x/text/encoding/simplifiedchinese
-golang.org/x/text/encoding/traditionalchinese
-golang.org/x/text/encoding/unicode
-golang.org/x/text/internal/language
-golang.org/x/text/internal/language/compact
-golang.org/x/text/internal/tag
-golang.org/x/text/internal/utf8internal
-golang.org/x/text/language
-golang.org/x/text/runes
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
 # golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
+## explicit
 golang.org/x/time/rate
-# golang.org/x/tools v0.1.2
-golang.org/x/tools/cmd/goimports
-golang.org/x/tools/go/analysis
-golang.org/x/tools/go/analysis/passes/inspect
+# golang.org/x/tools v0.1.6-0.20210820212750-d4cc65f0b2ff
+## explicit; go 1.17
 golang.org/x/tools/go/ast/astutil
-golang.org/x/tools/go/ast/inspector
-golang.org/x/tools/go/buildutil
 golang.org/x/tools/go/gcexportdata
-golang.org/x/tools/go/internal/cgo
 golang.org/x/tools/go/internal/gcimporter
 golang.org/x/tools/go/internal/packagesdriver
-golang.org/x/tools/go/loader
 golang.org/x/tools/go/packages
-golang.org/x/tools/go/types/objectpath
-golang.org/x/tools/go/types/typeutil
 golang.org/x/tools/imports
-golang.org/x/tools/internal/analysisinternal
 golang.org/x/tools/internal/event
 golang.org/x/tools/internal/event/core
 golang.org/x/tools/internal/event/keys
@@ -2321,69 +888,42 @@ golang.org/x/tools/internal/fastwalk
 golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
-golang.org/x/tools/internal/lsp/fuzzy
 golang.org/x/tools/internal/packagesinternal
+golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 # golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+## explicit; go 1.11
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# gomodules.xyz/jsonpatch/v2 v2.1.0
+# gomodules.xyz/jsonpatch/v2 v2.2.0
+## explicit; go 1.12
 gomodules.xyz/jsonpatch/v2
-# google.golang.org/api v0.33.0 => google.golang.org/api v0.25.0
-## explicit
-google.golang.org/api/appengine/v1
-google.golang.org/api/bigquery/v2
-google.golang.org/api/bigtableadmin/v2
-google.golang.org/api/cloudbilling/v1
-google.golang.org/api/cloudbuild/v1
-google.golang.org/api/cloudfunctions/v1
-google.golang.org/api/cloudiot/v1
-google.golang.org/api/cloudkms/v1
+# google.golang.org/api v0.44.0
+## explicit; go 1.11
 google.golang.org/api/cloudresourcemanager/v1
-google.golang.org/api/cloudresourcemanager/v2beta1
-google.golang.org/api/composer/v1beta1
-google.golang.org/api/compute/v0.beta
 google.golang.org/api/compute/v1
-google.golang.org/api/container/v1
-google.golang.org/api/container/v1beta1
-google.golang.org/api/dataflow/v1b3
-google.golang.org/api/dataproc/v1
-google.golang.org/api/dataproc/v1beta2
 google.golang.org/api/dns/v1
-google.golang.org/api/dns/v1beta2
-google.golang.org/api/file/v1beta1
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
-google.golang.org/api/healthcare/v1
 google.golang.org/api/iam/v1
-google.golang.org/api/iamcredentials/v1
 google.golang.org/api/internal
 google.golang.org/api/internal/gensupport
+google.golang.org/api/internal/impersonate
 google.golang.org/api/internal/third_party/uritemplates
 google.golang.org/api/iterator
-google.golang.org/api/logging/v2
 google.golang.org/api/option
 google.golang.org/api/option/internaloption
-google.golang.org/api/pubsub/v1
-google.golang.org/api/runtimeconfig/v1beta1
-google.golang.org/api/servicemanagement/v1
-google.golang.org/api/servicenetworking/v1
 google.golang.org/api/serviceusage/v1
 google.golang.org/api/serviceusage/v1beta1
-google.golang.org/api/sourcerepo/v1
-google.golang.org/api/spanner/v1
-google.golang.org/api/sqladmin/v1beta4
 google.golang.org/api/storage/v1
-google.golang.org/api/storagetransfer/v1
 google.golang.org/api/transport/cert
 google.golang.org/api/transport/grpc
 google.golang.org/api/transport/http
 google.golang.org/api/transport/http/internal/propagation
+google.golang.org/api/transport/internal/dca
 # google.golang.org/appengine v1.6.7
+## explicit; go 1.11
 google.golang.org/appengine
-google.golang.org/appengine/datastore
-google.golang.org/appengine/datastore/internal/cloudkey
-google.golang.org/appengine/datastore/internal/cloudpb
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/app_identity
 google.golang.org/appengine/internal/base
@@ -2395,26 +935,20 @@ google.golang.org/appengine/internal/socket
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/socket
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
-## explicit
+# google.golang.org/genproto v0.0.0-20210831024726-fe130286e0e2
+## explicit; go 1.11
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/api/distribution
 google.golang.org/genproto/googleapis/api/label
 google.golang.org/genproto/googleapis/api/metric
 google.golang.org/genproto/googleapis/api/monitoredres
-google.golang.org/genproto/googleapis/bigtable/admin/v2
-google.golang.org/genproto/googleapis/bigtable/v2
-google.golang.org/genproto/googleapis/iam/v1
 google.golang.org/genproto/googleapis/longrunning
 google.golang.org/genproto/googleapis/monitoring/v3
-google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/googleapis/type/calendarperiod
-google.golang.org/genproto/googleapis/type/expr
-google.golang.org/genproto/protobuf/field_mask
-# google.golang.org/grpc v1.32.0 => google.golang.org/grpc v1.29.1
-## explicit
+# google.golang.org/grpc v1.46.0
+## explicit; go 1.14
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
@@ -2422,8 +956,10 @@ google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/base
 google.golang.org/grpc/balancer/grpclb
 google.golang.org/grpc/balancer/grpclb/grpc_lb_v1
+google.golang.org/grpc/balancer/grpclb/state
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
+google.golang.org/grpc/channelz
 google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
@@ -2435,44 +971,46 @@ google.golang.org/grpc/credentials/alts/internal/handshaker
 google.golang.org/grpc/credentials/alts/internal/handshaker/service
 google.golang.org/grpc/credentials/alts/internal/proto/grpc_gcp
 google.golang.org/grpc/credentials/google
-google.golang.org/grpc/credentials/internal
+google.golang.org/grpc/credentials/insecure
 google.golang.org/grpc/credentials/oauth
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
-google.golang.org/grpc/health
-google.golang.org/grpc/health/grpc_health_v1
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
+google.golang.org/grpc/internal/balancer/gracefulswitch
 google.golang.org/grpc/internal/balancerload
 google.golang.org/grpc/internal/binarylog
 google.golang.org/grpc/internal/buffer
 google.golang.org/grpc/internal/channelz
+google.golang.org/grpc/internal/credentials
 google.golang.org/grpc/internal/envconfig
+google.golang.org/grpc/internal/googlecloud
 google.golang.org/grpc/internal/grpclog
 google.golang.org/grpc/internal/grpcrand
 google.golang.org/grpc/internal/grpcsync
 google.golang.org/grpc/internal/grpcutil
+google.golang.org/grpc/internal/metadata
+google.golang.org/grpc/internal/pretty
+google.golang.org/grpc/internal/resolver
 google.golang.org/grpc/internal/resolver/dns
 google.golang.org/grpc/internal/resolver/passthrough
+google.golang.org/grpc/internal/resolver/unix
+google.golang.org/grpc/internal/serviceconfig
 google.golang.org/grpc/internal/status
 google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
+google.golang.org/grpc/internal/transport/networktype
 google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
-google.golang.org/grpc/naming
 google.golang.org/grpc/peer
-google.golang.org/grpc/reflection
-google.golang.org/grpc/reflection/grpc_reflection_v1alpha
 google.golang.org/grpc/resolver
 google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-google.golang.org/grpc/test/bufconn
-# google.golang.org/protobuf v1.27.1
-google.golang.org/protobuf/cmd/protoc-gen-go/internal_gengo
-google.golang.org/protobuf/compiler/protogen
+# google.golang.org/protobuf v1.28.0
+## explicit; go 1.11
 google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
@@ -2509,93 +1047,23 @@ google.golang.org/protobuf/types/known/fieldmaskpb
 google.golang.org/protobuf/types/known/structpb
 google.golang.org/protobuf/types/known/timestamppb
 google.golang.org/protobuf/types/known/wrapperspb
-google.golang.org/protobuf/types/pluginpb
 # gopkg.in/go-playground/validator.v9 v9.31.0
+## explicit
 gopkg.in/go-playground/validator.v9
 # gopkg.in/inf.v0 v0.9.1
+## explicit
 gopkg.in/inf.v0
-# gopkg.in/ini.v1 v1.61.0
+# gopkg.in/ini.v1 v1.66.2
 ## explicit
 gopkg.in/ini.v1
-# gopkg.in/jcmturner/aescts.v1 v1.0.1
-gopkg.in/jcmturner/aescts.v1
-# gopkg.in/jcmturner/dnsutils.v1 v1.0.1
-gopkg.in/jcmturner/dnsutils.v1
-# gopkg.in/jcmturner/gokrb5.v7 v7.5.0
-gopkg.in/jcmturner/gokrb5.v7/asn1tools
-gopkg.in/jcmturner/gokrb5.v7/client
-gopkg.in/jcmturner/gokrb5.v7/config
-gopkg.in/jcmturner/gokrb5.v7/credentials
-gopkg.in/jcmturner/gokrb5.v7/crypto
-gopkg.in/jcmturner/gokrb5.v7/crypto/common
-gopkg.in/jcmturner/gokrb5.v7/crypto/etype
-gopkg.in/jcmturner/gokrb5.v7/crypto/rfc3961
-gopkg.in/jcmturner/gokrb5.v7/crypto/rfc3962
-gopkg.in/jcmturner/gokrb5.v7/crypto/rfc4757
-gopkg.in/jcmturner/gokrb5.v7/crypto/rfc8009
-gopkg.in/jcmturner/gokrb5.v7/gssapi
-gopkg.in/jcmturner/gokrb5.v7/iana
-gopkg.in/jcmturner/gokrb5.v7/iana/addrtype
-gopkg.in/jcmturner/gokrb5.v7/iana/adtype
-gopkg.in/jcmturner/gokrb5.v7/iana/asnAppTag
-gopkg.in/jcmturner/gokrb5.v7/iana/chksumtype
-gopkg.in/jcmturner/gokrb5.v7/iana/errorcode
-gopkg.in/jcmturner/gokrb5.v7/iana/etypeID
-gopkg.in/jcmturner/gokrb5.v7/iana/flags
-gopkg.in/jcmturner/gokrb5.v7/iana/keyusage
-gopkg.in/jcmturner/gokrb5.v7/iana/msgtype
-gopkg.in/jcmturner/gokrb5.v7/iana/nametype
-gopkg.in/jcmturner/gokrb5.v7/iana/patype
-gopkg.in/jcmturner/gokrb5.v7/kadmin
-gopkg.in/jcmturner/gokrb5.v7/keytab
-gopkg.in/jcmturner/gokrb5.v7/krberror
-gopkg.in/jcmturner/gokrb5.v7/messages
-gopkg.in/jcmturner/gokrb5.v7/pac
-gopkg.in/jcmturner/gokrb5.v7/types
-# gopkg.in/jcmturner/rpc.v1 v1.1.0
-gopkg.in/jcmturner/rpc.v1/mstypes
-gopkg.in/jcmturner/rpc.v1/ndr
-# gopkg.in/natefinch/lumberjack.v2 v2.0.0
-gopkg.in/natefinch/lumberjack.v2
-# gopkg.in/resty.v1 v1.12.0
-gopkg.in/resty.v1
 # gopkg.in/yaml.v2 v2.4.0
-## explicit
+## explicit; go 1.15
 gopkg.in/yaml.v2
-# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-gopkg.in/yaml.v3
-# honnef.co/go/tools v0.0.1-2020.1.6
-honnef.co/go/tools/arg
-honnef.co/go/tools/cmd/staticcheck
-honnef.co/go/tools/code
-honnef.co/go/tools/config
-honnef.co/go/tools/deprecated
-honnef.co/go/tools/edit
-honnef.co/go/tools/facts
-honnef.co/go/tools/functions
-honnef.co/go/tools/go/types/typeutil
-honnef.co/go/tools/internal/cache
-honnef.co/go/tools/internal/passes/buildir
-honnef.co/go/tools/internal/renameio
-honnef.co/go/tools/internal/robustio
-honnef.co/go/tools/internal/sharedcheck
-honnef.co/go/tools/ir
-honnef.co/go/tools/ir/irutil
-honnef.co/go/tools/lint
-honnef.co/go/tools/lint/lintdsl
-honnef.co/go/tools/lint/lintutil
-honnef.co/go/tools/lint/lintutil/format
-honnef.co/go/tools/loader
-honnef.co/go/tools/pattern
-honnef.co/go/tools/printf
-honnef.co/go/tools/report
-honnef.co/go/tools/simple
-honnef.co/go/tools/staticcheck
-honnef.co/go/tools/stylecheck
-honnef.co/go/tools/unused
-honnef.co/go/tools/version
-# k8s.io/api v0.22.2
+# gopkg.in/yaml.v3 v3.0.1
 ## explicit
+gopkg.in/yaml.v3
+# k8s.io/api v0.23.0
+## explicit; go 1.16
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
 k8s.io/api/admissionregistration/v1
@@ -2609,6 +1077,7 @@ k8s.io/api/authentication/v1beta1
 k8s.io/api/authorization/v1
 k8s.io/api/authorization/v1beta1
 k8s.io/api/autoscaling/v1
+k8s.io/api/autoscaling/v2
 k8s.io/api/autoscaling/v2beta1
 k8s.io/api/autoscaling/v2beta2
 k8s.io/api/batch/v1
@@ -2625,7 +1094,7 @@ k8s.io/api/events/v1beta1
 k8s.io/api/extensions/v1beta1
 k8s.io/api/flowcontrol/v1alpha1
 k8s.io/api/flowcontrol/v1beta1
-k8s.io/api/imagepolicy/v1alpha1
+k8s.io/api/flowcontrol/v1beta2
 k8s.io/api/networking/v1
 k8s.io/api/networking/v1beta1
 k8s.io/api/node/v1
@@ -2642,24 +1111,21 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apiextensions-apiserver v0.21.0-rc.0
-## explicit
+# k8s.io/apiextensions-apiserver v0.23.0
+## explicit; go 1.16
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1
-# k8s.io/apimachinery v0.22.2
-## explicit
+# k8s.io/apimachinery v0.23.0
+## explicit; go 1.16
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
 k8s.io/apimachinery/pkg/api/resource
-k8s.io/apimachinery/pkg/api/validation
-k8s.io/apimachinery/pkg/api/validation/path
 k8s.io/apimachinery/pkg/apis/meta/internalversion
 k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme
 k8s.io/apimachinery/pkg/apis/meta/v1
 k8s.io/apimachinery/pkg/apis/meta/v1/unstructured
-k8s.io/apimachinery/pkg/apis/meta/v1/unstructured/unstructuredscheme
 k8s.io/apimachinery/pkg/apis/meta/v1/validation
 k8s.io/apimachinery/pkg/apis/meta/v1beta1
 k8s.io/apimachinery/pkg/conversion
@@ -2677,13 +1143,9 @@ k8s.io/apimachinery/pkg/runtime/serializer/versioning
 k8s.io/apimachinery/pkg/selection
 k8s.io/apimachinery/pkg/types
 k8s.io/apimachinery/pkg/util/cache
-k8s.io/apimachinery/pkg/util/clock
 k8s.io/apimachinery/pkg/util/diff
-k8s.io/apimachinery/pkg/util/duration
 k8s.io/apimachinery/pkg/util/errors
 k8s.io/apimachinery/pkg/util/framer
-k8s.io/apimachinery/pkg/util/httpstream
-k8s.io/apimachinery/pkg/util/httpstream/spdy
 k8s.io/apimachinery/pkg/util/intstr
 k8s.io/apimachinery/pkg/util/json
 k8s.io/apimachinery/pkg/util/managedfields
@@ -2691,7 +1153,6 @@ k8s.io/apimachinery/pkg/util/mergepatch
 k8s.io/apimachinery/pkg/util/naming
 k8s.io/apimachinery/pkg/util/net
 k8s.io/apimachinery/pkg/util/rand
-k8s.io/apimachinery/pkg/util/remotecommand
 k8s.io/apimachinery/pkg/util/runtime
 k8s.io/apimachinery/pkg/util/sets
 k8s.io/apimachinery/pkg/util/strategicpatch
@@ -2703,14 +1164,9 @@ k8s.io/apimachinery/pkg/util/yaml
 k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
-k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/cli-runtime v0.21.0-rc.0
-k8s.io/cli-runtime/pkg/genericclioptions
-k8s.io/cli-runtime/pkg/printers
-k8s.io/cli-runtime/pkg/resource
-# k8s.io/client-go v12.0.0+incompatible => k8s.io/client-go v0.22.0
-## explicit
+# k8s.io/client-go v12.0.0+incompatible => k8s.io/client-go v0.23.0
+## explicit; go 1.16
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1beta1
 k8s.io/client-go/applyconfigurations/apiserverinternal/v1alpha1
@@ -2718,6 +1174,7 @@ k8s.io/client-go/applyconfigurations/apps/v1
 k8s.io/client-go/applyconfigurations/apps/v1beta1
 k8s.io/client-go/applyconfigurations/apps/v1beta2
 k8s.io/client-go/applyconfigurations/autoscaling/v1
+k8s.io/client-go/applyconfigurations/autoscaling/v2
 k8s.io/client-go/applyconfigurations/autoscaling/v2beta1
 k8s.io/client-go/applyconfigurations/autoscaling/v2beta2
 k8s.io/client-go/applyconfigurations/batch/v1
@@ -2734,6 +1191,7 @@ k8s.io/client-go/applyconfigurations/events/v1beta1
 k8s.io/client-go/applyconfigurations/extensions/v1beta1
 k8s.io/client-go/applyconfigurations/flowcontrol/v1alpha1
 k8s.io/client-go/applyconfigurations/flowcontrol/v1beta1
+k8s.io/client-go/applyconfigurations/flowcontrol/v1beta2
 k8s.io/client-go/applyconfigurations/internal
 k8s.io/client-go/applyconfigurations/meta/v1
 k8s.io/client-go/applyconfigurations/networking/v1
@@ -2753,7 +1211,6 @@ k8s.io/client-go/applyconfigurations/storage/v1
 k8s.io/client-go/applyconfigurations/storage/v1alpha1
 k8s.io/client-go/applyconfigurations/storage/v1beta1
 k8s.io/client-go/discovery
-k8s.io/client-go/discovery/cached/disk
 k8s.io/client-go/dynamic
 k8s.io/client-go/kubernetes
 k8s.io/client-go/kubernetes/scheme
@@ -2768,6 +1225,7 @@ k8s.io/client-go/kubernetes/typed/authentication/v1beta1
 k8s.io/client-go/kubernetes/typed/authorization/v1
 k8s.io/client-go/kubernetes/typed/authorization/v1beta1
 k8s.io/client-go/kubernetes/typed/autoscaling/v1
+k8s.io/client-go/kubernetes/typed/autoscaling/v2
 k8s.io/client-go/kubernetes/typed/autoscaling/v2beta1
 k8s.io/client-go/kubernetes/typed/autoscaling/v2beta2
 k8s.io/client-go/kubernetes/typed/batch/v1
@@ -2784,6 +1242,7 @@ k8s.io/client-go/kubernetes/typed/events/v1beta1
 k8s.io/client-go/kubernetes/typed/extensions/v1beta1
 k8s.io/client-go/kubernetes/typed/flowcontrol/v1alpha1
 k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta1
+k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2
 k8s.io/client-go/kubernetes/typed/networking/v1
 k8s.io/client-go/kubernetes/typed/networking/v1beta1
 k8s.io/client-go/kubernetes/typed/node/v1
@@ -2807,24 +1266,10 @@ k8s.io/client-go/pkg/apis/clientauthentication/v1
 k8s.io/client-go/pkg/apis/clientauthentication/v1alpha1
 k8s.io/client-go/pkg/apis/clientauthentication/v1beta1
 k8s.io/client-go/pkg/version
-k8s.io/client-go/plugin/pkg/client/auth
-k8s.io/client-go/plugin/pkg/client/auth/azure
 k8s.io/client-go/plugin/pkg/client/auth/exec
-k8s.io/client-go/plugin/pkg/client/auth/gcp
-k8s.io/client-go/plugin/pkg/client/auth/oidc
-k8s.io/client-go/plugin/pkg/client/auth/openstack
 k8s.io/client-go/rest
 k8s.io/client-go/rest/watch
 k8s.io/client-go/restmapper
-k8s.io/client-go/scale
-k8s.io/client-go/scale/scheme
-k8s.io/client-go/scale/scheme/appsint
-k8s.io/client-go/scale/scheme/appsv1beta1
-k8s.io/client-go/scale/scheme/appsv1beta2
-k8s.io/client-go/scale/scheme/autoscalingv1
-k8s.io/client-go/scale/scheme/extensionsint
-k8s.io/client-go/scale/scheme/extensionsv1beta1
-k8s.io/client-go/third_party/forked/golang/template
 k8s.io/client-go/tools/auth
 k8s.io/client-go/tools/cache
 k8s.io/client-go/tools/clientcmd
@@ -2838,83 +1283,44 @@ k8s.io/client-go/tools/pager
 k8s.io/client-go/tools/record
 k8s.io/client-go/tools/record/util
 k8s.io/client-go/tools/reference
-k8s.io/client-go/tools/remotecommand
 k8s.io/client-go/tools/watch
 k8s.io/client-go/transport
-k8s.io/client-go/transport/spdy
 k8s.io/client-go/util/cert
 k8s.io/client-go/util/connrotation
-k8s.io/client-go/util/exec
 k8s.io/client-go/util/flowcontrol
 k8s.io/client-go/util/homedir
-k8s.io/client-go/util/jsonpath
 k8s.io/client-go/util/keyutil
-k8s.io/client-go/util/retry
 k8s.io/client-go/util/workqueue
-# k8s.io/component-base v0.21.0
+# k8s.io/component-base v0.23.0
+## explicit; go 1.16
 k8s.io/component-base/config
 k8s.io/component-base/config/v1alpha1
-k8s.io/component-base/version
 # k8s.io/klog v1.0.0
-## explicit
+## explicit; go 1.12
 k8s.io/klog
-# k8s.io/klog/v2 v2.9.0
-## explicit
+# k8s.io/klog/v2 v2.30.0
+## explicit; go 1.13
 k8s.io/klog/v2
-# k8s.io/kube-aggregator v0.21.0-rc.0
-k8s.io/kube-aggregator/pkg/apis/apiregistration
-k8s.io/kube-aggregator/pkg/apis/apiregistration/v1
-k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1
-k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset
-k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/scheme
-k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1
-k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1beta1
-# k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e
+# k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65
+## explicit; go 1.16
+k8s.io/kube-openapi/pkg/schemaconv
 k8s.io/kube-openapi/pkg/util/proto
-k8s.io/kube-openapi/pkg/util/proto/validation
-# k8s.io/kubectl v0.21.0 => k8s.io/kubectl v0.21.0-rc.0
-k8s.io/kubectl/pkg/apps
-k8s.io/kubectl/pkg/cmd/util
-k8s.io/kubectl/pkg/cmd/util/podcmd
-k8s.io/kubectl/pkg/describe
-k8s.io/kubectl/pkg/polymorphichelpers
-k8s.io/kubectl/pkg/scheme
-k8s.io/kubectl/pkg/util/certificate
-k8s.io/kubectl/pkg/util/deployment
-k8s.io/kubectl/pkg/util/event
-k8s.io/kubectl/pkg/util/fieldpath
-k8s.io/kubectl/pkg/util/interrupt
-k8s.io/kubectl/pkg/util/openapi
-k8s.io/kubectl/pkg/util/openapi/validation
-k8s.io/kubectl/pkg/util/podutils
-k8s.io/kubectl/pkg/util/qos
-k8s.io/kubectl/pkg/util/rbac
-k8s.io/kubectl/pkg/util/resource
-k8s.io/kubectl/pkg/util/slice
-k8s.io/kubectl/pkg/util/storage
-k8s.io/kubectl/pkg/util/templates
-k8s.io/kubectl/pkg/util/term
-k8s.io/kubectl/pkg/validation
-# k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9
-## explicit
+# k8s.io/utils v0.0.0-20211208161948-7d6a63dca704
+## explicit; go 1.12
 k8s.io/utils/buffer
-k8s.io/utils/exec
+k8s.io/utils/clock
+k8s.io/utils/clock/testing
 k8s.io/utils/integer
+k8s.io/utils/internal/third_party/forked/golang/net
+k8s.io/utils/net
 k8s.io/utils/pointer
 k8s.io/utils/trace
-# sigs.k8s.io/cluster-api-provider-aws v0.0.0 => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80
-## explicit
-sigs.k8s.io/cluster-api-provider-aws/pkg/apis
-sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1
-# sigs.k8s.io/cluster-api-provider-azure v0.0.0 => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f
-## explicit
-sigs.k8s.io/cluster-api-provider-azure/pkg/apis
-sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1
-# sigs.k8s.io/cluster-api-provider-openstack v0.0.0 => github.com/openshift/cluster-api-provider-openstack v0.0.0-20210302164104-8498241fa4bd
-## explicit
+# sigs.k8s.io/cluster-api-provider-openstack v0.0.0 => github.com/openshift/cluster-api-provider-openstack v0.0.0-20211111204942-611d320170af
+## explicit; go 1.16
 sigs.k8s.io/cluster-api-provider-openstack/pkg/apis
 sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1
-# sigs.k8s.io/controller-runtime v0.9.0-beta.1.0.20210512131817-ce2f0c92d77e => sigs.k8s.io/controller-runtime v0.9.0-alpha.1
+# sigs.k8s.io/controller-runtime v0.11.0
+## explicit; go 1.17
 sigs.k8s.io/controller-runtime
 sigs.k8s.io/controller-runtime/pkg/builder
 sigs.k8s.io/controller-runtime/pkg/cache
@@ -2934,7 +1340,9 @@ sigs.k8s.io/controller-runtime/pkg/handler
 sigs.k8s.io/controller-runtime/pkg/healthz
 sigs.k8s.io/controller-runtime/pkg/internal/controller
 sigs.k8s.io/controller-runtime/pkg/internal/controller/metrics
+sigs.k8s.io/controller-runtime/pkg/internal/httpserver
 sigs.k8s.io/controller-runtime/pkg/internal/log
+sigs.k8s.io/controller-runtime/pkg/internal/objectutil
 sigs.k8s.io/controller-runtime/pkg/internal/recorder
 sigs.k8s.io/controller-runtime/pkg/leaderelection
 sigs.k8s.io/controller-runtime/pkg/log
@@ -2953,8 +1361,8 @@ sigs.k8s.io/controller-runtime/pkg/webhook
 sigs.k8s.io/controller-runtime/pkg/webhook/admission
 sigs.k8s.io/controller-runtime/pkg/webhook/conversion
 sigs.k8s.io/controller-runtime/pkg/webhook/internal/metrics
-# sigs.k8s.io/controller-tools v0.7.0 => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
-## explicit
+# sigs.k8s.io/controller-tools v0.8.0 => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
+## explicit; go 1.13
 sigs.k8s.io/controller-tools/cmd/controller-gen
 sigs.k8s.io/controller-tools/pkg/crd
 sigs.k8s.io/controller-tools/pkg/crd/markers
@@ -2969,120 +1377,24 @@ sigs.k8s.io/controller-tools/pkg/schemapatcher
 sigs.k8s.io/controller-tools/pkg/schemapatcher/internal/yaml
 sigs.k8s.io/controller-tools/pkg/version
 sigs.k8s.io/controller-tools/pkg/webhook
-# sigs.k8s.io/kustomize/api v0.8.5
-sigs.k8s.io/kustomize/api/builtins
-sigs.k8s.io/kustomize/api/filesys
-sigs.k8s.io/kustomize/api/filters/annotations
-sigs.k8s.io/kustomize/api/filters/fieldspec
-sigs.k8s.io/kustomize/api/filters/filtersutil
-sigs.k8s.io/kustomize/api/filters/fsslice
-sigs.k8s.io/kustomize/api/filters/imagetag
-sigs.k8s.io/kustomize/api/filters/labels
-sigs.k8s.io/kustomize/api/filters/nameref
-sigs.k8s.io/kustomize/api/filters/namespace
-sigs.k8s.io/kustomize/api/filters/patchjson6902
-sigs.k8s.io/kustomize/api/filters/patchstrategicmerge
-sigs.k8s.io/kustomize/api/filters/prefixsuffix
-sigs.k8s.io/kustomize/api/filters/refvar
-sigs.k8s.io/kustomize/api/filters/replicacount
-sigs.k8s.io/kustomize/api/filters/valueadd
-sigs.k8s.io/kustomize/api/hasher
-sigs.k8s.io/kustomize/api/ifc
-sigs.k8s.io/kustomize/api/image
-sigs.k8s.io/kustomize/api/internal/accumulator
-sigs.k8s.io/kustomize/api/internal/conflict
-sigs.k8s.io/kustomize/api/internal/generators
-sigs.k8s.io/kustomize/api/internal/git
-sigs.k8s.io/kustomize/api/internal/kusterr
-sigs.k8s.io/kustomize/api/internal/plugins/builtinconfig
-sigs.k8s.io/kustomize/api/internal/plugins/builtinhelpers
-sigs.k8s.io/kustomize/api/internal/plugins/execplugin
-sigs.k8s.io/kustomize/api/internal/plugins/fnplugin
-sigs.k8s.io/kustomize/api/internal/plugins/loader
-sigs.k8s.io/kustomize/api/internal/plugins/utils
-sigs.k8s.io/kustomize/api/internal/target
-sigs.k8s.io/kustomize/api/internal/utils
-sigs.k8s.io/kustomize/api/internal/validate
-sigs.k8s.io/kustomize/api/internal/wrappy
-sigs.k8s.io/kustomize/api/konfig
-sigs.k8s.io/kustomize/api/konfig/builtinpluginconsts
-sigs.k8s.io/kustomize/api/krusty
-sigs.k8s.io/kustomize/api/kv
-sigs.k8s.io/kustomize/api/loader
-sigs.k8s.io/kustomize/api/provenance
-sigs.k8s.io/kustomize/api/provider
-sigs.k8s.io/kustomize/api/resid
-sigs.k8s.io/kustomize/api/resmap
-sigs.k8s.io/kustomize/api/resource
-sigs.k8s.io/kustomize/api/types
-# sigs.k8s.io/kustomize/kyaml v0.10.15
-sigs.k8s.io/kustomize/kyaml/comments
-sigs.k8s.io/kustomize/kyaml/errors
-sigs.k8s.io/kustomize/kyaml/ext
-sigs.k8s.io/kustomize/kyaml/fieldmeta
-sigs.k8s.io/kustomize/kyaml/filtersutil
-sigs.k8s.io/kustomize/kyaml/fn/runtime/container
-sigs.k8s.io/kustomize/kyaml/fn/runtime/exec
-sigs.k8s.io/kustomize/kyaml/fn/runtime/runtimeutil
-sigs.k8s.io/kustomize/kyaml/fn/runtime/starlark
-sigs.k8s.io/kustomize/kyaml/internal/forked/github.com/qri-io/starlib/util
-sigs.k8s.io/kustomize/kyaml/kio
-sigs.k8s.io/kustomize/kyaml/kio/filters
-sigs.k8s.io/kustomize/kyaml/kio/kioutil
-sigs.k8s.io/kustomize/kyaml/openapi
-sigs.k8s.io/kustomize/kyaml/openapi/kubernetesapi
-sigs.k8s.io/kustomize/kyaml/openapi/kubernetesapi/v1204
-sigs.k8s.io/kustomize/kyaml/openapi/kustomizationapi
-sigs.k8s.io/kustomize/kyaml/runfn
-sigs.k8s.io/kustomize/kyaml/sets
-sigs.k8s.io/kustomize/kyaml/yaml
-sigs.k8s.io/kustomize/kyaml/yaml/internal/k8sgen/pkg/labels
-sigs.k8s.io/kustomize/kyaml/yaml/internal/k8sgen/pkg/selection
-sigs.k8s.io/kustomize/kyaml/yaml/internal/k8sgen/pkg/util/errors
-sigs.k8s.io/kustomize/kyaml/yaml/internal/k8sgen/pkg/util/sets
-sigs.k8s.io/kustomize/kyaml/yaml/internal/k8sgen/pkg/util/validation
-sigs.k8s.io/kustomize/kyaml/yaml/internal/k8sgen/pkg/util/validation/field
-sigs.k8s.io/kustomize/kyaml/yaml/merge2
-sigs.k8s.io/kustomize/kyaml/yaml/merge3
-sigs.k8s.io/kustomize/kyaml/yaml/schema
-sigs.k8s.io/kustomize/kyaml/yaml/walk
-# sigs.k8s.io/structured-merge-diff/v4 v4.1.2
+# sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2
+## explicit; go 1.17
+sigs.k8s.io/json
+sigs.k8s.io/json/internal/golang/encoding/json
+# sigs.k8s.io/structured-merge-diff/v4 v4.2.0
+## explicit; go 1.13
 sigs.k8s.io/structured-merge-diff/v4/fieldpath
 sigs.k8s.io/structured-merge-diff/v4/schema
 sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
-# sigs.k8s.io/yaml v1.2.0
+# sigs.k8s.io/yaml v1.3.0
+## explicit; go 1.12
 sigs.k8s.io/yaml
-# cloud.google.com/go => cloud.google.com/go v0.57.0
-# github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.26.2-openshift-2
-# github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb
-# github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4
-# github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
-# github.com/hashicorp/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
-# github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210706141527-5240e42f012a
-# github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20210706141527-5240e42f012a
-# github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
-# github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c
-# github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
-# github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20210622193531-7d13cfbb1a8c
-# github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.44.1-0.20210224232508-7509319df0f4
-# github.com/terraform-providers/terraform-provider-azurestack => github.com/openshift/terraform-provider-azurestack v0.10.0-openshift
-# github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.0
-# k8s.io/client-go => k8s.io/client-go v0.22.0
-# k8s.io/kubectl => k8s.io/kubectl v0.21.0-rc.0
-# sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210121023454-5ffc5f422a80
+# github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20220128094204-28771f489634
+# github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20220128094204-28771f489634
+# github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20220128094204-28771f489634
 # sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f
-# sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.0.0-20210302164104-8498241fa4bd
-# sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.9.0-alpha.1
+# sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.0.0-20211111204942-611d320170af
+# github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
+# k8s.io/client-go => k8s.io/client-go v0.23.0
 # sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
-# github.com/IBM/vpc-go-sdk => github.com/IBM/vpc-go-sdk v0.7.0
-# github.com/apparentlymart/go-cidr => github.com/apparentlymart/go-cidr v1.0.1
-# github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.32.3
-# github.com/go-openapi/errors => github.com/go-openapi/errors v0.19.2
-# github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.4
-# github.com/go-openapi/validate => github.com/go-openapi/validate v0.19.8
-# github.com/hashicorp/go-plugin => github.com/hashicorp/go-plugin v1.2.2
-# github.com/ulikunitz/xz => github.com/ulikunitz/xz v0.5.7
-# google.golang.org/api => google.golang.org/api v0.25.0
-# google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
-# google.golang.org/grpc => google.golang.org/grpc v1.29.1

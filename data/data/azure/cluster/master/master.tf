@@ -6,12 +6,18 @@ locals {
   ip_v6_configuration_name = "pipConfig-v6"
 }
 
+data "azurerm_storage_account" "storage_account" {
+  name                = var.storage_account_name
+  resource_group_name = var.resource_group_name
+}
+
 resource "azurerm_network_interface" "master" {
   count = var.instance_count
 
-  name                = "${var.cluster_id}-master-${count.index}-nic"
-  location            = var.region
-  resource_group_name = var.resource_group_name
+  name                          = "${var.cluster_id}-master-${count.index}-nic"
+  location                      = var.region
+  resource_group_name           = var.resource_group_name
+  enable_accelerated_networking = var.vm_networking_type
 
   dynamic "ip_configuration" {
     for_each = [for ip in [
@@ -86,7 +92,7 @@ resource "azurerm_linux_virtual_machine" "master" {
 
   name                  = "${var.cluster_id}-master-${count.index}"
   location              = var.region
-  zone                  = var.availability_zones[count.index]
+  zone                  = var.availability_zones[count.index] != "" ? var.availability_zones[count.index] : null
   resource_group_name   = var.resource_group_name
   network_interface_ids = [element(azurerm_network_interface.master.*.id, count.index)]
   size                  = var.vm_size
@@ -96,6 +102,11 @@ resource "azurerm_linux_virtual_machine" "master" {
   # included here because it is required by the Azure ARM API.
   admin_password                  = "NotActuallyApplied!"
   disable_password_authentication = false
+  encryption_at_host_enabled      = var.encryption_at_host_enabled
+
+  additional_capabilities {
+    ultra_ssd_enabled = var.ultra_ssd_enabled
+  }
 
   identity {
     type         = "UserAssigned"
@@ -103,21 +114,21 @@ resource "azurerm_linux_virtual_machine" "master" {
   }
 
   os_disk {
-    name                 = "${var.cluster_id}-master-${count.index}_OSDisk" # os disk name needs to match cluster-api convention
-    caching              = "ReadOnly"
-    storage_account_type = var.os_volume_type
-    disk_size_gb         = var.os_volume_size
+    name                   = "${var.cluster_id}-master-${count.index}_OSDisk" # os disk name needs to match cluster-api convention
+    caching                = "ReadOnly"
+    storage_account_type   = var.os_volume_type
+    disk_size_gb           = var.os_volume_size
+    disk_encryption_set_id = var.disk_encryption_set_id
   }
 
   source_image_id = var.vm_image
 
-  //we don't provide a ssh key, because it is set with ignition. 
+  //we don't provide a ssh key, because it is set with ignition.
   //it is required to provide at least 1 auth method to deploy a linux vm
   computer_name = "${var.cluster_id}-master-${count.index}"
   custom_data   = base64encode(var.ignition)
 
   boot_diagnostics {
-    storage_account_uri = var.storage_account.primary_blob_endpoint
+    storage_account_uri = data.azurerm_storage_account.storage_account.primary_blob_endpoint
   }
 }
-

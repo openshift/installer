@@ -1,5 +1,7 @@
 package ovirt
 
+import "fmt"
+
 // MachinePool stores the configuration for a machine pool installed
 // on ovirt.
 type MachinePool struct {
@@ -39,6 +41,25 @@ type MachinePool struct {
 	// Hugepages is the size of a VM's hugepages to use in KiBs.
 	// +optional
 	Hugepages Hugepages `json:"hugepages,omitempty"`
+
+	// Clone makes sure that the disks are cloned from the template and are not linked.
+	// Defaults to true for high performance and server VM types, false for desktop types.
+	//
+	// Note: this option is not documented in the OpenShift documentation. This is intentional as it has sane defaults
+	// that shouldn't be changed unless needed for debugging or resolving issues in cooperation with Red Hat support.
+	//
+	// +optional
+	Clone *bool `json:"clone,omitempty"`
+
+	// Sparse indicates that sparse provisioning should be used and disks should be not preallocated.
+	// +optional
+	Sparse *bool `json:"sparse,omitempty"`
+
+	// Format is the disk format that the disks are in. Can be "cow" or "raw". "raw" disables several features that
+	// may be needed, such as incremental backups.
+	// +kubebuilder:validation:Enum="";raw;cow
+	// +optional
+	Format string `json:"format,omitempty"`
 }
 
 // Disk defines a VM disk
@@ -56,6 +77,9 @@ type CPU struct {
 	// Cores is the number of cores per socket.
 	// Total CPUs is (Sockets * Cores)
 	Cores int32 `json:"cores"`
+
+	// Threads is the number of CPU threads.
+	Threads int32 `json:"threads"`
 }
 
 // VMType defines the type of the VM, which will change the VM configuration,
@@ -102,6 +126,10 @@ const (
 // +kubebuilder:validation:Enum=2048;1048576
 type Hugepages int32
 
+func (h Hugepages) String() string {
+	return fmt.Sprintf("%d", h)
+}
+
 const (
 	// Hugepages2MB for using 2MB hugepages.
 	Hugepages2MB Hugepages = 2048
@@ -146,4 +174,8 @@ func (p *MachinePool) Set(required *MachinePool) {
 	if required.Hugepages > 0 {
 		p.Hugepages = required.Hugepages
 	}
+
+	p.Clone = required.Clone
+	p.Format = required.Format
+	p.Sparse = required.Sparse
 }

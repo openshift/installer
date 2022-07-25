@@ -11,7 +11,7 @@ locals {
 provider "aws" {
   region = var.aws_region
 
-  skip_region_validation = var.aws_skip_region_validation
+  skip_region_validation = true
 
   endpoints {
     ec2     = lookup(var.custom_endpoints, "ec2", null)
@@ -31,21 +31,22 @@ module "masters" {
 
   tags = local.tags
 
-  availability_zones       = var.aws_master_availability_zones
-  az_to_subnet_id          = module.vpc.az_to_private_subnet_id
-  instance_count           = var.master_count
-  master_sg_ids            = [module.vpc.master_sg_id]
-  root_volume_iops         = var.aws_master_root_volume_iops
-  root_volume_size         = var.aws_master_root_volume_size
-  root_volume_type         = var.aws_master_root_volume_type
-  root_volume_encrypted    = var.aws_master_root_volume_encrypted
-  root_volume_kms_key_id   = var.aws_master_root_volume_kms_key_id
-  target_group_arns        = module.vpc.aws_lb_target_group_arns
-  target_group_arns_length = module.vpc.aws_lb_target_group_arns_length
-  ec2_ami                  = var.aws_region == var.aws_ami_region ? var.aws_ami : aws_ami_copy.imported[0].id
-  user_data_ign            = var.ignition_master
-  publish_strategy         = var.aws_publish_strategy
-  iam_role_name            = var.aws_master_iam_role_name
+  availability_zones               = var.aws_master_availability_zones
+  az_to_subnet_id                  = module.vpc.az_to_private_subnet_id
+  instance_count                   = var.master_count
+  master_sg_ids                    = [module.vpc.master_sg_id]
+  root_volume_iops                 = var.aws_master_root_volume_iops
+  root_volume_size                 = var.aws_master_root_volume_size
+  root_volume_type                 = var.aws_master_root_volume_type
+  root_volume_encrypted            = var.aws_master_root_volume_encrypted
+  root_volume_kms_key_id           = var.aws_master_root_volume_kms_key_id
+  instance_metadata_authentication = var.aws_master_instance_metadata_authentication
+  target_group_arns                = module.vpc.aws_lb_target_group_arns
+  target_group_arns_length         = module.vpc.aws_lb_target_group_arns_length
+  ec2_ami                          = var.aws_region == var.aws_ami_region ? var.aws_ami : aws_ami_copy.imported[0].id
+  user_data_ign                    = var.ignition_master
+  publish_strategy                 = var.aws_publish_strategy
+  iam_role_name                    = var.aws_master_iam_role_name
 }
 
 module "iam" {
