@@ -108,6 +108,73 @@ func (ComparisonType) EnumDescriptor() ([]byte, []int) {
 	return file_google_monitoring_v3_common_proto_rawDescGZIP(), []int{0}
 }
 
+// The tier of service for a Workspace. Please see the
+// [service tiers
+// documentation](https://cloud.google.com/monitoring/workspaces/tiers) for more
+// details.
+//
+// Deprecated: Do not use.
+type ServiceTier int32
+
+const (
+	// An invalid sentinel value, used to indicate that a tier has not
+	// been provided explicitly.
+	ServiceTier_SERVICE_TIER_UNSPECIFIED ServiceTier = 0
+	// The Stackdriver Basic tier, a free tier of service that provides basic
+	// features, a moderate allotment of logs, and access to built-in metrics.
+	// A number of features are not available in this tier. For more details,
+	// see [the service tiers
+	// documentation](https://cloud.google.com/monitoring/workspaces/tiers).
+	ServiceTier_SERVICE_TIER_BASIC ServiceTier = 1
+	// The Stackdriver Premium tier, a higher, more expensive tier of service
+	// that provides access to all Stackdriver features, lets you use Stackdriver
+	// with AWS accounts, and has a larger allotments for logs and metrics. For
+	// more details, see [the service tiers
+	// documentation](https://cloud.google.com/monitoring/workspaces/tiers).
+	ServiceTier_SERVICE_TIER_PREMIUM ServiceTier = 2
+)
+
+// Enum value maps for ServiceTier.
+var (
+	ServiceTier_name = map[int32]string{
+		0: "SERVICE_TIER_UNSPECIFIED",
+		1: "SERVICE_TIER_BASIC",
+		2: "SERVICE_TIER_PREMIUM",
+	}
+	ServiceTier_value = map[string]int32{
+		"SERVICE_TIER_UNSPECIFIED": 0,
+		"SERVICE_TIER_BASIC":       1,
+		"SERVICE_TIER_PREMIUM":     2,
+	}
+)
+
+func (x ServiceTier) Enum() *ServiceTier {
+	p := new(ServiceTier)
+	*p = x
+	return p
+}
+
+func (x ServiceTier) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ServiceTier) Descriptor() protoreflect.EnumDescriptor {
+	return file_google_monitoring_v3_common_proto_enumTypes[1].Descriptor()
+}
+
+func (ServiceTier) Type() protoreflect.EnumType {
+	return &file_google_monitoring_v3_common_proto_enumTypes[1]
+}
+
+func (x ServiceTier) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ServiceTier.Descriptor instead.
+func (ServiceTier) EnumDescriptor() ([]byte, []int) {
+	return file_google_monitoring_v3_common_proto_rawDescGZIP(), []int{1}
+}
+
 // The `Aligner` specifies the operation that will be applied to the data
 // points in each alignment period in a time series. Except for
 // `ALIGN_NONE`, which specifies that no operation be applied, each alignment
@@ -308,11 +375,11 @@ func (x Aggregation_Aligner) String() string {
 }
 
 func (Aggregation_Aligner) Descriptor() protoreflect.EnumDescriptor {
-	return file_google_monitoring_v3_common_proto_enumTypes[1].Descriptor()
+	return file_google_monitoring_v3_common_proto_enumTypes[2].Descriptor()
 }
 
 func (Aggregation_Aligner) Type() protoreflect.EnumType {
-	return &file_google_monitoring_v3_common_proto_enumTypes[1]
+	return &file_google_monitoring_v3_common_proto_enumTypes[2]
 }
 
 func (x Aggregation_Aligner) Number() protoreflect.EnumNumber {
@@ -455,11 +522,11 @@ func (x Aggregation_Reducer) String() string {
 }
 
 func (Aggregation_Reducer) Descriptor() protoreflect.EnumDescriptor {
-	return file_google_monitoring_v3_common_proto_enumTypes[2].Descriptor()
+	return file_google_monitoring_v3_common_proto_enumTypes[3].Descriptor()
 }
 
 func (Aggregation_Reducer) Type() protoreflect.EnumType {
-	return &file_google_monitoring_v3_common_proto_enumTypes[2]
+	return &file_google_monitoring_v3_common_proto_enumTypes[3]
 }
 
 func (x Aggregation_Reducer) Number() protoreflect.EnumNumber {
@@ -620,7 +687,7 @@ func (*TypedValue_DistributionValue) isTypedValue_Value() {}
 //   of the previous interval.
 //
 // * For `CUMULATIVE` metrics, the start time and end time must specify a
-//   a non-zero interval, with subsequent points specifying the same
+//   non-zero interval, with subsequent points specifying the same
 //   start time and increasing end times, until an event resets the
 //   cumulative value to zero and sets a new start time for the following
 //   points. The new start time must be at least a millisecond after the
@@ -953,20 +1020,26 @@ var file_google_monitoring_v3_common_proto_rawDesc = []byte{
 	0x4f, 0x4d, 0x50, 0x41, 0x52, 0x49, 0x53, 0x4f, 0x4e, 0x5f, 0x4c, 0x45, 0x10, 0x04, 0x12, 0x11,
 	0x0a, 0x0d, 0x43, 0x4f, 0x4d, 0x50, 0x41, 0x52, 0x49, 0x53, 0x4f, 0x4e, 0x5f, 0x45, 0x51, 0x10,
 	0x05, 0x12, 0x11, 0x0a, 0x0d, 0x43, 0x4f, 0x4d, 0x50, 0x41, 0x52, 0x49, 0x53, 0x4f, 0x4e, 0x5f,
-	0x4e, 0x45, 0x10, 0x06, 0x42, 0xc3, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x6f, 0x6f,
-	0x67, 0x6c, 0x65, 0x2e, 0x6d, 0x6f, 0x6e, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x2e, 0x76,
-	0x33, 0x42, 0x0b, 0x43, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01,
-	0x5a, 0x3e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x67, 0x6f, 0x6c, 0x61, 0x6e, 0x67, 0x2e,
-	0x6f, 0x72, 0x67, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6f, 0x6f,
-	0x67, 0x6c, 0x65, 0x61, 0x70, 0x69, 0x73, 0x2f, 0x6d, 0x6f, 0x6e, 0x69, 0x74, 0x6f, 0x72, 0x69,
-	0x6e, 0x67, 0x2f, 0x76, 0x33, 0x3b, 0x6d, 0x6f, 0x6e, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x6e, 0x67,
-	0xaa, 0x02, 0x1a, 0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x43, 0x6c, 0x6f, 0x75, 0x64, 0x2e,
-	0x4d, 0x6f, 0x6e, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x2e, 0x56, 0x33, 0xca, 0x02, 0x1a,
-	0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x5c, 0x43, 0x6c, 0x6f, 0x75, 0x64, 0x5c, 0x4d, 0x6f, 0x6e,
-	0x69, 0x74, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x5c, 0x56, 0x33, 0xea, 0x02, 0x1d, 0x47, 0x6f, 0x6f,
-	0x67, 0x6c, 0x65, 0x3a, 0x3a, 0x43, 0x6c, 0x6f, 0x75, 0x64, 0x3a, 0x3a, 0x4d, 0x6f, 0x6e, 0x69,
-	0x74, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x3a, 0x3a, 0x56, 0x33, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x4e, 0x45, 0x10, 0x06, 0x2a, 0x61, 0x0a, 0x0b, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x54,
+	0x69, 0x65, 0x72, 0x12, 0x1c, 0x0a, 0x18, 0x53, 0x45, 0x52, 0x56, 0x49, 0x43, 0x45, 0x5f, 0x54,
+	0x49, 0x45, 0x52, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10,
+	0x00, 0x12, 0x16, 0x0a, 0x12, 0x53, 0x45, 0x52, 0x56, 0x49, 0x43, 0x45, 0x5f, 0x54, 0x49, 0x45,
+	0x52, 0x5f, 0x42, 0x41, 0x53, 0x49, 0x43, 0x10, 0x01, 0x12, 0x18, 0x0a, 0x14, 0x53, 0x45, 0x52,
+	0x56, 0x49, 0x43, 0x45, 0x5f, 0x54, 0x49, 0x45, 0x52, 0x5f, 0x50, 0x52, 0x45, 0x4d, 0x49, 0x55,
+	0x4d, 0x10, 0x02, 0x1a, 0x02, 0x18, 0x01, 0x42, 0xc3, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x6d, 0x6f, 0x6e, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x6e,
+	0x67, 0x2e, 0x76, 0x33, 0x42, 0x0b, 0x43, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74,
+	0x6f, 0x50, 0x01, 0x5a, 0x3e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x67, 0x6f, 0x6c, 0x61,
+	0x6e, 0x67, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x61, 0x70, 0x69, 0x73, 0x2f, 0x6d, 0x6f, 0x6e, 0x69, 0x74,
+	0x6f, 0x72, 0x69, 0x6e, 0x67, 0x2f, 0x76, 0x33, 0x3b, 0x6d, 0x6f, 0x6e, 0x69, 0x74, 0x6f, 0x72,
+	0x69, 0x6e, 0x67, 0xaa, 0x02, 0x1a, 0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x43, 0x6c, 0x6f,
+	0x75, 0x64, 0x2e, 0x4d, 0x6f, 0x6e, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x2e, 0x56, 0x33,
+	0xca, 0x02, 0x1a, 0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x5c, 0x43, 0x6c, 0x6f, 0x75, 0x64, 0x5c,
+	0x4d, 0x6f, 0x6e, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x5c, 0x56, 0x33, 0xea, 0x02, 0x1d,
+	0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x3a, 0x3a, 0x43, 0x6c, 0x6f, 0x75, 0x64, 0x3a, 0x3a, 0x4d,
+	0x6f, 0x6e, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x3a, 0x3a, 0x56, 0x33, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -981,26 +1054,27 @@ func file_google_monitoring_v3_common_proto_rawDescGZIP() []byte {
 	return file_google_monitoring_v3_common_proto_rawDescData
 }
 
-var file_google_monitoring_v3_common_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_google_monitoring_v3_common_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
 var file_google_monitoring_v3_common_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_google_monitoring_v3_common_proto_goTypes = []interface{}{
 	(ComparisonType)(0),               // 0: google.monitoring.v3.ComparisonType
-	(Aggregation_Aligner)(0),          // 1: google.monitoring.v3.Aggregation.Aligner
-	(Aggregation_Reducer)(0),          // 2: google.monitoring.v3.Aggregation.Reducer
-	(*TypedValue)(nil),                // 3: google.monitoring.v3.TypedValue
-	(*TimeInterval)(nil),              // 4: google.monitoring.v3.TimeInterval
-	(*Aggregation)(nil),               // 5: google.monitoring.v3.Aggregation
-	(*distribution.Distribution)(nil), // 6: google.api.Distribution
-	(*timestamppb.Timestamp)(nil),     // 7: google.protobuf.Timestamp
-	(*durationpb.Duration)(nil),       // 8: google.protobuf.Duration
+	(ServiceTier)(0),                  // 1: google.monitoring.v3.ServiceTier
+	(Aggregation_Aligner)(0),          // 2: google.monitoring.v3.Aggregation.Aligner
+	(Aggregation_Reducer)(0),          // 3: google.monitoring.v3.Aggregation.Reducer
+	(*TypedValue)(nil),                // 4: google.monitoring.v3.TypedValue
+	(*TimeInterval)(nil),              // 5: google.monitoring.v3.TimeInterval
+	(*Aggregation)(nil),               // 6: google.monitoring.v3.Aggregation
+	(*distribution.Distribution)(nil), // 7: google.api.Distribution
+	(*timestamppb.Timestamp)(nil),     // 8: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),       // 9: google.protobuf.Duration
 }
 var file_google_monitoring_v3_common_proto_depIdxs = []int32{
-	6, // 0: google.monitoring.v3.TypedValue.distribution_value:type_name -> google.api.Distribution
-	7, // 1: google.monitoring.v3.TimeInterval.end_time:type_name -> google.protobuf.Timestamp
-	7, // 2: google.monitoring.v3.TimeInterval.start_time:type_name -> google.protobuf.Timestamp
-	8, // 3: google.monitoring.v3.Aggregation.alignment_period:type_name -> google.protobuf.Duration
-	1, // 4: google.monitoring.v3.Aggregation.per_series_aligner:type_name -> google.monitoring.v3.Aggregation.Aligner
-	2, // 5: google.monitoring.v3.Aggregation.cross_series_reducer:type_name -> google.monitoring.v3.Aggregation.Reducer
+	7, // 0: google.monitoring.v3.TypedValue.distribution_value:type_name -> google.api.Distribution
+	8, // 1: google.monitoring.v3.TimeInterval.end_time:type_name -> google.protobuf.Timestamp
+	8, // 2: google.monitoring.v3.TimeInterval.start_time:type_name -> google.protobuf.Timestamp
+	9, // 3: google.monitoring.v3.Aggregation.alignment_period:type_name -> google.protobuf.Duration
+	2, // 4: google.monitoring.v3.Aggregation.per_series_aligner:type_name -> google.monitoring.v3.Aggregation.Aligner
+	3, // 5: google.monitoring.v3.Aggregation.cross_series_reducer:type_name -> google.monitoring.v3.Aggregation.Reducer
 	6, // [6:6] is the sub-list for method output_type
 	6, // [6:6] is the sub-list for method input_type
 	6, // [6:6] is the sub-list for extension type_name
@@ -1063,7 +1137,7 @@ func file_google_monitoring_v3_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_google_monitoring_v3_common_proto_rawDesc,
-			NumEnums:      3,
+			NumEnums:      4,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
