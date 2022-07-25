@@ -42,6 +42,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	}
 
 	allErrs = append(allErrs, validateProject(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validateNetworkProject(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateRegion(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
@@ -162,17 +163,38 @@ func validateProject(client API, ic *types.InstallConfig, fieldPath *field.Path)
 	return allErrs
 }
 
+func validateNetworkProject(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if ic.GCP.NetworkProjectID != "" {
+		projects, err := client.GetProjects(context.TODO())
+		if err != nil {
+			return append(allErrs, field.InternalError(fieldPath.Child("networkProjectID"), err))
+		}
+		if _, found := projects[ic.GCP.NetworkProjectID]; !found {
+			return append(allErrs, field.Invalid(fieldPath.Child("networkProjectID"), ic.GCP.NetworkProjectID, "invalid project ID"))
+		}
+	}
+
+	return allErrs
+}
+
 // validateNetworks checks that the user-provided VPC is in the project and the provided subnets are valid.
 func validateNetworks(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	networkProjectID := ic.GCP.NetworkProjectID
+	if networkProjectID == "" {
+		networkProjectID = ic.GCP.ProjectID
+	}
+
 	if ic.GCP.Network != "" {
-		_, err := client.GetNetwork(context.TODO(), ic.GCP.Network, ic.GCP.ProjectID)
+		_, err := client.GetNetwork(context.TODO(), ic.GCP.Network, networkProjectID)
 		if err != nil {
 			return append(allErrs, field.Invalid(fieldPath.Child("network"), ic.GCP.Network, err.Error()))
 		}
 
-		subnets, err := client.GetSubnetworks(context.TODO(), ic.GCP.Network, ic.GCP.ProjectID, ic.GCP.Region)
+		subnets, err := client.GetSubnetworks(context.TODO(), ic.GCP.Network, networkProjectID, ic.GCP.Region)
 		if err != nil {
 			return append(allErrs, field.Invalid(fieldPath.Child("network"), ic.GCP.Network, "failed to retrieve subnets"))
 		}

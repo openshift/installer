@@ -20,6 +20,12 @@ type Platform struct {
 	// +optional
 	Network string `json:"network,omitempty"`
 
+	// NetworkProjectID is currently unsupported.
+	// NetworkProjectID specifies which project the network and subnets exist in when
+	// they are not in the main ProjectID.
+	// +optional
+	NetworkProjectID string `json:"networkProjectID,omitempty"`
+
 	// ControlPlaneSubnet is an existing subnet where the control plane will be deployed.
 	// The value should be the name of the subnet.
 	// +optional
