@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -28,6 +29,7 @@ import (
 const manifestPath = "/etc/assisted/manifests"
 const hostnamesPath = "/etc/assisted/hostnames"
 const nmConnectionsPath = "/etc/assisted/network"
+const extraManifestPath = "/etc/assisted/extra-manifests"
 
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
@@ -81,6 +83,7 @@ func (a *Ignition) Name() string {
 func (a *Ignition) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&manifests.AgentManifests{},
+		&manifests.ExtraManifests{},
 		&tls.KubeAPIServerLBSignerCertKey{},
 		&tls.KubeAPIServerLocalhostSignerCertKey{},
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
@@ -96,7 +99,8 @@ func (a *Ignition) Dependencies() []asset.Asset {
 func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentManifests := &manifests.AgentManifests{}
 	agentConfigAsset := &agentconfig.Asset{}
-	dependencies.Get(agentManifests, agentConfigAsset)
+	extraManifests := &manifests.ExtraManifests{}
+	dependencies.Get(agentManifests, agentConfigAsset, extraManifests)
 
 	infraEnv := agentManifests.InfraEnv
 
@@ -198,6 +202,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	addMirrorData(&config, registriesConfig, registryCABundle)
 
 	addHostConfig(&config, agentConfigAsset)
+
+	addExtraManifests(&config, extraManifests)
 
 	a.Config = &config
 	return nil
@@ -321,6 +327,30 @@ func addHostConfig(config *igntypes.Config, agentConfig *agentconfig.Asset) erro
 		config.Storage.Files = append(config.Storage.Files, hostConfigFile)
 	}
 	return nil
+}
+
+func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraManifests) {
+
+	user := "root"
+	mode := 0644
+
+	config.Storage.Directories = append(config.Storage.Directories, igntypes.Directory{
+		Node: igntypes.Node{
+			Path: extraManifestPath,
+			User: igntypes.NodeUser{
+				Name: &user,
+			},
+			Overwrite: util.BoolToPtr(true),
+		},
+		DirectoryEmbedded1: igntypes.DirectoryEmbedded1{
+			Mode: &mode,
+		},
+	})
+
+	for _, file := range extraManifests.FileList {
+		extraFile := ignition.FileFromBytes(filepath.Join(extraManifestPath, filepath.Base(file.Filename)), user, mode, file.Data)
+		config.Storage.Files = append(config.Storage.Files, extraFile)
+	}
 }
 
 func retrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.NMStateConfig) (string, error) {

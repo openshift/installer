@@ -1,6 +1,10 @@
 package image
 
 import (
+	"encoding/base64"
+	"fmt"
+	"os"
+	"path"
 	"strings"
 	"testing"
 
@@ -10,9 +14,14 @@ import (
 	"github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
+	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -247,4 +256,133 @@ func TestAddHostConfig_Roles(t *testing.T) {
 		})
 	}
 
+}
+
+func TestIgnition_Generate(t *testing.T) {
+
+	// This patch currently allows testing the Ignition asset using the embedded resources.
+	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
+	workingDirectory, _ := os.Getwd()
+	os.Chdir(path.Join(workingDirectory, "../../../../data"))
+
+	cases := []struct {
+		name          string
+		overrideDeps  []asset.Asset
+		expectedError string
+		expectedFiles []string
+	}{
+		{
+			name:          "no-extra-manifests",
+			expectedFiles: []string{},
+		},
+		{
+			name: "default",
+			overrideDeps: []asset.Asset{
+				&manifests.ExtraManifests{
+					FileList: []*asset.File{
+						{
+							Filename: "openshift/test-configmap.yaml",
+						},
+					},
+				},
+			},
+			expectedFiles: []string{
+				"/etc/assisted/extra-manifests/test-configmap.yaml",
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			deps := buildIgnitionAssetDefaultDependencies()
+
+			for _, od := range tc.overrideDeps {
+				for i, d := range deps {
+					if d.Name() == od.Name() {
+						deps[i] = od
+						break
+					}
+				}
+			}
+
+			parents := asset.Parents{}
+			parents.Add(deps...)
+
+			ignitionAsset := &Ignition{}
+			err := ignitionAsset.Generate(parents)
+
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+
+				assert.Len(t, ignitionAsset.Config.Storage.Directories, 1)
+				assert.Equal(t, "/etc/assisted/extra-manifests", ignitionAsset.Config.Storage.Directories[0].Node.Path)
+
+				for _, f := range tc.expectedFiles {
+					found := false
+					for _, i := range ignitionAsset.Config.Storage.Files {
+						if i.Node.Path == f {
+							found = true
+							break
+						}
+					}
+					assert.True(t, found, fmt.Sprintf("Expected file %s not found", f))
+				}
+			}
+		})
+	}
+}
+
+// This test util create the minimum valid set of dependencies for the
+// Ignition asset
+func buildIgnitionAssetDefaultDependencies() []asset.Asset {
+	secretDataBytes, _ := base64.StdEncoding.DecodeString("super-secret")
+
+	return []asset.Asset{
+		&manifests.AgentManifests{
+			InfraEnv: &v1beta1.InfraEnv{
+				Spec: v1beta1.InfraEnvSpec{
+					SSHAuthorizedKey: "my-ssh-key",
+				},
+			},
+			ClusterImageSet: &hivev1.ClusterImageSet{
+				Spec: hivev1.ClusterImageSetSpec{
+					ReleaseImage: "registry.ci.openshift.org/origin/release:4.11",
+				},
+			},
+			PullSecret: &v1.Secret{
+				Data: map[string][]byte{
+					".dockerconfigjson": secretDataBytes,
+				},
+			},
+			AgentClusterInstall: &hiveext.AgentClusterInstall{
+				Spec: hiveext.AgentClusterInstallSpec{
+					APIVIP: "192.168.111.5",
+					ProvisionRequirements: hiveext.ProvisionRequirements{
+						ControlPlaneAgents: 3,
+						WorkerAgents:       5,
+					},
+				},
+			},
+		},
+		&agentconfig.Asset{
+			Config: &agent.Config{
+				Spec: agent.Spec{
+					RendezvousIP: "192.168.111.80",
+				},
+			},
+			File: &asset.File{
+				Filename: "/cluster-manifests/agent-config.yaml",
+			},
+		},
+		&manifests.ExtraManifests{},
+		&mirror.RegistriesConf{},
+		&mirror.CaBundle{},
+		&tls.KubeAPIServerLBSignerCertKey{},
+		&tls.KubeAPIServerLocalhostSignerCertKey{},
+		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
+		&tls.AdminKubeConfigSignerCertKey{},
+		&tls.AdminKubeConfigClientCertKey{},
+	}
 }
