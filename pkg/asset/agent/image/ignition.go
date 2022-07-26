@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -329,8 +330,25 @@ func addHostConfig(config *igntypes.Config, agentConfig *agentconfig.Asset) erro
 }
 
 func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraManifests) {
+
+	user := "root"
+	mode := 0644
+
+	config.Storage.Directories = append(config.Storage.Directories, igntypes.Directory{
+		Node: igntypes.Node{
+			Path: extraManifestPath,
+			User: igntypes.NodeUser{
+				Name: &user,
+			},
+			Overwrite: util.BoolToPtr(true),
+		},
+		DirectoryEmbedded1: igntypes.DirectoryEmbedded1{
+			Mode: &mode,
+		},
+	})
+
 	for _, file := range extraManifests.FileList {
-		extraFile := ignition.FileFromBytes(filepath.Join(extraManifestPath, filepath.Base(file.Filename)), "root", 0644, file.Data)
+		extraFile := ignition.FileFromBytes(filepath.Join(extraManifestPath, filepath.Base(file.Filename)), user, mode, file.Data)
 		config.Storage.Files = append(config.Storage.Files, extraFile)
 	}
 }

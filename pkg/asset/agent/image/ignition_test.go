@@ -272,6 +272,10 @@ func TestIgnition_Generate(t *testing.T) {
 		expectedFiles []string
 	}{
 		{
+			name:          "no-extra-manifests",
+			expectedFiles: []string{},
+		},
+		{
 			name: "default",
 			overrideDeps: []asset.Asset{
 				&manifests.ExtraManifests{
@@ -311,6 +315,9 @@ func TestIgnition_Generate(t *testing.T) {
 				assert.Equal(t, tc.expectedError, err.Error())
 			} else {
 				assert.NoError(t, err)
+
+				assert.Len(t, ignitionAsset.Config.Storage.Directories, 1)
+				assert.Equal(t, "/etc/assisted/extra-manifests", ignitionAsset.Config.Storage.Directories[0].Node.Path)
 
 				for _, f := range tc.expectedFiles {
 					found := false
