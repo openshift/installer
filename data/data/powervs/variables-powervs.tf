@@ -39,6 +39,12 @@ variable "powervs_cloud_instance_id" {
   description = "The cloud instance ID of your account"
 }
 
+variable "powervs_wait_for_vpc" {
+  type        = string
+  description = "The seconds wait for VPC creation, default is 60s"
+  default     = "60s"
+}
+
 ################################################################
 # Configure storage
 ################################################################

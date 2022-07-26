@@ -12,3 +12,8 @@ variable "vpc_zone" {
   type        = string
   description = "The IBM Cloud zone in which the VPC is created."
 }
+
+variable "wait_for_vpc" {
+  type        = string
+  description = "The seconds wait for VPC creation, default is 60s."
+}
