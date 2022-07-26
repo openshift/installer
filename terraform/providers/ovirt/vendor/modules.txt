@@ -131,7 +131,7 @@ github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/tfplugin6
 github.com/hashicorp/terraform-plugin-go/tfprotov6/internal/toproto
 github.com/hashicorp/terraform-plugin-go/tfprotov6/tf6server
 github.com/hashicorp/terraform-plugin-go/tftypes
-# github.com/hashicorp/terraform-plugin-log v0.6.0
+# github.com/hashicorp/terraform-plugin-log v0.7.0
 ## explicit; go 1.17
 github.com/hashicorp/terraform-plugin-log/internal/fieldutils
 github.com/hashicorp/terraform-plugin-log/internal/hclogutils
@@ -202,10 +202,10 @@ github.com/ovirt/go-ovirt
 # github.com/ovirt/go-ovirt-client-log/v3 v3.0.0
 ## explicit; go 1.16
 github.com/ovirt/go-ovirt-client-log/v3
-# github.com/ovirt/go-ovirt-client/v2 v2.0.0-alpha02
+# github.com/ovirt/go-ovirt-client/v2 v2.0.0-alpha03
 ## explicit; go 1.16
 github.com/ovirt/go-ovirt-client/v2
-# github.com/ovirt/terraform-provider-ovirt/v2 v2.1.0
+# github.com/ovirt/terraform-provider-ovirt/v2 v2.1.4
 ## explicit; go 1.16
 github.com/ovirt/terraform-provider-ovirt/v2
 github.com/ovirt/terraform-provider-ovirt/v2/internal/ovirt

@@ -2170,9 +2170,11 @@ func vmSerialConsoleConverter(object *ovirtsdk.Vm, v *vm, logger Logger, action 
 }
 
 func vmSoundcardEnabledConverter(object *ovirtsdk.Vm, v *vm) error {
+	// soundcard_enabled is excluded from the response from oVirt engine by default. Therefore, using the default bool value as return value
+	// see: http://ovirt.github.io/ovirt-engine-api-model/master/#services/disk/methods/get/parameters/all_content
 	soundcardEnabled, ok := object.SoundcardEnabled()
 	if !ok {
-		return newFieldNotFound("vm", "soundcard enabled")
+		v.soundcardEnabled = false
 	}
 	v.soundcardEnabled = soundcardEnabled
 	return nil
