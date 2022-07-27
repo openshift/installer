@@ -53,6 +53,7 @@ type TFVarsSources struct {
 	Publish               types.PublishingStrategy
 	AdditionalTrustBundle string
 	Architecture          types.Architecture
+	Proxy                 *types.Proxy
 }
 
 // TFVars generates AlibabaCloud-specific Terraform variables launching the cluster.
@@ -100,7 +101,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PublishStrategy:           string(sources.Publish),
 	}
 
-	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundle(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle)
+	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle, sources.Proxy)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create stub Ignition config for bootstrap")
 	}
