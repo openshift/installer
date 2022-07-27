@@ -149,8 +149,9 @@ github.com/hashicorp/terraform-plugin-docs v0.13.0 h1:6e+VIWsVGb6jYJewfzq2ok2smP
 github.com/hashicorp/terraform-plugin-docs v0.13.0/go.mod h1:W0oCmHAjIlTHBbvtppWHe8fLfZ2BznQbuv8+UD8OucQ=
 github.com/hashicorp/terraform-plugin-go v0.12.0 h1:6wW9mT1dSs0Xq4LR6HXj1heQ5ovr5GxXNJwkErZzpJw=
 github.com/hashicorp/terraform-plugin-go v0.12.0/go.mod h1:kwhmaWHNDvT1B3QiSJdAtrB/D4RaKSY/v3r2BuoWK4M=
-github.com/hashicorp/terraform-plugin-log v0.6.0 h1:/Vq78uSIdUSZ3iqDc9PESKtwt8YqNKN6u+khD+lLjuw=
 github.com/hashicorp/terraform-plugin-log v0.6.0/go.mod h1:p4R1jWBXRTvL4odmEkFfDdhUjHf9zcs/BCoNHAc7IK4=
+github.com/hashicorp/terraform-plugin-log v0.7.0 h1:SDxJUyT8TwN4l5b5/VkiTIaQgY6R+Y2BQ0sRZftGKQs=
+github.com/hashicorp/terraform-plugin-log v0.7.0/go.mod h1:p4R1jWBXRTvL4odmEkFfDdhUjHf9zcs/BCoNHAc7IK4=
 github.com/hashicorp/terraform-plugin-sdk/v2 v2.19.0 h1:7gDAcfto/C4Cjtf90SdukQshsxdMxJ/P69QxiF3digI=
 github.com/hashicorp/terraform-plugin-sdk/v2 v2.19.0/go.mod h1:/WYikYjhKB7c2j1HmXZhRsAARldRb4M38bLCLOhC3so=
 github.com/hashicorp/terraform-registry-address v0.0.0-20220623143253-7d51757b572c h1:D8aRO6+mTqHfLsK/BC3j5OAoogv1WLRWzY1AaTo3rBg=
@@ -228,10 +229,10 @@ github.com/ovirt/go-ovirt v0.0.0-20220427092237-114c47f2835c h1:jXRFpl7+W0YZj/fg
 github.com/ovirt/go-ovirt v0.0.0-20220427092237-114c47f2835c/go.mod h1:Zkdj9/rW6eyuw0uOeEns6O3pP5G2ak+bI/tgkQ/tEZI=
 github.com/ovirt/go-ovirt-client-log/v3 v3.0.0 h1:uvACVHYhYPMkNJrrgWiABcfELB6qoFfsDDUTbpb4Jv4=
 github.com/ovirt/go-ovirt-client-log/v3 v3.0.0/go.mod h1:chKKxCv4lRjxezrTG+EIhkWXGhDAWByglPVXh/iYdnQ=
-github.com/ovirt/go-ovirt-client/v2 v2.0.0-alpha02 h1:OYa0nbgahE0TfI30FHEa5ZXktP9biyIWoD50Nb60JiQ=
-github.com/ovirt/go-ovirt-client/v2 v2.0.0-alpha02/go.mod h1:Zi2RF2khEr+hcr3fCAf6WL7OEoUwUHeWWiob/WcEaDc=
-github.com/ovirt/terraform-provider-ovirt/v2 v2.1.0 h1:s8iNXVn3q75VeRiK2KzAix4NLNvW13EBlwLngzlzkgw=
-github.com/ovirt/terraform-provider-ovirt/v2 v2.1.0/go.mod h1:lARJqHsH4+Xg10sOZf9eDyCt9VgsJHo4xVWuTHUhhzU=
+github.com/ovirt/go-ovirt-client/v2 v2.0.0-alpha03 h1:a6cZ5CoFuUB+/bwgizPsSSrqevvIvzg/3s+4Ne6EN2I=
+github.com/ovirt/go-ovirt-client/v2 v2.0.0-alpha03/go.mod h1:Zi2RF2khEr+hcr3fCAf6WL7OEoUwUHeWWiob/WcEaDc=
+github.com/ovirt/terraform-provider-ovirt/v2 v2.1.4 h1:oUy4WYle8CpP4ffr5uWdJKp/Ft9iHZNNAvROULxUzE8=
+github.com/ovirt/terraform-provider-ovirt/v2 v2.1.4/go.mod h1:ohSCsq1QekAqU+66kuEtcUYeSwwrwHpPk3szvKJwOXk=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
