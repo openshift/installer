@@ -135,7 +135,7 @@ func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 			Filename: RegistriesConfFilename,
 			Data:     []byte(defaultRegistriesConf),
 		}
-		return nil
+		return i.finish()
 	}
 
 	registries := sysregistriesv2.V2RegistriesConf{
@@ -198,7 +198,7 @@ func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
 
 func (i *RegistriesConf) finish() error {
 
-	config, err := extractLocationMirrorDataFromRegistries(string(i.File.Data))
+	config, err := extractLocationMirrorDataFromRegistries(i.File.Data)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("failed to parse mirrors in %s", RegistriesConfFilename))
 	}
@@ -209,31 +209,19 @@ func (i *RegistriesConf) finish() error {
 }
 
 // From assisted-service pkg/mirrorregistries/generator.go
-func extractLocationMirrorDataFromRegistries(registriesConfToml string) ([]RegistriesConfig, error) {
-	tomlTree, err := toml.Load(registriesConfToml)
+func extractLocationMirrorDataFromRegistries(registriesConfToml []byte) ([]RegistriesConfig, error) {
+	registries := sysregistriesv2.V2RegistriesConf{}
+	err := toml.Unmarshal(registriesConfToml, &registries)
 	if err != nil {
 		return nil, err
 	}
 
-	registriesTree, ok := tomlTree.Get("registry").([]*toml.Tree)
-	if !ok {
-		return nil, fmt.Errorf("failed to cast registry key to toml Tree")
-	}
-	registriesConfList := make([]RegistriesConfig, len(registriesTree))
-	for i, registryTree := range registriesTree {
-		location, ok := registryTree.Get("location").(string)
-		if !ok {
-			return nil, fmt.Errorf("failed to cast location key to string")
+	registriesConfList := make([]RegistriesConfig, len(registries.Registries))
+	for i, reg := range registries.Registries {
+		registriesConfList[i] = RegistriesConfig{
+			Location: reg.Location,
+			Mirror:   reg.Mirrors[0].Location,
 		}
-		mirrorTree, ok := registryTree.Get("mirror").([]*toml.Tree)
-		if !ok {
-			return nil, fmt.Errorf("failed to cast mirror key to toml Tree")
-		}
-		mirror, ok := mirrorTree[0].Get("location").(string)
-		if !ok {
-			return nil, fmt.Errorf("failed to cast mirror location key to string")
-		}
-		registriesConfList[i] = RegistriesConfig{Location: location, Mirror: mirror}
 	}
 
 	return registriesConfList, nil
