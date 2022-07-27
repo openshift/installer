@@ -2,12 +2,17 @@ package ibmcloud
 
 import (
 	"net/http"
+	"reflect"
 	"strings"
 
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
 )
 
-const securityGroupTypeName = "security group"
+const (
+	securityGroupTypeName     = "security group"
+	securityGroupRuleTypeName = "security group rule"
+)
 
 // listSecurityGroups lists security groups in the vpc
 func (o *ClusterUninstaller) listSecurityGroups() (cloudResources, error) {
@@ -37,10 +42,92 @@ func (o *ClusterUninstaller) listSecurityGroups() (cloudResources, error) {
 	return cloudResources{}.insert(result...), nil
 }
 
+func (o *ClusterUninstaller) listSecurityGroupRules(securityGroupID string) (cloudResources, error) {
+	o.Logger.Debugf("Listing security group rules for %q", securityGroupID)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
+	options := o.vpcSvc.NewListSecurityGroupRulesOptions(securityGroupID)
+	resources, _, err := o.vpcSvc.ListSecurityGroupRulesWithContext(ctx, options)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to list security group rules for %q", securityGroupID)
+	}
+
+	result := []cloudResource{}
+	for _, securityGroupRule := range resources.Rules {
+		switch reflect.TypeOf(securityGroupRule).String() {
+
+		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll":
+			{
+				rule := securityGroupRule.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll)
+				result = append(result, cloudResource{
+					key:      *rule.ID,
+					name:     *rule.ID,
+					status:   "",
+					typeName: securityGroupRuleTypeName,
+					id:       *rule.ID,
+				})
+			}
+		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
+			{
+				rule := securityGroupRule.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp)
+				result = append(result, cloudResource{
+					key:      *rule.ID,
+					name:     *rule.ID,
+					status:   "",
+					typeName: securityGroupRuleTypeName,
+					id:       *rule.ID,
+				})
+			}
+		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp":
+			{
+				rule := securityGroupRule.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
+				result = append(result, cloudResource{
+					key:      *rule.ID,
+					name:     *rule.ID,
+					status:   "",
+					typeName: securityGroupRuleTypeName,
+					id:       *rule.ID,
+				})
+			}
+		default:
+			{
+				o.Logger.Debugf("Unknown rule: %q", securityGroupRule)
+			}
+		}
+	}
+
+	return cloudResources{}.insert(result...), nil
+}
+
 func (o *ClusterUninstaller) deleteSecurityGroup(item cloudResource) error {
 	o.Logger.Debugf("Deleting security group %q", item.name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
+
+	found, err := o.listSecurityGroupRules(item.id)
+	if err != nil {
+		return err
+	}
+
+	rules := o.insertPendingItems(securityGroupRuleTypeName, found.list())
+
+	for _, rule := range rules {
+		if _, ok := found[rule.key]; !ok {
+			// This item has finished deletion.
+			o.deletePendingItems(rule.typeName, []cloudResource{rule})
+			o.Logger.Infof("Deleted security group rule %q", rule.name)
+			continue
+		}
+		err = o.deleteSecurityGroupRule(rule, item.id)
+		if err != nil {
+			o.errorTracker.suppressWarning(rule.key, err, o.Logger)
+		}
+	}
+
+	if rules = o.getPendingItems(securityGroupRuleTypeName); len(rules) > 0 {
+		return errors.Errorf("%d items pending", len(rules))
+	}
 
 	options := o.vpcSvc.NewDeleteSecurityGroupOptions(item.id)
 	details, err := o.vpcSvc.DeleteSecurityGroupWithContext(ctx, options)
@@ -54,6 +141,27 @@ func (o *ClusterUninstaller) deleteSecurityGroup(item cloudResource) error {
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
 		return errors.Wrapf(err, "Failed to delete security group %s", item.name)
+	}
+
+	return nil
+}
+
+func (o *ClusterUninstaller) deleteSecurityGroupRule(item cloudResource, securityGroupID string) error {
+	o.Logger.Debugf("Deleting security group rule %q", item.name)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
+	options := o.vpcSvc.NewDeleteSecurityGroupRuleOptions(securityGroupID, item.id)
+	details, err := o.vpcSvc.DeleteSecurityGroupRuleWithContext(ctx, options)
+	if err != nil && details != nil && details.StatusCode == http.StatusNotFound {
+		// The resource is gone
+		o.deletePendingItems(item.typeName, []cloudResource{item})
+		o.Logger.Infof("Deleted security group rule %q", item.name)
+		return nil
+	}
+
+	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
+		return errors.Wrapf(err, "Failed to delete security group rule %s", item.name)
 	}
 
 	return nil
