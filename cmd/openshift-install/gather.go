@@ -120,24 +120,23 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 		for _, stage := range platformstages.StagesForPlatform(config.Config.Platform.Name()) {
 			stageBootstrap, stagePort, stageMasters, err := stage.ExtractHostAddresses(directory, config.Config)
 			if err != nil {
-				return "", err
-			}
-			if stageBootstrap != "" {
-				bootstrap = stageBootstrap
-			}
-			if stagePort != 0 {
-				port = stagePort
-			}
-			if len(stageMasters) > 0 {
-				masters = stageMasters
+				logrus.Warnf("Failed to extract host addresses: %s", err.Error())
+			} else {
+				if stageBootstrap != "" {
+					bootstrap = stageBootstrap
+				}
+				if stagePort != 0 {
+					port = stagePort
+				}
+				if len(stageMasters) > 0 {
+					masters = stageMasters
+				}
 			}
 		}
+	}
 
-		if bootstrap == "" || len(masters) == 0 {
-			return "", errors.New("bootstrap host address and at least one control plane host address must be provided")
-		}
-	} else if bootstrap == "" || len(masters) == 0 {
-		return "", errors.New("must provide both bootstrap host address and at least one control plane host address when providing one")
+	if bootstrap == "" {
+		return "", errors.New("must provide bootstrap host address")
 	}
 
 	return gatherBootstrap(bootstrap, port, masters, directory)
