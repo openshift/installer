@@ -2,7 +2,7 @@
 
 The upstream project that provides management of bare metal hosts is [metal.equinix.com][equinix-metal].
 
-The steps for performing a UPI-based install are outlined here. Several [Terraform][upi-metal-example] templates are provided as an example to help model your own.
+The steps for performing a UPI-based install are maintained in the official [openshift docs][openshift-upi-metal].
 
 ## Table of contents
 
@@ -226,8 +226,6 @@ INFO Waiting up to 30m0s for the cluster to initialize...
 
 ## Example Bare-Metal UPI deployment
 
-Terraform [templates][upi-metal-example] provides an example of using OpenShift Installer to create an bare-metal UPI OpenShift cluster on [Equinix Metal][equinix-metal].
-
 ### Overview
 
 * Compute: Uses [Equinix Metal][equinix-metal] to deploy bare-metal machines.
@@ -238,21 +236,13 @@ Terraform [templates][upi-metal-example] provides an example of using OpenShift 
     Uses AWS [Route53](aws-route53) to configure the all the DNS records.
     Uses Round-Robin DNS [RRDNS][rrdns] in place of load balancing solutions.
 
-Refer to the pre-requisites for using the example [here][upi-metal-example-pre-req]
+Refer to the pre-requisites for UPI bare-metal installations [here][upi-metal-prereqs].
 
 ### Creating the cluster
 
 #### Installer assets
 
 Use the OpenShift Installer to create [Ignition configs](#getting-ignition-configs-for-machines) that will be used to create bootstrap, control plane and worker machines.
-
-#### Terraform variable file
-
-Use the [example][upi-metal-example-tfvar] Terraform variable file to create terraform variable file, and edit the `tfvars` file on your favorite editor.
-
-```sh
-cp terraform.tfvars{.example,}
-```
 
 #### Creating resources
 
@@ -329,3 +319,5 @@ terraform destroy -auto-approve
 [upi-metal-example-pre-req]: ../../../upi/metal/README.md#pre-requisites
 [upi-metal-example-tfvar]: ../../../upi/metal/terraform.tfvars.example
 [upi-metal-example]: ../../../upi/metal/README.md
+[openshift-upi-metal]: https://docs.openshift.com/container-platform/latest/installing/installing_bare_metal/installing-bare-metal.html
+[upi-metal-prereqs]: https://docs.openshift.com/container-platform/latest/installing/installing_bare_metal/installing-bare-metal.html#prerequisites
