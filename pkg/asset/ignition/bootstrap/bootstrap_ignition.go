@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/pem"
 	"fmt"
+	"strings"
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/openshift/installer/pkg/asset/ignition"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/vincent-petithory/dataurl"
 )
 
@@ -33,9 +35,9 @@ func parseCertificateBundle(userCA []byte) ([]igntypes.Resource, error) {
 	return carefs, nil
 }
 
-// GenerateIgnitionShimWithCertBundle is used to generate an ignition file that contains a user ca bundle
-// in its Security section.
-func GenerateIgnitionShimWithCertBundle(bootstrapConfigURL string, userCA string) ([]byte, error) {
+// GenerateIgnitionShimWithCertBundleAndProxy is used to generate an ignition file that contains both a user ca bundle
+// in its Security section and proxy settings (if any).
+func GenerateIgnitionShimWithCertBundleAndProxy(bootstrapConfigURL string, userCA string, proxy *types.Proxy) ([]byte, error) {
 	ign := igntypes.Config{
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
@@ -59,10 +61,35 @@ func GenerateIgnitionShimWithCertBundle(bootstrapConfigURL string, userCA string
 		}
 	}
 
+	if proxy != nil {
+		ign.Ignition.Proxy = ignitionProxy(proxy)
+	}
+
 	data, err := ignition.Marshal(ign)
 	if err != nil {
 		return nil, err
 	}
 
 	return data, nil
+}
+
+func ignitionProxy(proxy *types.Proxy) igntypes.Proxy {
+	var ignProxy igntypes.Proxy
+	if proxy == nil {
+		return ignProxy
+	}
+	if httpProxy := proxy.HTTPProxy; httpProxy != "" {
+		ignProxy.HTTPProxy = &httpProxy
+	}
+	if httpsProxy := proxy.HTTPSProxy; httpsProxy != "" {
+		ignProxy.HTTPSProxy = &httpsProxy
+	}
+	ignProxy.NoProxy = make([]igntypes.NoProxyItem, 0, len(proxy.NoProxy))
+	if noProxy := proxy.NoProxy; noProxy != "" {
+		noProxySplit := strings.Split(noProxy, ",")
+		for _, p := range noProxySplit {
+			ignProxy.NoProxy = append(ignProxy.NoProxy, igntypes.NoProxyItem(p))
+		}
+	}
+	return ignProxy
 }
