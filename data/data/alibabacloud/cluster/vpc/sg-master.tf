@@ -212,12 +212,12 @@ resource "alicloud_security_group_rule" "sg_rule_master_ingress_kube_controller_
 }
 
 resource "alicloud_security_group_rule" "sg_rule_master_ingress_kubelet_insecure" {
-  type                     = "ingress"
-  ip_protocol              = "tcp"
-  policy                   = "accept"
-  port_range               = "10250/10250"
-  security_group_id        = alicloud_security_group.sg_master.id
-  source_security_group_id = alicloud_security_group.sg_worker.id
+  type              = "ingress"
+  ip_protocol       = "tcp"
+  policy            = "accept"
+  port_range        = "10250/10250"
+  security_group_id = alicloud_security_group.sg_master.id
+  cidr_ip           = var.vpc_cidr_block
 }
 
 resource "alicloud_security_group_rule" "sg_rule_master_ingress_kubelet_insecure_from_worker" {
