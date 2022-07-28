@@ -193,12 +193,12 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 func TestAddHostConfig_Roles(t *testing.T) {
 	cases := []struct {
 		Name                            string
-		agentConfig                     *agentconfig.Asset
+		agentConfig                     *agentconfig.AgentConfig
 		expectedNumberOfHostConfigFiles int
 	}{
 		{
 			Name: "one-host-role-defined",
-			agentConfig: &agentconfig.Asset{
+			agentConfig: &agentconfig.AgentConfig{
 				Config: &agent.Config{
 					Spec: agent.Spec{
 						Hosts: []agent.Host{
@@ -213,7 +213,7 @@ func TestAddHostConfig_Roles(t *testing.T) {
 		},
 		{
 			Name: "multiple-host-roles-defined",
-			agentConfig: &agentconfig.Asset{
+			agentConfig: &agentconfig.AgentConfig{
 				Config: &agent.Config{
 					Spec: agent.Spec{
 						Hosts: []agent.Host{
@@ -366,7 +366,7 @@ func buildIgnitionAssetDefaultDependencies() []asset.Asset {
 				},
 			},
 		},
-		&agentconfig.Asset{
+		&agentconfig.AgentConfig{
 			Config: &agent.Config{
 				Spec: agent.Spec{
 					RendezvousIP: "192.168.111.80",

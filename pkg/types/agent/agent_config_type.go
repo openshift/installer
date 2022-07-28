@@ -30,5 +30,6 @@ type Host struct {
 	Role            string                    `json:"role,omitempty"`
 	RootDeviceHints baremetal.RootDeviceHints `json:"rootDeviceHints,omitempty"`
 	// list of interfaces and mac addresses
-	Interfaces []*aiv1beta1.Interface `json:"interfaces,omitempty"`
+	Interfaces    []*aiv1beta1.Interface `json:"interfaces,omitempty"`
+	NetworkConfig aiv1beta1.NetConfig    `json:"networkConfig,omitempty"`
 }
