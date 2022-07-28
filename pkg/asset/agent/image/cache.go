@@ -48,7 +48,7 @@ func GetFileFromCache(fileName string, cacheDir string) (string, error) {
 }
 
 // GetCacheDir returns a local path of the cache, where the installer should put the data:
-// <user_cache_dir>/openshift-installer/<dataType>_cache
+// <user_cache_dir>/agent/<dataType>_cache
 // If the directory doesn't exist, it will be automatically created.
 func GetCacheDir(dataType string) (string, error) {
 	if dataType == "" {
