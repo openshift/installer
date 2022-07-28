@@ -131,6 +131,7 @@ aliases:
     - prestist
     - marmijo
     - RishabhSaini
+    - c4rt0
   coreos-reviewers:
     - cgwalters
     - bgilbert
@@ -150,3 +151,4 @@ aliases:
     - prestist
     - marmijo
     - RishabhSaini
+    - c4rt0
