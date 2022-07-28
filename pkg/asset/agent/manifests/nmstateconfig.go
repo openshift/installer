@@ -21,7 +21,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	k8syaml "sigs.k8s.io/yaml"
-	"github.com/openshift/installer/pkg/asset/agent/common"
 )
 
 var (
@@ -180,14 +179,9 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 }
 
 func (n *NMStateConfig) finish() error {
-	if !common.AgentConfigAvailable {
-		if n.Config == nil {
-			return errors.New("missing configuration or manifest file")
-		}
 
-		if err := n.validateNMStateConfig().ToAggregate(); err != nil {
-			return errors.Wrapf(err, "invalid NMStateConfig configuration")
-		}
+	if err := n.validateNMStateConfig().ToAggregate(); err != nil {
+		return errors.Wrapf(err, "invalid NMStateConfig configuration")
 	}
 	return nil
 }

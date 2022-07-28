@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -62,12 +61,6 @@ func (a *AgentConfig) Load(f asset.FileFetcher) (bool, error) {
 	config := &agent.Config{}
 	if err := yaml.UnmarshalStrict(file.Data, config); err != nil {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", agentConfigFilename)
-	}
-
-	if config.Spec.RendezvousIP != "" {
-		common.AgentConfigAvailable = true
-	} else {
-		return false, errors.New("missing Spec.RendezvousIP")
 	}
 
 	a.File, a.Config = file, config
