@@ -21,6 +21,7 @@ module "vpc" {
   cluster_id     = var.cluster_id
   resource_group = var.powervs_resource_group
   vpc_zone       = var.powervs_vpc_zone
+  wait_for_vpc   = var.powervs_wait_for_vpc
 }
 
 module "pi_network" {

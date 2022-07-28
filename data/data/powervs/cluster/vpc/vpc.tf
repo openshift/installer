@@ -8,7 +8,13 @@ resource "ibm_is_vpc" "ocp_vpc" {
   resource_group = data.ibm_resource_group.rg.id
 }
 
+resource "time_sleep" "wait_for_vpc" {
+  depends_on      = [ibm_is_vpc.ocp_vpc]
+  create_duration = var.wait_for_vpc
+}
+
 resource "ibm_is_subnet" "ocp_vpc_subnet" {
+  depends_on               = [time_sleep.wait_for_vpc]
   name                     = "vpc-subnet-${var.cluster_id}"
   vpc                      = ibm_is_vpc.ocp_vpc.id
   resource_group           = data.ibm_resource_group.rg.id
