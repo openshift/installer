@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -51,8 +52,8 @@ func NewRelease(executer executer.Executer, config Config) Release {
 
 const (
 	templateGetImage             = "oc adm release info --image-for=%s --insecure=%t %s"
-	templateImageExtract         = "oc image extract --file=%s --path /:/%s --confirm %s"
-	templateImageExtractWithIcsp = "oc image extract --file=%s --path /:/%s --confirm --icsp-file=%s %s"
+	templateImageExtract         = "oc image extract --path %s:%s --confirm %s"
+	templateImageExtractWithIcsp = "oc image extract --path %s:%s --confirm --icsp-file=%s %s"
 )
 
 // Get the CoreOS ISO from the releaseImage
@@ -71,7 +72,7 @@ func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSe
 
 	filename := fmt.Sprintf(coreOsFileName, architecture)
 	// Check if file is already cached
-	filePath, err := GetFileFromCache(filename, cacheDir)
+	filePath, err := GetFileFromCache(path.Base(filename), cacheDir)
 	if err != nil {
 		return "", err
 	}
@@ -131,7 +132,7 @@ func (r *release) extractFileFromImage(log logrus.FieldLogger, image, file, cach
 		return "", err
 	}
 	// set path
-	path := filepath.Join(cacheDir, file)
+	path := filepath.Join(cacheDir, path.Base(file))
 	log.Info("Successfully extracted base ISO from the release")
 	log.Debugf("Base ISO %s cached at %s", file, path)
 	return path, nil

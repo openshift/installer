@@ -163,12 +163,25 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	// Use bootstrap script to get container images
-	err = bootstrap.AddStorageFiles(&config, "/usr/local/bin/release-image.sh",
-		"bootstrap/files/usr/local/bin/release-image.sh.template",
-		struct{ ReleaseImage string }{ReleaseImage: agentManifests.ClusterImageSet.Spec.ReleaseImage})
-	if err != nil {
+	// Set up bootstrap service recording
+	if err := bootstrap.AddStorageFiles(&config,
+		"/usr/local/bin/bootstrap-service-record.sh",
+		"bootstrap/files/usr/local/bin/bootstrap-service-record.sh",
+		nil); err != nil {
 		return err
+	}
+
+	// Use bootstrap script to get container images
+	relImgData := struct{ ReleaseImage string }{
+		ReleaseImage: agentManifests.ClusterImageSet.Spec.ReleaseImage,
+	}
+	for _, script := range []string{"release-image.sh", "release-image-download.sh"} {
+		if err := bootstrap.AddStorageFiles(&config,
+			"/usr/local/bin/"+script,
+			"bootstrap/files/usr/local/bin/"+script+".template",
+			relImgData); err != nil {
+			return err
+		}
 	}
 
 	// add ZTP manifests to manifestPath
