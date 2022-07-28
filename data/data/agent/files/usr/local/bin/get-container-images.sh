@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+/usr/local/bin/release-image-download.sh
+
 # shellcheck disable=SC1091
 . /usr/local/bin/release-image.sh
 
