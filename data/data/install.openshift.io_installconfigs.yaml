@@ -375,6 +375,12 @@ spec:
                           required:
                           - DiskSizeGB
                           type: object
+                        tags:
+                          description: Tags defines a set of network tags which will
+                            be added to instances in the machineset
+                          items:
+                            type: string
+                          type: array
                         type:
                           description: InstanceType defines the GCP instance type.
                             eg. n1-standard-4
@@ -1010,6 +1016,12 @@ spec:
                         required:
                         - DiskSizeGB
                         type: object
+                      tags:
+                        description: Tags defines a set of network tags which will
+                          be added to instances in the machineset
+                        items:
+                          type: string
+                        type: array
                       type:
                         description: InstanceType defines the GCP instance type. eg.
                           n1-standard-4
@@ -2186,6 +2198,12 @@ spec:
                         required:
                         - DiskSizeGB
                         type: object
+                      tags:
+                        description: Tags defines a set of network tags which will
+                          be added to instances in the machineset
+                        items:
+                          type: string
+                        type: array
                       type:
                         description: InstanceType defines the GCP instance type. eg.
                           n1-standard-4
