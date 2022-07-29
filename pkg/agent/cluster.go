@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"io/ioutil"
 	"path/filepath"
 	"time"
 
@@ -363,15 +362,10 @@ func (czero *Cluster) PrintInstallationComplete() error {
 		return err
 	}
 	kubeconfig := filepath.Join(absDir, "auth", "kubeconfig")
-	pwFile := filepath.Join(absDir, "auth", "kubeadmin-password")
-	pw, err := ioutil.ReadFile(pwFile)
-	if err != nil {
-		return err
-	}
 	logrus.Info("Install complete!")
 	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run\n    export KUBECONFIG=%s", kubeconfig)
 	logrus.Infof("Access the OpenShift web-console here: %s", czero.clusterConsoleRouteURL)
-	logrus.Infof("Login to the console with user: %q, and password: %q", "kubeadmin", pw)
+	// TODO: log kubeadmin password for the console
 	return nil
 
 }
