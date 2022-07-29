@@ -382,7 +382,7 @@ open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 
 ### Modify NetworkType (Required for Kuryr SDN)
 
-By default the `networkType` is set to `OpenShiftSDN` on the `install-config.yaml`.
+By default the `networkType` is set to `OVNKubernetes` on the `install-config.yaml`.
 
 If an installation with Kuryr is desired, you must modify the `networkType` field.
 

@@ -1,7 +1,7 @@
 # OpenStack Platform Support
 
 This document discusses the requirements, current expected behavior, and how to try out what exists so far.
-In addition, it covers the installation with the default CNI (OpenShiftSDN), as well as with the Kuryr SDN.
+In addition, it covers the installation with the default CNI (OVNKubernetes), as well as with the Kuryr SDN.
 
 ## Table of Contents
 

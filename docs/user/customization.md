@@ -44,7 +44,7 @@ The following `install-config.yaml` properties are available:
             The default is 10.0.0.0/16 for all platforms other than libvirt.
             For libvirt, the default is 192.168.126.0/24.
     * `networkType` (optional string): The type of network to install.
-        The default is [OVNKubernetes][ovn-kubernetes] for Single Node OpenShift and [OpenShiftSDN][openshift-sdn] for all other platforms.
+        The default is [OVNKubernetes][ovn-kubernetes].
     * `serviceNetwork` (optional array of [IP networks](#ip-networks)): The IP address pools for services.
         The default is 172.30.0.0/16.
 * `platform` (required object): The configuration for the specific platform upon which to perform the installation.
