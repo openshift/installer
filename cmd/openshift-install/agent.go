@@ -35,7 +35,7 @@ var (
 			Args:  cobra.ExactArgs(0),
 		},
 		assets: []asset.WritableAsset{
-			&agentconfig.Asset{},
+			&agentconfig.AgentConfig{},
 		},
 	}
 
