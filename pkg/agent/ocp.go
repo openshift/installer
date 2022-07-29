@@ -68,16 +68,14 @@ func (ocp *ClusterOpenShiftAPIClient) AreClusterOperatorsInitialized() (bool, er
 
 	failing := configv1.ClusterStatusConditionType("Failing")
 
-	operators, err := ocp.ConfigClient.ConfigV1().ClusterOperators().List(ocp.ctx, metav1.ListOptions{})
+	version, err := ocp.ConfigClient.ConfigV1().ClusterVersions().Get(ocp.ctx, "version", metav1.GetOptions{})
 	if err != nil {
-		return false, errors.Wrap(err, "Listing ClusterOperator objects")
+		return false, errors.Wrap(err, "Getting ClusterVersion object")
 	}
 
-	operator := operators.Items[0]
-
-	if cov1helpers.IsStatusConditionTrue(operator.Status.Conditions, configv1.OperatorAvailable) &&
-		cov1helpers.IsStatusConditionFalse(operator.Status.Conditions, failing) &&
-		cov1helpers.IsStatusConditionFalse(operator.Status.Conditions, configv1.OperatorProgressing) {
+	if cov1helpers.IsStatusConditionTrue(version.Status.Conditions, configv1.OperatorAvailable) &&
+		cov1helpers.IsStatusConditionFalse(version.Status.Conditions, failing) &&
+		cov1helpers.IsStatusConditionFalse(version.Status.Conditions, configv1.OperatorProgressing) {
 		return true, nil
 	}
 
