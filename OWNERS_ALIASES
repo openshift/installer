@@ -113,6 +113,7 @@ aliases:
     - adiantum
   # Keep in sync with the `coreos-approvers` and `coreos-reviewers` lists in https://github.com/openshift/release/blob/master/OWNERS_ALIASES
   coreos-approvers:
+    - c4rt0
     - cgwalters
     - bgilbert
     - dustymabe
@@ -131,8 +132,8 @@ aliases:
     - prestist
     - marmijo
     - RishabhSaini
-    - c4rt0
   coreos-reviewers:
+    - c4rt0
     - cgwalters
     - bgilbert
     - dustymabe
@@ -151,4 +152,3 @@ aliases:
     - prestist
     - marmijo
     - RishabhSaini
-    - c4rt0
