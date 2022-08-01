@@ -65,13 +65,12 @@ spec:
     # https://docs.openshift.com/container-platform/4.10/installing/installing_bare_metal_ipi/ipi-install-installation-workflow.html#root-device-hints_ipi-install-installation-workflow
     rootDeviceHints:
 	  deviceName: /dev/sda
+	# interfaces are used to identify the host to apply this configuration to
     interfaces:
       - macAddress: 00:00:00:00:00:00
         name: host-network-interface-name
-    # networkConfig contains the NMStateConfig.Spec.Config.interfaces definition for this host.
-    # https://nmstate.io/examples.html
-    # NMStateConfig.Spec.Interfaces section is not included in networkConfig. It is specified
-    # in the above interfaces: node
+    # networkConfig contains the network configuration for the host in NMState format.
+    # See https://nmstate.io/examples.html for examples.
     networkConfig:
       interfaces:
         - name: eth0

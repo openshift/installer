@@ -28,10 +28,11 @@ func newAgentCmd() *cobra.Command {
 
 var (
 	agentConfigTarget = target{
-		name: "Agent Config",
+		// TODO: remove template wording when interactive survey has been implemented
+		name: "Agent Config Template",
 		command: &cobra.Command{
-			Use:   "agent-config",
-			Short: "Generates the agent config manifest used by the agent installer",
+			Use:   "agent-config-template",
+			Short: "Generates a template of the agent config manifest used by the agent installer",
 			Args:  cobra.ExactArgs(0),
 		},
 		assets: []asset.WritableAsset{
