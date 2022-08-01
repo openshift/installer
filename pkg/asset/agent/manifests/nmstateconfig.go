@@ -180,6 +180,10 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 
 func (n *NMStateConfig) finish() error {
 
+	if n.Config == nil {
+		return errors.New("missing configuration or manifest file")
+	}
+
 	if err := n.validateNMStateConfig().ToAggregate(); err != nil {
 		return errors.Wrapf(err, "invalid NMStateConfig configuration")
 	}
