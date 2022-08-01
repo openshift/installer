@@ -44,7 +44,7 @@ func (a *AgentConfig) Generate(dependencies asset.Parents) error {
 	// TODO: We are temporarily generating a template of the agent-config.yaml
 	// Change this when its interactive survey is implemented.
 	agentConfigTemplate := `#
-# Note: This is an sample AgentConfig file showing
+# Note: This is a sample AgentConfig file showing
 # which fields are available to aid you in creating your 
 # own agent-config.yaml file.
 #
