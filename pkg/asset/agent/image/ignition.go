@@ -24,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types/agent"
+	"github.com/pkg/errors"
 )
 
 const manifestPath = "/etc/assisted/manifests"
@@ -368,15 +369,17 @@ func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraM
 
 func retrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.NMStateConfig) (string, error) {
 	var err error
-	var RendezvousIP string
-	// AgentConfig contains RendezvousIP
-	if agentConfig != nil && agentConfig.Spec.RendezvousIP != "" {
-		RendezvousIP = agentConfig.Spec.RendezvousIP
-		logrus.Debug("RendezvousIP from the AgentConfig ", RendezvousIP)
+	var rendezvousIP string
 
+	if agentConfig != nil && agentConfig.Spec.RendezvousIP != "" {
+		rendezvousIP = agentConfig.Spec.RendezvousIP
+		logrus.Debug("RendezvousIP from the AgentConfig ", rendezvousIP)
+
+	} else if len(nmStateConfigs) > 0 {
+		rendezvousIP, err = manifests.GetNodeZeroIP(nmStateConfigs)
+		logrus.Debug("RendezvousIP from the NMStateConfig ", rendezvousIP)
 	} else {
-		RendezvousIP, err = manifests.GetNodeZeroIP(nmStateConfigs)
-		logrus.Debug("RendezvousIP from the NMStateConfig ", RendezvousIP)
+		err = errors.New("missing Spec.RendezvousIP in agent-config or atleast one nmstateconfig manifest file")
 	}
-	return RendezvousIP, err
+	return rendezvousIP, err
 }

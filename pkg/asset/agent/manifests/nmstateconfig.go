@@ -187,7 +187,6 @@ func (n *NMStateConfig) finish() error {
 	if err := n.validateNMStateConfig().ToAggregate(); err != nil {
 		return errors.Wrapf(err, "invalid NMStateConfig configuration")
 	}
-
 	return nil
 }
 

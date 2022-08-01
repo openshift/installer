@@ -156,12 +156,19 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 		agentConfig          *agent.Config
 		nmStateConfigs       []*v1beta1.NMStateConfig
 		expectedRendezvousIP string
+		expectedError        string
 	}{
 		{
 			Name: "valid-agent-config-provided-with-RendezvousIP",
 			agentConfig: &agent.Config{
 				Spec: agent.Spec{
 					RendezvousIP: "192.168.122.21",
+					Hosts: []agent.Host{
+						{
+							Hostname: "control-0.example.org",
+							Role:     "master",
+						},
+					},
 				},
 			},
 			expectedRendezvousIP: "192.168.122.21",
@@ -179,12 +186,30 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 			},
 			expectedRendezvousIP: "192.168.122.21",
 		},
+		{
+			Name: "neither-agent-config-was-provided-with-RendezvousIP-nor-nmstateconfig-manifest",
+			agentConfig: &agent.Config{
+				Spec: agent.Spec{
+					Hosts: []agent.Host{
+						{
+							Hostname: "control-0.example.org",
+							Role:     "master",
+						},
+					},
+				},
+			},
+			expectedError: "missing Spec.RendezvousIP in agent-config or atleast one nmstateconfig manifest file",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
 			rendezvousIP, err := retrieveRendezvousIP(tc.agentConfig, tc.nmStateConfigs)
-			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedRendezvousIP, rendezvousIP)
+			if tc.expectedError != "" {
+				assert.Regexp(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedRendezvousIP, rendezvousIP)
+			}
 		})
 	}
 
