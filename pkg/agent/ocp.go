@@ -66,6 +66,7 @@ func NewClusterOpenShiftAPIClient(ctx context.Context, assetDir string) (*Cluste
 // AreClusterOperatorsInitialized Waits for all Openshift cluster operators to initialize
 func (ocp *ClusterOpenShiftAPIClient) AreClusterOperatorsInitialized() (bool, error) {
 
+	var lastError string
 	failing := configv1.ClusterStatusConditionType("Failing")
 
 	version, err := ocp.ConfigClient.ConfigV1().ClusterVersions().Get(ocp.ctx, "version", metav1.GetOptions{})
@@ -79,11 +80,18 @@ func (ocp *ClusterOpenShiftAPIClient) AreClusterOperatorsInitialized() (bool, er
 		return true, nil
 	}
 
+	if cov1helpers.IsStatusConditionTrue(version.Status.Conditions, failing) {
+		lastError = cov1helpers.FindStatusCondition(version.Status.Conditions, failing).Message
+	} else if cov1helpers.IsStatusConditionTrue(version.Status.Conditions, configv1.OperatorProgressing) {
+		lastError = cov1helpers.FindStatusCondition(version.Status.Conditions, configv1.OperatorProgressing).Message
+	}
+	logrus.Debugf("Still waiting for the cluster to initialize: %s", lastError)
+
 	return false, nil
 }
 
-// IsConsoleRouteAvaiable Check if the OCP console route is created
-func (ocp *ClusterOpenShiftAPIClient) IsConsoleRouteAvaiable() (bool, error) {
+// IsConsoleRouteAvailable Check if the OCP console route is created
+func (ocp *ClusterOpenShiftAPIClient) IsConsoleRouteAvailable() (bool, error) {
 	route, err := ocp.RouteClient.RouteV1().Routes(consoleNamespace).Get(ocp.ctx, consoleRouteName, metav1.GetOptions{})
 	if err == nil {
 		logrus.Debugf("Route found in openshift-console namespace: %s", consoleRouteName)
