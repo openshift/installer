@@ -42,7 +42,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
 			}
-			cluster, err := runWaitForBootstrapCompleteCmd(assetDir)
+			cluster, err := agentpkg.WaitForBootstrapComplete(assetDir)
 			if err != nil {
 				logrus.Debug("Printing the event list gathered from the Agent Rest API")
 				cluster.PrintInfraEnvRestAPIEventList()
@@ -59,11 +59,6 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 	}
 }
 
-func runWaitForBootstrapCompleteCmd(directory string) (*agentpkg.Cluster, error) {
-	cluster, err := agentpkg.WaitForBootstrapComplete(directory)
-	return cluster, err
-}
-
 func newWaitForInstallCompleteCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "install-complete",
@@ -75,7 +70,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
 			}
-			cluster, err := runWaitForInstallCompleteCmd(assetDir)
+			cluster, err := agentpkg.WaitForInstallComplete(assetDir)
 			if err != nil {
 				logrus.Debug("Printing the event list gathered from the Agent Rest API")
 				cluster.PrintInfraEnvRestAPIEventList()
@@ -91,9 +86,4 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			cluster.PrintInstallationComplete()
 		},
 	}
-}
-
-func runWaitForInstallCompleteCmd(directory string) (*agentpkg.Cluster, error) {
-	cluster, err := agentpkg.WaitForInstallComplete(directory)
-	return cluster, err
 }
