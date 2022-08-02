@@ -46,8 +46,8 @@ func CSRToPem(cert *x509.CertificateRequest) []byte {
 // PublicKeyToPem converts an rsa.PublicKey object to pem string
 func PublicKeyToPem(key *rsa.PublicKey) ([]byte, error) {
 	keyInBytes, err := x509.MarshalPKIXPublicKey(key)
-	logrus.Debugf("Failed to marshal PKIX public key: %s", err)
 	if err != nil {
+		logrus.Debugf("Failed to marshal PKIX public key: %s", err)
 		return nil, errors.Wrap(err, "failed to MarshalPKIXPublicKey")
 	}
 	keyinPem := pem.EncodeToMemory(
