@@ -2,7 +2,16 @@
 
 set -e
 
-IS_NODE_ZERO=$(ip -j address | jq '[.[].addr_info] | flatten | map(.local=="{{.NodeZeroIP}}") | any')
+timeout=$((SECONDS + 30))
+
+while [[ $SECONDS -lt $timeout ]]
+do
+     IS_NODE_ZERO=$(ip -j address | jq '[.[].addr_info] | flatten | map(.local=="{{.NodeZeroIP}}") | any')
+     if [ "${IS_NODE_ZERO}" = "true" ]; then
+          break
+     fi
+     sleep 5
+done
 
 if [ "${IS_NODE_ZERO}" = "true" ]; then
     echo "Node 0 IP {{.NodeZeroIP}} found on this host" 1>&2
