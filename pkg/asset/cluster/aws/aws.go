@@ -55,27 +55,48 @@ func tagSharedVPCResources(ctx context.Context, clusterID string, installConfig 
 		return err
 	}
 
-	ids := make([]*string, 0, len(privateSubnets)+len(publicSubnets))
-	for id := range privateSubnets {
-		ids = append(ids, aws.String(id))
-	}
-	for id := range publicSubnets {
-		ids = append(ids, aws.String(id))
-	}
-
 	session, err := installConfig.AWS.Session(ctx)
 	if err != nil {
 		return errors.Wrap(err, "could not create AWS session")
 	}
-
-	tagKey, tagValue := sharedTag(clusterID)
-
 	ec2Client := ec2.New(session, aws.NewConfig().WithRegion(installConfig.Config.Platform.AWS.Region))
+
+	ids := make([]*string, 0, len(publicSubnets))
+	for id := range publicSubnets {
+		ids = append(ids, aws.String(id))
+	}
+
+	// Add tags for Public Subnets
+	tagKey, tagValue := sharedTag(clusterID)
+	publicElbTagKey := "kubernetes.io/role/elb"
+	publicElbTagValue := ""
+
 	if _, err = ec2Client.CreateTagsWithContext(ctx, &ec2.CreateTagsInput{
 		Resources: ids,
-		Tags:      []*ec2.Tag{{Key: &tagKey, Value: &tagValue}},
+		Tags: []*ec2.Tag{
+			{Key: &tagKey, Value: &tagValue},
+			{Key: &publicElbTagKey, Value: &publicElbTagValue},
+		},
 	}); err != nil {
-		return errors.Wrap(err, "could not add tags to subnets")
+		return errors.Wrap(err, "could not add tags to public subnets")
+	}
+
+	ids = make([]*string, 0, len(privateSubnets))
+	for id := range privateSubnets {
+		ids = append(ids, aws.String(id))
+	}
+	// Add tags for Private Subnets
+	privateElbTagKey := "kubernetes.io/role/internal-elb"
+	privateElbTagValue := ""
+
+	if _, err = ec2Client.CreateTagsWithContext(ctx, &ec2.CreateTagsInput{
+		Resources: ids,
+		Tags: []*ec2.Tag{
+			{Key: &tagKey, Value: &tagValue},
+			{Key: &privateElbTagKey, Value: &privateElbTagValue},
+		},
+	}); err != nil {
+		return errors.Wrap(err, "could not add tags to private subnets")
 	}
 
 	if zone := installConfig.Config.AWS.HostedZone; zone != "" {
