@@ -63,7 +63,6 @@ var (
 		"agent.service",
 		"assisted-service-db.service",
 		"assisted-service-pod.service",
-		"assisted-service-ui.service",
 		"assisted-service.service",
 		"create-cluster-and-infraenv.service",
 		"node-zero.service",
