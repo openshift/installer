@@ -251,7 +251,7 @@ resource "ibm_is_security_group_rule" "control_plane_internal_etcd_inbound" {
 resource "ibm_is_security_group_rule" "control_plane_internal_kube_default_ports_inbound" {
   group     = ibm_is_security_group.control_plane_internal.id
   direction = "inbound"
-  remote    = ibm_is_security_group.control_plane_internal.id
+  remote    = ibm_is_security_group.cluster_wide.id
   tcp {
     port_min = 10257
     port_max = 10259
