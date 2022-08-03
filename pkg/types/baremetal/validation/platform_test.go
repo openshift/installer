@@ -214,10 +214,34 @@ func TestValidatePlatform(t *testing.T) {
 			expected: "baremetal.hosts\\[1\\].Name: Duplicate value: \"host1\"",
 		},
 		{
-			name: "invalid_host_name",
+			name: "valid_host_name",
+			platform: platform().
+				Hosts(host1().Name("host1")).build(),
+			expected: "",
+		},
+		{
+			name: "valid_host_name_fqdn",
+			platform: platform().
+				Hosts(host1().Name("test.example.com")).build(),
+			expected: "",
+		},
+		{
+			name: "invalid_host_name_char",
+			platform: platform().
+				Hosts(host1().Name("test,example.com")).build(),
+			expected: "baremetal.Hosts\\[0\\].name: Invalid value: \"test,example.com\"",
+		},
+		{
+			name: "invalid_host_name_uppercase",
 			platform: platform().
 				Hosts(host1().Name("Host1")).build(),
 			expected: "baremetal.Hosts\\[0\\].name: Invalid value: \"Host1\"",
+		},
+		{
+			name: "invalid_host_name_length",
+			platform: platform().
+				Hosts(host1().Name("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")).build(),
+			expected: "baremetal.Hosts\\[0\\].name: Invalid value: \"aaaaaaaaa",
 		},
 		{
 			name: "duplicate_host_mac",
