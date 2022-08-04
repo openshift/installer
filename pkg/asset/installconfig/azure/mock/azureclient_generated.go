@@ -234,6 +234,21 @@ func (mr *MockAPIMockRecorder) GetVMCapabilities(ctx, instanceType, region inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVMCapabilities", reflect.TypeOf((*MockAPI)(nil).GetVMCapabilities), ctx, instanceType, region)
 }
 
+// GetVirtualMachineFamily mocks base method.
+func (m *MockAPI) GetVirtualMachineFamily(ctx context.Context, name, region string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVirtualMachineFamily", ctx, name, region)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVirtualMachineFamily indicates an expected call of GetVirtualMachineFamily.
+func (mr *MockAPIMockRecorder) GetVirtualMachineFamily(ctx, name, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVirtualMachineFamily", reflect.TypeOf((*MockAPI)(nil).GetVirtualMachineFamily), ctx, name, region)
+}
+
 // GetVirtualMachineSku mocks base method.
 func (m *MockAPI) GetVirtualMachineSku(ctx context.Context, name, region string) (*compute.ResourceSku, error) {
 	m.ctrl.T.Helper()
