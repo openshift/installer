@@ -240,7 +240,7 @@ func TestValidatePlatform(t *testing.T) {
 		{
 			name: "invalid_host_name_length",
 			platform: platform().
-				Hosts(host1().Name("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")).build(),
+				Hosts(host1().Name(strings.Repeat("a", 300))).build(),
 			expected: "baremetal.Hosts\\[0\\].name: Invalid value: \"aaaaaaaaa",
 		},
 		{
