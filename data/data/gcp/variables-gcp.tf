@@ -120,3 +120,10 @@ variable "gcp_root_volume_kms_key_link" {
   description = "The GCP self link of KMS key to encrypt the volume."
   default = null
 }
+
+variable "gcp_control_plane_tags" {
+  type = list(string)
+  description = "The list of network tags which will be added to the control plane instances."
+
+}
+

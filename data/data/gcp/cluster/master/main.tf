@@ -63,7 +63,10 @@ resource "google_compute_instance" "master" {
     user-data = var.ignition
   }
 
-  tags = ["${var.cluster_id}-master"]
+  tags = concat(
+    ["${var.cluster_id}-master"],
+    var.tags,
+  )
 
   labels = var.labels
 
