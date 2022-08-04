@@ -142,6 +142,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					assert.Equal(t, tc.expectedConfig[i], yamlList[i])
 
 				}
+
+				assert.Equal(t, len(tc.expectedConfig), len(asset.StaticNetworkConfig))
 			}
 		})
 	}
