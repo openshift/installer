@@ -6,11 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
+
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/types/agent"
 )
 
 var (
@@ -19,9 +20,12 @@ var (
 
 // AgentConfig reads the agent-config.yaml file.
 type AgentConfig struct {
-	File   *asset.File
-	Config *agent.Config
+	File     *asset.File
+	Config   *agent.Config
+	Template string
 }
+
+var _ asset.WritableAsset = (*AgentConfig)(nil)
 
 // Name returns a human friendly name for the asset.
 func (*AgentConfig) Name() string {
@@ -34,8 +38,69 @@ func (*AgentConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{}
 }
 
-// Generate generates the Agent manifest.
+// Generate generates the Agent Config manifest.
 func (a *AgentConfig) Generate(dependencies asset.Parents) error {
+
+	// TODO: We are temporarily generating a template of the agent-config.yaml
+	// Change this when its interactive survey is implemented.
+	agentConfigTemplate := `#
+# Note: This is a sample AgentConfig file showing
+# which fields are available to aid you in creating your 
+# own agent-config.yaml file.
+#
+apiVersion: v1
+kind: AgentConfig
+metadata:
+  name: example-agent-config
+  namespace: cluster0
+spec:
+# All fields are optional
+  rendezvousIP: your-node0-ip
+  hosts:
+  # If a host is listed, then at least one interface
+  # needs to be specified.
+  - hostname: change-to-hostname
+    role: master
+    # For more information about rootDeviceHints:
+    # https://docs.openshift.com/container-platform/4.10/installing/installing_bare_metal_ipi/ipi-install-installation-workflow.html#root-device-hints_ipi-install-installation-workflow
+    rootDeviceHints:
+	  deviceName: /dev/sda
+	# interfaces are used to identify the host to apply this configuration to
+    interfaces:
+      - macAddress: 00:00:00:00:00:00
+        name: host-network-interface-name
+    # networkConfig contains the network configuration for the host in NMState format.
+    # See https://nmstate.io/examples.html for examples.
+    networkConfig:
+      interfaces:
+        - name: eth0
+          type: ethernet
+          state: up
+          mac-address: 00:00:00:00:00:00
+          ipv4:
+            enabled: true
+            address:
+              - ip: 192.168.122.2
+                prefix-length: 23
+            dhcp: false
+`
+
+	a.Template = agentConfigTemplate
+
+	// TODO: template is not validated
+	return nil
+}
+
+// PersistToFile writes the agent-config.yaml file to the assets folder
+func (a *AgentConfig) PersistToFile(directory string) error {
+	templatePath := filepath.Join(directory, agentConfigFilename)
+	templateByte := []byte(a.Template)
+
+	err := os.WriteFile(templatePath, templateByte, 0644)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -200,4 +265,9 @@ func (a *AgentConfig) HostConfigFiles() (HostConfigFileMap, error) {
 		}
 	}
 	return files, nil
+}
+
+func unmarshalJSON(b []byte) []byte {
+	output, _ := yaml.JSONToYAML(b)
+	return output
 }

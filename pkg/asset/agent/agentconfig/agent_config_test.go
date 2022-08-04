@@ -15,6 +15,72 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// func TestAgentConfig_Generate(t *testing.T) {
+
+// 	cases := []struct {
+// 		name           string
+// 		expectedError  string
+// 		expectedConfig *agent.Config
+// 	}{
+// 		{
+// 			name: "generate-basic-template",
+// 			expectedConfig: &agent.Config{
+// 				TypeMeta: metav1.TypeMeta{
+// 					Kind:       "AgentConfig",
+// 					APIVersion: "v1",
+// 				},
+// 				ObjectMeta: metav1.ObjectMeta{
+// 					Name:      "example-agent-config",
+// 					Namespace: "cluster0",
+// 				},
+// 				Spec: agent.Spec{
+// 					RendezvousIP: "your-node0-ip",
+// 					Hosts: []agent.Host{
+// 						{
+// 							Hostname: "change-to-hostname",
+// 							Role:     "master",
+// 							RootDeviceHints: baremetal.RootDeviceHints{
+// 								DeviceName: "/dev/sda",
+// 							},
+// 							Interfaces: []*aiv1beta1.Interface{
+// 								{
+// 									Name:       "your-network-interface-name",
+// 									MacAddress: "00:00:00:00:00",
+// 								},
+// 							},
+// 						},
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
+// 	for _, tc := range cases {
+// 		t.Run(tc.name, func(t *testing.T) {
+
+// 			parents := asset.Parents{}
+// 			asset := &AgentConfig{}
+// 			err := asset.Generate(parents)
+
+// 			if tc.expectedError != "" {
+// 				assert.Equal(t, tc.expectedError, err.Error())
+// 			} else {
+// 				assert.NoError(t, err)
+// 				assert.Equal(t, tc.expectedConfig, asset.Config)
+// 				assert.NotEmpty(t, asset.Files())
+
+// 				configFile := asset.Files()[0]
+// 				assert.Equal(t, "agent-config.yaml", configFile.Filename)
+
+// 				var actualConfig agent.Config
+// 				err = yaml.Unmarshal(configFile.Data, &actualConfig)
+// 				assert.NoError(t, err)
+// 				assert.Equal(t, *tc.expectedConfig, actualConfig)
+// 			}
+// 		})
+// 	}
+
+// }
+
 func TestAgentConfig_LoadedFromDisk(t *testing.T) {
 	falseBool := false
 	falsePtr := &falseBool

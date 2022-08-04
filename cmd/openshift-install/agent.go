@@ -5,6 +5,7 @@ import (
 
 	"github.com/openshift/installer/cmd/openshift-install/agent"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
@@ -26,6 +27,19 @@ func newAgentCmd() *cobra.Command {
 }
 
 var (
+	agentConfigTarget = target{
+		// TODO: remove template wording when interactive survey has been implemented
+		name: "Agent Config Template",
+		command: &cobra.Command{
+			Use:   "agent-config-template",
+			Short: "Generates a template of the agent config manifest used by the agent installer",
+			Args:  cobra.ExactArgs(0),
+		},
+		assets: []asset.WritableAsset{
+			&agentconfig.AgentConfig{},
+		},
+	}
+
 	agentManifestsTarget = target{
 		name: "Cluster Manifests",
 		command: &cobra.Command{
@@ -53,7 +67,7 @@ var (
 		},
 	}
 
-	agentTargets = []target{agentManifestsTarget, agentImageTarget}
+	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget}
 )
 
 func newAgentCreateCmd() *cobra.Command {
