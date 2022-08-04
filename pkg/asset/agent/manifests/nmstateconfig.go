@@ -70,6 +70,7 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 	agentConfig := &agentconfig.AgentConfig{}
 	dependencies.Get(agentConfig)
 
+	staticNetworkConfig := []*models.HostStaticNetworkConfig{}
 	nmStateConfigs := []*aiv1beta1.NMStateConfig{}
 	var data string
 
@@ -101,6 +102,11 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 			}
 			nmStateConfigs = append(nmStateConfigs, &nmStateConfig)
 
+			staticNetworkConfig = append(staticNetworkConfig, &models.HostStaticNetworkConfig{
+				MacInterfaceMap: buildMacInterfaceMap(nmStateConfig),
+				NetworkYaml:     string(nmStateConfig.Spec.NetConfig.Raw),
+			})
+
 			// Marshal the nmStateConfig one at a time
 			// and add a yaml seperator with new line
 			// so as not to marshal the nmStateConfigs
@@ -114,6 +120,7 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 		}
 
 		n.Config = nmStateConfigs
+		n.StaticNetworkConfig = staticNetworkConfig
 
 		n.File = &asset.File{
 			Filename: nmStateConfigFilename,
