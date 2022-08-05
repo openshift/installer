@@ -121,7 +121,7 @@ func (g *Gather) Run() error {
 		}
 	}
 
-	err = gather.DeleteArchiveDirectory(serialLogBundleDir)
+	err = gather.DeleteArchiveDirectory(filePathDir)
 	if err != nil {
 		g.logger.Debugf("failed to remove archive directory: %v", err)
 	}
