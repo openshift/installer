@@ -17,6 +17,11 @@ type MachinePool struct {
 	//
 	// +optional
 	OSDisk `json:"osDisk"`
+
+	// Tags defines a set of network tags which will be added to instances in the machineset
+	//
+	// +optional
+	Tags []string `json:"tags,omitempty"`
 }
 
 // OSDisk defines the disk for machines on GCP.
@@ -51,6 +56,10 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.InstanceType != "" {
 		a.InstanceType = required.InstanceType
+	}
+
+	if required.Tags != nil {
+		a.Tags = required.Tags
 	}
 
 	if required.OSDisk.DiskSizeGB > 0 {

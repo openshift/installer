@@ -2,7 +2,9 @@ package validation
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -33,6 +35,17 @@ func ValidateMachinePool(platform *gcp.Platform, p *gcp.MachinePool, fldPath *fi
 		}
 	}
 
+	for i, tag := range p.Tags {
+		if tag == "" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("tags").Index(i), tag, fmt.Sprintf("tag can not be empty")))
+		} else if !unicode.IsLetter(rune(tag[0])) || (!unicode.IsLetter(rune(tag[len(tag)-1])) && !unicode.IsNumber(rune(tag[len(tag)-1]))) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("tags").Index(i), tag, fmt.Sprintf("tag can only start with a letter and must end with a letter or a number")))
+		} else if !regexp.MustCompile(`^[a-z0-9-]*$`).MatchString(tag) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("tags").Index(i), tag, fmt.Sprintf("tag can only contain lowercase letters, numbers, and dashes")))
+		} else if len(tag) > 63 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("tags").Index(i), tag, fmt.Sprintf("maximum number of characters is 63")))
+		}
+	}
 	return allErrs
 }
 
