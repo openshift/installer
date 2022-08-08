@@ -58,6 +58,19 @@ resource "ibm_is_security_group_rule" "dns_vm_sg_ssh_all" {
   }
 }
 
+# allow all incoming network traffic on port 53
+resource "ibm_is_security_group_rule" "dns_vm_sg_dns_all" {
+  count     = local.proxy_count
+  group     = ibm_is_security_group.dns_vm_sg[0].id
+  direction = "inbound"
+  remote    = "0.0.0.0/0"
+
+  udp {
+    port_min = 53
+    port_max = 53
+  }
+}
+
 data "ibm_is_image" "dns_vm_image" {
   count = local.proxy_count
   name  = var.dns_vm_image_name
@@ -69,7 +82,19 @@ locals {
 packages:
   - bind
   - bind-utils
+write_files:
+- path: /tmp/named-conf-edit.sed
+  permissions: '0640'
+  content: |
+    /^\s*listen-on port 53 /s/127\.0\.0\.1/127\.0\.0\.1; MYIP/
+    /^\s*allow-query /s/localhost/any/
+    /^\s*dnssec-validation /s/ yes/ no/
+    /^\s*type hint;/s/ hint/ forward/
+    /^\s*file\s"named.ca";/d
+    /^\s*type forward/a \\tforward only;\n\tforwarders { 161.26.0.7; 161.26.0.8; };
 runcmd:
+  - export MYIP=`hostname -I`; sed -i.bak "s/MYIP/$MYIP/" /tmp/named-conf-edit.sed
+  - sed -i.orig -f /tmp/named-conf-edit.sed /etc/named.conf
   - systemctl enable named.service
   - systemctl start named.service
 EOF
@@ -93,5 +118,5 @@ resource "ibm_is_instance" "dns_vm_vsi" {
     security_groups = [ibm_is_security_group.dns_vm_sg[0].id]
   }
 
-  user_data = base64encode(local.user_data_string)
+  user_data = local.user_data_string
 }
