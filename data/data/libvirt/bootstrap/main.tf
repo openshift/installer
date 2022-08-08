@@ -43,5 +43,10 @@ resource "libvirt_domain" "bootstrap" {
     hostname   = "${var.cluster_id}-bootstrap.${var.cluster_domain}"
     addresses  = [var.libvirt_bootstrap_ip]
   }
+
+  graphics {
+    type        = "vnc"
+    listen_type = "address"
+  }
 }
 
