@@ -36,3 +36,8 @@ variable "public_endpoints" {
   type        = bool
   description = "If the bootstrap instance should have externally accessible resources."
 }
+
+variable "network_project_id" {
+  type        = string
+  description = "The project that the network and subnets exist in when they are not in the main ProjectID."
+}

@@ -379,8 +379,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 		auth := gcptfvars.Auth{
-			ProjectID:      installConfig.Config.GCP.ProjectID,
-			ServiceAccount: string(sess.Credentials.JSON),
+			ProjectID:        installConfig.Config.GCP.ProjectID,
+			NetworkProjectID: installConfig.Config.GCP.NetworkProjectID,
+			ServiceAccount:   string(sess.Credentials.JSON),
 		}
 
 		masters, err := mastersAsset.Machines()

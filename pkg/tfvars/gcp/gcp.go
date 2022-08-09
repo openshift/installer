@@ -15,8 +15,9 @@ const (
 
 // Auth is the collection of credentials that will be used by terrform.
 type Auth struct {
-	ProjectID      string `json:"gcp_project_id,omitempty"`
-	ServiceAccount string `json:"gcp_service_account,omitempty"`
+	ProjectID        string `json:"gcp_project_id,omitempty"`
+	NetworkProjectID string `json:"gcp_network_project_id,omitempty"`
+	ServiceAccount   string `json:"gcp_service_account,omitempty"`
 }
 
 type config struct {

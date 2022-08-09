@@ -1,4 +1,5 @@
 resource "google_compute_firewall" "api" {
+  count       = var.network_project_id != "" ? 0 : 1
   name        = "${var.cluster_id}-api"
   network     = local.cluster_network
   description = local.description
@@ -14,6 +15,7 @@ resource "google_compute_firewall" "api" {
 }
 
 resource "google_compute_firewall" "health_checks" {
+  count       = var.network_project_id != "" ? 0 : 1
   name        = "${var.cluster_id}-health-checks"
   network     = local.cluster_network
   description = local.description
@@ -29,6 +31,7 @@ resource "google_compute_firewall" "health_checks" {
 }
 
 resource "google_compute_firewall" "etcd" {
+  count       = var.network_project_id != "" ? 0 : 1
   name        = "${var.cluster_id}-etcd"
   network     = local.cluster_network
   description = local.description
@@ -44,6 +47,7 @@ resource "google_compute_firewall" "etcd" {
 }
 
 resource "google_compute_firewall" "control_plane" {
+  count       = var.network_project_id != "" ? 0 : 1
   name        = "${var.cluster_id}-control-plane"
   network     = local.cluster_network
   description = local.description
@@ -74,6 +78,7 @@ resource "google_compute_firewall" "control_plane" {
 }
 
 resource "google_compute_firewall" "internal_network" {
+  count       = var.network_project_id != "" ? 0 : 1
   name        = "${var.cluster_id}-internal-network"
   network     = local.cluster_network
   description = local.description
@@ -97,6 +102,7 @@ resource "google_compute_firewall" "internal_network" {
 }
 
 resource "google_compute_firewall" "internal_cluster" {
+  count       = var.network_project_id != "" ? 0 : 1
   name        = "${var.cluster_id}-internal-cluster"
   network     = local.cluster_network
   description = local.description

@@ -60,6 +60,7 @@ module "network" {
   cluster_network     = var.gcp_cluster_network
   master_subnet       = var.gcp_control_plane_subnet
   worker_subnet       = var.gcp_compute_subnet
+  network_project_id  = var.gcp_network_project_id
 }
 
 module "dns" {
