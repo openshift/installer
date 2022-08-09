@@ -18,11 +18,42 @@ const (
 	defaultAcceptLanguage = "en-US"
 )
 
-var unsupportedRegions = sets.NewString(
-	// Nanjing is a local cloud
-	"cn-nanjing",
+var supportedRegions = sets.NewString(
+	"cn-qingdao",
+	"cn-beijing",
+	"cn-zhangjiakou",
+	"cn-huhehaote",
+	"cn-wulanchabu",
+	"cn-hangzhou",
+	"cn-shanghai",
+	"cn-shenzhen",
+	"cn-heyuan",
+	"cn-guangzhou",
+	"cn-chengdu",
+	"cn-hongkong",
+	"ap-northeast-1",
+	"ap-southeast-1",
+	"ap-southeast-2",
+	"ap-southeast-3",
+	"ap-southeast-6",
+	"ap-southeast-5",
+	"ap-south-1",
+	"us-east-1",
+	"us-west-1",
+	"eu-west-1",
+	"eu-central-1",
+
+	// These regions are local cloud
+	// "cn-nanjing",
+	// "cn-fuzhou",
+
 	// Dubai does not support private zone service
-	"me-east-1",
+	// "me-east-1",
+
+	// Some resources are not supported
+	// "me-central-1",
+	// "ap-northeast-2",
+	// "ap-southeast-7",
 )
 
 // Platform collects AlibabaCloud-specific configuration.
@@ -53,7 +84,7 @@ func selectRegion(client *Client) (string, error) {
 	longRegions := []string{}
 	shortRegions := []string{}
 	for _, location := range regions {
-		if unsupportedRegions.Has(location.RegionId) {
+		if !supportedRegions.Has(location.RegionId) {
 			continue
 		}
 		longRegion := fmt.Sprintf("%s (%s)", location.RegionId, location.LocalName)
