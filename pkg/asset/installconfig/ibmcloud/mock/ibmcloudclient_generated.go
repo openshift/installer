@@ -279,17 +279,3 @@ func (mr *MockAPIMockRecorder) GetVSIProfiles(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVSIProfiles", reflect.TypeOf((*MockAPI)(nil).GetVSIProfiles), ctx)
 }
-
-// SetVPCServiceURLForRegion mocks base method.
-func (m *MockAPI) SetVPCServiceURLForRegion(ctx context.Context, region string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetVPCServiceURLForRegion", ctx, region)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetVPCServiceURLForRegion indicates an expected call of SetVPCServiceURLForRegion.
-func (mr *MockAPIMockRecorder) SetVPCServiceURLForRegion(ctx, region interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetVPCServiceURLForRegion", reflect.TypeOf((*MockAPI)(nil).SetVPCServiceURLForRegion), ctx, region)
-}
