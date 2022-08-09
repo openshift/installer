@@ -44,12 +44,14 @@ aliases:
     - Prashanth684
     - mjturek
   vsphere-approvers:
+    - bostrt
     - dav1x
     - jcpowermac
     - patrickdillon
     - jstuever
     - rvanderp3
   vsphere-reviewers:
+    - bostrt
     - jcpowermac
     - patrickdillon
     - jstuever
@@ -70,9 +72,11 @@ aliases:
     - sadasu
   aws-approvers:
     - jstuever
+    - mtulio
     - patrickdillon
   aws-reviewers:
     - jstuever
+    - mtulio
     - patrickdillon
   gcp-approvers:
     - jstuever
@@ -81,12 +85,12 @@ aliases:
     - jstuever
     - patrickdillon
   azure-approvers:
-    - fabianofranz
     - jhixson74
+    - mtulio
   azure-reviewers:
-    - fabianofranz
     - jhixson74
     - m1kola
+    - mtulio
   ovirt-approvers:
     - janosdebugs
     - eslutsky
@@ -100,17 +104,21 @@ aliases:
   ibmcloud-approvers:
     - bobbyradford
     - hasueki
+    - rvanderp3
   ibmcloud-reviewers:
     - bobbyradford
     - hasueki
+    - rvanderp3
   nutanix-approvers:
+    - adiantum
+    - rvanderp3
     - thunderboltsid
     - yanhua121
-    - adiantum
   nutanix-reviewers:
+    - adiantum
+    - rvanderp3
     - thunderboltsid
     - yanhua121
-    - adiantum
   # Keep in sync with the `coreos-approvers` and `coreos-reviewers` lists in https://github.com/openshift/release/blob/master/OWNERS_ALIASES
   coreos-approvers:
     - c4rt0
