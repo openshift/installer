@@ -1,6 +1,7 @@
 package defaults
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/apparentlymart/go-cidr/cidr"
@@ -27,8 +28,13 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 	// cluster. The DNS static pods running on the nodes resolve the
 	// api-int record to APIVIP.
 	if len(p.APIVIPs) == 0 && p.DeprecatedAPIVIP == "" {
-		vip, _ := cidr.Host(&n.MachineNetwork[0].CIDR.IPNet, 5)
-		p.APIVIPs = []string{vip.String()}
+		vip, err := cidr.Host(&n.MachineNetwork[0].CIDR.IPNet, 5)
+		if err != nil {
+			// This will fail validation and abort the install
+			p.APIVIPs = []string{fmt.Sprintf("could not derive API VIP from machine networks: %s", err.Error())}
+		} else {
+			p.APIVIPs = []string{vip.String()}
+		}
 	}
 
 	// IngressVIP returns the internal virtual IP address (VIP) put in
@@ -37,7 +43,12 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 	// e.g. `console`. The DNS static pods running on the nodes resolve
 	// the wildcard apps record to IngressVIP.
 	if len(p.IngressVIPs) == 0 && p.DeprecatedIngressVIP == "" {
-		vip, _ := cidr.Host(&n.MachineNetwork[0].CIDR.IPNet, 7)
-		p.IngressVIPs = []string{vip.String()}
+		vip, err := cidr.Host(&n.MachineNetwork[0].CIDR.IPNet, 7)
+		if err != nil {
+			// This will fail validation and abort the install
+			p.IngressVIPs = []string{fmt.Sprintf("could not derive Ingress VIP from machine networks: %s", err.Error())}
+		} else {
+			p.IngressVIPs = []string{vip.String()}
+		}
 	}
 }

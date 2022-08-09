@@ -161,6 +161,8 @@ func validOpenStackPlatform() *openstack.Platform {
 		DefaultMachinePlatform: &openstack.MachinePool{
 			FlavorName: "test-flavor",
 		},
+		APIVIPs:     []string{"10.0.0.5"},
+		IngressVIPs: []string{"10.0.0.4"},
 	}
 }
 
@@ -1850,7 +1852,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: "platform.baremetal.apiVIPs: Required value: must specify at least one VIP for the API",
 		},
 		{
-			name: "should not validate vips on OpenStack if not set (vips are not required on openstack)",
+			name: "should validate vips on OpenStack (vips are required on openstack)",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{
@@ -1861,7 +1863,21 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
+			expectedError: "platform.openstack.apiVIPs: Required value: must specify at least one VIP for the API",
 		},
+		// {
+		// 	name: "should not validate vips on OpenStack if not set (vips are not required on openstack)",
+		// 	installConfig: func() *types.InstallConfig {
+		// 		c := validInstallConfig()
+		// 		c.Platform = types.Platform{
+		// 			OpenStack: validOpenStackPlatform(),
+		// 		}
+		// 		c.Platform.OpenStack.DeprecatedAPIVIP = ""
+		// 		c.Platform.OpenStack.APIVIPs = []string{}
+
+		// 		return c
+		// 	}(),
+		// },
 		{
 			name: "should validate vips on OpenStack if set (vips are not required on openstack)",
 			installConfig: func() *types.InstallConfig {

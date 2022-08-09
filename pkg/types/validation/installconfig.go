@@ -496,7 +496,7 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			Ingress: platform.OpenStack.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, network, fldPath.Child(openstack.Name))...)
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, network, fldPath.Child(openstack.Name))...)
 	case platform.VSphere != nil:
 		ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.APIVIPs)
 		ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.IngressVIPs)
