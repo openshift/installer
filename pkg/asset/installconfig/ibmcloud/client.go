@@ -346,11 +346,10 @@ func (c *Client) GetSubnetByName(ctx context.Context, subnetName string, region 
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	c.SetVPCServiceURLForRegion(ctx, region)
 	listSubnetsOptions := c.vpcAPI.NewListSubnetsOptions()
 	subnetCollection, detailedResponse, err := c.vpcAPI.ListSubnetsWithContext(ctx, listSubnetsOptions)
 	if detailedResponse.GetStatusCode() == http.StatusNotFound {
-		return nil, err
+		return nil, errors.Wrap(err, region)
 	}
 	for _, subnet := range subnetCollection.Subnets {
 		if subnetName == *subnet.Name {
@@ -403,15 +402,10 @@ func (c *Client) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	err := c.SetVPCServiceURLForRegion(ctx, region)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to set vpc api service url")
-	}
-
 	allVPCs := []vpcv1.VPC{}
 	if vpcs, detailedResponse, err := c.vpcAPI.ListVpcs(c.vpcAPI.NewListVpcsOptions()); err != nil {
 		if detailedResponse.GetStatusCode() != http.StatusNotFound {
-			return nil, err
+			return nil, errors.Wrap(err, region)
 		}
 	} else if vpcs != nil {
 		allVPCs = append(allVPCs, vpcs.Vpcs...)
