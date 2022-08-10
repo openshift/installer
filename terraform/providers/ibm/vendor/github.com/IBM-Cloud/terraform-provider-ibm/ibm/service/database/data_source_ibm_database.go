@@ -86,11 +86,13 @@ func DataSourceIBMDatabaseInstance() *schema.Resource {
 				Description: "Memory allocation required for cluster",
 				Type:        schema.TypeInt,
 				Computed:    true,
+				Deprecated:  "This field is deprecated please use groups",
 			},
 			"members_disk_allocation_mb": {
 				Description: "Disk allocation required for cluster",
 				Type:        schema.TypeInt,
 				Computed:    true,
+				Deprecated:  "This field is deprecated please use groups",
 			},
 			"platform_options": {
 				Description: "Platform-specific options for this deployment.r",

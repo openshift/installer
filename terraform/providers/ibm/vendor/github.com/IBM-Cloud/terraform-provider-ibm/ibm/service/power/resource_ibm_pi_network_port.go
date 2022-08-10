@@ -71,6 +71,7 @@ func ResourceIBMPINetworkPort() *schema.Resource {
 				Computed: true,
 			},
 		},
+		DeprecationMessage: "Resource ibm_pi_network_port is deprecated. Use ibm_pi_network_port_attach to create & attach a network port to a pvm instance",
 	}
 }
 

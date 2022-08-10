@@ -54,7 +54,8 @@ type ContainerAuthenticator struct {
 
 	// [optional] The IAM token server's base endpoint URL.
 	// Default value: "https://iam.cloud.ibm.com"
-	URL string
+	URL     string
+	urlInit sync.Once
 
 	// [optional] The ClientID and ClientSecret fields are used to form a "basic auth"
 	// Authorization header for interactions with the IAM token server.
@@ -82,7 +83,8 @@ type ContainerAuthenticator struct {
 
 	// [optional] The http.Client object used in interacts with the IAM token server.
 	// If not specified by the user, a suitable default Client will be constructed.
-	Client *http.Client
+	Client     *http.Client
+	clientInit sync.Once
 
 	// The cached IAM access token and its expiration time.
 	tokenData *iamTokenData
@@ -176,6 +178,26 @@ func (builder *ContainerAuthenticatorBuilder) Build() (*ContainerAuthenticator, 
 	return &builder.ContainerAuthenticator, nil
 }
 
+// client returns the authenticator's http client after potentially initializing it.
+func (authenticator *ContainerAuthenticator) client() *http.Client {
+	authenticator.clientInit.Do(func() {
+		if authenticator.Client == nil {
+			authenticator.Client = DefaultHTTPClient()
+			authenticator.Client.Timeout = time.Second * 30
+
+			// If the user told us to disable SSL verification, then do it now.
+			if authenticator.DisableSSLVerification {
+				transport := &http.Transport{
+					// #nosec G402
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				}
+				authenticator.Client.Transport = transport
+			}
+		}
+	})
+	return authenticator.Client
+}
+
 // newContainerAuthenticatorFromMap constructs a new ContainerAuthenticator instance from a map containing
 // configuration properties.
 func newContainerAuthenticatorFromMap(properties map[string]string) (authenticator *ContainerAuthenticator, err error) {
@@ -221,6 +243,20 @@ func (authenticator *ContainerAuthenticator) Authenticate(request *http.Request)
 
 	request.Header.Set("Authorization", "Bearer "+token)
 	return nil
+}
+
+// url returns the authenticator's URL property after potentially initializing it.
+func (authenticator *ContainerAuthenticator) url() string {
+	authenticator.urlInit.Do(func() {
+		if authenticator.URL == "" {
+			// If URL was not specified, then use the default IAM endpoint.
+			authenticator.URL = defaultIamTokenServerEndpoint
+		} else {
+			// Canonicalize the URL by removing the operation path if it was specified by the user.
+			authenticator.URL = strings.TrimSuffix(authenticator.URL, iamAuthOperationPathGetToken)
+		}
+	})
+	return authenticator.URL
 }
 
 // getTokenData returns the tokenData field from the authenticator with synchronization.
@@ -332,7 +368,6 @@ func (authenticator *ContainerAuthenticator) invokeRequestTokenData() error {
 // that to obtain a new IAM access token from the IAM token server.
 func (authenticator *ContainerAuthenticator) RequestToken() (*IamTokenServerResponse, error) {
 	var err error
-	var operationPath string = "/identity/token"
 
 	// First, retrieve the CR token value for this compute resource.
 	crToken, err := authenticator.retrieveCRToken()
@@ -343,18 +378,9 @@ func (authenticator *ContainerAuthenticator) RequestToken() (*IamTokenServerResp
 		return nil, NewAuthenticationError(&DetailedResponse{}, err)
 	}
 
-	// Use the default IAM URL if one was not specified by the user.
-	url := authenticator.URL
-	if url == "" {
-		url = defaultIamTokenServerEndpoint
-	} else {
-		// Canonicalize the URL by removing the operation path if it was specified by the user.
-		url = strings.TrimSuffix(url, operationPath)
-	}
-
 	// Set up the request for the IAM "get token" invocation.
 	builder := NewRequestBuilder(POST)
-	_, err = builder.ResolveRequestURL(url, operationPath, nil)
+	_, err = builder.ResolveRequestURL(authenticator.url(), iamAuthOperationPathGetToken, nil)
 	if err != nil {
 		return nil, NewAuthenticationError(&DetailedResponse{}, err)
 	}
@@ -395,22 +421,6 @@ func (authenticator *ContainerAuthenticator) RequestToken() (*IamTokenServerResp
 		req.SetBasicAuth(authenticator.ClientID, authenticator.ClientSecret)
 	}
 
-	// If the authenticator does not have a Client, create one now.
-	if authenticator.Client == nil {
-		authenticator.Client = &http.Client{
-			Timeout: time.Second * 30,
-		}
-
-		// If the user told us to disable SSL verification, then do it now.
-		if authenticator.DisableSSLVerification {
-			transport := &http.Transport{
-				// #nosec G402
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			}
-			authenticator.Client.Transport = transport
-		}
-	}
-
 	// If debug is enabled, then dump the request.
 	if GetLogger().IsLogLevelEnabled(LevelDebug) {
 		buf, dumpErr := httputil.DumpRequestOut(req, req.Body != nil)
@@ -422,7 +432,7 @@ func (authenticator *ContainerAuthenticator) RequestToken() (*IamTokenServerResp
 	}
 
 	GetLogger().Debug("Invoking IAM 'get token' operation: %s", builder.URL)
-	resp, err := authenticator.Client.Do(req)
+	resp, err := authenticator.client().Do(req)
 	if err != nil {
 		return nil, NewAuthenticationError(&DetailedResponse{}, err)
 	}

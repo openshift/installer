@@ -459,7 +459,7 @@ func resourceIBMISSecurityGroupRuleDelete(d *schema.ResourceData, meta interface
 		ID:              &ruleID,
 	}
 	response, err = sess.DeleteSecurityGroupRule(deleteSecurityGroupRuleOptions)
-	if err != nil {
+	if err != nil && response.StatusCode != 404 {
 		return fmt.Errorf("[ERROR] Error Deleting Security Group Rule : %s\n%s", err, response)
 	}
 	d.SetId("")

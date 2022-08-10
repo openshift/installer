@@ -119,7 +119,7 @@ func ResourceIBMCISRangeApp() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "Allows for the true client IP to be passed to the service.",
-				ValidateFunc: validate.InvokeValidator(ibmCISRangeApp, cisRangeAppProtocol),
+				ValidateFunc: validate.InvokeValidator(ibmCISRangeApp, cisRangeAppProxyProtocol),
 			},
 			cisRangeAppEdgeIPsType: {
 				Type:         schema.TypeString,

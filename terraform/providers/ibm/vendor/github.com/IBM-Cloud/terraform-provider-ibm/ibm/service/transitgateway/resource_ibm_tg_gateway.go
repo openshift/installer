@@ -87,7 +87,7 @@ func ResourceIBMTransitGateway() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_tg_gateway", "tag")},
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_tg_gateway", "tags")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "Tags for the transit gateway instance",
 			},
@@ -167,7 +167,7 @@ func ResourceIBMTGValidator() *validate.ResourceValidator {
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "tag",
+			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
@@ -335,7 +335,7 @@ func resourceIBMTransitGatewayUpdate(d *schema.ResourceData, meta interface{}) e
 	tgw, resp, err := client.GetTransitGateway(tgOptions)
 
 	if err != nil {
-		log.Printf("Error fetching Tranisit  Gateway: %s", resp)
+		log.Printf("Error fetching Transit Gateway: %s", resp)
 		return err
 	}
 

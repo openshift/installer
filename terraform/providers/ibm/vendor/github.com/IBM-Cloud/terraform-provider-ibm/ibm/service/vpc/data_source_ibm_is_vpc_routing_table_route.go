@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2021 All Rights Reserved.
+// Copyright IBM Corp. 2021, 2022 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package vpc
@@ -62,6 +62,54 @@ func DataSourceIBMIBMIsVPCRoutingTableRoute() *schema.Resource {
 				Computed:    true,
 				Description: "The date and time that the route was created.",
 			},
+			"creator": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "If present, the resource that created the route. Routes with this property present cannot bedirectly deleted. All routes with an `origin` of `learned` or `service` will have thisproperty set, and future `origin` values may also have this property set.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"crn": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The VPN gateway's CRN.",
+						},
+						"deleted": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The VPN gateway's canonical URL.",
+						},
+						"id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this VPN gateway.",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user-defined name for this VPN gateway.",
+						},
+						"resource_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
+			},
 			rDestination: &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -124,6 +172,11 @@ func DataSourceIBMIBMIsVPCRoutingTableRoute() *schema.Resource {
 						},
 					},
 				},
+			},
+			"origin": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The origin of this route:- `service`: route was directly created by a service- `user`: route was directly created by a userThe enumerated values for this property are expected to expand in the future. When processing this property, check for and log unknown values. Optionally halt processing and surface the error, or bypass the route on which the unexpected property value was encountered.",
 			},
 			rZone: &schema.Schema{
 				Type:        schema.TypeList,
@@ -199,7 +252,11 @@ func dataSourceIBMIBMIsVPCRoutingTableRouteRead(context context.Context, d *sche
 		for _, r := range allrecs {
 			if *r.Name == routeName {
 				route = &r
+				break
 			}
+		}
+		if route == nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Route not found with name: %s", routeName))
 		}
 	}
 
@@ -211,6 +268,21 @@ func dataSourceIBMIBMIsVPCRoutingTableRouteRead(context context.Context, d *sche
 
 	if err = d.Set(rtCreateAt, flex.DateTimeToString(route.CreatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
+	}
+
+	// creator changes
+	creator := []map[string]interface{}{}
+	if route.Creator != nil {
+		mm, err := dataSourceIBMIsRouteCreatorToMap(route.Creator)
+		if err != nil {
+			log.Printf("Error reading list of VPC Routing Table Routes' creator:%s", err)
+			return diag.FromErr(fmt.Errorf("[ERROR] Error fetching creator: %s", err))
+		}
+		creator = append(creator, mm)
+
+	}
+	if err = d.Set("creator", creator); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting creator: %s", err))
 	}
 
 	if err = d.Set(isRoutingTableRouteID, route.ID); err != nil {
@@ -243,6 +315,11 @@ func dataSourceIBMIBMIsVPCRoutingTableRouteRead(context context.Context, d *sche
 	}
 	if err = d.Set(rNextHop, nextHop); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting next_hop %s", err))
+	}
+
+	//orgin
+	if err = d.Set("origin", route.Origin); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting origin %s", err))
 	}
 
 	zone := []map[string]interface{}{}

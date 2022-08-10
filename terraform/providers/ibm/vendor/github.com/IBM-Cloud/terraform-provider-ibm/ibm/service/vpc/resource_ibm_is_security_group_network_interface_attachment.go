@@ -214,7 +214,9 @@ func resourceIBMISSecurityGroupNetworkInterfaceAttachmentRead(d *schema.Resource
 	d.Set(isSGNICAInstanceNwInterfaceID, *instanceNic.ID)
 	d.Set(isSGNICAName, *instanceNic.Name)
 	d.Set(isSGNICAPortSpeed, *instanceNic.PortSpeed)
-	d.Set(isSGNICAPrimaryIPV4Address, *instanceNic.PrimaryIpv4Address)
+	if instanceNic.PrimaryIP != nil && instanceNic.PrimaryIP.Address != nil {
+		d.Set(isSGNICAPrimaryIPV4Address, *instanceNic.PrimaryIP.Address)
+	}
 	d.Set(isSGNICAStatus, *instanceNic.Status)
 	d.Set(isSGNICAType, *instanceNic.Type)
 	if instanceNic.Subnet != nil {

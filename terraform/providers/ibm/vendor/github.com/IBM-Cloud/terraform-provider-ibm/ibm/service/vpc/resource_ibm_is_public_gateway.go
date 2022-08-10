@@ -103,7 +103,7 @@ func ResourceIBMISPublicGateway() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_public_gateway", "tag")},
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_public_gateway", "tags")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "Service tags for the public gateway instance",
 			},
@@ -161,7 +161,7 @@ func ResourceIBMISPublicGatewayValidator() *validate.ResourceValidator {
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "tag",
+			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,

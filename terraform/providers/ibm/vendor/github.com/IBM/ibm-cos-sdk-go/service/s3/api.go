@@ -1197,6 +1197,79 @@ func (c *S3) DeleteBucketLifecycleWithContext(ctx aws.Context, input *DeleteBuck
 	return out, req.Send()
 }
 
+const opDeleteBucketReplication = "DeleteBucketReplication"
+
+// DeleteBucketReplicationRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteBucketReplication operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteBucketReplication for more information on using the DeleteBucketReplication
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteBucketReplicationRequest method.
+//    req, resp := client.DeleteBucketReplicationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/DeleteBucketReplication
+func (c *S3) DeleteBucketReplicationRequest(input *DeleteBucketReplicationInput) (req *request.Request, output *DeleteBucketReplicationOutput) {
+	op := &request.Operation{
+		Name:       opDeleteBucketReplication,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/{Bucket}?replication",
+	}
+
+	if input == nil {
+		input = &DeleteBucketReplicationInput{}
+	}
+
+	output = &DeleteBucketReplicationOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restxml.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteBucketReplication API operation for Amazon Simple Storage Service.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation DeleteBucketReplication for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/DeleteBucketReplication
+func (c *S3) DeleteBucketReplication(input *DeleteBucketReplicationInput) (*DeleteBucketReplicationOutput, error) {
+	req, out := c.DeleteBucketReplicationRequest(input)
+	return out, req.Send()
+}
+
+// DeleteBucketReplicationWithContext is the same as DeleteBucketReplication with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteBucketReplication for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *S3) DeleteBucketReplicationWithContext(ctx aws.Context, input *DeleteBucketReplicationInput, opts ...request.Option) (*DeleteBucketReplicationOutput, error) {
+	req, out := c.DeleteBucketReplicationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteBucketWebsite = "DeleteBucketWebsite"
 
 // DeleteBucketWebsiteRequest generates a "aws/request.Request" representing the
@@ -2338,6 +2411,78 @@ func (c *S3) GetBucketProtectionConfiguration(input *GetBucketProtectionConfigur
 // for more information on using Contexts.
 func (c *S3) GetBucketProtectionConfigurationWithContext(ctx aws.Context, input *GetBucketProtectionConfigurationInput, opts ...request.Option) (*GetBucketProtectionConfigurationOutput, error) {
 	req, out := c.GetBucketProtectionConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetBucketReplication = "GetBucketReplication"
+
+// GetBucketReplicationRequest generates a "aws/request.Request" representing the
+// client's request for the GetBucketReplication operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetBucketReplication for more information on using the GetBucketReplication
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetBucketReplicationRequest method.
+//    req, resp := client.GetBucketReplicationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketReplication
+func (c *S3) GetBucketReplicationRequest(input *GetBucketReplicationInput) (req *request.Request, output *GetBucketReplicationOutput) {
+	op := &request.Operation{
+		Name:       opGetBucketReplication,
+		HTTPMethod: "GET",
+		HTTPPath:   "/{Bucket}?replication",
+	}
+
+	if input == nil {
+		input = &GetBucketReplicationInput{}
+	}
+
+	output = &GetBucketReplicationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetBucketReplication API operation for Amazon Simple Storage Service.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation GetBucketReplication for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketReplication
+func (c *S3) GetBucketReplication(input *GetBucketReplicationInput) (*GetBucketReplicationOutput, error) {
+	req, out := c.GetBucketReplicationRequest(input)
+	return out, req.Send()
+}
+
+// GetBucketReplicationWithContext is the same as GetBucketReplication with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetBucketReplication for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *S3) GetBucketReplicationWithContext(ctx aws.Context, input *GetBucketReplicationInput, opts ...request.Option) (*GetBucketReplicationOutput, error) {
+	req, out := c.GetBucketReplicationRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -4895,6 +5040,83 @@ func (c *S3) PutBucketProtectionConfigurationWithContext(ctx aws.Context, input 
 	return out, req.Send()
 }
 
+const opPutBucketReplication = "PutBucketReplication"
+
+// PutBucketReplicationRequest generates a "aws/request.Request" representing the
+// client's request for the PutBucketReplication operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See PutBucketReplication for more information on using the PutBucketReplication
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the PutBucketReplicationRequest method.
+//    req, resp := client.PutBucketReplicationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/PutBucketReplication
+func (c *S3) PutBucketReplicationRequest(input *PutBucketReplicationInput) (req *request.Request, output *PutBucketReplicationOutput) {
+	op := &request.Operation{
+		Name:       opPutBucketReplication,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/{Bucket}?replication",
+	}
+
+	if input == nil {
+		input = &PutBucketReplicationInput{}
+	}
+
+	output = &PutBucketReplicationOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restxml.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	req.Handlers.Build.PushBackNamed(request.NamedHandler{
+		Name: "contentMd5Handler",
+		Fn:   checksum.AddBodyContentMD5Handler,
+	})
+	return
+}
+
+// PutBucketReplication API operation for Amazon Simple Storage Service.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation PutBucketReplication for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/PutBucketReplication
+func (c *S3) PutBucketReplication(input *PutBucketReplicationInput) (*PutBucketReplicationOutput, error) {
+	req, out := c.PutBucketReplicationRequest(input)
+	return out, req.Send()
+}
+
+// PutBucketReplicationWithContext is the same as PutBucketReplication with the addition of
+// the ability to pass a context and additional request options.
+//
+// See PutBucketReplication for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *S3) PutBucketReplicationWithContext(ctx aws.Context, input *PutBucketReplicationInput, opts ...request.Option) (*PutBucketReplicationOutput, error) {
+	req, out := c.PutBucketReplicationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opPutBucketVersioning = "PutBucketVersioning"
 
 // PutBucketVersioningRequest generates a "aws/request.Request" representing the
@@ -6288,9 +6510,7 @@ type AbortMultipartUploadInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Key of the object for which the multipart upload was initiated.
@@ -6956,9 +7176,7 @@ type CompleteMultipartUploadInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Object key for which the multipart upload was initiated.
@@ -8725,9 +8943,7 @@ type DeleteBucketCorsInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -8798,9 +9014,7 @@ type DeleteBucketInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -8857,9 +9071,7 @@ type DeleteBucketLifecycleInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -8936,6 +9148,77 @@ func (s DeleteBucketOutput) GoString() string {
 	return s.String()
 }
 
+type DeleteBucketReplicationInput struct {
+	_ struct{} `locationName:"DeleteBucketReplicationRequest" type:"structure"`
+
+	// The bucket name.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// Ignored by COS
+	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
+}
+
+// String returns the string representation
+func (s DeleteBucketReplicationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBucketReplicationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteBucketReplicationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteBucketReplicationInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Bucket != nil && len(*s.Bucket) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Bucket", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *DeleteBucketReplicationInput) SetBucket(v string) *DeleteBucketReplicationInput {
+	s.Bucket = &v
+	return s
+}
+
+func (s *DeleteBucketReplicationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
+// SetExpectedBucketOwner sets the ExpectedBucketOwner field's value.
+func (s *DeleteBucketReplicationInput) SetExpectedBucketOwner(v string) *DeleteBucketReplicationInput {
+	s.ExpectedBucketOwner = &v
+	return s
+}
+
+type DeleteBucketReplicationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteBucketReplicationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBucketReplicationOutput) GoString() string {
+	return s.String()
+}
+
 type DeleteBucketWebsiteInput struct {
 	_ struct{} `locationName:"DeleteBucketWebsiteRequest" type:"structure"`
 
@@ -8944,9 +9227,7 @@ type DeleteBucketWebsiteInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -9157,6 +9438,59 @@ func (s *DeleteMarkerEntry) SetVersionId(v string) *DeleteMarkerEntry {
 	return s
 }
 
+// Specifies whether Amazon S3 replicates delete markers. If you specify a Filter
+// in your replication configuration, you must also include a DeleteMarkerReplication
+// element. If your Filter includes a Tag element, the DeleteMarkerReplication
+// Status must be set to Disabled, because Amazon S3 does not support replicating
+// delete markers for tag-based rules. For an example configuration, see Basic
+// Rule Configuration (https://docs.aws.amazon.com/AmazonS3/latest/dev/replication-add-config.html#replication-config-min-rule-config).
+//
+// For more information about delete marker replication, see Basic Rule Configuration
+// (https://docs.aws.amazon.com/AmazonS3/latest/dev/delete-marker-replication.html).
+//
+// If you are using an earlier version of the replication configuration, Amazon
+// S3 handles replication of delete markers differently. For more information,
+// see Backward Compatibility (https://docs.aws.amazon.com/AmazonS3/latest/dev/replication-add-config.html#replication-backward-compat-considerations).
+type DeleteMarkerReplication struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates whether to replicate delete markers.
+	//
+	// Indicates whether to replicate delete markers.
+	//
+	// Status is a required field
+	Status *string `type:"string" required:"true" enum:"DeleteMarkerReplicationStatus"`
+}
+
+// String returns the string representation
+func (s DeleteMarkerReplication) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteMarkerReplication) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteMarkerReplication) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteMarkerReplication"}
+	if s.Status == nil {
+		invalidParams.Add(request.NewErrParamRequired("Status"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetStatus sets the Status field's value.
+func (s *DeleteMarkerReplication) SetStatus(v string) *DeleteMarkerReplication {
+	s.Status = &v
+	return s
+}
+
 type DeleteObjectInput struct {
 	_ struct{} `locationName:"DeleteObjectRequest" type:"structure"`
 
@@ -9180,9 +9514,7 @@ type DeleteObjectInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Key name of the object to delete.
@@ -9349,9 +9681,7 @@ type DeleteObjectTaggingInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// The key that identifies the object in the bucket from which to remove all
@@ -9478,9 +9808,7 @@ type DeleteObjectsInput struct {
 	// Delete is a required field
 	Delete *Delete `locationName:"Delete" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// The concatenation of the authentication device's serial number, a space,
@@ -9620,9 +9948,7 @@ type DeletePublicAccessBlockInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -9738,6 +10064,54 @@ func (s *DeletedObject) SetKey(v string) *DeletedObject {
 func (s *DeletedObject) SetVersionId(v string) *DeletedObject {
 	s.VersionId = &v
 	return s
+}
+
+// Specifies information about where to publish analysis or configuration results
+// for an Amazon S3 bucket and S3 Replication Time Control (S3 RTC).
+type Destination struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the bucket where you want Amazon S3 to
+	// store the results.
+	//
+	// Bucket is a required field
+	Bucket *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s Destination) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Destination) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Destination) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Destination"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *Destination) SetBucket(v string) *Destination {
+	s.Bucket = &v
+	return s
+}
+
+func (s *Destination) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Container for all error elements.
@@ -10316,9 +10690,7 @@ type GetBucketAclInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -10407,9 +10779,7 @@ type GetBucketCorsInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -10490,9 +10860,7 @@ type GetBucketLifecycleConfigurationInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -10572,9 +10940,7 @@ type GetBucketLocationInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -10656,9 +11022,7 @@ type GetBucketLoggingInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -10802,6 +11166,87 @@ func (s *GetBucketProtectionConfigurationOutput) SetProtectionConfiguration(v *P
 	return s
 }
 
+type GetBucketReplicationInput struct {
+	_ struct{} `locationName:"GetBucketReplicationRequest" type:"structure"`
+
+	// The bucket name for which to get the replication information.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// Ignored by COS
+	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
+}
+
+// String returns the string representation
+func (s GetBucketReplicationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBucketReplicationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetBucketReplicationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetBucketReplicationInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Bucket != nil && len(*s.Bucket) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Bucket", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *GetBucketReplicationInput) SetBucket(v string) *GetBucketReplicationInput {
+	s.Bucket = &v
+	return s
+}
+
+func (s *GetBucketReplicationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
+// SetExpectedBucketOwner sets the ExpectedBucketOwner field's value.
+func (s *GetBucketReplicationInput) SetExpectedBucketOwner(v string) *GetBucketReplicationInput {
+	s.ExpectedBucketOwner = &v
+	return s
+}
+
+type GetBucketReplicationOutput struct {
+	_ struct{} `type:"structure" payload:"ReplicationConfiguration"`
+
+	// A container for replication rules. You can add up to 1,000 rules. The maximum
+	// size of a replication configuration is 2 MB.
+	ReplicationConfiguration *ReplicationConfiguration `type:"structure"`
+}
+
+// String returns the string representation
+func (s GetBucketReplicationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBucketReplicationOutput) GoString() string {
+	return s.String()
+}
+
+// SetReplicationConfiguration sets the ReplicationConfiguration field's value.
+func (s *GetBucketReplicationOutput) SetReplicationConfiguration(v *ReplicationConfiguration) *GetBucketReplicationOutput {
+	s.ReplicationConfiguration = v
+	return s
+}
+
 type GetBucketVersioningInput struct {
 	_ struct{} `locationName:"GetBucketVersioningRequest" type:"structure"`
 
@@ -10810,9 +11255,7 @@ type GetBucketVersioningInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -10903,9 +11346,7 @@ type GetBucketWebsiteInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -11020,9 +11461,7 @@ type GetObjectAclInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// The key of the object for which to get the ACL information.
@@ -11175,9 +11614,7 @@ type GetObjectInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Return the object only if its entity tag (ETag) is the same as the one specified,
@@ -11792,9 +12229,7 @@ type GetObjectTaggingInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Object key for which to get the tagging information.
@@ -11925,9 +12360,7 @@ type GetPublicAccessBlockInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -12208,9 +12641,7 @@ type HeadBucketInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -12315,9 +12746,7 @@ type HeadObjectInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Return the object only if its entity tag (ETag) is the same as the one specified,
@@ -13551,9 +13980,7 @@ type ListMultipartUploadsInput struct {
 	// keys in the response.
 	EncodingType *string `location:"querystring" locationName:"encoding-type" type:"string" enum:"EncodingType"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Together with upload-id-marker, this parameter specifies the multipart upload
@@ -13836,9 +14263,7 @@ type ListObjectVersionsInput struct {
 	// keys in the response.
 	EncodingType *string `location:"querystring" locationName:"encoding-type" type:"string" enum:"EncodingType"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Specifies the key to start with when listing objects in a bucket.
@@ -14130,9 +14555,7 @@ type ListObjectsInput struct {
 	// keys in the response.
 	EncodingType *string `location:"querystring" locationName:"encoding-type" type:"string" enum:"EncodingType"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Specifies the key to start with when listing objects in a bucket.
@@ -14416,9 +14839,7 @@ type ListObjectsV2Input struct {
 	// Encoding type used by Amazon S3 to encode object keys in the response.
 	EncodingType *string `location:"querystring" locationName:"encoding-type" type:"string" enum:"EncodingType"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// The owner field is not present in listV2 by default, if you want to return
@@ -14730,9 +15151,7 @@ type ListPartsInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Object key for which the multipart upload was initiated.
@@ -15685,9 +16104,7 @@ type PutBucketAclInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Allows grantee the read, write, read ACP, and write ACP permissions on the
@@ -15829,9 +16246,7 @@ type PutBucketCorsInput struct {
 	// CORSConfiguration is a required field
 	CORSConfiguration *CORSConfiguration `locationName:"CORSConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -15916,9 +16331,7 @@ type PutBucketLifecycleConfigurationInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Container for lifecycle rules. You can add as many as 1000 rules.
@@ -16008,9 +16421,7 @@ type PutBucketLoggingInput struct {
 	// BucketLoggingStatus is a required field
 	BucketLoggingStatus *BucketLoggingStatus `locationName:"BucketLoggingStatus" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 }
 
@@ -16164,6 +16575,97 @@ func (s PutBucketProtectionConfigurationOutput) GoString() string {
 	return s.String()
 }
 
+type PutBucketReplicationInput struct {
+	_ struct{} `locationName:"PutBucketReplicationRequest" type:"structure" payload:"ReplicationConfiguration"`
+
+	// The name of the bucket
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// Ignored by COS
+	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
+
+	// A container for replication rules. You can add up to 1,000 rules. The maximum
+	// size of a replication configuration is 2 MB.
+	//
+	// ReplicationConfiguration is a required field
+	ReplicationConfiguration *ReplicationConfiguration `locationName:"ReplicationConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
+}
+
+// String returns the string representation
+func (s PutBucketReplicationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutBucketReplicationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PutBucketReplicationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PutBucketReplicationInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Bucket != nil && len(*s.Bucket) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Bucket", 1))
+	}
+	if s.ReplicationConfiguration == nil {
+		invalidParams.Add(request.NewErrParamRequired("ReplicationConfiguration"))
+	}
+	if s.ReplicationConfiguration != nil {
+		if err := s.ReplicationConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("ReplicationConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *PutBucketReplicationInput) SetBucket(v string) *PutBucketReplicationInput {
+	s.Bucket = &v
+	return s
+}
+
+func (s *PutBucketReplicationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
+// SetExpectedBucketOwner sets the ExpectedBucketOwner field's value.
+func (s *PutBucketReplicationInput) SetExpectedBucketOwner(v string) *PutBucketReplicationInput {
+	s.ExpectedBucketOwner = &v
+	return s
+}
+
+// SetReplicationConfiguration sets the ReplicationConfiguration field's value.
+func (s *PutBucketReplicationInput) SetReplicationConfiguration(v *ReplicationConfiguration) *PutBucketReplicationInput {
+	s.ReplicationConfiguration = v
+	return s
+}
+
+type PutBucketReplicationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s PutBucketReplicationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutBucketReplicationOutput) GoString() string {
+	return s.String()
+}
+
 type PutBucketVersioningInput struct {
 	_ struct{} `locationName:"PutBucketVersioningRequest" type:"structure" payload:"VersioningConfiguration"`
 
@@ -16172,9 +16674,7 @@ type PutBucketVersioningInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// The concatenation of the authentication device's serial number, a space,
@@ -16269,9 +16769,7 @@ type PutBucketWebsiteInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Container for the request.
@@ -16376,9 +16874,7 @@ type PutObjectAclInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Allows grantee the read, write, read ACP, and write ACP permissions on the
@@ -17110,9 +17606,7 @@ type PutObjectTaggingInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Name of the object key.
@@ -17251,9 +17745,7 @@ type PutPublicAccessBlockInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// The PublicAccessBlock configuration that you want to apply to this Amazon
@@ -17462,6 +17954,368 @@ func (s *RedirectAllRequestsTo) SetProtocol(v string) *RedirectAllRequestsTo {
 	return s
 }
 
+// A container for replication rules. You can add up to 1,000 rules. The maximum
+// size of a replication configuration is 2 MB.
+type ReplicationConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the AWS Identity and Access Management
+	// (IAM) role that Amazon S3 assumes when replicating objects. For more information,
+	// see How to Set Up Replication (https://docs.aws.amazon.com/AmazonS3/latest/dev/replication-how-setup.html)
+	// in the Amazon S3 User Guide.
+	Role *string `type:"string"`
+
+	// A container for one or more replication rules. A replication configuration
+	// must have at least one rule and can contain a maximum of 1,000 rules.
+	//
+	// Rules is a required field
+	Rules []*ReplicationRule `locationName:"Rule" type:"list" flattened:"true" required:"true"`
+}
+
+// String returns the string representation
+func (s ReplicationConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReplicationConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ReplicationConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ReplicationConfiguration"}
+	if s.Rules == nil {
+		invalidParams.Add(request.NewErrParamRequired("Rules"))
+	}
+	if s.Rules != nil {
+		for i, v := range s.Rules {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Rules", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRole sets the Role field's value.
+func (s *ReplicationConfiguration) SetRole(v string) *ReplicationConfiguration {
+	s.Role = &v
+	return s
+}
+
+// SetRules sets the Rules field's value.
+func (s *ReplicationConfiguration) SetRules(v []*ReplicationRule) *ReplicationConfiguration {
+	s.Rules = v
+	return s
+}
+
+// Specifies which Amazon S3 objects to replicate and where to store the replicas.
+type ReplicationRule struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies whether Amazon S3 replicates delete markers. If you specify a Filter
+	// in your replication configuration, you must also include a DeleteMarkerReplication
+	// element. If your Filter includes a Tag element, the DeleteMarkerReplication
+	// Status must be set to Disabled, because Amazon S3 does not support replicating
+	// delete markers for tag-based rules. For an example configuration, see Basic
+	// Rule Configuration (https://docs.aws.amazon.com/AmazonS3/latest/dev/replication-add-config.html#replication-config-min-rule-config).
+	//
+	// For more information about delete marker replication, see Basic Rule Configuration
+	// (https://docs.aws.amazon.com/AmazonS3/latest/dev/delete-marker-replication.html).
+	//
+	// If you are using an earlier version of the replication configuration, Amazon
+	// S3 handles replication of delete markers differently. For more information,
+	// see Backward Compatibility (https://docs.aws.amazon.com/AmazonS3/latest/dev/replication-add-config.html#replication-backward-compat-considerations).
+	//
+	// DeleteMarkerReplication is a required field
+	DeleteMarkerReplication *DeleteMarkerReplication `type:"structure" required:"true"`
+
+	// A container for information about the replication destination and its configurations
+	// including enabling the S3 Replication Time Control (S3 RTC).
+	//
+	// Destination is a required field
+	Destination *Destination `type:"structure" required:"true"`
+
+	// A filter that identifies the subset of objects to which the replication rule
+	// applies. A Filter must specify exactly one Prefix, Tag, or an And child element.
+	//
+	// Filter is a required field
+	Filter *ReplicationRuleFilter `type:"structure" required:"true"`
+
+	// A unique identifier for the rule. The maximum value is 255 characters.
+	ID *string `type:"string"`
+
+	// An object key name prefix that identifies the object or objects to which
+	// the rule applies. The maximum prefix length is 1,024 characters. To include
+	// all objects in a bucket, specify an empty string.
+	//
+	// Replacement must be made for object keys containing special characters (such
+	// as carriage returns) when using XML requests. For more information, see XML
+	// related object key constraints (https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-xml-related-constraints).
+	//
+	// Deprecated: Prefix has been deprecated
+	Prefix *string `deprecated:"true" type:"string"`
+
+	// The priority indicates which rule has precedence whenever two or more replication
+	// rules conflict. Amazon S3 will attempt to replicate objects according to
+	// all replication rules. However, if there are two or more rules with the same
+	// destination bucket, then objects will be replicated according to the rule
+	// with the highest priority. The higher the number, the higher the priority.
+	//
+	// For more information, see Replication (https://docs.aws.amazon.com/AmazonS3/latest/dev/replication.html)
+	// in the Amazon S3 User Guide.
+	//
+	// Priority is a required field
+	Priority *int64 `type:"integer" required:"true"`
+
+	// Specifies whether the rule is enabled.
+	//
+	// Status is a required field
+	Status *string `type:"string" required:"true" enum:"ReplicationRuleStatus"`
+}
+
+// String returns the string representation
+func (s ReplicationRule) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReplicationRule) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ReplicationRule) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ReplicationRule"}
+	if s.DeleteMarkerReplication == nil {
+		invalidParams.Add(request.NewErrParamRequired("DeleteMarkerReplication"))
+	}
+	if s.Destination == nil {
+		invalidParams.Add(request.NewErrParamRequired("Destination"))
+	}
+	if s.Filter == nil {
+		invalidParams.Add(request.NewErrParamRequired("Filter"))
+	}
+	if s.Priority == nil {
+		invalidParams.Add(request.NewErrParamRequired("Priority"))
+	}
+	if s.Status == nil {
+		invalidParams.Add(request.NewErrParamRequired("Status"))
+	}
+	if s.DeleteMarkerReplication != nil {
+		if err := s.DeleteMarkerReplication.Validate(); err != nil {
+			invalidParams.AddNested("DeleteMarkerReplication", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Destination != nil {
+		if err := s.Destination.Validate(); err != nil {
+			invalidParams.AddNested("Destination", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Filter != nil {
+		if err := s.Filter.Validate(); err != nil {
+			invalidParams.AddNested("Filter", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDeleteMarkerReplication sets the DeleteMarkerReplication field's value.
+func (s *ReplicationRule) SetDeleteMarkerReplication(v *DeleteMarkerReplication) *ReplicationRule {
+	s.DeleteMarkerReplication = v
+	return s
+}
+
+// SetDestination sets the Destination field's value.
+func (s *ReplicationRule) SetDestination(v *Destination) *ReplicationRule {
+	s.Destination = v
+	return s
+}
+
+// SetFilter sets the Filter field's value.
+func (s *ReplicationRule) SetFilter(v *ReplicationRuleFilter) *ReplicationRule {
+	s.Filter = v
+	return s
+}
+
+// SetID sets the ID field's value.
+func (s *ReplicationRule) SetID(v string) *ReplicationRule {
+	s.ID = &v
+	return s
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *ReplicationRule) SetPrefix(v string) *ReplicationRule {
+	s.Prefix = &v
+	return s
+}
+
+// SetPriority sets the Priority field's value.
+func (s *ReplicationRule) SetPriority(v int64) *ReplicationRule {
+	s.Priority = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *ReplicationRule) SetStatus(v string) *ReplicationRule {
+	s.Status = &v
+	return s
+}
+
+// A container for specifying rule filters. The filters determine the subset
+// of objects to which the rule applies. This element is required only if you
+// specify more than one filter.
+//
+// For example:
+//
+//    * If you specify both a Prefix and a Tag filter, wrap these filters in
+//    an And tag.
+//
+//    * If you specify a filter based on multiple tags, wrap the Tag elements
+//    in an And tag.
+type ReplicationRuleAndOperator struct {
+	_ struct{} `type:"structure"`
+
+	// An object key name prefix that identifies the subset of objects to which
+	// the rule applies.
+	Prefix *string `type:"string"`
+
+	// An array of tags containing key and value pairs.
+	Tags []*Tag `locationName:"Tag" locationNameList:"Tag" type:"list" flattened:"true"`
+}
+
+// String returns the string representation
+func (s ReplicationRuleAndOperator) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReplicationRuleAndOperator) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ReplicationRuleAndOperator) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ReplicationRuleAndOperator"}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *ReplicationRuleAndOperator) SetPrefix(v string) *ReplicationRuleAndOperator {
+	s.Prefix = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *ReplicationRuleAndOperator) SetTags(v []*Tag) *ReplicationRuleAndOperator {
+	s.Tags = v
+	return s
+}
+
+// A filter that identifies the subset of objects to which the replication rule
+// applies. A Filter must specify exactly one Prefix, Tag, or an And child element.
+type ReplicationRuleFilter struct {
+	_ struct{} `type:"structure"`
+
+	// A container for specifying rule filters. The filters determine the subset
+	// of objects to which the rule applies. This element is required only if you
+	// specify more than one filter. For example:
+	//
+	//    * If you specify both a Prefix and a Tag filter, wrap these filters in
+	//    an And tag.
+	//
+	//    * If you specify a filter based on multiple tags, wrap the Tag elements
+	//    in an And tag.
+	And *ReplicationRuleAndOperator `type:"structure"`
+
+	// An object key name prefix that identifies the subset of objects to which
+	// the rule applies.
+	//
+	// Replacement must be made for object keys containing special characters (such
+	// as carriage returns) when using XML requests. For more information, see XML
+	// related object key constraints (https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-xml-related-constraints).
+	Prefix *string `type:"string"`
+
+	// A container for specifying a tag key and value.
+	//
+	// The rule applies only to objects that have the tag in their tag set.
+	Tag *Tag `type:"structure"`
+}
+
+// String returns the string representation
+func (s ReplicationRuleFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReplicationRuleFilter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ReplicationRuleFilter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ReplicationRuleFilter"}
+	if s.And != nil {
+		if err := s.And.Validate(); err != nil {
+			invalidParams.AddNested("And", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Tag != nil {
+		if err := s.Tag.Validate(); err != nil {
+			invalidParams.AddNested("Tag", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAnd sets the And field's value.
+func (s *ReplicationRuleFilter) SetAnd(v *ReplicationRuleAndOperator) *ReplicationRuleFilter {
+	s.And = v
+	return s
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *ReplicationRuleFilter) SetPrefix(v string) *ReplicationRuleFilter {
+	s.Prefix = &v
+	return s
+}
+
+// SetTag sets the Tag field's value.
+func (s *ReplicationRuleFilter) SetTag(v *Tag) *ReplicationRuleFilter {
+	s.Tag = v
+	return s
+}
+
 type RestoreObjectInput struct {
 	_ struct{} `locationName:"RestoreObjectRequest" type:"structure" payload:"RestoreRequest"`
 
@@ -17485,9 +18339,7 @@ type RestoreObjectInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Object key for which the action was initiated.
@@ -18006,9 +18858,7 @@ type UploadPartCopyInput struct {
 	// encryption key was transmitted without error.
 	CopySourceSSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-copy-source-server-side-encryption-customer-key-MD5" type:"string"`
 
-	// The account ID of the expected destination bucket owner. If the destination
-	// bucket is owned by a different account, the request will fail with an HTTP
-	// 403 (Access Denied) error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// The account ID of the expected source bucket owner. If the source bucket
@@ -18354,9 +19204,7 @@ type UploadPartInput struct {
 	// if object lock parameters are specified.
 	ContentMD5 *string `location:"header" locationName:"Content-MD5" type:"string"`
 
-	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied)
-	// error.
+	// Ignored by COS
 	ExpectedBucketOwner *string `location:"header" locationName:"x-amz-expected-bucket-owner" type:"string"`
 
 	// Object key for which the multipart upload was initiated.
@@ -18848,6 +19696,22 @@ func BucketVersioningStatus_Values() []string {
 	}
 }
 
+const (
+	// DeleteMarkerReplicationStatusEnabled is a DeleteMarkerReplicationStatus enum value
+	DeleteMarkerReplicationStatusEnabled = "Enabled"
+
+	// DeleteMarkerReplicationStatusDisabled is a DeleteMarkerReplicationStatus enum value
+	DeleteMarkerReplicationStatusDisabled = "Disabled"
+)
+
+// DeleteMarkerReplicationStatus_Values returns all elements of the DeleteMarkerReplicationStatus enum
+func DeleteMarkerReplicationStatus_Values() []string {
+	return []string{
+		DeleteMarkerReplicationStatusEnabled,
+		DeleteMarkerReplicationStatusDisabled,
+	}
+}
+
 // Requests Amazon S3 to encode the object keys in the response and specifies
 // the encoding method to use. An object key may contain any Unicode character;
 // however, XML 1.0 parser cannot parse some characters, such as characters
@@ -19059,6 +19923,22 @@ func Protocol_Values() []string {
 	return []string{
 		ProtocolHttp,
 		ProtocolHttps,
+	}
+}
+
+const (
+	// ReplicationRuleStatusEnabled is a ReplicationRuleStatus enum value
+	ReplicationRuleStatusEnabled = "Enabled"
+
+	// ReplicationRuleStatusDisabled is a ReplicationRuleStatus enum value
+	ReplicationRuleStatusDisabled = "Disabled"
+)
+
+// ReplicationRuleStatus_Values returns all elements of the ReplicationRuleStatus enum
+func ReplicationRuleStatus_Values() []string {
+	return []string{
+		ReplicationRuleStatusEnabled,
+		ReplicationRuleStatusDisabled,
 	}
 }
 

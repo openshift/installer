@@ -42,9 +42,15 @@ func ResourceIBMKmskeyPolicies() *schema.Resource {
 				DiffSuppressFunc: suppressKMSInstanceIDDiff,
 			},
 			"key_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Key ID",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Key ID",
+				ExactlyOneOf: []string{"key_id", "alias"},
+			},
+			"alias": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"key_id", "alias"},
 			},
 			"endpoint_type": {
 				Type:         schema.TypeString,
@@ -176,8 +182,14 @@ func resourceIBMKmsKeyPolicyCreate(context context.Context, d *schema.ResourceDa
 		instanceID = CrnInstanceID[len(CrnInstanceID)-3]
 	}
 	endpointType := d.Get("endpoint_type").(string)
-	key_id := d.Get("key_id").(string)
-
+	var id string
+	if v, ok := d.GetOk("key_id"); ok {
+		id = v.(string)
+		d.Set("key_id", id)
+	}
+	if v, ok := d.GetOk("alias"); ok {
+		id = v.(string)
+	}
 	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
 	if err != nil {
 		return diag.FromErr(err)
@@ -198,11 +210,11 @@ func resourceIBMKmsKeyPolicyCreate(context context.Context, d *schema.ResourceDa
 
 	kpAPI.Config.InstanceID = instanceID
 
-	key, err := kpAPI.GetKey(context, key_id)
+	key, err := kpAPI.GetKey(context, id)
 	if err != nil {
 		return diag.Errorf("Get Key failed with error while creating policies: %s", err)
 	}
-	err = resourceHandlePolicies(context, d, kpAPI, meta, key_id)
+	err = resourceHandlePolicies(context, d, kpAPI, meta, id)
 	if err != nil {
 		return diag.Errorf("Could not create policies: %s", err)
 	}

@@ -12,12 +12,12 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPICloudConnectionClient ...
+// IBMPICloudConnectionClient
 type IBMPICloudConnectionClient struct {
 	IBMPIClient
 }
 
-// NewIBMPICloudConnectionClient ...
+// NewIBMPICloudConnectionClient
 func NewIBMPICloudConnectionClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPICloudConnectionClient {
 	return &IBMPICloudConnectionClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
@@ -45,7 +45,7 @@ func (f *IBMPICloudConnectionClient) Create(body *models.CloudConnectionCreate) 
 	return nil, nil, fmt.Errorf("failed to Create Cloud Connection")
 }
 
-// Get ...
+// Get a Cloud Connection
 func (f *IBMPICloudConnectionClient) Get(id string) (*models.CloudConnection, error) {
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -60,7 +60,7 @@ func (f *IBMPICloudConnectionClient) Get(id string) (*models.CloudConnection, er
 	return resp.Payload, nil
 }
 
-// GetAll ..
+// Get All Cloud Connections
 func (f *IBMPICloudConnectionClient) GetAll() (*models.CloudConnections, error) {
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -75,7 +75,7 @@ func (f *IBMPICloudConnectionClient) GetAll() (*models.CloudConnections, error) 
 	return resp.Payload, nil
 }
 
-// Update a cloud Connection
+// Update a Cloud Connection
 func (f *IBMPICloudConnectionClient) Update(id string, body *models.CloudConnectionUpdate) (*models.CloudConnection, *models.JobReference, error) {
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
@@ -109,7 +109,7 @@ func (f *IBMPICloudConnectionClient) Delete(id string) (*models.JobReference, er
 	return nil, nil
 }
 
-// AddNetwork to a cloud connection
+// Add a Network to a Cloud Connection
 func (f *IBMPICloudConnectionClient) AddNetwork(id, networkID string) (*models.CloudConnection, *models.JobReference, error) {
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsNetworksPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
@@ -128,7 +128,7 @@ func (f *IBMPICloudConnectionClient) AddNetwork(id, networkID string) (*models.C
 	return nil, nil, nil
 }
 
-// DeleteNetwork Deletes a network from a cloud connection
+// Delete a Network from a Cloud Connection
 func (f *IBMPICloudConnectionClient) DeleteNetwork(id, networkID string) (*models.CloudConnection, *models.JobReference, error) {
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsNetworksDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
@@ -147,7 +147,7 @@ func (f *IBMPICloudConnectionClient) DeleteNetwork(id, networkID string) (*model
 	return nil, nil, nil
 }
 
-// get VPCs for a cloud instance
+// Get all VPCs for a Cloud Instance
 func (f *IBMPICloudConnectionClient) GetVPC() (*models.CloudConnectionVirtualPrivateClouds, error) {
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsVirtualprivatecloudsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).

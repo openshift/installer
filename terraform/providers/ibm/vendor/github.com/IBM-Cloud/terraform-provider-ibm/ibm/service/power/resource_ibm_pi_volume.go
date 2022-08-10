@@ -22,14 +22,6 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
-const (
-	PIAffinityPolicy        = "pi_affinity_policy"
-	PIAffinityVolume        = "pi_affinity_volume"
-	PIAffinityInstance      = "pi_affinity_instance"
-	PIAntiAffinityInstances = "pi_anti_affinity_instances"
-	PIAntiAffinityVolumes   = "pi_anti_affinity_volumes"
-)
-
 func ResourceIBMPIVolume() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceIBMPIVolumeCreate,
@@ -85,7 +77,7 @@ func ResourceIBMPIVolume() *schema.Resource {
 				Optional:         true,
 				DiffSuppressFunc: flex.ApplyOnce,
 				Description:      "Affinity policy for data volume being created; ignored if pi_volume_pool provided; for policy affinity requires one of pi_affinity_instance or pi_affinity_volume to be specified; for policy anti-affinity requires one of pi_anti_affinity_instances or pi_anti_affinity_volumes to be specified",
-				ValidateFunc:     validate.InvokeValidator("ibm_pi_volume", "pi_affinity"),
+				ValidateFunc:     validate.InvokeValidator("ibm_pi_volume", PIAffinityPolicy),
 			},
 			PIAffinityVolume: {
 				Type:             schema.TypeString,

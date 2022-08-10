@@ -21,7 +21,7 @@ const (
 	isBareMetalServerNicIpAddress             = "address"
 	isBareMetalServerNicIpCRN                 = "crn"
 	isBareMetalServerNicIpHref                = "href"
-	isBareMetalServerNicIpID                  = "id"
+	isBareMetalServerNicIpID                  = "reserved_ip"
 	isBareMetalServerNicIpName                = "name"
 	isBareMetalServerNicIpAutoDelete          = "auto_delete"
 	isBareMetalServerNicHref                  = "href"
@@ -138,6 +138,26 @@ func DataSourceIBMIsBareMetalServerNetworkInterface() *schema.Resource {
 							Computed:    true,
 							Description: "The globally unique IP address",
 						},
+						isBareMetalServerNicIpHref: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this reserved IP",
+						},
+						isBareMetalServerNicIpName: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user-defined name for this reserved IP. If unspecified, the name will be a hyphenated list of randomly-selected words. Names must be unique within the subnet the reserved IP resides in. ",
+						},
+						isBareMetalServerNicIpID: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Identifies a reserved IP by a unique property.",
+						},
+						isBareMetalServerNicResourceType: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type",
+						},
 					},
 				},
 			},
@@ -243,8 +263,21 @@ func dataSourceIBMISBareMetalServerNetworkInterfaceRead(context context.Context,
 				d.Set(isBareMetalServerNicPortSpeed, *nic.PortSpeed)
 			}
 			primaryIpList := make([]map[string]interface{}, 0)
-			currentIP := map[string]interface{}{
-				isBareMetalServerNicIpAddress: *nic.PrimaryIpv4Address,
+			currentIP := map[string]interface{}{}
+			if nic.PrimaryIP.Href != nil {
+				currentIP[isBareMetalServerNicIpAddress] = *nic.PrimaryIP.Address
+			}
+			if nic.PrimaryIP.Href != nil {
+				currentIP[isBareMetalServerNicIpHref] = *nic.PrimaryIP.Href
+			}
+			if nic.PrimaryIP.Name != nil {
+				currentIP[isBareMetalServerNicIpName] = *nic.PrimaryIP.Name
+			}
+			if nic.PrimaryIP.ID != nil {
+				currentIP[isBareMetalServerNicIpID] = *nic.PrimaryIP.ID
+			}
+			if nic.PrimaryIP.ResourceType != nil {
+				currentIP[isBareMetalServerNicResourceType] = *nic.PrimaryIP.ResourceType
 			}
 			primaryIpList = append(primaryIpList, currentIP)
 			d.Set(isBareMetalServerNicPrimaryIP, primaryIpList)
@@ -297,14 +330,30 @@ func dataSourceIBMISBareMetalServerNetworkInterfaceRead(context context.Context,
 
 			d.Set(isBareMetalServerNicMacAddress, *nic.MacAddress)
 			d.Set(isBareMetalServerNicName, *nic.Name)
-			d.Set(isBareMetalServerNicPortSpeed, *nic.PortSpeed)
-
-			primaryIpList := make([]map[string]interface{}, 0)
-			currentIP := map[string]interface{}{
-				isBareMetalServerNicIpAddress: *nic.PrimaryIpv4Address,
+			if nic.PortSpeed != nil {
+				d.Set(isBareMetalServerNicPortSpeed, *nic.PortSpeed)
 			}
-			primaryIpList = append(primaryIpList, currentIP)
-			d.Set(isBareMetalServerNicPrimaryIP, primaryIpList)
+			if nic.PrimaryIP != nil {
+				primaryIpList := make([]map[string]interface{}, 0)
+				currentIP := map[string]interface{}{}
+				if nic.PrimaryIP.Href != nil {
+					currentIP[isBareMetalServerNicIpAddress] = *nic.PrimaryIP.Address
+				}
+				if nic.PrimaryIP.Href != nil {
+					currentIP[isBareMetalServerNicIpHref] = *nic.PrimaryIP.Href
+				}
+				if nic.PrimaryIP.Name != nil {
+					currentIP[isBareMetalServerNicIpName] = *nic.PrimaryIP.Name
+				}
+				if nic.PrimaryIP.ID != nil {
+					currentIP[isBareMetalServerNicIpID] = *nic.PrimaryIP.ID
+				}
+				if nic.PrimaryIP.ResourceType != nil {
+					currentIP[isBareMetalServerNicResourceType] = *nic.PrimaryIP.ResourceType
+				}
+				primaryIpList = append(primaryIpList, currentIP)
+				d.Set(isBareMetalServerNicPrimaryIP, primaryIpList)
+			}
 
 			d.Set(isBareMetalServerNicResourceType, *nic.ResourceType)
 

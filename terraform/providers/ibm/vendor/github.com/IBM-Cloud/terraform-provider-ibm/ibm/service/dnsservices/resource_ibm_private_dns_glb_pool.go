@@ -11,7 +11,6 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	dns "github.com/IBM/networking-go-sdk/dnssvcsv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -146,10 +145,9 @@ func ResourceIBMPrivateDNSGLBPool() *schema.Resource {
 				Description: "The notification channel,It is a webhook url",
 			},
 			pdnsGlbPoolRegion: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.InvokeValidator(ibmDNSGlbPool, pdnsGlbPoolRegion),
-				Description:  "Health check region of VSIs",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Health check region of VSIs",
 			},
 			pdnsGlbPoolSubnet: {
 				Type:        schema.TypeList,
@@ -171,21 +169,6 @@ func ResourceIBMPrivateDNSGLBPool() *schema.Resource {
 			},
 		},
 	}
-}
-
-func ResourceIBMPrivateDNSGLBPoolValidator() *validate.ResourceValidator {
-	regions := "us-south,us-east,eu-gb,eu-du,au-syd,jp-tok"
-
-	validateSchema := make([]validate.ValidateSchema, 0)
-	validateSchema = append(validateSchema,
-		validate.ValidateSchema{
-			Identifier:                 pdnsGlbPoolRegion,
-			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
-			Type:                       validate.TypeString,
-			Required:                   true,
-			AllowedValues:              regions})
-	dnsPoolValidator := validate.ResourceValidator{ResourceName: ibmDNSGlbPool, Schema: validateSchema}
-	return &dnsPoolValidator
 }
 
 func resourceIBMPrivateDNSGLBPoolCreate(d *schema.ResourceData, meta interface{}) error {

@@ -54,6 +54,16 @@ func DataSourceIBMISLbProfiles() *schema.Resource {
 							Computed:    true,
 							Description: "The route mode type for this load balancer profile, one of [fixed, dependent]",
 						},
+						"udp_supported": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "The UDP support for a load balancer with this profile",
+						},
+						"udp_supported_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The UDP support type for a load balancer with this profile",
+						},
 					},
 				},
 			},
@@ -91,6 +101,34 @@ func dataSourceIBMISLbProfilesRead(d *schema.ResourceData, meta interface{}) err
 			"name":   *profileCollector.Name,
 			"href":   *profileCollector.Href,
 			"family": *profileCollector.Family,
+		}
+		if profileCollector.UDPSupported != nil {
+			udpSupport := profileCollector.UDPSupported
+			switch reflect.TypeOf(udpSupport).String() {
+			case "*vpcv1.LoadBalancerProfileUDPSupportedFixed":
+				{
+					udp := udpSupport.(*vpcv1.LoadBalancerProfileUDPSupportedFixed)
+					l["udp_supported"] = udp.Value
+					l["udp_supported_type"] = udp.Type
+				}
+			case "*vpcv1.LoadBalancerProfileUDPSupportedDependent":
+				{
+					udp := udpSupport.(*vpcv1.LoadBalancerProfileUDPSupportedDependent)
+					if udp.Type != nil {
+						l["udp_supported_type"] = *udp.Type
+					}
+				}
+			case "*vpcv1.LoadBalancerProfileUDPSupported":
+				{
+					udp := udpSupport.(*vpcv1.LoadBalancerProfileUDPSupported)
+					if udp.Type != nil {
+						l["udp_supported_type"] = *udp.Type
+					}
+					if udp.Value != nil {
+						l["udp_supported"] = *udp.Value
+					}
+				}
+			}
 		}
 		if profileCollector.RouteModeSupported != nil {
 			routeMode := profileCollector.RouteModeSupported

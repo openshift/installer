@@ -31,13 +31,12 @@ type IBMPIOptions struct {
 
 	// Region of the Power Cloud Service Instance
 	// For generating the default endpoint
-	// Required when URL or env `IBMCLOUD_POWER_API_ENDPOINT` is not set
+	// Deprecated: Region is deprecated, the URL is auto generated based on Zone when not provided.
 	Region string
 
 	// Power Virtual Server host or URL endpoint
 	// This will be used instead of generating the default host
 	// eg: dal.power-iaas.cloud.ibm.com
-	// Required when Region is not provided
 	URL string
 
 	// Account id of the Power Cloud Service Instance
@@ -69,20 +68,26 @@ func NewIBMPISession(o *IBMPIOptions) (*IBMPISession, error) {
 		return nil, fmt.Errorf("option Zone is required")
 	}
 
+	region := o.Region
+	if region == "" {
+		region = costructRegionFromZone(o.Zone)
+	}
+
 	var serviceURL string
 	if o.URL != "" {
 		serviceURL = o.URL
 	} else {
-		// If URL is not set check in env
+		// Check in env
 		serviceURL = helpers.GetPowerEndPoint()
+		// If not set in env use prod endpoint
 		if serviceURL == "" {
-			// Generate default endpoint with Region
-			if o.Region != "" {
-				serviceURL = o.Region + ".power-iaas.cloud.ibm.com"
-			} else {
-				return nil, fmt.Errorf("atleast one of Region or URL is required")
-			}
+			serviceURL = "power-iaas.cloud.ibm.com"
 		}
+	}
+
+	// Prepend region to endpoint if not present
+	if strings.HasPrefix(serviceURL, "power-iaas.") {
+		serviceURL = region + "." + serviceURL
 	}
 
 	// We need just the server host from the URL

@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2017, 2022 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package vpc
@@ -102,6 +102,55 @@ func ResourceIBMISVPCRoutingTableRoute() *schema.Resource {
 				Computed:    true,
 				Description: "Routing table route Created At",
 			},
+			"creator": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "If present, the resource that created the route. Routes with this property present cannot bedirectly deleted. All routes with an `origin` of `learned` or `service` will have thisproperty set, and future `origin` values may also have this property set.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"crn": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The VPN gateway's CRN.",
+						},
+						"deleted": &schema.Schema{
+							Type:        schema.TypeList,
+							MaxItems:    1,
+							Optional:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": &schema.Schema{
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The VPN gateway's canonical URL.",
+						},
+						"id": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The unique identifier for this VPN gateway.",
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The user-defined name for this VPN gateway.",
+						},
+						"resource_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
+			},
 			rtLifecycleState: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -164,12 +213,12 @@ func resourceIBMISVPCRoutingTableRouteCreate(d *schema.ResourceData, meta interf
 	if add, ok := d.GetOk(rNextHop); ok {
 		item := add.(string)
 		if net.ParseIP(item) == nil {
-			nhConnectionID := &vpcv1.RouteNextHopPrototypeVPNGatewayConnectionIdentity{
+			nhConnectionID := &vpcv1.RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity{
 				ID: core.StringPtr(item),
 			}
 			createVpcRoutingTableRouteOptions.SetNextHop(nhConnectionID)
 		} else {
-			nh := &vpcv1.RouteNextHopPrototypeRouteNextHopIP{
+			nh := &vpcv1.RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP{
 				Address: core.StringPtr(item),
 			}
 			createVpcRoutingTableRouteOptions.SetNextHop(nh)
@@ -226,13 +275,26 @@ func resourceIBMISVPCRoutingTableRouteRead(d *schema.ResourceData, meta interfac
 			d.Set(rNextHop, *nexthop.ID)
 		}
 	}
+	if err = d.Set("origin", route.Origin); err != nil {
+		return fmt.Errorf("[ERROR] Error setting origin %s", err)
+	}
 	if route.Zone != nil {
 		d.Set(rZone, *route.Zone.Name)
 	}
 	d.Set(rtHref, route.Href)
 	d.Set(rtLifecycleState, route.LifecycleState)
 	d.Set(rtCreateAt, route.CreatedAt.String())
+	creator := []map[string]interface{}{}
+	if route.Creator != nil {
+		mm, err := dataSourceIBMIsRouteCreatorToMap(route.Creator)
+		if err != nil {
+			log.Printf("Error reading VPC Routing Table Routes' creator:%s", err)
+			return err
+		}
+		creator = append(creator, mm)
 
+		d.Set("creator", creator)
+	}
 	return nil
 }
 

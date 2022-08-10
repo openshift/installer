@@ -23,17 +23,6 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
-const (
-	PIVPNConnectionId                         = "connection_id"
-	PIVPNConnectionStatus                     = "connection_status"
-	PIVPNConnectionDeadPeerDetection          = "dead_peer_detections"
-	PIVPNConnectionDeadPeerDetectionAction    = "action"
-	PIVPNConnectionDeadPeerDetectionInterval  = "interval"
-	PIVPNConnectionDeadPeerDetectionThreshold = "threshold"
-	PIVPNConnectionLocalGatewayAddress        = "local_gateway_address"
-	PIVPNConnectionVpnGatewayAddress          = "gateway_address"
-)
-
 func ResourceIBMPIVPNConnection() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceIBMPIVPNConnectionCreate,

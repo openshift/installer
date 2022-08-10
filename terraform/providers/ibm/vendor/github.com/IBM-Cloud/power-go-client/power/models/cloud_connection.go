@@ -27,6 +27,9 @@ type CloudConnection struct {
 	// Required: true
 	CloudConnectionID *string `json:"cloudConnectionID"`
 
+	// type of service the gateway is attached to
+	ConnectionMode string `json:"connectionMode,omitempty"`
+
 	// creation date
 	// Required: true
 	// Format: date-time

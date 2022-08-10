@@ -164,9 +164,7 @@ func resourceIBMISLBPoolMemberCreate(d *schema.ResourceData, meta interface{}) e
 	port64 := int64(port)
 
 	var weight int64
-	if w, ok := d.GetOkExists(isLBPoolMemberWeight); ok {
-		weight = int64(w.(int))
-	}
+
 	isLBKey := "load_balancer_key_" + lbID
 	conns.IbmMutexKV.Lock(isLBKey)
 	defer conns.IbmMutexKV.Unlock(isLBKey)
@@ -213,7 +211,10 @@ func lbpMemberCreate(d *schema.ResourceData, meta interface{}, lbID, lbPoolID st
 		}
 		options.Target = target
 	}
-	options.Weight = &weight
+	if w, ok := d.GetOkExists(isLBPoolMemberWeight); ok {
+		weight = int64(w.(int))
+		options.Weight = &weight
+	}
 
 	lbPoolMember, response, err := sess.CreateLoadBalancerPoolMember(options)
 	if err != nil {

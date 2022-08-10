@@ -189,6 +189,13 @@ func ResourceIBMIAMServicePolicy() *schema.Resource {
 				Optional:    true,
 				Description: "Description of the Policy",
 			},
+
+			"transaction_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set transactionID for debug",
+			},
 		},
 	}
 }
@@ -263,6 +270,10 @@ func resourceIBMIAMServicePolicyCreate(d *schema.ResourceData, meta interface{})
 		createPolicyOptions.Description = &des
 	}
 
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		createPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	}
+
 	servicePolicy, res, err := iamPolicyManagementClient.CreatePolicy(createPolicyOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error creating servicePolicy: %s %s", err, res)
@@ -271,6 +282,10 @@ func resourceIBMIAMServicePolicyCreate(d *schema.ResourceData, meta interface{})
 	getPolicyOptions := iamPolicyManagementClient.NewGetPolicyOptions(
 		*servicePolicy.ID,
 	)
+
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		getPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	}
 
 	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
 		var err error
@@ -327,6 +342,11 @@ func resourceIBMIAMServicePolicyRead(d *schema.ResourceData, meta interface{}) e
 	getPolicyOptions := iamPolicyManagementClient.NewGetPolicyOptions(
 		servicePolicyID,
 	)
+
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		getPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	}
+
 	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
 		var err error
 		servicePolicy, res, err = iamPolicyManagementClient.GetPolicy(getPolicyOptions)
@@ -343,7 +363,7 @@ func resourceIBMIAMServicePolicyRead(d *schema.ResourceData, meta interface{}) e
 	if conns.IsResourceTimeoutError(err) {
 		servicePolicy, res, err = iamPolicyManagementClient.GetPolicy(getPolicyOptions)
 	}
-	if err != nil || servicePolicy == nil {
+	if err != nil || servicePolicy == nil || res == nil {
 		return fmt.Errorf("[ERROR] Error retrieving servicePolicy: %s %s", err, res)
 	}
 	if strings.HasPrefix(serviceIDUUID, "iam-") {
@@ -381,6 +401,10 @@ func resourceIBMIAMServicePolicyRead(d *schema.ResourceData, meta interface{}) e
 		d.Set("description", *servicePolicy.Description)
 	}
 
+	if len(res.Headers["Transaction-Id"]) > 0 && res.Headers["Transaction-Id"][0] != "" {
+		d.Set("transaction_id", res.Headers["Transaction-Id"][0])
+	}
+
 	return nil
 }
 
@@ -405,6 +429,11 @@ func resourceIBMIAMServicePolicyUpdate(d *schema.ResourceData, meta interface{})
 			getServiceIDOptions := iamidentityv1.GetServiceIDOptions{
 				ID: &serviceIDUUID,
 			}
+
+			if transactionID, ok := d.GetOk("transaction_id"); ok {
+				getServiceIDOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+			}
+
 			serviceID, resp, err := iamClient.GetServiceID(&getServiceIDOptions)
 			if err != nil {
 				return fmt.Errorf("[ERROR] Error] Error Getting Service Id %s %s", err, resp)
@@ -452,6 +481,11 @@ func resourceIBMIAMServicePolicyUpdate(d *schema.ResourceData, meta interface{})
 		getPolicyOptions := iamPolicyManagementClient.NewGetPolicyOptions(
 			servicePolicyID,
 		)
+
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			getPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+
 		policy, response, err := iamPolicyManagementClient.GetPolicy(getPolicyOptions)
 		if err != nil || policy == nil {
 			if response != nil && response.StatusCode == 404 {
@@ -475,6 +509,9 @@ func resourceIBMIAMServicePolicyUpdate(d *schema.ResourceData, meta interface{})
 			updatePolicyOptions.Description = &des
 		}
 
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			updatePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
 		_, _, err = iamPolicyManagementClient.UpdatePolicy(updatePolicyOptions)
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error updating service policy: %s", err)
@@ -501,6 +538,10 @@ func resourceIBMIAMServicePolicyDelete(d *schema.ResourceData, meta interface{})
 	deletePolicyOptions := iamPolicyManagementClient.NewDeletePolicyOptions(
 		servicePolicyID,
 	)
+
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		deletePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	}
 
 	_, err = iamPolicyManagementClient.DeletePolicy(deletePolicyOptions)
 	if err != nil {

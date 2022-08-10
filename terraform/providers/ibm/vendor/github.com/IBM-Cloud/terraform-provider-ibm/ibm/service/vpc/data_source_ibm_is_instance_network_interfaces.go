@@ -116,6 +116,40 @@ func DataSourceIBMIsInstanceNetworkInterfaces() *schema.Resource {
 							Computed:    true,
 							Description: "The primary IPv4 address.",
 						},
+						isInstanceNicPrimaryIP: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The primary IP address to bind to the network interface. This can be specified using an existing reserved IP, or a prototype object for a new reserved IP.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isInstanceNicReservedIpAddress: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The IP address to reserve, which must not already be reserved on the subnet.",
+									},
+									isInstanceNicReservedIpHref: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this reserved IP",
+									},
+									isInstanceNicReservedIpName: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The user-defined name for this reserved IP. If unspecified, the name will be a hyphenated list of randomly-selected words. Names must be unique within the subnet the reserved IP resides in. ",
+									},
+									isInstanceNicReservedIpId: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Identifies a reserved IP by a unique property.",
+									},
+									isInstanceNicReservedIpResourceType: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type",
+									},
+								},
+							},
+						},
 						"resource_type": {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -327,8 +361,32 @@ func dataSourceNetworkInterfaceCollectionNetworkInterfacesToMap(networkInterface
 	if networkInterfacesItem.PortSpeed != nil {
 		networkInterfacesMap["port_speed"] = networkInterfacesItem.PortSpeed
 	}
-	if networkInterfacesItem.PrimaryIpv4Address != nil {
-		networkInterfacesMap["primary_ipv4_address"] = networkInterfacesItem.PrimaryIpv4Address
+	if networkInterfacesItem.PrimaryIP != nil {
+		networkInterfacesMap["primary_ipv4_address"] = networkInterfacesItem.PrimaryIP.Address
+	}
+	if networkInterfacesItem.PrimaryIP != nil {
+		// reserved ip changes
+		primaryIpList := make([]map[string]interface{}, 0)
+		currentPrimIp := map[string]interface{}{}
+
+		if networkInterfacesItem.PrimaryIP.Address != nil {
+			currentPrimIp[isInstanceNicReservedIpAddress] = *networkInterfacesItem.PrimaryIP.Address
+		}
+		if networkInterfacesItem.PrimaryIP.Href != nil {
+			currentPrimIp[isInstanceNicReservedIpHref] = *networkInterfacesItem.PrimaryIP.Href
+		}
+		if networkInterfacesItem.PrimaryIP.Name != nil {
+			currentPrimIp[isInstanceNicReservedIpName] = *networkInterfacesItem.PrimaryIP.Name
+		}
+		if networkInterfacesItem.PrimaryIP.ID != nil {
+			currentPrimIp[isInstanceNicReservedIpId] = *networkInterfacesItem.PrimaryIP.ID
+		}
+		if networkInterfacesItem.PrimaryIP.ResourceType != nil {
+			currentPrimIp[isInstanceNicReservedIpResourceType] = *networkInterfacesItem.PrimaryIP.ResourceType
+		}
+
+		primaryIpList = append(primaryIpList, currentPrimIp)
+		networkInterfacesMap[isInstanceNicPrimaryIP] = primaryIpList
 	}
 	if networkInterfacesItem.ResourceType != nil {
 		networkInterfacesMap["resource_type"] = networkInterfacesItem.ResourceType

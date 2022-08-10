@@ -177,20 +177,20 @@ func DataSourceIBMSchematicsAction() *schema.Resource {
 								},
 							},
 						},
-						"cos_bucket": {
-							Type:        schema.TypeList,
-							Computed:    true,
-							Description: "Connection details to a IBM Cloud Object Storage bucket.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"cos_bucket_url": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "COS Bucket Url.",
-									},
-								},
-							},
-						},
+						// "cos_bucket": {
+						// 	Type:        schema.TypeList,
+						// 	Computed:    true,
+						// 	Description: "Connection details to a IBM Cloud Object Storage bucket.",
+						// 	Elem: &schema.Resource{
+						// 		Schema: map[string]*schema.Schema{
+						// 			"cos_bucket_url": {
+						// 				Type:        schema.TypeString,
+						// 				Computed:    true,
+						// 				Description: "COS Bucket Url.",
+						// 			},
+						// 		},
+						// 	},
+						// },
 					},
 				},
 			},
@@ -254,11 +254,11 @@ func DataSourceIBMSchematicsAction() *schema.Resource {
 										Computed:    true,
 										Description: "Default value for the variable, if the override value is not specified.",
 									},
-									"secure": {
-										Type:        schema.TypeBool,
-										Computed:    true,
-										Description: "Is the variable secure or sensitive ?.",
-									},
+									// "secure": {
+									// 	Type:        schema.TypeBool,
+									// 	Computed:    true,
+									// 	Description: "Is the variable secure or sensitive ?.",
+									// },
 									"immutable": {
 										Type:        schema.TypeBool,
 										Computed:    true,
@@ -269,39 +269,39 @@ func DataSourceIBMSchematicsAction() *schema.Resource {
 										Computed:    true,
 										Description: "If true, the variable will not be displayed on UI or CLI.",
 									},
-									"options": {
-										Type:        schema.TypeList,
-										Computed:    true,
-										Description: "List of possible values for this variable.  If type is integer or date, then the array of string will be  converted to array of integers or date during runtime.",
-										Elem: &schema.Schema{
-											Type: schema.TypeString,
-										},
-									},
-									"min_value": {
-										Type:        schema.TypeInt,
-										Computed:    true,
-										Description: "Minimum value of the variable. Applicable for integer type.",
-									},
-									"max_value": {
-										Type:        schema.TypeInt,
-										Computed:    true,
-										Description: "Maximum value of the variable. Applicable for integer type.",
-									},
-									"min_length": {
-										Type:        schema.TypeInt,
-										Computed:    true,
-										Description: "Minimum length of the variable value. Applicable for string type.",
-									},
-									"max_length": {
-										Type:        schema.TypeInt,
-										Computed:    true,
-										Description: "Maximum length of the variable value. Applicable for string type.",
-									},
-									"matches": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Regex for the variable value.",
-									},
+									// "options": {
+									// 	Type:        schema.TypeList,
+									// 	Computed:    true,
+									// 	Description: "List of possible values for this variable.  If type is integer or date, then the array of string will be  converted to array of integers or date during runtime.",
+									// 	Elem: &schema.Schema{
+									// 		Type: schema.TypeString,
+									// 	},
+									// },
+									// "min_value": {
+									// 	Type:        schema.TypeInt,
+									// 	Computed:    true,
+									// 	Description: "Minimum value of the variable. Applicable for integer type.",
+									// },
+									// "max_value": {
+									// 	Type:        schema.TypeInt,
+									// 	Computed:    true,
+									// 	Description: "Maximum value of the variable. Applicable for integer type.",
+									// },
+									// "min_length": {
+									// 	Type:        schema.TypeInt,
+									// 	Computed:    true,
+									// 	Description: "Minimum length of the variable value. Applicable for string type.",
+									// },
+									// "max_length": {
+									// 	Type:        schema.TypeInt,
+									// 	Computed:    true,
+									// 	Description: "Maximum length of the variable value. Applicable for string type.",
+									// },
+									// "matches": {
+									// 	Type:        schema.TypeString,
+									// 	Computed:    true,
+									// 	Description: "Regex for the variable value.",
+									// },
 									"position": {
 										Type:        schema.TypeInt,
 										Computed:    true,
@@ -1144,17 +1144,17 @@ func dataSourceActionSourceToMap(sourceItem schematicsv1.ExternalSource) (source
 		catalogList = append(catalogList, catalogMap)
 		sourceMap["catalog"] = catalogList
 	}
-	if sourceItem.CosBucket != nil {
-		cosBucketList := []map[string]interface{}{}
-		cosBucketMap := dataSourceActionSourceCosBucketToMap(*sourceItem.CosBucket)
-		cosBucketList = append(cosBucketList, cosBucketMap)
-		sourceMap["cos_bucket"] = cosBucketList
-	}
+	// if sourceItem.CosBucket != nil {
+	// 	cosBucketList := []map[string]interface{}{}
+	// 	cosBucketMap := dataSourceActionSourceCosBucketToMap(*sourceItem.CosBucket)
+	// 	cosBucketList = append(cosBucketList, cosBucketMap)
+	// 	sourceMap["cos_bucket"] = cosBucketList
+	// }
 
 	return sourceMap
 }
 
-func dataSourceActionSourceGitToMap(gitItem schematicsv1.ExternalSourceGit) (gitMap map[string]interface{}) {
+func dataSourceActionSourceGitToMap(gitItem schematicsv1.GitSource) (gitMap map[string]interface{}) {
 	gitMap = map[string]interface{}{}
 
 	if gitItem.ComputedGitRepoURL != nil {
@@ -1179,7 +1179,7 @@ func dataSourceActionSourceGitToMap(gitItem schematicsv1.ExternalSourceGit) (git
 	return gitMap
 }
 
-func dataSourceActionSourceCatalogToMap(catalogItem schematicsv1.ExternalSourceCatalog) (catalogMap map[string]interface{}) {
+func dataSourceActionSourceCatalogToMap(catalogItem schematicsv1.CatalogSource) (catalogMap map[string]interface{}) {
 	catalogMap = map[string]interface{}{}
 
 	if catalogItem.CatalogName != nil {
@@ -1207,17 +1207,17 @@ func dataSourceActionSourceCatalogToMap(catalogItem schematicsv1.ExternalSourceC
 	return catalogMap
 }
 
-func dataSourceActionSourceCosBucketToMap(cosBucketItem schematicsv1.ExternalSourceCosBucket) (cosBucketMap map[string]interface{}) {
-	cosBucketMap = map[string]interface{}{}
+// func dataSourceActionSourceCosBucketToMap(cosBucketItem schematicsv1.ExternalSourceCosBucket) (cosBucketMap map[string]interface{}) {
+// 	cosBucketMap = map[string]interface{}{}
 
-	if cosBucketItem.CosBucketURL != nil {
-		cosBucketMap["cos_bucket_url"] = cosBucketItem.CosBucketURL
-	}
+// 	if cosBucketItem.CosBucketURL != nil {
+// 		cosBucketMap["cos_bucket_url"] = cosBucketItem.CosBucketURL
+// 	}
 
-	return cosBucketMap
-}
+// 	return cosBucketMap
+// }
 
-func dataSourceActionFlattenCredentials(result []schematicsv1.VariableData) (credentials []map[string]interface{}) {
+func dataSourceActionFlattenCredentials(result []schematicsv1.CredentialVariableData) (credentials []map[string]interface{}) {
 	for _, credentialsItem := range result {
 		credentials = append(credentials, dataSourceActionCredentialsToMap(credentialsItem))
 	}
@@ -1225,7 +1225,7 @@ func dataSourceActionFlattenCredentials(result []schematicsv1.VariableData) (cre
 	return credentials
 }
 
-func dataSourceActionCredentialsToMap(credentialsItem schematicsv1.VariableData) (credentialsMap map[string]interface{}) {
+func dataSourceActionCredentialsToMap(credentialsItem schematicsv1.CredentialVariableData) (credentialsMap map[string]interface{}) {
 	credentialsMap = map[string]interface{}{}
 
 	if credentialsItem.Name != nil {
@@ -1247,7 +1247,7 @@ func dataSourceActionCredentialsToMap(credentialsItem schematicsv1.VariableData)
 	return credentialsMap
 }
 
-func dataSourceActionCredentialsMetadataToMap(metadataItem schematicsv1.VariableMetadata) (metadataMap map[string]interface{}) {
+func dataSourceActionCredentialsMetadataToMap(metadataItem schematicsv1.CredentialVariableMetadata) (metadataMap map[string]interface{}) {
 	metadataMap = map[string]interface{}{}
 
 	if metadataItem.Type != nil {
@@ -1262,33 +1262,33 @@ func dataSourceActionCredentialsMetadataToMap(metadataItem schematicsv1.Variable
 	if metadataItem.DefaultValue != nil {
 		metadataMap["default_value"] = metadataItem.DefaultValue
 	}
-	if metadataItem.Secure != nil {
-		metadataMap["secure"] = metadataItem.Secure
-	}
+	// if metadataItem.Secure != nil {
+	// 	metadataMap["secure"] = metadataItem.Secure
+	// }
 	if metadataItem.Immutable != nil {
 		metadataMap["immutable"] = metadataItem.Immutable
 	}
 	if metadataItem.Hidden != nil {
 		metadataMap["hidden"] = metadataItem.Hidden
 	}
-	if metadataItem.Options != nil {
-		metadataMap["options"] = metadataItem.Options
-	}
-	if metadataItem.MinValue != nil {
-		metadataMap["min_value"] = metadataItem.MinValue
-	}
-	if metadataItem.MaxValue != nil {
-		metadataMap["max_value"] = metadataItem.MaxValue
-	}
-	if metadataItem.MinLength != nil {
-		metadataMap["min_length"] = metadataItem.MinLength
-	}
-	if metadataItem.MaxLength != nil {
-		metadataMap["max_length"] = metadataItem.MaxLength
-	}
-	if metadataItem.Matches != nil {
-		metadataMap["matches"] = metadataItem.Matches
-	}
+	// if metadataItem.Options != nil {
+	// 	metadataMap["options"] = metadataItem.Options
+	// }
+	// if metadataItem.MinValue != nil {
+	// 	metadataMap["min_value"] = metadataItem.MinValue
+	// }
+	// if metadataItem.MaxValue != nil {
+	// 	metadataMap["max_value"] = metadataItem.MaxValue
+	// }
+	// if metadataItem.MinLength != nil {
+	// 	metadataMap["min_length"] = metadataItem.MinLength
+	// }
+	// if metadataItem.MaxLength != nil {
+	// 	metadataMap["max_length"] = metadataItem.MaxLength
+	// }
+	// if metadataItem.Matches != nil {
+	// 	metadataMap["matches"] = metadataItem.Matches
+	// }
 	if metadataItem.Position != nil {
 		metadataMap["position"] = metadataItem.Position
 	}
@@ -1323,7 +1323,7 @@ func dataSourceActionBastionToMap(bastionItem schematicsv1.BastionResourceDefini
 	return bastionMap
 }
 
-func dataSourceActionFlattenBastionCredential(result schematicsv1.VariableData) (finalList []map[string]interface{}) {
+func dataSourceActionFlattenBastionCredential(result schematicsv1.CredentialVariableData) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceActionBastionCredentialToMap(result)
 	finalList = append(finalList, finalMap)
@@ -1331,7 +1331,7 @@ func dataSourceActionFlattenBastionCredential(result schematicsv1.VariableData) 
 	return finalList
 }
 
-func dataSourceActionBastionCredentialToMap(bastionCredentialItem schematicsv1.VariableData) (bastionCredentialMap map[string]interface{}) {
+func dataSourceActionBastionCredentialToMap(bastionCredentialItem schematicsv1.CredentialVariableData) (bastionCredentialMap map[string]interface{}) {
 	bastionCredentialMap = map[string]interface{}{}
 
 	if bastionCredentialItem.Name != nil {
@@ -1353,7 +1353,7 @@ func dataSourceActionBastionCredentialToMap(bastionCredentialItem schematicsv1.V
 	return bastionCredentialMap
 }
 
-func dataSourceActionBastionCredentialMetadataToMap(metadataItem schematicsv1.VariableMetadata) (metadataMap map[string]interface{}) {
+func dataSourceActionBastionCredentialMetadataToMap(metadataItem schematicsv1.CredentialVariableMetadata) (metadataMap map[string]interface{}) {
 	metadataMap = map[string]interface{}{}
 
 	if metadataItem.Type != nil {
@@ -1368,33 +1368,33 @@ func dataSourceActionBastionCredentialMetadataToMap(metadataItem schematicsv1.Va
 	if metadataItem.DefaultValue != nil {
 		metadataMap["default_value"] = metadataItem.DefaultValue
 	}
-	if metadataItem.Secure != nil {
-		metadataMap["secure"] = metadataItem.Secure
-	}
+	// if metadataItem.Secure != nil {
+	// 	metadataMap["secure"] = metadataItem.Secure
+	// }
 	if metadataItem.Immutable != nil {
 		metadataMap["immutable"] = metadataItem.Immutable
 	}
 	if metadataItem.Hidden != nil {
 		metadataMap["hidden"] = metadataItem.Hidden
 	}
-	if metadataItem.Options != nil {
-		metadataMap["options"] = metadataItem.Options
-	}
-	if metadataItem.MinValue != nil {
-		metadataMap["min_value"] = metadataItem.MinValue
-	}
-	if metadataItem.MaxValue != nil {
-		metadataMap["max_value"] = metadataItem.MaxValue
-	}
-	if metadataItem.MinLength != nil {
-		metadataMap["min_length"] = metadataItem.MinLength
-	}
-	if metadataItem.MaxLength != nil {
-		metadataMap["max_length"] = metadataItem.MaxLength
-	}
-	if metadataItem.Matches != nil {
-		metadataMap["matches"] = metadataItem.Matches
-	}
+	// if metadataItem.Options != nil {
+	// 	metadataMap["options"] = metadataItem.Options
+	// }
+	// if metadataItem.MinValue != nil {
+	// 	metadataMap["min_value"] = metadataItem.MinValue
+	// }
+	// if metadataItem.MaxValue != nil {
+	// 	metadataMap["max_value"] = metadataItem.MaxValue
+	// }
+	// if metadataItem.MinLength != nil {
+	// 	metadataMap["min_length"] = metadataItem.MinLength
+	// }
+	// if metadataItem.MaxLength != nil {
+	// 	metadataMap["max_length"] = metadataItem.MaxLength
+	// }
+	// if metadataItem.Matches != nil {
+	// 	metadataMap["matches"] = metadataItem.Matches
+	// }
 	if metadataItem.Position != nil {
 		metadataMap["position"] = metadataItem.Position
 	}

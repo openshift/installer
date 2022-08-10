@@ -9,7 +9,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -18,8 +17,8 @@ import (
 
 func DataSourceIBMAtrackerEndpoints() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceIBMAtrackerEndpointsRead,
-
+		ReadContext:        dataSourceIBMAtrackerEndpointsRead,
+		DeprecationMessage: "use Settings instead",
 		Schema: map[string]*schema.Schema{
 			"api_endpoint": {
 				Type:        schema.TypeList,
@@ -55,7 +54,7 @@ func DataSourceIBMAtrackerEndpoints() *schema.Resource {
 }
 
 func dataSourceIBMAtrackerEndpointsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	atrackerClient, err := meta.(conns.ClientSession).AtrackerV1()
+	atrackerClient, _, err := getAtrackerClients(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -89,7 +89,6 @@ func ResourceIBMPrivateDNSCustomResolver() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				ForceNew:    true,
 				Description: "Whether High Availability is enabled in custom resolver",
 			},
 			pdnsCRHealth: {
@@ -98,10 +97,10 @@ func ResourceIBMPrivateDNSCustomResolver() *schema.Resource {
 				Description: "Healthy state of the custom resolver",
 			},
 			pdnsCustomResolverLocations: {
-				Type:             schema.TypeSet,
-				Description:      "Locations on which the custom resolver will be running",
-				Optional:         true,
-				DiffSuppressFunc: flex.ApplyOnce,
+				Type:        schema.TypeList,
+				Description: "Locations on which the custom resolver will be running",
+				Optional:    true,
+				MaxItems:    3,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						pdnsCRLocationId: {
@@ -184,6 +183,12 @@ func ResourceIBMPrivateDNSCustomResolver() *schema.Resource {
 	}
 }
 
+type location struct {
+	locationId string
+	subnet     string
+	enabled    bool
+}
+
 func resouceIBMPrivateDNSCustomResolverCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	sess, err := meta.(conns.ClientSession).PrivateDNSClientSession()
 	if err != nil {
@@ -207,20 +212,33 @@ func resouceIBMPrivateDNSCustomResolverCreate(context context.Context, d *schema
 
 	cr_highaval := d.Get(pdnsCRHighAvailability).(bool)
 
-	crLocationCreate := false
+	var loc_enable bool
+	cr_enable := d.Get(pdnsCREnabled)
+
+	// Validation
 	if _, ok := d.GetOk(pdnsCustomResolverLocations); ok {
-		crLocationCreate = true
-		crLocations := d.Get(pdnsCustomResolverLocations).(*schema.Set)
-		if cr_highaval && crLocations.Len() <= 1 {
-			return diag.FromErr(fmt.Errorf("To meet high availability status, configure custom resolvers with a minimum of two resolver locations. A maximum of four locations can be configured within the same subnet location."))
+		var expandcrLocations []dnssvcsv1.LocationInput
+		crLocations := d.Get(pdnsCustomResolverLocations).([]interface{})
+		if len(crLocations) > 3 {
+			return diag.FromErr(fmt.Errorf("A custom resolver can have a maximum of three locations, either within the same subnet or in different subnets."))
 		}
-		customResolverOption.SetLocations(expandPdnsCRLocations(crLocations))
+		if cr_highaval && len(crLocations) <= 1 {
+			return diag.FromErr(fmt.Errorf("To meet high availability status, configure custom resolvers with a minimum of two resolver locations. A maximum of three locations can be configured within the same subnet location."))
+		}
+		expandcrLocations, loc_enable = expandPdnsCRLocations(crLocations)
+		if cr_enable.(bool) && !loc_enable {
+			return diag.FromErr(fmt.Errorf("The Custom resolver cannot be enabled. There should be atleast one enabled location."))
+		}
+		customResolverOption.SetLocations(expandcrLocations)
 	} else {
 		if cr_highaval {
-			return diag.FromErr(fmt.Errorf("To meet high availability status, configure custom resolvers with a minimum of two resolver locations. A maximum of four locations can be configured within the same subnet location."))
+			return diag.FromErr(fmt.Errorf("To meet high availability status, configure custom resolvers with a minimum of two resolver locations. A maximum of three locations can be configured within the same subnet location."))
+		} else if cr_enable.(bool) {
+			return diag.FromErr(fmt.Errorf("The Custom resolver cannot be enabled. There should be atleast one enabled location."))
 		}
 	}
 
+	// Create a custom resolver
 	result, resp, err := sess.CreateCustomResolverWithContext(context, customResolverOption)
 	if err != nil || result == nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error reading the custom resolver %s:%s", err, resp))
@@ -229,12 +247,12 @@ func resouceIBMPrivateDNSCustomResolverCreate(context context.Context, d *schema
 	d.SetId(flex.ConvertCisToTfTwoVar(*result.ID, crn))
 	d.Set(pdnsCRId, *result.ID)
 
-	if crLocationCreate {
-		_, err = waitForPDNSCustomResolverHealthy(d, meta)
+	// Enable Custom resolver
+	if cr_enable.(bool) {
+		err := PDNSCustomResolverEnable(meta, crn, *result.ID)
 		if err != nil {
-			return diag.FromErr(err)
+			return err
 		}
-		return resouceIBMPrivateDNSCustomResolverUpdate(context, d, meta)
 	}
 	return resouceIBMPrivateDNSCustomResolverRead(context, d, meta)
 }
@@ -295,16 +313,50 @@ func resouceIBMPrivateDNSCustomResolverUpdate(context context.Context, d *schema
 		return diag.FromErr(err)
 	}
 
-	customResolverID, crn, err := flex.ConvertTftoCisTwoVar(d.Id())
+	resolverID, instanceID, err := flex.ConvertTftoCisTwoVar(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	var loc_enable, cr_enable, cr_highaval bool
+
+	if enable_cr, ok := d.GetOk(pdnsCREnabled); ok {
+		cr_enable = enable_cr.(bool)
+	}
+	if highaval, ok := d.GetOk(pdnsCRHighAvailability); ok {
+		cr_highaval = highaval.(bool)
+	}
+	var oldRaw, newRaw interface{}
+
 	if d.HasChange(pdnsCRName) ||
 		d.HasChange(pdnsCRDescription) ||
-		d.HasChange(pdnsCREnabled) {
+		d.HasChange(pdnsCREnabled) ||
+		d.HasChange(pdnsCRHighAvailability) {
 
-		opt := sess.NewUpdateCustomResolverOptions(crn, customResolverID)
+		// Validation
+		if _, ok := d.GetOk(pdnsCustomResolverLocations); ok {
+			var expandcrLocations []dnssvcsv1.LocationInput
+			crLocations := d.Get(pdnsCustomResolverLocations).([]interface{})
+			if len(crLocations) > 3 {
+				return diag.FromErr(fmt.Errorf("A custom resolver can have a maximum of three locations, either within the same subnet or in different subnets."))
+			}
+			if cr_highaval && len(crLocations) <= 1 {
+				return diag.FromErr(fmt.Errorf("To meet high availability status, configure custom resolvers with a minimum of two resolver locations .A maximum of three locations can be configured within the same subnet location."))
+			}
+			expandcrLocations, loc_enable = expandPdnsCRLocations(crLocations)
+			if cr_enable && !loc_enable {
+				return diag.FromErr(fmt.Errorf("The Custom resolver cannot be enabled. There should be atleast one enabled location."))
+			}
+			fmt.Print("expandcrLocations", expandcrLocations)
+		} else {
+			if cr_highaval {
+				return diag.FromErr(fmt.Errorf("To meet high availability status, configure custom resolvers with a minimum of two resolver locations. A maximum of three locations can be configured within the same subnet location."))
+			} else if cr_enable {
+				return diag.FromErr(fmt.Errorf("The Custom resolver cannot be enabled. There should be atleast one enabled location."))
+			}
+		}
+
+		opt := sess.NewUpdateCustomResolverOptions(instanceID, resolverID)
 		if name, ok := d.GetOk(pdnsCRName); ok {
 			crName := name.(string)
 			opt.SetName(crName)
@@ -313,16 +365,112 @@ func resouceIBMPrivateDNSCustomResolverUpdate(context context.Context, d *schema
 			crDescription := des.(string)
 			opt.SetDescription(crDescription)
 		}
-		if enabled, ok := d.GetOkExists(pdnsCREnabled); ok {
-			crEnabled := enabled.(bool)
-			opt.SetEnabled(crEnabled)
+		if !cr_enable {
+			opt.SetEnabled(false)
 		}
-
 		result, resp, err := sess.UpdateCustomResolverWithContext(context, opt)
 		if err != nil || result == nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error updating the custom resolver %s:%s", err, resp))
 		}
 
+	}
+
+	if d.HasChange(pdnsCustomResolverLocations) {
+
+		oldRaw, newRaw = d.GetChange(pdnsCustomResolverLocations)
+
+		newState := stateprocess(newRaw)
+		oldState := stateprocess(oldRaw)
+
+		// Delete Custom Resolver Location.
+		for _, oldloc := range oldState {
+			locationIdExists := false
+			for _, newloc := range newState {
+				if oldloc.locationId == newloc.locationId {
+					locationIdExists = true
+					break
+				}
+			}
+			if !locationIdExists {
+				if oldloc.enabled {
+					err := PDNSCustomResolverDisableLocation(meta, instanceID, resolverID, oldloc.locationId)
+					if err != nil {
+						return err
+					}
+				}
+				err := deleteCRLocation(meta, instanceID, resolverID, oldloc.locationId)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		for _, newLoc := range newState {
+			// Add new custom resolver locations
+			if strings.Contains(newLoc.locationId, "NEW0") {
+				locationID, err := addCRLocation(meta, instanceID, resolverID, newLoc.subnet)
+				if err != nil || locationID == "" {
+					return err
+				}
+				if newLoc.enabled {
+					err := PDNSCustomResolverEnableLocation(meta, instanceID, resolverID, locationID)
+					if err != nil {
+						return err
+					}
+				}
+			} else {
+				// Update Location
+				locationIdExists := false
+				for _, oldLoc := range oldState {
+					if oldLoc.locationId == newLoc.locationId {
+						locationIdExists = true
+						if !(oldLoc.subnet == newLoc.subnet) {
+							// Update location subnet crn.
+							// Disable location before changing the subnet.
+							err := PDNSCustomResolverDisableLocation(meta, instanceID, resolverID, newLoc.locationId)
+							if err != nil {
+								return err
+							}
+							errSub := updateLocationSubnet(meta, instanceID, resolverID, newLoc.locationId, newLoc.subnet)
+							if errSub != nil {
+								return errSub
+							}
+							if newLoc.enabled {
+								err := PDNSCustomResolverEnableLocation(meta, instanceID, resolverID, newLoc.locationId)
+								if err != nil {
+									return err
+								}
+							}
+						} else if newLoc.enabled != oldLoc.enabled {
+							// Update location enable/disable
+							if newLoc.enabled {
+								err := PDNSCustomResolverEnableLocation(meta, instanceID, resolverID, newLoc.locationId)
+								if err != nil {
+									return err
+								}
+							} else {
+								err := PDNSCustomResolverDisableLocation(meta, instanceID, resolverID, newLoc.locationId)
+								if err != nil {
+									return err
+								}
+							}
+						}
+					}
+				}
+				if !locationIdExists {
+					return diag.FromErr(fmt.Errorf("[ERROR] The custom resolver location %s does not exist anymore: %v", newLoc.locationId, err))
+				}
+			}
+		}
+	}
+
+	if d.HasChange(pdnsCREnabled) {
+		if cr_enable {
+			err := PDNSCustomResolverEnable(meta, instanceID, resolverID)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return resouceIBMPrivateDNSCustomResolverRead(context, d, meta)
@@ -401,53 +549,142 @@ func flattenPdnsCRLocations(crLocation []dnssvcsv1.Location) interface{} {
 	return flattened
 }
 
-func expandPdnsCRLocations(crLocList *schema.Set) (crLocations []dnssvcsv1.LocationInput) {
-	for _, iface := range crLocList.List() {
+func expandPdnsCRLocations(crLocList []interface{}) (crLocations []dnssvcsv1.LocationInput, loc_enable bool) {
+	for _, iface := range crLocList {
 		var locOpt dnssvcsv1.LocationInput
 		loc := iface.(map[string]interface{})
 		locOpt.SubnetCrn = core.StringPtr(loc[pdnsCRLocationSubnetCrn].(string))
 		if val, ok := loc[pdnsCRLocationEnabled]; ok {
+			if val.(bool) {
+				loc_enable = true
+			}
 			locOpt.Enabled = core.BoolPtr(val.(bool))
 		}
 		crLocations = append(crLocations, locOpt)
 	}
-	return
+	return crLocations, loc_enable
 }
 
-func waitForPDNSCustomResolverHealthy(d *schema.ResourceData, meta interface{}) (interface{}, error) {
+func PDNSCustomResolverEnable(meta interface{}, instanceID string, customResolverID string) diag.Diagnostics {
 	sess, err := meta.(conns.ClientSession).PrivateDNSClientSession()
 	if err != nil {
-		return nil, err
+		return diag.FromErr(err)
 	}
+	MaxTimeout := 600
+	SleepTime := 20
 
-	var customResolverID, crn string
-
-	g := strings.SplitN(d.Id(), ":", -1)
-	if len(g) > 2 {
-		_, customResolverID, crn, _ = flex.ConvertTfToCisThreeVar(d.Id())
-	} else {
-		customResolverID, crn, _ = flex.ConvertTftoCisTwoVar(d.Id())
+	for SleepTime < MaxTimeout {
+		opt := sess.NewUpdateCustomResolverOptions(instanceID, customResolverID)
+		opt.SetEnabled(true)
+		result, _, err := sess.UpdateCustomResolver(opt)
+		if err != nil || result == nil {
+			time.Sleep(20 * time.Second)
+			SleepTime = SleepTime + 20
+		} else {
+			return nil
+		}
 	}
+	return diag.FromErr(fmt.Errorf("[ERROR] Error Enabling the Custom resolver : MaxTimeout"))
+}
 
-	opt := sess.NewGetCustomResolverOptions(crn, customResolverID)
-
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{pdnsCustomResolverCritical, "false"},
-		Target:  []string{pdnsCustomResolverDegraded, pdnsCustomResolverHealthy, "true"},
-		Refresh: func() (interface{}, string, error) {
-			res, detail, err := sess.GetCustomResolver(opt)
-			if err != nil {
-				if detail != nil && detail.StatusCode == 404 {
-					return nil, "", fmt.Errorf("[ERROR] The custom resolver %s does not exist anymore: %v", customResolverID, err)
-				}
-				return nil, "", fmt.Errorf("Get the custom resolver %s failed with resp code: %s, err: %v", customResolverID, detail, err)
-			}
-			return res, *res.Health, nil
-		},
-		Timeout:    d.Timeout(schema.TimeoutCreate),
-		Delay:      10 * time.Second,
-		MinTimeout: 60 * time.Second,
+func PDNSCustomResolverEnableLocation(meta interface{}, instanceID string, customResolverID string, locationID string) diag.Diagnostics {
+	sess, err := meta.(conns.ClientSession).PrivateDNSClientSession()
+	if err != nil {
+		return diag.FromErr(err)
 	}
+	MaxTimeout := 600
+	SleepTime := 20
 
-	return stateConf.WaitForState()
+	for SleepTime < MaxTimeout {
+		updatelocation := sess.NewUpdateCustomResolverLocationOptions(instanceID, customResolverID, locationID)
+		updatelocation.SetEnabled(true)
+		result, _, err := sess.UpdateCustomResolverLocation(updatelocation)
+		if err != nil || result == nil {
+			time.Sleep(20 * time.Second)
+			SleepTime = SleepTime + 20
+		} else {
+			return nil
+		}
+	}
+	return diag.FromErr(fmt.Errorf("[ERROR] Error Enabling the Custom resolver location : MaxTimeout"))
+}
+
+func PDNSCustomResolverDisableLocation(meta interface{}, instanceID string, customResolverID string, locationID string) diag.Diagnostics {
+	sess, err := meta.(conns.ClientSession).PrivateDNSClientSession()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	updatelocation := sess.NewUpdateCustomResolverLocationOptions(instanceID, customResolverID, locationID)
+	updatelocation.SetEnabled(false)
+	result, resp, err := sess.UpdateCustomResolverLocation(updatelocation)
+	if err != nil || result == nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error Disabling the custom resolver location %s:%s", err, resp))
+	}
+	return nil
+}
+
+func deleteCRLocation(meta interface{}, instanceID string, customResolverID string, locationID string) diag.Diagnostics {
+	sess, err := meta.(conns.ClientSession).PrivateDNSClientSession()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	deleteCRlocation := sess.NewDeleteCustomResolverLocationOptions(instanceID, customResolverID, locationID)
+	resp, errDel := sess.DeleteCustomResolverLocation(deleteCRlocation)
+	if errDel != nil {
+		if resp != nil && resp.StatusCode == 404 {
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("[ERROR] Error Deleting the custom resolver location %s:%s", errDel, resp))
+	}
+	return nil
+}
+
+func addCRLocation(meta interface{}, instanceID string, customResolverID string, subnet string) (string, diag.Diagnostics) {
+	sess, err := meta.(conns.ClientSession).PrivateDNSClientSession()
+	if err != nil {
+		return "", diag.FromErr(err)
+	}
+	opt := sess.NewAddCustomResolverLocationOptions(instanceID, customResolverID)
+	opt.SetSubnetCrn(subnet)
+	opt.SetEnabled(false)
+	result, resp, err := sess.AddCustomResolverLocation(opt)
+	locationID := *result.ID
+	if err != nil || result == nil {
+		return "", diag.FromErr(fmt.Errorf("[ERROR] Error creating the custom resolver location %s:%s", err, resp))
+	}
+	return locationID, nil
+}
+
+func updateLocationSubnet(meta interface{}, instanceID string, customResolverID string, locationID string, subnet string) diag.Diagnostics {
+	sess, err := meta.(conns.ClientSession).PrivateDNSClientSession()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	updatelocation := sess.NewUpdateCustomResolverLocationOptions(instanceID, customResolverID, locationID)
+	updatelocation.SetSubnetCrn(subnet)
+	updatelocation.SetEnabled(false)
+	result, resp, err := sess.UpdateCustomResolverLocation(updatelocation)
+	if err != nil || result == nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error Disable and updating the custom resolver location %s:%s", err, resp))
+	}
+	return nil
+}
+
+func stateprocess(Raw interface{}) (State []location) {
+	new_LocationId := 0
+	for _, loc := range Raw.([]interface{}) {
+		temp_loc := loc.(map[string]interface{})
+		newlocationId := (temp_loc["location_id"]).(string)
+		newLocation := location{}
+		// Add a constant marker for new locations.
+		if len(newlocationId) == 0 {
+			new_LocationId = new_LocationId + 1
+			new_LocationName := "NEW0" + strconv.Itoa(new_LocationId)
+			newLocation = location{locationId: new_LocationName, subnet: (temp_loc["subnet_crn"]).(string), enabled: temp_loc["enabled"].(bool)}
+		} else {
+			newLocation = location{locationId: newlocationId, subnet: (temp_loc["subnet_crn"]).(string), enabled: temp_loc["enabled"].(bool)}
+		}
+		State = append(State, newLocation)
+	}
+	return State
 }

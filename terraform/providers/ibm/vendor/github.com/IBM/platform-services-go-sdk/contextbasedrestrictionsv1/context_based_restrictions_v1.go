@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2021.
+ * (C) Copyright IBM Corp. 2022.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.38.1-1037b405-20210908-184149
+ * IBM OpenAPI SDK Code Generator Version: 3.50.0-af9e48c4-20220523-163800
  */
 
 // Package contextbasedrestrictionsv1 : Operations and models for the ContextBasedRestrictionsV1 service
@@ -50,15 +50,15 @@ const DefaultServiceURL = "https://cbr.cloud.ibm.com"
 // DefaultServiceName is the default key used to find external configuration information.
 const DefaultServiceName = "context_based_restrictions"
 
-// Options : Service options
-type Options struct {
+// ContextBasedRestrictionsV1Options : Service options
+type ContextBasedRestrictionsV1Options struct {
 	ServiceName   string
 	URL           string
 	Authenticator core.Authenticator
 }
 
 // NewContextBasedRestrictionsV1UsingExternalConfig : constructs an instance of ContextBasedRestrictionsV1 with passed in options and external configuration.
-func NewContextBasedRestrictionsV1UsingExternalConfig(options *Options) (contextBasedRestrictions *ContextBasedRestrictionsV1, err error) {
+func NewContextBasedRestrictionsV1UsingExternalConfig(options *ContextBasedRestrictionsV1Options) (contextBasedRestrictions *ContextBasedRestrictionsV1, err error) {
 	if options.ServiceName == "" {
 		options.ServiceName = DefaultServiceName
 	}
@@ -87,7 +87,7 @@ func NewContextBasedRestrictionsV1UsingExternalConfig(options *Options) (context
 }
 
 // NewContextBasedRestrictionsV1 : constructs an instance of ContextBasedRestrictionsV1 with passed in options.
-func NewContextBasedRestrictionsV1(options *Options) (service *ContextBasedRestrictionsV1, err error) {
+func NewContextBasedRestrictionsV1(options *ContextBasedRestrictionsV1Options) (service *ContextBasedRestrictionsV1, err error) {
 	serviceOptions := &core.ServiceOptions{
 		URL:           DefaultServiceURL,
 		Authenticator: options.Authenticator,
@@ -635,6 +635,9 @@ func (contextBasedRestrictions *ContextBasedRestrictionsV1) CreateRuleWithContex
 	if createRuleOptions.Resources != nil {
 		body["resources"] = createRuleOptions.Resources
 	}
+	if createRuleOptions.EnforcementMode != nil {
+		body["enforcement_mode"] = createRuleOptions.EnforcementMode
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -874,6 +877,9 @@ func (contextBasedRestrictions *ContextBasedRestrictionsV1) ReplaceRuleWithConte
 	}
 	if replaceRuleOptions.Resources != nil {
 		body["resources"] = replaceRuleOptions.Resources
+	}
+	if replaceRuleOptions.EnforcementMode != nil {
+		body["enforcement_mode"] = replaceRuleOptions.EnforcementMode
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1184,19 +1190,36 @@ type CreateRuleOptions struct {
 	// The resources this rule apply to.
 	Resources []Resource `json:"resources,omitempty"`
 
+	// The rule enforcement mode:
+	//  * `enabled` - The restrictions are enforced and reported. This is the default.
+	//  * `disabled` - The restrictions are disabled. Nothing is enforced or reported.
+	//  * `report` - The restrictions are evaluated and reported, but not enforced.
+	EnforcementMode *string `json:"enforcement_mode,omitempty"`
+
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
+
+// Constants associated with the CreateRuleOptions.EnforcementMode property.
+// The rule enforcement mode:
+//  * `enabled` - The restrictions are enforced and reported. This is the default.
+//  * `disabled` - The restrictions are disabled. Nothing is enforced or reported.
+//  * `report` - The restrictions are evaluated and reported, but not enforced.
+const (
+	CreateRuleOptionsEnforcementModeDisabledConst = "disabled"
+	CreateRuleOptionsEnforcementModeEnabledConst  = "enabled"
+	CreateRuleOptionsEnforcementModeReportConst   = "report"
+)
 
 // NewCreateRuleOptions : Instantiate CreateRuleOptions
 func (*ContextBasedRestrictionsV1) NewCreateRuleOptions() *CreateRuleOptions {
@@ -1204,33 +1227,39 @@ func (*ContextBasedRestrictionsV1) NewCreateRuleOptions() *CreateRuleOptions {
 }
 
 // SetDescription : Allow user to set Description
-func (options *CreateRuleOptions) SetDescription(description string) *CreateRuleOptions {
-	options.Description = core.StringPtr(description)
-	return options
+func (_options *CreateRuleOptions) SetDescription(description string) *CreateRuleOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
 }
 
 // SetContexts : Allow user to set Contexts
-func (options *CreateRuleOptions) SetContexts(contexts []RuleContext) *CreateRuleOptions {
-	options.Contexts = contexts
-	return options
+func (_options *CreateRuleOptions) SetContexts(contexts []RuleContext) *CreateRuleOptions {
+	_options.Contexts = contexts
+	return _options
 }
 
 // SetResources : Allow user to set Resources
-func (options *CreateRuleOptions) SetResources(resources []Resource) *CreateRuleOptions {
-	options.Resources = resources
-	return options
+func (_options *CreateRuleOptions) SetResources(resources []Resource) *CreateRuleOptions {
+	_options.Resources = resources
+	return _options
+}
+
+// SetEnforcementMode : Allow user to set EnforcementMode
+func (_options *CreateRuleOptions) SetEnforcementMode(enforcementMode string) *CreateRuleOptions {
+	_options.EnforcementMode = core.StringPtr(enforcementMode)
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *CreateRuleOptions) SetXCorrelationID(xCorrelationID string) *CreateRuleOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *CreateRuleOptions) SetXCorrelationID(xCorrelationID string) *CreateRuleOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *CreateRuleOptions) SetTransactionID(transactionID string) *CreateRuleOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *CreateRuleOptions) SetTransactionID(transactionID string) *CreateRuleOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1260,12 +1289,12 @@ type CreateZoneOptions struct {
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1277,45 +1306,45 @@ func (*ContextBasedRestrictionsV1) NewCreateZoneOptions() *CreateZoneOptions {
 }
 
 // SetName : Allow user to set Name
-func (options *CreateZoneOptions) SetName(name string) *CreateZoneOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateZoneOptions) SetName(name string) *CreateZoneOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetAccountID : Allow user to set AccountID
-func (options *CreateZoneOptions) SetAccountID(accountID string) *CreateZoneOptions {
-	options.AccountID = core.StringPtr(accountID)
-	return options
+func (_options *CreateZoneOptions) SetAccountID(accountID string) *CreateZoneOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
 }
 
 // SetDescription : Allow user to set Description
-func (options *CreateZoneOptions) SetDescription(description string) *CreateZoneOptions {
-	options.Description = core.StringPtr(description)
-	return options
+func (_options *CreateZoneOptions) SetDescription(description string) *CreateZoneOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
 }
 
 // SetAddresses : Allow user to set Addresses
-func (options *CreateZoneOptions) SetAddresses(addresses []AddressIntf) *CreateZoneOptions {
-	options.Addresses = addresses
-	return options
+func (_options *CreateZoneOptions) SetAddresses(addresses []AddressIntf) *CreateZoneOptions {
+	_options.Addresses = addresses
+	return _options
 }
 
 // SetExcluded : Allow user to set Excluded
-func (options *CreateZoneOptions) SetExcluded(excluded []AddressIntf) *CreateZoneOptions {
-	options.Excluded = excluded
-	return options
+func (_options *CreateZoneOptions) SetExcluded(excluded []AddressIntf) *CreateZoneOptions {
+	_options.Excluded = excluded
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *CreateZoneOptions) SetXCorrelationID(xCorrelationID string) *CreateZoneOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *CreateZoneOptions) SetXCorrelationID(xCorrelationID string) *CreateZoneOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *CreateZoneOptions) SetTransactionID(transactionID string) *CreateZoneOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *CreateZoneOptions) SetTransactionID(transactionID string) *CreateZoneOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1327,17 +1356,17 @@ func (options *CreateZoneOptions) SetHeaders(param map[string]string) *CreateZon
 // DeleteRuleOptions : The DeleteRule options.
 type DeleteRuleOptions struct {
 	// The ID of a rule.
-	RuleID *string `json:"-" validate:"required,ne="`
+	RuleID *string `json:"rule_id" validate:"required,ne="`
 
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1351,21 +1380,21 @@ func (*ContextBasedRestrictionsV1) NewDeleteRuleOptions(ruleID string) *DeleteRu
 }
 
 // SetRuleID : Allow user to set RuleID
-func (options *DeleteRuleOptions) SetRuleID(ruleID string) *DeleteRuleOptions {
-	options.RuleID = core.StringPtr(ruleID)
-	return options
+func (_options *DeleteRuleOptions) SetRuleID(ruleID string) *DeleteRuleOptions {
+	_options.RuleID = core.StringPtr(ruleID)
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *DeleteRuleOptions) SetXCorrelationID(xCorrelationID string) *DeleteRuleOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *DeleteRuleOptions) SetXCorrelationID(xCorrelationID string) *DeleteRuleOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *DeleteRuleOptions) SetTransactionID(transactionID string) *DeleteRuleOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *DeleteRuleOptions) SetTransactionID(transactionID string) *DeleteRuleOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1377,17 +1406,17 @@ func (options *DeleteRuleOptions) SetHeaders(param map[string]string) *DeleteRul
 // DeleteZoneOptions : The DeleteZone options.
 type DeleteZoneOptions struct {
 	// The ID of a zone.
-	ZoneID *string `json:"-" validate:"required,ne="`
+	ZoneID *string `json:"zone_id" validate:"required,ne="`
 
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1401,21 +1430,21 @@ func (*ContextBasedRestrictionsV1) NewDeleteZoneOptions(zoneID string) *DeleteZo
 }
 
 // SetZoneID : Allow user to set ZoneID
-func (options *DeleteZoneOptions) SetZoneID(zoneID string) *DeleteZoneOptions {
-	options.ZoneID = core.StringPtr(zoneID)
-	return options
+func (_options *DeleteZoneOptions) SetZoneID(zoneID string) *DeleteZoneOptions {
+	_options.ZoneID = core.StringPtr(zoneID)
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *DeleteZoneOptions) SetXCorrelationID(xCorrelationID string) *DeleteZoneOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *DeleteZoneOptions) SetXCorrelationID(xCorrelationID string) *DeleteZoneOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *DeleteZoneOptions) SetTransactionID(transactionID string) *DeleteZoneOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *DeleteZoneOptions) SetTransactionID(transactionID string) *DeleteZoneOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1427,17 +1456,17 @@ func (options *DeleteZoneOptions) SetHeaders(param map[string]string) *DeleteZon
 // GetAccountSettingsOptions : The GetAccountSettings options.
 type GetAccountSettingsOptions struct {
 	// The ID of the account the settings are for.
-	AccountID *string `json:"-" validate:"required,ne="`
+	AccountID *string `json:"account_id" validate:"required,ne="`
 
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1451,21 +1480,21 @@ func (*ContextBasedRestrictionsV1) NewGetAccountSettingsOptions(accountID string
 }
 
 // SetAccountID : Allow user to set AccountID
-func (options *GetAccountSettingsOptions) SetAccountID(accountID string) *GetAccountSettingsOptions {
-	options.AccountID = core.StringPtr(accountID)
-	return options
+func (_options *GetAccountSettingsOptions) SetAccountID(accountID string) *GetAccountSettingsOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *GetAccountSettingsOptions) SetXCorrelationID(xCorrelationID string) *GetAccountSettingsOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *GetAccountSettingsOptions) SetXCorrelationID(xCorrelationID string) *GetAccountSettingsOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *GetAccountSettingsOptions) SetTransactionID(transactionID string) *GetAccountSettingsOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *GetAccountSettingsOptions) SetTransactionID(transactionID string) *GetAccountSettingsOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1477,17 +1506,17 @@ func (options *GetAccountSettingsOptions) SetHeaders(param map[string]string) *G
 // GetRuleOptions : The GetRule options.
 type GetRuleOptions struct {
 	// The ID of a rule.
-	RuleID *string `json:"-" validate:"required,ne="`
+	RuleID *string `json:"rule_id" validate:"required,ne="`
 
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1501,21 +1530,21 @@ func (*ContextBasedRestrictionsV1) NewGetRuleOptions(ruleID string) *GetRuleOpti
 }
 
 // SetRuleID : Allow user to set RuleID
-func (options *GetRuleOptions) SetRuleID(ruleID string) *GetRuleOptions {
-	options.RuleID = core.StringPtr(ruleID)
-	return options
+func (_options *GetRuleOptions) SetRuleID(ruleID string) *GetRuleOptions {
+	_options.RuleID = core.StringPtr(ruleID)
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *GetRuleOptions) SetXCorrelationID(xCorrelationID string) *GetRuleOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *GetRuleOptions) SetXCorrelationID(xCorrelationID string) *GetRuleOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *GetRuleOptions) SetTransactionID(transactionID string) *GetRuleOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *GetRuleOptions) SetTransactionID(transactionID string) *GetRuleOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1527,17 +1556,17 @@ func (options *GetRuleOptions) SetHeaders(param map[string]string) *GetRuleOptio
 // GetZoneOptions : The GetZone options.
 type GetZoneOptions struct {
 	// The ID of a zone.
-	ZoneID *string `json:"-" validate:"required,ne="`
+	ZoneID *string `json:"zone_id" validate:"required,ne="`
 
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1551,21 +1580,21 @@ func (*ContextBasedRestrictionsV1) NewGetZoneOptions(zoneID string) *GetZoneOpti
 }
 
 // SetZoneID : Allow user to set ZoneID
-func (options *GetZoneOptions) SetZoneID(zoneID string) *GetZoneOptions {
-	options.ZoneID = core.StringPtr(zoneID)
-	return options
+func (_options *GetZoneOptions) SetZoneID(zoneID string) *GetZoneOptions {
+	_options.ZoneID = core.StringPtr(zoneID)
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *GetZoneOptions) SetXCorrelationID(xCorrelationID string) *GetZoneOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *GetZoneOptions) SetXCorrelationID(xCorrelationID string) *GetZoneOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *GetZoneOptions) SetTransactionID(transactionID string) *GetZoneOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *GetZoneOptions) SetTransactionID(transactionID string) *GetZoneOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1579,15 +1608,15 @@ type ListAvailableServicerefTargetsOptions struct {
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Specifies the types of services to retrieve.
-	Type *string `json:"-"`
+	Type *string `json:"type,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1606,21 +1635,21 @@ func (*ContextBasedRestrictionsV1) NewListAvailableServicerefTargetsOptions() *L
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *ListAvailableServicerefTargetsOptions) SetXCorrelationID(xCorrelationID string) *ListAvailableServicerefTargetsOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *ListAvailableServicerefTargetsOptions) SetXCorrelationID(xCorrelationID string) *ListAvailableServicerefTargetsOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *ListAvailableServicerefTargetsOptions) SetTransactionID(transactionID string) *ListAvailableServicerefTargetsOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *ListAvailableServicerefTargetsOptions) SetTransactionID(transactionID string) *ListAvailableServicerefTargetsOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetType : Allow user to set Type
-func (options *ListAvailableServicerefTargetsOptions) SetType(typeVar string) *ListAvailableServicerefTargetsOptions {
-	options.Type = core.StringPtr(typeVar)
-	return options
+func (_options *ListAvailableServicerefTargetsOptions) SetType(typeVar string) *ListAvailableServicerefTargetsOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1632,42 +1661,42 @@ func (options *ListAvailableServicerefTargetsOptions) SetHeaders(param map[strin
 // ListRulesOptions : The ListRules options.
 type ListRulesOptions struct {
 	// The ID of the managing account.
-	AccountID *string `json:"-" validate:"required"`
+	AccountID *string `json:"account_id" validate:"required"`
 
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// The `region` resource attribute.
-	Region *string `json:"-"`
+	Region *string `json:"region,omitempty"`
 
 	// The `resource` resource attribute.
-	Resource *string `json:"-"`
+	Resource *string `json:"resource,omitempty"`
 
 	// The `resourceType` resource attribute.
-	ResourceType *string `json:"-"`
+	ResourceType *string `json:"resource_type,omitempty"`
 
 	// The `serviceInstance` resource attribute.
-	ServiceInstance *string `json:"-"`
+	ServiceInstance *string `json:"service_instance,omitempty"`
 
 	// The `serviceName` resource attribute.
-	ServiceName *string `json:"-"`
+	ServiceName *string `json:"service_name,omitempty"`
 
 	// The rule's `serviceType` resource attribute.
-	ServiceType *string `json:"-"`
+	ServiceType *string `json:"service_type,omitempty"`
 
 	// The globally unique ID of the zone.
-	ZoneID *string `json:"-"`
+	ZoneID *string `json:"zone_id,omitempty"`
 
 	// Sorts results by using a valid sort field. To learn more, see
 	// [Sorting](https://cloud.ibm.com/docs/api-handbook?topic=api-handbook-sorting).
-	Sort *string `json:"-"`
+	Sort *string `json:"sort,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1681,69 +1710,69 @@ func (*ContextBasedRestrictionsV1) NewListRulesOptions(accountID string) *ListRu
 }
 
 // SetAccountID : Allow user to set AccountID
-func (options *ListRulesOptions) SetAccountID(accountID string) *ListRulesOptions {
-	options.AccountID = core.StringPtr(accountID)
-	return options
+func (_options *ListRulesOptions) SetAccountID(accountID string) *ListRulesOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *ListRulesOptions) SetXCorrelationID(xCorrelationID string) *ListRulesOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *ListRulesOptions) SetXCorrelationID(xCorrelationID string) *ListRulesOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *ListRulesOptions) SetTransactionID(transactionID string) *ListRulesOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *ListRulesOptions) SetTransactionID(transactionID string) *ListRulesOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetRegion : Allow user to set Region
-func (options *ListRulesOptions) SetRegion(region string) *ListRulesOptions {
-	options.Region = core.StringPtr(region)
-	return options
+func (_options *ListRulesOptions) SetRegion(region string) *ListRulesOptions {
+	_options.Region = core.StringPtr(region)
+	return _options
 }
 
 // SetResource : Allow user to set Resource
-func (options *ListRulesOptions) SetResource(resource string) *ListRulesOptions {
-	options.Resource = core.StringPtr(resource)
-	return options
+func (_options *ListRulesOptions) SetResource(resource string) *ListRulesOptions {
+	_options.Resource = core.StringPtr(resource)
+	return _options
 }
 
 // SetResourceType : Allow user to set ResourceType
-func (options *ListRulesOptions) SetResourceType(resourceType string) *ListRulesOptions {
-	options.ResourceType = core.StringPtr(resourceType)
-	return options
+func (_options *ListRulesOptions) SetResourceType(resourceType string) *ListRulesOptions {
+	_options.ResourceType = core.StringPtr(resourceType)
+	return _options
 }
 
 // SetServiceInstance : Allow user to set ServiceInstance
-func (options *ListRulesOptions) SetServiceInstance(serviceInstance string) *ListRulesOptions {
-	options.ServiceInstance = core.StringPtr(serviceInstance)
-	return options
+func (_options *ListRulesOptions) SetServiceInstance(serviceInstance string) *ListRulesOptions {
+	_options.ServiceInstance = core.StringPtr(serviceInstance)
+	return _options
 }
 
 // SetServiceName : Allow user to set ServiceName
-func (options *ListRulesOptions) SetServiceName(serviceName string) *ListRulesOptions {
-	options.ServiceName = core.StringPtr(serviceName)
-	return options
+func (_options *ListRulesOptions) SetServiceName(serviceName string) *ListRulesOptions {
+	_options.ServiceName = core.StringPtr(serviceName)
+	return _options
 }
 
 // SetServiceType : Allow user to set ServiceType
-func (options *ListRulesOptions) SetServiceType(serviceType string) *ListRulesOptions {
-	options.ServiceType = core.StringPtr(serviceType)
-	return options
+func (_options *ListRulesOptions) SetServiceType(serviceType string) *ListRulesOptions {
+	_options.ServiceType = core.StringPtr(serviceType)
+	return _options
 }
 
 // SetZoneID : Allow user to set ZoneID
-func (options *ListRulesOptions) SetZoneID(zoneID string) *ListRulesOptions {
-	options.ZoneID = core.StringPtr(zoneID)
-	return options
+func (_options *ListRulesOptions) SetZoneID(zoneID string) *ListRulesOptions {
+	_options.ZoneID = core.StringPtr(zoneID)
+	return _options
 }
 
 // SetSort : Allow user to set Sort
-func (options *ListRulesOptions) SetSort(sort string) *ListRulesOptions {
-	options.Sort = core.StringPtr(sort)
-	return options
+func (_options *ListRulesOptions) SetSort(sort string) *ListRulesOptions {
+	_options.Sort = core.StringPtr(sort)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1755,24 +1784,24 @@ func (options *ListRulesOptions) SetHeaders(param map[string]string) *ListRulesO
 // ListZonesOptions : The ListZones options.
 type ListZonesOptions struct {
 	// The ID of the managing account.
-	AccountID *string `json:"-" validate:"required"`
+	AccountID *string `json:"account_id" validate:"required"`
 
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// The name of the zone.
-	Name *string `json:"-"`
+	Name *string `json:"name,omitempty"`
 
 	// Sorts results by using a valid sort field. To learn more, see
 	// [Sorting](https://cloud.ibm.com/docs/api-handbook?topic=api-handbook-sorting).
-	Sort *string `json:"-"`
+	Sort *string `json:"sort,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1786,33 +1815,33 @@ func (*ContextBasedRestrictionsV1) NewListZonesOptions(accountID string) *ListZo
 }
 
 // SetAccountID : Allow user to set AccountID
-func (options *ListZonesOptions) SetAccountID(accountID string) *ListZonesOptions {
-	options.AccountID = core.StringPtr(accountID)
-	return options
+func (_options *ListZonesOptions) SetAccountID(accountID string) *ListZonesOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *ListZonesOptions) SetXCorrelationID(xCorrelationID string) *ListZonesOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *ListZonesOptions) SetXCorrelationID(xCorrelationID string) *ListZonesOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *ListZonesOptions) SetTransactionID(transactionID string) *ListZonesOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *ListZonesOptions) SetTransactionID(transactionID string) *ListZonesOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *ListZonesOptions) SetName(name string) *ListZonesOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *ListZonesOptions) SetName(name string) *ListZonesOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetSort : Allow user to set Sort
-func (options *ListZonesOptions) SetSort(sort string) *ListZonesOptions {
-	options.Sort = core.StringPtr(sort)
-	return options
+func (_options *ListZonesOptions) SetSort(sort string) *ListZonesOptions {
+	_options.Sort = core.StringPtr(sort)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1824,11 +1853,11 @@ func (options *ListZonesOptions) SetHeaders(param map[string]string) *ListZonesO
 // ReplaceRuleOptions : The ReplaceRule options.
 type ReplaceRuleOptions struct {
 	// The ID of a rule.
-	RuleID *string `json:"-" validate:"required,ne="`
+	RuleID *string `json:"rule_id" validate:"required,ne="`
 
 	// The current revision of the resource being updated. This can be found in the Create/Get/Update resource response
 	// ETag header.
-	IfMatch *string `json:"-" validate:"required"`
+	IfMatch *string `json:"If-Match" validate:"required"`
 
 	// The description of the rule.
 	Description *string `json:"description,omitempty"`
@@ -1839,19 +1868,36 @@ type ReplaceRuleOptions struct {
 	// The resources this rule apply to.
 	Resources []Resource `json:"resources,omitempty"`
 
+	// The rule enforcement mode:
+	//  * `enabled` - The restrictions are enforced and reported. This is the default.
+	//  * `disabled` - The restrictions are disabled. Nothing is enforced or reported.
+	//  * `report` - The restrictions are evaluated and reported, but not enforced.
+	EnforcementMode *string `json:"enforcement_mode,omitempty"`
+
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
+
+// Constants associated with the ReplaceRuleOptions.EnforcementMode property.
+// The rule enforcement mode:
+//  * `enabled` - The restrictions are enforced and reported. This is the default.
+//  * `disabled` - The restrictions are disabled. Nothing is enforced or reported.
+//  * `report` - The restrictions are evaluated and reported, but not enforced.
+const (
+	ReplaceRuleOptionsEnforcementModeDisabledConst = "disabled"
+	ReplaceRuleOptionsEnforcementModeEnabledConst  = "enabled"
+	ReplaceRuleOptionsEnforcementModeReportConst   = "report"
+)
 
 // NewReplaceRuleOptions : Instantiate ReplaceRuleOptions
 func (*ContextBasedRestrictionsV1) NewReplaceRuleOptions(ruleID string, ifMatch string) *ReplaceRuleOptions {
@@ -1862,45 +1908,51 @@ func (*ContextBasedRestrictionsV1) NewReplaceRuleOptions(ruleID string, ifMatch 
 }
 
 // SetRuleID : Allow user to set RuleID
-func (options *ReplaceRuleOptions) SetRuleID(ruleID string) *ReplaceRuleOptions {
-	options.RuleID = core.StringPtr(ruleID)
-	return options
+func (_options *ReplaceRuleOptions) SetRuleID(ruleID string) *ReplaceRuleOptions {
+	_options.RuleID = core.StringPtr(ruleID)
+	return _options
 }
 
 // SetIfMatch : Allow user to set IfMatch
-func (options *ReplaceRuleOptions) SetIfMatch(ifMatch string) *ReplaceRuleOptions {
-	options.IfMatch = core.StringPtr(ifMatch)
-	return options
+func (_options *ReplaceRuleOptions) SetIfMatch(ifMatch string) *ReplaceRuleOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
 }
 
 // SetDescription : Allow user to set Description
-func (options *ReplaceRuleOptions) SetDescription(description string) *ReplaceRuleOptions {
-	options.Description = core.StringPtr(description)
-	return options
+func (_options *ReplaceRuleOptions) SetDescription(description string) *ReplaceRuleOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
 }
 
 // SetContexts : Allow user to set Contexts
-func (options *ReplaceRuleOptions) SetContexts(contexts []RuleContext) *ReplaceRuleOptions {
-	options.Contexts = contexts
-	return options
+func (_options *ReplaceRuleOptions) SetContexts(contexts []RuleContext) *ReplaceRuleOptions {
+	_options.Contexts = contexts
+	return _options
 }
 
 // SetResources : Allow user to set Resources
-func (options *ReplaceRuleOptions) SetResources(resources []Resource) *ReplaceRuleOptions {
-	options.Resources = resources
-	return options
+func (_options *ReplaceRuleOptions) SetResources(resources []Resource) *ReplaceRuleOptions {
+	_options.Resources = resources
+	return _options
+}
+
+// SetEnforcementMode : Allow user to set EnforcementMode
+func (_options *ReplaceRuleOptions) SetEnforcementMode(enforcementMode string) *ReplaceRuleOptions {
+	_options.EnforcementMode = core.StringPtr(enforcementMode)
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *ReplaceRuleOptions) SetXCorrelationID(xCorrelationID string) *ReplaceRuleOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *ReplaceRuleOptions) SetXCorrelationID(xCorrelationID string) *ReplaceRuleOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *ReplaceRuleOptions) SetTransactionID(transactionID string) *ReplaceRuleOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *ReplaceRuleOptions) SetTransactionID(transactionID string) *ReplaceRuleOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1912,11 +1964,11 @@ func (options *ReplaceRuleOptions) SetHeaders(param map[string]string) *ReplaceR
 // ReplaceZoneOptions : The ReplaceZone options.
 type ReplaceZoneOptions struct {
 	// The ID of a zone.
-	ZoneID *string `json:"-" validate:"required,ne="`
+	ZoneID *string `json:"zone_id" validate:"required,ne="`
 
 	// The current revision of the resource being updated. This can be found in the Create/Get/Update resource response
 	// ETag header.
-	IfMatch *string `json:"-" validate:"required"`
+	IfMatch *string `json:"If-Match" validate:"required"`
 
 	// The name of the zone.
 	Name *string `json:"name,omitempty"`
@@ -1937,12 +1989,12 @@ type ReplaceZoneOptions struct {
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
-	XCorrelationID *string `json:"-"`
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
 
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
-	TransactionID *string `json:"-"`
+	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1957,57 +2009,57 @@ func (*ContextBasedRestrictionsV1) NewReplaceZoneOptions(zoneID string, ifMatch 
 }
 
 // SetZoneID : Allow user to set ZoneID
-func (options *ReplaceZoneOptions) SetZoneID(zoneID string) *ReplaceZoneOptions {
-	options.ZoneID = core.StringPtr(zoneID)
-	return options
+func (_options *ReplaceZoneOptions) SetZoneID(zoneID string) *ReplaceZoneOptions {
+	_options.ZoneID = core.StringPtr(zoneID)
+	return _options
 }
 
 // SetIfMatch : Allow user to set IfMatch
-func (options *ReplaceZoneOptions) SetIfMatch(ifMatch string) *ReplaceZoneOptions {
-	options.IfMatch = core.StringPtr(ifMatch)
-	return options
+func (_options *ReplaceZoneOptions) SetIfMatch(ifMatch string) *ReplaceZoneOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *ReplaceZoneOptions) SetName(name string) *ReplaceZoneOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *ReplaceZoneOptions) SetName(name string) *ReplaceZoneOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetAccountID : Allow user to set AccountID
-func (options *ReplaceZoneOptions) SetAccountID(accountID string) *ReplaceZoneOptions {
-	options.AccountID = core.StringPtr(accountID)
-	return options
+func (_options *ReplaceZoneOptions) SetAccountID(accountID string) *ReplaceZoneOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
 }
 
 // SetDescription : Allow user to set Description
-func (options *ReplaceZoneOptions) SetDescription(description string) *ReplaceZoneOptions {
-	options.Description = core.StringPtr(description)
-	return options
+func (_options *ReplaceZoneOptions) SetDescription(description string) *ReplaceZoneOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
 }
 
 // SetAddresses : Allow user to set Addresses
-func (options *ReplaceZoneOptions) SetAddresses(addresses []AddressIntf) *ReplaceZoneOptions {
-	options.Addresses = addresses
-	return options
+func (_options *ReplaceZoneOptions) SetAddresses(addresses []AddressIntf) *ReplaceZoneOptions {
+	_options.Addresses = addresses
+	return _options
 }
 
 // SetExcluded : Allow user to set Excluded
-func (options *ReplaceZoneOptions) SetExcluded(excluded []AddressIntf) *ReplaceZoneOptions {
-	options.Excluded = excluded
-	return options
+func (_options *ReplaceZoneOptions) SetExcluded(excluded []AddressIntf) *ReplaceZoneOptions {
+	_options.Excluded = excluded
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *ReplaceZoneOptions) SetXCorrelationID(xCorrelationID string) *ReplaceZoneOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *ReplaceZoneOptions) SetXCorrelationID(xCorrelationID string) *ReplaceZoneOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetTransactionID : Allow user to set TransactionID
-func (options *ReplaceZoneOptions) SetTransactionID(transactionID string) *ReplaceZoneOptions {
-	options.TransactionID = core.StringPtr(transactionID)
-	return options
+func (_options *ReplaceZoneOptions) SetTransactionID(transactionID string) *ReplaceZoneOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -2148,6 +2200,12 @@ type Rule struct {
 	// The resources this rule apply to.
 	Resources []Resource `json:"resources" validate:"required"`
 
+	// The rule enforcement mode:
+	//  * `enabled` - The restrictions are enforced and reported. This is the default.
+	//  * `disabled` - The restrictions are disabled. Nothing is enforced or reported.
+	//  * `report` - The restrictions are evaluated and reported, but not enforced.
+	EnforcementMode *string `json:"enforcement_mode,omitempty"`
+
 	// The href link to the resource.
 	Href *string `json:"href" validate:"required"`
 
@@ -2163,6 +2221,17 @@ type Rule struct {
 	// IAM ID of the user or service which modified the resource.
 	LastModifiedByID *string `json:"last_modified_by_id" validate:"required"`
 }
+
+// Constants associated with the Rule.EnforcementMode property.
+// The rule enforcement mode:
+//  * `enabled` - The restrictions are enforced and reported. This is the default.
+//  * `disabled` - The restrictions are disabled. Nothing is enforced or reported.
+//  * `report` - The restrictions are evaluated and reported, but not enforced.
+const (
+	RuleEnforcementModeDisabledConst = "disabled"
+	RuleEnforcementModeEnabledConst  = "enabled"
+	RuleEnforcementModeReportConst   = "report"
+)
 
 // UnmarshalRule unmarshals an instance of Rule from the specified map of raw messages.
 func UnmarshalRule(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -2184,6 +2253,10 @@ func UnmarshalRule(m map[string]json.RawMessage, result interface{}) (err error)
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalResource)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "enforcement_mode", &obj.EnforcementMode)
 	if err != nil {
 		return
 	}

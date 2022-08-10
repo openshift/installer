@@ -70,14 +70,19 @@ func ResourceIBMISLBListener() *schema.Resource {
 				Description:  "Loadbalancer listener port",
 			},
 			isLBListenerPortMin: {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The inclusive lower bound of the range of ports used by this listener. Only load balancers in the `network` family support more than one port per listener.",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validate.ValidateLBListenerPort,
+				Computed:     true,
+				Description:  "The inclusive lower bound of the range of ports used by this listener. Only load balancers in the `network` family support more than one port per listener.",
 			},
+
 			isLBListenerPortMax: {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The inclusive upper bound of the range of ports used by this listener. Only load balancers in the `network` family support more than one port per listener",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validate.ValidateLBListenerPort,
+				Computed:     true,
+				Description:  "The inclusive upper bound of the range of ports used by this listener. Only load balancers in the `network` family support more than one port per listener",
 			},
 
 			isLBListenerProtocol: {
@@ -176,7 +181,7 @@ func ResourceIBMISLBListener() *schema.Resource {
 func ResourceIBMISLBListenerValidator() *validate.ResourceValidator {
 
 	validateSchema := make([]validate.ValidateSchema, 0)
-	protocol := "https, http, tcp"
+	protocol := "https, http, tcp, udp"
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 isLBListenerProtocol,
@@ -194,6 +199,8 @@ func resourceIBMISLBListenerCreate(d *schema.ResourceData, meta interface{}) err
 	log.Printf("[DEBUG] LB Listener create")
 	lbID := d.Get(isLBListenerLBID).(string)
 	port := int64(d.Get(isLBListenerPort).(int))
+	portMin := int64(d.Get(isLBListenerPortMin).(int))
+	portMax := int64(d.Get(isLBListenerPortMax).(int))
 	protocol := d.Get(isLBListenerProtocol).(string)
 	var defPool, certificateCRN string
 	if pool, ok := d.GetOk(isLBListenerDefaultPool); ok {
@@ -236,7 +243,7 @@ func resourceIBMISLBListenerCreate(d *schema.ResourceData, meta interface{}) err
 	conns.IbmMutexKV.Lock(isLBKey)
 	defer conns.IbmMutexKV.Unlock(isLBKey)
 
-	err := lbListenerCreate(d, meta, lbID, protocol, defPool, certificateCRN, listener, uri, port, connLimit, httpStatusCode)
+	err := lbListenerCreate(d, meta, lbID, protocol, defPool, certificateCRN, listener, uri, port, portMin, portMax, connLimit, httpStatusCode)
 	if err != nil {
 		return err
 	}
@@ -244,7 +251,7 @@ func resourceIBMISLBListenerCreate(d *schema.ResourceData, meta interface{}) err
 	return resourceIBMISLBListenerRead(d, meta)
 }
 
-func lbListenerCreate(d *schema.ResourceData, meta interface{}, lbID, protocol, defPool, certificateCRN, listener, uri string, port, connLimit, httpStatusCode int64) error {
+func lbListenerCreate(d *schema.ResourceData, meta interface{}, lbID, protocol, defPool, certificateCRN, listener, uri string, port, portMin, portMax, connLimit, httpStatusCode int64) error {
 	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
@@ -263,15 +270,38 @@ func lbListenerCreate(d *schema.ResourceData, meta interface{}, lbID, protocol, 
 	if err != nil || lb == nil {
 		return fmt.Errorf("[ERROR] Error getting Load Balancer : %s\n%s", err, response)
 	}
-
 	if lb != nil && *lb.RouteMode && lb.Profile != nil && *lb.Profile.Name == "network-fixed" {
-		portMin := int64(1)
-		portMax := int64(65535)
+		if portMin > 0 && portMax > 0 && portMin != 1 && portMax != 65535 {
+			return fmt.Errorf("[ERROR] Only acceptable value for port_min is 1 and port_max is 65535 for route_mode enabled private network load balancer")
+		}
+		pmin := int64(1)
+		pmax := int64(65535)
 
-		options.PortMin = &portMin
-		options.PortMax = &portMax
-	} else {
-		options.Port = &port
+		options.PortMin = &pmin
+		options.PortMax = &pmax
+	} else if lb != nil && lb.Profile != nil {
+		if strings.EqualFold(*lb.Profile.Family, "network") && *lb.IsPublic {
+			if port == 0 && (portMin == 0 || portMax == 0) {
+				return fmt.Errorf(
+					"[ERROR] Error port_min(%d)/port_max(%d) for public network load balancer(%s) needs to be in between 1-65335", portMin, portMax, lbID)
+			} else {
+				if port != 0 {
+					options.Port = &port
+				} else {
+					options.PortMin = &portMin
+					options.PortMax = &portMax
+				}
+			}
+		} else if portMin != portMax {
+			return fmt.Errorf("[ERROR] Listener port_min and port_max values have to be equal for ALB and private NLB (excluding route mode)")
+		} else {
+			if port != 0 && (portMin == 0 || port == portMin) {
+				options.Port = &port
+			} else {
+				options.PortMin = &portMin
+				options.PortMax = &portMax
+			}
+		}
 	}
 
 	if app, ok := d.GetOk(isLBListenerAcceptProxyProtocol); ok {
@@ -517,9 +547,19 @@ func lbListenerUpdate(d *schema.ResourceData, meta interface{}, lbID, lbListener
 			loadBalancerListenerPatchModel.HTTPSRedirect = HTTPSRedirect
 		}
 	}
-	if d.HasChange(isLBListenerPort) {
+	if _, ok := d.GetOk(isLBListenerPort); ok && d.HasChange(isLBListenerPort) {
 		port = int64(d.Get(isLBListenerPort).(int))
 		loadBalancerListenerPatchModel.Port = &port
+		hasChanged = true
+	}
+	if d.HasChange(isLBListenerPortMin) {
+		portMin := int64(d.Get(isLBListenerPortMin).(int))
+		loadBalancerListenerPatchModel.PortMin = &portMin
+		hasChanged = true
+	}
+	if d.HasChange(isLBListenerPortMax) {
+		portMax := int64(d.Get(isLBListenerPortMax).(int))
+		loadBalancerListenerPatchModel.PortMax = &portMax
 		hasChanged = true
 	}
 

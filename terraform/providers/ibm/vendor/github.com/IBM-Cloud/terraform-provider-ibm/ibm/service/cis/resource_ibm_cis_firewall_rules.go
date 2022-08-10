@@ -242,7 +242,7 @@ func ResourceIBMCISFirewallrulesDelete(context context.Context, d *schema.Resour
 	return nil
 }
 func ResourceIBMCISFirewallrulesValidator() *validate.ResourceValidator {
-	validateSchema := make([]validate.ValidateSchema, 1)
+	validateSchema := make([]validate.ValidateSchema, 0)
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{

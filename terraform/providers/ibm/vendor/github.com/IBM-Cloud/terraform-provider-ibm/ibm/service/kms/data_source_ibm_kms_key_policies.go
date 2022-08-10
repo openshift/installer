@@ -35,9 +35,16 @@ func DataSourceIBMKMSkeyPolicies() *schema.Resource {
 				Default:      "public",
 			},
 			"key_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Key ID of the Key",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Key ID of the Key",
+				ExactlyOneOf: []string{"key_id", "alias"},
+			},
+			"alias": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Alias of the Key",
+				ExactlyOneOf: []string{"key_id", "alias"},
 			},
 			"policies": {
 				Type:        schema.TypeList,
@@ -160,7 +167,6 @@ func dataSourceIBMKMSKeyPoliciesRead(context context.Context, d *schema.Resource
 		instanceID = CrnInstanceID[len(CrnInstanceID)-3]
 	}
 	endpointType := d.Get("endpoint_type").(string)
-	key_id := d.Get("key_id").(string)
 
 	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
 	if err != nil {
@@ -180,9 +186,22 @@ func dataSourceIBMKMSKeyPoliciesRead(context context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 	api.URL = URL
-
 	api.Config.InstanceID = instanceID
-	policies, err := api.GetPolicies(context, key_id)
+	var id string
+	if v, ok := d.GetOk("key_id"); ok {
+		id = v.(string)
+		d.Set("key_id", id)
+	}
+	if v, ok := d.GetOk("alias"); ok {
+		id = v.(string)
+		key, err := api.GetKey(context, id)
+		if err != nil {
+			return diag.Errorf("Failed to get Key: %s", err)
+		}
+		d.Set("alias", id)
+		d.Set("key_id", key.ID)
+	}
+	policies, err := api.GetPolicies(context, id)
 	if err != nil {
 		return diag.Errorf("Failed to read policies: %s", err)
 	}
@@ -192,12 +211,9 @@ func dataSourceIBMKMSKeyPoliciesRead(context context.Context, d *schema.Resource
 	} else {
 		d.Set("policies", flex.FlattenKeyPolicies(policies))
 	}
-
 	d.SetId(instanceID)
-	d.Set("key_id", key_id)
 	d.Set("instance_id", instanceID)
 	d.Set("endpoint_type", endpointType)
 
 	return nil
-
 }

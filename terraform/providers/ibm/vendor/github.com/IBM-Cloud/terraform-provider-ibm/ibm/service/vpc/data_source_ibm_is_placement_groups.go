@@ -144,14 +144,12 @@ func dataSourceIbmIsPlacementGroupsRead(context context.Context, d *schema.Resou
 	}
 
 	d.SetId(dataSourceIbmIsPlacementGroupsID(d))
-	if len(allrecs) > 0 {
-		err = d.Set("placement_groups", dataSourcePlacementGroupCollectionFlattenPlacementGroups(meta, allrecs))
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting placement_groups %s", err))
-		}
-		if err = d.Set("total_count", len(allrecs)); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting total_count: %s", err))
-		}
+	err = d.Set("placement_groups", dataSourcePlacementGroupCollectionFlattenPlacementGroups(meta, allrecs))
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting placement_groups %s", err))
+	}
+	if err = d.Set("total_count", len(allrecs)); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting total_count: %s", err))
 	}
 	return nil
 }
@@ -162,6 +160,7 @@ func dataSourceIbmIsPlacementGroupsID(d *schema.ResourceData) string {
 }
 
 func dataSourcePlacementGroupCollectionFlattenPlacementGroups(meta interface{}, result []vpcv1.PlacementGroup) (placementGroups []map[string]interface{}) {
+	placementGroups = make([]map[string]interface{}, 0)
 	for _, placementGroupsItem := range result {
 		placementGroups = append(placementGroups, dataSourcePlacementGroupCollectionPlacementGroupsToMap(meta, placementGroupsItem))
 	}

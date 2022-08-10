@@ -1,11 +1,10 @@
-// Copyright IBM Corp. 2021 All Rights Reserved.
+// Copyright IBM Corp. 2022 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package contextbasedrestrictions
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -21,69 +20,70 @@ import (
 
 func ResourceIBMCbrZone() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceIBMCbrZoneCreate,
-		ReadContext:   resourceIBMCbrZoneRead,
-		UpdateContext: resourceIBMCbrZoneUpdate,
-		DeleteContext: resourceIBMCbrZoneDelete,
+		CreateContext: ResourceIBMCbrZoneCreate,
+		ReadContext:   ResourceIBMCbrZoneRead,
+		UpdateContext: ResourceIBMCbrZoneUpdate,
+		DeleteContext: ResourceIBMCbrZoneDelete,
 		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cbr_zone", "name"),
 				Description:  "The name of the zone.",
 			},
-			"account_id": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The id of the account owning this zone.",
+			"account_id": &schema.Schema{
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_cbr_zone", "account_id"),
+				Description:  "The id of the account owning this zone.",
 			},
-			"description": {
+			"description": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cbr_zone", "description"),
 				Description:  "The description of the zone.",
 			},
-			"addresses": {
+			"addresses": &schema.Schema{
 				Type:        schema.TypeList,
 				Required:    true,
 				Description: "The list of addresses in the zone.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"type": {
+						"type": &schema.Schema{
 							Type:        schema.TypeString,
-							Optional:    true,
+							Required:    true,
 							Description: "The type of address.",
 						},
-						"value": {
+						"value": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "The IP address.",
 						},
-						"ref": {
+						"ref": &schema.Schema{
 							Type:        schema.TypeList,
 							MaxItems:    1,
 							Optional:    true,
 							Description: "A service reference value.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"account_id": {
+									"account_id": &schema.Schema{
 										Type:        schema.TypeString,
-										Computed:    true,
+										Required:    true,
 										Description: "The id of the account owning the service.",
 									},
-									"service_type": {
+									"service_type": &schema.Schema{
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The service type.",
 									},
-									"service_name": {
+									"service_name": &schema.Schema{
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The service name.",
 									},
-									"service_instance": {
+									"service_instance": &schema.Schema{
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The service instance.",
@@ -94,45 +94,45 @@ func ResourceIBMCbrZone() *schema.Resource {
 					},
 				},
 			},
-			"excluded": {
+			"excluded": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "The list of excluded addresses in the zone. Only addresses of type `ipAddress`, `ipRange`, and `subnet` can be excluded.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"type": {
+						"type": &schema.Schema{
 							Type:        schema.TypeString,
-							Optional:    true,
+							Required:    true,
 							Description: "The type of address.",
 						},
-						"value": {
+						"value": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "The IP address.",
 						},
-						"ref": {
+						"ref": &schema.Schema{
 							Type:        schema.TypeList,
 							MaxItems:    1,
 							Optional:    true,
 							Description: "A service reference value.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"account_id": {
+									"account_id": &schema.Schema{
 										Type:        schema.TypeString,
-										Computed:    true,
+										Required:    true,
 										Description: "The id of the account owning the service.",
 									},
-									"service_type": {
+									"service_type": &schema.Schema{
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The service type.",
 									},
-									"service_name": {
+									"service_name": &schema.Schema{
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The service name.",
 									},
-									"service_instance": {
+									"service_instance": &schema.Schema{
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The service instance.",
@@ -143,47 +143,59 @@ func ResourceIBMCbrZone() *schema.Resource {
 					},
 				},
 			},
-			"crn": {
+			"x_correlation_id": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_cbr_zone", "x_correlation_id"),
+				Description:  "The supplied or generated value of this header is logged for a request and repeated in a response header for the corresponding response. The same value is used for downstream requests and retries of those requests. If a value of this headers is not supplied in a request, the service generates a random (version 4) UUID.",
+			},
+			"transaction_id": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_cbr_zone", "transaction_id"),
+				Description:  "The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.",
+			},
+			"crn": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The zone CRN.",
 			},
-			"address_count": {
+			"address_count": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "The number of addresses in the zone.",
 			},
-			"excluded_count": {
+			"excluded_count": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "The number of excluded addresses in the zone.",
 			},
-			"href": {
+			"href": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The href link to the resource.",
 			},
-			"created_at": {
+			"created_at": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The time the resource was created.",
 			},
-			"created_by_id": {
+			"created_by_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IAM ID of the user or service which created the resource.",
 			},
-			"last_modified_at": {
+			"last_modified_at": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The last time the resource was modified.",
 			},
-			"last_modified_by_id": {
+			"last_modified_by_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IAM ID of the user or service which modified the resource.",
 			},
-			"version": {
+			"version": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -192,14 +204,23 @@ func ResourceIBMCbrZone() *schema.Resource {
 }
 
 func ResourceIBMCbrZoneValidator() *validate.ResourceValidator {
-	validateSchema := make([]validate.ValidateSchema, 1)
+	validateSchema := make([]validate.ValidateSchema, 0)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 "name",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
-			Regexp:                     `^[a-zA-Z0-9 \\-_]+$`,
+			Regexp:                     `^[a-zA-Z0-9 \-_]+$`,
+			MinValueLength:             1,
+			MaxValueLength:             128,
+		},
+		validate.ValidateSchema{
+			Identifier:                 "account_id",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^[a-zA-Z0-9\-]+$`,
 			MinValueLength:             1,
 			MaxValueLength:             128,
 		},
@@ -212,23 +233,31 @@ func ResourceIBMCbrZoneValidator() *validate.ResourceValidator {
 			MinValueLength:             0,
 			MaxValueLength:             300,
 		},
+		validate.ValidateSchema{
+			Identifier:                 "x_correlation_id",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^[a-zA-Z0-9 ,\-_]+$`,
+			MinValueLength:             1,
+			MaxValueLength:             1024,
+		},
+		validate.ValidateSchema{
+			Identifier:                 "transaction_id",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^[a-zA-Z0-9 ,\-_]+$`,
+			MinValueLength:             1,
+			MaxValueLength:             1024,
+		},
 	)
 
 	resourceValidator := validate.ResourceValidator{ResourceName: "ibm_cbr_zone", Schema: validateSchema}
 	return &resourceValidator
 }
 
-func getIBMCbrAccountId(meta interface{}) (string, error) {
-	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
-
-	if err != nil {
-		return "", err
-	} else {
-		return userDetails.UserAccount, nil
-	}
-}
-
-func resourceIBMCbrZoneCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func ResourceIBMCbrZoneCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
 		return diag.FromErr(err)
@@ -239,13 +268,9 @@ func resourceIBMCbrZoneCreate(context context.Context, d *schema.ResourceData, m
 	if _, ok := d.GetOk("name"); ok {
 		createZoneOptions.SetName(d.Get("name").(string))
 	}
-
-	accountID, err := getIBMCbrAccountId(meta)
-	if err != nil {
-		return diag.FromErr(err)
+	if _, ok := d.GetOk("account_id"); ok {
+		createZoneOptions.SetAccountID(d.Get("account_id").(string))
 	}
-	createZoneOptions.SetAccountID(accountID)
-
 	if _, ok := d.GetOk("description"); ok {
 		createZoneOptions.SetDescription(d.Get("description").(string))
 	}
@@ -253,7 +278,10 @@ func resourceIBMCbrZoneCreate(context context.Context, d *schema.ResourceData, m
 		var addresses []contextbasedrestrictionsv1.AddressIntf
 		for _, e := range d.Get("addresses").([]interface{}) {
 			value := e.(map[string]interface{})
-			addressesItem := resourceIBMCbrZoneMapToAddress(value, accountID)
+			addressesItem, err := ResourceIBMCbrZoneMapToAddress(value)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 			addresses = append(addresses, addressesItem)
 		}
 		createZoneOptions.SetAddresses(addresses)
@@ -262,10 +290,19 @@ func resourceIBMCbrZoneCreate(context context.Context, d *schema.ResourceData, m
 		var excluded []contextbasedrestrictionsv1.AddressIntf
 		for _, e := range d.Get("excluded").([]interface{}) {
 			value := e.(map[string]interface{})
-			excludedItem := resourceIBMCbrZoneMapToAddress(value, accountID)
+			excludedItem, err := ResourceIBMCbrZoneMapToAddress(value)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 			excluded = append(excluded, excludedItem)
 		}
 		createZoneOptions.SetExcluded(excluded)
+	}
+	if _, ok := d.GetOk("x_correlation_id"); ok {
+		createZoneOptions.SetXCorrelationID(d.Get("x_correlation_id").(string))
+	}
+	if _, ok := d.GetOk("transaction_id"); ok {
+		createZoneOptions.SetTransactionID(d.Get("transaction_id").(string))
 	}
 
 	zone, response, err := contextBasedRestrictionsClient.CreateZoneWithContext(context, createZoneOptions)
@@ -276,123 +313,16 @@ func resourceIBMCbrZoneCreate(context context.Context, d *schema.ResourceData, m
 
 	d.SetId(*zone.ID)
 
-	return resourceIBMCbrZoneRead(context, d, meta)
+	return ResourceIBMCbrZoneRead(context, d, meta)
 }
 
-func resourceIBMCbrZoneMapToAddress(addressMap map[string]interface{}, accountID string) contextbasedrestrictionsv1.AddressIntf {
-	var address contextbasedrestrictionsv1.AddressIntf
-	disc, ok := addressMap["type"]
-	if ok {
-		switch disc {
-		case "ipAddress":
-			ipAddress := resourceIBMCbrZoneMapToAddressIPAddress(addressMap)
-			address = &ipAddress
-		case "ipRange":
-			ipAddressRange := resourceIBMCbrZoneMapToAddressIPAddressRange(addressMap)
-			address = &ipAddressRange
-		case "subnet":
-			subnet := resourceIBMCbrZoneMapToAddressSubnet(addressMap)
-			address = &subnet
-		case "vpc":
-			vpc := resourceIBMCbrZoneMapToAddressVPC(addressMap)
-			address = &vpc
-		case "serviceRef":
-			serviceRef := resourceIBMCbrZoneMapToAddressServiceRef(addressMap, accountID)
-			address = &serviceRef
-		}
-	} else {
-		log.Println("[DEBUG] 'type' field is missing from 'addresses'")
-	}
-
-	return address
-}
-
-func resourceIBMCbrZoneMapToServiceRefValue(serviceRefValueMap map[string]interface{}, accountID string) contextbasedrestrictionsv1.ServiceRefValue {
-	serviceRefValue := contextbasedrestrictionsv1.ServiceRefValue{}
-
-	serviceRefValue.AccountID = &accountID
-
-	if serviceRefValueMap["service_type"] != nil && serviceRefValueMap["service_type"] != "" {
-		serviceRefValue.ServiceType = core.StringPtr(serviceRefValueMap["service_type"].(string))
-	}
-	if serviceRefValueMap["service_name"] != nil && serviceRefValueMap["service_name"] != "" {
-		serviceRefValue.ServiceName = core.StringPtr(serviceRefValueMap["service_name"].(string))
-	}
-	if serviceRefValueMap["service_instance"] != nil && serviceRefValueMap["service_instance"] != "" {
-		serviceRefValue.ServiceInstance = core.StringPtr(serviceRefValueMap["service_instance"].(string))
-	}
-
-	return serviceRefValue
-}
-
-func resourceIBMCbrZoneMapToAddressIPAddress(addressIPAddressMap map[string]interface{}) contextbasedrestrictionsv1.AddressIPAddress {
-	addressIPAddress := contextbasedrestrictionsv1.AddressIPAddress{}
-
-	addressIPAddress.Type = core.StringPtr(addressIPAddressMap["type"].(string))
-	addressIPAddress.Value = core.StringPtr(addressIPAddressMap["value"].(string))
-
-	return addressIPAddress
-}
-
-func resourceIBMCbrZoneMapToAddressServiceRef(addressServiceRefMap map[string]interface{}, accountID string) contextbasedrestrictionsv1.AddressServiceRef {
-	addressServiceRef := contextbasedrestrictionsv1.AddressServiceRef{}
-
-	addressServiceRef.Type = core.StringPtr(addressServiceRefMap["type"].(string))
-
-	if _, ok := addressServiceRefMap["value"]; ok {
-		delete(addressServiceRefMap, "value")
-	}
-
-	if refSlice, ok := addressServiceRefMap["ref"]; ok {
-		ref := refSlice.([]interface{})
-		if len(ref) > 0 {
-			serviceRefValue := resourceIBMCbrZoneMapToServiceRefValue(ref[0].(map[string]interface{}), accountID)
-			addressServiceRef.Ref = &serviceRefValue
-		}
-	}
-
-	return addressServiceRef
-}
-
-func resourceIBMCbrZoneMapToAddressSubnet(addressSubnetMap map[string]interface{}) contextbasedrestrictionsv1.AddressSubnet {
-	addressSubnet := contextbasedrestrictionsv1.AddressSubnet{}
-
-	addressSubnet.Type = core.StringPtr(addressSubnetMap["type"].(string))
-	addressSubnet.Value = core.StringPtr(addressSubnetMap["value"].(string))
-
-	return addressSubnet
-}
-
-func resourceIBMCbrZoneMapToAddressIPAddressRange(addressIPAddressRangeMap map[string]interface{}) contextbasedrestrictionsv1.AddressIPAddressRange {
-	addressIPAddressRange := contextbasedrestrictionsv1.AddressIPAddressRange{}
-
-	addressIPAddressRange.Type = core.StringPtr(addressIPAddressRangeMap["type"].(string))
-	addressIPAddressRange.Value = core.StringPtr(addressIPAddressRangeMap["value"].(string))
-
-	return addressIPAddressRange
-}
-
-func resourceIBMCbrZoneMapToAddressVPC(addressVPCMap map[string]interface{}) contextbasedrestrictionsv1.AddressVPC {
-	addressVPC := contextbasedrestrictionsv1.AddressVPC{}
-
-	addressVPC.Type = core.StringPtr(addressVPCMap["type"].(string))
-	addressVPC.Value = core.StringPtr(addressVPCMap["value"].(string))
-
-	return addressVPC
-}
-
-func resourceIBMCbrZoneRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func ResourceIBMCbrZoneRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	getZoneOptions := &contextbasedrestrictionsv1.GetZoneOptions{}
-
-	accountID, err := getIBMCbrAccountId(meta)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
 	getZoneOptions.SetZoneID(d.Id())
 
@@ -406,170 +336,79 @@ func resourceIBMCbrZoneRead(context context.Context, d *schema.ResourceData, met
 		return diag.FromErr(fmt.Errorf("GetZoneWithContext failed %s\n%s", err, response))
 	}
 
+	if err = d.Set("x_correlation_id", getZoneOptions.XCorrelationID); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting x_correlation_id: %s", err))
+	}
+	if err = d.Set("transaction_id", getZoneOptions.TransactionID); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting transaction_id: %s", err))
+	}
 	if err = d.Set("name", zone.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
-
+	if err = d.Set("account_id", zone.AccountID); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
+	}
 	if err = d.Set("description", zone.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
 	}
-
+	addresses := []map[string]interface{}{}
 	if zone.Addresses != nil {
-		addresses := []map[string]interface{}{}
 		for _, addressesItem := range zone.Addresses {
-			addressesItemMap := resourceIBMCbrZoneAddressToMap(addressesItem, accountID)
+			addressesItemMap, err := ResourceIBMCbrZoneAddressToMap(addressesItem)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 			addresses = append(addresses, addressesItemMap)
 		}
-
-		if err = d.Set("addresses", addresses); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting addresses: %s", err))
-		}
 	}
-
+	if err = d.Set("addresses", addresses); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting addresses: %s", err))
+	}
+	excluded := []map[string]interface{}{}
 	if zone.Excluded != nil {
-		excluded := []map[string]interface{}{}
 		for _, excludedItem := range zone.Excluded {
-			excludedItemMap := resourceIBMCbrZoneAddressToMap(excludedItem, accountID)
+			excludedItemMap, err := ResourceIBMCbrZoneAddressToMap(excludedItem)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 			excluded = append(excluded, excludedItemMap)
 		}
-		if err = d.Set("excluded", excluded); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting excluded: %s", err))
-		}
+	}
+	if err = d.Set("excluded", excluded); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting excluded: %s", err))
 	}
 	if err = d.Set("crn", zone.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting crn: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
 	}
 	if err = d.Set("address_count", flex.IntValue(zone.AddressCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting address_count: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting address_count: %s", err))
 	}
 	if err = d.Set("excluded_count", flex.IntValue(zone.ExcludedCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting excluded_count: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting excluded_count: %s", err))
 	}
 	if err = d.Set("href", zone.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting href: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
 	if err = d.Set("created_at", flex.DateTimeToString(zone.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
 	}
 	if err = d.Set("created_by_id", zone.CreatedByID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_by_id: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting created_by_id: %s", err))
 	}
 	if err = d.Set("last_modified_at", flex.DateTimeToString(zone.LastModifiedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting last_modified_at: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting last_modified_at: %s", err))
 	}
 	if err = d.Set("last_modified_by_id", zone.LastModifiedByID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting last_modified_by_id: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting last_modified_by_id: %s", err))
 	}
 	if err = d.Set("version", response.Headers.Get("Etag")); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting version: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting version: %s", err))
 	}
 
 	return nil
 }
 
-func resourceIBMCbrZoneAddressToMap(address contextbasedrestrictionsv1.AddressIntf, accountID string) map[string]interface{} {
-	addressMap := map[string]interface{}{}
-
-	buf, err := json.Marshal(address)
-
-	if err == nil {
-		err = json.Unmarshal(buf, &addressMap)
-	}
-
-	if err != nil {
-		panic(err)
-	}
-
-	if addressMap["type"] == "serviceRef" {
-		var refArray []interface{}
-
-		refMap := map[string]string{}
-		refBuf, err := json.Marshal(addressMap["ref"])
-		if err == nil {
-			err = json.Unmarshal(refBuf, &refMap)
-		}
-
-		if err != nil {
-			panic(err)
-		}
-
-		delete(refMap, "account_id")
-
-		refArray = append(refArray, refMap)
-
-		delete(addressMap, "ref")
-		addressMap["ref"] = refArray
-
-		addressMap["value"] = ""
-	}
-
-	return addressMap
-}
-
-func resourceIBMCbrZoneServiceRefValueToMap(serviceRefValue contextbasedrestrictionsv1.ServiceRefValue) map[string]interface{} {
-	serviceRefValueMap := map[string]interface{}{}
-
-	serviceRefValueMap["account_id"] = serviceRefValue.AccountID
-	if serviceRefValue.ServiceType != nil {
-		serviceRefValueMap["service_type"] = serviceRefValue.ServiceType
-	}
-	if serviceRefValue.ServiceName != nil {
-		serviceRefValueMap["service_name"] = serviceRefValue.ServiceName
-	}
-	if serviceRefValue.ServiceInstance != nil {
-		serviceRefValueMap["service_instance"] = serviceRefValue.ServiceInstance
-	}
-
-	return serviceRefValueMap
-}
-
-func resourceIBMCbrZoneAddressIPAddressToMap(addressIPAddress contextbasedrestrictionsv1.AddressIPAddress) map[string]interface{} {
-	addressIPAddressMap := map[string]interface{}{}
-
-	addressIPAddressMap["type"] = addressIPAddress.Type
-	addressIPAddressMap["value"] = addressIPAddress.Value
-
-	return addressIPAddressMap
-}
-
-func resourceIBMCbrZoneAddressServiceRefToMap(addressServiceRef contextbasedrestrictionsv1.AddressServiceRef) map[string]interface{} {
-	addressServiceRefMap := map[string]interface{}{}
-
-	addressServiceRefMap["type"] = addressServiceRef.Type
-	RefMap := resourceIBMCbrZoneServiceRefValueToMap(*addressServiceRef.Ref)
-	addressServiceRefMap["ref"] = []map[string]interface{}{RefMap}
-
-	return addressServiceRefMap
-}
-
-func resourceIBMCbrZoneAddressSubnetToMap(addressSubnet contextbasedrestrictionsv1.AddressSubnet) map[string]interface{} {
-	addressSubnetMap := map[string]interface{}{}
-
-	addressSubnetMap["type"] = addressSubnet.Type
-	addressSubnetMap["value"] = addressSubnet.Value
-
-	return addressSubnetMap
-}
-
-func resourceIBMCbrZoneAddressIPAddressRangeToMap(addressIPAddressRange contextbasedrestrictionsv1.AddressIPAddressRange) map[string]interface{} {
-	addressIPAddressRangeMap := map[string]interface{}{}
-
-	addressIPAddressRangeMap["type"] = addressIPAddressRange.Type
-	addressIPAddressRangeMap["value"] = addressIPAddressRange.Value
-
-	return addressIPAddressRangeMap
-}
-
-func resourceIBMCbrZoneAddressVPCToMap(addressVPC contextbasedrestrictionsv1.AddressVPC) map[string]interface{} {
-	addressVPCMap := map[string]interface{}{}
-
-	addressVPCMap["type"] = addressVPC.Type
-	addressVPCMap["value"] = addressVPC.Value
-
-	return addressVPCMap
-}
-
-func resourceIBMCbrZoneUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func ResourceIBMCbrZoneUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
 		return diag.FromErr(err)
@@ -581,13 +420,9 @@ func resourceIBMCbrZoneUpdate(context context.Context, d *schema.ResourceData, m
 	if _, ok := d.GetOk("name"); ok {
 		replaceZoneOptions.SetName(d.Get("name").(string))
 	}
-
-	accountID, err := getIBMCbrAccountId(meta)
-	if err != nil {
-		return diag.FromErr(err)
+	if _, ok := d.GetOk("account_id"); ok {
+		replaceZoneOptions.SetAccountID(d.Get("account_id").(string))
 	}
-	replaceZoneOptions.SetAccountID(accountID)
-
 	if _, ok := d.GetOk("description"); ok {
 		replaceZoneOptions.SetDescription(d.Get("description").(string))
 	}
@@ -595,7 +430,10 @@ func resourceIBMCbrZoneUpdate(context context.Context, d *schema.ResourceData, m
 		var addresses []contextbasedrestrictionsv1.AddressIntf
 		for _, e := range d.Get("addresses").([]interface{}) {
 			value := e.(map[string]interface{})
-			addressesItem := resourceIBMCbrZoneMapToAddress(value, accountID)
+			addressesItem, err := ResourceIBMCbrZoneMapToAddress(value)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 			addresses = append(addresses, addressesItem)
 		}
 		replaceZoneOptions.SetAddresses(addresses)
@@ -604,12 +442,20 @@ func resourceIBMCbrZoneUpdate(context context.Context, d *schema.ResourceData, m
 		var excluded []contextbasedrestrictionsv1.AddressIntf
 		for _, e := range d.Get("excluded").([]interface{}) {
 			value := e.(map[string]interface{})
-			excludedItem := resourceIBMCbrZoneMapToAddress(value, accountID)
+			excludedItem, err := ResourceIBMCbrZoneMapToAddress(value)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 			excluded = append(excluded, excludedItem)
 		}
 		replaceZoneOptions.SetExcluded(excluded)
 	}
-
+	if _, ok := d.GetOk("x_correlation_id"); ok {
+		replaceZoneOptions.SetXCorrelationID(d.Get("x_correlation_id").(string))
+	}
+	if _, ok := d.GetOk("transaction_id"); ok {
+		replaceZoneOptions.SetTransactionID(d.Get("transaction_id").(string))
+	}
 	replaceZoneOptions.SetIfMatch(d.Get("version").(string))
 
 	_, response, err := contextBasedRestrictionsClient.ReplaceZoneWithContext(context, replaceZoneOptions)
@@ -618,10 +464,10 @@ func resourceIBMCbrZoneUpdate(context context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("ReplaceZoneWithContext failed %s\n%s", err, response))
 	}
 
-	return resourceIBMCbrZoneRead(context, d, meta)
+	return ResourceIBMCbrZoneRead(context, d, meta)
 }
 
-func resourceIBMCbrZoneDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func ResourceIBMCbrZoneDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
 		return diag.FromErr(err)
@@ -640,4 +486,166 @@ func resourceIBMCbrZoneDelete(context context.Context, d *schema.ResourceData, m
 	d.SetId("")
 
 	return nil
+}
+
+func ResourceIBMCbrZoneMapToAddress(modelMap map[string]interface{}) (contextbasedrestrictionsv1.AddressIntf, error) {
+	discValue, ok := modelMap["type"]
+	if ok {
+		if discValue == "ipAddress" {
+			return ResourceIBMCbrZoneMapToAddressIPAddress(modelMap)
+		} else if discValue == "ipRange" {
+			return ResourceIBMCbrZoneMapToAddressIPAddressRange(modelMap)
+		} else if discValue == "subnet" {
+			return ResourceIBMCbrZoneMapToAddressSubnet(modelMap)
+		} else if discValue == "vpc" {
+			return ResourceIBMCbrZoneMapToAddressVPC(modelMap)
+		} else if discValue == "serviceRef" {
+			return ResourceIBMCbrZoneMapToAddressServiceRef(modelMap)
+		} else {
+			return nil, fmt.Errorf("unexpected value for discriminator property 'type' found in map: '%s'", discValue)
+		}
+	} else {
+		return nil, fmt.Errorf("discriminator property 'type' not found in map")
+	}
+}
+
+func ResourceIBMCbrZoneMapToServiceRefValue(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.ServiceRefValue, error) {
+	model := &contextbasedrestrictionsv1.ServiceRefValue{}
+	model.AccountID = core.StringPtr(modelMap["account_id"].(string))
+	if modelMap["service_type"] != nil && modelMap["service_type"].(string) != "" {
+		model.ServiceType = core.StringPtr(modelMap["service_type"].(string))
+	}
+	if modelMap["service_name"] != nil && modelMap["service_name"].(string) != "" {
+		model.ServiceName = core.StringPtr(modelMap["service_name"].(string))
+	}
+	if modelMap["service_instance"] != nil && modelMap["service_instance"].(string) != "" {
+		model.ServiceInstance = core.StringPtr(modelMap["service_instance"].(string))
+	}
+	return model, nil
+}
+
+func ResourceIBMCbrZoneMapToAddressIPAddress(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.AddressIPAddress, error) {
+	model := &contextbasedrestrictionsv1.AddressIPAddress{}
+	model.Type = core.StringPtr(modelMap["type"].(string))
+	model.Value = core.StringPtr(modelMap["value"].(string))
+	return model, nil
+}
+
+func ResourceIBMCbrZoneMapToAddressServiceRef(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.AddressServiceRef, error) {
+	model := &contextbasedrestrictionsv1.AddressServiceRef{}
+	model.Type = core.StringPtr(modelMap["type"].(string))
+	RefModel, err := ResourceIBMCbrZoneMapToServiceRefValue(modelMap["ref"].([]interface{})[0].(map[string]interface{}))
+	if err != nil {
+		return model, err
+	}
+	model.Ref = RefModel
+	return model, nil
+}
+
+func ResourceIBMCbrZoneMapToAddressSubnet(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.AddressSubnet, error) {
+	model := &contextbasedrestrictionsv1.AddressSubnet{}
+	model.Type = core.StringPtr(modelMap["type"].(string))
+	model.Value = core.StringPtr(modelMap["value"].(string))
+	return model, nil
+}
+
+func ResourceIBMCbrZoneMapToAddressIPAddressRange(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.AddressIPAddressRange, error) {
+	model := &contextbasedrestrictionsv1.AddressIPAddressRange{}
+	model.Type = core.StringPtr(modelMap["type"].(string))
+	model.Value = core.StringPtr(modelMap["value"].(string))
+	return model, nil
+}
+
+func ResourceIBMCbrZoneMapToAddressVPC(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.AddressVPC, error) {
+	model := &contextbasedrestrictionsv1.AddressVPC{}
+	model.Type = core.StringPtr(modelMap["type"].(string))
+	model.Value = core.StringPtr(modelMap["value"].(string))
+	return model, nil
+}
+
+func ResourceIBMCbrZoneAddressToMap(model contextbasedrestrictionsv1.AddressIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*contextbasedrestrictionsv1.AddressIPAddress); ok {
+		return ResourceIBMCbrZoneAddressIPAddressToMap(model.(*contextbasedrestrictionsv1.AddressIPAddress))
+	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressIPAddressRange); ok {
+		return ResourceIBMCbrZoneAddressIPAddressRangeToMap(model.(*contextbasedrestrictionsv1.AddressIPAddressRange))
+	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressSubnet); ok {
+		return ResourceIBMCbrZoneAddressSubnetToMap(model.(*contextbasedrestrictionsv1.AddressSubnet))
+	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressVPC); ok {
+		return ResourceIBMCbrZoneAddressVPCToMap(model.(*contextbasedrestrictionsv1.AddressVPC))
+	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressServiceRef); ok {
+		return ResourceIBMCbrZoneAddressServiceRefToMap(model.(*contextbasedrestrictionsv1.AddressServiceRef))
+	} else if _, ok := model.(*contextbasedrestrictionsv1.Address); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*contextbasedrestrictionsv1.Address)
+		if model.Type != nil {
+			modelMap["type"] = model.Type
+		}
+		if model.Value != nil {
+			modelMap["value"] = model.Value
+		}
+		if model.Ref != nil {
+			refMap, err := ResourceIBMCbrZoneServiceRefValueToMap(model.Ref)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["ref"] = []map[string]interface{}{refMap}
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized contextbasedrestrictionsv1.AddressIntf subtype encountered")
+	}
+}
+
+func ResourceIBMCbrZoneServiceRefValueToMap(model *contextbasedrestrictionsv1.ServiceRefValue) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["account_id"] = model.AccountID
+	if model.ServiceType != nil {
+		modelMap["service_type"] = model.ServiceType
+	}
+	if model.ServiceName != nil {
+		modelMap["service_name"] = model.ServiceName
+	}
+	if model.ServiceInstance != nil {
+		modelMap["service_instance"] = model.ServiceInstance
+	}
+	return modelMap, nil
+}
+
+func ResourceIBMCbrZoneAddressIPAddressToMap(model *contextbasedrestrictionsv1.AddressIPAddress) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["type"] = model.Type
+	modelMap["value"] = model.Value
+	return modelMap, nil
+}
+
+func ResourceIBMCbrZoneAddressServiceRefToMap(model *contextbasedrestrictionsv1.AddressServiceRef) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["type"] = model.Type
+	refMap, err := ResourceIBMCbrZoneServiceRefValueToMap(model.Ref)
+	if err != nil {
+		return modelMap, err
+	}
+	modelMap["ref"] = []map[string]interface{}{refMap}
+	return modelMap, nil
+}
+
+func ResourceIBMCbrZoneAddressSubnetToMap(model *contextbasedrestrictionsv1.AddressSubnet) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["type"] = model.Type
+	modelMap["value"] = model.Value
+	return modelMap, nil
+}
+
+func ResourceIBMCbrZoneAddressIPAddressRangeToMap(model *contextbasedrestrictionsv1.AddressIPAddressRange) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["type"] = model.Type
+	modelMap["value"] = model.Value
+	return modelMap, nil
+}
+
+func ResourceIBMCbrZoneAddressVPCToMap(model *contextbasedrestrictionsv1.AddressVPC) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["type"] = model.Type
+	modelMap["value"] = model.Value
+	return modelMap, nil
 }

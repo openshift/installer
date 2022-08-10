@@ -37,7 +37,7 @@ func ResourceIBMSchematicsAction() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "The unique name of your action. The name can be up to 128 characters long and can include alphanumeric characters, spaces, dashes, and underscores. **Example** you can use the name to stop action.",
-				ValidateFunc: validate.InvokeValidator("ibm_schematics_action", actionName),
+				ValidateFunc: validate.InvokeValidator("ibm_schematics_action", "name"),
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -189,21 +189,21 @@ func ResourceIBMSchematicsAction() *schema.Resource {
 								},
 							},
 						},
-						"cos_bucket": {
-							Type:        schema.TypeList,
-							MaxItems:    1,
-							Optional:    true,
-							Description: "Connection details to a IBM Cloud Object Storage bucket.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"cos_bucket_url": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "COS Bucket Url.",
-									},
-								},
-							},
-						},
+						// "cos_bucket": {
+						// 	Type:        schema.TypeList,
+						// 	MaxItems:    1,
+						// 	Optional:    true,
+						// 	Description: "Connection details to a IBM Cloud Object Storage bucket.",
+						// 	Elem: &schema.Resource{
+						// 		Schema: map[string]*schema.Schema{
+						// 			"cos_bucket_url": {
+						// 				Type:        schema.TypeString,
+						// 				Optional:    true,
+						// 				Description: "COS Bucket Url.",
+						// 			},
+						// 		},
+						// 	},
+						// },
 					},
 				},
 			},
@@ -1018,10 +1018,10 @@ func resourceIBMSchematicsActionCreate(context context.Context, d *schema.Resour
 		createActionOptions.SetInventory(d.Get("inventory").(string))
 	}
 	if _, ok := d.GetOk("credentials"); ok {
-		var credentials []schematicsv1.VariableData
+		var credentials []schematicsv1.CredentialVariableData
 		for _, e := range d.Get("credentials").([]interface{}) {
 			value := e.(map[string]interface{})
-			credentialsItem := resourceIBMSchematicsActionMapToVariableData(value)
+			credentialsItem := resourceIBMSchematicsActionMapToCredentialsVariableData(value)
 			credentials = append(credentials, credentialsItem)
 		}
 		createActionOptions.SetCredentials(credentials)
@@ -1031,7 +1031,7 @@ func resourceIBMSchematicsActionCreate(context context.Context, d *schema.Resour
 		createActionOptions.SetBastion(&bastion)
 	}
 	if _, ok := d.GetOk("bastion_credential"); ok {
-		bastionCredential := resourceIBMSchematicsActionMapToVariableData(d.Get("bastion_credential.0").(map[string]interface{}))
+		bastionCredential := resourceIBMSchematicsActionMapToCredentialsVariableData(d.Get("bastion_credential.0").(map[string]interface{}))
 		createActionOptions.SetBastionCredential(&bastionCredential)
 	}
 	if _, ok := d.GetOk("targets_ini"); ok {
@@ -1122,8 +1122,8 @@ func resourceIBMSchematicsActionMapToExternalSource(externalSourceMap map[string
 	return externalSource
 }
 
-func resourceIBMSchematicsActionMapToExternalSourceGit(externalSourceGitMap map[string]interface{}) schematicsv1.ExternalSourceGit {
-	externalSourceGit := schematicsv1.ExternalSourceGit{}
+func resourceIBMSchematicsActionMapToExternalSourceGit(externalSourceGitMap map[string]interface{}) schematicsv1.GitSource {
+	externalSourceGit := schematicsv1.GitSource{}
 
 	if externalSourceGitMap["computed_git_repo_url"] != nil {
 		externalSourceGit.ComputedGitRepoURL = core.StringPtr(externalSourceGitMap["computed_git_repo_url"].(string))
@@ -1147,8 +1147,8 @@ func resourceIBMSchematicsActionMapToExternalSourceGit(externalSourceGitMap map[
 	return externalSourceGit
 }
 
-func resourceIBMSchematicsActionMapToExternalSourceCatalog(externalSourceCatalogMap map[string]interface{}) schematicsv1.ExternalSourceCatalog {
-	externalSourceCatalog := schematicsv1.ExternalSourceCatalog{}
+func resourceIBMSchematicsActionMapToExternalSourceCatalog(externalSourceCatalogMap map[string]interface{}) schematicsv1.CatalogSource {
+	externalSourceCatalog := schematicsv1.CatalogSource{}
 
 	if externalSourceCatalogMap["catalog_name"] != nil {
 		externalSourceCatalog.CatalogName = core.StringPtr(externalSourceCatalogMap["catalog_name"].(string))
@@ -1175,15 +1175,15 @@ func resourceIBMSchematicsActionMapToExternalSourceCatalog(externalSourceCatalog
 	return externalSourceCatalog
 }
 
-func resourceIBMSchematicsActionMapToExternalSourceCosBucket(externalSourceCosBucketMap map[string]interface{}) schematicsv1.ExternalSourceCosBucket {
-	externalSourceCosBucket := schematicsv1.ExternalSourceCosBucket{}
+// func resourceIBMSchematicsActionMapToExternalSourceCosBucket(externalSourceCosBucketMap map[string]interface{}) schematicsv1.ExternalSourceCosBucket {
+// 	externalSourceCosBucket := schematicsv1.ExternalSourceCosBucket{}
 
-	if externalSourceCosBucketMap["cos_bucket_url"] != nil {
-		externalSourceCosBucket.CosBucketURL = core.StringPtr(externalSourceCosBucketMap["cos_bucket_url"].(string))
-	}
+// 	if externalSourceCosBucketMap["cos_bucket_url"] != nil {
+// 		externalSourceCosBucket.CosBucketURL = core.StringPtr(externalSourceCosBucketMap["cos_bucket_url"].(string))
+// 	}
 
-	return externalSourceCosBucket
-}
+// 	return externalSourceCosBucket
+// }
 
 func resourceIBMSchematicsActionMapToVariableData(variableDataMap map[string]interface{}) schematicsv1.VariableData {
 	variableData := schematicsv1.VariableData{}
@@ -1196,6 +1196,25 @@ func resourceIBMSchematicsActionMapToVariableData(variableDataMap map[string]int
 	}
 	if variableDataMap["metadata"] != nil && len(variableDataMap["metadata"].([]interface{})) != 0 {
 		variableMetaData := resourceIBMSchematicsJobMapToVariableMetadata(variableDataMap["metadata"].([]interface{})[0].(map[string]interface{}))
+		variableData.Metadata = &variableMetaData
+	}
+	if variableDataMap["link"] != nil {
+		variableData.Link = core.StringPtr(variableDataMap["link"].(string))
+	}
+
+	return variableData
+}
+func resourceIBMSchematicsActionMapToCredentialsVariableData(variableDataMap map[string]interface{}) schematicsv1.CredentialVariableData {
+	variableData := schematicsv1.CredentialVariableData{}
+
+	if variableDataMap["name"] != nil {
+		variableData.Name = core.StringPtr(variableDataMap["name"].(string))
+	}
+	if variableDataMap["value"] != nil {
+		variableData.Value = core.StringPtr(variableDataMap["value"].(string))
+	}
+	if variableDataMap["metadata"] != nil && len(variableDataMap["metadata"].([]interface{})) != 0 {
+		variableMetaData := resourceIBMSchematicsJobMapToCredentialVariableMetadata(variableDataMap["metadata"].([]interface{})[0].(map[string]interface{}))
 		variableData.Metadata = &variableMetaData
 	}
 	if variableDataMap["link"] != nil {
@@ -1379,7 +1398,7 @@ func resourceIBMSchematicsActionRead(context context.Context, d *schema.Resource
 	if action.Credentials != nil {
 		credentials := []map[string]interface{}{}
 		for _, credentialsItem := range action.Credentials {
-			credentialsItemMap := resourceIBMSchematicsActionVariableDataToMap(credentialsItem)
+			credentialsItemMap := resourceIBMSchematicsActionCredentialVariableDataToMap(credentialsItem)
 			credentials = append(credentials, credentialsItemMap)
 		}
 		if err = d.Set("credentials", credentials); err != nil {
@@ -1395,7 +1414,7 @@ func resourceIBMSchematicsActionRead(context context.Context, d *schema.Resource
 		}
 	}
 	if action.BastionCredential != nil {
-		bastionCredentialMap := resourceIBMSchematicsActionVariableDataToMap(*action.BastionCredential)
+		bastionCredentialMap := resourceIBMSchematicsActionCredentialVariableDataToMap(*action.BastionCredential)
 		if err = d.Set("bastion_credential", []map[string]interface{}{bastionCredentialMap}); err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting bastion_credential: %s", err))
 		}
@@ -1514,15 +1533,15 @@ func resourceIBMSchematicsActionExternalSourceToMap(externalSource schematicsv1.
 		CatalogMap := resourceIBMSchematicsActionExternalSourceCatalogToMap(*externalSource.Catalog)
 		externalSourceMap["catalog"] = []map[string]interface{}{CatalogMap}
 	}
-	if externalSource.CosBucket != nil {
-		CosBucketMap := resourceIBMSchematicsActionExternalSourceCosBucketToMap(*externalSource.CosBucket)
-		externalSourceMap["cos_bucket"] = []map[string]interface{}{CosBucketMap}
-	}
+	// if externalSource.CosBucket != nil {
+	// 	CosBucketMap := resourceIBMSchematicsActionExternalSourceCosBucketToMap(*externalSource.CosBucket)
+	// 	externalSourceMap["cos_bucket"] = []map[string]interface{}{CosBucketMap}
+	// }
 
 	return externalSourceMap
 }
 
-func resourceIBMSchematicsActionExternalSourceGitToMap(externalSourceGit schematicsv1.ExternalSourceGit) map[string]interface{} {
+func resourceIBMSchematicsActionExternalSourceGitToMap(externalSourceGit schematicsv1.GitSource) map[string]interface{} {
 	externalSourceGitMap := map[string]interface{}{}
 
 	if externalSourceGit.ComputedGitRepoURL != nil {
@@ -1547,7 +1566,7 @@ func resourceIBMSchematicsActionExternalSourceGitToMap(externalSourceGit schemat
 	return externalSourceGitMap
 }
 
-func resourceIBMSchematicsActionExternalSourceCatalogToMap(externalSourceCatalog schematicsv1.ExternalSourceCatalog) map[string]interface{} {
+func resourceIBMSchematicsActionExternalSourceCatalogToMap(externalSourceCatalog schematicsv1.CatalogSource) map[string]interface{} {
 	externalSourceCatalogMap := map[string]interface{}{}
 
 	if externalSourceCatalog.CatalogName != nil {
@@ -1575,15 +1594,15 @@ func resourceIBMSchematicsActionExternalSourceCatalogToMap(externalSourceCatalog
 	return externalSourceCatalogMap
 }
 
-func resourceIBMSchematicsActionExternalSourceCosBucketToMap(externalSourceCosBucket schematicsv1.ExternalSourceCosBucket) map[string]interface{} {
-	externalSourceCosBucketMap := map[string]interface{}{}
+// func resourceIBMSchematicsActionExternalSourceCosBucketToMap(externalSourceCosBucket schematicsv1.ExternalSourceCosBucket) map[string]interface{} {
+// 	externalSourceCosBucketMap := map[string]interface{}{}
 
-	if externalSourceCosBucket.CosBucketURL != nil {
-		externalSourceCosBucketMap["cos_bucket_url"] = externalSourceCosBucket.CosBucketURL
-	}
+// 	if externalSourceCosBucket.CosBucketURL != nil {
+// 		externalSourceCosBucketMap["cos_bucket_url"] = externalSourceCosBucket.CosBucketURL
+// 	}
 
-	return externalSourceCosBucketMap
-}
+// 	return externalSourceCosBucketMap
+// }
 
 func resourceIBMSchematicsActionVariableDataToMap(variableData schematicsv1.VariableData) map[string]interface{} {
 	variableDataMap := map[string]interface{}{}
@@ -1604,7 +1623,59 @@ func resourceIBMSchematicsActionVariableDataToMap(variableData schematicsv1.Vari
 
 	return variableDataMap
 }
+func resourceIBMSchematicsActionCredentialVariableDataToMap(variableData schematicsv1.CredentialVariableData) map[string]interface{} {
+	variableDataMap := map[string]interface{}{}
 
+	if variableData.Name != nil {
+		variableDataMap["name"] = variableData.Name
+	}
+	if variableData.Value != nil {
+		variableDataMap["value"] = variableData.Value
+	}
+	if variableData.Metadata != nil {
+		MetadataMap := resourceIBMSchematicsActionCredentialVariableMetadataToMap(*variableData.Metadata)
+		variableDataMap["metadata"] = []map[string]interface{}{MetadataMap}
+	}
+	if variableData.Link != nil {
+		variableDataMap["link"] = variableData.Link
+	}
+
+	return variableDataMap
+}
+
+func resourceIBMSchematicsActionCredentialVariableMetadataToMap(variableMetadata schematicsv1.CredentialVariableMetadata) map[string]interface{} {
+	variableMetadataMap := map[string]interface{}{}
+
+	if variableMetadata.Type != nil {
+		variableMetadataMap["type"] = variableMetadata.Type
+	}
+	if variableMetadata.Aliases != nil {
+		variableMetadataMap["aliases"] = variableMetadata.Aliases
+	}
+	if variableMetadata.Description != nil {
+		variableMetadataMap["description"] = variableMetadata.Description
+	}
+	if variableMetadata.DefaultValue != nil {
+		variableMetadataMap["default_value"] = variableMetadata.DefaultValue
+	}
+	if variableMetadata.Immutable != nil {
+		variableMetadataMap["immutable"] = variableMetadata.Immutable
+	}
+	if variableMetadata.Hidden != nil {
+		variableMetadataMap["hidden"] = variableMetadata.Hidden
+	}
+	if variableMetadata.Position != nil {
+		variableMetadataMap["position"] = flex.IntValue(variableMetadata.Position)
+	}
+	if variableMetadata.GroupBy != nil {
+		variableMetadataMap["group_by"] = variableMetadata.GroupBy
+	}
+	if variableMetadata.Source != nil {
+		variableMetadataMap["source"] = variableMetadata.Source
+	}
+
+	return variableMetadataMap
+}
 func resourceIBMSchematicsActionVariableMetadataToMap(variableMetadata schematicsv1.VariableMetadata) map[string]interface{} {
 	variableMetadataMap := map[string]interface{}{}
 
@@ -1786,7 +1857,7 @@ func resourceIBMSchematicsActionUpdate(context context.Context, d *schema.Resour
 		hasChange = true
 	}
 	if d.HasChange("bastion_credential") {
-		bastionCredential := resourceIBMSchematicsActionMapToVariableData(d.Get("bastion_credential.0").(map[string]interface{}))
+		bastionCredential := resourceIBMSchematicsActionMapToCredentialsVariableData(d.Get("bastion_credential.0").(map[string]interface{}))
 		updateActionOptions.SetBastionCredential(&bastionCredential)
 		hasChange = true
 	}

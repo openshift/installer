@@ -185,7 +185,7 @@ func ResourceIBMCISFirewallRecord() *schema.Resource {
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									cisFirewallUARuleConfigurationTarget: {
+									cisFirewallAccessRuleConfigurationTarget: {
 										Type:        schema.TypeString,
 										Required:    true,
 										ForceNew:    true,

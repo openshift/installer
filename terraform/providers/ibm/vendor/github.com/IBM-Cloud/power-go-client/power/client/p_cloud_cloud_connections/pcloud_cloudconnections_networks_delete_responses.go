@@ -47,6 +47,18 @@ func (o *PcloudCloudconnectionsNetworksDeleteReader) ReadResponse(response runti
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudCloudconnectionsNetworksDeleteNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 408:
+		result := NewPcloudCloudconnectionsNetworksDeleteRequestTimeout()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 410:
 		result := NewPcloudCloudconnectionsNetworksDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -181,6 +193,70 @@ func (o *PcloudCloudconnectionsNetworksDeleteUnauthorized) GetPayload() *models.
 }
 
 func (o *PcloudCloudconnectionsNetworksDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsNetworksDeleteNotFound creates a PcloudCloudconnectionsNetworksDeleteNotFound with default headers values
+func NewPcloudCloudconnectionsNetworksDeleteNotFound() *PcloudCloudconnectionsNetworksDeleteNotFound {
+	return &PcloudCloudconnectionsNetworksDeleteNotFound{}
+}
+
+/* PcloudCloudconnectionsNetworksDeleteNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudCloudconnectionsNetworksDeleteNotFound struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteNotFound) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}][%d] pcloudCloudconnectionsNetworksDeleteNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudCloudconnectionsNetworksDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsNetworksDeleteRequestTimeout creates a PcloudCloudconnectionsNetworksDeleteRequestTimeout with default headers values
+func NewPcloudCloudconnectionsNetworksDeleteRequestTimeout() *PcloudCloudconnectionsNetworksDeleteRequestTimeout {
+	return &PcloudCloudconnectionsNetworksDeleteRequestTimeout{}
+}
+
+/* PcloudCloudconnectionsNetworksDeleteRequestTimeout describes a response with status code 408, with default header values.
+
+Request Timeout
+*/
+type PcloudCloudconnectionsNetworksDeleteRequestTimeout struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteRequestTimeout) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}][%d] pcloudCloudconnectionsNetworksDeleteRequestTimeout  %+v", 408, o.Payload)
+}
+func (o *PcloudCloudconnectionsNetworksDeleteRequestTimeout) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteRequestTimeout) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

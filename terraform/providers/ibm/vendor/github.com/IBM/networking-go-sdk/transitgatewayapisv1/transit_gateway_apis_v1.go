@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2021.
+ * (C) Copyright IBM Corp. 2022.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.41.1-790c0dfc-20211021-231519
+ * IBM OpenAPI SDK Code Generator Version: 3.43.0-49eab5c7-20211117-152138
  */
 
 // Package transitgatewayapisv1 : Operations and models for the TransitGatewayApisV1 service
@@ -229,6 +229,356 @@ func (transitGatewayApis *TransitGatewayApisV1) ListConnectionsWithContext(ctx c
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTransitConnectionCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListTransitGatewayConnectionPrefixFilters : Retrieves all prefix filters in a Transit Gateway connection
+// This request retrieves all prefix filters in a Transit Gateway connection.
+func (transitGatewayApis *TransitGatewayApisV1) ListTransitGatewayConnectionPrefixFilters(listTransitGatewayConnectionPrefixFiltersOptions *ListTransitGatewayConnectionPrefixFiltersOptions) (result *PrefixFilterCollection, response *core.DetailedResponse, err error) {
+	return transitGatewayApis.ListTransitGatewayConnectionPrefixFiltersWithContext(context.Background(), listTransitGatewayConnectionPrefixFiltersOptions)
+}
+
+// ListTransitGatewayConnectionPrefixFiltersWithContext is an alternate form of the ListTransitGatewayConnectionPrefixFilters method which supports a Context parameter
+func (transitGatewayApis *TransitGatewayApisV1) ListTransitGatewayConnectionPrefixFiltersWithContext(ctx context.Context, listTransitGatewayConnectionPrefixFiltersOptions *ListTransitGatewayConnectionPrefixFiltersOptions) (result *PrefixFilterCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listTransitGatewayConnectionPrefixFiltersOptions, "listTransitGatewayConnectionPrefixFiltersOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listTransitGatewayConnectionPrefixFiltersOptions, "listTransitGatewayConnectionPrefixFiltersOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"transit_gateway_id": *listTransitGatewayConnectionPrefixFiltersOptions.TransitGatewayID,
+		"id":                 *listTransitGatewayConnectionPrefixFiltersOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = transitGatewayApis.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(transitGatewayApis.Service.Options.URL, `/transit_gateways/{transit_gateway_id}/connections/{id}/prefix_filters`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listTransitGatewayConnectionPrefixFiltersOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("transit_gateway_apis", "V1", "ListTransitGatewayConnectionPrefixFilters")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*transitGatewayApis.Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = transitGatewayApis.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrefixFilterCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateTransitGatewayConnectionPrefixFilter : Add a prefix filter to a Transit Gateway Connection
+// Add a prefix filter to a Transit Gateway Connection.
+func (transitGatewayApis *TransitGatewayApisV1) CreateTransitGatewayConnectionPrefixFilter(createTransitGatewayConnectionPrefixFilterOptions *CreateTransitGatewayConnectionPrefixFilterOptions) (result *PrefixFilterCust, response *core.DetailedResponse, err error) {
+	return transitGatewayApis.CreateTransitGatewayConnectionPrefixFilterWithContext(context.Background(), createTransitGatewayConnectionPrefixFilterOptions)
+}
+
+// CreateTransitGatewayConnectionPrefixFilterWithContext is an alternate form of the CreateTransitGatewayConnectionPrefixFilter method which supports a Context parameter
+func (transitGatewayApis *TransitGatewayApisV1) CreateTransitGatewayConnectionPrefixFilterWithContext(ctx context.Context, createTransitGatewayConnectionPrefixFilterOptions *CreateTransitGatewayConnectionPrefixFilterOptions) (result *PrefixFilterCust, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createTransitGatewayConnectionPrefixFilterOptions, "createTransitGatewayConnectionPrefixFilterOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(createTransitGatewayConnectionPrefixFilterOptions, "createTransitGatewayConnectionPrefixFilterOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"transit_gateway_id": *createTransitGatewayConnectionPrefixFilterOptions.TransitGatewayID,
+		"id":                 *createTransitGatewayConnectionPrefixFilterOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = transitGatewayApis.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(transitGatewayApis.Service.Options.URL, `/transit_gateways/{transit_gateway_id}/connections/{id}/prefix_filters`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range createTransitGatewayConnectionPrefixFilterOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("transit_gateway_apis", "V1", "CreateTransitGatewayConnectionPrefixFilter")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*transitGatewayApis.Version))
+
+	body := make(map[string]interface{})
+	if createTransitGatewayConnectionPrefixFilterOptions.Action != nil {
+		body["action"] = createTransitGatewayConnectionPrefixFilterOptions.Action
+	}
+	if createTransitGatewayConnectionPrefixFilterOptions.Prefix != nil {
+		body["prefix"] = createTransitGatewayConnectionPrefixFilterOptions.Prefix
+	}
+	if createTransitGatewayConnectionPrefixFilterOptions.Before != nil {
+		body["before"] = createTransitGatewayConnectionPrefixFilterOptions.Before
+	}
+	if createTransitGatewayConnectionPrefixFilterOptions.Ge != nil {
+		body["ge"] = createTransitGatewayConnectionPrefixFilterOptions.Ge
+	}
+	if createTransitGatewayConnectionPrefixFilterOptions.Le != nil {
+		body["le"] = createTransitGatewayConnectionPrefixFilterOptions.Le
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = transitGatewayApis.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrefixFilterCust)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteTransitGatewayConnectionPrefixFilter : Remove prefix filter from Transit Gateway Connection
+// Delete a prefix filter.
+func (transitGatewayApis *TransitGatewayApisV1) DeleteTransitGatewayConnectionPrefixFilter(deleteTransitGatewayConnectionPrefixFilterOptions *DeleteTransitGatewayConnectionPrefixFilterOptions) (response *core.DetailedResponse, err error) {
+	return transitGatewayApis.DeleteTransitGatewayConnectionPrefixFilterWithContext(context.Background(), deleteTransitGatewayConnectionPrefixFilterOptions)
+}
+
+// DeleteTransitGatewayConnectionPrefixFilterWithContext is an alternate form of the DeleteTransitGatewayConnectionPrefixFilter method which supports a Context parameter
+func (transitGatewayApis *TransitGatewayApisV1) DeleteTransitGatewayConnectionPrefixFilterWithContext(ctx context.Context, deleteTransitGatewayConnectionPrefixFilterOptions *DeleteTransitGatewayConnectionPrefixFilterOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteTransitGatewayConnectionPrefixFilterOptions, "deleteTransitGatewayConnectionPrefixFilterOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(deleteTransitGatewayConnectionPrefixFilterOptions, "deleteTransitGatewayConnectionPrefixFilterOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"transit_gateway_id": *deleteTransitGatewayConnectionPrefixFilterOptions.TransitGatewayID,
+		"id":                 *deleteTransitGatewayConnectionPrefixFilterOptions.ID,
+		"filter_id":          *deleteTransitGatewayConnectionPrefixFilterOptions.FilterID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = transitGatewayApis.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(transitGatewayApis.Service.Options.URL, `/transit_gateways/{transit_gateway_id}/connections/{id}/prefix_filters/{filter_id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range deleteTransitGatewayConnectionPrefixFilterOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("transit_gateway_apis", "V1", "DeleteTransitGatewayConnectionPrefixFilter")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*transitGatewayApis.Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = transitGatewayApis.Service.Request(request, nil)
+
+	return
+}
+
+// GetTransitGatewayConnectionPrefixFilter : Retrieves specified Transit Gateway connection prefix filter
+// This request retrieves a prefix filter from the Transit Gateway Connection.
+func (transitGatewayApis *TransitGatewayApisV1) GetTransitGatewayConnectionPrefixFilter(getTransitGatewayConnectionPrefixFilterOptions *GetTransitGatewayConnectionPrefixFilterOptions) (result *PrefixFilterCust, response *core.DetailedResponse, err error) {
+	return transitGatewayApis.GetTransitGatewayConnectionPrefixFilterWithContext(context.Background(), getTransitGatewayConnectionPrefixFilterOptions)
+}
+
+// GetTransitGatewayConnectionPrefixFilterWithContext is an alternate form of the GetTransitGatewayConnectionPrefixFilter method which supports a Context parameter
+func (transitGatewayApis *TransitGatewayApisV1) GetTransitGatewayConnectionPrefixFilterWithContext(ctx context.Context, getTransitGatewayConnectionPrefixFilterOptions *GetTransitGatewayConnectionPrefixFilterOptions) (result *PrefixFilterCust, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getTransitGatewayConnectionPrefixFilterOptions, "getTransitGatewayConnectionPrefixFilterOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getTransitGatewayConnectionPrefixFilterOptions, "getTransitGatewayConnectionPrefixFilterOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"transit_gateway_id": *getTransitGatewayConnectionPrefixFilterOptions.TransitGatewayID,
+		"id":                 *getTransitGatewayConnectionPrefixFilterOptions.ID,
+		"filter_id":          *getTransitGatewayConnectionPrefixFilterOptions.FilterID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = transitGatewayApis.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(transitGatewayApis.Service.Options.URL, `/transit_gateways/{transit_gateway_id}/connections/{id}/prefix_filters/{filter_id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getTransitGatewayConnectionPrefixFilterOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("transit_gateway_apis", "V1", "GetTransitGatewayConnectionPrefixFilter")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*transitGatewayApis.Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = transitGatewayApis.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrefixFilterCust)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateTransitGatewayConnectionPrefixFilter : Updates specified Transit Gateway connection prefix filter
+// Update prefix filter for a Transit Gateway Connection.
+func (transitGatewayApis *TransitGatewayApisV1) UpdateTransitGatewayConnectionPrefixFilter(updateTransitGatewayConnectionPrefixFilterOptions *UpdateTransitGatewayConnectionPrefixFilterOptions) (result *PrefixFilterCust, response *core.DetailedResponse, err error) {
+	return transitGatewayApis.UpdateTransitGatewayConnectionPrefixFilterWithContext(context.Background(), updateTransitGatewayConnectionPrefixFilterOptions)
+}
+
+// UpdateTransitGatewayConnectionPrefixFilterWithContext is an alternate form of the UpdateTransitGatewayConnectionPrefixFilter method which supports a Context parameter
+func (transitGatewayApis *TransitGatewayApisV1) UpdateTransitGatewayConnectionPrefixFilterWithContext(ctx context.Context, updateTransitGatewayConnectionPrefixFilterOptions *UpdateTransitGatewayConnectionPrefixFilterOptions) (result *PrefixFilterCust, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateTransitGatewayConnectionPrefixFilterOptions, "updateTransitGatewayConnectionPrefixFilterOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(updateTransitGatewayConnectionPrefixFilterOptions, "updateTransitGatewayConnectionPrefixFilterOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"transit_gateway_id": *updateTransitGatewayConnectionPrefixFilterOptions.TransitGatewayID,
+		"id":                 *updateTransitGatewayConnectionPrefixFilterOptions.ID,
+		"filter_id":          *updateTransitGatewayConnectionPrefixFilterOptions.FilterID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = transitGatewayApis.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(transitGatewayApis.Service.Options.URL, `/transit_gateways/{transit_gateway_id}/connections/{id}/prefix_filters/{filter_id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range updateTransitGatewayConnectionPrefixFilterOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("transit_gateway_apis", "V1", "UpdateTransitGatewayConnectionPrefixFilter")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*transitGatewayApis.Version))
+
+	body := make(map[string]interface{})
+	if updateTransitGatewayConnectionPrefixFilterOptions.Action != nil {
+		body["action"] = updateTransitGatewayConnectionPrefixFilterOptions.Action
+	}
+	if updateTransitGatewayConnectionPrefixFilterOptions.Before != nil {
+		body["before"] = updateTransitGatewayConnectionPrefixFilterOptions.Before
+	}
+	if updateTransitGatewayConnectionPrefixFilterOptions.Ge != nil {
+		body["ge"] = updateTransitGatewayConnectionPrefixFilterOptions.Ge
+	}
+	if updateTransitGatewayConnectionPrefixFilterOptions.Le != nil {
+		body["le"] = updateTransitGatewayConnectionPrefixFilterOptions.Le
+	}
+	if updateTransitGatewayConnectionPrefixFilterOptions.Prefix != nil {
+		body["prefix"] = updateTransitGatewayConnectionPrefixFilterOptions.Prefix
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = transitGatewayApis.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrefixFilterCust)
 		if err != nil {
 			return
 		}
@@ -929,6 +1279,12 @@ func (transitGatewayApis *TransitGatewayApisV1) CreateTransitGatewayConnectionWi
 	if createTransitGatewayConnectionOptions.NetworkID != nil {
 		body["network_id"] = createTransitGatewayConnectionOptions.NetworkID
 	}
+	if createTransitGatewayConnectionOptions.PrefixFilters != nil {
+		body["prefix_filters"] = createTransitGatewayConnectionOptions.PrefixFilters
+	}
+	if createTransitGatewayConnectionOptions.PrefixFiltersDefault != nil {
+		body["prefix_filters_default"] = createTransitGatewayConnectionOptions.PrefixFiltersDefault
+	}
 	if createTransitGatewayConnectionOptions.RemoteBgpAsn != nil {
 		body["remote_bgp_asn"] = createTransitGatewayConnectionOptions.RemoteBgpAsn
 	}
@@ -1128,6 +1484,9 @@ func (transitGatewayApis *TransitGatewayApisV1) UpdateTransitGatewayConnectionWi
 	body := make(map[string]interface{})
 	if updateTransitGatewayConnectionOptions.Name != nil {
 		body["name"] = updateTransitGatewayConnectionOptions.Name
+	}
+	if updateTransitGatewayConnectionOptions.PrefixFiltersDefault != nil {
+		body["prefix_filters_default"] = updateTransitGatewayConnectionOptions.PrefixFiltersDefault
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1423,6 +1782,15 @@ type CreateTransitGatewayConnectionOptions struct {
 	// respectively. This field is required to be unspecified for network type 'classic' and 'gre_tunnel' connections.
 	NetworkID *string `json:"network_id,omitempty"`
 
+	// Array of prefix route filters for a transit gateway connection. Prefix filters can be specified for netowrk type
+	// 'vpc', 'classic' and 'directlink' connections. They are not allowed for type 'gre_tunnel' connections. This is order
+	// dependent with those first in the array being applied first, and those at the end of the array being applied last,
+	// or just before applying the default.
+	PrefixFilters []TransitGatewayConnectionPrefixFilter `json:"prefix_filters,omitempty"`
+
+	// Default setting of permit or deny which applies to any routes that don't match a specified filter.
+	PrefixFiltersDefault *string `json:"prefix_filters_default,omitempty"`
+
 	// Remote network BGP ASN.  This field is only applicable to 'gre_tunnel' type connections. The following ASN values
 	// are reserved and unavailable 64512-64513, 65100, 65201-65234, 65402-65433, 65500 and 4201065000-4201065999. If
 	// 'remote_bgp_asn' is omitted on gre_tunnel connection create requests IBM will assign an ASN.
@@ -1454,6 +1822,13 @@ const (
 	CreateTransitGatewayConnectionOptions_NetworkType_Directlink = "directlink"
 	CreateTransitGatewayConnectionOptions_NetworkType_GreTunnel  = "gre_tunnel"
 	CreateTransitGatewayConnectionOptions_NetworkType_Vpc        = "vpc"
+)
+
+// Constants associated with the CreateTransitGatewayConnectionOptions.PrefixFiltersDefault property.
+// Default setting of permit or deny which applies to any routes that don't match a specified filter.
+const (
+	CreateTransitGatewayConnectionOptions_PrefixFiltersDefault_Deny   = "deny"
+	CreateTransitGatewayConnectionOptions_PrefixFiltersDefault_Permit = "permit"
 )
 
 // NewCreateTransitGatewayConnectionOptions : Instantiate CreateTransitGatewayConnectionOptions
@@ -1512,6 +1887,18 @@ func (_options *CreateTransitGatewayConnectionOptions) SetNetworkID(networkID st
 	return _options
 }
 
+// SetPrefixFilters : Allow user to set PrefixFilters
+func (_options *CreateTransitGatewayConnectionOptions) SetPrefixFilters(prefixFilters []TransitGatewayConnectionPrefixFilter) *CreateTransitGatewayConnectionOptions {
+	_options.PrefixFilters = prefixFilters
+	return _options
+}
+
+// SetPrefixFiltersDefault : Allow user to set PrefixFiltersDefault
+func (_options *CreateTransitGatewayConnectionOptions) SetPrefixFiltersDefault(prefixFiltersDefault string) *CreateTransitGatewayConnectionOptions {
+	_options.PrefixFiltersDefault = core.StringPtr(prefixFiltersDefault)
+	return _options
+}
+
 // SetRemoteBgpAsn : Allow user to set RemoteBgpAsn
 func (_options *CreateTransitGatewayConnectionOptions) SetRemoteBgpAsn(remoteBgpAsn string) *CreateTransitGatewayConnectionOptions {
 	_options.RemoteBgpAsn = core.StringPtr(remoteBgpAsn)
@@ -1538,6 +1925,113 @@ func (_options *CreateTransitGatewayConnectionOptions) SetZone(zone ZoneIdentity
 
 // SetHeaders : Allow user to set Headers
 func (options *CreateTransitGatewayConnectionOptions) SetHeaders(param map[string]string) *CreateTransitGatewayConnectionOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateTransitGatewayConnectionPrefixFilterOptions : The CreateTransitGatewayConnectionPrefixFilter options.
+type CreateTransitGatewayConnectionPrefixFilterOptions struct {
+	// The Transit Gateway identifier.
+	TransitGatewayID *string `json:"transit_gateway_id" validate:"required,ne="`
+
+	// The connection identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Whether to permit or deny prefix filter.
+	Action *string `json:"action" validate:"required"`
+
+	// IP Prefix.
+	Prefix *string `json:"prefix" validate:"required"`
+
+	// Identifier of prefix filter to handle the ordering and follow semantics:
+	// - When a filter reference another filter in it's before field, then the filter making the reference is applied
+	// before
+	//   the referenced filter. For example: if filter A references filter B in its before field, A is applied before B.
+	// - When a new filter is added that has the same before as an existing filter, then the older filter will have its
+	// before
+	//   field updated to point to the new filter. Starting with the above example: if filter C is added and it references
+	// B in its
+	//   before field, then A's before field should be modified to point to C, so the order of application would be A, C
+	// and finally B.
+	// - A filter that has an empty before reference will be applied last (though the date order mentioned above will still
+	// apply).
+	//   So continuing the above examples, if filter B has an empty before field, then it will be applied last, but if
+	// filter D
+	//   is created with an empty before field, then B's before field will be modified to point to D, so B will be applied
+	// before D.
+	Before *string `json:"before,omitempty"`
+
+	// IP Prefix GE.
+	Ge *int64 `json:"ge,omitempty"`
+
+	// IP Prefix LE.
+	Le *int64 `json:"le,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the CreateTransitGatewayConnectionPrefixFilterOptions.Action property.
+// Whether to permit or deny prefix filter.
+const (
+	CreateTransitGatewayConnectionPrefixFilterOptions_Action_Deny   = "deny"
+	CreateTransitGatewayConnectionPrefixFilterOptions_Action_Permit = "permit"
+)
+
+// NewCreateTransitGatewayConnectionPrefixFilterOptions : Instantiate CreateTransitGatewayConnectionPrefixFilterOptions
+func (*TransitGatewayApisV1) NewCreateTransitGatewayConnectionPrefixFilterOptions(transitGatewayID string, id string, action string, prefix string) *CreateTransitGatewayConnectionPrefixFilterOptions {
+	return &CreateTransitGatewayConnectionPrefixFilterOptions{
+		TransitGatewayID: core.StringPtr(transitGatewayID),
+		ID:               core.StringPtr(id),
+		Action:           core.StringPtr(action),
+		Prefix:           core.StringPtr(prefix),
+	}
+}
+
+// SetTransitGatewayID : Allow user to set TransitGatewayID
+func (_options *CreateTransitGatewayConnectionPrefixFilterOptions) SetTransitGatewayID(transitGatewayID string) *CreateTransitGatewayConnectionPrefixFilterOptions {
+	_options.TransitGatewayID = core.StringPtr(transitGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *CreateTransitGatewayConnectionPrefixFilterOptions) SetID(id string) *CreateTransitGatewayConnectionPrefixFilterOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetAction : Allow user to set Action
+func (_options *CreateTransitGatewayConnectionPrefixFilterOptions) SetAction(action string) *CreateTransitGatewayConnectionPrefixFilterOptions {
+	_options.Action = core.StringPtr(action)
+	return _options
+}
+
+// SetPrefix : Allow user to set Prefix
+func (_options *CreateTransitGatewayConnectionPrefixFilterOptions) SetPrefix(prefix string) *CreateTransitGatewayConnectionPrefixFilterOptions {
+	_options.Prefix = core.StringPtr(prefix)
+	return _options
+}
+
+// SetBefore : Allow user to set Before
+func (_options *CreateTransitGatewayConnectionPrefixFilterOptions) SetBefore(before string) *CreateTransitGatewayConnectionPrefixFilterOptions {
+	_options.Before = core.StringPtr(before)
+	return _options
+}
+
+// SetGe : Allow user to set Ge
+func (_options *CreateTransitGatewayConnectionPrefixFilterOptions) SetGe(ge int64) *CreateTransitGatewayConnectionPrefixFilterOptions {
+	_options.Ge = core.Int64Ptr(ge)
+	return _options
+}
+
+// SetLe : Allow user to set Le
+func (_options *CreateTransitGatewayConnectionPrefixFilterOptions) SetLe(le int64) *CreateTransitGatewayConnectionPrefixFilterOptions {
+	_options.Le = core.Int64Ptr(le)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateTransitGatewayConnectionPrefixFilterOptions) SetHeaders(param map[string]string) *CreateTransitGatewayConnectionPrefixFilterOptions {
 	options.Headers = param
 	return options
 }
@@ -1661,6 +2155,54 @@ func (_options *DeleteTransitGatewayConnectionOptions) SetID(id string) *DeleteT
 
 // SetHeaders : Allow user to set Headers
 func (options *DeleteTransitGatewayConnectionOptions) SetHeaders(param map[string]string) *DeleteTransitGatewayConnectionOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteTransitGatewayConnectionPrefixFilterOptions : The DeleteTransitGatewayConnectionPrefixFilter options.
+type DeleteTransitGatewayConnectionPrefixFilterOptions struct {
+	// The Transit Gateway identifier.
+	TransitGatewayID *string `json:"transit_gateway_id" validate:"required,ne="`
+
+	// The connection identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Prefix filter identifier.
+	FilterID *string `json:"filter_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeleteTransitGatewayConnectionPrefixFilterOptions : Instantiate DeleteTransitGatewayConnectionPrefixFilterOptions
+func (*TransitGatewayApisV1) NewDeleteTransitGatewayConnectionPrefixFilterOptions(transitGatewayID string, id string, filterID string) *DeleteTransitGatewayConnectionPrefixFilterOptions {
+	return &DeleteTransitGatewayConnectionPrefixFilterOptions{
+		TransitGatewayID: core.StringPtr(transitGatewayID),
+		ID:               core.StringPtr(id),
+		FilterID:         core.StringPtr(filterID),
+	}
+}
+
+// SetTransitGatewayID : Allow user to set TransitGatewayID
+func (_options *DeleteTransitGatewayConnectionPrefixFilterOptions) SetTransitGatewayID(transitGatewayID string) *DeleteTransitGatewayConnectionPrefixFilterOptions {
+	_options.TransitGatewayID = core.StringPtr(transitGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *DeleteTransitGatewayConnectionPrefixFilterOptions) SetID(id string) *DeleteTransitGatewayConnectionPrefixFilterOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetFilterID : Allow user to set FilterID
+func (_options *DeleteTransitGatewayConnectionPrefixFilterOptions) SetFilterID(filterID string) *DeleteTransitGatewayConnectionPrefixFilterOptions {
+	_options.FilterID = core.StringPtr(filterID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteTransitGatewayConnectionPrefixFilterOptions) SetHeaders(param map[string]string) *DeleteTransitGatewayConnectionPrefixFilterOptions {
 	options.Headers = param
 	return options
 }
@@ -1797,6 +2339,54 @@ func (options *GetTransitGatewayConnectionOptions) SetHeaders(param map[string]s
 	return options
 }
 
+// GetTransitGatewayConnectionPrefixFilterOptions : The GetTransitGatewayConnectionPrefixFilter options.
+type GetTransitGatewayConnectionPrefixFilterOptions struct {
+	// The Transit Gateway identifier.
+	TransitGatewayID *string `json:"transit_gateway_id" validate:"required,ne="`
+
+	// The connection identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Prefix filter identifier.
+	FilterID *string `json:"filter_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetTransitGatewayConnectionPrefixFilterOptions : Instantiate GetTransitGatewayConnectionPrefixFilterOptions
+func (*TransitGatewayApisV1) NewGetTransitGatewayConnectionPrefixFilterOptions(transitGatewayID string, id string, filterID string) *GetTransitGatewayConnectionPrefixFilterOptions {
+	return &GetTransitGatewayConnectionPrefixFilterOptions{
+		TransitGatewayID: core.StringPtr(transitGatewayID),
+		ID:               core.StringPtr(id),
+		FilterID:         core.StringPtr(filterID),
+	}
+}
+
+// SetTransitGatewayID : Allow user to set TransitGatewayID
+func (_options *GetTransitGatewayConnectionPrefixFilterOptions) SetTransitGatewayID(transitGatewayID string) *GetTransitGatewayConnectionPrefixFilterOptions {
+	_options.TransitGatewayID = core.StringPtr(transitGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetTransitGatewayConnectionPrefixFilterOptions) SetID(id string) *GetTransitGatewayConnectionPrefixFilterOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetFilterID : Allow user to set FilterID
+func (_options *GetTransitGatewayConnectionPrefixFilterOptions) SetFilterID(filterID string) *GetTransitGatewayConnectionPrefixFilterOptions {
+	_options.FilterID = core.StringPtr(filterID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetTransitGatewayConnectionPrefixFilterOptions) SetHeaders(param map[string]string) *GetTransitGatewayConnectionPrefixFilterOptions {
+	options.Headers = param
+	return options
+}
+
 // GetTransitGatewayOptions : The GetTransitGateway options.
 type GetTransitGatewayOptions struct {
 	// The Transit Gateway identifier.
@@ -1925,6 +2515,44 @@ func (options *ListGatewayLocationsOptions) SetHeaders(param map[string]string) 
 	return options
 }
 
+// ListTransitGatewayConnectionPrefixFiltersOptions : The ListTransitGatewayConnectionPrefixFilters options.
+type ListTransitGatewayConnectionPrefixFiltersOptions struct {
+	// The Transit Gateway identifier.
+	TransitGatewayID *string `json:"transit_gateway_id" validate:"required,ne="`
+
+	// The connection identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListTransitGatewayConnectionPrefixFiltersOptions : Instantiate ListTransitGatewayConnectionPrefixFiltersOptions
+func (*TransitGatewayApisV1) NewListTransitGatewayConnectionPrefixFiltersOptions(transitGatewayID string, id string) *ListTransitGatewayConnectionPrefixFiltersOptions {
+	return &ListTransitGatewayConnectionPrefixFiltersOptions{
+		TransitGatewayID: core.StringPtr(transitGatewayID),
+		ID:               core.StringPtr(id),
+	}
+}
+
+// SetTransitGatewayID : Allow user to set TransitGatewayID
+func (_options *ListTransitGatewayConnectionPrefixFiltersOptions) SetTransitGatewayID(transitGatewayID string) *ListTransitGatewayConnectionPrefixFiltersOptions {
+	_options.TransitGatewayID = core.StringPtr(transitGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *ListTransitGatewayConnectionPrefixFiltersOptions) SetID(id string) *ListTransitGatewayConnectionPrefixFiltersOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListTransitGatewayConnectionPrefixFiltersOptions) SetHeaders(param map[string]string) *ListTransitGatewayConnectionPrefixFiltersOptions {
+	options.Headers = param
+	return options
+}
+
 // ListTransitGatewayConnectionsOptions : The ListTransitGatewayConnections options.
 type ListTransitGatewayConnectionsOptions struct {
 	// The Transit Gateway identifier.
@@ -2014,6 +2642,111 @@ func (_options *ListTransitGatewaysOptions) SetStart(start string) *ListTransitG
 func (options *ListTransitGatewaysOptions) SetHeaders(param map[string]string) *ListTransitGatewaysOptions {
 	options.Headers = param
 	return options
+}
+
+// PrefixFilterCollection : prefix filters.
+type PrefixFilterCollection struct {
+	// Array of prefix filters.
+	PrefixFilters []PrefixFilterCust `json:"prefix_filters" validate:"required"`
+}
+
+// UnmarshalPrefixFilterCollection unmarshals an instance of PrefixFilterCollection from the specified map of raw messages.
+func UnmarshalPrefixFilterCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrefixFilterCollection)
+	err = core.UnmarshalModel(m, "prefix_filters", &obj.PrefixFilters, UnmarshalPrefixFilterCust)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PrefixFilterCust : prefix filter.
+type PrefixFilterCust struct {
+	// Whether to permit or deny prefix filter.
+	Action *string `json:"action" validate:"required"`
+
+	// Identifier of prefix filter that handles the ordering and follow semantics:
+	// - When a filter reference another filter in it's before field, then the filter making the reference is applied
+	// before
+	//   the referenced filter. For example: if filter A references filter B in its before field, A is applied before B.
+	// - When a new filter is added that has the same before as an existing filter, then the older filter will have its
+	// before
+	//   field updated to point to the new filter. Starting with the above example: if filter C is added and it references
+	// B in its
+	//   before field, then A's before field should be modified to point to C, so the order of application would be A, C
+	// and finally B.
+	// - A filter that has an empty before reference will be applied last (though the date order mentioned above will still
+	// apply).
+	//   So continuing the above examples, if filter B has an empty before field, then it will be applied last, but if
+	// filter D
+	//   is created with an empty before field, then B's before field will be modified to point to D, so B will be applied
+	// before D.
+	Before *string `json:"before,omitempty"`
+
+	// The date and time that this prefix filter was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// IP Prefix GE.
+	Ge *int64 `json:"ge,omitempty"`
+
+	// Prefix Filter identifier.
+	ID *string `json:"id" validate:"required"`
+
+	// IP Prefix LE.
+	Le *int64 `json:"le,omitempty"`
+
+	// IP Prefix.
+	Prefix *string `json:"prefix" validate:"required"`
+
+	// The date and time that this prefix filter was last updated.
+	UpdatedAt *strfmt.DateTime `json:"updated_at,omitempty"`
+}
+
+// Constants associated with the PrefixFilterCust.Action property.
+// Whether to permit or deny prefix filter.
+const (
+	PrefixFilterCust_Action_Deny   = "deny"
+	PrefixFilterCust_Action_Permit = "permit"
+)
+
+// UnmarshalPrefixFilterCust unmarshals an instance of PrefixFilterCust from the specified map of raw messages.
+func UnmarshalPrefixFilterCust(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrefixFilterCust)
+	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "before", &obj.Before)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ge", &obj.Ge)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "le", &obj.Le)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "prefix", &obj.Prefix)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // ResourceGroupIdentity : The resource group to use. If unspecified, the account's [default resource
@@ -2456,6 +3189,13 @@ type TransitConnection struct {
 	// expand in the future. Code and processes using this field must tolerate unexpected values.
 	NetworkType *string `json:"network_type" validate:"required"`
 
+	// Array of prefix route filters for a transit gateway connection. This is order dependent with those first in the
+	// array being applied first, and those at the end of the array is applied last, or just before the default.
+	PrefixFilters []TransitGatewayConnectionPrefixFilterReference `json:"prefix_filters,omitempty"`
+
+	// Default setting of permit or deny which applies to any routes that don't match a specified filter.
+	PrefixFiltersDefault *string `json:"prefix_filters_default" validate:"required"`
+
 	// Remote network BGP ASN.  This field only applies to network type 'gre_tunnel' connections.
 	RemoteBgpAsn *int64 `json:"remote_bgp_asn,omitempty"`
 
@@ -2492,6 +3232,13 @@ const (
 	TransitConnection_NetworkType_Directlink = "directlink"
 	TransitConnection_NetworkType_GreTunnel  = "gre_tunnel"
 	TransitConnection_NetworkType_Vpc        = "vpc"
+)
+
+// Constants associated with the TransitConnection.PrefixFiltersDefault property.
+// Default setting of permit or deny which applies to any routes that don't match a specified filter.
+const (
+	TransitConnection_PrefixFiltersDefault_Deny   = "deny"
+	TransitConnection_PrefixFiltersDefault_Permit = "permit"
 )
 
 // Constants associated with the TransitConnection.RequestStatus property.
@@ -2562,6 +3309,14 @@ func UnmarshalTransitConnection(m map[string]json.RawMessage, result interface{}
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "network_type", &obj.NetworkType)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "prefix_filters", &obj.PrefixFilters, UnmarshalTransitGatewayConnectionPrefixFilterReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "prefix_filters_default", &obj.PrefixFiltersDefault)
 	if err != nil {
 		return
 	}
@@ -2919,6 +3674,13 @@ type TransitGatewayConnectionCust struct {
 	// Cloud account than the gateway.
 	NetworkAccountID *string `json:"network_account_id,omitempty"`
 
+	// Array of prefix route filters for a transit gateway connection. This is order dependent with those first in the
+	// array being applied first, and those at the end of the array is applied last, or just before the default.
+	PrefixFilters []TransitGatewayConnectionPrefixFilterReference `json:"prefix_filters,omitempty"`
+
+	// Default setting of permit or deny which applies to any routes that don't match a specified filter.
+	PrefixFiltersDefault *string `json:"prefix_filters_default" validate:"required"`
+
 	// Remote network BGP ASN.  This field only applies to network type 'gre_tunnel' connections.
 	RemoteBgpAsn *int64 `json:"remote_bgp_asn,omitempty"`
 
@@ -2952,6 +3714,13 @@ const (
 	TransitGatewayConnectionCust_NetworkType_Directlink = "directlink"
 	TransitGatewayConnectionCust_NetworkType_GreTunnel  = "gre_tunnel"
 	TransitGatewayConnectionCust_NetworkType_Vpc        = "vpc"
+)
+
+// Constants associated with the TransitGatewayConnectionCust.PrefixFiltersDefault property.
+// Default setting of permit or deny which applies to any routes that don't match a specified filter.
+const (
+	TransitGatewayConnectionCust_PrefixFiltersDefault_Deny   = "deny"
+	TransitGatewayConnectionCust_PrefixFiltersDefault_Permit = "permit"
 )
 
 // Constants associated with the TransitGatewayConnectionCust.RequestStatus property.
@@ -3025,6 +3794,14 @@ func UnmarshalTransitGatewayConnectionCust(m map[string]json.RawMessage, result 
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "prefix_filters", &obj.PrefixFilters, UnmarshalTransitGatewayConnectionPrefixFilterReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "prefix_filters_default", &obj.PrefixFiltersDefault)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "remote_bgp_asn", &obj.RemoteBgpAsn)
 	if err != nil {
 		return
@@ -3067,6 +3844,149 @@ type TransitGatewayConnectionCustZone struct {
 func UnmarshalTransitGatewayConnectionCustZone(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(TransitGatewayConnectionCustZone)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TransitGatewayConnectionPrefixFilter : A prefix filter for a Transit Gateway connection.
+type TransitGatewayConnectionPrefixFilter struct {
+	// Whether to permit or deny prefix filter.
+	Action *string `json:"action" validate:"required"`
+
+	// IP Prefix GE.
+	Ge *int64 `json:"ge,omitempty"`
+
+	// IP Prefix LE.
+	Le *int64 `json:"le,omitempty"`
+
+	// IP Prefix.
+	Prefix *string `json:"prefix" validate:"required"`
+}
+
+// Constants associated with the TransitGatewayConnectionPrefixFilter.Action property.
+// Whether to permit or deny prefix filter.
+const (
+	TransitGatewayConnectionPrefixFilter_Action_Deny   = "deny"
+	TransitGatewayConnectionPrefixFilter_Action_Permit = "permit"
+)
+
+// NewTransitGatewayConnectionPrefixFilter : Instantiate TransitGatewayConnectionPrefixFilter (Generic Model Constructor)
+func (*TransitGatewayApisV1) NewTransitGatewayConnectionPrefixFilter(action string, prefix string) (_model *TransitGatewayConnectionPrefixFilter, err error) {
+	_model = &TransitGatewayConnectionPrefixFilter{
+		Action: core.StringPtr(action),
+		Prefix: core.StringPtr(prefix),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalTransitGatewayConnectionPrefixFilter unmarshals an instance of TransitGatewayConnectionPrefixFilter from the specified map of raw messages.
+func UnmarshalTransitGatewayConnectionPrefixFilter(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TransitGatewayConnectionPrefixFilter)
+	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ge", &obj.Ge)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "le", &obj.Le)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "prefix", &obj.Prefix)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TransitGatewayConnectionPrefixFilterReference : A prefix filter reference object for a Transit Gateway connection.
+type TransitGatewayConnectionPrefixFilterReference struct {
+	// Whether to permit or deny prefix filter.
+	Action *string `json:"action" validate:"required"`
+
+	// Identifier of prefix filter that handles the ordering and follow semantics:
+	// - When a filter reference another filter in it's before field, then the filter making the reference is applied
+	// before
+	//   the referenced filter. For example: if filter A references filter B in its before field, A is applied before B.
+	// - When a new filter is added that has the same before as an existing filter, then the older filter will have its
+	// before
+	//   field updated to point to the new filter. Starting with the above example: if filter C is added and it references
+	// B in its
+	//   before field, then A's before field should be modified to point to C, so the order of application would be A, C
+	// and finally B.
+	// - A filter that has an empty before reference will be applied last (though the date order mentioned above will still
+	// apply).
+	//   So continuing the above examples, if filter B has an empty before field, then it will be applied last, but if
+	// filter D
+	//   is created with an empty before field, then B's before field will be modified to point to D, so B will be applied
+	// before D.
+	Before *string `json:"before,omitempty"`
+
+	// The date and time that this prefix filter was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// IP Prefix GE.
+	Ge *int64 `json:"ge,omitempty"`
+
+	// Prefix Filter identifier.
+	ID *string `json:"id" validate:"required"`
+
+	// IP Prefix LE.
+	Le *int64 `json:"le,omitempty"`
+
+	// IP Prefix.
+	Prefix *string `json:"prefix" validate:"required"`
+
+	// The date and time that this prefix filter was last updated.
+	UpdatedAt *strfmt.DateTime `json:"updated_at,omitempty"`
+}
+
+// Constants associated with the TransitGatewayConnectionPrefixFilterReference.Action property.
+// Whether to permit or deny prefix filter.
+const (
+	TransitGatewayConnectionPrefixFilterReference_Action_Deny   = "deny"
+	TransitGatewayConnectionPrefixFilterReference_Action_Permit = "permit"
+)
+
+// UnmarshalTransitGatewayConnectionPrefixFilterReference unmarshals an instance of TransitGatewayConnectionPrefixFilterReference from the specified map of raw messages.
+func UnmarshalTransitGatewayConnectionPrefixFilterReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TransitGatewayConnectionPrefixFilterReference)
+	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "before", &obj.Before)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ge", &obj.Ge)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "le", &obj.Le)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "prefix", &obj.Prefix)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
 		return
 	}
@@ -3118,9 +4038,19 @@ type UpdateTransitGatewayConnectionOptions struct {
 	// 'classic').
 	Name *string `json:"name,omitempty"`
 
+	// Default setting of permit or deny which applies to any routes that don't match a specified filter.
+	PrefixFiltersDefault *string `json:"prefix_filters_default,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
+
+// Constants associated with the UpdateTransitGatewayConnectionOptions.PrefixFiltersDefault property.
+// Default setting of permit or deny which applies to any routes that don't match a specified filter.
+const (
+	UpdateTransitGatewayConnectionOptions_PrefixFiltersDefault_Deny   = "deny"
+	UpdateTransitGatewayConnectionOptions_PrefixFiltersDefault_Permit = "permit"
+)
 
 // NewUpdateTransitGatewayConnectionOptions : Instantiate UpdateTransitGatewayConnectionOptions
 func (*TransitGatewayApisV1) NewUpdateTransitGatewayConnectionOptions(transitGatewayID string, id string) *UpdateTransitGatewayConnectionOptions {
@@ -3148,8 +4078,129 @@ func (_options *UpdateTransitGatewayConnectionOptions) SetName(name string) *Upd
 	return _options
 }
 
+// SetPrefixFiltersDefault : Allow user to set PrefixFiltersDefault
+func (_options *UpdateTransitGatewayConnectionOptions) SetPrefixFiltersDefault(prefixFiltersDefault string) *UpdateTransitGatewayConnectionOptions {
+	_options.PrefixFiltersDefault = core.StringPtr(prefixFiltersDefault)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *UpdateTransitGatewayConnectionOptions) SetHeaders(param map[string]string) *UpdateTransitGatewayConnectionOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateTransitGatewayConnectionPrefixFilterOptions : The UpdateTransitGatewayConnectionPrefixFilter options.
+type UpdateTransitGatewayConnectionPrefixFilterOptions struct {
+	// The Transit Gateway identifier.
+	TransitGatewayID *string `json:"transit_gateway_id" validate:"required,ne="`
+
+	// The connection identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Prefix filter identifier.
+	FilterID *string `json:"filter_id" validate:"required,ne="`
+
+	// Whether to permit or deny prefix filter.
+	Action *string `json:"action,omitempty"`
+
+	// Identifier of prefix filter to handle the ordering and follow semantics:
+	// - When a filter reference another filter in it's before field, then the filter making the reference is applied
+	// before
+	//   the referenced filter. For example: if filter A references filter B in its before field, A is applied before B.
+	// - When a new filter is added that has the same before as an existing filter, then the older filter will have its
+	// before
+	//   field updated to point to the new filter. Starting with the above example: if filter C is added and it references
+	// B in its
+	//   before field, then A's before field should be modified to point to C, so the order of application would be A, C
+	// and finally B.
+	// - A filter that has an empty before reference will be applied last (though the date order mentioned above will still
+	// apply).
+	//   So continuing the above examples, if filter B has an empty before field, then it will be applied last, but if
+	// filter D
+	//   is created with an empty before field, then B's before field will be modified to point to D, so B will be applied
+	// before D.
+	Before *string `json:"before,omitempty"`
+
+	// IP Prefix GE.
+	Ge *int64 `json:"ge,omitempty"`
+
+	// IP Prefix LE.
+	Le *int64 `json:"le,omitempty"`
+
+	// IP Prefix.
+	Prefix *string `json:"prefix,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the UpdateTransitGatewayConnectionPrefixFilterOptions.Action property.
+// Whether to permit or deny prefix filter.
+const (
+	UpdateTransitGatewayConnectionPrefixFilterOptions_Action_Deny   = "deny"
+	UpdateTransitGatewayConnectionPrefixFilterOptions_Action_Permit = "permit"
+)
+
+// NewUpdateTransitGatewayConnectionPrefixFilterOptions : Instantiate UpdateTransitGatewayConnectionPrefixFilterOptions
+func (*TransitGatewayApisV1) NewUpdateTransitGatewayConnectionPrefixFilterOptions(transitGatewayID string, id string, filterID string) *UpdateTransitGatewayConnectionPrefixFilterOptions {
+	return &UpdateTransitGatewayConnectionPrefixFilterOptions{
+		TransitGatewayID: core.StringPtr(transitGatewayID),
+		ID:               core.StringPtr(id),
+		FilterID:         core.StringPtr(filterID),
+	}
+}
+
+// SetTransitGatewayID : Allow user to set TransitGatewayID
+func (_options *UpdateTransitGatewayConnectionPrefixFilterOptions) SetTransitGatewayID(transitGatewayID string) *UpdateTransitGatewayConnectionPrefixFilterOptions {
+	_options.TransitGatewayID = core.StringPtr(transitGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdateTransitGatewayConnectionPrefixFilterOptions) SetID(id string) *UpdateTransitGatewayConnectionPrefixFilterOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetFilterID : Allow user to set FilterID
+func (_options *UpdateTransitGatewayConnectionPrefixFilterOptions) SetFilterID(filterID string) *UpdateTransitGatewayConnectionPrefixFilterOptions {
+	_options.FilterID = core.StringPtr(filterID)
+	return _options
+}
+
+// SetAction : Allow user to set Action
+func (_options *UpdateTransitGatewayConnectionPrefixFilterOptions) SetAction(action string) *UpdateTransitGatewayConnectionPrefixFilterOptions {
+	_options.Action = core.StringPtr(action)
+	return _options
+}
+
+// SetBefore : Allow user to set Before
+func (_options *UpdateTransitGatewayConnectionPrefixFilterOptions) SetBefore(before string) *UpdateTransitGatewayConnectionPrefixFilterOptions {
+	_options.Before = core.StringPtr(before)
+	return _options
+}
+
+// SetGe : Allow user to set Ge
+func (_options *UpdateTransitGatewayConnectionPrefixFilterOptions) SetGe(ge int64) *UpdateTransitGatewayConnectionPrefixFilterOptions {
+	_options.Ge = core.Int64Ptr(ge)
+	return _options
+}
+
+// SetLe : Allow user to set Le
+func (_options *UpdateTransitGatewayConnectionPrefixFilterOptions) SetLe(le int64) *UpdateTransitGatewayConnectionPrefixFilterOptions {
+	_options.Le = core.Int64Ptr(le)
+	return _options
+}
+
+// SetPrefix : Allow user to set Prefix
+func (_options *UpdateTransitGatewayConnectionPrefixFilterOptions) SetPrefix(prefix string) *UpdateTransitGatewayConnectionPrefixFilterOptions {
+	_options.Prefix = core.StringPtr(prefix)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateTransitGatewayConnectionPrefixFilterOptions) SetHeaders(param map[string]string) *UpdateTransitGatewayConnectionPrefixFilterOptions {
 	options.Headers = param
 	return options
 }

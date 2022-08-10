@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.36.1-694fc13e-20210723-211159
+ * IBM OpenAPI SDK Code Generator Version: 3.47.0-60650593-20220330-200002
  */
 
 // Package atrackerv1 : Operations and models for the AtrackerV1 service
@@ -34,11 +34,11 @@ import (
 	"github.com/go-openapi/strfmt"
 )
 
-// AtrackerV1 : Activity Tracker is a platform service that you can configure in each region in your account to define
-// how auditing events are collected and stored. Events are stored in a Cloud Object Storage bucket that is also
-// available in the account.
+// AtrackerV1 : IBM Cloud Activity Tracker Event Routing allows you to configure how auditing events are collected and
+// stored in each region in your account. Events are stored in a Cloud Object Storage bucket that is also available in
+// the account.
 //
-// Version: 1.1.0
+// API Version: 1.1.0
 type AtrackerV1 struct {
 	Service *core.BaseService
 }
@@ -118,6 +118,12 @@ func GetServiceURLForRegion(region string) (string, error) {
 		"private.us-south": "https://private.us-south.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-south region.
 		"us-east": "https://us-east.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-east region.
 		"private.us-east": "https://private.us-east.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-east region.
+		"eu-de": "https://eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-de region.
+		"private.eu-de": "https://private.eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-de region.
+		"eu-gb": "https://eu-gb.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
+		"private.eu-gb": "https://private.eu-gb.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
+		"au-syd": "https://au-syd.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the au-syd region.
+		"private.au-syd": "https://private.au-syd.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the au-syd region.
 	}
 
 	if url, ok := endpoints[region]; ok {
@@ -1028,7 +1034,7 @@ func UnmarshalAPIEndpoint(m map[string]json.RawMessage, result interface{}) (err
 // CreateRouteOptions : The CreateRoute options.
 type CreateRouteOptions struct {
 	// The name of the route. The name must be 1000 characters or less and cannot include any special characters other than
-	// `(space) - . _ :`.
+	// `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name" validate:"required"`
 
 	// Indicates whether or not all global events should be forwarded to this region.
@@ -1077,7 +1083,7 @@ func (options *CreateRouteOptions) SetHeaders(param map[string]string) *CreateRo
 // CreateTargetOptions : The CreateTarget options.
 type CreateTargetOptions struct {
 	// The name of the target. The name must be 1000 characters or less, and cannot include any special characters other
-	// than `(space) - . _ :`.
+	// than `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name" validate:"required"`
 
 	// The type of the target.
@@ -1132,7 +1138,7 @@ func (options *CreateTargetOptions) SetHeaders(param map[string]string) *CreateT
 // DeleteRouteOptions : The DeleteRoute options.
 type DeleteRouteOptions struct {
 	// The v4 UUID that uniquely identifies the route.
-	ID *string `json:"-" validate:"required,ne="`
+	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1160,7 +1166,7 @@ func (options *DeleteRouteOptions) SetHeaders(param map[string]string) *DeleteRo
 // DeleteTargetOptions : The DeleteTarget options.
 type DeleteTargetOptions struct {
 	// The v4 UUID that uniquely identifies the target.
-	ID *string `json:"-" validate:"required,ne="`
+	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1240,7 +1246,7 @@ func (options *GetEndpointsOptions) SetHeaders(param map[string]string) *GetEndp
 // GetRouteOptions : The GetRoute options.
 type GetRouteOptions struct {
 	// The v4 UUID that uniquely identifies the route.
-	ID *string `json:"-" validate:"required,ne="`
+	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1268,7 +1274,7 @@ func (options *GetRouteOptions) SetHeaders(param map[string]string) *GetRouteOpt
 // GetTargetOptions : The GetTarget options.
 type GetTargetOptions struct {
 	// The v4 UUID that uniquely identifies the target.
-	ID *string `json:"-" validate:"required,ne="`
+	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1358,10 +1364,10 @@ func (options *PatchEndpointsOptions) SetHeaders(param map[string]string) *Patch
 // ReplaceRouteOptions : The ReplaceRoute options.
 type ReplaceRouteOptions struct {
 	// The v4 UUID that uniquely identifies the route.
-	ID *string `json:"-" validate:"required,ne="`
+	ID *string `json:"id" validate:"required,ne="`
 
 	// The name of the route. The name must be 1000 characters or less and cannot include any special characters other than
-	// `(space) - . _ :`.
+	// `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name" validate:"required"`
 
 	// Indicates whether or not all global events should be forwarded to this region.
@@ -1417,10 +1423,10 @@ func (options *ReplaceRouteOptions) SetHeaders(param map[string]string) *Replace
 // ReplaceTargetOptions : The ReplaceTarget options.
 type ReplaceTargetOptions struct {
 	// The v4 UUID that uniquely identifies the target.
-	ID *string `json:"-" validate:"required,ne="`
+	ID *string `json:"id" validate:"required,ne="`
 
 	// The name of the target. The name must be 1000 characters or less, and cannot include any special characters other
-	// than `(space) - . _ :`.
+	// than `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name" validate:"required"`
 
 	// The type of the target.
@@ -1689,7 +1695,7 @@ func UnmarshalTargetList(m map[string]json.RawMessage, result interface{}) (err 
 // ValidateTargetOptions : The ValidateTarget options.
 type ValidateTargetOptions struct {
 	// The v4 UUID that uniquely identifies the target.
-	ID *string `json:"-" validate:"required,ne="`
+	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string

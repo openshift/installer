@@ -71,6 +71,10 @@ func DataSourceIBMContainerVPCCluster() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"host_pool_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"labels": {
 							Type:     schema.TypeMap,
 							Computed: true,

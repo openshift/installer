@@ -107,6 +107,7 @@ func DataSourceIBMEnDestination() *schema.Resource {
 				},
 			},
 		},
+		DeprecationMessage: "This data source will be deprecated. A new data source ibm_en_destination_webhook will replace the existing ibm_en_destination data source",
 	}
 }
 

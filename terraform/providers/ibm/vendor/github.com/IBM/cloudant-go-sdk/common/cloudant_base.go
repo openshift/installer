@@ -1,5 +1,5 @@
 /**
- * © Copyright IBM Corporation 2021. All Rights Reserved.
+ * © Copyright IBM Corporation 2021, 2022. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,12 @@ import (
 	"fmt"
 	"net/http"
 	neturl "net/url"
+	"runtime"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/IBM/cloudant-go-sdk/auth"
 	"github.com/IBM/go-sdk-core/v5/core"
 )
 
@@ -93,6 +97,13 @@ func NewBaseService(opts *core.ServiceOptions) (*BaseService, error) {
 	if err != nil {
 		return &BaseService{}, err
 	}
+	client := core.DefaultHTTPClient()
+	client.Timeout = 6 * time.Minute
+	baseService.SetHTTPClient(client)
+
+	// Set a default value for the User-Agent http header.
+	baseService.SetUserAgent(buildUserAgent())
+
 	return &BaseService{0, baseService}, nil
 }
 
@@ -158,4 +169,48 @@ func (c *BaseService) SetServiceURL(url string) error {
 		}
 	}
 	return err
+}
+
+// GetAuthenticatorFromEnvironment instantiates an Authenticator
+// using service properties retrieved from external config sources.
+func GetAuthenticatorFromEnvironment(credentialKey string) (core.Authenticator, error) {
+	props, err := core.GetServiceProperties(credentialKey)
+	if err != nil {
+		return nil, err
+	}
+	authType, ok := props[core.PROPNAME_AUTH_TYPE]
+	if !ok {
+		// this property is not a member of core's constants
+		authType, ok = props["AUTHTYPE"]
+	}
+
+	if ok && strings.EqualFold(authType, auth.AUTHTYPE_COUCHDB_SESSION) {
+		authenticator, err := auth.NewCouchDbSessionAuthenticatorFromMap(props)
+		if url, ok := props[core.PROPNAME_SVC_URL]; ok && url != "" {
+			authenticator.URL = url
+		}
+		if disableSSLVerification, ok := props[core.PROPNAME_SVC_DISABLE_SSL]; ok && disableSSLVerification != "" {
+			boolValue, err := strconv.ParseBool(disableSSLVerification)
+			if err == nil && boolValue {
+				authenticator.DisableSSLVerification = true
+			}
+		}
+		return authenticator, err
+	}
+
+	return core.GetAuthenticatorFromEnvironment(credentialKey)
+}
+
+// buildUserAgent builds the user agent string.
+func buildUserAgent() string {
+	return fmt.Sprintf("cloudant-go-sdk/%s (%s)", Version, getSystemInfo())
+}
+
+// getSystemInfo returns the system information.
+func getSystemInfo() string {
+	return fmt.Sprintf("go.version=%s; os.name=%s os.arch=%s lang=go",
+		runtime.Version(),
+		runtime.GOOS,
+		runtime.GOARCH,
+	)
 }
