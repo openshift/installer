@@ -1,6 +1,7 @@
 package vsphere
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -17,7 +18,7 @@ var (
 	validCIDR = "10.0.0.0/16"
 )
 
-func validIPIInstallConfig() *types.InstallConfig {
+func validIPIInstallConfig(dcName string, fName string) *types.InstallConfig {
 	return &types.InstallConfig{
 		Networking: &types.Networking{
 			MachineNetwork: []types.MachineNetworkEntry{
@@ -27,10 +28,10 @@ func validIPIInstallConfig() *types.InstallConfig {
 		Publish: types.ExternalPublishingStrategy,
 		Platform: types.Platform{
 			VSphere: &vsphere.Platform{
-				Cluster:          "DC0_C0",
-				Datacenter:       "DC0",
+				Cluster:          fmt.Sprintf("%s/%s_C0", fName, dcName),
+				Datacenter:       fmt.Sprintf("%s/%s", fName, dcName),
 				DefaultDatastore: "LocalDS_0",
-				Network:          "DC0_DVPG0",
+				Network:          fmt.Sprintf("%s_DVPG0", dcName),
 				Password:         "valid_password",
 				Username:         "valid_username",
 				VCenter:          "valid-vcenter",
@@ -44,6 +45,9 @@ func validIPIInstallConfig() *types.InstallConfig {
 func TestValidate(t *testing.T) {
 	server := mock.StartSimulator()
 	defer server.Close()
+	dcName := "DC0"
+	fName := "F0"
+	dcName1 := "DC1"
 	tests := []struct {
 		name             string
 		installConfig    *types.InstallConfig
@@ -51,12 +55,16 @@ func TestValidate(t *testing.T) {
 		expectErr        string
 	}{{
 		name:             "valid IPI install config",
-		installConfig:    validIPIInstallConfig(),
+		installConfig:    validIPIInstallConfig(dcName, ""),
+		validationMethod: validateProvisioning,
+	}, {
+		name:             "valid IPI install config - DC in folder",
+		installConfig:    validIPIInstallConfig(dcName1, fName),
 		validationMethod: validateProvisioning,
 	}, {
 		name: "invalid IPI - no network",
 		installConfig: func() *types.InstallConfig {
-			c := validIPIInstallConfig()
+			c := validIPIInstallConfig(dcName, "")
 			c.Platform.VSphere.Network = ""
 			return c
 		}(),
@@ -65,7 +73,7 @@ func TestValidate(t *testing.T) {
 	}, {
 		name: "invalid IPI - invalid datacenter",
 		installConfig: func() *types.InstallConfig {
-			c := validIPIInstallConfig()
+			c := validIPIInstallConfig(dcName, "")
 			c.Platform.VSphere.Datacenter = "invalid_dc"
 			return c
 		}(),
@@ -74,7 +82,16 @@ func TestValidate(t *testing.T) {
 	}, {
 		name: "invalid IPI - invalid network",
 		installConfig: func() *types.InstallConfig {
-			c := validIPIInstallConfig()
+			c := validIPIInstallConfig(dcName, "")
+			c.Platform.VSphere.Network = "invalid_network"
+			return c
+		}(),
+		validationMethod: validateProvisioning,
+		expectErr:        `^platform.vsphere.network: Invalid value: "invalid_network": unable to find network provided$`,
+	}, {
+		name: "invalid IPI - invalid network - DC in folder",
+		installConfig: func() *types.InstallConfig {
+			c := validIPIInstallConfig(dcName1, fName)
 			c.Platform.VSphere.Network = "invalid_network"
 			return c
 		}(),
@@ -83,7 +100,7 @@ func TestValidate(t *testing.T) {
 	}, {
 		name: "invalid IPI - no cluster",
 		installConfig: func() *types.InstallConfig {
-			c := validIPIInstallConfig()
+			c := validIPIInstallConfig(dcName, "")
 			c.Platform.VSphere.Cluster = ""
 			return c
 		}(),
