@@ -130,7 +130,7 @@ variable "powervs_image_bucket_file_name" {
 variable "powervs_image_storage_type" {
   type        = string
   description = "Storage type used when storing image in Power VS."
-  default     = "tier3"
+  default     = "tier1"
 }
 
 variable "powervs_expose_bootstrap" {
