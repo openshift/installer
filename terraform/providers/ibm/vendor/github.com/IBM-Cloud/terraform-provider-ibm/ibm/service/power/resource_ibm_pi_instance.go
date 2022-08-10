@@ -23,18 +23,6 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
-const (
-	//Added timeout values for warning  and active status
-	warningTimeOut = 60 * time.Second
-	activeTimeOut  = 2 * time.Minute
-	// power service instance capabilities
-	CUSTOM_VIRTUAL_CORES          = "custom-virtualcores"
-	PIInstanceNetwork             = "pi_network"
-	PIInstanceStoragePool         = "pi_storage_pool"
-	PISAPInstanceProfileID        = "pi_sap_profile_id"
-	PIInstanceStoragePoolAffinity = "pi_storage_pool_affinity"
-)
-
 func ResourceIBMPIInstance() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceIBMPIInstanceCreate,
@@ -53,6 +41,7 @@ func ResourceIBMPIInstance() *schema.Resource {
 
 			helpers.PICloudInstanceId: {
 				Type:        schema.TypeString,
+				ForceNew:    true,
 				Required:    true,
 				Description: "This is the Power Instance id that is assigned to the account",
 			},
@@ -246,9 +235,10 @@ func ResourceIBMPIInstance() *schema.Resource {
 				Description:   "Instance processor type",
 			},
 			helpers.PIInstanceSSHKeyName: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "SSH key name",
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "SSH key name",
 			},
 			helpers.PIInstanceMemory: {
 				Type:          schema.TypeFloat,
@@ -262,6 +252,11 @@ func ResourceIBMPIInstance() *schema.Resource {
 				Optional:      true,
 				ConflictsWith: []string{helpers.PIInstanceProcessors, helpers.PIInstanceMemory, helpers.PIInstanceProcType},
 				Description:   "SAP Profile ID for the amount of cores and memory",
+			},
+			PISAPInstanceDeploymentType: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Custom SAP Deployment Type Information",
 			},
 			helpers.PIInstanceSystemType: {
 				Type:        schema.TypeString,
@@ -822,7 +817,12 @@ func isPIInstanceRefreshFunc(client *st.IBMPIInstanceClient, id, instanceReadySt
 			return pvm, helpers.PIInstanceAvailable, nil
 		}
 		if *pvm.Status == "ERROR" {
-			return pvm, *pvm.Status, fmt.Errorf("failed to create the lpar")
+			if pvm.Fault != nil {
+				err = fmt.Errorf("failed to create the lpar: %s", pvm.Fault.Message)
+			} else {
+				err = fmt.Errorf("failed to create the lpar")
+			}
+			return pvm, *pvm.Status, err
 		}
 
 		return pvm, helpers.PIInstanceBuilding, nil
@@ -1031,6 +1031,9 @@ func createSAPInstance(d *schema.ResourceData, sapClient *st.IBMPISAPInstanceCli
 		ProfileID: &profileID,
 	}
 
+	if v, ok := d.GetOk(PISAPInstanceDeploymentType); ok {
+		body.DeploymentType = v.(string)
+	}
 	if v, ok := d.GetOk(helpers.PIInstanceVolumeIds); ok {
 		volids := flex.ExpandStringList((v.(*schema.Set)).List())
 		if len(volids) > 0 {

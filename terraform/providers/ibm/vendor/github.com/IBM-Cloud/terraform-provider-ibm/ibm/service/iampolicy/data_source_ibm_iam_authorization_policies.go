@@ -31,6 +31,12 @@ func DataSourceIBMIAMAuthorizationPolicies() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+			"transaction_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set transactionID for debug",
+			},
 			"policies": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -146,9 +152,13 @@ func dataSourceIBMIAMAuthorizationPoliciesRead(d *schema.ResourceData, meta inte
 		listPoliciesOptions.Sort = core.StringPtr(v.(string))
 	}
 
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		listPoliciesOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	}
+
 	policyList, resp, err := iamPolicyManagementClient.ListPolicies(listPoliciesOptions)
 
-	if err != nil {
+	if err != nil || resp == nil {
 		return fmt.Errorf("[ERROR] Error listing authorization policies: %s, %s", err, resp)
 	}
 
@@ -184,6 +194,11 @@ func dataSourceIBMIAMAuthorizationPoliciesRead(d *schema.ResourceData, meta inte
 
 	d.SetId(time.Now().UTC().String())
 	d.Set("account_id", accountID)
+
+	if len(resp.Headers["Transaction-Id"]) > 0 && resp.Headers["Transaction-Id"][0] != "" {
+		d.Set("transaction_id", resp.Headers["Transaction-Id"][0])
+	}
+
 	d.Set("policies", authorizationPolicies)
 
 	return nil

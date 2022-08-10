@@ -33,6 +33,7 @@ const (
 	PICloudConnectionClassicGreSource = "gre_source_address"
 	PICloudConnectionVPCEnabled       = "vpc_enabled"
 	PICloudConnectionVPCCRNs          = "vpc_crns"
+	PICloudConnectionConnectionMode   = "connection_mode"
 )
 
 func DataSourceIBMPICloudConnection() *schema.Resource {
@@ -112,6 +113,11 @@ func DataSourceIBMPICloudConnection() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Set of VPCs attached to this cloud connection",
 			},
+			PICloudConnectionConnectionMode: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Type of service the gateway is attached to",
+			},
 		},
 	}
 }
@@ -152,6 +158,12 @@ func dataSourceIBMPICloudConnectionRead(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("failed to perform get cloud connection operation for name %s", cloudConnectionName)
 	}
 
+	cloudConnection, err = client.Get(*cloudConnection.CloudConnectionID)
+	if err != nil {
+		log.Printf("[DEBUG] get cloud connection failed %v", err)
+		return diag.FromErr(err)
+	}
+
 	d.SetId(*cloudConnection.CloudConnectionID)
 	d.Set(helpers.PICloudConnectionName, cloudConnection.Name)
 	d.Set(PICloudConnectionGlobalRouting, cloudConnection.GlobalRouting)
@@ -162,6 +174,7 @@ func dataSourceIBMPICloudConnectionRead(ctx context.Context, d *schema.ResourceD
 	d.Set(PICloudConnectionPort, cloudConnection.Port)
 	d.Set(PICloudConnectionSpeed, cloudConnection.Speed)
 	d.Set(helpers.PICloudInstanceId, cloudInstanceID)
+	d.Set(PICloudConnectionConnectionMode, cloudConnection.ConnectionMode)
 	if cloudConnection.Networks != nil {
 		networks := make([]string, len(cloudConnection.Networks))
 		for i, ccNetwork := range cloudConnection.Networks {
@@ -188,6 +201,5 @@ func dataSourceIBMPICloudConnectionRead(ctx context.Context, d *schema.ResourceD
 			d.Set(PICloudConnectionVPCCRNs, vpcCRNs)
 		}
 	}
-
 	return nil
 }

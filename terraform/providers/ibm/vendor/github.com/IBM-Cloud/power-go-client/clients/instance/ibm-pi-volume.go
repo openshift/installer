@@ -12,19 +12,19 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPIVolumeClient ..
+// IBMPIVolumeClient
 type IBMPIVolumeClient struct {
 	IBMPIClient
 }
 
-// NewIBMPIVolumeClient ...
+// NewIBMPIVolumeClient
 func NewIBMPIVolumeClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPIVolumeClient {
 	return &IBMPIVolumeClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
 	}
 }
 
-//Get information about a single volume only
+// Get a Volume
 func (f *IBMPIVolumeClient) Get(id string) (*models.Volume, error) {
 	params := p_cloud_volumes.NewPcloudCloudinstancesVolumesGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -39,7 +39,7 @@ func (f *IBMPIVolumeClient) Get(id string) (*models.Volume, error) {
 	return resp.Payload, nil
 }
 
-// GetAll volumes
+// Get All Volumes
 func (f *IBMPIVolumeClient) GetAll() (*models.Volumes, error) {
 	params := p_cloud_volumes.NewPcloudCloudinstancesVolumesGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -54,7 +54,7 @@ func (f *IBMPIVolumeClient) GetAll() (*models.Volumes, error) {
 	return resp.Payload, nil
 }
 
-// GetAll volumes
+// Get All Affinity Volumes
 func (f *IBMPIVolumeClient) GetAllAffinityVolumes(affinity string) (*models.Volumes, error) {
 	params := p_cloud_volumes.NewPcloudCloudinstancesVolumesGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -69,7 +69,7 @@ func (f *IBMPIVolumeClient) GetAllAffinityVolumes(affinity string) (*models.Volu
 	return resp.Payload, nil
 }
 
-//CreateVolumeV2 ...
+// Create a VolumeV2
 func (f *IBMPIVolumeClient) CreateVolumeV2(body *models.MultiVolumesCreate) (*models.Volumes, error) {
 	params := p_cloud_volumes.NewPcloudV2VolumesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -84,7 +84,7 @@ func (f *IBMPIVolumeClient) CreateVolumeV2(body *models.MultiVolumesCreate) (*mo
 	return resp.Payload, nil
 }
 
-// CreateVolume ...
+// Create a Volume
 func (f *IBMPIVolumeClient) CreateVolume(body *models.CreateDataVolume) (*models.Volume, error) {
 	params := p_cloud_volumes.NewPcloudCloudinstancesVolumesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -99,7 +99,7 @@ func (f *IBMPIVolumeClient) CreateVolume(body *models.CreateDataVolume) (*models
 	return resp.Payload, nil
 }
 
-// UpdateVolume ...
+// Update a Volume
 func (f *IBMPIVolumeClient) UpdateVolume(id string, body *models.UpdateVolume) (*models.Volume, error) {
 	params := p_cloud_volumes.NewPcloudCloudinstancesVolumesPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
@@ -115,7 +115,7 @@ func (f *IBMPIVolumeClient) UpdateVolume(id string, body *models.UpdateVolume) (
 	return resp.Payload, nil
 }
 
-// DeleteVolume ...
+// Delete a Volume
 func (f *IBMPIVolumeClient) DeleteVolume(id string) error {
 	params := p_cloud_volumes.NewPcloudCloudinstancesVolumesDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
@@ -127,7 +127,7 @@ func (f *IBMPIVolumeClient) DeleteVolume(id string) error {
 	return nil
 }
 
-// Attach a volume
+// Attach a Volume to an Instance
 func (f *IBMPIVolumeClient) Attach(id, volumename string) error {
 	params := p_cloud_volumes.NewPcloudPvminstancesVolumesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -140,7 +140,7 @@ func (f *IBMPIVolumeClient) Attach(id, volumename string) error {
 	return nil
 }
 
-//Detach a volume
+// Detach a Volume from an Instance
 func (f *IBMPIVolumeClient) Detach(id, volumename string) error {
 	params := p_cloud_volumes.NewPcloudPvminstancesVolumesDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -153,7 +153,7 @@ func (f *IBMPIVolumeClient) Detach(id, volumename string) error {
 	return nil
 }
 
-// GetAll volumes part of an instance
+// Get All Volumes attached to an Instance
 func (f *IBMPIVolumeClient) GetAllInstanceVolumes(id string) (*models.Volumes, error) {
 	params := p_cloud_volumes.NewPcloudPvminstancesVolumesGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -168,7 +168,7 @@ func (f *IBMPIVolumeClient) GetAllInstanceVolumes(id string) (*models.Volumes, e
 	return resp.Payload, nil
 }
 
-// SetBootVolume as the boot volume - PUT Operation
+// Set a Volume as the Boot Volume for an Instance
 func (f *IBMPIVolumeClient) SetBootVolume(id, volumename string) error {
 	params := p_cloud_volumes.NewPcloudPvminstancesVolumesSetbootPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -181,7 +181,7 @@ func (f *IBMPIVolumeClient) SetBootVolume(id, volumename string) error {
 	return nil
 }
 
-// CheckVolumeAttach if the volume is attached to the instance
+// Check if a Volume is attached to an Instance
 func (f *IBMPIVolumeClient) CheckVolumeAttach(id, volumeID string) (*models.Volume, error) {
 	params := p_cloud_volumes.NewPcloudPvminstancesVolumesGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -197,7 +197,7 @@ func (f *IBMPIVolumeClient) CheckVolumeAttach(id, volumeID string) (*models.Volu
 	return resp.Payload, nil
 }
 
-// UpdateVolumeAttach if the volume is attached to the instance
+// Update a Volume attached to an Instance
 func (f *IBMPIVolumeClient) UpdateVolumeAttach(id, volumeID string, body *models.PVMInstanceVolumeUpdate) error {
 	params := p_cloud_volumes.NewPcloudPvminstancesVolumesPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).

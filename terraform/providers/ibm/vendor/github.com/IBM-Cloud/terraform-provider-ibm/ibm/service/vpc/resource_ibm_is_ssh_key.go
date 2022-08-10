@@ -5,15 +5,19 @@ package vpc
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"golang.org/x/crypto/ssh"
 )
 
 const (
@@ -52,10 +56,11 @@ func ResourceIBMISSSHKey() *schema.Resource {
 			},
 
 			isKeyPublicKey: {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "SSH Public key data",
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: suppressPublicKeyDiff,
+				Description:      "SSH Public key data",
 			},
 
 			isKeyType: {
@@ -79,7 +84,7 @@ func ResourceIBMISSSHKey() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_ssh_key", "tag")},
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_ssh_key", "tags")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "List of tags for SSH key",
 			},
@@ -140,7 +145,7 @@ func ResourceIBMISSHKeyValidator() *validate.ResourceValidator {
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "tag",
+			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
@@ -373,4 +378,59 @@ func keyExists(d *schema.ResourceData, meta interface{}, id string) (bool, error
 		return false, fmt.Errorf("[ERROR] Error getting SSH Key: %s\n%s", err, response)
 	}
 	return true, nil
+}
+
+// to suppress any change shown when keys are same
+func suppressPublicKeyDiff(k, old, new string, d *schema.ResourceData) bool {
+	// if there are extra spaces or new lines, suppress that change
+	if strings.Compare(strings.TrimSpace(old), strings.TrimSpace(new)) != 0 {
+		// if old is empty
+		if old != "" {
+			//create a new piblickey object from the string
+			usePK, error := parseKey(new)
+			if error != nil {
+				return false
+			}
+			// returns the key in byte format with an extra added new line at the end
+			newkey := strings.TrimRight(string(ssh.MarshalAuthorizedKey(usePK)), "\n")
+			// check if both keys are same, if yes suppress the change
+			return strings.TrimSpace(strings.TrimPrefix(newkey, old)) == ""
+		} else {
+			return strings.TrimSpace(strings.TrimPrefix(new, old)) == ""
+		}
+	} else {
+		return true
+	}
+}
+
+// takes a string and returns public key object
+func parseKey(s string) (ssh.PublicKey, error) {
+	keyBytes := []byte(s)
+
+	// Accepts formats of PublicKey:
+	// - <base64 key>
+	// - ssh-rsa <base64 key>
+	// - ssh-rsa <base64 key> <comment>
+	// if PublicKey provides other than just base64 key, then first part must be "ssh-rsa"
+	if subStrs := strings.Split(s, " "); len(subStrs) > 1 && subStrs[0] != "ssh-rsa" {
+		return nil, errors.New("not an RSA key")
+	}
+
+	pk, _, _, _, e := ssh.ParseAuthorizedKey(keyBytes)
+	if e == nil {
+		return pk, nil
+	}
+
+	decodedKey := make([]byte, base64.StdEncoding.DecodedLen(len(keyBytes)))
+	n, e := base64.StdEncoding.Decode(decodedKey, keyBytes)
+	if e != nil {
+		return nil, e
+	}
+	decodedKey = decodedKey[:n]
+
+	pk, e = ssh.ParsePublicKey(decodedKey)
+	if e == nil {
+		return pk, nil
+	}
+	return nil, e
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -172,6 +173,10 @@ func dataSourceIBMContainerClusterConfigRead(d *schema.ResourceData, meta interf
 					if strings.Contains(err.Error(), "Could not login to openshift account runtime error:") {
 						return resource.RetryableError(err)
 					}
+					if intermittentUserLookupFailure, _ := regexp.MatchString("Error: lookup of user for \"(.+)\" failed", err.Error()); intermittentUserLookupFailure {
+						// Intermittent error resulting from synchronisation delay
+						return resource.RetryableError(err)
+					}
 					return resource.NonRetryableError(err)
 				}
 				return nil
@@ -198,6 +203,10 @@ func dataSourceIBMContainerClusterConfigRead(d *schema.ResourceData, meta interf
 				if err != nil {
 					log.Printf("[DEBUG] Failed to fetch cluster config err %s", err)
 					if strings.Contains(err.Error(), "Could not login to openshift account runtime error:") {
+						return resource.RetryableError(err)
+					}
+					if intermittentUserLookupFailure, _ := regexp.MatchString("Error: lookup of user for \"(.+)\" failed", err.Error()); intermittentUserLookupFailure {
+						// Intermittent error resulting from synchronisation delay
 						return resource.RetryableError(err)
 					}
 					return resource.NonRetryableError(err)

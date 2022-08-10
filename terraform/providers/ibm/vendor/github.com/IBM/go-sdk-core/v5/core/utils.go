@@ -266,28 +266,49 @@ func SliceContains(slice []string, contains string) bool {
 	return false
 }
 
-// GetQueryParam() returns a pointer to the value of query parameter `param` from urlStr,
+// GetQueryParam returns a pointer to the value of query parameter `param` from urlStr,
 // or nil if not found.
-func GetQueryParam(urlStr *string, param string) (*string, error) {
+func GetQueryParam(urlStr *string, param string) (value *string, err error) {
 	if urlStr == nil || *urlStr == "" {
-		return nil, nil
+		return
 	}
 
-	u, err := url.Parse(*urlStr)
+	urlObj, err := url.Parse(*urlStr)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	q, err := url.ParseQuery(u.RawQuery)
+	query, err := url.ParseQuery(urlObj.RawQuery)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	v := q.Get(param)
+	v := query.Get(param)
 	if v == "" {
-		return nil, nil
+		return
 	}
-	return &v, nil
+
+	value = &v
+
+	return
+}
+
+// GetQueryParamAsInt returns a pointer to the value of query parameter `param` from urlStr
+// converted to an int64 value, or nil if not found.
+func GetQueryParamAsInt(urlStr *string, param string) (value *int64, err error) {
+	strValue, err := GetQueryParam(urlStr, param)
+	if err != nil || strValue == nil {
+		return
+	}
+
+	intValue, err := strconv.ParseInt(*strValue, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	value = &intValue
+
+	return
 }
 
 // Pre-compiled regular expressions used by RedactSecrets().

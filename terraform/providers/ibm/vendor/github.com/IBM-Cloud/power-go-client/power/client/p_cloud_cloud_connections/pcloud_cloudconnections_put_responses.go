@@ -59,6 +59,12 @@ func (o *PcloudCloudconnectionsPutReader) ReadResponse(response runtime.ClientRe
 			return nil, err
 		}
 		return nil, result
+	case 408:
+		result := NewPcloudCloudconnectionsPutRequestTimeout()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudCloudconnectionsPutConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -263,6 +269,38 @@ func (o *PcloudCloudconnectionsPutMethodNotAllowed) GetPayload() *models.Error {
 }
 
 func (o *PcloudCloudconnectionsPutMethodNotAllowed) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsPutRequestTimeout creates a PcloudCloudconnectionsPutRequestTimeout with default headers values
+func NewPcloudCloudconnectionsPutRequestTimeout() *PcloudCloudconnectionsPutRequestTimeout {
+	return &PcloudCloudconnectionsPutRequestTimeout{}
+}
+
+/* PcloudCloudconnectionsPutRequestTimeout describes a response with status code 408, with default header values.
+
+Request Timeout
+*/
+type PcloudCloudconnectionsPutRequestTimeout struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudconnectionsPutRequestTimeout) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsPutRequestTimeout  %+v", 408, o.Payload)
+}
+func (o *PcloudCloudconnectionsPutRequestTimeout) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsPutRequestTimeout) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

@@ -5,7 +5,6 @@ package vpc
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
@@ -103,6 +102,12 @@ func DataSourceIBMISVolume() *schema.Resource {
 							Computed:    true,
 							Description: "An explanation of the status reason",
 						},
+
+						isVolumeStatusReasonsMoreInfo: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about this status reason",
+						},
 					},
 				},
 			},
@@ -186,64 +191,57 @@ func volumeGet(d *schema.ResourceData, meta interface{}, name string) error {
 	if zname, ok := d.GetOk(isVolumeZone); ok {
 		zone = zname.(string)
 	}
-	start := ""
-	allrecs := []vpcv1.Volume{}
-	for {
-		listVolumesOptions := &vpcv1.ListVolumesOptions{}
-		if start != "" {
-			listVolumesOptions.Start = &start
-		}
-		if zone != "" {
-			listVolumesOptions.ZoneName = &zone
-		}
-		listVolumesOptions.Name = &name
-		vols, response, err := sess.ListVolumes(listVolumesOptions)
-		if err != nil {
-			return fmt.Errorf("[ERROR] Error Fetching volumes %s\n%s", err, response)
-		}
-		start = flex.GetNext(vols.Next)
-		allrecs = append(allrecs, vols.Volumes...)
-		if start == "" {
-			break
-		}
+	listVolumesOptions := &vpcv1.ListVolumesOptions{
+		Name: &name,
 	}
-	for _, vol := range allrecs {
-		d.SetId(*vol.ID)
-		d.Set(isVolumeBandwidth, int(*vol.Bandwidth))
-		d.Set(isVolumeName, *vol.Name)
-		d.Set(isVolumeProfileName, *vol.Profile.Name)
-		d.Set(isVolumeZone, *vol.Zone.Name)
-		if vol.EncryptionKey != nil {
-			d.Set(isVolumeEncryptionKey, vol.EncryptionKey.CRN)
-		}
-		if vol.Encryption != nil {
-			d.Set(isVolumeEncryptionType, vol.Encryption)
-		}
-		if vol.SourceSnapshot != nil {
-			d.Set(isVolumeSourceSnapshot, *vol.SourceSnapshot.ID)
-		}
-		d.Set(isVolumeIops, *vol.Iops)
-		d.Set(isVolumeCapacity, *vol.Capacity)
-		d.Set(isVolumeCrn, *vol.CRN)
-		d.Set(isVolumeStatus, *vol.Status)
-		if vol.StatusReasons != nil {
-			statusReasonsList := make([]map[string]interface{}, 0)
-			for _, sr := range vol.StatusReasons {
-				currentSR := map[string]interface{}{}
-				if sr.Code != nil && sr.Message != nil {
-					currentSR[isVolumeStatusReasonsCode] = *sr.Code
-					currentSR[isVolumeStatusReasonsMessage] = *sr.Message
-					statusReasonsList = append(statusReasonsList, currentSR)
+
+	if zone != "" {
+		listVolumesOptions.ZoneName = &zone
+	}
+	listVolumesOptions.Name = &name
+	vols, response, err := sess.ListVolumes(listVolumesOptions)
+	if err != nil {
+		return fmt.Errorf("[ERROR] Error Fetching volumes %s\n%s", err, response)
+	}
+	allrecs := vols.Volumes
+
+	if len(allrecs) == 0 {
+		return fmt.Errorf("[ERROR] No Volume found with name %s", name)
+	}
+	vol := allrecs[0]
+	d.SetId(*vol.ID)
+	d.Set(isVolumeBandwidth, int(*vol.Bandwidth))
+	d.Set(isVolumeName, *vol.Name)
+	d.Set(isVolumeProfileName, *vol.Profile.Name)
+	d.Set(isVolumeZone, *vol.Zone.Name)
+	if vol.EncryptionKey != nil {
+		d.Set(isVolumeEncryptionKey, vol.EncryptionKey.CRN)
+	}
+	if vol.Encryption != nil {
+		d.Set(isVolumeEncryptionType, vol.Encryption)
+	}
+	if vol.SourceSnapshot != nil {
+		d.Set(isVolumeSourceSnapshot, *vol.SourceSnapshot.ID)
+	}
+	d.Set(isVolumeIops, *vol.Iops)
+	d.Set(isVolumeCapacity, *vol.Capacity)
+	d.Set(isVolumeCrn, *vol.CRN)
+	d.Set(isVolumeStatus, *vol.Status)
+	if vol.StatusReasons != nil {
+		statusReasonsList := make([]map[string]interface{}, 0)
+		for _, sr := range vol.StatusReasons {
+			currentSR := map[string]interface{}{}
+			if sr.Code != nil && sr.Message != nil {
+				currentSR[isVolumeStatusReasonsCode] = *sr.Code
+				currentSR[isVolumeStatusReasonsMessage] = *sr.Message
+				if sr.MoreInfo != nil {
+					currentSR[isVolumeStatusReasonsMoreInfo] = *sr.Message
 				}
+				statusReasonsList = append(statusReasonsList, currentSR)
 			}
 			d.Set(isVolumeStatusReasons, statusReasonsList)
 		}
-		tags, err := flex.GetTagsUsingCRN(meta, *vol.CRN)
-		if err != nil {
-			log.Printf(
-				"Error on get of resource vpc volume (%s) tags: %s", d.Id(), err)
-		}
-		d.Set(isVolumeTags, tags)
+		d.Set(isVolumeTags, vol.UserTags)
 		controller, err := flex.GetBaseController(meta)
 		if err != nil {
 			return err
@@ -256,7 +254,19 @@ func volumeGet(d *schema.ResourceData, meta interface{}, name string) error {
 			d.Set(flex.ResourceGroupName, vol.ResourceGroup.Name)
 			d.Set(isVolumeResourceGroup, *vol.ResourceGroup.ID)
 		}
-		return nil
+		d.Set(isVolumeStatusReasons, statusReasonsList)
 	}
-	return fmt.Errorf("[ERROR] No Volume found with name %s", name)
+	controller, err := flex.GetBaseController(meta)
+	if err != nil {
+		return err
+	}
+	d.Set(flex.ResourceControllerURL, controller+"/vpc-ext/storage/storageVolumes")
+	d.Set(flex.ResourceName, *vol.Name)
+	d.Set(flex.ResourceCRN, *vol.CRN)
+	d.Set(flex.ResourceStatus, *vol.Status)
+	if vol.ResourceGroup != nil {
+		d.Set(flex.ResourceGroupName, vol.ResourceGroup.Name)
+		d.Set(isVolumeResourceGroup, *vol.ResourceGroup.ID)
+	}
+	return nil
 }

@@ -1,9 +1,10 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2017, 2022 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package vpc
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -67,6 +68,54 @@ func DataSourceIBMISVPCRoutingTableRoutes() *schema.Resource {
 							Computed:    true,
 							Description: "Routing Table Route Created At",
 						},
+						"creator": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, the resource that created the route. Routes with this property present cannot bedirectly deleted. All routes with an `origin` of `learned` or `service` will have thisproperty set, and future `origin` values may also have this property set.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The VPN gateway's CRN.",
+									},
+									"deleted": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The VPN gateway's canonical URL.",
+									},
+									"id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this VPN gateway.",
+									},
+									"name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The user-defined name for this VPN gateway.",
+									},
+									"resource_type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
 						isRoutingTableRouteLifecycleState: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -86,6 +135,11 @@ func DataSourceIBMISVPCRoutingTableRoutes() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Routing Table Route Nexthop Address or VPN Gateway Connection ID",
+						},
+						"origin": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The origin of this route:- `service`: route was directly created by a service- `user`: route was directly created by a userThe enumerated values for this property are expected to expand in the future. When processing this property, check for and log unknown values. Optionally halt processing and surface the error, or bypass the route on which the unexpected property value was encountered.",
 						},
 						isRoutingTableRouteZoneName: {
 							Type:        schema.TypeString,
@@ -142,6 +196,18 @@ func dataSourceIBMISVPCRoutingTableRoutesList(d *schema.ResourceData, meta inter
 		if instance.CreatedAt != nil {
 			route[isRoutingTableRouteCreatedAt] = (*instance.CreatedAt).String()
 		}
+		// creator changes
+		creator := []map[string]interface{}{}
+		if instance.Creator != nil {
+			mm, err := dataSourceIBMIsRouteCreatorToMap(instance.Creator)
+			if err != nil {
+				log.Printf("Error reading list of VPC Routing Table Routes' creator:%s", err)
+				return err
+			}
+			creator = append(creator, mm)
+
+		}
+		route["creator"] = creator
 		if instance.LifecycleState != nil {
 			route[isRoutingTableRouteLifecycleState] = *instance.LifecycleState
 		}
@@ -159,6 +225,10 @@ func dataSourceIBMISVPCRoutingTableRoutesList(d *schema.ResourceData, meta inter
 				route[isRoutingTableRouteNexthop] = *nexthop.ID
 			}
 		}
+		//orgin
+		if instance.Origin != nil {
+			route["origin"] = *instance.Origin
+		}
 
 		vpcRoutingTableRoutes = append(vpcRoutingTableRoutes, route)
 	}
@@ -172,4 +242,110 @@ func dataSourceIBMISVPCRoutingTableRoutesList(d *schema.ResourceData, meta inter
 // dataSourceIBMISVPCRoutingTablesID returns a reasonable ID for dns zones list.
 func dataSourceIBMISVPCRoutingTableRoutesID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
+}
+
+func dataSourceIBMIsRouteCreatorToMap(model vpcv1.RouteCreatorIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.RouteCreatorVPNGatewayReference); ok {
+		return DataSourceIBMIsRouteCreatorVPNGatewayReferenceToMap(model.(*vpcv1.RouteCreatorVPNGatewayReference))
+	} else if _, ok := model.(*vpcv1.RouteCreatorVPNServerReference); ok {
+		return DataSourceIBMIsRouteCreatorVPNServerReferenceToMap(model.(*vpcv1.RouteCreatorVPNServerReference))
+	} else if _, ok := model.(*vpcv1.RouteCreator); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.RouteCreator)
+		if model.CRN != nil {
+			modelMap["crn"] = *model.CRN
+		}
+		if model.Deleted != nil {
+			deletedMap, err := DataSourceIBMIsRouteVPNGatewayReferenceDeletedToMap(model.Deleted)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["deleted"] = []map[string]interface{}{deletedMap}
+		}
+		if model.Href != nil {
+			modelMap["href"] = *model.Href
+		}
+		if model.ID != nil {
+			modelMap["id"] = *model.ID
+		}
+		if model.Name != nil {
+			modelMap["name"] = *model.Name
+		}
+		if model.ResourceType != nil {
+			modelMap["resource_type"] = *model.ResourceType
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("[Error] unrecognized vpcv1.RouteCreatorIntf subtype encountered")
+	}
+}
+
+func DataSourceIBMIsRouteCreatorVPNGatewayReferenceToMap(model *vpcv1.RouteCreatorVPNGatewayReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.CRN != nil {
+		modelMap["crn"] = *model.CRN
+	}
+	if model.Deleted != nil {
+		deletedMap, err := DataSourceIBMIsRouteVPNGatewayReferenceDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	if model.Href != nil {
+		modelMap["href"] = *model.Href
+	}
+	if model.ID != nil {
+		modelMap["id"] = *model.ID
+	}
+	if model.Name != nil {
+		modelMap["name"] = *model.Name
+	}
+	if model.ResourceType != nil {
+		modelMap["resource_type"] = *model.ResourceType
+	}
+	return modelMap, nil
+}
+
+func DataSourceIBMIsRouteCreatorVPNServerReferenceToMap(model *vpcv1.RouteCreatorVPNServerReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.CRN != nil {
+		modelMap["crn"] = *model.CRN
+	}
+	if model.Deleted != nil {
+		deletedMap, err := DataSourceIBMIsRouteVPNServerReferenceDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	if model.Href != nil {
+		modelMap["href"] = *model.Href
+	}
+	if model.ID != nil {
+		modelMap["id"] = *model.ID
+	}
+	if model.Name != nil {
+		modelMap["name"] = *model.Name
+	}
+	if model.ResourceType != nil {
+		modelMap["resource_type"] = *model.ResourceType
+	}
+	return modelMap, nil
+}
+
+func DataSourceIBMIsRouteVPNGatewayReferenceDeletedToMap(model *vpcv1.VPNGatewayReferenceDeleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.MoreInfo != nil {
+		modelMap["more_info"] = *model.MoreInfo
+	}
+	return modelMap, nil
+}
+
+func DataSourceIBMIsRouteVPNServerReferenceDeletedToMap(model *vpcv1.VPNServerReferenceDeleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.MoreInfo != nil {
+		modelMap["more_info"] = *model.MoreInfo
+	}
+	return modelMap, nil
 }

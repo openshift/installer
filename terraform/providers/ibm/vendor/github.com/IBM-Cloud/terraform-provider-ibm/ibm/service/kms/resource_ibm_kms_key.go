@@ -6,7 +6,6 @@ package kms
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
 	"strconv"
 	"strings"
@@ -124,112 +123,6 @@ func ResourceIBMKmskey() *schema.Resource {
 				Optional:    true,
 				Description: "The date the key material expires. The date format follows RFC 3339. You can set an expiration date on any key on its creation. A key moves into the Deactivated state within one hour past its expiration date, if one is assigned. If you create a key without specifying an expiration date, the key does not expire",
 				ForceNew:    true,
-			},
-			"policies": {
-				Type:        schema.TypeList,
-				Deprecated:  "Support for creating Policies with the key will soon be removed, Utilise the new resource for creating policies for the keys => ibm_kms_key_policies",
-				Optional:    true,
-				Computed:    true,
-				Description: "Creates or updates one or more policies for the specified key",
-				MinItems:    1,
-				MaxItems:    1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"rotation": {
-							Type:         schema.TypeList,
-							Optional:     true,
-							Computed:     true,
-							AtLeastOneOf: []string{"policies.0.rotation", "policies.0.dual_auth_delete"},
-							Description:  "Specifies the key rotation time interval in months, with a minimum of 1, and a maximum of 12",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"id": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The v4 UUID used to uniquely identify the policy resource, as specified by RFC 4122.",
-									},
-									"crn": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Cloud Resource Name (CRN) that uniquely identifies your cloud resources.",
-									},
-									"created_by": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The unique identifier for the resource that created the policy.",
-									},
-									"creation_date": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The date the policy was created. The date format follows RFC 3339.",
-									},
-									"updated_by": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The unique identifier for the resource that updated the policy.",
-									},
-									"last_update_date": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Updates when the policy is replaced or modified. The date format follows RFC 3339.",
-									},
-									"interval_month": {
-										Type:         schema.TypeInt,
-										Required:     true,
-										ValidateFunc: validate.ValidateAllowedRangeInt(1, 12),
-										Description:  "Specifies the key rotation time interval in months",
-									},
-								},
-							},
-						},
-						"dual_auth_delete": {
-							Type:         schema.TypeList,
-							Optional:     true,
-							Computed:     true,
-							AtLeastOneOf: []string{"policies.0.rotation", "policies.0.dual_auth_delete"},
-							Description:  "Data associated with the dual authorization delete policy.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"id": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The v4 UUID used to uniquely identify the policy resource, as specified by RFC 4122.",
-									},
-									"crn": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Cloud Resource Name (CRN) that uniquely identifies your cloud resources.",
-									},
-									"created_by": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The unique identifier for the resource that created the policy.",
-									},
-									"creation_date": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The date the policy was created. The date format follows RFC 3339.",
-									},
-									"updated_by": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The unique identifier for the resource that updated the policy.",
-									},
-									"last_update_date": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Updates when the policy is replaced or modified. The date format follows RFC 3339.",
-									},
-									"enabled": {
-										Type:        schema.TypeBool,
-										Required:    true,
-										Description: "If set to true, Key Protect enables a dual authorization policy on a single key.",
-									},
-								},
-							},
-						},
-					},
-				},
 			},
 			"instance_crn": {
 				Type:        schema.TypeString,
@@ -408,20 +301,10 @@ func resourceIBMKmsKeyRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[ERROR] Get Key failed with error while reading policies: %s", err)
+		return fmt.Errorf("[ERROR] Get Key failed with error while reading Key: %s", err)
 	} else if key.State == 5 { //Refers to Deleted state of the Key
 		d.SetId("")
 		return nil
-	}
-
-	policies, err := kpAPI.GetPolicies(context.Background(), keyid)
-	if err != nil && !strings.Contains(fmt.Sprint(err), "Unauthorized: The user does not have access to the specified resource") {
-		return fmt.Errorf("[ERROR] Failed to read policies: %s", err)
-	}
-	if len(policies) == 0 {
-		log.Printf("No Policy Configurations read\n")
-	} else {
-		d.Set("policies", flex.FlattenKeyPolicies(policies))
 	}
 	d.Set("instance_id", instanceID)
 	d.Set("instance_crn", instanceCRN)
@@ -469,44 +352,6 @@ func resourceIBMKmsKeyUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	if d.HasChange("force_delete") {
 		d.Set("force_delete", d.Get("force_delete").(bool))
-	}
-	if d.HasChange("policies") {
-
-		kpAPI, err := meta.(conns.ClientSession).KeyManagementAPI()
-		if err != nil {
-			return err
-		}
-
-		crn := d.Id()
-		crnData := strings.Split(crn, ":")
-		endpointType := d.Get("endpoint_type").(string)
-		instanceID := crnData[len(crnData)-3]
-		key_id := crnData[len(crnData)-1]
-
-		rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
-		if err != nil {
-			return err
-		}
-		resourceInstanceGet := rc.GetResourceInstanceOptions{
-			ID: &instanceID,
-		}
-
-		instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-		if err != nil || instanceData == nil {
-			return fmt.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-		}
-		extensions := instanceData.Extensions
-		URL, err := KmsEndpointURL(kpAPI, endpointType, extensions)
-		if err != nil {
-			return err
-		}
-		kpAPI.URL = URL
-		kpAPI.Config.InstanceID = instanceID
-
-		err = handlePolicies(d, kpAPI, meta, key_id)
-		if err != nil {
-			return fmt.Errorf("[ERROR] Could not update policies: %s", err)
-		}
 	}
 	return resourceIBMKmsKeyRead(d, meta)
 
@@ -599,38 +444,6 @@ func resourceIBMKmsKeyExists(d *schema.ResourceData, meta interface{}) (bool, er
 	}
 	return true, nil
 
-}
-
-func handlePolicies(d *schema.ResourceData, kpAPI *kp.Client, meta interface{}, key_id string) error {
-	var setRotation, setDualAuthDelete, dualAuthEnable bool
-	var rotationInterval int
-
-	if policyInfo, ok := d.GetOk("policies"); ok {
-
-		policyDataList := policyInfo.([]interface{})
-		policyData := policyDataList[0].(map[string]interface{})
-
-		if rpd, ok := policyData["rotation"]; ok {
-			rpdList := rpd.([]interface{})
-			if len(rpdList) != 0 {
-				rotationInterval = rpdList[0].(map[string]interface{})["interval_month"].(int)
-				setRotation = true
-			}
-		}
-		if dadp, ok := policyData["dual_auth_delete"]; ok {
-			dadpList := dadp.([]interface{})
-			if len(dadpList) != 0 {
-				dualAuthEnable = dadpList[0].(map[string]interface{})["enabled"].(bool)
-				setDualAuthDelete = true
-			}
-		}
-
-		_, err := kpAPI.SetPolicies(context.Background(), key_id, setRotation, rotationInterval, setDualAuthDelete, dualAuthEnable)
-		if err != nil {
-			return fmt.Errorf("[ERROR] Error while creating policies: %s", err)
-		}
-	}
-	return nil
 }
 
 //Construct KMS URL

@@ -55,7 +55,7 @@ func ResourceIBMPrivateDNSForwardingRule() *schema.Resource {
 			pdnsCRFRType: {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validate.InvokeValidator(pdnsCRForwardRule, "type"),
+				ValidateFunc: validate.InvokeValidator(pdnsCRForwardRule, pdnsCRFRType),
 				Description:  "Type of the forwarding rule.",
 			},
 			pdnsCRFRMatch: {

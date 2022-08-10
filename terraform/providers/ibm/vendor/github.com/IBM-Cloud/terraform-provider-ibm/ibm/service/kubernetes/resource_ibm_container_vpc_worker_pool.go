@@ -116,7 +116,7 @@ func ResourceIBMContainerVpcWorkerPool() *schema.Resource {
 							Description: "Effect for taint. Accepted values are NoSchedule, PreferNoSchedule and NoExecute.",
 							ValidateFunc: validate.InvokeValidator(
 								"ibm_container_vpc_worker_pool",
-								"worker_taints"),
+								"effect"),
 						},
 					},
 				},
@@ -146,10 +146,30 @@ func ResourceIBMContainerVpcWorkerPool() *schema.Resource {
 				DiffSuppressFunc: flex.ApplyOnce,
 				Description:      "Entitlement option reduces additional OCP Licence cost in Openshift Clusters",
 			},
+			"host_pool_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The ID of the dedicated host pool associated with the worker pool",
+			},
 			flex.ResourceControllerURL: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Resource Controller URL",
+			},
+			"kms_instance_id": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "Instance ID for boot volume encryption",
+				RequiredWith:     []string{"crk"},
+			},
+			"crk": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "Root Key ID for boot volume encryption",
+				RequiredWith:     []string{"kms_instance_id"},
 			},
 		},
 	}
@@ -159,7 +179,7 @@ func ResourceIBMContainerVPCWorkerPoolValidator() *validate.ResourceValidator {
 	validateSchema := make([]validate.ValidateSchema, 0)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "worker_taints",
+			Identifier:                 "effect",
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			Required:                   true,
@@ -194,14 +214,8 @@ func resourceIBMContainerVpcWorkerPoolCreate(d *schema.ResourceData, meta interf
 
 	}
 
-	// for _, e := range d.Get("zones").(*schema.Set).List() {
-	// 	value := e.(map[string]interface{})
-	// 	id := value["id"].(string)
-	// 	subnetid := value["subnet_id"].(string)
-
-	// }
-
-	workerPoolConfig := v2.WorkerPoolConfig{
+	params := v2.WorkerPoolRequest{
+		Cluster:     clusterNameorID,
 		Name:        d.Get("worker_pool_name").(string),
 		VpcID:       d.Get("vpc_id").(string),
 		Flavor:      d.Get("flavor").(string),
@@ -209,22 +223,30 @@ func resourceIBMContainerVpcWorkerPoolCreate(d *schema.ResourceData, meta interf
 		Zones:       zone,
 	}
 
+	if v, ok := d.GetOk("kms_instance_id"); ok {
+		crk := d.Get("crk").(string)
+		wve := v2.WorkerVolumeEncryption{
+			KmsInstanceID:     v.(string),
+			WorkerVolumeCRKID: crk,
+		}
+		params.WorkerVolumeEncryption = &wve
+	}
+
 	if l, ok := d.GetOk("labels"); ok {
 		labels := make(map[string]string)
 		for k, v := range l.(map[string]interface{}) {
 			labels[k] = v.(string)
 		}
-		workerPoolConfig.Labels = labels
+		params.Labels = labels
 	}
 
 	// Update workerpoolConfig with Entitlement option if provided
 	if v, ok := d.GetOk("entitlement"); ok {
-		workerPoolConfig.Entitlement = v.(string)
+		params.Entitlement = v.(string)
 	}
 
-	params := v2.WorkerPoolRequest{
-		WorkerPoolConfig: workerPoolConfig,
-		Cluster:          clusterNameorID,
+	if hpid, ok := d.GetOk("host_pool_id"); ok {
+		params.HostPoolID = hpid.(string)
 	}
 
 	workerPoolsAPI := wpClient.WorkerPools()
@@ -460,8 +482,13 @@ func resourceIBMContainerVpcWorkerPoolRead(d *schema.ResourceData, meta interfac
 	d.Set("resource_group_id", cls.ResourceGroupID)
 	d.Set("cluster", cluster)
 	d.Set("vpc_id", workerPool.VpcID)
+	d.Set("host_pool_id", workerPool.HostPoolID)
 	if workerPool.Taints != nil {
 		d.Set("taints", flattenWorkerPoolTaints(workerPool))
+	}
+	if workerPool.WorkerVolumeEncryption != nil {
+		d.Set("kms_instance_id", workerPool.WorkerVolumeEncryption.KmsInstanceID)
+		d.Set("crk", workerPool.WorkerVolumeEncryption.WorkerVolumeCRKID)
 	}
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {

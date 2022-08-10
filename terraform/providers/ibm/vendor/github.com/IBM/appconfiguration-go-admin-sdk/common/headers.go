@@ -18,11 +18,10 @@ package common
 
 import (
 	"fmt"
-	"runtime"
 )
 
 const (
-	sdkName             = "appconfiguration-admin-sdk-go"
+	sdkName             = "appconfiguration-go-admin-sdk"
 	headerNameUserAgent = "User-Agent"
 )
 
@@ -41,14 +40,12 @@ const (
 //
 // If you plan to gather metrics for your SDK, the User-Agent header value must
 // be a string similar to the following:
-// appconfiguration-admin-sdk-go/1.0.0 (lang=go; arch=x86_64; os=Linux; go.version=1.12.9)
+// appconfiguration-go-admin-sdk/1.0.0
 //
 // In the example above, the analytics tool will parse the user-agent header and
 // use the following properties:
-// "appconfiguration-admin-sdk-go" - the name of your sdk
+// "appconfiguration-go-admin-sdk" - the name of your sdk
 // "1.0.0"- the version of your sdk
-// "lang=go" - the language of the current sdk
-// "arch=x86_64; os=Linux; go.version=1.12.9" - system information
 //
 // Note: It is very important that the sdk name ends with the string `-sdk`,
 // as the analytics data collector uses this to gather usage data.
@@ -74,14 +71,8 @@ func GetSdkHeaders(serviceName string, serviceVersion string, operationId string
 	return sdkHeaders
 }
 
-var userAgent string = fmt.Sprintf("%s/%s %s", sdkName, Version, GetSystemInfo())
+var userAgent string = fmt.Sprintf("%s/%s", sdkName, Version)
 
 func GetUserAgentInfo() string {
 	return userAgent
-}
-
-var systemInfo = fmt.Sprintf("(lang=go; arch=%s; os=%s; go.version=%s)", runtime.GOARCH, runtime.GOOS, runtime.Version())
-
-func GetSystemInfo() string {
-	return systemInfo
 }

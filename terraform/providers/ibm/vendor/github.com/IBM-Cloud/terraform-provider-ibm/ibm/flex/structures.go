@@ -353,6 +353,7 @@ func FlattenVpcWorkerPools(list []containerv2.GetWorkerPoolResponse) []map[strin
 			"isolation":    workerPool.Isolation,
 			"labels":       workerPool.Labels,
 			"state":        workerPool.Lifecycle.ActualState,
+			"host_pool_id": workerPool.HostPoolID,
 		}
 		zones := workerPool.Zones
 		zonesConfig := make([]map[string]interface{}, len(zones))
@@ -871,6 +872,43 @@ func FlattenCosObejctVersioning(in *s3.GetBucketVersioningOutput) []interface{} 
 	return versioning
 }
 
+func ReplicationRuleGet(in *s3.ReplicationConfiguration) []map[string]interface{} {
+	rules := make([]map[string]interface{}, 0, 1)
+	if in != nil {
+		for _, replicaterule := range in.Rules {
+			replicationConfig := make(map[string]interface{})
+			if replicaterule.DeleteMarkerReplication != nil {
+				if *(replicaterule.DeleteMarkerReplication).Status == "Enabled" {
+					replicationConfig["deletemarker_replication_status"] = true
+				} else {
+					replicationConfig["deletemarker_replication_status"] = false
+				}
+			}
+			if replicaterule.Destination != nil {
+				replicationConfig["destination_bucket_crn"] = *(replicaterule.Destination).Bucket
+			}
+			if replicaterule.ID != nil {
+				replicationConfig["rule_id"] = *replicaterule.ID
+			}
+			if replicaterule.Priority != nil {
+				replicationConfig["priority"] = int(*replicaterule.Priority)
+			}
+			if replicaterule.Status != nil {
+				if *replicaterule.Status == "Enabled" {
+					replicationConfig["enable"] = true
+				} else {
+					replicationConfig["enable"] = false
+				}
+			}
+			if replicaterule.Filter != nil && replicaterule.Filter.Prefix != nil {
+				replicationConfig["prefix"] = *(replicaterule.Filter).Prefix
+			}
+			rules = append(rules, replicationConfig)
+		}
+	}
+	return rules
+}
+
 func FlattenLimits(in *whisk.Limits) []interface{} {
 	att := make(map[string]interface{})
 	if in.Timeout != nil {
@@ -980,7 +1018,7 @@ func float64Value(f32 *float32) (f float64) {
 	return
 }
 
-func dateToString(d *strfmt.Date) (s string) {
+func DateToString(d *strfmt.Date) (s string) {
 	if d != nil {
 		s = d.String()
 	}
@@ -2273,6 +2311,22 @@ func ResourceVolumeAttachmentValidate(diff *schema.ResourceDiff) error {
 		}
 	}
 
+	return nil
+}
+
+func InstanceProfileValidate(diff *schema.ResourceDiff) error {
+	if diff.Id() != "" && diff.HasChange("profile") {
+		o, n := diff.GetChange("profile")
+		old := o.(string)
+		new := n.(string)
+		log.Println("old profile : ", old)
+		log.Println("new profile : ", new)
+		if !strings.Contains(old, "d") && strings.Contains(new, "d") {
+			diff.ForceNew("profile")
+		} else if strings.Contains(old, "d") && !strings.Contains(new, "d") {
+			diff.ForceNew("profile")
+		}
+	}
 	return nil
 }
 

@@ -316,7 +316,7 @@ func ResourceIBMISNetworkACLRuleValidator() *validate.ResourceValidator {
 			MaxValue:                   "65535"})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "tag",
+			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,

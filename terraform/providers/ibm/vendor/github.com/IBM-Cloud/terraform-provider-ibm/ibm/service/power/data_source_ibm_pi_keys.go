@@ -17,40 +17,37 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
 
-const (
-	PIKeys    = "keys"
-	PIKeyName = "name"
-	PIKey     = "ssh_key"
-	PIKeyDate = "creation_date"
-)
-
 func DataSourceIBMPIKeys() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIKeysRead,
 		Schema: map[string]*schema.Schema{
-			helpers.PICloudInstanceId: {
+
+			// Arguments
+			Arg_CloudInstanceID: {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "PI cloud instance ID",
 				ValidateFunc: validation.NoZeroValues,
 			},
-			// Computed Attributes
-			PIKeys: {
-				Type:     schema.TypeList,
-				Computed: true,
+
+			// Attributes
+			Attr_Keys: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "SSH Keys",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						PIKeyName: {
+						Attr_KeyName: {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "User defined name for the SSH key",
 						},
-						PIKey: {
+						Attr_Key: {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "SSH RSA key",
 						},
-						PIKeyDate: {
+						Attr_KeyCreationDate: {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Date of SSH key creation",
@@ -63,13 +60,17 @@ func DataSourceIBMPIKeys() *schema.Resource {
 }
 
 func dataSourceIBMPIKeysRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+
+	// session
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	// arguments
 	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
 
+	// get keys
 	client := st.NewIBMPIKeyClient(ctx, sess, cloudInstanceID)
 	sshKeys, err := client.GetAll()
 	if err != nil {
@@ -77,19 +78,19 @@ func dataSourceIBMPIKeysRead(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
+	// set attributes
 	result := make([]map[string]interface{}, 0, len(sshKeys.SSHKeys))
 	for _, sshKey := range sshKeys.SSHKeys {
 		key := map[string]interface{}{
-			PIKeyName: sshKey.Name,
-			PIKey:     sshKey.SSHKey,
-			PIKeyDate: sshKey.CreationDate.String(),
+			Attr_KeyName:         sshKey.Name,
+			Attr_Key:             sshKey.SSHKey,
+			Attr_KeyCreationDate: sshKey.CreationDate.String(),
 		}
 		result = append(result, key)
 	}
-
 	var genID, _ = uuid.GenerateUUID()
 	d.SetId(genID)
-	d.Set(PIKeys, result)
+	d.Set(Attr_Keys, result)
 
 	return nil
 }

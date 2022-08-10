@@ -78,7 +78,7 @@ func ResourceIbmIsPlacementGroup() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_placement_group", "tag")},
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_placement_group", "tags")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "List of tags",
 			},
@@ -86,7 +86,7 @@ func ResourceIbmIsPlacementGroup() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_placement_group", "accesstag")},
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_placement_group", isPlacementGroupAccessTags)},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "List of access management tags",
 			},
@@ -120,7 +120,7 @@ func ResourceIbmIsPlacementGroup() *schema.Resource {
 }
 
 func ResourceIbmIsPlacementGroupValidator() *validate.ResourceValidator {
-	validateSchema := make([]validate.ValidateSchema, 1)
+	validateSchema := make([]validate.ValidateSchema, 0)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 "strategy",
@@ -139,7 +139,7 @@ func ResourceIbmIsPlacementGroupValidator() *validate.ResourceValidator {
 			MaxValueLength:             63,
 		},
 		validate.ValidateSchema{
-			Identifier:                 "tag",
+			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
@@ -148,7 +148,7 @@ func ResourceIbmIsPlacementGroupValidator() *validate.ResourceValidator {
 			MaxValueLength:             128,
 		},
 		validate.ValidateSchema{
-			Identifier:                 "accesstag",
+			Identifier:                 isPlacementGroupAccessTags,
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,

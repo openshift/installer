@@ -101,7 +101,7 @@ func dataSourceIBMEnDestinationsRead(context context.Context, d *schema.Resource
 	}
 	var destinationList *en.DestinationList
 
-	finalList := []en.DestinationLisItem{}
+	finalList := []en.DestinationListItem{}
 
 	var offset int64 = 0
 	var limit int64 = 100
@@ -145,7 +145,7 @@ func dataSourceIBMEnDestinationsRead(context context.Context, d *schema.Resource
 	return nil
 }
 
-func enFlattenDestinationsList(result []en.DestinationLisItem) (destinations []map[string]interface{}) {
+func enFlattenDestinationsList(result []en.DestinationListItem) (destinations []map[string]interface{}) {
 	for _, destinationsItem := range result {
 		destinations = append(destinations, enDestinationListToMap(destinationsItem))
 	}
@@ -153,7 +153,7 @@ func enFlattenDestinationsList(result []en.DestinationLisItem) (destinations []m
 	return destinations
 }
 
-func enDestinationListToMap(destinationItem en.DestinationLisItem) (destination map[string]interface{}) {
+func enDestinationListToMap(destinationItem en.DestinationListItem) (destination map[string]interface{}) {
 	destination = map[string]interface{}{}
 
 	if destinationItem.ID != nil {

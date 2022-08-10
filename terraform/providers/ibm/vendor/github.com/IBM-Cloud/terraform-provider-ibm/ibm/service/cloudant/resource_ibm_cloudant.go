@@ -14,6 +14,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/resourcecontroller"
+	"github.com/IBM-Cloud/terraform-provider-ibm/version"
 	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -377,6 +378,15 @@ func getCloudantClient(d *schema.ResourceData, meta interface{}) (*cloudantv1.Cl
 		return nil, fmt.Errorf("[ERROR] Missing endpoints.public in extensions")
 	}
 
+	return GetCloudantClientForUrl(endpoint, meta)
+}
+
+func GetCloudantClientForUrl(endpoint string, meta interface{}) (*cloudantv1.CloudantV1, error) {
+	session, err := meta.(conns.ClientSession).BluemixSession()
+	if err != nil {
+		return nil, err
+	}
+
 	var authenticator core.Authenticator
 	token := session.Config.IAMAccessToken
 
@@ -410,6 +420,7 @@ func getCloudantClient(d *schema.ResourceData, meta interface{}) (*cloudantv1.Cl
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] Error occured while configuring Cloudant service: %q", err)
 	}
+	client.Service.SetUserAgent("cloudant-terraform/" + version.Version)
 
 	return client, nil
 }
@@ -474,7 +485,7 @@ func setCloudantInstanceCapacity(client *cloudantv1.CloudantV1, d *schema.Resour
 	if capacityThroughputInformation.Current != nil && capacityThroughputInformation.Current.Throughput != nil {
 		currentThroughput := capacityThroughputInformation.Current.Throughput
 		// lite plan doesn't have "blocks" attr on broker's response
-		if d.Get("plan").(string) == "lite" {
+		if d.Get("plan").(string) == "lite" || currentThroughput.Blocks == nil {
 			d.Set("capacity", 1)
 		} else {
 			blocks := int(*currentThroughput.Blocks)

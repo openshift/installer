@@ -151,16 +151,17 @@ func resourceIBMContainerVpcWorkerVolumeAttachmentRead(context context.Context, 
 	workerID := parts[1]
 	volumeAttachmentID := parts[2]
 
-	volume, err := workersAPI.GetStorageAttachment(clusterNameorID, workerID, volumeAttachmentID, target)
+	volumeAttachment, err := workersAPI.GetStorageAttachment(clusterNameorID, workerID, volumeAttachmentID, target)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.Set("cluster", clusterNameorID)
 	d.Set("worker", workerID)
+	d.Set("volume", volumeAttachment.Volume.Id)
 	d.Set("volume_attachment_id", volumeAttachmentID)
-	d.Set("volume_attachment_name", volume.Name)
-	d.Set("status", volume.Status)
-	d.Set("volume_type", volume.Type)
+	d.Set("volume_attachment_name", volumeAttachment.Name)
+	d.Set("status", volumeAttachment.Status)
+	d.Set("volume_type", volumeAttachment.Type)
 	return nil
 }
 

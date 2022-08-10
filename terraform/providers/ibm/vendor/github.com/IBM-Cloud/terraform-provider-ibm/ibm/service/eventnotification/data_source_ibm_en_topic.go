@@ -199,12 +199,12 @@ func dataSourceIBMEnTopicRead(context context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscription_count: %s", err))
 	}
 
-	if result.Sources != nil {
-		err = d.Set("sources", dataSourceTopicFlattenSources(result.Sources))
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting sources %s", err))
-		}
-	}
+	// if result.Sources != nil {
+	// 	err = d.Set("sources", dataSourceTopicFlattenSources(result.Sources))
+	// 	if err != nil {
+	// 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting sources %s", err))
+	// 	}
+	// }
 
 	if result.Subscriptions != nil {
 		err = d.Set("subscriptions", enFlattenSubscriptions(result.Subscriptions))
@@ -216,62 +216,62 @@ func dataSourceIBMEnTopicRead(context context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func dataSourceTopicFlattenSources(result []en.TopicSourcesItem) (sources []map[string]interface{}) {
-	sources = []map[string]interface{}{}
+// func dataSourceTopicFlattenSources(result []en.TopicSourcesItem) (sources []map[string]interface{}) {
+// 	sources = []map[string]interface{}{}
 
-	for _, sourcesItem := range result {
-		sources = append(sources, dataSourceTopicSourcesToMap(sourcesItem))
-	}
+// 	for _, sourcesItem := range result {
+// 		sources = append(sources, dataSourceTopicSourcesToMap(sourcesItem))
+// 	}
 
-	return sources
-}
+// 	return sources
+// }
 
-func dataSourceTopicSourcesToMap(sourcesItem en.TopicSourcesItem) (sourcesMap map[string]interface{}) {
-	sourcesMap = map[string]interface{}{}
+// func dataSourceTopicSourcesToMap(sourcesItem en.TopicSourcesItem) (sourcesMap map[string]interface{}) {
+// 	sourcesMap = map[string]interface{}{}
 
-	if sourcesItem.ID != nil {
-		sourcesMap["id"] = sourcesItem.ID
-	}
-	if sourcesItem.Name != nil {
-		sourcesMap["name"] = sourcesItem.Name
-	}
+// 	if sourcesItem.ID != nil {
+// 		sourcesMap["id"] = sourcesItem.ID
+// 	}
+// 	if sourcesItem.Name != nil {
+// 		sourcesMap["name"] = sourcesItem.Name
+// 	}
 
-	if sourcesItem.Rules != nil {
-		rulesList := []map[string]interface{}{}
-		for _, rulesItem := range sourcesItem.Rules {
-			rulesList = append(rulesList, enRulesToMap(rulesItem))
-		}
-		sourcesMap["rules"] = rulesList
-	}
+// 	if sourcesItem.Rules != nil {
+// 		rulesList := []map[string]interface{}{}
+// 		for _, rulesItem := range sourcesItem.Rules {
+// 			rulesList = append(rulesList, enRulesToMap(rulesItem))
+// 		}
+// 		sourcesMap["rules"] = rulesList
+// 	}
 
-	return sourcesMap
-}
+// 	return sourcesMap
+// }
 
-func enRulesToMap(rulesItem en.RulesGet) (rulesMap map[string]interface{}) {
-	rulesMap = map[string]interface{}{}
+// func enRulesToMap(rulesItem en.RulesGet) (rulesMap map[string]interface{}) {
+// 	rulesMap = map[string]interface{}{}
 
-	if rulesItem.ID != nil {
-		rulesMap["id"] = rulesItem.ID
-	}
+// 	if rulesItem.ID != nil {
+// 		rulesMap["id"] = rulesItem.ID
+// 	}
 
-	if rulesItem.Enabled != nil {
-		rulesMap["enabled"] = rulesItem.Enabled
-	}
+// 	if rulesItem.Enabled != nil {
+// 		rulesMap["enabled"] = rulesItem.Enabled
+// 	}
 
-	if rulesItem.EventTypeFilter != nil {
-		rulesMap["event_type_filter"] = rulesItem.EventTypeFilter
-	}
+// 	if rulesItem.EventTypeFilter != nil {
+// 		rulesMap["event_type_filter"] = rulesItem.EventTypeFilter
+// 	}
 
-	if rulesItem.NotificationFilter != nil {
-		rulesMap["notification_filter"] = rulesItem.NotificationFilter
-	}
+// 	if rulesItem.NotificationFilter != nil {
+// 		rulesMap["notification_filter"] = rulesItem.NotificationFilter
+// 	}
 
-	if rulesItem.UpdatedAt != nil {
-		rulesMap["updated_at"] = rulesItem.UpdatedAt
-	}
+// 	if rulesItem.UpdatedAt != nil {
+// 		rulesMap["updated_at"] = rulesItem.UpdatedAt
+// 	}
 
-	return rulesMap
-}
+// 	return rulesMap
+// }
 
 func enFlattenSubscriptions(subscriptionList []en.SubscriptionListItem) (subscriptions []map[string]interface{}) {
 	subscriptions = []map[string]interface{}{}

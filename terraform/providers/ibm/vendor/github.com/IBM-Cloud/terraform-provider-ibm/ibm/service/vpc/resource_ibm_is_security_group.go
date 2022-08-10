@@ -62,7 +62,7 @@ func ResourceIBMISSecurityGroup() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_security_group", "tag")},
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_security_group", "tags")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "List of tags",
 			},
@@ -132,7 +132,7 @@ func ResourceIBMISSecurityGroupValidator() *validate.ResourceValidator {
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "tag",
+			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
@@ -410,7 +410,7 @@ func resourceIBMISSecurityGroupDelete(d *schema.ResourceData, meta interface{}) 
 				deleteSecurityGroupTargetBindingOptions := sess.NewDeleteSecurityGroupTargetBindingOptions(id, *securityGroupTargetReference.ID)
 				response, err = sess.DeleteSecurityGroupTargetBinding(deleteSecurityGroupTargetBindingOptions)
 				if err != nil {
-					return fmt.Errorf("[ERROR] Error Deleting Security Group Targets : %s\n%s", err, response)
+					return fmt.Errorf("[ERROR] Error deleting security group target binding while deleting security group : %s\n%s", err, response)
 				}
 
 			}

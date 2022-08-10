@@ -68,7 +68,7 @@ func ResourceIBMResourceTag() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_resource_tag", "tag_type"),
+				ValidateFunc: validate.InvokeValidator("ibm_resource_tag", tagType),
 				Description:  "Type of the tag. Only allowed values are: user, or service or access (default value : user)",
 			},
 			acccountID: {
@@ -92,7 +92,7 @@ func ResourceIBMResourceTagValidator() *validate.ResourceValidator {
 			Required:                   true,
 			Regexp:                     `^crn:v1(:[a-zA-Z0-9 \-\._~\*\+,;=!$&'\(\)\/\?#\[\]@]*){8}$|^[0-9]+$`,
 			MinValueLength:             1,
-			MaxValueLength:             128})
+			MaxValueLength:             1024})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 tags,

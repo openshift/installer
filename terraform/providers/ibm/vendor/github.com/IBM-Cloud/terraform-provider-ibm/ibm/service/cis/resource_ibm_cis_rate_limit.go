@@ -122,7 +122,7 @@ func ResourceIBMCISRateLimit() *schema.Resource {
 						"timeout": {
 							Type:         schema.TypeInt,
 							Optional:     true,
-							ValidateFunc: validate.InvokeValidator("ibm_cis_rate_limit", cisRLTimeout),
+							ValidateFunc: validate.InvokeValidator("ibm_cis_rate_limit", "timeout"),
 							Description:  "The time to perform the mitigation action. Timeout be the same or greater than the period.",
 						},
 						"response": {
@@ -141,7 +141,7 @@ func ResourceIBMCISRateLimit() *schema.Resource {
 									"body": {
 										Type:         schema.TypeString,
 										Required:     true,
-										ValidateFunc: validate.InvokeValidator("ibm_cis_rate_limit", cisRLBody),
+										ValidateFunc: validate.InvokeValidator("ibm_cis_rate_limit", "body"),
 										Description:  "The body to return. The content here must confirm to the 'content_type'",
 									},
 								},
@@ -192,7 +192,7 @@ func ResourceIBMCISRateLimit() *schema.Resource {
 										Optional:     true,
 										Computed:     true,
 										Description:  "URL pattern of matching request",
-										ValidateFunc: validate.InvokeValidator("ibm_cis_rate_limit", cisRLURL),
+										ValidateFunc: validate.InvokeValidator("ibm_cis_rate_limit", "url"),
 									},
 								},
 							},

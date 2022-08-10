@@ -20,7 +20,7 @@ func DataSourceIBMResourceTag() *schema.Resource {
 			"resource_id": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_resource_tag", resourceID),
+				ValidateFunc: validate.InvokeValidator("ibm_resource_tag", "resource_id"),
 				Description:  "CRN of the resource on which the tags should be attached",
 			},
 			"tags": {

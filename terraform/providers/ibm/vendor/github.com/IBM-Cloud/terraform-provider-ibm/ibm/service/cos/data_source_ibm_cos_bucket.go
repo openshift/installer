@@ -32,24 +32,35 @@ func DataSourceIBMCosBucket() *schema.Resource {
 				Required: true,
 			},
 			"bucket_type": {
-				Type:         schema.TypeString,
-				ValidateFunc: validate.ValidateAllowedStringValues(bucketTypes),
-				Required:     true,
+				Type:          schema.TypeString,
+				ValidateFunc:  validate.ValidateAllowedStringValues(bucketTypes),
+				Optional:      true,
+				RequiredWith:  []string{"bucket_region"},
+				ConflictsWith: []string{"satellite_location_id"},
 			},
 			"bucket_region": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				RequiredWith:  []string{"bucket_type"},
+				ConflictsWith: []string{"satellite_location_id"},
 			},
 			"resource_instance_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"satellite_location_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"bucket_type", "bucket_region"},
+				ExactlyOneOf:  []string{"satellite_location_id", "bucket_region"},
+			},
 			"endpoint_type": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{"public", "private", "direct"}),
-				Description:  "public or private",
-				Default:      "public",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ValidateFunc:  validate.ValidateAllowedStringValues([]string{"public", "private", "direct"}),
+				Description:   "public or private",
+				ConflictsWith: []string{"satellite_location_id"},
+				Default:       "public",
 			},
 			"crn": {
 				Type:        schema.TypeString,
@@ -308,6 +319,44 @@ func DataSourceIBMCosBucket() *schema.Resource {
 					},
 				},
 			},
+			"replication_rule": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Replicate objects between buckets, replicate across source and destination. A container for replication rules can add up to 1,000 rules. The maximum size of a replication configuration is 2 MB.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"rule_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A unique identifier for the rule. The maximum value is 255 characters.",
+						},
+						"priority": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"enable": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Enable or disable an replication rule for a bucket",
+						},
+						"prefix": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The rule applies to any objects with keys that match this prefix",
+						},
+						"deletemarker_replication_status": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Indicates whether to replicate delete markers. It should be either Enable or Disable",
+						},
+						"destination_bucket_crn": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The Cloud Resource Name (CRN) of the bucket where you want COS to store the results",
+						},
+					},
+				},
+			},
 			"hard_quota": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -327,14 +376,32 @@ func dataSourceIBMCosBucketRead(d *schema.ResourceData, meta interface{}) error 
 	serviceID := d.Get("resource_instance_id").(string)
 	bucketType := d.Get("bucket_type").(string)
 	bucketRegion := d.Get("bucket_region").(string)
-	var endpointType = d.Get("endpoint_type").(string)
-	apiEndpoint, apiEndpointPrivate, directApiEndpoint := SelectCosApi(bucketLocationConvert(bucketType), bucketRegion)
-	if endpointType == "private" {
-		apiEndpoint = apiEndpointPrivate
+	endpointType := d.Get("endpoint_type").(string)
+
+	var satlc_id, apiEndpoint, apiEndpointPrivate, directApiEndpoint string
+
+	if satlc, ok := d.GetOk("satellite_location_id"); ok {
+		satlc_id = satlc.(string)
+		satloc_guid := strings.Split(serviceID, ":")
+		bucketsatcrn := satloc_guid[7]
+		serviceID = bucketsatcrn
+		bucketType = "sl"
 	}
-	if endpointType == "direct" {
-		apiEndpoint = directApiEndpoint
+
+	if bucketType == "sl" {
+		apiEndpoint = SelectSatlocCosApi(bucketType, serviceID, satlc_id)
+
+	} else {
+		apiEndpoint, apiEndpointPrivate, directApiEndpoint = SelectCosApi(bucketLocationConvert(bucketType), bucketRegion)
+		if endpointType == "private" {
+			apiEndpoint = apiEndpointPrivate
+		}
+		if endpointType == "direct" {
+			apiEndpoint = directApiEndpoint
+		}
+
 	}
+
 	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
 	if apiEndpoint == "" {
 		return fmt.Errorf("[ERROR] The endpoint doesn't exists for given location %s and endpoint type %s", bucketRegion, endpointType)
@@ -372,26 +439,31 @@ func dataSourceIBMCosBucketRead(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("failed waiting for bucket %s to be created, %v",
 			bucketName, err)
 	}
-	bucketLocationInput := &s3.GetBucketLocationInput{
-		Bucket: aws.String(bucketName),
-	}
-	bucketLocationConstraint, err := s3Client.GetBucketLocation(bucketLocationInput)
-	if err != nil {
-		return err
-	}
-	bLocationConstraint := *bucketLocationConstraint.LocationConstraint
 
-	if singleSiteLocationRegex.MatchString(bLocationConstraint) {
-		d.Set("single_site_location", strings.Split(bLocationConstraint, "-")[0])
-		d.Set("storage_class", strings.Split(bLocationConstraint, "-")[1])
-	}
-	if regionLocationRegex.MatchString(bLocationConstraint) {
-		d.Set("region_location", fmt.Sprintf("%s-%s", strings.Split(bLocationConstraint, "-")[0], strings.Split(bLocationConstraint, "-")[1]))
-		d.Set("storage_class", strings.Split(bLocationConstraint, "-")[2])
-	}
-	if crossRegionLocationRegex.MatchString(bLocationConstraint) {
-		d.Set("cross_region_location", strings.Split(bLocationConstraint, "-")[0])
-		d.Set("storage_class", strings.Split(bLocationConstraint, "-")[1])
+	if bucketType != "sl" {
+		bucketLocationInput := &s3.GetBucketLocationInput{
+			Bucket: aws.String(bucketName),
+		}
+		bucketLocationConstraint, err := s3Client.GetBucketLocation(bucketLocationInput)
+		if err != nil {
+			return err
+		}
+		bLocationConstraint := *bucketLocationConstraint.LocationConstraint
+
+		if singleSiteLocationRegex.MatchString(bLocationConstraint) {
+			d.Set("single_site_location", strings.Split(bLocationConstraint, "-")[0])
+			d.Set("storage_class", strings.Split(bLocationConstraint, "-")[1])
+		}
+		if regionLocationRegex.MatchString(bLocationConstraint) {
+			d.Set("region_location", fmt.Sprintf("%s-%s", strings.Split(bLocationConstraint, "-")[0], strings.Split(bLocationConstraint, "-")[1]))
+			d.Set("storage_class", strings.Split(bLocationConstraint, "-")[2])
+		}
+		if crossRegionLocationRegex.MatchString(bLocationConstraint) {
+			d.Set("cross_region_location", strings.Split(bLocationConstraint, "-")[0])
+			d.Set("storage_class", strings.Split(bLocationConstraint, "-")[1])
+		}
+	} else {
+		d.Set("satellite_location_id", satlc_id)
 	}
 
 	head, err := s3Client.HeadBucket(headInput)
@@ -420,14 +492,20 @@ func dataSourceIBMCosBucketRead(d *schema.ResourceData, meta interface{}) error 
 	if endpointType == "private" {
 		sess.SetServiceURL("https://config.private.cloud-object-storage.cloud.ibm.com/v1")
 	}
-	bucketPtr, response, err := sess.GetBucketConfig(getBucketConfigOptions)
 
+	if bucketType == "sl" {
+		satconfig := fmt.Sprintf("https://config.%s.%s.cloud-object-storage.appdomain.cloud/v1", serviceID, satlc_id)
+
+		sess.SetServiceURL(satconfig)
+
+	}
+
+	bucketPtr, response, err := sess.GetBucketConfig(getBucketConfigOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error in getting bucket info rule: %s\n%s", err, response)
 	}
 
 	if bucketPtr != nil {
-
 		if bucketPtr.Firewall != nil {
 			d.Set("allowed_ip", flex.FlattenStringList(bucketPtr.Firewall.AllowedIp))
 		}
@@ -509,6 +587,24 @@ func dataSourceIBMCosBucketRead(d *schema.ResourceData, meta interface{}) error 
 		}
 	}
 
+	// Get the replication rules
+	getBucketReplicationInput := &s3.GetBucketReplicationInput{
+		Bucket: aws.String(bucketName),
+	}
+
+	replicationptr, err := s3Client.GetBucketReplication(getBucketReplicationInput)
+
+	if err != nil && !strings.Contains(err.Error(), "AccessDenied: Access Denied") && !strings.Contains(err.Error(), "The replication configuration was not found") {
+		return err
+	}
+
+	if replicationptr != nil {
+		replicationRules := flex.ReplicationRuleGet(replicationptr.ReplicationConfiguration)
+		if len(replicationRules) > 0 {
+			d.Set("replication_rule", replicationRules)
+		}
+	}
+
 	return nil
 }
 
@@ -520,7 +616,7 @@ func bucketLocationConvert(locationtype string) string {
 		return "rl"
 	}
 	if locationtype == "single_site_location" {
-		return "crl"
+		return "ssl"
 	}
 	return ""
 }

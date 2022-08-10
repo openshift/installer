@@ -47,6 +47,18 @@ func (o *PcloudCloudconnectionsNetworksPutReader) ReadResponse(response runtime.
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudCloudconnectionsNetworksPutNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 408:
+		result := NewPcloudCloudconnectionsNetworksPutRequestTimeout()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 422:
 		result := NewPcloudCloudconnectionsNetworksPutUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -181,6 +193,70 @@ func (o *PcloudCloudconnectionsNetworksPutUnauthorized) GetPayload() *models.Err
 }
 
 func (o *PcloudCloudconnectionsNetworksPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsNetworksPutNotFound creates a PcloudCloudconnectionsNetworksPutNotFound with default headers values
+func NewPcloudCloudconnectionsNetworksPutNotFound() *PcloudCloudconnectionsNetworksPutNotFound {
+	return &PcloudCloudconnectionsNetworksPutNotFound{}
+}
+
+/* PcloudCloudconnectionsNetworksPutNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudCloudconnectionsNetworksPutNotFound struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudconnectionsNetworksPutNotFound) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}][%d] pcloudCloudconnectionsNetworksPutNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudCloudconnectionsNetworksPutNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsNetworksPutNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsNetworksPutRequestTimeout creates a PcloudCloudconnectionsNetworksPutRequestTimeout with default headers values
+func NewPcloudCloudconnectionsNetworksPutRequestTimeout() *PcloudCloudconnectionsNetworksPutRequestTimeout {
+	return &PcloudCloudconnectionsNetworksPutRequestTimeout{}
+}
+
+/* PcloudCloudconnectionsNetworksPutRequestTimeout describes a response with status code 408, with default header values.
+
+Request Timeout
+*/
+type PcloudCloudconnectionsNetworksPutRequestTimeout struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudconnectionsNetworksPutRequestTimeout) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}][%d] pcloudCloudconnectionsNetworksPutRequestTimeout  %+v", 408, o.Payload)
+}
+func (o *PcloudCloudconnectionsNetworksPutRequestTimeout) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsNetworksPutRequestTimeout) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

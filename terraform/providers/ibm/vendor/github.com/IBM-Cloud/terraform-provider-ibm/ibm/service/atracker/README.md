@@ -8,4 +8,4 @@ This area is primarily for IBM provider contributors and maintainers. For inform
 * IBM Provider Docs: [Home](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs)
 * IBM Provider Docs: [One of the Activity Tracker resources](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/resources/atracker_route)
 * IBM API Docs: [IBM API Docs for Activity Tracker](https://cloud.ibm.com/apidocs/atracker)
-* IBM Activity Tracker SDK: [IBM SDK for Activity Tracker](https://github.com/IBM/platform-services-go-sdk/tree/main/atrackerv1)
+* IBM Activity Tracker SDK: [IBM SDK for Activity Tracker](https://github.com/IBM/platform-services-go-sdk/tree/main/atrackerv2)

@@ -163,9 +163,8 @@ func DataSourceIBMIsBareMetalServers() *schema.Resource {
 										Computed: true,
 									},
 									isBareMetalServerNicPortSpeed: {
-										Type:       schema.TypeInt,
-										Computed:   true,
-										Deprecated: "This field is deprected",
+										Type:     schema.TypeInt,
+										Computed: true,
 									},
 									isBareMetalServerNicHref: {
 										Type:       schema.TypeString,
@@ -193,6 +192,26 @@ func DataSourceIBMIsBareMetalServers() *schema.Resource {
 													Type:        schema.TypeString,
 													Computed:    true,
 													Description: "The globally unique IP address",
+												},
+												isBareMetalServerNicIpHref: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The URL for this reserved IP",
+												},
+												isBareMetalServerNicIpName: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The user-defined name for this reserved IP. If unspecified, the name will be a hyphenated list of randomly-selected words. Names must be unique within the subnet the reserved IP resides in. ",
+												},
+												isBareMetalServerNicIpID: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Identifies a reserved IP by a unique property.",
+												},
+												isBareMetalServerNicResourceType: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The resource type",
 												},
 											},
 										},
@@ -244,6 +263,26 @@ func DataSourceIBMIsBareMetalServers() *schema.Resource {
 													Type:        schema.TypeString,
 													Computed:    true,
 													Description: "The globally unique IP address",
+												},
+												isBareMetalServerNicIpHref: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The URL for this reserved IP",
+												},
+												isBareMetalServerNicIpName: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The user-defined name for this reserved IP. If unspecified, the name will be a hyphenated list of randomly-selected words. Names must be unique within the subnet the reserved IP resides in. ",
+												},
+												isBareMetalServerNicIpID: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Identifies a reserved IP by a unique property.",
+												},
+												isBareMetalServerNicResourceType: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The resource type",
 												},
 											},
 										},
@@ -316,13 +355,19 @@ func DataSourceIBMIsBareMetalServers() *schema.Resource {
 										Computed:    true,
 										Description: "An explanation of the status reason",
 									},
+
+									isBareMetalServerStatusReasonsMoreInfo: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about this status reason",
+									},
 								},
 							},
 						},
 						isBareMetalServerTags: {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_bare_metal_server", "tag")},
+							Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_bare_metal_server", "tags")},
 							Set:         flex.ResourceIBMVPCHash,
 							Description: "Tags for the Bare metal server",
 						},
@@ -413,8 +458,21 @@ func dataSourceIBMISBareMetalServersRead(context context.Context, d *schema.Reso
 			currentPrimNic[isBareMetalServerNicHref] = *bms.PrimaryNetworkInterface.Href
 			currentPrimNic[isBareMetalServerNicSubnet] = *bms.PrimaryNetworkInterface.Subnet.ID
 			primaryIpList := make([]map[string]interface{}, 0)
-			currentIP := map[string]interface{}{
-				isBareMetalServerNicIpAddress: *bms.PrimaryNetworkInterface.PrimaryIpv4Address,
+			currentIP := map[string]interface{}{}
+			if bms.PrimaryNetworkInterface.PrimaryIP.Href != nil {
+				currentIP[isBareMetalServerNicIpAddress] = *bms.PrimaryNetworkInterface.PrimaryIP.Address
+			}
+			if bms.PrimaryNetworkInterface.PrimaryIP.Href != nil {
+				currentIP[isBareMetalServerNicIpHref] = *bms.PrimaryNetworkInterface.PrimaryIP.Href
+			}
+			if bms.PrimaryNetworkInterface.PrimaryIP.Name != nil {
+				currentIP[isBareMetalServerNicIpName] = *bms.PrimaryNetworkInterface.PrimaryIP.Name
+			}
+			if bms.PrimaryNetworkInterface.PrimaryIP.ID != nil {
+				currentIP[isBareMetalServerNicIpID] = *bms.PrimaryNetworkInterface.PrimaryIP.ID
+			}
+			if bms.PrimaryNetworkInterface.PrimaryIP.ResourceType != nil {
+				currentIP[isBareMetalServerNicResourceType] = *bms.PrimaryNetworkInterface.PrimaryIP.ResourceType
 			}
 			primaryIpList = append(primaryIpList, currentIP)
 			currentPrimNic[isBareMetalServerNicPrimaryIP] = primaryIpList
@@ -432,6 +490,7 @@ func dataSourceIBMISBareMetalServersRead(context context.Context, d *schema.Reso
 				{
 					primNic := bmsnic.(*vpcv1.BareMetalServerNetworkInterfaceByPci)
 					currentPrimNic[isInstanceNicAllowIPSpoofing] = *primNic.AllowIPSpoofing
+					currentPrimNic[isBareMetalServerNicPortSpeed] = *primNic.PortSpeed
 					if len(primNic.SecurityGroups) != 0 {
 						secgrpList := []string{}
 						for i := 0; i < len(primNic.SecurityGroups); i++ {
@@ -444,6 +503,7 @@ func dataSourceIBMISBareMetalServersRead(context context.Context, d *schema.Reso
 				{
 					primNic := bmsnic.(*vpcv1.BareMetalServerNetworkInterfaceByVlan)
 					currentPrimNic[isInstanceNicAllowIPSpoofing] = *primNic.AllowIPSpoofing
+					currentPrimNic[isBareMetalServerNicPortSpeed] = *primNic.PortSpeed
 
 					if len(primNic.SecurityGroups) != 0 {
 						secgrpList := []string{}
@@ -469,8 +529,21 @@ func dataSourceIBMISBareMetalServersRead(context context.Context, d *schema.Reso
 				currentNic[isBareMetalServerNicHref] = *intfc.Href
 				currentNic[isBareMetalServerNicName] = *intfc.Name
 				primaryIpList := make([]map[string]interface{}, 0)
-				currentIP := map[string]interface{}{
-					isBareMetalServerNicIpAddress: *intfc.PrimaryIpv4Address,
+				currentIP := map[string]interface{}{}
+				if intfc.PrimaryIP.Href != nil {
+					currentIP[isBareMetalServerNicIpAddress] = *intfc.PrimaryIP.Address
+				}
+				if intfc.PrimaryIP.Href != nil {
+					currentIP[isBareMetalServerNicIpHref] = *intfc.PrimaryIP.Href
+				}
+				if intfc.PrimaryIP.Name != nil {
+					currentIP[isBareMetalServerNicIpName] = *intfc.PrimaryIP.Name
+				}
+				if intfc.PrimaryIP.ID != nil {
+					currentIP[isBareMetalServerNicIpID] = *intfc.PrimaryIP.ID
+				}
+				if intfc.PrimaryIP.ResourceType != nil {
+					currentIP[isBareMetalServerNicResourceType] = *intfc.PrimaryIP.ResourceType
 				}
 				primaryIpList = append(primaryIpList, currentIP)
 				currentNic[isBareMetalServerNicPrimaryIP] = primaryIpList
@@ -527,6 +600,9 @@ func dataSourceIBMISBareMetalServersRead(context context.Context, d *schema.Reso
 				if sr.Code != nil && sr.Message != nil {
 					currentSR[isBareMetalServerStatusReasonsCode] = *sr.Code
 					currentSR[isBareMetalServerStatusReasonsMessage] = *sr.Message
+					if sr.MoreInfo != nil {
+						currentSR[isBareMetalServerStatusReasonsMoreInfo] = *sr.MoreInfo
+					}
 					statusReasonsList = append(statusReasonsList, currentSR)
 				}
 			}

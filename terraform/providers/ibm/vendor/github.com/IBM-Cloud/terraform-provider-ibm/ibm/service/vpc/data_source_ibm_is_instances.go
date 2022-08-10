@@ -147,6 +147,12 @@ func DataSourceIBMISInstances() *schema.Resource {
 										Computed:    true,
 										Description: "An explanation of the status reason",
 									},
+
+									isInstanceStatusReasonsMoreInfo: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about this status reason",
+									},
 								},
 							},
 						},
@@ -252,6 +258,40 @@ func DataSourceIBMISInstances() *schema.Resource {
 										Computed:    true,
 										Description: "Instance Primary Network interface IPV4 Address",
 									},
+									isInstanceNicPrimaryIP: {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The primary IP address to bind to the network interface. This can be specified using an existing reserved IP, or a prototype object for a new reserved IP.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												isInstanceNicReservedIpAddress: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The IP address to reserve, which must not already be reserved on the subnet.",
+												},
+												isInstanceNicReservedIpHref: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The URL for this reserved IP",
+												},
+												isInstanceNicReservedIpName: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The user-defined name for this reserved IP. If unspecified, the name will be a hyphenated list of randomly-selected words. Names must be unique within the subnet the reserved IP resides in. ",
+												},
+												isInstanceNicReservedIpId: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Identifies a reserved IP by a unique property.",
+												},
+												isInstanceNicReservedIpResourceType: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The resource type",
+												},
+											},
+										},
+									},
 									isInstanceNicSecurityGroups: {
 										Type:        schema.TypeSet,
 										Computed:    true,
@@ -335,6 +375,40 @@ func DataSourceIBMISInstances() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Instance Network interface IPV4 Address",
+									},
+									isInstanceNicPrimaryIP: {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The primary IP address to bind to the network interface. This can be specified using an existing reserved IP, or a prototype object for a new reserved IP.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												isInstanceNicReservedIpAddress: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The IP address to reserve, which must not already be reserved on the subnet.",
+												},
+												isInstanceNicReservedIpHref: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The URL for this reserved IP",
+												},
+												isInstanceNicReservedIpName: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The user-defined name for this reserved IP. If unspecified, the name will be a hyphenated list of randomly-selected words. Names must be unique within the subnet the reserved IP resides in. ",
+												},
+												isInstanceNicReservedIpId: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Identifies a reserved IP by a unique property.",
+												},
+												isInstanceNicReservedIpResourceType: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The resource type",
+												},
+											},
+										},
 									},
 									isInstanceNicSecurityGroups: {
 										Type:        schema.TypeSet,
@@ -711,6 +785,9 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 				if sr.Code != nil && sr.Message != nil {
 					currentSR[isInstanceStatusReasonsCode] = *sr.Code
 					currentSR[isInstanceStatusReasonsMessage] = *sr.Message
+					if sr.MoreInfo != nil {
+						currentSR[isInstanceStatusReasonsMoreInfo] = *sr.MoreInfo
+					}
 					statusReasonsList = append(statusReasonsList, currentSR)
 				}
 			}
@@ -738,7 +815,30 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 			currentPrimNic := map[string]interface{}{}
 			currentPrimNic["id"] = *instance.PrimaryNetworkInterface.ID
 			currentPrimNic[isInstanceNicName] = *instance.PrimaryNetworkInterface.Name
-			currentPrimNic[isInstanceNicPrimaryIpv4Address] = *instance.PrimaryNetworkInterface.PrimaryIpv4Address
+
+			// reserved ip changes
+			primaryIpList := make([]map[string]interface{}, 0)
+			currentPrimIp := map[string]interface{}{}
+
+			if instance.PrimaryNetworkInterface.PrimaryIP.Address != nil {
+				currentPrimNic[isInstanceNicPrimaryIpv4Address] = *instance.PrimaryNetworkInterface.PrimaryIP.Address
+				currentPrimIp[isInstanceNicReservedIpAddress] = *instance.PrimaryNetworkInterface.PrimaryIP.Address
+			}
+			if instance.PrimaryNetworkInterface.PrimaryIP.Href != nil {
+				currentPrimIp[isInstanceNicReservedIpHref] = *instance.PrimaryNetworkInterface.PrimaryIP.Href
+			}
+			if instance.PrimaryNetworkInterface.PrimaryIP.Name != nil {
+				currentPrimIp[isInstanceNicReservedIpName] = *instance.PrimaryNetworkInterface.PrimaryIP.Name
+			}
+			if instance.PrimaryNetworkInterface.PrimaryIP.ID != nil {
+				currentPrimIp[isInstanceNicReservedIpId] = *instance.PrimaryNetworkInterface.PrimaryIP.ID
+			}
+			if instance.PrimaryNetworkInterface.PrimaryIP.ResourceType != nil {
+				currentPrimIp[isInstanceNicReservedIpResourceType] = *instance.PrimaryNetworkInterface.PrimaryIP.ResourceType
+			}
+			primaryIpList = append(primaryIpList, currentPrimIp)
+			currentPrimNic[isInstanceNicPrimaryIP] = primaryIpList
+
 			getnicoptions := &vpcv1.GetInstanceNetworkInterfaceOptions{
 				InstanceID: &id,
 				ID:         instance.PrimaryNetworkInterface.ID,
@@ -767,7 +867,29 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 					currentNic := map[string]interface{}{}
 					currentNic["id"] = *intfc.ID
 					currentNic[isInstanceNicName] = *intfc.Name
-					currentNic[isInstanceNicPrimaryIpv4Address] = *intfc.PrimaryIpv4Address
+
+					// reserved ip changes
+					primaryIpList := make([]map[string]interface{}, 0)
+					currentPrimIp := map[string]interface{}{}
+					if intfc.PrimaryIP.Address != nil {
+						currentPrimIp[isInstanceNicReservedIpAddress] = *intfc.PrimaryIP.Address
+						currentNic[isInstanceNicPrimaryIpv4Address] = *intfc.PrimaryIP.Address
+					}
+					if intfc.PrimaryIP.Href != nil {
+						currentPrimIp[isInstanceNicReservedIpHref] = *intfc.PrimaryIP.Href
+					}
+					if intfc.PrimaryIP.Name != nil {
+						currentPrimIp[isInstanceNicReservedIpName] = *intfc.PrimaryIP.Name
+					}
+					if intfc.PrimaryIP.ID != nil {
+						currentPrimIp[isInstanceNicReservedIpId] = *intfc.PrimaryIP.ID
+					}
+					if intfc.PrimaryIP.ResourceType != nil {
+						currentPrimIp[isInstanceNicReservedIpResourceType] = *intfc.PrimaryIP.ResourceType
+					}
+					primaryIpList = append(primaryIpList, currentPrimIp)
+					currentNic[isInstanceNicPrimaryIP] = primaryIpList
+
 					getnicoptions := &vpcv1.GetInstanceNetworkInterfaceOptions{
 						InstanceID: &id,
 						ID:         intfc.ID,

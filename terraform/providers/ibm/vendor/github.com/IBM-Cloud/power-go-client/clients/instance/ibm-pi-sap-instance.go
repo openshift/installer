@@ -10,19 +10,19 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPISAPInstanceClient ...
+// IBMPISAPInstanceClient
 type IBMPISAPInstanceClient struct {
 	IBMPIClient
 }
 
-// NewIBMPISAPInstanceClient ...
+// NewIBMPISAPInstanceClient
 func NewIBMPISAPInstanceClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPISAPInstanceClient {
 	return &IBMPISAPInstanceClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
 	}
 }
 
-// Create a SAP instance
+// Create a SAP Instance
 func (f *IBMPISAPInstanceClient) Create(body *models.SAPCreate) (*models.PVMInstanceList, error) {
 	params := p_cloud_s_a_p.NewPcloudSapPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -43,7 +43,7 @@ func (f *IBMPISAPInstanceClient) Create(body *models.SAPCreate) (*models.PVMInst
 	return nil, fmt.Errorf("failed to Create SAP Instance")
 }
 
-// Get SAP Profile
+// Get a SAP Profile
 func (f *IBMPISAPInstanceClient) GetSAPProfile(id string) (*models.SAPProfile, error) {
 	params := p_cloud_s_a_p.NewPcloudSapGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -58,7 +58,7 @@ func (f *IBMPISAPInstanceClient) GetSAPProfile(id string) (*models.SAPProfile, e
 	return resp.Payload, nil
 }
 
-// GetAll SAP Profiles
+// Get All SAP Profiles
 func (f *IBMPISAPInstanceClient) GetAllSAPProfiles(cloudInstanceID string) (*models.SAPProfiles, error) {
 	params := p_cloud_s_a_p.NewPcloudSapGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).

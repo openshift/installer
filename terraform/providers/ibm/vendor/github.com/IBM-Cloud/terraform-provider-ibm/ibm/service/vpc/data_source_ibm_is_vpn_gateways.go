@@ -62,7 +62,6 @@ func DataSourceIBMISVPNGateways() *schema.Resource {
 										Computed:    true,
 										Description: "The private IP address assigned to the VPN gateway member",
 									},
-
 									"role": {
 										Type:        schema.TypeString,
 										Computed:    true,
@@ -161,7 +160,7 @@ func dataSourceIBMVPNGatewaysRead(d *schema.ResourceData, meta interface{}) erro
 					currentMemberIP["status"] = *memberIP.Status
 					vpcMembersIpsList = append(vpcMembersIpsList, currentMemberIP)
 				}
-				if memberIP.PrivateIP != nil {
+				if memberIP.PrivateIP != nil && memberIP.PrivateIP.Address != nil {
 					currentMemberIP["private_address"] = *memberIP.PrivateIP.Address
 				}
 			}

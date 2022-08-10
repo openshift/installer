@@ -42,14 +42,14 @@ func ResourceIBMIAMAccountSettings() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				ValidateFunc: validate.InvokeValidator(accountSettings, restrictCreateServiceId),
+				ValidateFunc: validate.InvokeValidator(accountSettings, "restrict_create_service_id"),
 				Description:  "Defines whether or not creating a Service Id is access controlled. Valid values:  * RESTRICTED - to apply access control  * NOT_RESTRICTED - to remove access control  * NOT_SET - to 'unset' a previous set value.",
 			},
 			"restrict_create_platform_apikey": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				ValidateFunc: validate.InvokeValidator(accountSettings, restrictCreateApiKey),
+				ValidateFunc: validate.InvokeValidator(accountSettings, "restrict_create_platform_apikey"),
 				Description:  "Defines whether or not creating platform API keys is access controlled. Valid values:  * RESTRICTED - to apply access control  * NOT_RESTRICTED - to remove access control  * NOT_SET - to 'unset' a previous set value.",
 			},
 			"allowed_ip_addresses": {
@@ -67,7 +67,7 @@ func ResourceIBMIAMAccountSettings() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				ValidateFunc: validate.InvokeValidator(accountSettings, mfa),
+				ValidateFunc: validate.InvokeValidator(accountSettings, "mfa"),
 				Description:  "Defines the MFA trait for the account. Valid values:  * NONE - No MFA trait set  * TOTP - For all non-federated IBMId users  * TOTP4ALL - For all users  * LEVEL1 - Email-based MFA for all users  * LEVEL2 - TOTP-based MFA for all users  * LEVEL3 - U2F MFA for all users.",
 			},
 			"if_match": {

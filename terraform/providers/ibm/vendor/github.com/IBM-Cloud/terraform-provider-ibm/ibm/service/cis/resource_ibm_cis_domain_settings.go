@@ -57,16 +57,16 @@ const (
 	cisDomainSettingsMobileRedirectStripURI          = "strip_uri"
 	cisDomainSettingsMaxUpload                       = "max_upload"
 	cisDomainSettingsCipher                          = "cipher"
-	cisDomainSettingsONOFFValidatorID                = "on_off"
-	cisDomainSettingsActiveDisableValidatorID        = "active_disable"
-	cisDomainSettingsSSLSettingValidatorID           = "ssl_setting"
-	cisDomainSettingsTLSVersionValidatorID           = "tls_version"
-	cisDomainSettingsCNAMEFlattenValidatorID         = "cname_flatten"
-	cisDomainSettingsImgSizeOptimizeValidatorID      = "img_size_optimize"
-	cisDomainSettingsPseudoIPv4ValidatorID           = "psuedo_ipv4"
-	cisDomainSettingsChallengeTTLValidatorID         = "challenge_ttl"
-	cisDomainSettingsMaxUploadValidatorID            = "max_upload"
-	cisDomainSettingsCipherValidatorID               = "cipher"
+	// cisDomainSettingsONOFFValidatorID                = "on_off"
+	// cisDomainSettingsActiveDisableValidatorID        = "active_disable"
+	cisDomainSettingsSSLSettingValidatorID      = "ssl_setting"
+	cisDomainSettingsTLSVersionValidatorID      = "tls_version"
+	cisDomainSettingsCNAMEFlattenValidatorID    = "cname_flatten"
+	cisDomainSettingsImgSizeOptimizeValidatorID = "img_size_optimize"
+	cisDomainSettingsPseudoIPv4ValidatorID      = "psuedo_ipv4"
+	cisDomainSettingsChallengeTTLValidatorID    = "challenge_ttl"
+	cisDomainSettingsMaxUploadValidatorID       = "max_upload"
+	cisDomainSettingsCipherValidatorID          = "cipher"
 )
 
 func ResourceIBMCISSettings() *schema.Resource {
@@ -90,7 +90,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsActiveDisableValidatorID),
+					cisDomainSettingsDNSSEC),
 			},
 			cisDomainSettingsWAF: {
 				Type:        schema.TypeString,
@@ -99,7 +99,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsWAF),
 			},
 			cisDomainSettingsSSL: {
 				Type:        schema.TypeString,
@@ -141,7 +141,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsOpportunisticEncryption),
 			},
 			cisDomainSettingsAutomaticHTPSRewrites: {
 				Type:        schema.TypeString,
@@ -150,7 +150,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsAutomaticHTPSRewrites),
 			},
 			cisDomainSettingsAlwaysUseHTTPS: {
 				Type:        schema.TypeString,
@@ -159,7 +159,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsAlwaysUseHTTPS),
 			},
 			cisDomainSettingsIPv6: {
 				Type:        schema.TypeString,
@@ -168,7 +168,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsIPv6),
 			},
 			cisDomainSettingsBrowserCheck: {
 				Type:        schema.TypeString,
@@ -177,7 +177,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsBrowserCheck),
 			},
 			cisDomainSettingsHotlinkProtection: {
 				Type:        schema.TypeString,
@@ -186,7 +186,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsHotlinkProtection),
 			},
 			cisDomainSettingsHTTP2: {
 				Type:        schema.TypeString,
@@ -195,7 +195,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsHTTP2),
 			},
 			cisDomainSettingsImageLoadOptimization: {
 				Type:        schema.TypeString,
@@ -204,7 +204,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsImageLoadOptimization),
 			},
 			cisDomainSettingsImageSizeOptimization: {
 				Type:        schema.TypeString,
@@ -222,7 +222,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsIPGeoLocation),
 			},
 			cisDomainSettingsOriginErrorPagePassThru: {
 				Type:        schema.TypeString,
@@ -231,7 +231,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsOriginErrorPagePassThru),
 			},
 			cisDomainSettingsBrotli: {
 				Type:        schema.TypeString,
@@ -240,7 +240,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsBrotli),
 			},
 			cisDomainSettingsPseudoIPv4: {
 				Type:        schema.TypeString,
@@ -258,7 +258,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsPrefetchPreload),
 			},
 			cisDomainSettingsResponseBuffering: {
 				Type:        schema.TypeString,
@@ -267,7 +267,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsResponseBuffering),
 			},
 			cisDomainSettingsScriptLoadOptimisation: {
 				Type:        schema.TypeString,
@@ -276,7 +276,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsScriptLoadOptimisation),
 			},
 			cisDomainSettingsServerSideExclude: {
 				Type:        schema.TypeString,
@@ -285,7 +285,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsServerSideExclude),
 			},
 			cisDomainSettingsTLSClientAuth: {
 				Type:        schema.TypeString,
@@ -294,7 +294,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsTLSClientAuth),
 			},
 			cisDomainSettingsTrueClientIPHeader: {
 				Type:        schema.TypeString,
@@ -303,7 +303,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsTrueClientIPHeader),
 			},
 			cisDomainSettingsWebSockets: {
 				Type:        schema.TypeString,
@@ -312,7 +312,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
-					cisDomainSettingsONOFFValidatorID),
+					cisDomainSettingsWebSockets),
 			},
 			cisDomainSettingsChallengeTTL: {
 				Type:        schema.TypeInt,
@@ -360,7 +360,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 							Required:    true,
 							ValidateFunc: validate.InvokeValidator(
 								ibmCISDomainSettings,
-								cisDomainSettingsONOFFValidatorID),
+								cisDomainSettingsMinifyCSS),
 						},
 						cisDomainSettingsMinifyHTML: {
 							Type:        schema.TypeString,
@@ -368,7 +368,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 							Required:    true,
 							ValidateFunc: validate.InvokeValidator(
 								ibmCISDomainSettings,
-								cisDomainSettingsONOFFValidatorID),
+								cisDomainSettingsMinifyHTML),
 						},
 						cisDomainSettingsMinifyJS: {
 							Type:        schema.TypeString,
@@ -376,7 +376,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 							Required:    true,
 							ValidateFunc: validate.InvokeValidator(
 								ibmCISDomainSettings,
-								cisDomainSettingsONOFFValidatorID),
+								cisDomainSettingsMinifyJS),
 						},
 					},
 				},
@@ -427,7 +427,7 @@ func ResourceIBMCISSettings() *schema.Resource {
 							Required:    true,
 							ValidateFunc: validate.InvokeValidator(
 								ibmCISDomainSettings,
-								cisDomainSettingsONOFFValidatorID),
+								cisDomainSettingsMobileRedirectStatus),
 						},
 						cisDomainSettingsMobileRedirectMobileSubdomain: {
 							Type:        schema.TypeString,
@@ -463,13 +463,13 @@ func ResourceIBMCISDomainSettingValidator() *validate.ResourceValidator {
 	pseudoIPv4 := "overwrite_header, off, add_header"
 	challengeTTL := "300, 900, 1800, 2700, 3600, 7200, 10800, 14400, 28800, 57600, 86400, 604800, 2592000, 31536000"
 	maxUpload := "100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500"
-	cipher := "ECDHE-ECDSA-AES128-GCM-SHA256,ECDHE-ECDSA-CHACHA20-POLY1305, ECDHE-RSA-AES128-GCM-SHA256,ECDHE-RSA-CHACHA20-POLY1305, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-RSA-AES128-SHA256, ECDHE-RSA-AES128-SHA, AES128-GCM-SHA256, AES128-SHA256, AES128-SHA, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA384, ECDHE-RSA-AES256-GCM-SHA384, ECDHE-RSA-AES256-SHA384, ECDHE-RSA-AES256-SHA, AES256-GCM-SHA384, AES256-SHA256, AES256-SHA, DES-CBC3-SHA"
+	cipher := "ECDHE-ECDSA-AES128-GCM-SHA256,ECDHE-ECDSA-CHACHA20-POLY1305, ECDHE-RSA-AES128-GCM-SHA256,ECDHE-RSA-CHACHA20-POLY1305, ECDHE-ECDSA-AES128-SHA256, ECDHE-ECDSA-AES128-SHA, ECDHE-RSA-AES128-SHA256, ECDHE-RSA-AES128-SHA, AES128-GCM-SHA256, AES128-SHA256, AES128-SHA, ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES256-SHA384, ECDHE-RSA-AES256-GCM-SHA384, ECDHE-RSA-AES256-SHA384, ECDHE-RSA-AES256-SHA, AES256-GCM-SHA384, AES256-SHA256, AES256-SHA, DES-CBC3-SHA, AEAD-AES128-GCM-SHA256, AEAD-AES256-GCM-SHA384, AEAD-CHACHA20-POLY1305-SHA256"
 
 	validateSchema := make([]validate.ValidateSchema, 0)
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 cisDomainSettingsONOFFValidatorID,
+			Identifier:                 cisDomainSettingsWAF,
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			Required:                   true,
@@ -477,7 +477,172 @@ func ResourceIBMCISDomainSettingValidator() *validate.ResourceValidator {
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 cisDomainSettingsActiveDisableValidatorID,
+			Identifier:                 cisDomainSettingsOpportunisticEncryption,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsAutomaticHTPSRewrites,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsAlwaysUseHTTPS,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsIPv6,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsBrowserCheck,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsHotlinkProtection,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsHTTP2,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsImageLoadOptimization,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsIPGeoLocation,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsOriginErrorPagePassThru,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsBrotli,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsPrefetchPreload,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsResponseBuffering,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsScriptLoadOptimisation,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsServerSideExclude,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsTLSClientAuth,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsTrueClientIPHeader,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsWebSockets,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsMinifyCSS,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsMinifyHTML,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsMinifyJS,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsMobileRedirectStatus,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "on, off"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsDNSSEC,
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			Required:                   true,

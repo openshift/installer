@@ -9,8 +9,18 @@ import (
 // WorkerPoolRequest provides worker pool data
 // swagger:model
 type WorkerPoolRequest struct {
-	Cluster string `json:"cluster" description:"cluster name where the worker pool will be created"`
-	WorkerPoolConfig
+	Cluster                string                  `json:"cluster" description:"cluster name where the worker pool will be created"`
+	DiskEncryption         bool                    `json:"diskEncryption,omitempty"`
+	Entitlement            string                  `json:"entitlement"`
+	Flavor                 string                  `json:"flavor"`
+	HostPoolID             string                  `json:"hostPool,omitempty"`
+	Isolation              string                  `json:"isolation,omitempty"`
+	Labels                 map[string]string       `json:"labels,omitempty"`
+	Name                   string                  `json:"name" binding:"required" description:"The workerpool's name"`
+	VpcID                  string                  `json:"vpcID"`
+	WorkerCount            int                     `json:"workerCount"`
+	Zones                  []Zone                  `json:"zones"`
+	WorkerVolumeEncryption *WorkerVolumeEncryption `json:"workerVolumeEncryption,omitempty"`
 }
 type WorkerPoolTaintRequest struct {
 	Cluster    string            `json:"cluster" description:"cluster name"`
@@ -32,17 +42,19 @@ type WorkerPoolZone struct {
 }
 
 type GetWorkerPoolResponse struct {
-	Flavor      string            `json:"flavor"`
-	ID          string            `json:"id"`
-	Isolation   string            `json:"isolation"`
-	Labels      map[string]string `json:"labels,omitempty"`
-	Taints      map[string]string `json:"taints,omitempty"`
-	Lifecycle   `json:"lifecycle"`
-	VpcID       string     `json:"vpcID"`
-	WorkerCount int        `json:"workerCount"`
-	PoolName    string     `json:"poolName"`
-	Provider    string     `json:"provider"`
-	Zones       []ZoneResp `json:"zones"`
+	HostPoolID             string            `json:"dedicatedHostPoolId,omitempty"`
+	Flavor                 string            `json:"flavor"`
+	ID                     string            `json:"id"`
+	Isolation              string            `json:"isolation"`
+	Labels                 map[string]string `json:"labels,omitempty"`
+	Taints                 map[string]string `json:"taints,omitempty"`
+	Lifecycle              `json:"lifecycle"`
+	VpcID                  string                  `json:"vpcID"`
+	WorkerCount            int                     `json:"workerCount"`
+	PoolName               string                  `json:"poolName"`
+	Provider               string                  `json:"provider"`
+	Zones                  []ZoneResp              `json:"zones"`
+	WorkerVolumeEncryption *WorkerVolumeEncryption `json:"workerVolumeEncryption,omitempty"`
 }
 
 type Lifecycle struct {

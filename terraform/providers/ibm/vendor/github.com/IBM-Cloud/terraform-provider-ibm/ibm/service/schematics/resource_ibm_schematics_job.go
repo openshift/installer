@@ -2009,21 +2009,21 @@ func ResourceIBMSchematicsJob() *schema.Resource {
 																	},
 																},
 															},
-															"cos_bucket": {
-																Type:        schema.TypeList,
-																MaxItems:    1,
-																Optional:    true,
-																Description: "Connection details to a IBM Cloud Object Storage bucket.",
-																Elem: &schema.Resource{
-																	Schema: map[string]*schema.Schema{
-																		"cos_bucket_url": {
-																			Type:        schema.TypeString,
-																			Optional:    true,
-																			Description: "COS Bucket Url.",
-																		},
-																	},
-																},
-															},
+															// "cos_bucket": {
+															// 	Type:        schema.TypeList,
+															// 	MaxItems:    1,
+															// 	Optional:    true,
+															// 	Description: "Connection details to a IBM Cloud Object Storage bucket.",
+															// 	Elem: &schema.Resource{
+															// 		Schema: map[string]*schema.Schema{
+															// 			"cos_bucket_url": {
+															// 				Type:        schema.TypeString,
+															// 				Optional:    true,
+															// 				Description: "COS Bucket Url.",
+															// 			},
+															// 		},
+															// 	},
+															// },
 														},
 													},
 												},
@@ -2815,7 +2815,7 @@ func ResourceIBMSchematicsJob() *schema.Resource {
 }
 
 func ResourceIBMSchematicsJobValidator() *validate.ResourceValidator {
-	validateSchema := make([]validate.ValidateSchema, 1)
+	validateSchema := make([]validate.ValidateSchema, 0)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 "command_object",
@@ -3008,6 +3008,44 @@ func resourceIBMSchematicsJobMapToVariableMetadata(variableMetadataMap map[strin
 	if variableMetadataMap["matches"] != nil {
 		variableMetadata.Matches = core.StringPtr(variableMetadataMap["matches"].(string))
 	}
+	if variableMetadataMap["position"] != nil {
+		variableMetadata.Position = core.Int64Ptr(int64(variableMetadataMap["position"].(int)))
+	}
+	if variableMetadataMap["group_by"] != nil {
+		variableMetadata.GroupBy = core.StringPtr(variableMetadataMap["group_by"].(string))
+	}
+	if variableMetadataMap["source"] != nil {
+		variableMetadata.Source = core.StringPtr(variableMetadataMap["source"].(string))
+	}
+
+	return variableMetadata
+}
+func resourceIBMSchematicsJobMapToCredentialVariableMetadata(variableMetadataMap map[string]interface{}) schematicsv1.CredentialVariableMetadata {
+	variableMetadata := schematicsv1.CredentialVariableMetadata{}
+
+	if variableMetadataMap["type"] != nil {
+		variableMetadata.Type = core.StringPtr(variableMetadataMap["type"].(string))
+	}
+	if variableMetadataMap["aliases"] != nil {
+		aliases := []string{}
+		for _, aliasesItem := range variableMetadataMap["aliases"].([]interface{}) {
+			aliases = append(aliases, aliasesItem.(string))
+		}
+		variableMetadata.Aliases = aliases
+	}
+	if variableMetadataMap["description"] != nil {
+		variableMetadata.Description = core.StringPtr(variableMetadataMap["description"].(string))
+	}
+	if variableMetadataMap["default_value"] != nil {
+		variableMetadata.DefaultValue = core.StringPtr(variableMetadataMap["default_value"].(string))
+	}
+	if variableMetadataMap["immutable"] != nil {
+		variableMetadata.Immutable = core.BoolPtr(variableMetadataMap["immutable"].(bool))
+	}
+	if variableMetadataMap["hidden"] != nil {
+		variableMetadata.Hidden = core.BoolPtr(variableMetadataMap["hidden"].(bool))
+	}
+
 	if variableMetadataMap["position"] != nil {
 		variableMetadata.Position = core.Int64Ptr(int64(variableMetadataMap["position"].(int)))
 	}
@@ -3534,8 +3572,8 @@ func resourceIBMSchematicsJobMapToExternalSource(externalSourceMap map[string]in
 	return externalSource
 }
 
-func resourceIBMSchematicsJobMapToExternalSourceGit(externalSourceGitMap map[string]interface{}) schematicsv1.ExternalSourceGit {
-	externalSourceGit := schematicsv1.ExternalSourceGit{}
+func resourceIBMSchematicsJobMapToExternalSourceGit(externalSourceGitMap map[string]interface{}) schematicsv1.GitSource {
+	externalSourceGit := schematicsv1.GitSource{}
 
 	if externalSourceGitMap["computed_git_repo_url"] != nil {
 		externalSourceGit.ComputedGitRepoURL = core.StringPtr(externalSourceGitMap["computed_git_repo_url"].(string))
@@ -3559,8 +3597,8 @@ func resourceIBMSchematicsJobMapToExternalSourceGit(externalSourceGitMap map[str
 	return externalSourceGit
 }
 
-func resourceIBMSchematicsJobMapToExternalSourceCatalog(externalSourceCatalogMap map[string]interface{}) schematicsv1.ExternalSourceCatalog {
-	externalSourceCatalog := schematicsv1.ExternalSourceCatalog{}
+func resourceIBMSchematicsJobMapToExternalSourceCatalog(externalSourceCatalogMap map[string]interface{}) schematicsv1.CatalogSource {
+	externalSourceCatalog := schematicsv1.CatalogSource{}
 
 	if externalSourceCatalogMap["catalog_name"] != nil {
 		externalSourceCatalog.CatalogName = core.StringPtr(externalSourceCatalogMap["catalog_name"].(string))
@@ -3587,15 +3625,15 @@ func resourceIBMSchematicsJobMapToExternalSourceCatalog(externalSourceCatalogMap
 	return externalSourceCatalog
 }
 
-func resourceIBMSchematicsJobMapToExternalSourceCosBucket(externalSourceCosBucketMap map[string]interface{}) schematicsv1.ExternalSourceCosBucket {
-	externalSourceCosBucket := schematicsv1.ExternalSourceCosBucket{}
+// func resourceIBMSchematicsJobMapToExternalSourceCosBucket(externalSourceCosBucketMap map[string]interface{}) schematicsv1.ExternalSourceCosBucket {
+// 	externalSourceCosBucket := schematicsv1.ExternalSourceCosBucket{}
 
-	if externalSourceCosBucketMap["cos_bucket_url"] != nil {
-		externalSourceCosBucket.CosBucketURL = core.StringPtr(externalSourceCosBucketMap["cos_bucket_url"].(string))
-	}
+// 	if externalSourceCosBucketMap["cos_bucket_url"] != nil {
+// 		externalSourceCosBucket.CosBucketURL = core.StringPtr(externalSourceCosBucketMap["cos_bucket_url"].(string))
+// 	}
 
-	return externalSourceCosBucket
-}
+// 	return externalSourceCosBucket
+// }
 
 func resourceIBMSchematicsJobMapToJobDataWorkItemLastJob(jobDataWorkItemLastJobMap map[string]interface{}) schematicsv1.JobDataWorkItemLastJob {
 	jobDataWorkItemLastJob := schematicsv1.JobDataWorkItemLastJob{}
@@ -4592,15 +4630,15 @@ func resourceIBMSchematicsJobExternalSourceToMap(externalSource schematicsv1.Ext
 		CatalogMap := resourceIBMSchematicsJobExternalSourceCatalogToMap(*externalSource.Catalog)
 		externalSourceMap["catalog"] = []map[string]interface{}{CatalogMap}
 	}
-	if externalSource.CosBucket != nil {
-		CosBucketMap := resourceIBMSchematicsJobExternalSourceCosBucketToMap(*externalSource.CosBucket)
-		externalSourceMap["cos_bucket"] = []map[string]interface{}{CosBucketMap}
-	}
+	// if externalSource.CosBucket != nil {
+	// 	CosBucketMap := resourceIBMSchematicsJobExternalSourceCosBucketToMap(*externalSource.CosBucket)
+	// 	externalSourceMap["cos_bucket"] = []map[string]interface{}{CosBucketMap}
+	// }
 
 	return externalSourceMap
 }
 
-func resourceIBMSchematicsJobExternalSourceGitToMap(externalSourceGit schematicsv1.ExternalSourceGit) map[string]interface{} {
+func resourceIBMSchematicsJobExternalSourceGitToMap(externalSourceGit schematicsv1.GitSource) map[string]interface{} {
 	externalSourceGitMap := map[string]interface{}{}
 
 	if externalSourceGit.ComputedGitRepoURL != nil {
@@ -4625,7 +4663,7 @@ func resourceIBMSchematicsJobExternalSourceGitToMap(externalSourceGit schematics
 	return externalSourceGitMap
 }
 
-func resourceIBMSchematicsJobExternalSourceCatalogToMap(externalSourceCatalog schematicsv1.ExternalSourceCatalog) map[string]interface{} {
+func resourceIBMSchematicsJobExternalSourceCatalogToMap(externalSourceCatalog schematicsv1.CatalogSource) map[string]interface{} {
 	externalSourceCatalogMap := map[string]interface{}{}
 
 	if externalSourceCatalog.CatalogName != nil {
@@ -4653,15 +4691,15 @@ func resourceIBMSchematicsJobExternalSourceCatalogToMap(externalSourceCatalog sc
 	return externalSourceCatalogMap
 }
 
-func resourceIBMSchematicsJobExternalSourceCosBucketToMap(externalSourceCosBucket schematicsv1.ExternalSourceCosBucket) map[string]interface{} {
-	externalSourceCosBucketMap := map[string]interface{}{}
+// func resourceIBMSchematicsJobExternalSourceCosBucketToMap(externalSourceCosBucket schematicsv1.ExternalSourceCosBucket) map[string]interface{} {
+// 	externalSourceCosBucketMap := map[string]interface{}{}
 
-	if externalSourceCosBucket.CosBucketURL != nil {
-		externalSourceCosBucketMap["cos_bucket_url"] = externalSourceCosBucket.CosBucketURL
-	}
+// 	if externalSourceCosBucket.CosBucketURL != nil {
+// 		externalSourceCosBucketMap["cos_bucket_url"] = externalSourceCosBucket.CosBucketURL
+// 	}
 
-	return externalSourceCosBucketMap
-}
+// 	return externalSourceCosBucketMap
+// }
 
 func resourceIBMSchematicsJobJobDataWorkItemLastJobToMap(jobDataWorkItemLastJob schematicsv1.JobDataWorkItemLastJob) map[string]interface{} {
 	jobDataWorkItemLastJobMap := map[string]interface{}{}

@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2021 All Rights Reserved.
+// Copyright IBM Corp. 2021, 2022 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package vpc
@@ -37,6 +37,20 @@ func DataSourceIBMIBMIsVPCRoutingTable() *schema.Resource {
 				AtLeastOneOf:  []string{rName, isRoutingTableID},
 				ConflictsWith: []string{isRoutingTableID},
 				Description:   "The user-defined name for this routing table.",
+			},
+			isRoutingTableAcceptRoutesFrom: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The filters specifying the resources that may create routes in this routing table.At present, only the `resource_type` filter is permitted, and only the `vpn_gateway` value is supported, but filter support is expected to expand in the future.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"resource_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
 			},
 			isRoutingTableID: &schema.Schema{
 				Type:          schema.TypeString,
@@ -224,6 +238,19 @@ func dataSourceIBMIBMIsVPCRoutingTableRead(context context.Context, d *schema.Re
 
 	if err = d.Set(rtCreateAt, flex.DateTimeToString(routingTable.CreatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
+	}
+	acceptRoutesFromInfo := make([]map[string]interface{}, 0)
+	if routingTable.AcceptRoutesFrom != nil {
+		for _, AcceptRoutesFrom := range routingTable.AcceptRoutesFrom {
+			l := map[string]interface{}{}
+			if AcceptRoutesFrom.ResourceType != nil {
+				l["resource_type"] = *AcceptRoutesFrom.ResourceType
+				acceptRoutesFromInfo = append(acceptRoutesFromInfo, l)
+			}
+		}
+	}
+	if err = d.Set(isRoutingTableAcceptRoutesFrom, acceptRoutesFromInfo); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting accept_routes_from %s", err))
 	}
 
 	if err = d.Set(isRoutingTableID, routingTable.ID); err != nil {

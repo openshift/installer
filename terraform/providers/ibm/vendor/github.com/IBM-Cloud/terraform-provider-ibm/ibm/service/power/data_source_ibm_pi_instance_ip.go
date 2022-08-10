@@ -83,19 +83,20 @@ func dataSourceIBMPIInstancesIPRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	for _, address := range powervmdata.Addresses {
-		if address.NetworkName == networkName {
-			log.Printf("Printing the ip %s", address.IP)
-			d.SetId(address.NetworkID)
-			d.Set("ip", address.IP)
-			d.Set("network_id", address.NetworkID)
-			d.Set("macaddress", address.MacAddress)
-			d.Set("external_ip", address.ExternalIP)
-			d.Set("type", address.Type)
+	for _, network := range powervmdata.Networks {
+		if network.NetworkName == networkName {
+			log.Printf("Printing the ip %s", network.IPAddress)
+			d.SetId(network.NetworkID)
+			d.Set("ip", network.IPAddress)
+			d.Set("network_id", network.NetworkID)
+			d.Set("macaddress", network.MacAddress)
+			d.Set("external_ip", network.ExternalIP)
+			d.Set("type", network.Type)
 
-			IPObject := net.ParseIP(address.IP).To4()
-
-			d.Set("ipoctet", strconv.Itoa(int(IPObject[3])))
+			IPObject := net.ParseIP(network.IPAddress).To4()
+			if len(IPObject) > 0 {
+				d.Set("ipoctet", strconv.Itoa(int(IPObject[3])))
+			}
 
 			return nil
 		}

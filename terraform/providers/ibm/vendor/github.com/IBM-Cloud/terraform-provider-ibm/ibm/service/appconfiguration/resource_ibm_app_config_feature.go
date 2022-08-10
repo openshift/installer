@@ -71,6 +71,11 @@ func ResourceIBMIbmAppConfigFeature() *schema.Resource {
 				Optional:    true,
 				Description: "Tags associated with the feature.",
 			},
+			"rollout_percentage": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Rollout percentage of the feature.",
+			},
 			"segment_rules": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -101,6 +106,11 @@ func ResourceIBMIbmAppConfigFeature() *schema.Resource {
 							Type:        schema.TypeInt,
 							Required:    true,
 							Description: "Order of the rule, used during evaluation. The evaluation is performed in the order defined and the value associated with the first matching rule is used for evaluation.",
+						},
+						"rollout_percentage": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "Rollout percentage for the segment rule.",
 						},
 					},
 				},
@@ -161,7 +171,9 @@ func resourceIbmIbmAppConfigFeatureCreate(d *schema.ResourceData, meta interface
 	options.SetEnabledValue(d.Get("enabled_value").(string))
 	options.SetEnvironmentID(d.Get("environment_id").(string))
 	options.SetDisabledValue(d.Get("disabled_value").(string))
-
+	if _, ok := d.GetOk("rollout_percentage"); ok {
+		options.SetRolloutPercentage(int64(d.Get("rollout_percentage").(int)))
+	}
 	if _, ok := d.GetOk("description"); ok {
 		options.SetDescription(d.Get("description").(string))
 	}
@@ -170,7 +182,7 @@ func resourceIbmIbmAppConfigFeatureCreate(d *schema.ResourceData, meta interface
 	}
 
 	if _, ok := d.GetOk("segment_rules"); ok {
-		var segmentRules []appconfigurationv1.SegmentRule
+		var segmentRules []appconfigurationv1.FeatureSegmentRule
 		for _, e := range d.Get("segment_rules").([]interface{}) {
 			value := e.(map[string]interface{})
 			segmentRulesItem, err := resourceIbmAppConfigFeatureMapToSegmentRule(d, value)
@@ -215,7 +227,7 @@ func resourceIbmIbmAppConfigFeatureUpdate(d *schema.ResourceData, meta interface
 	options.SetEnvironmentID(parts[1])
 	options.SetFeatureID(parts[2])
 
-	if ok := d.HasChanges("name", "enabled_value", "disabled_value", "description", "tags", "segment_rules", "collections"); ok {
+	if ok := d.HasChanges("name", "enabled_value", "disabled_value", "description", "rollout_percentage", "tags", "segment_rules", "collections"); ok {
 		options.SetName(d.Get("name").(string))
 		options.SetEnabledValue(d.Get("enabled_value").(string))
 		options.SetDisabledValue(d.Get("disabled_value").(string))
@@ -223,11 +235,14 @@ func resourceIbmIbmAppConfigFeatureUpdate(d *schema.ResourceData, meta interface
 		if _, ok := d.GetOk("description"); ok {
 			options.SetDescription(d.Get("description").(string))
 		}
+		if _, ok := d.GetOk("rollout_percentage"); ok {
+			options.SetRolloutPercentage(int64(d.Get("rollout_percentage").(int)))
+		}
 		if _, ok := d.GetOk("tags"); ok {
 			options.SetTags(d.Get("tags").(string))
 		}
 		if _, ok := d.GetOk("segment_rules"); ok {
-			var segmentRules []appconfigurationv1.SegmentRule
+			var segmentRules []appconfigurationv1.FeatureSegmentRule
 			for _, e := range d.Get("segment_rules").([]interface{}) {
 				value := e.(map[string]interface{})
 				segmentRulesItem, err := resourceIbmAppConfigFeatureMapToSegmentRule(d, value)
@@ -298,7 +313,12 @@ func resourceIbmIbmAppConfigFeatureRead(d *schema.ResourceData, meta interface{}
 		if err = d.Set("description", result.Description); err != nil {
 			return fmt.Errorf("[ERROR] Error setting description: %s", err)
 		}
+	}
 
+	if result.RolloutPercentage != nil {
+		if err = d.Set("rollout_percentage", result.RolloutPercentage); err != nil {
+			return fmt.Errorf("[ERROR] Error setting rollout_percentage: %s", err)
+		}
 	}
 	if result.Tags != nil {
 		if err = d.Set("tags", result.Tags); err != nil {
@@ -428,7 +448,7 @@ func ResourceIBMAppConfigFeatureValidator() *validate.ResourceValidator {
 }
 
 // output
-func resourceIbmAppConfigFeatureSegmentRuleToMap(segmentRule appconfigurationv1.SegmentRule) map[string]interface{} {
+func resourceIbmAppConfigFeatureSegmentRuleToMap(segmentRule appconfigurationv1.FeatureSegmentRule) map[string]interface{} {
 	segmentRuleMap := map[string]interface{}{}
 
 	rules := []map[string]interface{}{}
@@ -439,7 +459,7 @@ func resourceIbmAppConfigFeatureSegmentRuleToMap(segmentRule appconfigurationv1.
 
 	segmentRuleMap["rules"] = rules
 	segmentRuleMap["order"] = flex.IntValue(segmentRule.Order)
-
+	segmentRuleMap["rollout_percentage"] = flex.IntValue(segmentRule.RolloutPercentage)
 	segmentValue := segmentRule.Value
 	switch segmentValue.(interface{}).(type) {
 	case string:
@@ -467,8 +487,8 @@ func resourceIbmAppConfigFeatureCollectionRefToMap(collectionRef appconfiguratio
 }
 
 // input
-func resourceIbmAppConfigFeatureMapToSegmentRule(d *schema.ResourceData, segmentRuleMap map[string]interface{}) (appconfigurationv1.SegmentRule, error) {
-	segmentRule := appconfigurationv1.SegmentRule{}
+func resourceIbmAppConfigFeatureMapToSegmentRule(d *schema.ResourceData, segmentRuleMap map[string]interface{}) (appconfigurationv1.FeatureSegmentRule, error) {
+	segmentRule := appconfigurationv1.FeatureSegmentRule{}
 
 	rules := []appconfigurationv1.TargetSegments{}
 	for _, rulesItem := range segmentRuleMap["rules"].([]interface{}) {
@@ -478,7 +498,7 @@ func resourceIbmAppConfigFeatureMapToSegmentRule(d *schema.ResourceData, segment
 	segmentRule.Rules = rules
 
 	segmentRule.Order = core.Int64Ptr(int64(segmentRuleMap["order"].(int)))
-
+	segmentRule.RolloutPercentage = core.Int64Ptr(int64(segmentRuleMap["rollout_percentage"].(int)))
 	ruleValue := segmentRuleMap["value"].(string)
 	switch d.Get("type").(string) {
 	case "STRING":

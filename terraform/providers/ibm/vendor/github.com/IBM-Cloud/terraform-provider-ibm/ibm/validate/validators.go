@@ -1004,7 +1004,7 @@ func ValidateISName(v interface{}, k string) (ws []string, errors []error) {
 	endwithalphanumeric, _ := regexp.MatchString(`.*[a-z0-9]$`, name)
 	length := len(name)
 	if acceptedcharacters == true {
-		if length <= 40 {
+		if length <= 63 {
 			if endwithalphanumeric == true {
 				if strings.Contains(name, "--") != true {
 					return
@@ -1018,7 +1018,7 @@ func ValidateISName(v interface{}, k string) (ws []string, errors []error) {
 			}
 		} else {
 			errors = append(errors, fmt.Errorf(
-				"%q (%q) should not exceed 40 characters", k, v))
+				"%q (%q) should not exceed 63 characters", k, v))
 		}
 
 	} else {
@@ -1060,7 +1060,7 @@ func (f FunctionIdentifier) MarshalText() ([]byte, error) {
 
 // Use stringer tool to generate this later.
 func (i FunctionIdentifier) String() string {
-	return [...]string{"IntBetween", "IntAtLeast", "IntAtMost", "ValidateAllowedStringValue", "StringLenBetween", "ValidateIPorCIDR", "ValidateAllowedIntValue", "ValidateRegexpLen", "ValidateRegexp", "ValidateNoZeroValues", "ValidateJSONString", "ValidateJSONParam", "ValidateBindedPackageName", "ValidateOverlappingAddress"}[i]
+	return [...]string{"IntBetween", "IntAtLeast", "IntAtMost", "ValidateAllowedStringValue", "StringLenBetween", "ValidateIPorCIDR", "ValidateCIDRAddress", "ValidateAllowedIntValue", "ValidateRegexpLen", "ValidateRegexp", "ValidateNoZeroValues", "ValidateJSONString", "ValidateJSONParam", "ValidateBindedPackageName", "ValidateOverlappingAddress"}[i]
 }
 
 // ValueType -- Copied from Terraform for now. You can refer to Terraform ValueType directly.

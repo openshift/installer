@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
@@ -33,48 +32,62 @@ func ResourceIBMPIKey() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 
-			helpers.PIKeyName: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Key name in the PI instance",
-			},
-
-			helpers.PIKey: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "PI instance key info",
-			},
-			helpers.PIKeyDate: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Date info",
-			},
-
-			helpers.PICloudInstanceId: {
+			// Arguments
+			Arg_CloudInstanceID: {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "PI cloud instance ID",
 			},
+			Arg_KeyName: {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "User defined name for the SSH key",
+			},
+			Arg_Key: {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "SSH RSA key",
+			},
 
-			"key_id": {
+			// Attributes
+			Attr_KeyCreationDate: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Key ID in the PI instance",
+				Description: "Date of SSH Key creation",
+			},
+			Attr_KeyID: {
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: "User defined name for the SSH key (deprecated - replaced by name)",
+			},
+			Attr_KeyName: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "User defined name for the SSH key",
+			},
+			Attr_Key: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "SSH RSA key",
 			},
 		},
 	}
 }
 
 func resourceIBMPIKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+
+	// session
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
-	name := d.Get(helpers.PIKeyName).(string)
-	sshkey := d.Get(helpers.PIKey).(string)
+	// arguments
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
+	name := d.Get(Arg_KeyName).(string)
+	sshkey := d.Get(Arg_Key).(string)
 
+	// create key
 	client := st.NewIBMPIKeyClient(ctx, sess, cloudInstanceID)
 	body := &models.SSHKey{
 		Name:   &name,
@@ -87,50 +100,57 @@ func resourceIBMPIKeyCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	log.Printf("Printing the sshkey %+v", *sshResponse)
-
 	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, name))
 	return resourceIBMPIKeyRead(ctx, d, meta)
 }
 
 func resourceIBMPIKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
+	// session
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	// arguments
 	cloudInstanceID, key, err := splitID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	// get key
 	sshkeyC := st.NewIBMPIKeyClient(ctx, sess, cloudInstanceID)
 	sshkeydata, err := sshkeyC.Get(key)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.Set(helpers.PIKeyName, sshkeydata.Name)
-	d.Set(helpers.PIKey, sshkeydata.SSHKey)
-	d.Set(helpers.PIKeyDate, sshkeydata.CreationDate.String())
-	d.Set("key_id", sshkeydata.Name)
+	// set attributes
+	d.Set(Attr_KeyName, sshkeydata.Name)
+	d.Set(Attr_KeyID, sshkeydata.Name)
+	d.Set(Attr_Key, sshkeydata.SSHKey)
+	d.Set(Attr_KeyCreationDate, sshkeydata.CreationDate.String())
 
 	return nil
-
 }
 func resourceIBMPIKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return resourceIBMPIKeyRead(ctx, d, meta)
 }
 func resourceIBMPIKeyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+
+	// session
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// arguments
 	cloudInstanceID, key, err := splitID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	// delete key
 	sshkeyC := st.NewIBMPIKeyClient(ctx, sess, cloudInstanceID)
 	err = sshkeyC.Delete(key)
 	if err != nil {

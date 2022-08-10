@@ -98,6 +98,12 @@ func ResourceIBMSatelliteLocation() *schema.Resource {
 				Optional:    true,
 				Description: "A description of the new Satellite location",
 			},
+			"coreos_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Enable Red Hat CoreOS features within the Satellite location",
+			},
 			"logging_account_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -235,6 +241,10 @@ func resourceIBMSatelliteLocationCreate(d *schema.ResourceData, meta interface{}
 	sateLocZone := d.Get(sateLocZone).(string)
 	createSatLocOptions.Location = &sateLocZone
 
+	if v, ok := d.GetOk("coreos_enabled"); ok {
+		coreosEnabled := v.(bool)
+		createSatLocOptions.CoreosEnabled = coreosEnabled
+	}
 	if v, ok := d.GetOk("cos_config"); ok {
 		createSatLocOptions.CosConfig = flex.ExpandCosConfig(v.([]interface{}))
 	}
@@ -315,6 +325,10 @@ func resourceIBMSatelliteLocationRead(d *schema.ResourceData, meta interface{}) 
 	d.Set(satLocation, *instance.Name)
 	if instance.Description != nil {
 		d.Set("description", *instance.Description)
+	}
+
+	if instance.CoreosEnabled != nil {
+		d.Set("coreos_enabled", *instance.CoreosEnabled)
 	}
 
 	if instance.Datacenter != nil {

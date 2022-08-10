@@ -6,7 +6,6 @@ package vpc
 import (
 	"fmt"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -112,56 +111,47 @@ func imageGetByName(d *schema.ResourceData, meta interface{}, name, visibility s
 	if err != nil {
 		return err
 	}
-	start := ""
-	allrecs := []vpcv1.Image{}
-	for {
-		listImagesOptions := &vpcv1.ListImagesOptions{}
-		if start != "" {
-			listImagesOptions.Start = &start
-		}
-		if visibility != "" {
-			listImagesOptions.Visibility = &visibility
-		}
-		availableImages, response, err := sess.ListImages(listImagesOptions)
-		if err != nil {
-			return fmt.Errorf("[ERROR] Error Fetching Images %s\n%s", err, response)
-		}
-		start = flex.GetNext(availableImages.Next)
-		allrecs = append(allrecs, availableImages.Images...)
-		if start == "" {
-			break
-		}
+	listImagesOptions := &vpcv1.ListImagesOptions{
+		Name: &name,
 	}
 
-	for _, image := range allrecs {
-		if *image.Name == name {
-			d.SetId(*image.ID)
-			d.Set("status", *image.Status)
-			if *image.Status == "deprecated" {
-				fmt.Printf("[WARN] Given image %s is deprecated and soon will be obsolete.", name)
-			}
-			d.Set("name", *image.Name)
-			d.Set("visibility", *image.Visibility)
-			d.Set("os", *image.OperatingSystem.Name)
-			d.Set("architecture", *image.OperatingSystem.Architecture)
-			d.Set("crn", *image.CRN)
-			if image.Encryption != nil {
-				d.Set("encryption", *image.Encryption)
-			}
-			if image.EncryptionKey != nil {
-				d.Set("encryption_key", *image.EncryptionKey.CRN)
-			}
-			if image.File != nil && image.File.Checksums != nil {
-				d.Set(isImageCheckSum, *image.File.Checksums.Sha256)
-			}
-			if image.SourceVolume != nil {
-				d.Set("source_volume", *image.SourceVolume.ID)
-			}
-			return nil
-		}
+	if visibility != "" {
+		listImagesOptions.Visibility = &visibility
 	}
+	availableImages, response, err := sess.ListImages(listImagesOptions)
+	if err != nil {
+		return fmt.Errorf("[ERROR] Error Fetching Images %s\n%s", err, response)
+	}
+	allrecs := availableImages.Images
 
-	return fmt.Errorf("[ERROR] No image found with name  %s", name)
+	if len(allrecs) == 0 {
+		return fmt.Errorf("[ERROR] No image found with name  %s", name)
+	}
+	image := allrecs[0]
+	d.SetId(*image.ID)
+	d.Set("status", *image.Status)
+	if *image.Status == "deprecated" {
+		fmt.Printf("[WARN] Given image %s is deprecated and soon will be obsolete.", name)
+	}
+	d.Set("name", *image.Name)
+	d.Set("visibility", *image.Visibility)
+	d.Set("os", *image.OperatingSystem.Name)
+	d.Set("architecture", *image.OperatingSystem.Architecture)
+	d.Set("crn", *image.CRN)
+	if image.Encryption != nil {
+		d.Set("encryption", *image.Encryption)
+	}
+	if image.EncryptionKey != nil {
+		d.Set("encryption_key", *image.EncryptionKey.CRN)
+	}
+	if image.File != nil && image.File.Checksums != nil {
+		d.Set(isImageCheckSum, *image.File.Checksums.Sha256)
+	}
+	if image.SourceVolume != nil {
+		d.Set("source_volume", *image.SourceVolume.ID)
+	}
+	return nil
+
 }
 func imageGetById(d *schema.ResourceData, meta interface{}, identifier string) error {
 	sess, err := vpcClient(meta)

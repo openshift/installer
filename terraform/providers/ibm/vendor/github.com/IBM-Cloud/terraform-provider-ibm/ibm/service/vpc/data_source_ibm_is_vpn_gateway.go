@@ -370,7 +370,7 @@ func dataSourceVPNGatewayFlattenMembers(result []vpcv1.VPNGatewayMember) (member
 func dataSourceVPNGatewayMembersToMap(membersItem vpcv1.VPNGatewayMember) (membersMap map[string]interface{}) {
 	membersMap = map[string]interface{}{}
 
-	if membersItem.PrivateIP != nil {
+	if membersItem.PrivateIP != nil && membersItem.PrivateIP.Address != nil {
 		membersMap["private_ip_address"] = membersItem.PrivateIP.Address
 	}
 	if membersItem.PublicIP != nil {

@@ -34,12 +34,13 @@ const (
 
 func ResourceIBMISVpcRoute() *schema.Resource {
 	return &schema.Resource{
-		Create:   resourceIBMISVpcRouteCreate,
-		Read:     resourceIBMISVpcRouteRead,
-		Update:   resourceIBMISVpcRouteUpdate,
-		Delete:   resourceIBMISVpcRouteDelete,
-		Exists:   resourceIBMISVpcRouteExists,
-		Importer: &schema.ResourceImporter{},
+		DeprecationMessage: "This resource is deprecated, use ibm_is_vpc_routing_table_route instead.",
+		Create:             resourceIBMISVpcRouteCreate,
+		Read:               resourceIBMISVpcRouteRead,
+		Update:             resourceIBMISVpcRouteUpdate,
+		Delete:             resourceIBMISVpcRouteDelete,
+		Exists:             resourceIBMISVpcRouteExists,
+		Importer:           &schema.ResourceImporter{},
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(10 * time.Minute),
@@ -144,7 +145,7 @@ func vpcRouteCreate(d *schema.ResourceData, meta interface{}, routeName, zoneNam
 		VPCID:       &vpcID,
 		Destination: &cidr,
 		Name:        &routeName,
-		NextHop: &vpcv1.RouteNextHopPrototype{
+		NextHop: &vpcv1.RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP{
 			Address: &nextHop,
 		},
 		Zone: &vpcv1.ZoneIdentity{

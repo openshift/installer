@@ -179,6 +179,13 @@ func ResourceIBMIAMUserPolicy() *schema.Resource {
 				Optional:    true,
 				Description: "Description of the Policy",
 			},
+
+			"transaction_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set transactionID for debug",
+			},
 		},
 	}
 }
@@ -242,14 +249,21 @@ func resourceIBMIAMUserPolicyCreate(d *schema.ResourceData, meta interface{}) er
 		createPolicyOptions.Description = &des
 	}
 
-	userPolicy, resp, err := iamPolicyManagementClient.CreatePolicy(createPolicyOptions)
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		createPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	}
 
+	userPolicy, resp, err := iamPolicyManagementClient.CreatePolicy(createPolicyOptions)
 	if err != nil {
 		return fmt.Errorf("Error creating user policies: %s, %s", err, resp)
 	}
 
 	getPolicyOptions := &iampolicymanagementv1.GetPolicyOptions{
 		PolicyID: userPolicy.ID,
+	}
+
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		getPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
 	}
 
 	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
@@ -291,13 +305,14 @@ func resourceIBMIAMUserPolicyRead(d *schema.ResourceData, meta interface{}) erro
 	userEmail := parts[0]
 	userPolicyID := parts[1]
 
-	if err != nil {
-		return err
-	}
-
 	getPolicyOptions := &iampolicymanagementv1.GetPolicyOptions{
 		PolicyID: core.StringPtr(userPolicyID),
 	}
+
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		getPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	}
+
 	userPolicy := &iampolicymanagementv1.Policy{}
 	res := &core.DetailedResponse{}
 	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
@@ -316,7 +331,7 @@ func resourceIBMIAMUserPolicyRead(d *schema.ResourceData, meta interface{}) erro
 	if conns.IsResourceTimeoutError(err) {
 		userPolicy, res, err = iamPolicyManagementClient.GetPolicy(getPolicyOptions)
 	}
-	if err != nil || userPolicy == nil {
+	if err != nil || userPolicy == nil || res == nil {
 		return fmt.Errorf("[ERROR] Error retrieving userPolicy: %s %s", err, res)
 	}
 	d.Set("ibm_id", userEmail)
@@ -348,6 +363,10 @@ func resourceIBMIAMUserPolicyRead(d *schema.ResourceData, meta interface{}) erro
 	if userPolicy.Description != nil {
 		d.Set("description", *userPolicy.Description)
 	}
+	if len(res.Headers["Transaction-Id"]) > 0 && res.Headers["Transaction-Id"][0] != "" {
+		d.Set("transaction_id", res.Headers["Transaction-Id"][0])
+	}
+
 	return nil
 }
 
@@ -403,6 +422,11 @@ func resourceIBMIAMUserPolicyUpdate(d *schema.ResourceData, meta interface{}) er
 		getPolicyOptions := &iampolicymanagementv1.GetPolicyOptions{
 			PolicyID: &userPolicyID,
 		}
+
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			getPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+
 		policy, response, err := iamPolicyManagementClient.GetPolicy(getPolicyOptions)
 		if err != nil || policy == nil {
 			if response != nil && response.StatusCode == 404 {
@@ -424,6 +448,10 @@ func resourceIBMIAMUserPolicyUpdate(d *schema.ResourceData, meta interface{}) er
 		if description, ok := d.GetOk("description"); ok {
 			des := description.(string)
 			updatePolicyOptions.Description = &des
+		}
+
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			updatePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
 		}
 
 		_, resp, err := iamPolicyManagementClient.UpdatePolicy(updatePolicyOptions)
@@ -450,6 +478,11 @@ func resourceIBMIAMUserPolicyDelete(d *schema.ResourceData, meta interface{}) er
 	deletePolicyOptions := iamPolicyManagementClient.NewDeletePolicyOptions(
 		userPolicyID,
 	)
+
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		deletePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	}
+
 	_, err = iamPolicyManagementClient.DeletePolicy(deletePolicyOptions)
 	if err != nil {
 		return err

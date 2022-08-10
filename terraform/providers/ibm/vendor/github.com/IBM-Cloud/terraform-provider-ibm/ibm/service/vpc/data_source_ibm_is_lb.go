@@ -14,24 +14,30 @@ import (
 )
 
 const (
-	name                    = "name"
-	poolAlgorithm           = "algorithm"
-	href                    = "href"
-	poolProtocol            = "protocol"
-	poolCreatedAt           = "created_at"
-	poolProvisioningStatus  = "provisioning_status"
-	healthMonitor           = "health_monitor"
-	instanceGroup           = "instance_group"
-	members                 = "members"
-	sessionPersistence      = "session_persistence"
-	crnInstance             = "crn"
-	sessionType             = "type"
-	healthMonitorType       = "type"
-	healthMonitorDelay      = "delay"
-	healthMonitorMaxRetries = "max_retries"
-	healthMonitorPort       = "port"
-	healthMonitorTimeout    = "timeout"
-	healthMonitorURLPath    = "url_path"
+	name                      = "name"
+	poolAlgorithm             = "algorithm"
+	href                      = "href"
+	poolProtocol              = "protocol"
+	poolCreatedAt             = "created_at"
+	poolProvisioningStatus    = "provisioning_status"
+	healthMonitor             = "health_monitor"
+	instanceGroup             = "instance_group"
+	members                   = "members"
+	sessionPersistence        = "session_persistence"
+	crnInstance               = "crn"
+	sessionType               = "type"
+	healthMonitorType         = "type"
+	healthMonitorDelay        = "delay"
+	healthMonitorMaxRetries   = "max_retries"
+	healthMonitorPort         = "port"
+	healthMonitorTimeout      = "timeout"
+	healthMonitorURLPath      = "url_path"
+	isLBPrivateIPDetail       = "private_ip"
+	isLBPrivateIpAddress      = "address"
+	isLBPrivateIpHref         = "href"
+	isLBPrivateIpName         = "name"
+	isLBPrivateIpId           = "reserved_ip"
+	isLBPrivateIpResourceType = "resource_type"
 )
 
 func DataSourceIBMISLB() *schema.Resource {
@@ -49,6 +55,12 @@ func DataSourceIBMISLB() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Load Balancer type",
+			},
+
+			isLBUdpSupported: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates whether this load balancer supports UDP.",
 			},
 
 			isLBStatus: {
@@ -224,6 +236,40 @@ func DataSourceIBMISLB() *schema.Resource {
 					},
 				},
 			},
+			isLBPrivateIPDetail: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The private IP addresses assigned to this load balancer.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isLBPrivateIpAddress: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The IP address to reserve, which must not already be reserved on the subnet.",
+						},
+						isLBPrivateIpHref: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this reserved IP",
+						},
+						isLBPrivateIpName: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user-defined name for this reserved IP. If unspecified, the name will be a hyphenated list of randomly-selected words. Names must be unique within the subnet the reserved IP resides in. ",
+						},
+						isLBPrivateIpId: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Identifies a reserved IP by a unique property.",
+						},
+						isLBPrivateIpResourceType: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type",
+						},
+					},
+				},
+			},
 			flex.ResourceControllerURL: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -295,6 +341,9 @@ func lbGetByName(d *schema.ResourceData, meta interface{}, name string) error {
 			if lb.RouteMode != nil {
 				d.Set(isLBRouteMode, *lb.RouteMode)
 			}
+			if lb.UDPSupported != nil {
+				d.Set(isLBUdpSupported, *lb.UDPSupported)
+			}
 			d.Set(isLBCrn, *lb.CRN)
 			d.Set(isLBOperatingStatus, *lb.OperatingStatus)
 			publicIpList := make([]string, 0)
@@ -308,14 +357,35 @@ func lbGetByName(d *schema.ResourceData, meta interface{}, name string) error {
 			}
 			d.Set(isLBPublicIPs, publicIpList)
 			privateIpList := make([]string, 0)
+			privateIpDetailList := make([]map[string]interface{}, 0)
 			if lb.PrivateIps != nil {
 				for _, ip := range lb.PrivateIps {
 					if ip.Address != nil {
 						prip := *ip.Address
 						privateIpList = append(privateIpList, prip)
 					}
+					currentPriIp := map[string]interface{}{}
+
+					if ip.Address != nil {
+						currentPriIp[isLBPrivateIpAddress] = ip.Address
+					}
+					if ip.Href != nil {
+						currentPriIp[isLBPrivateIpHref] = ip.Href
+					}
+					if ip.Name != nil {
+						currentPriIp[isLBPrivateIpName] = ip.Name
+					}
+					if ip.ID != nil {
+						currentPriIp[isLBPrivateIpId] = ip.ID
+					}
+					if ip.ResourceType != nil {
+						currentPriIp[isLBPrivateIpResourceType] = ip.ResourceType
+					}
+					privateIpDetailList = append(privateIpDetailList, currentPriIp)
+
 				}
 			}
+			d.Set(isLBPrivateIPDetail, privateIpDetailList)
 			d.Set(isLBPrivateIPs, privateIpList)
 			if lb.Subnets != nil {
 				subnetList := make([]string, 0)

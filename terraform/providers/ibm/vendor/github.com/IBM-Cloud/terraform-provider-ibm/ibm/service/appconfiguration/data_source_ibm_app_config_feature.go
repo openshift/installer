@@ -78,6 +78,11 @@ func DataSourceIBMAppConfigFeature() *schema.Resource {
 				Computed:    true,
 				Description: "Denotes if the targeting rules are specified for the feature flag.",
 			},
+			"rollout_percentage": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Rollout percentage of the feature.",
+			},
 			"segment_rules": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -110,6 +115,11 @@ func DataSourceIBMAppConfigFeature() *schema.Resource {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Order of the rule, used during evaluation. The evaluation is performed in the order defined and the value associated with the first matching rule is used for evaluation.",
+						},
+						"rollout_percentage": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Rollout percentage for the segment rule.",
 						},
 					},
 				},
@@ -201,6 +211,11 @@ func dataSourceIbmAppConfigFeatureRead(d *schema.ResourceData, meta interface{})
 			return fmt.Errorf("[ERROR] Error setting tags: %s", err)
 		}
 	}
+	if result.RolloutPercentage != nil {
+		if err = d.Set("rollout_percentage", result.RolloutPercentage); err != nil {
+			return fmt.Errorf("[ERROR] Error setting rollout_percentage: %s", err)
+		}
+	}
 	if result.SegmentExists != nil {
 		if err = d.Set("segment_exists", result.SegmentExists); err != nil {
 			return fmt.Errorf("[ERROR] Error setting segment_exists: %s", err)
@@ -264,7 +279,7 @@ func dataSourceIbmAppConfigFeatureRead(d *schema.ResourceData, meta interface{})
 	return nil
 }
 
-func dataSourceFeatureFlattenSegmentRules(result []appconfigurationv1.SegmentRule) (segmentRules []map[string]interface{}) {
+func dataSourceFeatureFlattenSegmentRules(result []appconfigurationv1.FeatureSegmentRule) (segmentRules []map[string]interface{}) {
 	for _, segmentRulesItem := range result {
 		segmentRules = append(segmentRules, dataSourceFeatureSegmentRulesToMap(segmentRulesItem))
 	}
@@ -272,7 +287,7 @@ func dataSourceFeatureFlattenSegmentRules(result []appconfigurationv1.SegmentRul
 	return segmentRules
 }
 
-func dataSourceFeatureSegmentRulesToMap(segmentRulesItem appconfigurationv1.SegmentRule) (segmentRulesMap map[string]interface{}) {
+func dataSourceFeatureSegmentRulesToMap(segmentRulesItem appconfigurationv1.FeatureSegmentRule) (segmentRulesMap map[string]interface{}) {
 	segmentRulesMap = map[string]interface{}{}
 
 	if segmentRulesItem.Rules != nil {
@@ -295,6 +310,9 @@ func dataSourceFeatureSegmentRulesToMap(segmentRulesItem appconfigurationv1.Segm
 	}
 	if segmentRulesItem.Order != nil {
 		segmentRulesMap["order"] = segmentRulesItem.Order
+	}
+	if segmentRulesItem.RolloutPercentage != nil {
+		segmentRulesMap["rollout_percentage"] = segmentRulesItem.RolloutPercentage
 	}
 
 	return segmentRulesMap

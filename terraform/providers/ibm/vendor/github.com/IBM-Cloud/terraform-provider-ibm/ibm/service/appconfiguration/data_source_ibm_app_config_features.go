@@ -119,6 +119,11 @@ func DataSourceIBMAppConfigFeatures() *schema.Resource {
 							Computed:    true,
 							Description: "Tags associated with the feature.",
 						},
+						"rollout_percentage": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Rollout percentage of the feature.",
+						},
 						"segment_rules": {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -151,6 +156,11 @@ func DataSourceIBMAppConfigFeatures() *schema.Resource {
 										Type:        schema.TypeInt,
 										Computed:    true,
 										Description: "Order of the rule, used during evaluation. The evaluation is performed in the order defined and the value associated with the first matching rule is used for evaluation.",
+									},
+									"rollout_percentage": {
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "Rollout percentage for the segment rule.",
 									},
 								},
 							},
@@ -417,6 +427,9 @@ func dataSourceFeaturesListFeaturesToMap(featuresItem appconfigurationv1.Feature
 	if featuresItem.Tags != nil {
 		featuresMap["tags"] = featuresItem.Tags
 	}
+	if featuresItem.RolloutPercentage != nil {
+		featuresMap["rollout_percentage"] = featuresItem.RolloutPercentage
+	}
 	if featuresItem.SegmentRules != nil {
 		segmentRulesList := []map[string]interface{}{}
 		for _, segmentRulesItem := range featuresItem.SegmentRules {
@@ -471,7 +484,7 @@ func dataSourceFeaturesListFeaturesToMap(featuresItem appconfigurationv1.Feature
 	return featuresMap
 }
 
-func dataSourceFeaturesListFeaturesSegmentRulesToMap(segmentRulesItem appconfigurationv1.SegmentRule) (segmentRulesMap map[string]interface{}) {
+func dataSourceFeaturesListFeaturesSegmentRulesToMap(segmentRulesItem appconfigurationv1.FeatureSegmentRule) (segmentRulesMap map[string]interface{}) {
 	segmentRulesMap = map[string]interface{}{}
 
 	if segmentRulesItem.Rules != nil {
@@ -494,6 +507,9 @@ func dataSourceFeaturesListFeaturesSegmentRulesToMap(segmentRulesItem appconfigu
 	}
 	if segmentRulesItem.Order != nil {
 		segmentRulesMap["order"] = segmentRulesItem.Order
+	}
+	if segmentRulesItem.RolloutPercentage != nil {
+		segmentRulesMap["rollout_percentage"] = segmentRulesItem.RolloutPercentage
 	}
 
 	return segmentRulesMap
