@@ -26,17 +26,17 @@ type Platform struct {
 	// UserID is the login for the user's IBM Cloud account.
 	UserID string `json:"userID"`
 
-	// VPC is a VPC inside IBM Cloud. Needed in order to create VPC Load Balancers.
+	// VPCName is the name of a pre-created VPC inside IBM Cloud.
 	//
 	// +optional
-	VPC string `json:"vpc,omitempty"`
+	VPCName string `json:"vpcName,omitempty"`
 
-	// Subnets specifies existing subnets (by ID) where cluster
+	// VPCSubnets specifies existing subnets (by ID) where cluster
 	// resources will be created.  Leave unset to have the installer
 	// create subnets in a new VPC on your behalf.
 	//
 	// +optional
-	Subnets []string `json:"subnets,omitempty"`
+	VPCSubnets []string `json:"vpcSubnets,omitempty"`
 
 	// PVSNetworkName specifies an existing network within the Power VS Service Instance.
 	//
@@ -54,4 +54,9 @@ type Platform struct {
 	// platform configuration.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
+
+	// CloudConnctionName is the name of an existing Power VS Cloud connection.
+	// If empty, one is created by the installer.
+	// +optional
+	CloudConnectionName string `json:"cloudConnectionName,omitempty"`
 }

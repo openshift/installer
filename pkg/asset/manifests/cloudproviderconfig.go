@@ -230,8 +230,8 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
-		vpc := installConfig.Config.PowerVS.VPC
-		vpcSubnets := installConfig.Config.PowerVS.Subnets
+		vpc := installConfig.Config.PowerVS.VPCName
+		vpcSubnets := installConfig.Config.PowerVS.VPCSubnets
 		if vpc == "" {
 			vpc = fmt.Sprintf("vpc-%s", clusterID.InfraID)
 		}

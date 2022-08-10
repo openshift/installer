@@ -39,12 +39,6 @@ variable "powervs_cloud_instance_id" {
   description = "The cloud instance ID of your account"
 }
 
-variable "powervs_wait_for_vpc" {
-  type        = string
-  description = "The seconds wait for VPC creation, default is 60s"
-  default     = "60s"
-}
-
 ################################################################
 # Configure storage
 ################################################################
@@ -65,6 +59,40 @@ variable "powervs_cos_storage_class" {
   description = "The plan used for your COS instance"
   default     = "smart"
 }
+
+################################################################
+# Configure networking
+################################################################
+variable "powervs_wait_for_vpc" {
+  type        = string
+  description = "The seconds wait for VPC creation, default is 60s"
+  default     = "60s"
+}
+
+variable "powervs_ccon_name" {
+  type        = string
+  description = "The name of a pre-created Power VS Cloud connection"
+  default     = ""
+}
+
+variable "powervs_network_name" {
+  type        = string
+  description = "The name of a pre-created Power VS DHCP network"
+  default     = ""
+}
+
+variable "powervs_vpc_name" {
+  type        = string
+  description = "The name of a pre-created IBM Cloud VPC. Must be in $powervs_vpc_region"
+  default     = ""
+}
+
+variable "powervs_vpc_subnet_name" {
+  type        = string
+  description = "The name of a pre-created IBM Cloud Subnet. Must be in $powervs_vpc_region"
+  default     = ""
+}
+
 
 ################################################################
 # Configure instances
