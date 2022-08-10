@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
-	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -89,13 +88,6 @@ secret-namespace = kube-system
 			return "", "", Error{err, "failed to read clouds.yaml ca-cert from disk"}
 		}
 		cloudProviderConfigCABundleData = string(caFile)
-	}
-
-	cloudProviderConfigData += "[LoadBalancer]\n"
-	if installConfig.NetworkType == string(operv1.NetworkTypeKuryr) {
-		cloudProviderConfigData += "use-octavia = False\n"
-	} else {
-		cloudProviderConfigData += "use-octavia = True\n"
 	}
 
 	return cloudProviderConfigData, cloudProviderConfigCABundleData, nil
