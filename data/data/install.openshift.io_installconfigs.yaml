@@ -59,6 +59,9 @@ spec:
                   - openshift-samples
                   - baremetal
                   - marketplace
+                  - Console
+                  - Insights
+                  - Storage
                   type: string
                 type: array
               baselineCapabilitySet:
@@ -68,6 +71,7 @@ spec:
                 enum:
                 - None
                 - v4.11
+                - v4.12
                 - vCurrent
                 type: string
             type: object

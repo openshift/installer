@@ -44,7 +44,7 @@ require (
 	github.com/metal3-io/baremetal-operator/apis v0.0.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.0
-	github.com/openshift/api v0.0.0-20220504105152-6f735e7109c8
+	github.com/openshift/api v0.0.0-20220811160310-427c7cc57280
 	github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e

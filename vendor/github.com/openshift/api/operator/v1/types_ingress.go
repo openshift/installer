@@ -616,6 +616,34 @@ type HostNetworkStrategy struct {
 // PrivateStrategy holds parameters for the Private endpoint publishing
 // strategy.
 type PrivateStrategy struct {
+	// protocol specifies whether the IngressController expects incoming
+	// connections to use plain TCP or whether the IngressController expects
+	// PROXY protocol.
+	//
+	// PROXY protocol can be used with load balancers that support it to
+	// communicate the source addresses of client connections when
+	// forwarding those connections to the IngressController.  Using PROXY
+	// protocol enables the IngressController to report those source
+	// addresses instead of reporting the load balancer's address in HTTP
+	// headers and logs.  Note that enabling PROXY protocol on the
+	// IngressController will cause connections to fail if you are not using
+	// a load balancer that uses PROXY protocol to forward connections to
+	// the IngressController.  See
+	// http://www.haproxy.org/download/2.2/doc/proxy-protocol.txt for
+	// information about PROXY protocol.
+	//
+	// The following values are valid for this field:
+	//
+	// * The empty string.
+	// * "TCP".
+	// * "PROXY".
+	//
+	// The empty string specifies the default, which is TCP without PROXY
+	// protocol.  Note that the default is subject to change.
+	//
+	// +kubebuilder:validation:Optional
+	// +optional
+	Protocol IngressControllerProtocol `json:"protocol,omitempty"`
 }
 
 // NodePortStrategy holds parameters for the NodePortService endpoint publishing strategy.
@@ -1387,6 +1415,10 @@ type IngressControllerTuningOptions struct {
 	// a default for all routes, but may be overridden per-route by the route annotation
 	// "router.openshift.io/haproxy.health.check.interval".
 	//
+	// Expects an unsigned duration string of decimal numbers, each with optional
+	// fraction and a unit suffix, eg "300ms", "1.5h" or "2h45m".
+	// Valid time units are "ns", "us" (or "µs" U+00B5 or "μs" U+03BC), "ms", "s", "m", "h".
+	//
 	// Setting this to less than 5s can cause excess traffic due to too frequent
 	// TCP health checks and accompanying SYN packet storms.  Alternatively, setting
 	// this too high can result in increased latency, due to backend servers that are no
@@ -1400,7 +1432,8 @@ type IngressControllerTuningOptions struct {
 	// 2147483647ms (24.85 days).  Both are subject to change over time.
 	//
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Format=duration
+	// +kubebuilder:validation:Pattern=^(0|([0-9]+(\.[0-9]+)?(ns|us|µs|μs|ms|s|m|h))+)$
+	// +kubebuilder:validation:Type:=string
 	// +optional
 	HealthCheckInterval *metav1.Duration `json:"healthCheckInterval,omitempty"`
 
@@ -1448,6 +1481,38 @@ type IngressControllerTuningOptions struct {
 	// +kubebuilder:validation:Optional
 	// +optional
 	MaxConnections int32 `json:"maxConnections,omitempty"`
+
+	// reloadInterval defines the minimum interval at which the router is allowed to reload
+	// to accept new changes. Increasing this value can prevent the accumulation of
+	// HAProxy processes, depending on the scenario. Increasing this interval can
+	// also lessen load imbalance on a backend's servers when using the roundrobin
+	// balancing algorithm. Alternatively, decreasing this value may decrease latency
+	// since updates to HAProxy's configuration can take effect more quickly.
+	//
+	// The value must be a time duration value; see <https://pkg.go.dev/time#ParseDuration>.
+	// Currently, the minimum value allowed is 1s, and the maximum allowed value is
+	// 120s. Minimum and maximum allowed values may change in future versions of OpenShift.
+	// Note that if a duration outside of these bounds is provided, the value of reloadInterval
+	// will be capped/floored and not rejected (e.g. a duration of over 120s will be capped to
+	// 120s; the IngressController will not reject and replace this disallowed value with
+	// the default).
+	//
+	// A zero value for reloadInterval tells the IngressController to choose the default,
+	// which is currently 5s and subject to change without notice.
+	//
+	// This field expects an unsigned duration string of decimal numbers, each with optional
+	// fraction and a unit suffix, e.g. "100s", "1m30s". Valid time units are "s" and "m".
+	//
+	// Note: Setting a value significantly larger than the default of 5s can cause latency
+	// in observing updates to routes and their endpoints. HAProxy's configuration will
+	// be reloaded less frequently, and newly created routes will not be served until the
+	// subsequent reload.
+	//
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Pattern=^(0|([0-9]+(\.[0-9]+)?(s|m))+)$
+	// +kubebuilder:validation:Type:=string
+	// +optional
+	ReloadInterval metav1.Duration `json:"reloadInterval,omitempty"`
 }
 
 // HTTPEmptyRequestsPolicy indicates how HTTP connections for which no request

@@ -1095,8 +1095,8 @@ github.com/openshift/api v0.0.0-20210730095913-85e1d547cdee/go.mod h1:ntkQrC1Z6A
 github.com/openshift/api v0.0.0-20211025104849-a11323ccb6ea/go.mod h1:RsQCVJu4qhUawxxDP7pGlwU3IA4F01wYm3qKEu29Su8=
 github.com/openshift/api v0.0.0-20211108165917-be1be0e89115/go.mod h1:RsQCVJu4qhUawxxDP7pGlwU3IA4F01wYm3qKEu29Su8=
 github.com/openshift/api v0.0.0-20211209135129-c58d9f695577/go.mod h1:DoslCwtqUpr3d/gsbq4ZlkaMEdYqKxuypsDjorcHhME=
-github.com/openshift/api v0.0.0-20220504105152-6f735e7109c8 h1:/gMlLRp6nql6uWl0x3Hx81Cm3sE8xtdj7P2iCriBLXs=
-github.com/openshift/api v0.0.0-20220504105152-6f735e7109c8/go.mod h1:F/eU6jgr6Q2VhMu1mSpMmygxAELd7+BUxs3NHZ25jV4=
+github.com/openshift/api v0.0.0-20220811160310-427c7cc57280 h1:9fq03OoS3nYONkEigI/YLMKeSFbXyz9st65upbSaguw=
+github.com/openshift/api v0.0.0-20220811160310-427c7cc57280/go.mod h1:LEnw1IVscIxyDnltE3Wi7bQb/QzIM8BfPNKoGA1Qlxw=
 github.com/openshift/baremetal-operator v0.0.0-20220128094204-28771f489634 h1:HMxwhxQKSamgM3RpvbUwUKrnD39fEAWrEYaueTHVRmY=
 github.com/openshift/baremetal-operator v0.0.0-20220128094204-28771f489634/go.mod h1:fKoRJ8B07os5e+LFLvhFSS2g8nTODZW/J5jKw4dsQ18=
 github.com/openshift/baremetal-operator/apis v0.0.0-20220128094204-28771f489634 h1:TfLz0GbuVWt0bKNK+71JeYHIAemjcnE1fAVgqMgw2Ac=
@@ -2152,6 +2152,7 @@ k8s.io/code-generator v0.22.0-rc.0/go.mod h1:eV77Y09IopzeXOJzndrDyCI88UBok2h6WxA
 k8s.io/code-generator v0.22.0/go.mod h1:eV77Y09IopzeXOJzndrDyCI88UBok2h6WxAlBwpxa+o=
 k8s.io/code-generator v0.22.1/go.mod h1:eV77Y09IopzeXOJzndrDyCI88UBok2h6WxAlBwpxa+o=
 k8s.io/code-generator v0.23.0/go.mod h1:vQvOhDXhuzqiVfM/YHp+dmg10WDZCchJVObc9MvowsE=
+k8s.io/code-generator v0.24.0/go.mod h1:dpVhs00hTuTdTY6jvVxvTFCk6gSMrtfRydbhZwHI15w=
 k8s.io/code-generator v0.24.3/go.mod h1:dpVhs00hTuTdTY6jvVxvTFCk6gSMrtfRydbhZwHI15w=
 k8s.io/component-base v0.18.0-beta.2/go.mod h1:HVk5FpRnyzQ/MjBr9//e/yEBjTVa2qjGXCTuUzcD7ks=
 k8s.io/component-base v0.18.2/go.mod h1:kqLlMuhJNHQ9lz8Z7V5bxUUtjFZnrypArGl58gmDfUM=
