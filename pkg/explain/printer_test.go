@@ -65,8 +65,12 @@ func Test_PrintFields(t *testing.T) {
       FIPS configures https://www.nist.gov/itl/fips-general-information
 
     imageContentSources <[]object>
-      ImageContentSources lists sources/repositories for the release-image content.
-      ImageContentSource defines a list of sources/repositories that can be used to pull content.
+      ImageContentSources lists sources/repositories for the release-image content. The field is deprecated. Please use imageDigestSources.
+      ImageContentSource defines a list of sources/repositories that can be used to pull content. The field is deprecated. Please use imageDigestSources.
+
+    imageDigestSources <[]object>
+      ImageDigestSources lists sources/repositories for the release-image content.
+      ImageDigestSource defines a list of sources/repositories that can be used to pull content.
 
     kind <string>
       Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds

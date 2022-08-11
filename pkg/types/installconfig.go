@@ -138,8 +138,13 @@ type InstallConfig struct {
 	Proxy *Proxy `json:"proxy,omitempty"`
 
 	// ImageContentSources lists sources/repositories for the release-image content.
+	// The field is deprecated. Please use imageDigestSources.
 	// +optional
-	ImageContentSources []ImageContentSource `json:"imageContentSources,omitempty"`
+	DeprecatedImageContentSources []ImageContentSource `json:"imageContentSources,omitempty"`
+
+	// ImageDigestSources lists sources/repositories for the release-image content.
+	// +optional
+	ImageDigestSources []ImageDigestSource `json:"imageDigestSources,omitempty"`
 
 	// Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
 	// When no strategy is specified, the strategy is "External".
@@ -427,7 +432,18 @@ type Proxy struct {
 }
 
 // ImageContentSource defines a list of sources/repositories that can be used to pull content.
+// The field is deprecated. Please use imageDigestSources.
 type ImageContentSource struct {
+	// Source is the repository that users refer to, e.g. in image pull specifications.
+	Source string `json:"source"`
+
+	// Mirrors is one or more repositories that may also contain the same images.
+	// +optional
+	Mirrors []string `json:"mirrors,omitempty"`
+}
+
+// ImageDigestSource defines a list of sources/repositories that can be used to pull content.
+type ImageDigestSource struct {
 	// Source is the repository that users refer to, e.g. in image pull specifications.
 	Source string `json:"source"`
 

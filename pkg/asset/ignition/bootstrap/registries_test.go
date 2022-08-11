@@ -11,49 +11,49 @@ import (
 func TestMergedMirrorSets(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    []types.ImageContentSource
-		expected []types.ImageContentSource
+		input    []types.ImageDigestSource
+		expected []types.ImageDigestSource
 	}{{
-		input: []types.ImageContentSource{{
+		input: []types.ImageDigestSource{{
 			Source: "a",
 		}, {
 			Source: "b",
 		}},
-		expected: []types.ImageContentSource{{
+		expected: []types.ImageDigestSource{{
 			Source: "a",
 		}, {
 			Source: "b",
 		}},
 	}, {
-		input: []types.ImageContentSource{{
+		input: []types.ImageDigestSource{{
 			Source: "a",
 		}, {
 			Source: "a",
 		}},
-		expected: []types.ImageContentSource{{
+		expected: []types.ImageDigestSource{{
 			Source: "a",
 		}},
 	}, {
-		input: []types.ImageContentSource{{
+		input: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma", "mb", "mb"},
 		}, {
 			Source:  "a",
 			Mirrors: []string{"mc", "mc", "md"},
 		}},
-		expected: []types.ImageContentSource{{
+		expected: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma", "mb", "mc", "md"},
 		}},
 	}, {
-		input: []types.ImageContentSource{{
+		input: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma", "mb"},
 		}, {
 			Source:  "b",
 			Mirrors: []string{"mc", "md"},
 		}},
-		expected: []types.ImageContentSource{{
+		expected: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma", "mb"},
 		}, {
@@ -61,31 +61,31 @@ func TestMergedMirrorSets(t *testing.T) {
 			Mirrors: []string{"mc", "md"},
 		}},
 	}, {
-		input: []types.ImageContentSource{{
+		input: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma", "mb"},
 		}, {
 			Source:  "a",
 			Mirrors: []string{"ma", "md"},
 		}},
-		expected: []types.ImageContentSource{{
+		expected: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma", "mb", "md"},
 		}},
 	}, {
-		input: []types.ImageContentSource{{
+		input: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma", "mb"},
 		}, {
 			Source:  "a",
 			Mirrors: []string{"md", "ma"},
 		}},
-		expected: []types.ImageContentSource{{
+		expected: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma", "mb", "md"},
 		}},
 	}, {
-		input: []types.ImageContentSource{{
+		input: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma", "mb"},
 		}, {
@@ -95,12 +95,12 @@ func TestMergedMirrorSets(t *testing.T) {
 			Source:  "a",
 			Mirrors: []string{"me", "mb"},
 		}},
-		expected: []types.ImageContentSource{{
+		expected: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma", "mb", "md", "me"},
 		}},
 	}, {
-		input: []types.ImageContentSource{{
+		input: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma"},
 		}, {
@@ -110,7 +110,7 @@ func TestMergedMirrorSets(t *testing.T) {
 			Source:  "a",
 			Mirrors: []string{"mb", "ma"},
 		}},
-		expected: []types.ImageContentSource{{
+		expected: []types.ImageDigestSource{{
 			Source:  "a",
 			Mirrors: []string{"ma", "mb"},
 		}, {
@@ -121,6 +121,34 @@ func TestMergedMirrorSets(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert.Equal(t, test.expected, MergedMirrorSets(test.input))
+		})
+	}
+}
+
+func TestContentSourceToDigestMirror(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []types.ImageContentSource
+		expected []types.ImageDigestSource
+	}{{
+		input: []types.ImageContentSource{{
+			Source:  "a",
+			Mirrors: []string{"ma", "mb", "mb"},
+		}, {
+			Source:  "a",
+			Mirrors: []string{"mc", "mc", "md"},
+		}},
+		expected: []types.ImageDigestSource{{
+			Source:  "a",
+			Mirrors: []string{"ma", "mb", "mb"},
+		}, {
+			Source:  "a",
+			Mirrors: []string{"mc", "mc", "md"},
+		}},
+	}}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, ContentSourceToDigestMirror(test.input))
 		})
 	}
 }

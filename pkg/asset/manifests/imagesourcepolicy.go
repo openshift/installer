@@ -35,15 +35,15 @@ func (*ImageContentSourcePolicy) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the ImageContentSourcePolicy config and its CRD.
+// Generate generates the ImageContentSourcePolicy config and its CR.
 func (p *ImageContentSourcePolicy) Generate(dependencies asset.Parents) error {
 	installconfig := &installconfig.InstallConfig{}
 	dependencies.Get(installconfig)
 
-	padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", len(installconfig.Config.ImageContentSources))))
+	padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", len(installconfig.Config.DeprecatedImageContentSources))))
 
 	var policies []*operatorv1alpha1.ImageContentSourcePolicy
-	for gidx, group := range installconfig.Config.ImageContentSources {
+	for gidx, group := range installconfig.Config.DeprecatedImageContentSources {
 		policies = append(policies, &operatorv1alpha1.ImageContentSourcePolicy{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: operatorv1alpha1.SchemeGroupVersion.String(),

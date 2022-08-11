@@ -61,7 +61,7 @@ func TestRegistriesConf_Generate(t *testing.T) {
 							ObjectMeta: v1.ObjectMeta{
 								Namespace: "cluster-0",
 							},
-							ImageContentSources: []types.ImageContentSource{
+							DeprecatedImageContentSources: []types.ImageContentSource{
 								{
 									Source: "registry.ci.openshift.org/origin/release",
 									Mirrors: []string{
@@ -94,7 +94,57 @@ func TestRegistriesConf_Generate(t *testing.T) {
 							ObjectMeta: v1.ObjectMeta{
 								Namespace: "cluster-0",
 							},
-							ImageContentSources: []types.ImageContentSource{
+							DeprecatedImageContentSources: []types.ImageContentSource{
+								{
+									Source: "registry.ci.openshift.org/ocp/release",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+									},
+								},
+								{
+									Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+									},
+								},
+							},
+						},
+					},
+				},
+				&releaseimage.Image{
+					PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
+				},
+			},
+			expectedConfig: `unqualified-search-registries = []
+
+[[registry]]
+  location = "registry.ci.openshift.org/ocp/release"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+[[registry]]
+  location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+`,
+		},
+		{
+			name: "image-digest-sources",
+			dependencies: []asset.Asset{
+				&agent.OptionalInstallConfig{
+					Supplied: true,
+					AssetBase: installconfig.AssetBase{
+						Config: &types.InstallConfig{
+							ObjectMeta: v1.ObjectMeta{
+								Namespace: "cluster-0",
+							},
+							ImageDigestSources: []types.ImageDigestSource{
 								{
 									Source: "registry.ci.openshift.org/ocp/release",
 									Mirrors: []string{

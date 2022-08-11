@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
+	"github.com/openshift/installer/pkg/types"
 )
 
 var (
@@ -139,14 +140,24 @@ func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 	releaseImage := &releaseimage.Image{}
 	dependencies.Get(installConfig, releaseImage)
 
-	if !installConfig.Supplied || len(installConfig.Config.ImageContentSources) == 0 {
+	if !installConfig.Supplied || len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0 {
 		return i.generateDefaultRegistriesConf()
+	}
+
+	if len(installConfig.Config.DeprecatedImageContentSources) != 0 && len(installConfig.Config.ImageDigestSources) != 0 {
+		return fmt.Errorf("invalid install-config.yaml, cannot set imageContentSources and imageDigestSources at the same time")
 	}
 
 	registries := &sysregistriesv2.V2RegistriesConf{
 		Registries: []sysregistriesv2.Registry{},
 	}
-	for _, group := range bootstrap.MergedMirrorSets(installConfig.Config.ImageContentSources) {
+	digestMirrorSources := []types.ImageDigestSource{}
+	if len(installConfig.Config.DeprecatedImageContentSources) > 0 {
+		digestMirrorSources = bootstrap.ContentSourceToDigestMirror(installConfig.Config.DeprecatedImageContentSources)
+	} else if len(installConfig.Config.ImageDigestSources) > 0 {
+		digestMirrorSources = append(digestMirrorSources, installConfig.Config.ImageDigestSources...)
+	}
+	for _, group := range bootstrap.MergedMirrorSets(digestMirrorSources) {
 		if len(group.Mirrors) == 0 {
 			continue
 		}
@@ -163,7 +174,7 @@ func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 	i.setMirrorConfig(i.Config)
 
 	if !i.releaseImageIsSameInRegistriesConf(releaseImage.PullSpec) {
-		logrus.Warnf(fmt.Sprintf("The ImageContentSources configuration in install-config.yaml should have at least one source field matching the releaseImage value %s", releaseImage.PullSpec))
+		logrus.Warnf(fmt.Sprintf("The imageDigestSources configuration in install-config.yaml should have at least one source field matching the releaseImage value %s", releaseImage.PullSpec))
 	}
 
 	registriesData, err := toml.Marshal(registries)

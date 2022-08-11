@@ -248,7 +248,13 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	}
 
 	registries := []sysregistriesv2.Registry{}
-	for _, group := range MergedMirrorSets(installConfig.Config.ImageContentSources) {
+	digestMirrorSources := []types.ImageDigestSource{}
+	if len(installConfig.Config.DeprecatedImageContentSources) > 0 {
+		digestMirrorSources = ContentSourceToDigestMirror(installConfig.Config.DeprecatedImageContentSources)
+	} else if len(installConfig.Config.ImageDigestSources) > 0 {
+		digestMirrorSources = append(digestMirrorSources, installConfig.Config.ImageDigestSources...)
+	}
+	for _, group := range MergedMirrorSets(digestMirrorSources) {
 		if len(group.Mirrors) == 0 {
 			continue
 		}

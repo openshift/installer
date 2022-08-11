@@ -1112,7 +1112,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "release image source is not valid",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.ImageContentSources = []types.ImageContentSource{{
+				c.DeprecatedImageContentSources = []types.ImageContentSource{{
 					Source: "ocp/release-x.y",
 				}}
 				return c
@@ -1123,7 +1123,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "release image source's mirror is not valid",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.ImageContentSources = []types.ImageContentSource{{
+				c.DeprecatedImageContentSources = []types.ImageContentSource{{
 					Source:  "q.io/ocp/release-x.y",
 					Mirrors: []string{"ocp/openshift-x.y"},
 				}}
@@ -1135,7 +1135,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "release image source's mirror is valid",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.ImageContentSources = []types.ImageContentSource{{
+				c.DeprecatedImageContentSources = []types.ImageContentSource{{
 					Source:  "q.io/ocp/release-x.y",
 					Mirrors: []string{"mirror.example.com:5000"},
 				}}
@@ -1146,7 +1146,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "release image source is not repository but reference by digest",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.ImageContentSources = []types.ImageContentSource{{
+				c.DeprecatedImageContentSources = []types.ImageContentSource{{
 					Source: "quay.io/ocp/release-x.y@sha256:397c867cc10bcc90cf05ae9b71dd3de6000535e27cb6c704d9f503879202582c",
 				}}
 				return c
@@ -1157,7 +1157,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "release image source is not repository but reference by tag",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.ImageContentSources = []types.ImageContentSource{{
+				c.DeprecatedImageContentSources = []types.ImageContentSource{{
 					Source: "quay.io/ocp/release-x.y:latest",
 				}}
 				return c
@@ -1168,11 +1168,92 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "valid release image source",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.ImageContentSources = []types.ImageContentSource{{
+				c.DeprecatedImageContentSources = []types.ImageContentSource{{
 					Source: "quay.io/ocp/release-x.y",
 				}}
 				return c
 			}(),
+		},
+		{
+			name: "release image source is not valid ImageDigestSource",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source: "ocp/release-x.y",
+				}}
+				return c
+			}(),
+			expectedError: `^imageDigestSources\[0\]\.source: Invalid value: "ocp/release-x\.y": the repository provided is invalid: a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, \'\-\' or \'\.\', and must start and end with an alphanumeric character \(e.g. \'example\.com\', regex used for validation is \'\[a\-z0\-9\]\(\[\-a\-z0\-9\]\*\[a\-z0\-9\]\)\?\(\\\.\[a\-z0\-9\]\(\[\-a\-z0\-9\]\*\[a\-z0\-9\]\)\?\)\*\'\)`,
+		},
+		{
+			name: "release image source's mirror is not valid ImageDigestSource",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:  "q.io/ocp/release-x.y",
+					Mirrors: []string{"ocp/openshift-x.y"},
+				}}
+				return c
+			}(),
+			expectedError: `^imageDigestSources\[0\]\.mirrors\[0\]: Invalid value: "ocp/openshift-x\.y": the repository provided is invalid: a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, \'\-\' or \'\.\', and must start and end with an alphanumeric character \(e.g. \'example\.com\', regex used for validation is \'\[a\-z0\-9\]\(\[\-a\-z0\-9\]\*\[a\-z0\-9\]\)\?\(\\\.\[a\-z0\-9\]\(\[\-a\-z0\-9\]\*\[a\-z0\-9\]\)\?\)\*\'\)`,
+		},
+		{
+			name: "release image source's mirror is valid ImageDigestSource",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:  "q.io/ocp/release-x.y",
+					Mirrors: []string{"mirror.example.com:5000"},
+				}}
+				return c
+			}(),
+		},
+		{
+			name: "release image source is not repository but reference by digest ImageDigestSource",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source: "quay.io/ocp/release-x.y@sha256:397c867cc10bcc90cf05ae9b71dd3de6000535e27cb6c704d9f503879202582c",
+				}}
+				return c
+			}(),
+			expectedError: `^imageDigestSources\[0\]\.source: Invalid value: "quay\.io/ocp/release-x\.y@sha256:397c867cc10bcc90cf05ae9b71dd3de6000535e27cb6c704d9f503879202582c": must be repository--not reference$`,
+		},
+		{
+			name: "release image source is not repository but reference by tag ImageDigestSource",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source: "quay.io/ocp/release-x.y:latest",
+				}}
+				return c
+			}(),
+			expectedError: `^imageDigestSources\[0\]\.source: Invalid value: "quay\.io/ocp/release-x\.y:latest": must be repository--not reference$`,
+		},
+		{
+			name: "valid release image source ImageDigstSourrce",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source: "quay.io/ocp/release-x.y",
+				}}
+				return c
+			}(),
+		},
+		{
+			name: "error out ImageContentSources and ImageDigestSources and are set at the same time",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.DeprecatedImageContentSources = []types.ImageContentSource{{
+					Source:  "q.io/ocp/source",
+					Mirrors: []string{"ocp/openshift/mirror"},
+				}}
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:  "q.io/ocp/source",
+					Mirrors: []string{"ocp-digest/openshift/mirror"}}}
+				return c
+			}(),
+			expectedError: `cannot set imageContentSources and imageDigestSources at the same time`,
 		},
 		{
 			name: "invalid publishing strategy",
