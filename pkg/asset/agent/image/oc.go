@@ -1,6 +1,8 @@
 package image
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -21,8 +23,9 @@ import (
 )
 
 const (
-	machineOsImageName = "machine-os-images"
-	coreOsFileName     = "/coreos/coreos-%s.iso"
+	machineOsImageName   = "machine-os-images"
+	coreOsFileName       = "/coreos/coreos-%s.iso"
+	coreOsSha256FileName = "/coreos/coreos-%s.iso.sha256"
 	//OcDefaultTries is the number of times to execute the oc command on failues
 	OcDefaultTries = 5
 	// OcDefaultRetryDelay is the time between retries
@@ -37,7 +40,7 @@ type Config struct {
 
 // Release is the interface to use the oc command to the get image info
 type Release interface {
-	GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig, architecture string) (string, error)
+	GetBaseIso(log logrus.FieldLogger, releaseImage, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (string, error)
 }
 
 type release struct {
@@ -57,7 +60,7 @@ const (
 )
 
 // Get the CoreOS ISO from the releaseImage
-func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig, architecture string) (string, error) {
+func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
 
 	// Get the machine-os-images pullspec from the release and use that to get the CoreOS ISO
 	image, err := r.getImageFromRelease(log, machineOsImageName, releaseImage, pullSecret, len(mirrorConfig) > 0)
@@ -72,19 +75,28 @@ func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSe
 
 	filename := fmt.Sprintf(coreOsFileName, architecture)
 	// Check if file is already cached
-	filePath, err := GetFileFromCache(path.Base(filename), cacheDir)
+	cachedFile, err := GetFileFromCache(path.Base(filename), cacheDir)
 	if err != nil {
 		return "", err
 	}
-	if filePath != "" {
-		// Found cached file
-		return filePath, nil
+	if cachedFile != "" {
+		log.Info("Verifying cached file")
+		valid, err := r.verifyCacheFile(log, image, cachedFile, pullSecret, architecture, mirrorConfig)
+		if err != nil {
+			return "", err
+		}
+		if valid {
+			log.Infof("Using cached Base ISO %s", cachedFile)
+			return cachedFile, nil
+		}
 	}
 
+	// Get the base ISO from the payload
 	path, err := r.extractFileFromImage(log, image, filename, cacheDir, pullSecret, mirrorConfig)
 	if err != nil {
 		return "", err
 	}
+	log.Infof("Base ISO obtained from release and cached at %s", path)
 	return path, err
 }
 
@@ -126,19 +138,54 @@ func (r *release) extractFileFromImage(log logrus.FieldLogger, image, file, cach
 		cmd = fmt.Sprintf(templateImageExtract, file, cacheDir, image)
 	}
 
-	log.Debugf("extracting %s to %s, %s", file, cacheDir, cmd)
+	logrus.Debugf("extracting %s to %s, %s", file, cacheDir, cmd)
 	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, execute, log, r.executer, pullSecret, cmd)
 	if err != nil {
 		return "", err
 	}
 	// set path
 	path := filepath.Join(cacheDir, path.Base(file))
-	log.Info("Successfully extracted base ISO from the release")
-	log.Debugf("Base ISO %s cached at %s", file, path)
 	return path, nil
 }
 
-func execute(log logrus.FieldLogger, executer executer.Executer, pullSecret string, command string) (string, error) {
+// Check if there is a different base ISO in the release payload
+func (r *release) verifyCacheFile(log logrus.FieldLogger, image, file, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (bool, error) {
+
+	tempDir, err := ioutil.TempDir("", "cache")
+	if err != nil {
+		return false, err
+	}
+
+	// Get the file containing the coreos sha256 hash
+	shaFilename := fmt.Sprintf(coreOsSha256FileName, architecture)
+	shaFile, err := r.extractFileFromImage(log, image, shaFilename, tempDir, pullSecret, mirrorConfig)
+	if err != nil {
+		return false, err
+	}
+
+	defer os.RemoveAll(tempDir)
+
+	payloadSha256, err := ioutil.ReadFile(shaFile)
+	if err != nil {
+		return false, err
+	}
+
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		return false, err
+	}
+	fileHash := sha256.Sum256(data)
+
+	// Compare the hash of cached file to the hash retrieved from payload
+	if hex.EncodeToString(fileHash[:]) == string(payloadSha256) {
+		// cached file is the same as in payload
+		return true, nil
+	}
+	logrus.Debugf("Cached file %s is not most recent", file)
+	return false, err
+}
+
+func execute(log logrus.FieldLogger, executer executer.Executer, pullSecret, command string) (string, error) {
 
 	ps, err := executer.TempFile("", "registry-config")
 	if err != nil {
