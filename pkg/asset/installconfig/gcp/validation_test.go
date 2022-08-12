@@ -60,14 +60,15 @@ var (
 		ic.Platform.GCP.DefaultMachinePlatform.InstanceType = "n1-dne-1"
 	}
 
-	invalidateNetwork       = func(ic *types.InstallConfig) { ic.GCP.Network = "invalid-vpc" }
-	invalidateComputeSubnet = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet = "invalid-compute-subnet" }
-	invalidateCPSubnet      = func(ic *types.InstallConfig) { ic.GCP.ControlPlaneSubnet = "invalid-cp-subnet" }
-	invalidateRegion        = func(ic *types.InstallConfig) { ic.GCP.Region = invalidRegion }
-	invalidateProject       = func(ic *types.InstallConfig) { ic.GCP.ProjectID = invalidProjectName }
-	removeVPC               = func(ic *types.InstallConfig) { ic.GCP.Network = "" }
-	removeSubnets           = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet, ic.GCP.ControlPlaneSubnet = "", "" }
-	invalidClusterName      = func(ic *types.InstallConfig) { ic.ObjectMeta.Name = "testgoogletest" }
+	invalidateNetwork        = func(ic *types.InstallConfig) { ic.GCP.Network = "invalid-vpc" }
+	invalidateComputeSubnet  = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet = "invalid-compute-subnet" }
+	invalidateCPSubnet       = func(ic *types.InstallConfig) { ic.GCP.ControlPlaneSubnet = "invalid-cp-subnet" }
+	invalidateRegion         = func(ic *types.InstallConfig) { ic.GCP.Region = invalidRegion }
+	invalidateProject        = func(ic *types.InstallConfig) { ic.GCP.ProjectID = invalidProjectName }
+	invalidateNetworkProject = func(ic *types.InstallConfig) { ic.GCP.NetworkProjectID = invalidProjectName }
+	removeVPC                = func(ic *types.InstallConfig) { ic.GCP.Network = "" }
+	removeSubnets            = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet, ic.GCP.ControlPlaneSubnet = "", "" }
+	invalidClusterName       = func(ic *types.InstallConfig) { ic.ObjectMeta.Name = "testgoogletest" }
 
 	machineTypeAPIResult = map[string]*compute.MachineType{
 		"n1-standard-1": {GuestCpus: 1, MemoryMb: 3840},
@@ -228,6 +229,12 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			edits:          editFunctions{invalidateProject, removeSubnets, removeVPC},
 			expectedError:  true,
 			expectedErrMsg: "platform.gcp.project: Invalid value: \"invalid-project\": invalid project ID",
+		},
+		{
+			name:           "Invalid network project ID",
+			edits:          editFunctions{invalidateNetworkProject},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.networkProjectID: Invalid value: \"invalid-project\": invalid project ID",
 		},
 		{
 			name:           "Valid Region",

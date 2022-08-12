@@ -2229,6 +2229,11 @@ spec:
                     description: Network specifies an existing VPC where the cluster
                       should be created rather than provisioning a new one.
                     type: string
+                  networkProjectID:
+                    description: NetworkProjectID is currently unsupported. NetworkProjectID
+                      specifies which project the network and subnets exist in when
+                      they are not in the main ProjectID.
+                    type: string
                   projectID:
                     description: ProjectID is the the project that will be used for
                       the cluster.
