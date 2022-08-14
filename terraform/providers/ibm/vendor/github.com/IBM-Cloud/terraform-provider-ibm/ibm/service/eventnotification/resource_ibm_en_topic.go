@@ -364,7 +364,7 @@ func resourceIBMEnTopicMapToRules(rulesMap map[string]interface{}) en.Rules {
 	return rules
 }
 
-func enTopicUpdateSourcesItemToMap(source en.TopicSourcesItem) map[string]interface{} {
+func enTopicUpdateSourcesItemToMap(source en.SourcesListItem) map[string]interface{} {
 	sourceMap := map[string]interface{}{}
 
 	if source.ID != nil {

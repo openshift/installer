@@ -97,7 +97,7 @@ func ResourceIBMCISInstance() *schema.Resource {
 			"tags": {
 				Type:     schema.TypeSet,
 				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_cis", "tag")},
+				Elem:     &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_cis", "tags")},
 				Set:      schema.HashString,
 			},
 
@@ -144,7 +144,7 @@ func ResourceIBMCISValidator() *validate.ResourceValidator {
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "tag",
+			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,

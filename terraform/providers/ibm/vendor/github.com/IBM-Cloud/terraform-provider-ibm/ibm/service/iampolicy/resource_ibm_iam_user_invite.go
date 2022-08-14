@@ -302,6 +302,11 @@ func ResourceIBMIAMUserInvite() *schema.Resource {
 													Computed:    true,
 													Description: "ID of the resource group.",
 												},
+												"service_type": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Service type of the policy definition",
+												},
 
 												"attributes": {
 													Type:        schema.TypeMap,
@@ -387,7 +392,11 @@ func ResourceIBMIAMUserInvite() *schema.Resource {
 																Computed:    true,
 																Description: "ID of the resource group.",
 															},
-
+															"service_type": {
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "Service type of the policy definition",
+															},
 															"attributes": {
 																Type:        schema.TypeMap,
 																Computed:    true,
@@ -595,13 +604,15 @@ func resourceIBMIAMGetUsers(d *schema.ResourceData, meta interface{}) error {
 				roles[i] = *role.DisplayName
 			}
 			//populate policy resources
-			resources := flex.FlattenPolicyResource(policy.Resources)
+			// userResources := make([]map[string]interface{}, 0)
+			userResources := flex.FlattenPolicyResource(policy.Resources)
 			p := map[string]interface{}{
 				"id":        policy.ID,
 				"roles":     roles,
-				"resources": resources,
+				"resources": userResources,
 			}
 			userPolicies = append(userPolicies, p)
+
 		}
 
 		listAccessGroupOptions := &iamaccessgroupsv2.ListAccessGroupsOptions{
@@ -634,17 +645,17 @@ func resourceIBMIAMGetUsers(d *schema.ResourceData, meta interface{}) error {
 					roles[i] = *role.DisplayName
 				}
 				//populate policy resources
-				resources := flex.FlattenPolicyResource(policy.Resources)
+				grpResources := flex.FlattenPolicyResource(policy.Resources)
 				p := map[string]interface{}{
 					"id":        policy.ID,
 					"roles":     roles,
-					"resources": resources,
+					"resources": grpResources,
 				}
 				grpPolicies = append(grpPolicies, p)
 			}
 			//populate name & policies of a access group
 			agInfo := map[string]interface{}{
-				"name":     grpData.Name,
+				"name":     *grpData.Name,
 				"policies": grpPolicies,
 			}
 			//add agInfo to list of access groups

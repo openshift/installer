@@ -24,6 +24,11 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
+const (
+	piEndingIPAaddress   = "pi_ending_ip_address"
+	piStartingIPAaddress = "pi_starting_ip_address"
+)
+
 func ResourceIBMPINetwork() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceIBMPINetworkCreate,
@@ -65,6 +70,7 @@ func ResourceIBMPINetwork() *schema.Resource {
 			helpers.PINetworkGateway: {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "PI network gateway",
 			},
 			helpers.PINetworkJumbo: {
@@ -77,6 +83,26 @@ func ResourceIBMPINetwork() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "PI cloud instance ID",
+			},
+			helpers.PINetworkIPAddressRange: {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				Description: "List of one or more ip address range(s)",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						piEndingIPAaddress: {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Ending ip address",
+						},
+						piStartingIPAaddress: {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Starting ip address",
+						},
+					},
+				},
 			},
 
 			//Computed Attributes
@@ -102,26 +128,30 @@ func resourceIBMPINetworkCreate(ctx context.Context, d *schema.ResourceData, met
 	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
 	networkname := d.Get(helpers.PINetworkName).(string)
 	networktype := d.Get(helpers.PINetworkType).(string)
-	networkdns := flex.ExpandStringList((d.Get(helpers.PINetworkDNS).(*schema.Set)).List())
 
 	client := st.NewIBMPINetworkClient(ctx, sess, cloudInstanceID)
 	var body = &models.NetworkCreate{
 		Type: &networktype,
 		Name: networkname,
 	}
+	if v, ok := d.GetOk(helpers.PINetworkDNS); ok {
+		networkdns := flex.ExpandStringList((v.(*schema.Set)).List())
+		if len(networkdns) > 0 {
+			body.DNSServers = networkdns
+		}
+	}
+
 	if v, ok := d.GetOk(helpers.PINetworkJumbo); ok {
 		body.Jumbo = v.(bool)
-	}
-	if len(networkdns) > 0 {
-		body.DNSServers = networkdns
 	}
 
 	if networktype == "vlan" {
 		var networkcidr string
+		var ipBodyRanges []*models.IPAddressRange
 		if v, ok := d.GetOk(helpers.PINetworkCidr); ok {
 			networkcidr = v.(string)
 		} else {
-			diag.Errorf("%s is required when %s is vlan", helpers.PINetworkCidr, helpers.PINetworkType)
+			return diag.Errorf("%s is required when %s is vlan", helpers.PINetworkCidr, helpers.PINetworkType)
 		}
 
 		gateway, firstip, lastip, err := generateIPData(networkcidr)
@@ -129,8 +159,17 @@ func resourceIBMPINetworkCreate(ctx context.Context, d *schema.ResourceData, met
 			return diag.FromErr(err)
 		}
 
-		var ipbody = []*models.IPAddressRange{{EndingIPAddress: &lastip, StartingIPAddress: &firstip}}
-		body.IPAddressRanges = ipbody
+		ipBodyRanges = []*models.IPAddressRange{{EndingIPAddress: &lastip, StartingIPAddress: &firstip}}
+
+		if g, ok := d.GetOk(helpers.PINetworkGateway); ok {
+			gateway = g.(string)
+		}
+
+		if ips, ok := d.GetOk(helpers.PINetworkIPAddressRange); ok {
+			ipBodyRanges = getIPAddressRanges(ips.([]interface{}))
+		}
+
+		body.IPAddressRanges = ipBodyRanges
 		body.Gateway = gateway
 		body.Cidr = networkcidr
 	}
@@ -140,11 +179,11 @@ func resourceIBMPINetworkCreate(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(err)
 	}
 
-	IBMPINetworkID := *networkResponse.NetworkID
+	networkID := *networkResponse.NetworkID
 
-	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, IBMPINetworkID))
+	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, networkID))
 
-	_, err = isWaitForIBMPINetworkAvailable(ctx, client, IBMPINetworkID, d.Timeout(schema.TimeoutCreate))
+	_, err = isWaitForIBMPINetworkAvailable(ctx, client, networkID, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -176,6 +215,20 @@ func resourceIBMPINetworkRead(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set(helpers.PINetworkName, networkdata.Name)
 	d.Set(helpers.PINetworkType, networkdata.Type)
 	d.Set(helpers.PINetworkJumbo, networkdata.Jumbo)
+	d.Set(helpers.PINetworkGateway, networkdata.Gateway)
+	ipRangesMap := []map[string]interface{}{}
+	if networkdata.IPAddressRanges != nil {
+		for _, n := range networkdata.IPAddressRanges {
+			if n != nil {
+				v := map[string]interface{}{
+					piEndingIPAaddress:   n.EndingIPAddress,
+					piStartingIPAaddress: n.StartingIPAddress,
+				}
+				ipRangesMap = append(ipRangesMap, v)
+			}
+		}
+	}
+	d.Set(helpers.PINetworkIPAddressRange, ipRangesMap)
 
 	return nil
 
@@ -192,15 +245,18 @@ func resourceIBMPINetworkUpdate(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(err)
 	}
 
-	if d.HasChanges(helpers.PINetworkName, helpers.PINetworkDNS) {
+	if d.HasChanges(helpers.PINetworkName, helpers.PINetworkDNS, helpers.PINetworkGateway, helpers.PINetworkIPAddressRange) {
 		networkC := st.NewIBMPINetworkClient(ctx, sess, cloudInstanceID)
 		body := &models.NetworkUpdate{
 			DNSServers: flex.ExpandStringList((d.Get(helpers.PINetworkDNS).(*schema.Set)).List()),
 		}
+		if d.Get(helpers.PINetworkType).(string) == "vlan" {
+			body.Gateway = flex.PtrToString(d.Get(helpers.PINetworkGateway).(string))
+			body.IPAddressRanges = getIPAddressRanges(d.Get(helpers.PINetworkIPAddressRange).([]interface{}))
+		}
 
 		if d.HasChange(helpers.PINetworkName) {
-			name := d.Get(helpers.PINetworkName).(string)
-			body.Name = &name
+			body.Name = flex.PtrToString(d.Get(helpers.PINetworkName).(string))
 		}
 
 		_, err = networkC.Update(networkID, body)
@@ -307,4 +363,19 @@ func generateIPData(cdir string) (gway, firstip, lastip string, err error) {
 	}
 	return gateway.String(), firstusable.String(), lastusable.String(), nil
 
+}
+
+func getIPAddressRanges(ipAddressRanges []interface{}) []*models.IPAddressRange {
+	ipRanges := make([]*models.IPAddressRange, 0, len(ipAddressRanges))
+	for _, v := range ipAddressRanges {
+		if v != nil {
+			ipAddressRange := v.(map[string]interface{})
+			ipRange := &models.IPAddressRange{
+				EndingIPAddress:   flex.PtrToString(ipAddressRange[piEndingIPAaddress].(string)),
+				StartingIPAddress: flex.PtrToString(ipAddressRange[piStartingIPAaddress].(string)),
+			}
+			ipRanges = append(ipRanges, ipRange)
+		}
+	}
+	return ipRanges
 }

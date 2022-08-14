@@ -100,7 +100,7 @@ func ResourceIBMSchematicsWorkspace() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "The description of the workspace.",
-				ValidateFunc: validate.InvokeValidator("ibm_schematics_workspace", schematicsWorkspaceDescription),
+				ValidateFunc: validate.InvokeValidator("ibm_schematics_workspace", "description"),
 			},
 			"location": {
 				Type:        schema.TypeString,
@@ -111,7 +111,7 @@ func ResourceIBMSchematicsWorkspace() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "The name of your workspace. The name can be up to 128 characters long and can include alphanumeric characters, spaces, dashes, and underscores. When you create a workspace for your own Terraform template, consider including the microservice component that you set up with your Terraform template and the IBM Cloud environment where you want to deploy your resources in your name.",
-				ValidateFunc: validate.InvokeValidator("ibm_schematics_workspace", schematicsWorkspaceName),
+				ValidateFunc: validate.InvokeValidator("ibm_schematics_workspace", "name"),
 			},
 			"resource_group": {
 				Type:        schema.TypeString,
@@ -205,7 +205,7 @@ func ResourceIBMSchematicsWorkspace() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "The Terraform version that you want to use to run your Terraform code. Enter `terraform_v0.12` to use Terraform version 0.12, and `terraform_v0.11` to use Terraform version 0.11. The Terraform config files are run with Terraform version 0.11. This is a required variable. Make sure that your Terraform config files are compatible with the Terraform version that you select.",
-				ValidateFunc: validate.InvokeValidator("ibm_schematics_workspace", schematicsWorkspaceTemplateType),
+				ValidateFunc: validate.InvokeValidator("ibm_schematics_workspace", "template_type"),
 			},
 			"template_uninstall_script_name": {
 				Type:        schema.TypeString,
@@ -470,7 +470,7 @@ func ResourceIBMSchematicsWorkspaceValidator() *validate.ResourceValidator {
 			Identifier:                 schematicsWorkspaceTemplateType,
 			ValidateFunctionIdentifier: validate.ValidateRegexp,
 			Type:                       validate.TypeString,
-			Regexp:                     `^terraform_v(?:0\.11|0\.12|0\.13|0\.14|0\.15|1\.0)(?:\.\d+)?$`,
+			Regexp:                     `^terraform_v(?:0\.11|0\.12|0\.13|0\.14|0\.15|1\.0|1\.1)(?:\.\d+)?$`,
 			Default:                    "[]",
 			Optional:                   true})
 
@@ -749,9 +749,9 @@ func resourceIBMSchematicsWorkspaceMapToTemplateSourceDataRequest(templateSource
 		templateSourceDataRequest.Values = core.StringPtr(templateSourceDataRequestMap["values"].(string))
 	}
 	if templateSourceDataRequestMap["values_metadata"] != nil {
-		valuesMetadata := []interface{}{}
+		valuesMetadata := make([]schematicsv1.VariableMetadata, 0)
 		for _, valuesMetadataItem := range templateSourceDataRequestMap["values_metadata"].([]interface{}) {
-			valuesMetadata = append(valuesMetadata, valuesMetadataItem.(interface{}))
+			valuesMetadata = append(valuesMetadata, valuesMetadataItem.(schematicsv1.VariableMetadata))
 		}
 		templateSourceDataRequest.ValuesMetadata = valuesMetadata
 	}

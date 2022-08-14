@@ -12,19 +12,19 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPICloudInstanceClient ...
+// IBMPICloudInstanceClient
 type IBMPICloudInstanceClient struct {
 	IBMPIClient
 }
 
-// NewIBMPICloudInstanceClient ...
+// NewIBMPICloudInstanceClient
 func NewIBMPICloudInstanceClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPICloudInstanceClient {
 	return &IBMPICloudInstanceClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
 	}
 }
 
-// Get information about a cloud instance
+// Get a Cloud Instance
 func (f *IBMPICloudInstanceClient) Get(id string) (*models.CloudInstance, error) {
 	params := p_cloud_instances.NewPcloudCloudinstancesGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -39,7 +39,7 @@ func (f *IBMPICloudInstanceClient) Get(id string) (*models.CloudInstance, error)
 	return resp.Payload, nil
 }
 
-// Update a cloud instance
+// Update a Cloud Instance
 func (f *IBMPICloudInstanceClient) Update(id string, body *models.CloudInstanceUpdate) (*models.CloudInstance, error) {
 	params := p_cloud_instances.NewPcloudCloudinstancesPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
@@ -54,7 +54,7 @@ func (f *IBMPICloudInstanceClient) Update(id string, body *models.CloudInstanceU
 	return resp.Payload, nil
 }
 
-// Delete a Cloud instance
+// Delete a Cloud Instance
 func (f *IBMPICloudInstanceClient) Delete(id string) error {
 	params := p_cloud_instances.NewPcloudCloudinstancesDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).

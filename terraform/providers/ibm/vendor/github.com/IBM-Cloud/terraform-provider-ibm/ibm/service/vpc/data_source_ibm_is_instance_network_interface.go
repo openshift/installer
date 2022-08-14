@@ -109,6 +109,40 @@ func DataSourceIBMIsInstanceNetworkInterface() *schema.Resource {
 				Computed:    true,
 				Description: "The primary IPv4 address.",
 			},
+			isInstanceNicPrimaryIP: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The primary IP address to bind to the network interface. This can be specified using an existing reserved IP, or a prototype object for a new reserved IP.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isInstanceNicReservedIpAddress: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The IP address to reserve, which must not already be reserved on the subnet.",
+						},
+						isInstanceNicReservedIpHref: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this reserved IP",
+						},
+						isInstanceNicReservedIpName: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user-defined name for this reserved IP. If unspecified, the name will be a hyphenated list of randomly-selected words. Names must be unique within the subnet the reserved IP resides in. ",
+						},
+						isInstanceNicReservedIpId: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Identifies a reserved IP by a unique property.",
+						},
+						isInstanceNicReservedIpResourceType: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type",
+						},
+					},
+				},
+			},
 			"resource_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -281,8 +315,30 @@ func dataSourceIBMIsInstanceNetworkInterfaceRead(context context.Context, d *sch
 					if err = d.Set("port_speed", flex.IntValue(networkInterface.PortSpeed)); err != nil {
 						return diag.FromErr(fmt.Errorf("[ERROR] Error setting port_speed: %s", err))
 					}
-					if err = d.Set("primary_ipv4_address", networkInterface.PrimaryIpv4Address); err != nil {
+					if err = d.Set("primary_ipv4_address", networkInterface.PrimaryIP.Address); err != nil {
 						return diag.FromErr(fmt.Errorf("[ERROR] Error setting primary_ipv4_address: %s", err))
+					}
+					if networkInterface.PrimaryIP != nil {
+						// reserved ip changes
+						primaryIpList := make([]map[string]interface{}, 0)
+						currentPrimIp := map[string]interface{}{}
+						if networkInterface.PrimaryIP.Address != nil {
+							currentPrimIp[isInstanceNicReservedIpAddress] = *networkInterface.PrimaryIP.Address
+						}
+						if networkInterface.PrimaryIP.Href != nil {
+							currentPrimIp[isInstanceNicReservedIpHref] = *networkInterface.PrimaryIP.Href
+						}
+						if networkInterface.PrimaryIP.Name != nil {
+							currentPrimIp[isInstanceNicReservedIpName] = *networkInterface.PrimaryIP.Name
+						}
+						if networkInterface.PrimaryIP.ID != nil {
+							currentPrimIp[isInstanceNicReservedIpId] = *networkInterface.PrimaryIP.ID
+						}
+						if networkInterface.PrimaryIP.ResourceType != nil {
+							currentPrimIp[isInstanceNicReservedIpResourceType] = *networkInterface.PrimaryIP.ResourceType
+						}
+						primaryIpList = append(primaryIpList, currentPrimIp)
+						d.Set(isInstanceNicPrimaryIP, primaryIpList)
 					}
 					if err = d.Set("resource_type", networkInterface.ResourceType); err != nil {
 						return diag.FromErr(fmt.Errorf("[ERROR] Error setting resource_type: %s", err))

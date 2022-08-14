@@ -12,12 +12,12 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPIVpnPolicyClient ...
+// IBMPIVpnPolicyClient
 type IBMPIVpnPolicyClient struct {
 	IBMPIClient
 }
 
-// IBMPIVpnPolicyClient ...
+// IBMPIVpnPolicyClient
 func NewIBMPIVpnPolicyClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPIVpnPolicyClient {
 	return &IBMPIVpnPolicyClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
@@ -25,8 +25,7 @@ func NewIBMPIVpnPolicyClient(ctx context.Context, sess *ibmpisession.IBMPISessio
 }
 
 // IKE Policies
-
-// Get information about a IKE Policy
+// Get an IKE Policy
 func (f *IBMPIVpnPolicyClient) GetIKEPolicy(id string) (*models.IKEPolicy, error) {
 	params := p_cloud_v_p_n_policies.NewPcloudIkepoliciesGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -41,7 +40,7 @@ func (f *IBMPIVpnPolicyClient) GetIKEPolicy(id string) (*models.IKEPolicy, error
 	return resp.Payload, nil
 }
 
-// Create a IKE Policy
+// Create an IKE Policy
 func (f *IBMPIVpnPolicyClient) CreateIKEPolicy(body *models.IKEPolicyCreate) (*models.IKEPolicy, error) {
 	params := p_cloud_v_p_n_policies.NewPcloudIkepoliciesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -56,7 +55,7 @@ func (f *IBMPIVpnPolicyClient) CreateIKEPolicy(body *models.IKEPolicyCreate) (*m
 	return nil, fmt.Errorf("failed to Create VPN Policy")
 }
 
-// Update a IKE Policy
+// Update an IKE Policy
 func (f *IBMPIVpnPolicyClient) UpdateIKEPolicy(id string, body *models.IKEPolicyUpdate) (*models.IKEPolicy, error) {
 	params := p_cloud_v_p_n_policies.NewPcloudIkepoliciesPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
@@ -72,7 +71,7 @@ func (f *IBMPIVpnPolicyClient) UpdateIKEPolicy(id string, body *models.IKEPolicy
 	return nil, fmt.Errorf("failed to Update VPN Policy")
 }
 
-// Get all IKE Policies
+// Get All IKE Policies
 func (f *IBMPIVpnPolicyClient) GetAllIKEPolicies() (*models.IKEPolicies, error) {
 	params := p_cloud_v_p_n_policies.NewPcloudIkepoliciesGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -87,7 +86,7 @@ func (f *IBMPIVpnPolicyClient) GetAllIKEPolicies() (*models.IKEPolicies, error) 
 	return resp.Payload, nil
 }
 
-// Delete a IKE Policy
+// Delete an IKE Policy
 func (f *IBMPIVpnPolicyClient) DeleteIKEPolicy(id string) error {
 	params := p_cloud_v_p_n_policies.NewPcloudIkepoliciesDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
@@ -100,8 +99,7 @@ func (f *IBMPIVpnPolicyClient) DeleteIKEPolicy(id string) error {
 }
 
 // IPSec Policies
-
-// Get information about a IPSec Policy
+// Get an IPSec Policy
 func (f *IBMPIVpnPolicyClient) GetIPSecPolicy(id string) (*models.IPSecPolicy, error) {
 	params := p_cloud_v_p_n_policies.NewPcloudIpsecpoliciesGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -116,7 +114,7 @@ func (f *IBMPIVpnPolicyClient) GetIPSecPolicy(id string) (*models.IPSecPolicy, e
 	return resp.Payload, nil
 }
 
-// Create a IPSec Policy
+// Create an IPSec Policy
 func (f *IBMPIVpnPolicyClient) CreateIPSecPolicy(body *models.IPSecPolicyCreate) (*models.IPSecPolicy, error) {
 	params := p_cloud_v_p_n_policies.NewPcloudIpsecpoliciesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -131,7 +129,7 @@ func (f *IBMPIVpnPolicyClient) CreateIPSecPolicy(body *models.IPSecPolicyCreate)
 	return nil, fmt.Errorf("failed to Create VPN Policy")
 }
 
-// Update a IPSec Policy
+// Update an IPSec Policy
 func (f *IBMPIVpnPolicyClient) UpdateIPSecPolicy(id string, body *models.IPSecPolicyUpdate) (*models.IPSecPolicy, error) {
 	params := p_cloud_v_p_n_policies.NewPcloudIpsecpoliciesPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
@@ -147,7 +145,7 @@ func (f *IBMPIVpnPolicyClient) UpdateIPSecPolicy(id string, body *models.IPSecPo
 	return nil, fmt.Errorf("failed to Update VPN Policy")
 }
 
-// Get all IPSec Policies
+// Get All IPSec Policies
 func (f *IBMPIVpnPolicyClient) GetAllIPSecPolicies() (*models.IPSecPolicies, error) {
 	params := p_cloud_v_p_n_policies.NewPcloudIpsecpoliciesGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -162,7 +160,7 @@ func (f *IBMPIVpnPolicyClient) GetAllIPSecPolicies() (*models.IPSecPolicies, err
 	return resp.Payload, nil
 }
 
-// Delete a IPSec Policy
+// Delete an IPSec Policy
 func (f *IBMPIVpnPolicyClient) DeleteIPSecPolicy(id string) error {
 	params := p_cloud_v_p_n_policies.NewPcloudIpsecpoliciesDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).

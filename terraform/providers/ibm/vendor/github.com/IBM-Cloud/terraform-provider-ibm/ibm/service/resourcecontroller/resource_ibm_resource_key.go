@@ -300,36 +300,32 @@ func resourceIBMResourceKeyRead(d *schema.ResourceData, meta interface{}) error 
 	d.Set("status", *resourceKey.State)
 	if resourceKey.Credentials != nil && resourceKey.Credentials.IamRoleCRN != nil {
 		roleCrn := *resourceKey.Credentials.IamRoleCRN
-		roleName := roleCrn[strings.LastIndex(roleCrn, ":")+1:]
-
-		// TODO.S: update client
-		if strings.Contains(roleCrn, ":customRole:") {
-			iamPolicyManagementClient, err := meta.(conns.ClientSession).IAMPolicyManagementV1API()
-			if err == nil {
-				var resourceCRN string
-				if resourceKey.CRN != nil {
-					serviceName := strings.Split(*resourceKey.CRN, ":")
-					if len(serviceName) > 4 {
-						resourceCRN = serviceName[4]
-					}
+		iamPolicyManagementClient, err := meta.(conns.ClientSession).IAMPolicyManagementV1API()
+		if err == nil {
+			var resourceCRN string
+			if resourceKey.CRN != nil {
+				serviceName := strings.Split(*resourceKey.CRN, ":")
+				if len(serviceName) > 4 {
+					resourceCRN = serviceName[4]
 				}
-				listRoleOptions := &iampolicymanagementv1.ListRolesOptions{
-					AccountID:   resourceKey.AccountID,
-					ServiceName: &resourceCRN,
-				}
-				roleList, _, err := iamPolicyManagementClient.ListRoles(listRoleOptions)
-				roles := roleList.CustomRoles
-				if err == nil && len(roles) > 0 {
-					for _, role := range roles {
-						if *role.Name == roleName {
-							customRoleName := role.DisplayName
-							d.Set("role", customRoleName)
-						}
+			}
+			listRoleOptions := &iampolicymanagementv1.ListRolesOptions{
+				AccountID:   resourceKey.AccountID,
+				ServiceName: &resourceCRN,
+			}
+			roleList, resp, err := iamPolicyManagementClient.ListRoles(listRoleOptions)
+			roles := flex.MapRoleListToPolicyRoles(*roleList)
+			if err == nil && len(roles) > 0 {
+				for _, role := range roles {
+					if *role.RoleID == roleCrn {
+						RoleName := role.DisplayName
+						d.Set("role", RoleName)
 					}
 				}
 			}
-		} else {
-			d.Set("role", roleName)
+			if err != nil {
+				log.Printf("[ERROR] Error listing IAM Roles %s, %s", err, resp)
+			}
 		}
 	}
 

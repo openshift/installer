@@ -17,15 +17,6 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
 
-const (
-	PISAPProfiles         = "profiles"
-	PISAPProfileCertified = "certified"
-	PISAPProfileCores     = "cores"
-	PISAPProfileMemory    = "memory"
-	PISAPProfileID        = "profile_id"
-	PISAPProfileType      = "type"
-)
-
 func DataSourceIBMPISAPProfiles() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPISAPProfilesRead,

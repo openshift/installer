@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"reflect"
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -130,6 +131,40 @@ func DataSourceIBMIsFloatingIps() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The primary IPv4 address.If the address has not yet been selected, the value will be `0.0.0.0`.",
+									},
+									floatingIpPrimaryIP: {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The primary IP address to bind to the network interface. This can be specified using an existing reserved IP, or a prototype object for a new reserved IP.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												floatingIpPrimaryIpAddress: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The IP address to reserve, which must not already be reserved on the subnet.",
+												},
+												floatingIpPrimaryIpHref: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The URL for this reserved IP",
+												},
+												floatingIpPrimaryIpName: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The user-defined name for this reserved IP. If unspecified, the name will be a hyphenated list of randomly-selected words. Names must be unique within the subnet the reserved IP resides in. ",
+												},
+												floatingIpPrimaryIpId: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Identifies a reserved IP by a unique property.",
+												},
+												floatingIpPrimaryIpResourceType: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The resource type",
+												},
+											},
+										},
 									},
 									"resource_type": {
 										Type:        schema.TypeString,
@@ -321,37 +356,139 @@ func dataSourceFloatingIPCollectionFloatingIpsResourceGroupToMap(resourceGroupIt
 
 func dataSourceFloatingIPCollectionFloatingIpsTargetToMap(targetItemIntf vpcv1.FloatingIPTargetIntf) (targetMap map[string]interface{}) {
 	targetMap = map[string]interface{}{}
-	targetItem := targetItemIntf.(*vpcv1.FloatingIPTarget)
 
-	if targetItem.Deleted != nil {
-		deletedList := []map[string]interface{}{}
-		deletedMap := dataSourceFloatingIPCollectionTargetDeletedToMap(*targetItem.Deleted)
-		deletedList = append(deletedList, deletedMap)
-		targetMap["deleted"] = deletedList
-	}
-	if targetItem.Href != nil {
-		targetMap["href"] = targetItem.Href
-	}
-	if targetItem.ID != nil {
-		targetMap["id"] = targetItem.ID
-	}
-	if targetItem.Name != nil {
-		targetMap["name"] = targetItem.Name
-	}
-	if targetItem.PrimaryIpv4Address != nil {
-		targetMap["primary_ipv4_address"] = targetItem.PrimaryIpv4Address
-	}
-	if targetItem.ResourceType != nil {
-		targetMap["resource_type"] = targetItem.ResourceType
-	}
-	if targetItem.CRN != nil {
-		targetMap["crn"] = targetItem.CRN
+	switch reflect.TypeOf(targetItemIntf).String() {
+	case "*vpcv1.FloatingIPTargetNetworkInterfaceReference":
+		{
+			targetItem := targetItemIntf.(*vpcv1.FloatingIPTargetNetworkInterfaceReference)
+			if targetItem.Deleted != nil {
+				deletedList := []map[string]interface{}{}
+				deletedMap := dataSourceFloatingIPCollectionTargetNicDeletedToMap(*targetItem.Deleted)
+				deletedList = append(deletedList, deletedMap)
+				targetMap["deleted"] = deletedList
+			}
+			if targetItem.Href != nil {
+				targetMap["href"] = targetItem.Href
+			}
+			if targetItem.ID != nil {
+				targetMap["id"] = targetItem.ID
+			}
+			if targetItem.Name != nil {
+				targetMap["name"] = targetItem.Name
+			}
+			if targetItem.PrimaryIP != nil {
+				primaryIpList := make([]map[string]interface{}, 0)
+				currentIP := map[string]interface{}{}
+				if targetItem.PrimaryIP.Address != nil {
+					targetMap["primary_ipv4_address"] = *targetItem.PrimaryIP.Address
+					currentIP[floatingIpPrimaryIpAddress] = *targetItem.PrimaryIP.Address
+				}
+				if targetItem.PrimaryIP.Href != nil {
+					currentIP[floatingIpPrimaryIpHref] = *targetItem.PrimaryIP.Href
+				}
+				if targetItem.PrimaryIP.Name != nil {
+					currentIP[floatingIpPrimaryIpName] = *targetItem.PrimaryIP.Name
+				}
+				if targetItem.PrimaryIP.ID != nil {
+					currentIP[floatingIpPrimaryIpId] = *targetItem.PrimaryIP.ID
+				}
+				if targetItem.PrimaryIP.ResourceType != nil {
+					currentIP[floatingIpPrimaryIpResourceType] = *targetItem.PrimaryIP.ResourceType
+				}
+				primaryIpList = append(primaryIpList, currentIP)
+				targetMap[floatingIpPrimaryIP] = primaryIpList
+			}
+			if targetItem.ResourceType != nil {
+				targetMap["resource_type"] = targetItem.ResourceType
+			}
+		}
+	case "*vpcv1.FloatingIPTargetPublicGatewayReference":
+		{
+			targetItem := targetItemIntf.(*vpcv1.FloatingIPTargetPublicGatewayReference)
+			if targetItem.Deleted != nil {
+				deletedList := []map[string]interface{}{}
+				deletedMap := dataSourceFloatingIPCollectionTargetPgDeletedToMap(*targetItem.Deleted)
+				deletedList = append(deletedList, deletedMap)
+				targetMap["deleted"] = deletedList
+			}
+			if targetItem.Href != nil {
+				targetMap["href"] = targetItem.Href
+			}
+			if targetItem.ID != nil {
+				targetMap["id"] = targetItem.ID
+			}
+			if targetItem.Name != nil {
+				targetMap["name"] = targetItem.Name
+			}
+			if targetItem.ResourceType != nil {
+				targetMap["resource_type"] = targetItem.ResourceType
+			}
+			if targetItem.CRN != nil {
+				targetMap["crn"] = targetItem.CRN
+			}
+		}
+	case "*vpcv1.FloatingIPTarget":
+		{
+			targetItem := targetItemIntf.(*vpcv1.FloatingIPTarget)
+			if targetItem.Deleted != nil {
+				deletedList := []map[string]interface{}{}
+				deletedMap := dataSourceFloatingIPCollectionTargetNicDeletedToMap(*targetItem.Deleted)
+				deletedList = append(deletedList, deletedMap)
+				targetMap["deleted"] = deletedList
+			}
+			if targetItem.Href != nil {
+				targetMap["href"] = targetItem.Href
+			}
+			if targetItem.ID != nil {
+				targetMap["id"] = targetItem.ID
+			}
+			if targetItem.Name != nil {
+				targetMap["name"] = targetItem.Name
+			}
+			if targetItem.PrimaryIP != nil && targetItem.PrimaryIP.Address != nil {
+				primaryIpList := make([]map[string]interface{}, 0)
+				currentIP := map[string]interface{}{}
+				if targetItem.PrimaryIP.Address != nil {
+					targetMap["primary_ipv4_address"] = *targetItem.PrimaryIP.Address
+					currentIP[floatingIpPrimaryIpAddress] = *targetItem.PrimaryIP.Address
+				}
+				if targetItem.PrimaryIP.Href != nil {
+					currentIP[floatingIpPrimaryIpHref] = *targetItem.PrimaryIP.Href
+				}
+				if targetItem.PrimaryIP.Name != nil {
+					currentIP[floatingIpPrimaryIpName] = *targetItem.PrimaryIP.Name
+				}
+				if targetItem.PrimaryIP.ID != nil {
+					currentIP[floatingIpPrimaryIpId] = *targetItem.PrimaryIP.ID
+				}
+				if targetItem.PrimaryIP.ResourceType != nil {
+					currentIP[floatingIpPrimaryIpResourceType] = *targetItem.PrimaryIP.ResourceType
+				}
+				primaryIpList = append(primaryIpList, currentIP)
+				targetMap[floatingIpPrimaryIP] = primaryIpList
+			}
+			if targetItem.ResourceType != nil {
+				targetMap["resource_type"] = targetItem.ResourceType
+			}
+			if targetItem.CRN != nil {
+				targetMap["crn"] = targetItem.CRN
+			}
+		}
 	}
 
 	return targetMap
 }
 
-func dataSourceFloatingIPCollectionTargetDeletedToMap(deletedItem vpcv1.NetworkInterfaceReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceFloatingIPCollectionTargetNicDeletedToMap(deletedItem vpcv1.NetworkInterfaceReferenceDeleted) (deletedMap map[string]interface{}) {
+	deletedMap = map[string]interface{}{}
+
+	if deletedItem.MoreInfo != nil {
+		deletedMap["more_info"] = deletedItem.MoreInfo
+	}
+
+	return deletedMap
+}
+func dataSourceFloatingIPCollectionTargetPgDeletedToMap(deletedItem vpcv1.PublicGatewayReferenceDeleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

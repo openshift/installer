@@ -127,9 +127,8 @@ func (builder *VpcInstanceAuthenticatorBuilder) Build() (*VpcInstanceAuthenticat
 func (authenticator *VpcInstanceAuthenticator) client() *http.Client {
 	authenticator.clientInit.Do(func() {
 		if authenticator.Client == nil {
-			authenticator.Client = &http.Client{
-				Timeout: vpcauthDefaultTimeout,
-			}
+			authenticator.Client = DefaultHTTPClient()
+			authenticator.Client.Timeout = vpcauthDefaultTimeout
 		}
 	})
 	return authenticator.Client
@@ -279,11 +278,6 @@ func (authenticator *VpcInstanceAuthenticator) invokeRequestTokenData() error {
 // RequestToken will use the VPC Instance Metadata Service to (1) retrieve a fresh instance identity token
 // and then (2) exchange that for an IAM access token.
 func (authenticator *VpcInstanceAuthenticator) RequestToken() (iamTokenResponse *IamTokenServerResponse, err error) {
-
-	// Use the default VPC base endpoint if user didn't specifiy the URL property.
-	if authenticator.URL == "" {
-		authenticator.URL = vpcauthDefaultIMSEndpoint
-	}
 
 	// Retrieve the instance identity token from the VPC Instance Metadata Service.
 	instanceIdentityToken, err := authenticator.retrieveInstanceIdentityToken()

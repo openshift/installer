@@ -1,10 +1,11 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2017, 2022 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package vpc
 
 import (
 	//"encoding/json"
+
 	"log"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 )
 
 const (
+	isRoutingTableAcceptRoutesFrom      = "accept_routes_from"
 	isRoutingTableID                    = "routing_table"
 	isRoutingTableHref                  = "href"
 	isRoutingTableName                  = "name"
@@ -45,6 +47,20 @@ func DataSourceIBMISVPCRoutingTables() *schema.Resource {
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						isRoutingTableAcceptRoutesFrom: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The filters specifying the resources that may create routes in this routing table.At present, only the `resource_type` filter is permitted, and only the `vpn_gateway` value is supported, but filter support is expected to expand in the future.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"resource_type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
 						isRoutingTableID: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -171,6 +187,15 @@ func dataSourceIBMISVPCRoutingTablesList(d *schema.ResourceData, meta interface{
 	for _, routingTable := range allrecs {
 
 		rtable := map[string]interface{}{}
+		acceptRoutesFromInfo := make([]map[string]interface{}, 0)
+		for _, AcceptRoutesFrom := range routingTable.AcceptRoutesFrom {
+			if AcceptRoutesFrom.ResourceType != nil {
+				l := map[string]interface{}{}
+				l["resource_type"] = *AcceptRoutesFrom.ResourceType
+				acceptRoutesFromInfo = append(acceptRoutesFromInfo, l)
+			}
+		}
+		rtable[isRoutingTableAcceptRoutesFrom] = acceptRoutesFromInfo
 		if routingTable.ID != nil {
 			rtable[isRoutingTableID] = *routingTable.ID
 		}

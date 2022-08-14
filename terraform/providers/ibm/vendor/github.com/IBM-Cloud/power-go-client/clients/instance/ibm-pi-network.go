@@ -12,19 +12,19 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPINetworkClient ...
+// IBMPINetworkClient
 type IBMPINetworkClient struct {
 	IBMPIClient
 }
 
-// NewIBMPINetworkClient ...
+// NewIBMPINetworkClient
 func NewIBMPINetworkClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPINetworkClient {
 	return &IBMPINetworkClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
 	}
 }
 
-// Get ...
+// Get a Network
 func (f *IBMPINetworkClient) Get(id string) (*models.Network, error) {
 	params := p_cloud_networks.NewPcloudNetworksGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -39,7 +39,7 @@ func (f *IBMPINetworkClient) Get(id string) (*models.Network, error) {
 	return resp.Payload, nil
 }
 
-// Get All
+// Get All Networks
 func (f *IBMPINetworkClient) GetAll() (*models.Networks, error) {
 	params := p_cloud_networks.NewPcloudNetworksGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -54,7 +54,7 @@ func (f *IBMPINetworkClient) GetAll() (*models.Networks, error) {
 	return resp.Payload, nil
 }
 
-// Create ...
+// Create a Network
 func (f *IBMPINetworkClient) Create(body *models.NetworkCreate) (*models.Network, error) {
 	params := p_cloud_networks.NewPcloudNetworksPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -72,7 +72,7 @@ func (f *IBMPINetworkClient) Create(body *models.NetworkCreate) (*models.Network
 	return nil, fmt.Errorf("failed to perform Create Network Operation for Network %s", body.Name)
 }
 
-// Update ...
+// Update a Network
 func (f *IBMPINetworkClient) Update(id string, body *models.NetworkUpdate) (*models.Network, error) {
 	params := p_cloud_networks.NewPcloudNetworksPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
@@ -88,7 +88,7 @@ func (f *IBMPINetworkClient) Update(id string, body *models.NetworkUpdate) (*mod
 	return resp.Payload, nil
 }
 
-// GetPublic ...
+// Get All Public Networks
 func (f *IBMPINetworkClient) GetAllPublic() (*models.Networks, error) {
 	filterQuery := "type=\"pub-vlan\""
 	params := p_cloud_networks.NewPcloudNetworksGetallParams().
@@ -104,7 +104,7 @@ func (f *IBMPINetworkClient) GetAllPublic() (*models.Networks, error) {
 	return resp.Payload, nil
 }
 
-// Delete ...
+// Delete a Network
 func (f *IBMPINetworkClient) Delete(id string) error {
 	params := p_cloud_networks.NewPcloudNetworksDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
@@ -116,7 +116,7 @@ func (f *IBMPINetworkClient) Delete(id string) error {
 	return nil
 }
 
-//GetAllPorts ...
+// Get All Ports on a Network
 func (f *IBMPINetworkClient) GetAllPorts(id string) (*models.NetworkPorts, error) {
 	params := p_cloud_networks.NewPcloudNetworksPortsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -131,7 +131,7 @@ func (f *IBMPINetworkClient) GetAllPorts(id string) (*models.NetworkPorts, error
 	return resp.Payload, nil
 }
 
-// GetPort ...
+// Get a Port on a Network
 func (f *IBMPINetworkClient) GetPort(id string, networkPortID string) (*models.NetworkPort, error) {
 	params := p_cloud_networks.NewPcloudNetworksPortsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -148,7 +148,7 @@ func (f *IBMPINetworkClient) GetPort(id string, networkPortID string) (*models.N
 	return resp.Payload, nil
 }
 
-// CreatePort ...
+// Create a Port on a Network
 func (f *IBMPINetworkClient) CreatePort(id string, body *models.NetworkPortCreate) (*models.NetworkPort, error) {
 	params := p_cloud_networks.NewPcloudNetworksPortsPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -164,7 +164,7 @@ func (f *IBMPINetworkClient) CreatePort(id string, body *models.NetworkPortCreat
 	return resp.Payload, nil
 }
 
-// DeletePort ...
+// Delete a Port on a Network
 func (f *IBMPINetworkClient) DeletePort(id string, networkPortID string) error {
 	params := p_cloud_networks.NewPcloudNetworksPortsDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
@@ -177,7 +177,7 @@ func (f *IBMPINetworkClient) DeletePort(id string, networkPortID string) error {
 	return nil
 }
 
-//UpdatePort with the PVM Instance
+// Update a Port on a Network
 func (f *IBMPINetworkClient) UpdatePort(id, networkPortID string, body *models.NetworkPortUpdate) (*models.NetworkPort, error) {
 	params := p_cloud_networks.NewPcloudNetworksPortsPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).

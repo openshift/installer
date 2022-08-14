@@ -25,39 +25,62 @@ func ResourceIBMPINetworkPortAttach() *schema.Resource {
 
 		CreateContext: resourceIBMPINetworkPortAttachCreate,
 		ReadContext:   resourceIBMPINetworkPortAttachRead,
-		UpdateContext: resourceIBMPINetworkPortAttachUpdate,
 		DeleteContext: resourceIBMPINetworkPortAttachDelete,
 		Importer:      &schema.ResourceImporter{},
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
-			Update: schema.DefaultTimeout(60 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
-			"port_id": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
 			helpers.PICloudInstanceId: {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
-			helpers.PIInstanceName: {
+			helpers.PIInstanceId: {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Instance name to attach the network port to",
+				ForceNew:    true,
+				Description: "Instance id to attach the network port to",
 			},
 			helpers.PINetworkName: {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Network Name - This is the subnet name  in the Cloud instance",
 			},
 			helpers.PINetworkPortDescription: {
 				Type:        schema.TypeString,
 				Optional:    true,
+				ForceNew:    true,
 				Description: "A human readable description for this network Port",
 				Default:     "Port Created via Terraform",
+			},
+			helpers.PINetworkPortIPAddress: {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Computed: true,
+			},
+
+			//Computed Attributes
+			"macaddress": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"port_id": {
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: "port_id attribute is deprecated, use network_port_id instead.",
+			},
+			"network_port_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"status": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"public_ip": {
 				Type:     schema.TypeString,
@@ -73,45 +96,57 @@ func resourceIBMPINetworkPortAttachCreate(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
 	networkname := d.Get(helpers.PINetworkName).(string)
-	portid := d.Get("port_id").(string)
-	instancename := d.Get(helpers.PIInstanceName).(string)
+	instanceID := d.Get(helpers.PIInstanceId).(string)
 	description := d.Get(helpers.PINetworkPortDescription).(string)
+	nwportBody := &models.NetworkPortCreate{Description: description}
+
+	if v, ok := d.GetOk(helpers.PINetworkPortIPAddress); ok {
+		ipaddress := v.(string)
+		nwportBody.IPAddress = ipaddress
+	}
+
+	nwportattachBody := &models.NetworkPortUpdate{
+		Description:   &description,
+		PvmInstanceID: &instanceID,
+	}
+
 	client := st.NewIBMPINetworkClient(ctx, sess, cloudInstanceID)
 
-	log.Printf("Printing the input to the resource: cloud instance [%s] and network name [%s] and the portid [%s]", cloudInstanceID, networkname, portid)
-	body := &models.NetworkPortUpdate{
-		Description:   &description,
-		PvmInstanceID: &instancename,
-	}
-	networkPortResponse, err := client.UpdatePort(networkname, portid, body)
-
+	networkPortResponse, err := client.CreatePort(networkname, nwportBody)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	log.Printf("Printing the networkresponse %+v", &networkPortResponse)
 
-	IBMPINetworkPortID := *networkPortResponse.PortID
+	networkPortID := *networkPortResponse.PortID
 
-	d.SetId(fmt.Sprintf("%s/%s/%s", cloudInstanceID, networkname, IBMPINetworkPortID))
-
-	_, err = isWaitForIBMPINetworkPortAttachAvailable(ctx, client, IBMPINetworkPortID, networkname, d.Timeout(schema.TimeoutCreate))
+	_, err = isWaitForIBMPINetworkportAvailable(ctx, client, networkPortID, networkname, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	networkPortResponse, err = client.UpdatePort(networkname, networkPortID, nwportattachBody)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	_, err = isWaitForIBMPINetworkPortAttachAvailable(ctx, client, networkPortID, networkname, instanceID, d.Timeout(schema.TimeoutUpdate))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(fmt.Sprintf("%s/%s/%s", cloudInstanceID, networkname, networkPortID))
 
 	return resourceIBMPINetworkPortAttachRead(ctx, d, meta)
 }
 
 func resourceIBMPINetworkPortAttachRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("Calling ther Network Port Attach Read code")
 	sess, err := meta.(conns.ClientSession).IBMPISession()
-
 	if err != nil {
-		fmt.Printf("failed to get  a session from the IBM Cloud Service %v", err)
+		return diag.FromErr(err)
 	}
 
 	parts, err := flex.IdParts(d.Id())
@@ -119,37 +154,33 @@ func resourceIBMPINetworkPortAttachRead(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 	cloudInstanceID := parts[0]
-	networkID := parts[1]
+	networkname := parts[1]
 	portID := parts[2]
 
 	networkC := st.NewIBMPINetworkClient(ctx, sess, cloudInstanceID)
-	networkdata, err := networkC.GetPort(networkID, portID)
+	networkdata, err := networkC.GetPort(networkname, portID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.Set("ipaddress", networkdata.IPAddress)
+	d.Set(helpers.PINetworkPortIPAddress, networkdata.IPAddress)
+	d.Set(helpers.PINetworkPortDescription, networkdata.Description)
+	d.Set(helpers.PIInstanceId, networkdata.PvmInstance.PvmInstanceID)
 	d.Set("macaddress", networkdata.MacAddress)
 	d.Set("status", networkdata.Status)
-	d.Set("portid", networkdata.PortID)
-	d.Set("pvminstance", networkdata.PvmInstance.Href)
+	d.Set("network_port_id", networkdata.PortID)
+	d.Set("port_id", networkdata.PortID)
 	d.Set("public_ip", networkdata.ExternalIP)
 
 	return nil
 }
 
-func resourceIBMPINetworkPortAttachUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("Calling the attach update ")
-	return nil
-}
-
 func resourceIBMPINetworkPortAttachDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("Detaching the network port from the Instance ")
 
+	log.Printf("Calling the network delete functions. ")
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
-		fmt.Printf("failed to get  a session from the IBM Cloud Service %v", err)
-
+		return diag.FromErr(err)
 	}
 
 	parts, err := flex.IdParts(d.Id())
@@ -157,34 +188,28 @@ func resourceIBMPINetworkPortAttachDelete(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 	cloudInstanceID := parts[0]
-	networkID := parts[1]
+	networkname := parts[1]
 	portID := parts[2]
 
 	client := st.NewIBMPINetworkClient(ctx, sess, cloudInstanceID)
-	log.Printf("Executing network port detach")
-	emptyPVM := ""
-	body := &models.NetworkPortUpdate{
-		PvmInstanceID: &emptyPVM,
-	}
-	networkPort, err := client.UpdatePort(networkID, portID, body)
+
+	log.Printf("Calling the delete with the following params delete with cloud instance (%s) and networkid (%s) and portid (%s) ", cloudInstanceID, networkname, portID)
+	err = client.DeletePort(networkname, portID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("Printing the networkresponse %+v", &networkPort)
-
 	d.SetId("")
 	return nil
-
 }
 
-func isWaitForIBMPINetworkPortAttachAvailable(ctx context.Context, client *st.IBMPINetworkClient, id string, networkname string, timeout time.Duration) (interface{}, error) {
+func isWaitForIBMPINetworkportAvailable(ctx context.Context, client *st.IBMPINetworkClient, id string, networkname string, timeout time.Duration) (interface{}, error) {
 	log.Printf("Waiting for Power Network (%s) that was created for Network Zone (%s) to be available.", id, networkname)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"retry", helpers.PINetworkProvisioning},
-		Target:     []string{"ACTIVE"},
-		Refresh:    isIBMPINetworkPortAttachRefreshFunc(client, id, networkname),
+		Target:     []string{"DOWN"},
+		Refresh:    isIBMPINetworkportRefreshFunc(client, id, networkname),
 		Timeout:    timeout,
 		Delay:      10 * time.Second,
 		MinTimeout: 10 * time.Minute,
@@ -193,7 +218,7 @@ func isWaitForIBMPINetworkPortAttachAvailable(ctx context.Context, client *st.IB
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func isIBMPINetworkPortAttachRefreshFunc(client *st.IBMPINetworkClient, id, networkname string) resource.StateRefreshFunc {
+func isIBMPINetworkportRefreshFunc(client *st.IBMPINetworkClient, id, networkname string) resource.StateRefreshFunc {
 
 	log.Printf("Calling the IsIBMPINetwork Refresh Function....with the following id (%s) for network port and following id (%s) for network name and waiting for network to be READY", id, networkname)
 	return func() (interface{}, string, error) {
@@ -202,8 +227,39 @@ func isIBMPINetworkPortAttachRefreshFunc(client *st.IBMPINetworkClient, id, netw
 			return nil, "", err
 		}
 
-		if &network.PortID != nil && &network.PvmInstance.PvmInstanceID != nil {
-			//if network.State == "available" {
+		if *network.Status == "DOWN" {
+			log.Printf(" The port has been created with the following ip address and attached to an instance ")
+			return network, "DOWN", nil
+		}
+
+		return network, helpers.PINetworkProvisioning, nil
+	}
+}
+func isWaitForIBMPINetworkPortAttachAvailable(ctx context.Context, client *st.IBMPINetworkClient, id, networkname, instanceid string, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for Power Network (%s) that was created for Network Zone (%s) to be available.", id, networkname)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"retry", helpers.PINetworkProvisioning},
+		Target:     []string{"ACTIVE"},
+		Refresh:    isIBMPINetworkPortAttachRefreshFunc(client, id, networkname, instanceid),
+		Timeout:    timeout,
+		Delay:      10 * time.Second,
+		MinTimeout: 10 * time.Minute,
+	}
+
+	return stateConf.WaitForStateContext(ctx)
+}
+
+func isIBMPINetworkPortAttachRefreshFunc(client *st.IBMPINetworkClient, id, networkname, instanceid string) resource.StateRefreshFunc {
+
+	log.Printf("Calling the IsIBMPINetwork Refresh Function....with the following id (%s) for network port and following id (%s) for network name and waiting for network to be READY", id, networkname)
+	return func() (interface{}, string, error) {
+		network, err := client.GetPort(networkname, id)
+		if err != nil {
+			return nil, "", err
+		}
+
+		if *network.Status == "ACTIVE" && network.PvmInstance.PvmInstanceID == instanceid {
 			log.Printf(" The port has been created with the following ip address and attached to an instance ")
 			return network, "ACTIVE", nil
 		}

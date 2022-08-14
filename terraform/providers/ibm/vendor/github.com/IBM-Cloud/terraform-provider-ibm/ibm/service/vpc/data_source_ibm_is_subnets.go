@@ -96,6 +96,49 @@ func DataSourceIBMISSubnets() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"routing_table": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The routing table for this subnet",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"deleted": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this routing table.",
+									},
+									"id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this routing table.",
+									},
+									"name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The user-defined name for this routing table.",
+									},
+									"resource_type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -181,6 +224,9 @@ func subnetList(d *schema.ResourceData, meta interface{}) error {
 		}
 		if subnet.ResourceGroup != nil {
 			l["resource_group"] = *subnet.ResourceGroup.ID
+		}
+		if subnet.RoutingTable != nil {
+			l["routing_table"] = dataSourceSubnetFlattenroutingTable(*subnet.RoutingTable)
 		}
 		subnetsInfo = append(subnetsInfo, l)
 	}

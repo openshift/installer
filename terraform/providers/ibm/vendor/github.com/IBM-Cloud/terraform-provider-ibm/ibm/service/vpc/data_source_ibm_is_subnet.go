@@ -135,6 +135,50 @@ func DataSourceIBMISSubnet() *schema.Resource {
 				Computed:    true,
 				Description: "The resource group name in which resource is provisioned",
 			},
+
+			"routing_table": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The routing table for this subnet",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"deleted": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this routing table.",
+						},
+						"id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this routing table.",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user-defined name for this routing table.",
+						},
+						"resource_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -213,6 +257,13 @@ func subnetGetByNameOrID(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(*subnet.ID)
+
+	if subnet.RoutingTable != nil {
+		err = d.Set("routing_table", dataSourceSubnetFlattenroutingTable(*subnet.RoutingTable))
+		if err != nil {
+			return fmt.Errorf("Error setting routing_table %s", err)
+		}
+	}
 	d.Set(isSubnetName, *subnet.Name)
 	d.Set(isSubnetIpv4CidrBlock, *subnet.Ipv4CIDRBlock)
 	d.Set(isSubnetAvailableIpv4AddressCount, *subnet.AvailableIpv4AddressCount)
@@ -259,4 +310,47 @@ func subnetGetByNameOrID(d *schema.ResourceData, meta interface{}) error {
 		d.Set(flex.ResourceGroupName, *subnet.ResourceGroup.Name)
 	}
 	return nil
+}
+
+func dataSourcesubnetRoutingTableDeletedToMap(deletedItem vpcv1.RoutingTableReferenceDeleted) (deletedMap map[string]interface{}) {
+	deletedMap = map[string]interface{}{}
+
+	if deletedItem.MoreInfo != nil {
+		deletedMap["more_info"] = deletedItem.MoreInfo
+	}
+
+	return deletedMap
+}
+
+func dataSourceSubnetFlattenroutingTable(result vpcv1.RoutingTableReference) (finalList []map[string]interface{}) {
+	finalList = []map[string]interface{}{}
+	finalMap := dataSourceSubnetRoutingTableToMap(result)
+	finalList = append(finalList, finalMap)
+
+	return finalList
+}
+
+func dataSourceSubnetRoutingTableToMap(routingTableItem vpcv1.RoutingTableReference) (routingTableMap map[string]interface{}) {
+	routingTableMap = map[string]interface{}{}
+
+	if routingTableItem.Deleted != nil {
+		deletedList := []map[string]interface{}{}
+		deletedMap := dataSourcesubnetRoutingTableDeletedToMap(*routingTableItem.Deleted)
+		deletedList = append(deletedList, deletedMap)
+		routingTableMap["deleted"] = deletedList
+	}
+	if routingTableItem.Href != nil {
+		routingTableMap["href"] = routingTableItem.Href
+	}
+	if routingTableItem.ID != nil {
+		routingTableMap["id"] = routingTableItem.ID
+	}
+	if routingTableItem.Name != nil {
+		routingTableMap["name"] = routingTableItem.Name
+	}
+	if routingTableItem.ResourceType != nil {
+		routingTableMap["resource_type"] = routingTableItem.ResourceType
+	}
+
+	return routingTableMap
 }

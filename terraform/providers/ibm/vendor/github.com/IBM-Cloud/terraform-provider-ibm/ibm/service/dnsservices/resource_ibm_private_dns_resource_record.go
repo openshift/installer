@@ -5,6 +5,7 @@ package dnsservices
 
 import (
 	"fmt"
+	"math/rand"
 	"regexp"
 	"strings"
 	"time"
@@ -297,7 +298,9 @@ func resourceIBMPrivateDNSResourceRecordCreate(d *schema.ResourceData, meta inte
 		createResourceRecordOptions.SetService(service)
 		createResourceRecordOptions.SetProtocol(protocol)
 	}
-	mk := "private_dns_resource_record_" + instanceID + zoneID
+	rand.Seed(time.Now().UnixNano())
+	randI := fmt.Sprint(rand.Intn(50))
+	mk := "private_dns_resource_record_" + instanceID + zoneID + randI
 	conns.IbmMutexKV.Lock(mk)
 	defer conns.IbmMutexKV.Unlock(mk)
 	response, detail, err := sess.CreateResourceRecord(createResourceRecordOptions)
@@ -386,8 +389,9 @@ func resourceIBMPrivateDNSResourceRecordUpdate(d *schema.ResourceData, meta inte
 	if err != nil {
 		return err
 	}
-
-	mk := "private_dns_resource_record_" + idSet[0] + idSet[1]
+	rand.Seed(time.Now().UnixNano())
+	randI := fmt.Sprint(rand.Intn(50))
+	mk := "private_dns_resource_record_" + idSet[0] + idSet[1] + randI
 	conns.IbmMutexKV.Lock(mk)
 	defer conns.IbmMutexKV.Unlock(mk)
 
@@ -493,9 +497,10 @@ func resourceIBMPrivateDNSResourceRecordDelete(d *schema.ResourceData, meta inte
 	if err != nil {
 		return err
 	}
-
+	rand.Seed(time.Now().UnixNano())
+	randI := fmt.Sprint(rand.Intn(50))
 	deleteResourceRecordOptions := sess.NewDeleteResourceRecordOptions(idSet[0], idSet[1], idSet[2])
-	mk := "private_dns_resource_record_" + idSet[0] + idSet[1]
+	mk := "private_dns_resource_record_" + idSet[0] + idSet[1] + randI
 	conns.IbmMutexKV.Lock(mk)
 	defer conns.IbmMutexKV.Unlock(mk)
 	response, err := sess.DeleteResourceRecord(deleteResourceRecordOptions)
@@ -517,8 +522,10 @@ func resourceIBMPrivateDNSResourceRecordExists(d *schema.ResourceData, meta inte
 	if len(idSet) < 3 {
 		return false, fmt.Errorf("[ERROR] Incorrect ID %s: Id should be a combination of InstanceID/zoneID/recordID", d.Id())
 	}
+	rand.Seed(time.Now().UnixNano())
+	randI := fmt.Sprint(rand.Intn(50))
 	getResourceRecordOptions := sess.NewGetResourceRecordOptions(idSet[0], idSet[1], idSet[2])
-	mk := "private_dns_resource_record_" + idSet[0] + idSet[1]
+	mk := "private_dns_resource_record_" + idSet[0] + idSet[1] + randI
 	conns.IbmMutexKV.Lock(mk)
 	defer conns.IbmMutexKV.Unlock(mk)
 	_, response, err := sess.GetResourceRecord(getResourceRecordOptions)

@@ -20,11 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
-const (
-	PIPlacementGroupID      = "placement_group_id"
-	PIPlacementGroupMembers = "members"
-)
-
 func ResourceIBMPIPlacementGroup() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceIBMPIPlacementGroupCreate,

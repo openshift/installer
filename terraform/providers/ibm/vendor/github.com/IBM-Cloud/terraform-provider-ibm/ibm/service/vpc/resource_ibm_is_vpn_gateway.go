@@ -117,7 +117,7 @@ func ResourceIBMISVPNGateway() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_vpn_gateway", "tag")},
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_vpn_gateway", "tags")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "VPN Gateway tags list",
 			},
@@ -230,7 +230,7 @@ func ResourceIBMISVPNGatewayValidator() *validate.ResourceValidator {
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "tag",
+			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
@@ -417,7 +417,7 @@ func vpngwGet(d *schema.ResourceData, meta interface{}, id string) error {
 				currentMemberIP["status"] = *memberIP.Status
 				vpcMembersIpsList = append(vpcMembersIpsList, currentMemberIP)
 			}
-			if memberIP.PrivateIP != nil {
+			if memberIP.PrivateIP != nil && memberIP.PrivateIP.Address != nil {
 				currentMemberIP["private_address"] = *memberIP.PrivateIP.Address
 			}
 		}

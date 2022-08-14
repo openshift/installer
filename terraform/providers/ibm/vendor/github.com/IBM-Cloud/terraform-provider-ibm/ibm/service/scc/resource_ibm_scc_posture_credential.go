@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
@@ -98,7 +97,7 @@ func ResourceIBMSccPostureCredentials() *schema.Resource {
 }
 
 func ResourceIBMSccPostureCredentialsValidator() *validate.ResourceValidator {
-	validateSchema := make([]validate.ValidateSchema, 1)
+	validateSchema := make([]validate.ValidateSchema, 0)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 "type",
@@ -112,16 +111,16 @@ func ResourceIBMSccPostureCredentialsValidator() *validate.ResourceValidator {
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Required:                   true,
-			Regexp:                     `^[a-zA-Z0-9-\\._,\\s]*$`,
-			MinValueLength:             1,
-			MaxValueLength:             255,
+			Regexp:                     `^[a-zA-Z0-9-._,\s]*$`,
+			MinValueLength:             3,
+			MaxValueLength:             30,
 		},
 		validate.ValidateSchema{
 			Identifier:                 "description",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Required:                   true,
-			Regexp:                     `^[a-zA-Z0-9-\\._,\\s]*$`,
+			Regexp:                     `^[a-zA-Z0-9-._,\s]*$`,
 			MinValueLength:             1,
 			MaxValueLength:             255,
 		},
@@ -148,7 +147,12 @@ func resourceIBMSccPostureCredentialsCreate(context context.Context, d *schema.R
 	}
 
 	createCredentialOptions := &posturemanagementv2.CreateCredentialOptions{}
-	createCredentialOptions.SetAccountID(os.Getenv("SCC_POSTURE_ACCOUNT_ID"))
+
+	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error getting userDetails %s", err))
+	}
+	createCredentialOptions.SetAccountID(userDetails.UserAccount)
 
 	createCredentialOptions.SetEnabled(d.Get("enabled").(bool))
 	createCredentialOptions.SetType(d.Get("type").(string))
@@ -206,25 +210,26 @@ func resourceIBMSccPostureCredentialsRead(context context.Context, d *schema.Res
 		return diag.FromErr(err)
 	}
 
-	listCredentialsOptions := &posturemanagementv2.ListCredentialsOptions{}
+	getCredentialsOptions := &posturemanagementv2.GetCredentialOptions{}
 	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error getting userDetails %s", err))
 	}
 
 	accountID := userDetails.UserAccount
-	listCredentialsOptions.SetAccountID(accountID)
+	getCredentialsOptions.SetAccountID(accountID)
+	getCredentialsOptions.SetID(d.Id())
 
-	credentialList, response, err := postureManagementClient.ListCredentialsWithContext(context, listCredentialsOptions)
+	credential, response, err := postureManagementClient.GetCredentialWithContext(context, getCredentialsOptions)
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] ListCredentialsWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("ListCredentialsWithContext failed %s\n%s", err, response))
+		log.Printf("[DEBUG] GetCredentialWithContext failed %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("GetCredentialWithContext failed %s\n%s", err, response))
 	}
-	d.SetId(*(credentialList.Credentials[0].ID))
+	d.SetId(*(credential.ID))
 	return nil
 }
 
@@ -254,7 +259,12 @@ func resourceIBMSccPostureCredentialsUpdate(context context.Context, d *schema.R
 	}
 
 	updateCredentialOptions := &posturemanagementv2.UpdateCredentialOptions{}
-	updateCredentialOptions.SetAccountID(os.Getenv("SCC_POSTURE_ACCOUNT_ID"))
+
+	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error getting userDetails %s", err))
+	}
+	updateCredentialOptions.SetAccountID(userDetails.UserAccount)
 
 	updateCredentialOptions.SetID(d.Id())
 
@@ -290,7 +300,12 @@ func resourceIBMSccPostureCredentialsDelete(context context.Context, d *schema.R
 	}
 
 	deleteCredentialOptions := &posturemanagementv2.DeleteCredentialOptions{}
-	deleteCredentialOptions.SetAccountID(os.Getenv("SCC_POSTURE_ACCOUNT_ID"))
+
+	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error getting userDetails %s", err))
+	}
+	deleteCredentialOptions.SetAccountID(userDetails.UserAccount)
 
 	deleteCredentialOptions.SetID(d.Id())
 

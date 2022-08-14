@@ -10,19 +10,19 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPIStorageCapacityClient ..
+// IBMPIStorageCapacityClient
 type IBMPIStorageCapacityClient struct {
 	IBMPIClient
 }
 
-// NewIBMPIStorageCapacityClient ...
+// NewIBMPIStorageCapacityClient
 func NewIBMPIStorageCapacityClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPIStorageCapacityClient {
 	return &IBMPIStorageCapacityClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
 	}
 }
 
-//Storage capacity for all available storage pools in a region
+// Get All Storage Capacities for all available Storage Pools in a Region
 func (f *IBMPIStorageCapacityClient) GetAllStoragePoolsCapacity() (*models.StoragePoolsCapacity, error) {
 	params := p_cloud_storage_capacity.NewPcloudStoragecapacityPoolsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -37,7 +37,7 @@ func (f *IBMPIStorageCapacityClient) GetAllStoragePoolsCapacity() (*models.Stora
 	return resp.Payload, nil
 }
 
-// Storage capacity for a storage pool in a region
+// Get Storage Capacity for a Storage Pool in a Region
 func (f *IBMPIStorageCapacityClient) GetStoragePoolCapacity(storagePool string) (*models.StoragePoolCapacity, error) {
 	params := p_cloud_storage_capacity.NewPcloudStoragecapacityPoolsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -52,7 +52,7 @@ func (f *IBMPIStorageCapacityClient) GetStoragePoolCapacity(storagePool string) 
 	return resp.Payload, nil
 }
 
-// Storage capacity for a storage type in a region
+// Get Storage capacity for a Storage Type in a Region
 func (f *IBMPIStorageCapacityClient) GetStorageTypeCapacity(storageType string) (*models.StorageTypeCapacity, error) {
 	params := p_cloud_storage_capacity.NewPcloudStoragecapacityTypesGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -67,7 +67,7 @@ func (f *IBMPIStorageCapacityClient) GetStorageTypeCapacity(storageType string) 
 	return resp.Payload, nil
 }
 
-// Storage capacity for all available storage types in a region
+// Get Storage Capacity for all available Storage Types in a Region
 func (f *IBMPIStorageCapacityClient) GetAllStorageTypesCapacity() (*models.StorageTypesCapacity, error) {
 	params := p_cloud_storage_capacity.NewPcloudStoragecapacityTypesGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).

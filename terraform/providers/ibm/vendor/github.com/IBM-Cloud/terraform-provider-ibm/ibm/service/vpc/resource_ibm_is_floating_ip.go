@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
@@ -106,6 +107,7 @@ func ResourceIBMISFloatingIP() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				ConflictsWith: []string{isFloatingIPTarget},
+				ExactlyOneOf:  []string{isFloatingIPTarget, isFloatingIPZone},
 				Description:   "Zone name",
 			},
 
@@ -114,7 +116,90 @@ func ResourceIBMISFloatingIP() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				ConflictsWith: []string{isFloatingIPZone},
+				ExactlyOneOf:  []string{isFloatingIPTarget, isFloatingIPZone},
 				Description:   "Target info",
+			},
+			floatingIPTargets: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The target of this floating IP.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						floatingIPTargetsDeleted: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									floatingIPTargetsMoreInfo: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						floatingIPTargetsHref: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this network interface.",
+						},
+						floatingIPTargetsId: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this network interface.",
+						},
+						floatingIPTargetsName: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user-defined name for this network interface.",
+						},
+						floatingIpPrimaryIP: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The primary IP address to bind to the network interface. This can be specified using an existing reserved IP, or a prototype object for a new reserved IP.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									floatingIpPrimaryIpAddress: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The IP address to reserve, which must not already be reserved on the subnet.",
+									},
+									floatingIpPrimaryIpHref: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this reserved IP",
+									},
+									floatingIpPrimaryIpName: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The user-defined name for this reserved IP. If unspecified, the name will be a hyphenated list of randomly-selected words. Names must be unique within the subnet the reserved IP resides in. ",
+									},
+									floatingIpPrimaryIpId: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Identifies a reserved IP by a unique property.",
+									},
+									floatingIpPrimaryIpResourceType: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type",
+									},
+								},
+							},
+						},
+						floatingIPTargetsResourceType: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+						floatingIPTargetsCrn: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CRN for this public gateway.",
+						},
+					},
+				},
 			},
 
 			isFloatingIPResourceGroup: {
@@ -129,7 +214,7 @@ func ResourceIBMISFloatingIP() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_floating_ip", "tag")},
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_floating_ip", "tags")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "Floating IP tags",
 			},
@@ -192,7 +277,7 @@ func ResourceIBMISFloatingIPValidator() *validate.ResourceValidator {
 			MaxValueLength:             63})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "tag",
+			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
@@ -307,12 +392,15 @@ func fipGet(d *schema.ResourceData, meta interface{}, id string) error {
 	d.Set(isFloatingIPAddress, *floatingip.Address)
 	d.Set(isFloatingIPStatus, *floatingip.Status)
 	d.Set(isFloatingIPZone, *floatingip.Zone.Name)
-	target, ok := floatingip.Target.(*vpcv1.FloatingIPTarget)
-	if ok {
-		d.Set(isFloatingIPTarget, target.ID)
+	targetId, targetMap := floatingIPCollectionFloatingIpTargetToMap(floatingip.Target)
+	if targetId != "" {
+		d.Set(isFloatingIPTarget, targetId)
 	} else {
 		d.Set(isFloatingIPTarget, "")
 	}
+	targetList := make([]map[string]interface{}, 0)
+	targetList = append(targetList, targetMap)
+	d.Set(floatingIPTargets, targetList)
 	tags, err := flex.GetTagsUsingCRN(meta, *floatingip.CRN)
 	if err != nil {
 		log.Printf(
@@ -569,4 +657,151 @@ func checkIfZoneChanged(oldNic, newNic, currentZone string, floatingipC *vpcv1.V
 		return true
 	}
 	return false
+}
+
+func floatingIPCollectionFloatingIpTargetToMap(targetItemIntf vpcv1.FloatingIPTargetIntf) (targetId string, targetMap map[string]interface{}) {
+	targetMap = map[string]interface{}{}
+	targetId = ""
+	if targetItemIntf != nil {
+		switch reflect.TypeOf(targetItemIntf).String() {
+		case "*vpcv1.FloatingIPTargetNetworkInterfaceReference":
+			{
+				targetItem := targetItemIntf.(*vpcv1.FloatingIPTargetNetworkInterfaceReference)
+				targetId = *targetItem.ID
+				if targetItem.Deleted != nil {
+					deletedList := []map[string]interface{}{}
+					deletedMap := floatingIPTargetNicDeletedToMap(*targetItem.Deleted)
+					deletedList = append(deletedList, deletedMap)
+					targetMap[floatingIPTargetsDeleted] = deletedList
+				}
+				if targetItem.Href != nil {
+					targetMap[floatingIPTargetsHref] = targetItem.Href
+				}
+				if targetItem.ID != nil {
+					targetMap[floatingIPTargetsId] = targetItem.ID
+				}
+				if targetItem.Name != nil {
+					targetMap[floatingIPTargetsName] = targetItem.Name
+				}
+				if targetItem.PrimaryIP != nil {
+					primaryIpList := make([]map[string]interface{}, 0)
+					currentIP := map[string]interface{}{}
+					if targetItem.PrimaryIP.Address != nil {
+						currentIP[floatingIpPrimaryIpAddress] = *targetItem.PrimaryIP.Address
+					}
+					if targetItem.PrimaryIP.Href != nil {
+						currentIP[floatingIpPrimaryIpHref] = *targetItem.PrimaryIP.Href
+					}
+					if targetItem.PrimaryIP.Name != nil {
+						currentIP[floatingIpPrimaryIpName] = *targetItem.PrimaryIP.Name
+					}
+					if targetItem.PrimaryIP.ID != nil {
+						currentIP[floatingIpPrimaryIpId] = *targetItem.PrimaryIP.ID
+					}
+					if targetItem.PrimaryIP.ResourceType != nil {
+						currentIP[floatingIpPrimaryIpResourceType] = *targetItem.PrimaryIP.ResourceType
+					}
+					primaryIpList = append(primaryIpList, currentIP)
+					targetMap[floatingIpPrimaryIP] = primaryIpList
+				}
+				if targetItem.ResourceType != nil {
+					targetMap[floatingIPTargetsResourceType] = targetItem.ResourceType
+				}
+			}
+		case "*vpcv1.FloatingIPTargetPublicGatewayReference":
+			{
+				targetItem := targetItemIntf.(*vpcv1.FloatingIPTargetPublicGatewayReference)
+				targetId = *targetItem.ID
+				if targetItem.Deleted != nil {
+					deletedList := []map[string]interface{}{}
+					deletedMap := floatingIPTargetPgDeletedToMap(*targetItem.Deleted)
+					deletedList = append(deletedList, deletedMap)
+					targetMap[floatingIPTargetsDeleted] = deletedList
+				}
+				if targetItem.Href != nil {
+					targetMap[floatingIPTargetsHref] = targetItem.Href
+				}
+				if targetItem.ID != nil {
+					targetMap[floatingIPTargetsId] = targetItem.ID
+				}
+				if targetItem.Name != nil {
+					targetMap[floatingIPTargetsName] = targetItem.Name
+				}
+				if targetItem.ResourceType != nil {
+					targetMap[floatingIPTargetsResourceType] = targetItem.ResourceType
+				}
+				if targetItem.CRN != nil {
+					targetMap[floatingIPTargetsCrn] = targetItem.CRN
+				}
+			}
+		case "*vpcv1.FloatingIPTarget":
+			{
+				targetItem := targetItemIntf.(*vpcv1.FloatingIPTarget)
+				targetId = *targetItem.ID
+				if targetItem.Deleted != nil {
+					deletedList := []map[string]interface{}{}
+					deletedMap := floatingIPTargetNicDeletedToMap(*targetItem.Deleted)
+					deletedList = append(deletedList, deletedMap)
+					targetMap[floatingIPTargetsDeleted] = deletedList
+				}
+				if targetItem.Href != nil {
+					targetMap[floatingIPTargetsHref] = targetItem.Href
+				}
+				if targetItem.ID != nil {
+					targetMap[floatingIPTargetsId] = targetItem.ID
+				}
+				if targetItem.Name != nil {
+					targetMap[floatingIPTargetsName] = targetItem.Name
+				}
+				if targetItem.PrimaryIP != nil && targetItem.PrimaryIP.Address != nil {
+					primaryIpList := make([]map[string]interface{}, 0)
+					currentIP := map[string]interface{}{}
+					if targetItem.PrimaryIP.Address != nil {
+						currentIP[floatingIpPrimaryIpAddress] = *targetItem.PrimaryIP.Address
+					}
+					if targetItem.PrimaryIP.Href != nil {
+						currentIP[floatingIpPrimaryIpHref] = *targetItem.PrimaryIP.Href
+					}
+					if targetItem.PrimaryIP.Name != nil {
+						currentIP[floatingIpPrimaryIpName] = *targetItem.PrimaryIP.Name
+					}
+					if targetItem.PrimaryIP.ID != nil {
+						currentIP[floatingIpPrimaryIpId] = *targetItem.PrimaryIP.ID
+					}
+					if targetItem.PrimaryIP.ResourceType != nil {
+						currentIP[floatingIpPrimaryIpResourceType] = *targetItem.PrimaryIP.ResourceType
+					}
+					primaryIpList = append(primaryIpList, currentIP)
+					targetMap[floatingIpPrimaryIP] = primaryIpList
+				}
+				if targetItem.ResourceType != nil {
+					targetMap[floatingIPTargetsResourceType] = targetItem.ResourceType
+				}
+				if targetItem.CRN != nil {
+					targetMap[floatingIPTargetsCrn] = targetItem.CRN
+				}
+			}
+		}
+	}
+
+	return targetId, targetMap
+}
+
+func floatingIPTargetNicDeletedToMap(deletedItem vpcv1.NetworkInterfaceReferenceDeleted) (deletedMap map[string]interface{}) {
+	deletedMap = map[string]interface{}{}
+
+	if deletedItem.MoreInfo != nil {
+		deletedMap[floatingIPTargetsMoreInfo] = deletedItem.MoreInfo
+	}
+
+	return deletedMap
+}
+func floatingIPTargetPgDeletedToMap(deletedItem vpcv1.PublicGatewayReferenceDeleted) (deletedMap map[string]interface{}) {
+	deletedMap = map[string]interface{}{}
+
+	if deletedItem.MoreInfo != nil {
+		deletedMap[floatingIPTargetsMoreInfo] = deletedItem.MoreInfo
+	}
+
+	return deletedMap
 }

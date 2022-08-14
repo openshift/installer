@@ -17,14 +17,13 @@
 package auth
 
 import (
-	"bytes"
-	"encoding/base64"
-	"fmt"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 )
+
+// endOfTime is the time when session (non-persistent) cookies expire.
+var endOfTime = time.Now().AddDate(0, 0, 14)
 
 // session represent CouchDB AuthSession token and its expiration period.
 type session struct {
@@ -37,17 +36,8 @@ type session struct {
 // newSession returns new session object constructed from AuthSession cookie.
 func newSession(c *http.Cookie) (*session, error) {
 	expires := c.Expires
-
-	// is CouchDB uses allow_persistent_cookie = false
-	// failback to AuthSession token's expiration
 	if expires.IsZero() {
-		valueRaw, _ := base64.StdEncoding.DecodeString(c.Value)
-		parts := bytes.Split(valueRaw, []byte(":"))
-		ts, err := strconv.ParseInt(string(parts[1]), 16, 64)
-		if err != nil {
-			return nil, fmt.Errorf("Invalid format for AuthSession: %s", err)
-		}
-		expires = time.Unix(ts, 0)
+		expires = endOfTime
 	}
 
 	// refreshTime is 20% of period between now and the expiration time

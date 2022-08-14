@@ -41,6 +41,12 @@ func (o *PcloudNetworksPutReader) ReadResponse(response runtime.ClientResponse, 
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudNetworksPutNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 422:
 		result := NewPcloudNetworksPutUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -143,6 +149,38 @@ func (o *PcloudNetworksPutUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudNetworksPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudNetworksPutNotFound creates a PcloudNetworksPutNotFound with default headers values
+func NewPcloudNetworksPutNotFound() *PcloudNetworksPutNotFound {
+	return &PcloudNetworksPutNotFound{}
+}
+
+/* PcloudNetworksPutNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudNetworksPutNotFound struct {
+	Payload *models.Error
+}
+
+func (o *PcloudNetworksPutNotFound) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudNetworksPutNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudNetworksPutNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

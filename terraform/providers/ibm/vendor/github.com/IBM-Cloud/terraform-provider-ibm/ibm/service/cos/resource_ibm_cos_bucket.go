@@ -38,7 +38,7 @@ var crossRegionLocation = []string{
 }
 
 var storageClass = []string{
-	"standard", "vault", "cold", "smart",
+	"standard", "vault", "cold", "smart", "flex",
 }
 
 var singleSiteLocationRegex = regexp.MustCompile("^[a-z]{3}[0-9][0-9]-[a-z]{4,8}$")
@@ -53,6 +53,12 @@ func caseDiffSuppress(_, old, new string, _ *schema.ResourceData) bool {
 	return strings.ToUpper(old) == strings.ToUpper(new)
 }
 
+func resourceinstanceidDiffSuppress(_, old, new string, _ *schema.ResourceData) bool {
+	if old != "" && strings.Contains(new, old) {
+		return true
+	}
+	return false
+}
 func ResourceIBMCOSBucket() *schema.Resource {
 	return &schema.Resource{
 		Read:          resourceIBMCOSBucketRead,
@@ -76,11 +82,12 @@ func ResourceIBMCOSBucket() *schema.Resource {
 				Description: "COS Bucket name",
 			},
 			"resource_instance_id": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				Description:  "resource instance ID",
-				ValidateFunc: validate.ValidateRegexps(`^crn:.+:.+:.+:.+:.+:a\/[0-9a-f]{32}:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\:\:$`),
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				Description:      "resource instance ID",
+				DiffSuppressFunc: resourceinstanceidDiffSuppress,
+				ValidateFunc:     validate.ValidateRegexps(`^crn:.+:.+:.+:.+:.+:a\/[0-9a-f]{32}:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\:\:$`),
 			},
 			"crn": {
 				Type:        schema.TypeString,
@@ -93,12 +100,20 @@ func ResourceIBMCOSBucket() *schema.Resource {
 				Optional:    true,
 				Description: "CRN of the key you want to use data at rest encryption",
 			},
+			"satellite_location_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"cross_region_location", "single_site_location", "region_location"},
+				Description:   "Provide satellite location info.",
+			},
 			"single_site_location": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ValidateFunc:  validate.ValidateAllowedStringValues(singleSiteLocation),
 				ForceNew:      true,
-				ConflictsWith: []string{"region_location", "cross_region_location"},
+				ConflictsWith: []string{"region_location", "cross_region_location", "satellite_location_id"},
+				RequiredWith:  []string{"storage_class"},
 				Description:   "single site location info",
 			},
 			"region_location": {
@@ -106,7 +121,8 @@ func ResourceIBMCOSBucket() *schema.Resource {
 				Optional: true,
 				//ValidateFunc:  validate.ValidateAllowedStringValues(regionLocation),
 				ForceNew:      true,
-				ConflictsWith: []string{"cross_region_location", "single_site_location"},
+				ConflictsWith: []string{"cross_region_location", "single_site_location", "satellite_location_id"},
+				RequiredWith:  []string{"storage_class"},
 				Description:   "Region Location info.",
 			},
 			"cross_region_location": {
@@ -114,21 +130,24 @@ func ResourceIBMCOSBucket() *schema.Resource {
 				Optional:      true,
 				ValidateFunc:  validate.ValidateAllowedStringValues(crossRegionLocation),
 				ForceNew:      true,
-				ConflictsWith: []string{"region_location", "single_site_location"},
+				ConflictsWith: []string{"region_location", "single_site_location", "satellite_location_id"},
+				RequiredWith:  []string{"storage_class"},
 				Description:   "Cros region location info",
 			},
 			"storage_class": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validate.ValidateAllowedStringValues(storageClass),
-				ForceNew:     true,
-				Description:  "Storage class info",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				Description:   "Storage class info",
+				ConflictsWith: []string{"satellite_location_id"},
+				ValidateFunc:  validate.ValidateAllowedStringValues(storageClass),
 			},
 			"endpoint_type": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateFunc:     validate.ValidateAllowedStringValues([]string{"public", "private", "direct"}),
 				Description:      "public or private",
+				ConflictsWith:    []string{"satellite_location_id"},
 				DiffSuppressFunc: flex.ApplyOnce,
 				Default:          "public",
 			},
@@ -148,11 +167,12 @@ func ResourceIBMCOSBucket() *schema.Resource {
 				Description: "Direct endpoint for the COS bucket",
 			},
 			"allowed_ip": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				ForceNew:    false,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of IPv4 or IPv6 addresses ",
+				Type:          schema.TypeList,
+				Optional:      true,
+				ForceNew:      false,
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				ConflictsWith: []string{"satellite_location_id"},
+				Description:   "List of IPv4 or IPv6 addresses ",
 			},
 			"activity_tracking": {
 				Type:        schema.TypeList,
@@ -649,14 +669,31 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 	bucketName := parseBucketId(d.Id(), "bucketName")
 	serviceID := parseBucketId(d.Id(), "serviceID")
 	endpointType := parseBucketId(d.Id(), "endpointType")
-	apiEndpoint, apiEndpointPrivate, directApiEndpoint := SelectCosApi(parseBucketId(d.Id(), "apiType"), parseBucketId(d.Id(), "bLocation"))
-	if endpointType == "private" {
-		apiEndpoint = apiEndpointPrivate
+	bLocation := parseBucketId(d.Id(), "bLocation")
+	apiType := parseBucketId(d.Id(), "apiType")
+	if apiType == "sl" {
+		satloc_guid := strings.Split(serviceID, ":")
+		bucketsatcrn := satloc_guid[0]
+		serviceID = bucketsatcrn
 	}
-	if endpointType == "direct" {
-		apiEndpoint = directApiEndpoint
+
+	var apiEndpoint, apiEndpointPrivate, directApiEndpoint string
+
+	if apiType == "sl" {
+		apiEndpoint = SelectSatlocCosApi(apiType, serviceID, bLocation)
+	} else {
+		apiEndpoint, apiEndpointPrivate, directApiEndpoint = SelectCosApi(apiType, bLocation)
+		if endpointType == "private" {
+			apiEndpoint = apiEndpointPrivate
+		}
+		if endpointType == "direct" {
+			apiEndpoint = directApiEndpoint
+		}
+
 	}
+
 	authEndpoint, err := rsConClient.Config.EndpointLocator.IAMEndpoint()
+
 	if err != nil {
 		return err
 	}
@@ -806,6 +843,7 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 			Bucket:                  aws.String(bucketName),
 			VersioningConfiguration: versioningConf,
 		}
+
 		_, err := s3Client.PutBucketVersioning(input)
 		if err != nil {
 			return fmt.Errorf("failed to update the object versioning on COS bucket %s, %v", bucketName, err)
@@ -818,6 +856,12 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 	}
 	if endpointType == "private" {
 		sess.SetServiceURL("https://config.private.cloud-object-storage.cloud.ibm.com/v1")
+	}
+
+	if apiType == "sl" {
+		satconfig := fmt.Sprintf("https://config.%s.%s.cloud-object-storage.appdomain.cloud/v1", serviceID, bLocation)
+
+		sess.SetServiceURL(satconfig)
 	}
 
 	hasChanged := false
@@ -920,16 +964,37 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 	bucketName := parseBucketId(d.Id(), "bucketName")
 	serviceID := parseBucketId(d.Id(), "serviceID")
 	endpointType := parseBucketId(d.Id(), "endpointType")
-	apiEndpoint, apiEndpointPrivate, directApiEndpoint := SelectCosApi(parseBucketId(d.Id(), "apiType"), parseBucketId(d.Id(), "bLocation"))
-	if endpointType == "private" {
-		apiEndpoint = apiEndpointPrivate
+	apiType := parseBucketId(d.Id(), "apiType")
+	bLocation := parseBucketId(d.Id(), "bLocation")
+
+	//split satellite resource instance id to get the 1st value
+	if apiType == "sl" {
+		satloc_guid := strings.Split(serviceID, ":")
+		bucketsatcrn := satloc_guid[0]
+		serviceID = bucketsatcrn
 	}
-	if endpointType == "direct" {
-		apiEndpoint = directApiEndpoint
+
+	var apiEndpoint, apiEndpointPrivate, directApiEndpoint string
+
+	if apiType == "sl" {
+		apiEndpoint = SelectSatlocCosApi(apiType, serviceID, bLocation)
+	} else {
+		apiEndpoint, apiEndpointPrivate, directApiEndpoint = SelectCosApi(apiType, bLocation)
+		if endpointType == "private" {
+			apiEndpoint = apiEndpointPrivate
+		}
+		if endpointType == "direct" {
+			apiEndpoint = directApiEndpoint
+		}
+
 	}
+
 	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
+
 	authEndpoint, err := rsConClient.Config.EndpointLocator.IAMEndpoint()
+
 	if err != nil {
+
 		return err
 	}
 	authEndpointPath := fmt.Sprintf("%s%s", authEndpoint, "/identity/token")
@@ -956,6 +1021,7 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 	headInput := &s3.HeadBucketInput{
 		Bucket: aws.String(bucketName),
 	}
+
 	err = s3Client.WaitUntilBucketExists(headInput)
 	if err != nil {
 		return fmt.Errorf("failed waiting for bucket %s to be created, %v",
@@ -967,24 +1033,30 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	var bLocationConstraint string
-	for _, b := range bucketOutput.Buckets {
-		if *b.Name == bucketName {
-			bLocationConstraint = *b.LocationConstraint
-		}
-	}
 
-	if singleSiteLocationRegex.MatchString(bLocationConstraint) {
-		d.Set("single_site_location", strings.Split(bLocationConstraint, "-")[0])
-		d.Set("storage_class", strings.Split(bLocationConstraint, "-")[1])
-	}
-	if regionLocationRegex.MatchString(bLocationConstraint) {
-		d.Set("region_location", fmt.Sprintf("%s-%s", strings.Split(bLocationConstraint, "-")[0], strings.Split(bLocationConstraint, "-")[1]))
-		d.Set("storage_class", strings.Split(bLocationConstraint, "-")[2])
-	}
-	if crossRegionLocationRegex.MatchString(bLocationConstraint) {
-		d.Set("cross_region_location", strings.Split(bLocationConstraint, "-")[0])
-		d.Set("storage_class", strings.Split(bLocationConstraint, "-")[1])
+	if apiType != "sl" {
+		var bLocationConstraint string
+		for _, b := range bucketOutput.Buckets {
+			if *b.Name == bucketName {
+				bLocationConstraint = *b.LocationConstraint
+			}
+		}
+
+		if singleSiteLocationRegex.MatchString(bLocationConstraint) {
+			d.Set("single_site_location", strings.Split(bLocationConstraint, "-")[0])
+			d.Set("storage_class", strings.Split(bLocationConstraint, "-")[1])
+		}
+		if regionLocationRegex.MatchString(bLocationConstraint) {
+			d.Set("region_location", fmt.Sprintf("%s-%s", strings.Split(bLocationConstraint, "-")[0], strings.Split(bLocationConstraint, "-")[1]))
+			d.Set("storage_class", strings.Split(bLocationConstraint, "-")[2])
+		}
+		if crossRegionLocationRegex.MatchString(bLocationConstraint) {
+			d.Set("cross_region_location", strings.Split(bLocationConstraint, "-")[0])
+			d.Set("storage_class", strings.Split(bLocationConstraint, "-")[1])
+		}
+	} else {
+		d.Set("satellite_location_id", bLocation)
+
 	}
 
 	bucketCRN := fmt.Sprintf("%s:%s:%s", strings.Replace(serviceID, "::", "", -1), "bucket", bucketName)
@@ -1010,6 +1082,13 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 		sess.SetServiceURL("https://config.private.cloud-object-storage.cloud.ibm.com/v1")
 	}
 
+	if apiType == "sl" {
+
+		satconfig := fmt.Sprintf("https://config.%s.%s.cloud-object-storage.appdomain.cloud/v1", serviceID, bLocation)
+
+		sess.SetServiceURL(satconfig)
+	}
+
 	bucketPtr, response, err := sess.GetBucketConfig(getBucketConfigOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error in getting bucket info rule: %s\n%s", err, response)
@@ -1019,6 +1098,9 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 
 		if bucketPtr.Firewall != nil {
 			d.Set("allowed_ip", flex.FlattenStringList(bucketPtr.Firewall.AllowedIp))
+		} else {
+
+			d.Set("allowed_ip", []string{})
 		}
 		if bucketPtr.ActivityTracking != nil {
 			d.Set("activity_tracking", flex.FlattenActivityTrack(bucketPtr.ActivityTracking))
@@ -1028,6 +1110,8 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 		}
 		if bucketPtr.HardQuota != nil {
 			d.Set("hard_quota", bucketPtr.HardQuota)
+		} else {
+			d.Set("hard_quota", 0)
 		}
 	}
 	// Read the lifecycle configuration (archive & expiration or non current version or abort incomplete multipart upload)
@@ -1081,6 +1165,7 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 	versionInput := &s3.GetBucketVersioningInput{
 		Bucket: aws.String(bucketName),
 	}
+
 	versionPtr, err := s3Client.GetBucketVersioning(versionInput)
 
 	if err != nil && bucketPtr != nil && bucketPtr.Firewall != nil && !strings.Contains(err.Error(), "AccessDenied: Access Denied") {
@@ -1088,6 +1173,7 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	if versionPtr != nil {
 		versioningData := flex.FlattenCosObejctVersioning(versionPtr)
+
 		if len(versioningData) > 0 {
 			d.Set("object_versioning", versioningData)
 		} else {
@@ -1107,7 +1193,16 @@ func resourceIBMCOSBucketCreate(d *schema.ResourceData, meta interface{}) error 
 	storageClass := d.Get("storage_class").(string)
 	var bLocation string
 	var apiType string
+	var satlc_id string
 	serviceID := d.Get("resource_instance_id").(string)
+
+	//satlc_id := d.GetOK("satellite_location_id")
+	if satlc, ok := d.GetOk("satellite_location_id"); ok {
+		satlc_id = satlc.(string)
+		satloc_guid := strings.Split(serviceID, ":")
+		bucketsatcrn := satloc_guid[7]
+		serviceID = bucketsatcrn
+	}
 
 	if bucketLocation, ok := d.GetOk("cross_region_location"); ok {
 		bLocation = bucketLocation.(string)
@@ -1121,27 +1216,53 @@ func resourceIBMCOSBucketCreate(d *schema.ResourceData, meta interface{}) error 
 		bLocation = bucketLocation.(string)
 		apiType = "ssl"
 	}
+	//Add satellite location id
+	if bucketLocation, ok := d.GetOk("satellite_location_id"); ok {
+		bLocation = bucketLocation.(string)
+		apiType = "sl"
+	}
+
 	if bLocation == "" {
-		return fmt.Errorf("Provide either `cross_region_location` or `region_location` or `single_site_location`")
+		return fmt.Errorf("Provide either `cross_region_location` or `region_location` or `single_site_location` or `satellite_location_id`")
 	}
 	lConstraint := fmt.Sprintf("%s-%s", bLocation, storageClass)
+
 	var endpointType = d.Get("endpoint_type").(string)
-	apiEndpoint, privateApiEndpoint, directApiEndpoint := SelectCosApi(apiType, bLocation)
-	if endpointType == "private" {
-		apiEndpoint = privateApiEndpoint
+
+	var apiEndpoint, privateApiEndpoint, directApiEndpoint string
+	if apiType == "sl" {
+
+		apiEndpoint = SelectSatlocCosApi(apiType, serviceID, bLocation)
+
+	} else {
+		apiEndpoint, privateApiEndpoint, directApiEndpoint = SelectCosApi(apiType, bLocation)
+		if endpointType == "private" {
+			apiEndpoint = privateApiEndpoint
+		}
+		if endpointType == "direct" {
+			apiEndpoint = directApiEndpoint
+		}
+
 	}
-	if endpointType == "direct" {
-		apiEndpoint = directApiEndpoint
-	}
+
 	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
+
 	if apiEndpoint == "" {
 		return fmt.Errorf("[ERROR] The endpoint doesn't exists for given location %s and endpoint type %s", bLocation, endpointType)
 	}
-	create := &s3.CreateBucketInput{
-		Bucket: aws.String(bucketName),
-		CreateBucketConfiguration: &s3.CreateBucketConfiguration{
-			LocationConstraint: aws.String(lConstraint),
-		},
+
+	var create *s3.CreateBucketInput
+	if satlc_id != "" {
+		create = &s3.CreateBucketInput{
+			Bucket: aws.String(bucketName),
+		}
+	} else {
+		create = &s3.CreateBucketInput{
+			Bucket: aws.String(bucketName),
+			CreateBucketConfiguration: &s3.CreateBucketConfiguration{
+				LocationConstraint: aws.String(lConstraint),
+			},
+		}
 	}
 
 	if keyprotect, ok := d.GetOk("key_protect"); ok {
@@ -1176,6 +1297,7 @@ func resourceIBMCOSBucketCreate(d *schema.ResourceData, meta interface{}) error 
 	s3Client := s3.New(s3Sess, s3Conf)
 
 	_, err = s3Client.CreateBucket(create)
+
 	if err != nil {
 		return err
 	}
@@ -1192,6 +1314,7 @@ func resourceIBMCOSBucketDelete(d *schema.ResourceData, meta interface{}) error 
 	rsConClient, _ := meta.(conns.ClientSession).BluemixSession()
 	bucketName := parseBucketId(d.Id(), "bucketName")
 	serviceID := d.Get("resource_instance_id").(string)
+
 	var bLocation string
 	var apiType string
 	if bucketLocation, ok := d.GetOk("cross_region_location"); ok {
@@ -1206,15 +1329,33 @@ func resourceIBMCOSBucketDelete(d *schema.ResourceData, meta interface{}) error 
 		bLocation = bucketLocation.(string)
 		apiType = "ssl"
 	}
+
+	if bucketLocation, ok := d.GetOk("satellite_location_id"); ok {
+		bLocation = bucketLocation.(string)
+		apiType = "sl"
+	}
+
 	endpointType := parseBucketId(d.Id(), "endpointType")
-	apiEndpoint, apiEndpointPrivate, directApiEndpoint := SelectCosApi(apiType, bLocation)
-	if endpointType == "private" {
-		apiEndpoint = apiEndpointPrivate
+
+	var apiEndpoint, apiEndpointPrivate, directApiEndpoint string
+
+	if apiType == "sl" {
+
+		apiEndpoint = SelectSatlocCosApi(apiType, serviceID, bLocation)
+
+	} else {
+		apiEndpoint, apiEndpointPrivate, directApiEndpoint = SelectCosApi(apiType, bLocation)
+		if endpointType == "private" {
+			apiEndpoint = apiEndpointPrivate
+		}
+		if endpointType == "direct" {
+			apiEndpoint = directApiEndpoint
+		}
+
 	}
-	if endpointType == "direct" {
-		apiEndpoint = directApiEndpoint
-	}
+
 	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
+
 	if apiEndpoint == "" {
 		return fmt.Errorf("[ERROR] The endpoint doesn't exists for given location %s and endpoint type %s", bLocation, endpointType)
 	}
@@ -1281,23 +1422,49 @@ func resourceIBMCOSBucketDelete(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourceIBMCOSBucketExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+
 	var s3Conf *aws.Config
 	rsConClient, err := meta.(conns.ClientSession).BluemixSession()
 	if err != nil {
 		return false, err
 	}
+	bucket_meta := strings.Split(d.Id(), ":meta:")
+	if len(bucket_meta) < 2 || len(strings.Split(bucket_meta[1], ":")) < 2 {
+		return false, fmt.Errorf("[ERROR] Error parsing bucket ID. Bucket ID format must be: $CRN:meta:$buckettype:$bucketlocation")
+	}
 
 	bucketName := parseBucketId(d.Id(), "bucketName")
 	serviceID := parseBucketId(d.Id(), "serviceID")
+
+	apiType := parseBucketId(d.Id(), "apiType")
+	bLocation := parseBucketId(d.Id(), "bLocation")
 	endpointType := parseBucketId(d.Id(), "endpointType")
-	apiEndpoint, apiEndpointPrivate, directApiEndpoint := SelectCosApi(parseBucketId(d.Id(), "apiType"), parseBucketId(d.Id(), "bLocation"))
-	if endpointType == "private" {
-		apiEndpoint = apiEndpointPrivate
+
+	if apiType == "sl" {
+		satloc_guid := strings.Split(serviceID, ":")
+		bucketsatcrn := satloc_guid[0]
+		serviceID = bucketsatcrn
 	}
-	if endpointType == "direct" {
-		apiEndpoint = directApiEndpoint
+
+	var apiEndpoint, apiEndpointPrivate, directApiEndpoint string
+
+	if apiType == "sl" {
+
+		apiEndpoint = SelectSatlocCosApi(apiType, serviceID, bLocation)
+
+	} else {
+		apiEndpoint, apiEndpointPrivate, directApiEndpoint = SelectCosApi(apiType, bLocation)
+		if endpointType == "private" {
+			apiEndpoint = apiEndpointPrivate
+		}
+		if endpointType == "direct" {
+			apiEndpoint = directApiEndpoint
+		}
+
 	}
+
 	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
+
 	if apiEndpoint == "" {
 		return false, fmt.Errorf("[ERROR] The endpoint doesn't exists for given endpoint type %s", endpointType)
 	}
@@ -1351,6 +1518,14 @@ func SelectCosApi(apiType string, bLocation string) (string, string, string) {
 		return fmt.Sprintf("s3.%s.cloud-object-storage.appdomain.cloud", bLocation), fmt.Sprintf("s3.private.%s.cloud-object-storage.appdomain.cloud", bLocation), fmt.Sprintf("s3.direct.%s.cloud-object-storage.appdomain.cloud", bLocation)
 	}
 	return "", "", ""
+}
+
+///Satellite ENdpoint configuration
+func SelectSatlocCosApi(apiType string, serviceID string, bLocation string) string {
+	if apiType == "sl" {
+		return fmt.Sprintf("s3.%s.%s.cloud-object-storage.appdomain.cloud", serviceID, bLocation)
+	}
+	return ""
 }
 
 func parseBucketId(id string, info string) string {

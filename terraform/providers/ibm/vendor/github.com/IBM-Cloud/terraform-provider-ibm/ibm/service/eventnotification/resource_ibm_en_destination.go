@@ -63,12 +63,12 @@ func ResourceIBMEnDestination() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"url": {
 										Type:        schema.TypeString,
-										Required:    true,
+										Optional:    true,
 										Description: "URL of webhook.",
 									},
 									"verb": {
 										Type:        schema.TypeString,
-										Required:    true,
+										Optional:    true,
 										Description: "HTTP method of webhook.",
 									},
 									"custom_headers": {
@@ -111,11 +111,12 @@ func ResourceIBMEnDestination() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},
+		DeprecationMessage: "This resource will be deprecated. A new resource ibm_en_destination_webhook will replace the existing ibm_en_destination resource ",
 	}
 }
 
 func ResourceIBMEnDestinationValidator() *validate.ResourceValidator {
-	validateSchema := make([]validate.ValidateSchema, 1)
+	validateSchema := make([]validate.ValidateSchema, 0)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 "type",
@@ -322,7 +323,6 @@ func destinationConfigMapToDestinationConfig(configParams map[string]interface{}
 		}
 		params.SensitiveHeaders = sensitiveHeaders
 	}
-
 	destinationConfig := new(en.DestinationConfig)
 	destinationConfig.Params = params
 	return *destinationConfig

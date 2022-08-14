@@ -1,5 +1,5 @@
 /**
- * © Copyright IBM Corporation 2020. All Rights Reserved.
+ * © Copyright IBM Corporation 2020, 2022. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,9 @@ package common
 
 import (
 	"fmt"
-	"runtime"
 )
 
 const (
-	sdkName                = "cloudant-go-sdk"
-	headerNameUserAgent    = "User-Agent"
 	headerNameSdkAnalytics = "X-IBMCloud-SDK-Analytics"
 )
 
@@ -48,7 +45,6 @@ func GetSdkHeaders(serviceName string, serviceVersion string, operationID string
 	sdkHeaders := make(map[string]string)
 
 	sdkHeaders[headerNameSdkAnalytics] = GetSdkAnalyticsHeader(serviceName, serviceVersion, operationID)
-	sdkHeaders[headerNameUserAgent] = GetUserAgentInfo()
 
 	return sdkHeaders
 }
@@ -56,18 +52,4 @@ func GetSdkHeaders(serviceName string, serviceVersion string, operationID string
 func GetSdkAnalyticsHeader(serviceName string, serviceVersion string, operationID string) string {
 	return fmt.Sprintf("service_name=%s;service_version=%s;operation_id=%s",
 		serviceName, serviceVersion, operationID)
-}
-
-var userAgent string = fmt.Sprintf("%s/%s %s", sdkName, Version, GetSystemInfo())
-
-func GetUserAgentInfo() string {
-	return userAgent
-}
-
-var systemInfo = fmt.Sprintf(
-	"(lang=go; arch=%s; os=%s; go.version=%s)",
-	runtime.GOARCH, runtime.GOOS, runtime.Version())
-
-func GetSystemInfo() string {
-	return systemInfo
 }

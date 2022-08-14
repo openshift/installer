@@ -34,10 +34,18 @@ func ResourceIBMKmskeyAlias() *schema.Resource {
 				Description: "Key protect or hpcs key alias name",
 			},
 			"key_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Key ID",
-				ForceNew:    true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Key ID",
+				ForceNew:     true,
+				ExactlyOneOf: []string{"key_id", "existing_alias"},
+			},
+			"existing_alias": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Existing Alias of the Key",
+				ForceNew:     true,
+				ExactlyOneOf: []string{"key_id", "existing_alias"},
 			},
 			"endpoint_type": {
 				Type:         schema.TypeString,
@@ -85,8 +93,15 @@ func resourceIBMKmsKeyAliasCreate(d *schema.ResourceData, meta interface{}) erro
 	kpAPI.Config.InstanceID = instanceID
 
 	aliasName := d.Get("alias").(string)
-	keyID := d.Get("key_id").(string)
-	stkey, err := kpAPI.CreateKeyAlias(context.Background(), aliasName, keyID)
+	var id string
+	if v, ok := d.GetOk("key_id"); ok {
+		id = v.(string)
+		d.Set("key_id", id)
+	}
+	if v, ok := d.GetOk("existing_alias"); ok {
+		id = v.(string)
+	}
+	stkey, err := kpAPI.CreateKeyAlias(context.Background(), aliasName, id)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error while creating alias name for the key: %s", err)
 	}

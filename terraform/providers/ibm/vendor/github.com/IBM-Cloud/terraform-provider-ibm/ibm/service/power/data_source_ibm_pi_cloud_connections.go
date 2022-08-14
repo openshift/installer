@@ -107,6 +107,11 @@ func DataSourceIBMPICloudConnections() *schema.Resource {
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Description: "Set of VPCs attached to this cloud connection",
 						},
+						PICloudConnectionConnectionMode: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Type of service the gateway is attached to",
+						},
 					},
 				},
 			},
@@ -132,15 +137,16 @@ func dataSourceIBMPICloudConnectionsRead(ctx context.Context, d *schema.Resource
 	result := make([]map[string]interface{}, 0, len(cloudConnections.CloudConnections))
 	for _, cloudConnection := range cloudConnections.CloudConnections {
 		cc := map[string]interface{}{
-			PICloudConnectionId:            *cloudConnection.CloudConnectionID,
-			PICloudConnectionName:          *cloudConnection.Name,
-			PICloudConnectionGlobalRouting: *cloudConnection.GlobalRouting,
-			PICloudConnectionMetered:       *cloudConnection.Metered,
-			PICloudConnectionIBMIPAddress:  *cloudConnection.IbmIPAddress,
-			PICloudConnectionUserIPAddress: *cloudConnection.UserIPAddress,
-			PICloudConnectionStatus:        *cloudConnection.LinkStatus,
-			PICloudConnectionPort:          *cloudConnection.Port,
-			PICloudConnectionSpeed:         *cloudConnection.Speed,
+			PICloudConnectionId:             *cloudConnection.CloudConnectionID,
+			PICloudConnectionName:           *cloudConnection.Name,
+			PICloudConnectionGlobalRouting:  *cloudConnection.GlobalRouting,
+			PICloudConnectionMetered:        *cloudConnection.Metered,
+			PICloudConnectionIBMIPAddress:   *cloudConnection.IbmIPAddress,
+			PICloudConnectionUserIPAddress:  *cloudConnection.UserIPAddress,
+			PICloudConnectionStatus:         *cloudConnection.LinkStatus,
+			PICloudConnectionPort:           *cloudConnection.Port,
+			PICloudConnectionSpeed:          *cloudConnection.Speed,
+			PICloudConnectionConnectionMode: cloudConnection.ConnectionMode,
 		}
 
 		if cloudConnection.Networks != nil {

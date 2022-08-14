@@ -1,3 +1,8 @@
+![GitHub issues by-label](https://img.shields.io/github/issues/IBM-Cloud/terraform-provider-ibm/service/Power%20Systems?color=red&label=Power%20Issues)
+![GitHub closed issues by-label](https://img.shields.io/github/issues-closed/IBM-Cloud/terraform-provider-ibm/service/Power%20Systems?color=brightgreen&label=Power%20Issues)<br>
+![GitHub pull requests by-label](https://img.shields.io/github/issues/IBM-Cloud/terraform-provider-ibm/service/Power%20Systems?label=Power%20Pull%20Requests)
+![GitHub closed pull requests by-label](https://img.shields.io/github/issues-pr-closed/IBM-Cloud/terraform-provider-ibm/service/Power%20Systems?color=brightgreen&label=Power%20Pull%20Requests)
+
 # Terraform IBM Provider Power Systems
 <!-- markdownlint-disable MD026 -->
 This area is primarily for IBM provider contributors and maintainers. For information on _using_ Terraform and the IBM provider, see the links below.

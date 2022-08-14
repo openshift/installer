@@ -79,6 +79,12 @@ func ResourceIBMISInstanceAction() *schema.Resource {
 							Computed:    true,
 							Description: "An explanation of the status reason",
 						},
+
+						isInstanceStatusReasonsMoreInfo: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about this status reason",
+						},
 					},
 				},
 			},
@@ -89,7 +95,7 @@ func ResourceIBMISInstanceAction() *schema.Resource {
 func ResourceIBMISInstanceActionValidator() *validate.ResourceValidator {
 
 	instanceActions := "start, reboot, stop"
-	validateSchema := make([]validate.ValidateSchema, 1)
+	validateSchema := make([]validate.ValidateSchema, 0)
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
@@ -187,6 +193,9 @@ func resourceIBMISInstanceActionRead(context context.Context, d *schema.Resource
 			if sr.Code != nil && sr.Message != nil {
 				currentSR[isInstanceStatusReasonsCode] = *sr.Code
 				currentSR[isInstanceStatusReasonsMessage] = *sr.Message
+				if sr.MoreInfo != nil {
+					currentSR[isInstanceStatusReasonsMoreInfo] = *sr.MoreInfo
+				}
 				statusReasonsList = append(statusReasonsList, currentSR)
 			}
 		}

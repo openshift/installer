@@ -47,6 +47,12 @@ func (o *PcloudV2PvminstancesVolumesPostReader) ReadResponse(response runtime.Cl
 			return nil, err
 		}
 		return nil, result
+	case 409:
+		result := NewPcloudV2PvminstancesVolumesPostConflict()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewPcloudV2PvminstancesVolumesPostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -175,6 +181,38 @@ func (o *PcloudV2PvminstancesVolumesPostNotFound) GetPayload() *models.Error {
 }
 
 func (o *PcloudV2PvminstancesVolumesPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2PvminstancesVolumesPostConflict creates a PcloudV2PvminstancesVolumesPostConflict with default headers values
+func NewPcloudV2PvminstancesVolumesPostConflict() *PcloudV2PvminstancesVolumesPostConflict {
+	return &PcloudV2PvminstancesVolumesPostConflict{}
+}
+
+/* PcloudV2PvminstancesVolumesPostConflict describes a response with status code 409, with default header values.
+
+Conflict
+*/
+type PcloudV2PvminstancesVolumesPostConflict struct {
+	Payload *models.Error
+}
+
+func (o *PcloudV2PvminstancesVolumesPostConflict) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes][%d] pcloudV2PvminstancesVolumesPostConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudV2PvminstancesVolumesPostConflict) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV2PvminstancesVolumesPostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

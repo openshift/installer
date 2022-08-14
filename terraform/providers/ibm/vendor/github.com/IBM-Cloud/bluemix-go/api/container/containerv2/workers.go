@@ -9,6 +9,8 @@ import (
 //Worker ...
 type Worker struct {
 	Billing           string `json:"billing,omitempty"`
+	HostID            string `json:"dedicatedHostId,omitempty"`
+	HostPoolID        string `json:"dedicatedHostPoolId,omitempty"`
 	Flavor            string `json:"flavor"`
 	ID                string `json:"id"`
 	KubeVersion       KubeDetails

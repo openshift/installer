@@ -118,14 +118,16 @@ func ResourceIBMIsBareMetalServerNetworkInterface() *schema.Resource {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Computed:    true,
+				MaxItems:    1,
 				Description: "title: IPv4, The IP address. ",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						isBareMetalServerNicIpAddress: {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Computed:    true,
-							Description: "The globally unique IP address",
+							Type:          schema.TypeString,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"primary_ip.0.reserved_ip"},
+							Description:   "The globally unique IP address",
 						},
 						isBareMetalServerNicIpHref: {
 							Type:        schema.TypeString,
@@ -133,16 +135,18 @@ func ResourceIBMIsBareMetalServerNetworkInterface() *schema.Resource {
 							Description: "The URL for this reserved IP",
 						},
 						isBareMetalServerNicIpID: {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Computed:    true,
-							Description: "The unique identifier for this reserved IP",
+							Type:          schema.TypeString,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"primary_ip.0.address", "primary_ip.0.auto_delete", "primary_ip.0.name"},
+							Description:   "The unique identifier for this reserved IP",
 						},
 						isBareMetalServerNicIpName: {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Computed:    true,
-							Description: "The unique user-defined name for this reserved IP",
+							Type:          schema.TypeString,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"primary_ip.0.reserved_ip"},
+							Description:   "The unique user-defined name for this reserved IP",
 						},
 						isBareMetalServerNicResourceType: {
 							Type:        schema.TypeString,
@@ -150,10 +154,11 @@ func ResourceIBMIsBareMetalServerNetworkInterface() *schema.Resource {
 							Description: "The resource type: [ subnet_reserved_ip ]",
 						},
 						isBareMetalServerNicIpAutoDelete: {
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Computed:    true,
-							Description: "If set to true, this reserved IP will be automatically deleted when the target is deleted or when the reserved IP is unbound.",
+							Type:          schema.TypeBool,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"primary_ip.0.reserved_ip"},
+							Description:   "If set to true, this reserved IP will be automatically deleted when the target is deleted or when the reserved IP is unbound.",
 						},
 					},
 				},
@@ -223,7 +228,7 @@ func ResourceIBMIsBareMetalServerNetworkInterface() *schema.Resource {
 
 func ResourceIBMIsBareMetalServerNetworkInterfaceValidator() *validate.ResourceValidator {
 
-	validateSchema := make([]validate.ValidateSchema, 1)
+	validateSchema := make([]validate.ValidateSchema, 0)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 isBareMetalServerName,
@@ -236,7 +241,7 @@ func ResourceIBMIsBareMetalServerNetworkInterfaceValidator() *validate.ResourceV
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "tag",
+			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
@@ -331,11 +336,35 @@ func resourceIBMISBareMetalServerNetworkInterfaceCreate(context context.Context,
 		if primaryIpIntf, ok := d.GetOk(isBareMetalServerNicPrimaryIP); ok && len(primaryIpIntf.([]interface{})) > 0 {
 			primaryIp := primaryIpIntf.([]interface{})[0].(map[string]interface{})
 
-			reservedIpAddressOk, ok := primaryIp[isBareMetalServerNicIpAddress]
-			if ok && reservedIpAddressOk.(string) != "" {
-				reservedIpAddress := reservedIpAddressOk.(string)
-				nicOptions.PrimaryIpv4Address = &reservedIpAddress
+			reservedIpIdOk, ok := primaryIp[isBareMetalServerNicIpID]
+			if ok && reservedIpIdOk.(string) != "" {
+				ipid := reservedIpIdOk.(string)
+				nicOptions.PrimaryIP = &vpcv1.NetworkInterfaceIPPrototypeReservedIPIdentity{
+					ID: &ipid,
+				}
+			} else {
+				primaryip := &vpcv1.NetworkInterfaceIPPrototypeReservedIPPrototypeNetworkInterfaceContext{}
+
+				reservedIpAddressOk, okAdd := primaryIp[isBareMetalServerNicIpAddress]
+				if okAdd && reservedIpAddressOk.(string) != "" {
+					reservedIpAddress := reservedIpAddressOk.(string)
+					primaryip.Address = &reservedIpAddress
+				}
+				reservedIpNameOk, okName := primaryIp[isBareMetalServerNicIpName]
+				if okName && reservedIpNameOk.(string) != "" {
+					reservedIpName := reservedIpNameOk.(string)
+					primaryip.Name = &reservedIpName
+				}
+				reservedIpAutoOk, okAuto := primaryIp[isBareMetalServerNicIpAutoDelete]
+				if okAuto {
+					reservedIpAuto := reservedIpAutoOk.(bool)
+					primaryip.AutoDelete = &reservedIpAuto
+				}
+				if okAdd || okName || okAuto {
+					nicOptions.PrimaryIP = primaryip
+				}
 			}
+
 		}
 
 		sGroups := d.Get(isBareMetalServerNicSecurityGroups).(*schema.Set).List()
@@ -355,7 +384,7 @@ func resourceIBMISBareMetalServerNetworkInterfaceCreate(context context.Context,
 		if err != nil || nic == nil {
 			return diag.FromErr(fmt.Errorf("[DEBUG] Create bare metal server (%s) network interface err %s\n%s", bareMetalServerId, err, response))
 		}
-		err = bareMetalServerNICGet(d, meta, nic, bareMetalServerId)
+		err = bareMetalServerNICGet(d, meta, sess, nic, bareMetalServerId)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -437,11 +466,35 @@ func createVlanTypeNetworkInterface(context context.Context, d *schema.ResourceD
 	if primaryIpIntf, ok := d.GetOk(isBareMetalServerNicPrimaryIP); ok && len(primaryIpIntf.([]interface{})) > 0 {
 		primaryIp := primaryIpIntf.([]interface{})[0].(map[string]interface{})
 
-		reservedIpAddressOk, ok := primaryIp[isBareMetalServerNicIpAddress]
-		if ok && reservedIpAddressOk.(string) != "" {
-			reservedIpAddress := reservedIpAddressOk.(string)
-			nicOptions.PrimaryIpv4Address = &reservedIpAddress
+		reservedIpIdOk, ok := primaryIp[isBareMetalServerNicIpID]
+		if ok && reservedIpIdOk.(string) != "" {
+			ipid := reservedIpIdOk.(string)
+			nicOptions.PrimaryIP = &vpcv1.NetworkInterfaceIPPrototypeReservedIPIdentity{
+				ID: &ipid,
+			}
+		} else {
+			primaryip := &vpcv1.NetworkInterfaceIPPrototypeReservedIPPrototypeNetworkInterfaceContext{}
+			reservedIpAddressOk, okAdd := primaryIp[isBareMetalServerNicIpAddress]
+			if okAdd && reservedIpAddressOk.(string) != "" {
+				reservedIpAddress := reservedIpAddressOk.(string)
+				primaryip.Address = &reservedIpAddress
+			}
+
+			reservedIpNameOk, okName := primaryIp[isBareMetalServerNicIpName]
+			if okName && reservedIpNameOk.(string) != "" {
+				reservedIpName := reservedIpNameOk.(string)
+				primaryip.Name = &reservedIpName
+			}
+			reservedIpAutoOk, okAuto := primaryIp[isBareMetalServerNicIpAutoDelete]
+			if okAuto {
+				reservedIpAuto := reservedIpAutoOk.(bool)
+				primaryip.AutoDelete = &reservedIpAuto
+			}
+			if okAdd || okName || okAuto {
+				nicOptions.PrimaryIP = primaryip
+			}
 		}
+
 	}
 
 	sGroups := d.Get(isBareMetalServerNicSecurityGroups).(*schema.Set).List()
@@ -461,7 +514,7 @@ func createVlanTypeNetworkInterface(context context.Context, d *schema.ResourceD
 	if err != nil || nic == nil {
 		return fmt.Errorf("[DEBUG] Create bare metal server (%s) network interface err %s\n%s", bareMetalServerId, err, response)
 	}
-	err = bareMetalServerNICGet(d, meta, nic, bareMetalServerId)
+	err = bareMetalServerNICGet(d, meta, sess, nic, bareMetalServerId)
 	if err != nil {
 		return err
 	}
@@ -499,14 +552,14 @@ func resourceIBMISBareMetalServerNetworkInterfaceRead(context context.Context, d
 		}
 		return diag.FromErr(fmt.Errorf("[ERROR] Error getting Bare Metal Server (%s) network interface (%s): %s\n%s", bareMetalServerId, nicID, err, response))
 	}
-	err = bareMetalServerNICGet(d, meta, nicIntf, bareMetalServerId)
+	err = bareMetalServerNICGet(d, meta, sess, nicIntf, bareMetalServerId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
 }
 
-func bareMetalServerNICGet(d *schema.ResourceData, meta interface{}, nicIntf interface{}, bareMetalServerId string) error {
+func bareMetalServerNICGet(d *schema.ResourceData, meta interface{}, sess *vpcv1.VpcV1, nicIntf interface{}, bareMetalServerId string) error {
 	switch reflect.TypeOf(nicIntf).String() {
 	case "*vpcv1.BareMetalServerNetworkInterfaceByPci":
 		{
@@ -537,14 +590,37 @@ func bareMetalServerNICGet(d *schema.ResourceData, meta interface{}, nicIntf int
 			if nic.PortSpeed != nil {
 				d.Set(isBareMetalServerNicPortSpeed, *nic.PortSpeed)
 			}
-			primaryIpList := make([]map[string]interface{}, 0)
-			currentIP := map[string]interface{}{
+			if nic.PrimaryIP != nil {
+				primaryIpList := make([]map[string]interface{}, 0)
+				currentIP := map[string]interface{}{}
+				if nic.PrimaryIP.Href != nil {
+					currentIP[isBareMetalServerNicIpAddress] = *nic.PrimaryIP.Address
+				}
+				if nic.PrimaryIP.Href != nil {
+					currentIP[isBareMetalServerNicIpHref] = *nic.PrimaryIP.Href
+				}
+				if nic.PrimaryIP.Name != nil {
+					currentIP[isBareMetalServerNicIpName] = *nic.PrimaryIP.Name
+				}
+				if nic.PrimaryIP.ID != nil {
+					currentIP[isBareMetalServerNicIpID] = *nic.PrimaryIP.ID
+				}
+				if nic.PrimaryIP.ResourceType != nil {
+					currentIP[isBareMetalServerNicResourceType] = *nic.PrimaryIP.ResourceType
+				}
+				getripoptions := &vpcv1.GetSubnetReservedIPOptions{
+					SubnetID: nic.Subnet.ID,
+					ID:       nic.PrimaryIP.ID,
+				}
+				bmsRip, response, err := sess.GetSubnetReservedIP(getripoptions)
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error getting network interface reserved ip(%s) attached to the bare metal server network interface(%s): %s\n%s", *nic.PrimaryIP.ID, *nic.ID, err, response)
+				}
+				currentIP[isBareMetalServerNicIpAutoDelete] = bmsRip.AutoDelete
+				primaryIpList = append(primaryIpList, currentIP)
 
-				isBareMetalServerNicIpAddress: *nic.PrimaryIpv4Address,
+				d.Set(isBareMetalServerNicPrimaryIP, primaryIpList)
 			}
-			primaryIpList = append(primaryIpList, currentIP)
-			d.Set(isBareMetalServerNicPrimaryIP, primaryIpList)
-
 			d.Set(isBareMetalServerNicResourceType, *nic.ResourceType)
 
 			if nic.SecurityGroups != nil && len(nic.SecurityGroups) != 0 {
@@ -594,10 +670,32 @@ func bareMetalServerNICGet(d *schema.ResourceData, meta interface{}, nicIntf int
 			d.Set(isBareMetalServerNicPortSpeed, nic.PortSpeed)
 
 			primaryIpList := make([]map[string]interface{}, 0)
-			currentIP := map[string]interface{}{
-
-				isBareMetalServerNicIpAddress: *nic.PrimaryIpv4Address,
+			currentIP := map[string]interface{}{}
+			if nic.PrimaryIP.Href != nil {
+				currentIP[isBareMetalServerNicIpAddress] = *nic.PrimaryIP.Address
 			}
+			if nic.PrimaryIP.Href != nil {
+				currentIP[isBareMetalServerNicIpHref] = *nic.PrimaryIP.Href
+			}
+			if nic.PrimaryIP.Name != nil {
+				currentIP[isBareMetalServerNicIpName] = *nic.PrimaryIP.Name
+			}
+			if nic.PrimaryIP.ID != nil {
+				currentIP[isBareMetalServerNicIpID] = *nic.PrimaryIP.ID
+			}
+			if nic.PrimaryIP.ResourceType != nil {
+				currentIP[isBareMetalServerNicResourceType] = *nic.PrimaryIP.ResourceType
+			}
+			getripoptions := &vpcv1.GetSubnetReservedIPOptions{
+				SubnetID: nic.Subnet.ID,
+				ID:       nic.PrimaryIP.ID,
+			}
+			bmsRip, response, err := sess.GetSubnetReservedIP(getripoptions)
+			if err != nil {
+				return fmt.Errorf("[ERROR] Error getting network interface reserved ip(%s) attached to the bare metal server network interface(%s): %s\n%s", *nic.PrimaryIP.ID, *nic.ID, err, response)
+			}
+			currentIP[isBareMetalServerNicIpAutoDelete] = bmsRip.AutoDelete
+
 			primaryIpList = append(primaryIpList, currentIP)
 			d.Set(isBareMetalServerNicPrimaryIP, primaryIpList)
 
@@ -636,12 +734,40 @@ func resourceIBMISBareMetalServerNetworkInterfaceUpdate(context context.Context,
 		BareMetalServerID: &bareMetalServerId,
 		ID:                &nicId,
 	}
+
+	if d.HasChange("primary_ip.0.name") || d.HasChange("primary_ip.0.auto_delete") {
+		subnetId := d.Get(isBareMetalServerNicSubnet).(string)
+		ripId := d.Get("primary_ip.0.reserved_ip").(string)
+		updateripoptions := &vpcv1.UpdateSubnetReservedIPOptions{
+			SubnetID: &subnetId,
+			ID:       &ripId,
+		}
+		reservedIpPath := &vpcv1.ReservedIPPatch{}
+		if d.HasChange("primary_ip.0.name") {
+			name := d.Get("primary_ip.0.name").(string)
+			reservedIpPath.Name = &name
+		}
+		if d.HasChange("primary_ip.0.auto_delete") {
+			auto := d.Get("primary_ip.0.auto_delete").(bool)
+			reservedIpPath.AutoDelete = &auto
+		}
+		reservedIpPathAsPatch, err := reservedIpPath.AsPatch()
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error calling reserved ip as patch \n%s", err))
+		}
+		updateripoptions.ReservedIPPatch = reservedIpPathAsPatch
+		_, response, err := sess.UpdateSubnetReservedIP(updateripoptions)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error updating network interface reserved ip(%s): %s\n%s", ripId, err, response))
+		}
+	}
+
 	nicPatchModel := &vpcv1.BareMetalServerNetworkInterfacePatch{}
 	flag := false
 	if d.HasChange(isBareMetalServerNicAllowIPSpoofing) {
 		flag = true
 		aisBool := false
-		if ais, ok := d.GetOk(isBareMetalServerNicEnableInfraNAT); ok {
+		if ais, ok := d.GetOk(isBareMetalServerNicAllowIPSpoofing); ok {
 			aisBool = ais.(bool)
 		}
 		nicPatchModel.AllowIPSpoofing = &aisBool
@@ -686,7 +812,7 @@ func resourceIBMISBareMetalServerNetworkInterfaceUpdate(context context.Context,
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error updating Bare Metal Server: %s\n%s", err, response))
 		}
-		return diag.FromErr(bareMetalServerNICGet(d, meta, nicIntf, bareMetalServerId))
+		return diag.FromErr(bareMetalServerNICGet(d, meta, sess, nicIntf, bareMetalServerId))
 	}
 
 	return nil

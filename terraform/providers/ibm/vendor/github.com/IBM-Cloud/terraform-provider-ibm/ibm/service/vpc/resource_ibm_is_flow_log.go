@@ -133,7 +133,7 @@ func ResourceIBMISFlowLog() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_flow_log", "tag")},
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_flow_log", "tags")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "Tags for the VPC Flow logs",
 			},
@@ -186,7 +186,7 @@ func ResourceIBMISFlowLogValidator() *validate.ResourceValidator {
 			MaxValueLength:             63})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "tag",
+			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
@@ -225,7 +225,7 @@ func resourceIBMISFlowLogCreate(d *schema.ResourceData, meta interface{}) error 
 	createFlowLogCollectorOptionsModel.Target = FlowLogCollectorTargetModel
 
 	bucketname := d.Get(isFlowLogStorageBucket).(string)
-	cloudObjectStorageBucketIdentityModel := new(vpcv1.CloudObjectStorageBucketIdentityByName)
+	cloudObjectStorageBucketIdentityModel := new(vpcv1.LegacyCloudObjectStorageBucketIdentityCloudObjectStorageBucketIdentityByName)
 	cloudObjectStorageBucketIdentityModel.Name = &bucketname
 	createFlowLogCollectorOptionsModel.StorageBucket = cloudObjectStorageBucketIdentityModel
 

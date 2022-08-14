@@ -175,6 +175,13 @@ func ResourceIBMIAMAuthorizationPolicy() *schema.Resource {
 				Optional:    true,
 				Description: "Description of the Policy",
 			},
+
+			"transaction_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set transactionID for debug",
+			},
 		},
 	}
 }
@@ -347,6 +354,10 @@ func resourceIBMIAMAuthorizationPolicyCreate(d *schema.ResourceData, meta interf
 		createPolicyOptions.Description = &des
 	}
 
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		createPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	}
+
 	authPolicy, resp, err := iampapClient.CreatePolicy(createPolicyOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error creating authorization policy: %s %s", err, resp)
@@ -368,8 +379,12 @@ func resourceIBMIAMAuthorizationPolicyRead(d *schema.ResourceData, meta interfac
 		PolicyID: core.StringPtr(d.Id()),
 	}
 
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		getPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	}
+
 	authorizationPolicy, resp, err := iampapClient.GetPolicy(getPolicyOptions)
-	if err != nil {
+	if err != nil || resp == nil {
 		return fmt.Errorf("[ERROR] Error retrieving authorizationPolicy: %s %s", err, resp)
 	}
 	roles := make([]string, len(authorizationPolicy.Roles))
@@ -378,6 +393,9 @@ func resourceIBMIAMAuthorizationPolicyRead(d *schema.ResourceData, meta interfac
 	}
 	if authorizationPolicy.Description != nil {
 		d.Set("description", *authorizationPolicy.Description)
+	}
+	if len(resp.Headers["Transaction-Id"]) > 0 && resp.Headers["Transaction-Id"][0] != "" {
+		d.Set("transaction_id", resp.Headers["Transaction-Id"][0])
 	}
 	d.Set("roles", roles)
 	source := authorizationPolicy.Subjects[0]
@@ -415,6 +433,11 @@ func resourceIBMIAMAuthorizationPolicyDelete(d *schema.ResourceData, meta interf
 	deletePolicyOptions := &iampolicymanagementv1.DeletePolicyOptions{
 		PolicyID: core.StringPtr(authorizationPolicyID),
 	}
+
+	if transactionID, ok := d.GetOk("transaction_id"); ok {
+		deletePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	}
+
 	resp, err := iampapClient.DeletePolicy(deletePolicyOptions)
 	if err != nil {
 		log.Printf(

@@ -207,32 +207,24 @@ func dataSourceIBMIsFlowLogRead(context context.Context, d *schema.ResourceData,
 	var flowLogCollector *vpcv1.FlowLogCollector
 
 	if name != "" {
-		start := ""
-		allrecs := []vpcv1.FlowLogCollector{}
-		for {
-			listOptions := &vpcv1.ListFlowLogCollectorsOptions{}
-			if start != "" {
-				listOptions.Start = &start
-			}
-			flowlogCollectors, response, err := sess.ListFlowLogCollectors(listOptions)
-			if err != nil {
-				return diag.FromErr(fmt.Errorf("[ERROR] Error Fetching Flow Logs for VPC %s\n%s", err, response))
-			}
-			start = flex.GetNext(flowlogCollectors.Next)
-			allrecs = append(allrecs, flowlogCollectors.FlowLogCollectors...)
-			if start == "" {
-				break
-			}
+
+		listOptions := &vpcv1.ListFlowLogCollectorsOptions{
+			Name: &name,
 		}
-		for _, flowlogCollector := range allrecs {
-			if *flowlogCollector.Name == name {
-				flowLogCollector = &flowlogCollector
-				break
-			}
+
+		flowlogCollectors, response, err := sess.ListFlowLogCollectors(listOptions)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("Error Fetching Flow Logs for VPC %s\n%s", err, response))
 		}
-		if flowLogCollector == nil {
+
+		allrecs := flowlogCollectors.FlowLogCollectors
+
+		if len(allrecs) == 0 {
 			return diag.FromErr(fmt.Errorf("[ERROR] No flow log collector found with name (%s)", name))
 		}
+		flc := allrecs[0]
+		flowLogCollector = &flc
+
 	} else if identifier != "" {
 		getFlowLogCollectorOptions := &vpcv1.GetFlowLogCollectorOptions{}
 
@@ -329,7 +321,7 @@ func dataSourceFlowLogCollectorResourceGroupToMap(resourceGroupItem vpcv1.Resour
 	return resourceGroupMap
 }
 
-func dataSourceFlowLogCollectorFlattenStorageBucket(result vpcv1.CloudObjectStorageBucketReference) (finalList []map[string]interface{}) {
+func dataSourceFlowLogCollectorFlattenStorageBucket(result vpcv1.LegacyCloudObjectStorageBucketReference) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceFlowLogCollectorStorageBucketToMap(result)
 	finalList = append(finalList, finalMap)
@@ -337,7 +329,7 @@ func dataSourceFlowLogCollectorFlattenStorageBucket(result vpcv1.CloudObjectStor
 	return finalList
 }
 
-func dataSourceFlowLogCollectorStorageBucketToMap(storageBucketItem vpcv1.CloudObjectStorageBucketReference) (storageBucketMap map[string]interface{}) {
+func dataSourceFlowLogCollectorStorageBucketToMap(storageBucketItem vpcv1.LegacyCloudObjectStorageBucketReference) (storageBucketMap map[string]interface{}) {
 	storageBucketMap = map[string]interface{}{}
 
 	if storageBucketItem.Name != nil {

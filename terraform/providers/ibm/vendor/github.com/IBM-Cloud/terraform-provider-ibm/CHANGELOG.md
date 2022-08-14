@@ -1,6 +1,634 @@
+# 1.44.2 (Aug 8, 2022)
+BUG FIXES
+* fix: schematics template metadata issue ([3953](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3953))
+
+# 1.44.1 (Aug 3, 2022)
+BUG FIXES
+* Fix the breaking change of cos bucket with replication configuration ([3945](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3945))
+* fix the firewall allowed_ip issue ([3894](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3894))
+* Fix the nil pointer for coreos enabled ([3948](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3948))
+
+# 1.44.0 (Aug 2, 2022)
+Features
+* Support Internt Services
+    - **DataSources**
+        - ibm_cis_mtlss
+        - ibm_cis_mtls_apps
+        - ibm_cis_origin_auths
+    - **Resources**
+        - ibm_cis_mtls
+        - ibm_cis_mtls_app
+        - ibm_cis_origin_auth
+* Support Internt Services
+    - **DataSources**
+        - ibm_database_task
+        - ibm_database_tasks
+* Support Security and Compilance 
+    - **DataSources**
+        - ibm_scc_posture_credential
+        - ibm_scc_posture_collector
+        - ibm_scc_posture_scope
+        - ibm_scc_posture_credentials
+        - ibm_scc_posture_collectors
+* Support Virtual Private Cloud
+    - **DataSources**
+        - ibm_is_backup_policy
+        - ibm_is_backup_policies
+        - ibm_is_backup_policy_plan
+        - ibm_is_backup_policy_plans
+        - ibm_is_vpn_server
+        - ibm_is_vpn_servers
+        - ibm_is_vpn_server_client
+        - ibm_is_vpn_server_client_configuration
+        - ibm_is_vpn_server_clients
+        - ibm_is_vpn_server_route
+        - ibm_is_vpn_server_routes
+    - **Resources**
+        - ibm_is_backup_policy
+        - ibm_is_backup_policy_plan
+        - ibm_is_vpn_server
+        - ibm_is_vpn_server_route
+* Support IBM Cloud Storage 
+    - **DataSources**
+        - ibm_cos_bucket_replication_rule
+* Support Private DNS
+    - **DataSources**
+        - ibm_dns_custom_resolver_secondary_zones
+    - **Resources**
+        - ibm_dns_custom_resolver_secondary_zones
+
+Enhancements
+* Routing Table in Subnet Datasource ([3909](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3909))
+* Added cidr param to dhcp ([3916](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3916))
+* Add CoreOS-enabled option for Satellite location create ([3914](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3914))
+
+BUG FIXES
+* fix(documentation): error statement fix on security group and is_volumes ([3993](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3893))
+* CIS WAF Group Documentation Fix ([3997](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3897))
+* CD doc fix from generator utility ([3905](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3905))
+* added note for default cipher values ([3915](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3915))
+* Deprecation of vpc_route resource & correction in vpc_routing_table_route ([3919](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3919))
+* Roll back the strogae types for existing buckets ([3928](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3928))
+* Fix the subcategory for cbr docs ([3928](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3928))
+* terraform versions 1.1 added to validator check ([3930](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3920))
+* fix(is_bare_metal_server): removed nics with allow float from server nics ([3938](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3928))
+# 1.44.0-beta0 (Jul 20, 2022)
+Features
+* Support Internt Services
+    - **DataSources**
+        - ibm_cis_mtlss
+        - ibm_cis_mtls_apps
+        - ibm_cis_origin_auths
+    - **Resources**
+        - ibm_cis_mtls
+        - ibm_cis_mtls_app
+        - ibm_cis_origin_auth
+* Support Internt Services
+    - **DataSources**
+        - ibm_database_task
+        - ibm_database_tasks
+* Support Security and Compilance 
+    - **DataSources**
+        - ibm_scc_posture_credential
+        - ibm_scc_posture_collector
+        - ibm_scc_posture_scope
+        - ibm_scc_posture_credentials
+        - ibm_scc_posture_collectors
+* Support Virtual Private Cloud
+    - **DataSources**
+        - ibm_is_backup_policy
+        - ibm_is_backup_policies
+        - ibm_is_backup_policy_plan
+        - ibm_is_backup_policy_plans
+        - ibm_is_vpn_server
+        - ibm_is_vpn_servers
+        - ibm_is_vpn_server_client
+        - ibm_is_vpn_server_client_configuration
+        - ibm_is_vpn_server_clients
+        - ibm_is_vpn_server_route
+        - ibm_is_vpn_server_routes
+    - **Resources**
+        - ibm_is_backup_policy
+        - ibm_is_backup_policy_plan
+        - ibm_is_vpn_server
+        - ibm_is_vpn_server_route
+* Support IBM Cloud Storage 
+    - **DataSources**
+        - ibm_cos_bucket_replication_rule
+* Support Private DNS
+    - **DataSources**
+        - ibm_dns_custom_resolver_secondary_zones
+    - **Resources**
+        - ibm_dns_custom_resolver_secondary_zones
+
+Enhancements
+* Routing Table in Subnet Datasource ([3909](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3909))
+* Added cidr param to dhcp ([3916](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3916))
+* Add CoreOS-enabled option for Satellite location create ([3914](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3914))
+
+BUG FIXES
+* fix(documentation): error statement fix on security group and is_volumes ([3993](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3893))
+* CIS WAF Group Documentation Fix ([3997](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3897))
+* CD doc fix from generator utility ([3905](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3905))
+* added note for default cipher values ([3915](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3915))
+* Deprecation of vpc_route resource & correction in vpc_routing_table_route ([3919](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3919))
+* Roll back the strogae types for existing buckets ([3928](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3928))
+* Fix the subcategory for cbr docs ([3928](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3928))
+
+# 1.43.0 (Jul 01, 2022)
+Features
+* Support Kubernetes
+    - **DataSources**
+        - ibm_container_dedicated_host_pool
+        - ibm_container_dedicated_host_flavor
+        - ibm_container_dedicated_host_flavors
+        - ibm_container_dedicated_host
+    - **Resources**
+        - ibm_container_dedicated_host_pool
+        - ibm_container_dedicated_host
+
+* Support EventNotification
+    - **DataSources**
+        - ibm_en_source
+        - ibm_en_destination_slack
+        - ibm_en_subscription_slack
+        - ibm_en_subscription_safari
+        - ibm_en_destination_safari
+    - **Resources**
+        - ibm_en_source
+        - ibm_en_destination_slack
+        - ibm_en_subscription_slack
+        - ibm_en_subscription_safari
+        - ibm_en_destination_safari
+
+* Support HPCS
+    - **DataSources**
+        - ibm_hpcs_managed_key
+        - ibm_hpcs_key_template
+        - ibm_hpcs_keystore
+        - ibm_hpcs_vault
+    - **Resources**
+        - ibm_hpcs_managed_key
+        - ibm_hpcs_key_template
+        - ibm_hpcs_keystore
+        - ibm_hpcs_vault
+
+* Support CD Toolchain
+    - **DataSources**
+        - ibm_cd_toolchain
+		- ibm_cd_toolchain_tool_keyprotect         
+		- ibm_cd_toolchain_tool_secretsmanager    
+		- ibm_cd_toolchain_tool_bitbucketgit       
+		- ibm_cd_toolchain_tool_githubintegrated   
+		- ibm_cd_toolchain_tool_githubconsolidated 
+		- ibm_cd_toolchain_tool_gitlab 
+		- ibm_cd_toolchain_tool_hostedgit          
+		- ibm_cd_toolchain_tool_artifactory        
+		- ibm_cd_toolchain_tool_custom 
+		- ibm_cd_toolchain_tool_pipeline          
+		- ibm_cd_toolchain_tool_devopsinsights     
+		- ibm_cd_toolchain_tool_slack  
+		- ibm_cd_toolchain_tool_sonarqube         
+		- ibm_cd_toolchain_tool_hashicorpvault     
+		- ibm_cd_toolchain_tool_securitycompliance 
+		- ibm_cd_toolchain_tool_privateworker     
+		- ibm_cd_toolchain_tool_appconfig          
+		- ibm_cd_toolchain_tool_jenkins
+		- ibm_cd_toolchain_tool_nexus  
+		- ibm_cd_toolchain_tool_pagerduty          
+		- ibm_cd_toolchain_tool_saucelabs          
+    - **Resources**
+        - ibm_cd_toolchain
+		- ibm_cd_toolchain_tool_keyprotect         
+		- ibm_cd_toolchain_tool_secretsmanager    
+		- ibm_cd_toolchain_tool_bitbucketgit       
+		- ibm_cd_toolchain_tool_githubintegrated   
+		- ibm_cd_toolchain_tool_githubconsolidated 
+		- ibm_cd_toolchain_tool_gitlab 
+		- ibm_cd_toolchain_tool_hostedgit          
+		- ibm_cd_toolchain_tool_artifactory        
+		- ibm_cd_toolchain_tool_custom 
+		- ibm_cd_toolchain_tool_pipeline          
+		- ibm_cd_toolchain_tool_devopsinsights     
+		- ibm_cd_toolchain_tool_slack  
+		- ibm_cd_toolchain_tool_sonarqube         
+		- ibm_cd_toolchain_tool_hashicorpvault     
+		- ibm_cd_toolchain_tool_securitycompliance 
+		- ibm_cd_toolchain_tool_privateworker     
+		- ibm_cd_toolchain_tool_appconfig          
+		- ibm_cd_toolchain_tool_jenkins
+		- ibm_cd_toolchain_tool_nexus  
+		- ibm_cd_toolchain_tool_pagerduty          
+		- ibm_cd_toolchain_tool_saucelabs
+
+* Support CD Tekton Pipeline
+    - **Datasources**
+        - ibm_cd_tekton_pipeline_definition
+        - ibm_cd_tekton_pipeline_trigger_property
+        - ibm_cd_tekton_pipeline_property
+        - ibm_cd_tekton_pipeline_trigger
+        - ibm_cd_tekton_pipeline
+    - **Resources**
+        - ibm_cd_tekton_pipeline_definition
+        - ibm_cd_tekton_pipeline_trigger_property
+        - ibm_cd_tekton_pipeline_property
+        - ibm_cd_tekton_pipeline_trigger
+        - ibm_cd_tekton_pipeline
+        
+Enhancements
+* support for creation of bucket on Satellite location ([3727](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3727))
+* Allow status filtering in ibm_is_images ([3841](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3841))
+* IBM Cloud CD terraform resources examples - empty toolchain template ([3858](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3858))
+* updated platform-services-go-sdk version to 0.26.1 ([3881](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3881))
+* placement target patch support ([3809](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3809))
+* Added multithreading for 49 requests for Private DNS Resource Record ([3886](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3886))
+* add vpc cluster and workerpool to the dhost example ([3878](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3878))
+* CBR: context-based-restriction update for Enforcement mode support ([3853](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3853))
+* profile patch enhancement for VPC instance ([3860](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3860))
+
+BUG Fixes
+* ibm_dns_glb docs to not specify the enabled argument ([3818](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3818))
+* floating ip data source nil fix ([3843](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3843))
+* support TLS 1.3 supported ciphers for ibm_cis_domain_settings ([3736](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3736))
+* Update provider version in docs ([3750](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3750))
+* Update cloud_shell_account_settings.html.markdown ([3812](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3812))
+* fix: placement targets empty list ([3787](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3787))
+* fix: instance network interface mutex sync ([3791](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3791))
+* ibm_scc_posture_scope does not allow for blank-space in description ([3733](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3733))
+* SCC provider should output User friendly error messages clearly indicating the problem ([3844](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3844))
+* ibm_is_instance should not not suppress change and force new on boot_volume.0.snapshot change ([3819](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3819))
+* fix(bare_metal_server) : vlan id in multi nic fix ([3767](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3767))
+* fix ibm_container_storage_attachment import ([3862](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3862))
+* Remove rogue CD website document ([3865](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3865))
+* IAM User inivte always shows a diff on "invited_users" ([3863](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3863))
+* name corrections for VPC instance group manager docs ([3884](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3884))
+* UKO Terraform Doc and Bugfixes ([3889](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3889))
+* Make CD Pagerduty prop computed and general tidy up ([3891](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3891))
+* cis waf group settings fix ([3882](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3882))
+* Fix: validator identifier names ([3870](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3870))
+* Fix validateSchema from one element to zero ([3870](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3870))
+# 1.43.0-beta0 (Jun 22, 2022)
+Features
+* Support Kubernetes
+    - **DataSources**
+        - ibm_container_dedicated_host_pool
+        - ibm_container_dedicated_host_flavor
+        - ibm_container_dedicated_host_flavors
+        - ibm_container_dedicated_host
+    - **Resources**
+        - ibm_container_dedicated_host_pool
+        - ibm_container_dedicated_host
+
+* Support EventNotification
+    - **DataSources**
+        - ibm_en_source
+        - ibm_en_destination_slack
+        - ibm_en_subscription_slack
+        - ibm_en_subscription_safari
+        - ibm_en_destination_safari
+    - **Resources**
+        - ibm_en_source
+        - ibm_en_destination_slack
+        - ibm_en_subscription_slack
+        - ibm_en_subscription_safari
+        - ibm_en_destination_safari
+
+* Support HPCS
+    - **DataSources**
+        - ibm_hpcs_managed_key
+        - ibm_hpcs_key_template
+        - ibm_hpcs_keystore
+        - ibm_hpcs_vault
+    - **Resources**
+        - ibm_hpcs_managed_key
+        - ibm_hpcs_key_template
+        - ibm_hpcs_keystore
+        - ibm_hpcs_vault
+
+* Support CD Toolchain
+    - **DataSources**
+        - ibm_cd_toolchain
+		- ibm_cd_toolchain_tool_keyprotect         
+		- ibm_cd_toolchain_tool_secretsmanager    
+		- ibm_cd_toolchain_tool_bitbucketgit       
+		- ibm_cd_toolchain_tool_githubintegrated   
+		- ibm_cd_toolchain_tool_githubconsolidated 
+		- ibm_cd_toolchain_tool_gitlab 
+		- ibm_cd_toolchain_tool_hostedgit          
+		- ibm_cd_toolchain_tool_artifactory        
+		- ibm_cd_toolchain_tool_custom 
+		- ibm_cd_toolchain_tool_pipeline          
+		- ibm_cd_toolchain_tool_devopsinsights     
+		- ibm_cd_toolchain_tool_slack  
+		- ibm_cd_toolchain_tool_sonarqube         
+		- ibm_cd_toolchain_tool_hashicorpvault     
+		- ibm_cd_toolchain_tool_securitycompliance 
+		- ibm_cd_toolchain_tool_privateworker     
+		- ibm_cd_toolchain_tool_appconfig          
+		- ibm_cd_toolchain_tool_jenkins
+		- ibm_cd_toolchain_tool_nexus  
+		- ibm_cd_toolchain_tool_pagerduty          
+		- ibm_cd_toolchain_tool_saucelabs          
+    - **Resources**
+        - ibm_cd_toolchain
+		- ibm_cd_toolchain_tool_keyprotect         
+		- ibm_cd_toolchain_tool_secretsmanager    
+		- ibm_cd_toolchain_tool_bitbucketgit       
+		- ibm_cd_toolchain_tool_githubintegrated   
+		- ibm_cd_toolchain_tool_githubconsolidated 
+		- ibm_cd_toolchain_tool_gitlab 
+		- ibm_cd_toolchain_tool_hostedgit          
+		- ibm_cd_toolchain_tool_artifactory        
+		- ibm_cd_toolchain_tool_custom 
+		- ibm_cd_toolchain_tool_pipeline          
+		- ibm_cd_toolchain_tool_devopsinsights     
+		- ibm_cd_toolchain_tool_slack  
+		- ibm_cd_toolchain_tool_sonarqube         
+		- ibm_cd_toolchain_tool_hashicorpvault     
+		- ibm_cd_toolchain_tool_securitycompliance 
+		- ibm_cd_toolchain_tool_privateworker     
+		- ibm_cd_toolchain_tool_appconfig          
+		- ibm_cd_toolchain_tool_jenkins
+		- ibm_cd_toolchain_tool_nexus  
+		- ibm_cd_toolchain_tool_pagerduty          
+		- ibm_cd_toolchain_tool_saucelabs
+
+* Support CD Tekton Pipeline
+    - **Datasources**
+        - ibm_cd_tekton_pipeline_definition
+        - ibm_cd_tekton_pipeline_trigger_property
+        - ibm_cd_tekton_pipeline_property
+        - ibm_cd_tekton_pipeline_trigger
+        - ibm_cd_tekton_pipeline
+    - **Resources**
+        - ibm_cd_tekton_pipeline_definition
+        - ibm_cd_tekton_pipeline_trigger_property
+        - ibm_cd_tekton_pipeline_property
+        - ibm_cd_tekton_pipeline_trigger
+        - ibm_cd_tekton_pipeline
+        
+Enhancements
+* support for creation of bucket on Satellite location ([3727](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3727))
+
+BUG Fixes
+* ibm_dns_glb docs to not specify the enabled argument ([3818](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3818))
+* floating ip data source nil fix ([3843](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3843))
+* support TLS 1.3 supported ciphers for ibm_cis_domain_settings ([3736](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3736))
+* Update provider version in docs ([3750](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3750))
+* Update cloud_shell_account_settings.html.markdown ([3812](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3812))
+* fix: placement targets empty list ([3787](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3787))
+* fix: instance network interface mutex sync ([3791](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3791))
+* ibm_scc_posture_scope does not allow for blank-space in description ([3733](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3733))
+* SCC provider should output User friendly error messages clearly indicating the problem ([3844](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3844))
+* ibm_is_instance should not not suppress change and force new on boot_volume.0.snapshot change ([3819](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3819))
+* fix(bare_metal_server) : vlan id in multi nic fix ([3767](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3767))
+* fix ibm_container_storage_attachment import ([3862](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3862))
+
+# 1.42.0 (Jun 07, 2022)
+Breaking Changes
+* Redesign Dns Custom resolver resource and deprecate Custom resolver location ([3820](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3820))
+
+Features
+* Support Databases
+    - **DataSources**
+        - ibm_database_remotes
+        - ibm_database_point_in_time_recovery
+        - ibm_database_backup
+        - ibm_database_backups
+* Support PowerSystem
+    - **DataSources**
+        - ibm_pi_system_pools
+* Support EventNotification
+    - **DataSources**
+        - ibm_en_destination_chrome
+        - ibm_en_destination_firefox
+    - **Resources**
+        - ibm_en_destination_chrome
+        - ibm_en_destination_firefox
+* Support VPC
+    - **DataSources**
+        - ibm_is_ssh_keys
+        - ibm_is_volumes
+* Support Atracker
+    - **DataSources**
+        - ibm_atracker_settings
+    - **Resources**
+        - ibm_atracker_settings
+* Support Cloudant
+    - **Datasources**
+        - ibm_cloudant_database
+    - **Resources**
+        - ibm_cloudant_database
+Enhancements
+* enhancement(Cloud Databases): add support for User types, roles ([3475](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3475))
+* added in preliminary changes for v2 atracker ([3724](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3724))
+*  add support to retrieve all secret types ([3793](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3793))
+* Support of Transaction-Id for IAM Policy Management ([3518](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3518))
+* Deprecate flat list of scaling attributes ([3782](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3782))
+* added docs & enhanced network-port-attach resource ([3756](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3756))
+* Add support for transit enabled cloud connections ([3758](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3758))
+* Support boot volume encryption in cluster and workerpool ([3776](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3776))
+* Alias support for key policies ([3768](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3768))
+* Enable VPC cluster and worker pool to accept a dedicated host pool ID ([3781](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3781))
+* Support SAP deployment type ([3822](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3822))
+*
+
+BUGFIXES
+* Name Validation Error Fix for VPC ([3675](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3675))
+* fix for route by name VPC Routing Table ([3754](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3754))
+* Documentation Update VPC Lb Listener and SG Rule ([3673](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3673))
+* Added fix for optional weight attribute's value ([3684](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3684))
+* Error on failed bucket parsing ([3757](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3757))
+* Fix to list the policies even policy contains service specific attributes ([3811](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3811))
+* Resource: ibm_resource_key is always recreated even when no changes are available for service Role ([3803](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3803))
+* browser cachec issue fixed for zero valid input ([3823](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3823))
+* Add new Healthcheck regions ([3827](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3827))
+
+
+# 1.42.0-beta0 (May 23, 2022)
+Features
+* Support Databases
+    - **DataSources**
+        - ibm_database_remotes
+        - ibm_database_point_in_time_recovery
+        - ibm_database_backup
+        - ibm_database_backups
+* Support PowerSystem
+    - **DataSources**
+        - ibm_pi_system_pools
+* Support EventNotification
+    - **DataSources**
+        - ibm_en_destination_chrome
+        - ibm_en_destination_firefox
+    - **Resources**
+        - ibm_en_destination_chrome
+        - ibm_en_destination_firefox
+* Support VPC
+    - **DataSources**
+        - ibm_is_ssh_keys
+        - ibm_is_volumes
+* Support Atracker
+    - **DataSources**
+        - ibm_atracker_settings
+    - **Resources**
+        - ibm_atracker_settings
+* Support Cloudant
+    - **Datasources**
+        - ibm_cloudant_database
+    - **Resources**
+        - ibm_cloudant_database
+Enhancements
+* enhancement(Cloud Databases): add support for User types, roles ([3475](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3475))
+* added in preliminary changes for v2 atracker ([3724](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3724))
+*  add support to retrieve all secret types ([3793](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3793))
+* Support of Transaction-Id for IAM Policy Management ([3518](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3518))
+* Deprecate flat list of scaling attributes ([3782](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3782))
+
+BUGFIXES
+* Name Validation Error Fix for VPC ([3675](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3675))
+* fix for route by name VPC Routing Table ([3754](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3754))
+* Documentation Update VPC Lb Listener and SG Rule ([3673](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3673))
+* Added fix for optional weight attribute's value ([3684](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3684))
+* Error on failed bucket parsing ([3757](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3757))
+
+# 1.41.1 (May 17, 2022)
+BUGFIXES
+* fix(floating_ip): fixed nil check on floating ip target ([3783](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3783))
+
+# 1.41.0 (May 04, 2022)
+Features
+* Support Databases
+    - **DataSources**
+        - ibm_database_connection
+* Support Power Instances
+    - **Resources**
+        - ibm_pi_cloud_connection_network_attach
+
+* Support Event Notifications
+    - **Resources**
+        - ibm_en_destination_webhook
+        - ibm_en_destination_android
+        - ibm_en_destination_ios
+        - ibm_en_subscription_sms
+        - ibm_en_subscription_email
+        - ibm_en_subscription_webhook
+        - ibm_en_subscription_android
+        - ibm_en_subscription_ios
+    - **DataSources**
+        - ibm_en_destination_webhook
+        - ibm_en_destination_android
+        - ibm_en_destination_ios
+        - ibm_en_subscription_sms
+        - ibm_en_subscription_email
+        - ibm_en_subscription_webhook
+        - ibm_en_subscription_android
+        - ibm_en_subscription_ios
+* Support SCC
+    - **Resources**
+        - ibm_scc_rule
+        - ibm_scc_rule_attachment
+        - ibm_scc_template
+        - ibm_scc_template_attachment
+* Support Transist Gateway
+    - **Resources**
+        - ibm_tg_connection_prefix_filter
+     - **DataSources**
+        - ibm_tg_connection_prefix_filter
+        - ibm_tg_connection_prefix_filters
+
+
+Enhancements
+* Key Policies Deprecate ([3670](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3670))
+* Support dynamic network type address ([3659](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3659))
+* Update connections schema with mongodbee analytics and bi_connector ([3705](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3705))
+* Support port speed attribute in primary nic of instance ([3367](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3367))
+* Support for reserved ip changes for VPC ([3712](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3712))
+* Support for udp protocol in load balancers ([3711](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3711))
+* Fix(status_reasons): fixed status reasons in volume, instance and baremetalserver service ([3725](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3725))
+* Support group scaling for IBM Cloud Databases ([3699](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3699))
+* Support for port range for public network load balancers ([3660](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3660))
+* Add gateway & ip_address_range attribute for network resource ([3585](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3585))
+
+BUGFIXES
+* read cloud connection for details ([3650](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3650))
+* Fix for optional weight attribute's value ([3685](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3685))
+* add DiffSuppressFunc for public key for ibm_is_ssh_key ([3701](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3701))
+* Changed list logic in datasource by name ([3415](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3415))
+* SCC-PostureManagement Create scope issue ([3708](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3708))
+* Limitation on the number of characters in the resource ibm_resource_tag ([3703](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3703))
+* Correct a minor typo in docs ([3735](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3735))
+* fix(Cloud Databases): fix group scaling crash during provisioning ([3737](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3737))
+* fix(Cloud Databases): remove nodeCount update during group resource validation ([3739](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3739))
+*  show pi instance provisioning time error ([3738](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3738))
+* fix(reserved ip) : bare metal server reserved ip multi nic changes ([3747](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3747))
+* Fix: authorisation policy docs ([3753](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3753))
+* Broken link for Host Auto Assigment in Cluster ([3752](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3752))
+* iam_access_group data source can't see more than 50 access groups ([3728](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3728))
+
+# 1.41.0-beta0 (Apr18, 2022)
+Features
+* Support Databases
+    - **DataSources**
+        - ibm_database_connection
+* Support Power Instances
+    - **Resources**
+        - ibm_pi_cloud_connection_network_attach
+
+* Support Event Notifications
+    - **Resources**
+        - ibm_en_destination_webhook
+        - ibm_en_destination_android
+        - ibm_en_destination_ios
+        - ibm_en_subscription_sms
+        - ibm_en_subscription_email
+        - ibm_en_subscription_webhook
+        - ibm_en_subscription_android
+        - ibm_en_subscription_ios
+    - **DataSources**
+        - ibm_en_destination_webhook
+        - ibm_en_destination_android
+        - ibm_en_destination_ios
+        - ibm_en_subscription_sms
+        - ibm_en_subscription_email
+        - ibm_en_subscription_webhook
+        - ibm_en_subscription_android
+        - ibm_en_subscription_ios
+* Support SCC
+    - **Resources**
+        - ibm_scc_rule
+        - ibm_scc_rule_attachment
+        - ibm_scc_template
+        - ibm_scc_template_attachment
+* Support Transist Gateway
+    - **Resources**
+        - ibm_tg_connection_prefix_filter
+     - **DataSources**
+        - ibm_tg_connection_prefix_filter
+        - ibm_tg_connection_prefix_filters
+
+
+Enhancements
+* Key Policies Deprecate ([3670](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3670))
+* Support dynamic network type address ([3659](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3659))
+* Update connections schema with mongodbee analytics and bi_connector ([3705](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3705))
+* Support port speed attribute in primary nic of instance ([3367](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3367))
+* Support for reserved ip changes for VPC ([3712](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3712))
+* Support for udp protocol in load balancers ([3711](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3711))
+* Fix(status_reasons): fixed status reasons in volume, instance and baremetalserver service ([3725](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3725))
+* Support group scaling for IBM Cloud Databases ([3699](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3699))
+* Support for port range for public network load balancers ([3660](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3660))
+
+BUGFIXES
+* read cloud connection for details ([3650](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3650))
+* Fix for optional weight attribute's value ([3685](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3685))
+* add DiffSuppressFunc for public key for ibm_is_ssh_key ([3701](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3701))
+* Changed list logic in datasource by name ([3415](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3415))
+* SCC-PostureManagement Create scope issue ([3708](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3708))
+
 # 1.40.1 (Apr08, 2022)
 BUGFIXES:
  Allow 0 allocation for optional scaling group types ([3714](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3714))
+ 
 
 # 1.40.0 (Mar31, 2022)
 Features

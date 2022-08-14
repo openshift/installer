@@ -1,11 +1,10 @@
-// Copyright IBM Corp. 2021 All Rights Reserved.
+// Copyright IBM Corp. 2022 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package contextbasedrestrictions
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -19,87 +18,82 @@ import (
 
 func DataSourceIBMCbrZone() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceIBMCbrZoneRead,
+		ReadContext: DataSourceIBMCbrZoneRead,
 
 		Schema: map[string]*schema.Schema{
-			"zone_id": {
+			"zone_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The ID of a zone.",
 			},
-			"id": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The globally unique ID of the zone.",
-			},
-			"crn": {
+			"crn": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The zone CRN.",
 			},
-			"address_count": {
+			"address_count": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "The number of addresses in the zone.",
 			},
-			"excluded_count": {
+			"excluded_count": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "The number of excluded addresses in the zone.",
 			},
-			"name": {
+			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The name of the zone.",
 			},
-			"account_id": {
+			"account_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The id of the account owning this zone.",
 			},
-			"description": {
+			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The description of the zone.",
 			},
-			"addresses": {
+			"addresses": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "The list of addresses in the zone.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"type": {
+						"type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The type of address.",
 						},
-						"value": {
+						"value": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The IP address.",
 						},
-						"ref": {
+						"ref": &schema.Schema{
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "A service reference value.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"account_id": {
+									"account_id": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The id of the account owning the service.",
 									},
-									"service_type": {
+									"service_type": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The service type.",
 									},
-									"service_name": {
+									"service_name": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The service name.",
 									},
-									"service_instance": {
+									"service_instance": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The service instance.",
@@ -110,44 +104,44 @@ func DataSourceIBMCbrZone() *schema.Resource {
 					},
 				},
 			},
-			"excluded": {
+			"excluded": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "The list of excluded addresses in the zone.",
+				Description: "The list of excluded addresses in the zone. Only addresses of type `ipAddress`, `ipRange`, and `subnet` can be excluded.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"type": {
+						"type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The type of address.",
 						},
-						"value": {
+						"value": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The IP address.",
 						},
-						"ref": {
+						"ref": &schema.Schema{
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "A service reference value.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"account_id": {
+									"account_id": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The id of the account owning the service.",
 									},
-									"service_type": {
+									"service_type": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The service type.",
 									},
-									"service_name": {
+									"service_name": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The service name.",
 									},
-									"service_instance": {
+									"service_instance": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The service instance.",
@@ -158,27 +152,27 @@ func DataSourceIBMCbrZone() *schema.Resource {
 					},
 				},
 			},
-			"href": {
+			"href": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The href link to the resource.",
 			},
-			"created_at": {
+			"created_at": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The time the resource was created.",
 			},
-			"created_by_id": {
+			"created_by_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IAM ID of the user or service which created the resource.",
 			},
-			"last_modified_at": {
+			"last_modified_at": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The last time the resource was modified.",
 			},
-			"last_modified_by_id": {
+			"last_modified_by_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IAM ID of the user or service which modified the resource.",
@@ -187,7 +181,7 @@ func DataSourceIBMCbrZone() *schema.Resource {
 	}
 }
 
-func dataSourceIBMCbrZoneRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func DataSourceIBMCbrZoneRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
 		return diag.FromErr(err)
@@ -203,141 +197,188 @@ func dataSourceIBMCbrZoneRead(context context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("GetZoneWithContext failed %s\n%s", err, response))
 	}
 
-	d.SetId(*getZoneOptions.ZoneID)
-	if err = d.Set("id", zone.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting id: %s", err))
-	}
+	d.SetId(fmt.Sprintf("%s", *getZoneOptions.ZoneID))
+
 	if err = d.Set("crn", zone.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting crn: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
 	}
+
 	if err = d.Set("address_count", flex.IntValue(zone.AddressCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting address_count: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting address_count: %s", err))
 	}
+
 	if err = d.Set("excluded_count", flex.IntValue(zone.ExcludedCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting excluded_count: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting excluded_count: %s", err))
 	}
+
 	if err = d.Set("name", zone.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
+
 	if err = d.Set("account_id", zone.AccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting account_id: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
 	}
+
 	if err = d.Set("description", zone.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
 	}
 
+	addresses := []map[string]interface{}{}
 	if zone.Addresses != nil {
-		err = d.Set("addresses", dataSourceZoneFlattenAddresses(zone.Addresses))
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting addresses %s", err))
+		for _, modelItem := range zone.Addresses {
+			modelMap, err := DataSourceIBMCbrZoneAddressToMap(modelItem)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			addresses = append(addresses, modelMap)
 		}
+	}
+	if err = d.Set("addresses", addresses); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting addresses %s", err))
 	}
 
+	excluded := []map[string]interface{}{}
 	if zone.Excluded != nil {
-		err = d.Set("excluded", dataSourceZoneFlattenExcluded(zone.Excluded))
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting excluded %s", err))
+		for _, modelItem := range zone.Excluded {
+			modelMap, err := DataSourceIBMCbrZoneAddressToMap(modelItem)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			excluded = append(excluded, modelMap)
 		}
 	}
+	if err = d.Set("excluded", excluded); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting excluded %s", err))
+	}
+
 	if err = d.Set("href", zone.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting href: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
+
 	if err = d.Set("created_at", flex.DateTimeToString(zone.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
 	}
+
 	if err = d.Set("created_by_id", zone.CreatedByID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_by_id: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting created_by_id: %s", err))
 	}
+
 	if err = d.Set("last_modified_at", flex.DateTimeToString(zone.LastModifiedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting last_modified_at: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting last_modified_at: %s", err))
 	}
+
 	if err = d.Set("last_modified_by_id", zone.LastModifiedByID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting last_modified_by_id: %s", err))
+		return diag.FromErr(fmt.Errorf("Error setting last_modified_by_id: %s", err))
 	}
 
 	return nil
 }
 
-func dataSourceZoneFlattenAddresses(result []contextbasedrestrictionsv1.AddressIntf) (addresses []map[string]interface{}) {
-	for _, addressesItem := range result {
-		addresses = append(addresses, dataSourceZoneAddressesToMap(addressesItem))
+func DataSourceIBMCbrZoneAddressToMap(model contextbasedrestrictionsv1.AddressIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*contextbasedrestrictionsv1.AddressIPAddress); ok {
+		return DataSourceIBMCbrZoneAddressIPAddressToMap(model.(*contextbasedrestrictionsv1.AddressIPAddress))
+	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressIPAddressRange); ok {
+		return DataSourceIBMCbrZoneAddressIPAddressRangeToMap(model.(*contextbasedrestrictionsv1.AddressIPAddressRange))
+	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressSubnet); ok {
+		return DataSourceIBMCbrZoneAddressSubnetToMap(model.(*contextbasedrestrictionsv1.AddressSubnet))
+	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressVPC); ok {
+		return DataSourceIBMCbrZoneAddressVPCToMap(model.(*contextbasedrestrictionsv1.AddressVPC))
+	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressServiceRef); ok {
+		return DataSourceIBMCbrZoneAddressServiceRefToMap(model.(*contextbasedrestrictionsv1.AddressServiceRef))
+	} else if _, ok := model.(*contextbasedrestrictionsv1.Address); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*contextbasedrestrictionsv1.Address)
+		if model.Type != nil {
+			modelMap["type"] = *model.Type
+		}
+		if model.Value != nil {
+			modelMap["value"] = *model.Value
+		}
+		if model.Ref != nil {
+			refMap, err := DataSourceIBMCbrZoneServiceRefValueToMap(model.Ref)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["ref"] = []map[string]interface{}{refMap}
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized contextbasedrestrictionsv1.AddressIntf subtype encountered")
 	}
-
-	return addresses
 }
 
-func dataSourceZoneAddressesToMap(addressesItem contextbasedrestrictionsv1.AddressIntf) (addressesMap map[string]interface{}) {
-
-	buf, err := json.Marshal(addressesItem)
-
-	if err == nil {
-		err = json.Unmarshal(buf, &addressesMap)
+func DataSourceIBMCbrZoneServiceRefValueToMap(model *contextbasedrestrictionsv1.ServiceRefValue) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.AccountID != nil {
+		modelMap["account_id"] = *model.AccountID
 	}
-
-	if err != nil {
-		panic(err)
+	if model.ServiceType != nil {
+		modelMap["service_type"] = *model.ServiceType
 	}
-
-	return addressesMap
+	if model.ServiceName != nil {
+		modelMap["service_name"] = *model.ServiceName
+	}
+	if model.ServiceInstance != nil {
+		modelMap["service_instance"] = *model.ServiceInstance
+	}
+	return modelMap, nil
 }
 
-func dataSourceZoneAddressesRefToMap(refItem contextbasedrestrictionsv1.ServiceRefValue) (refMap map[string]interface{}) {
-	refMap = map[string]interface{}{}
-
-	if refItem.AccountID != nil {
-		refMap["account_id"] = refItem.AccountID
+func DataSourceIBMCbrZoneAddressIPAddressToMap(model *contextbasedrestrictionsv1.AddressIPAddress) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
 	}
-	if refItem.ServiceType != nil {
-		refMap["service_type"] = refItem.ServiceType
+	if model.Value != nil {
+		modelMap["value"] = *model.Value
 	}
-	if refItem.ServiceName != nil {
-		refMap["service_name"] = refItem.ServiceName
-	}
-	if refItem.ServiceInstance != nil {
-		refMap["service_instance"] = refItem.ServiceInstance
-	}
-
-	return refMap
+	return modelMap, nil
 }
 
-func dataSourceZoneFlattenExcluded(result []contextbasedrestrictionsv1.AddressIntf) (excluded []map[string]interface{}) {
-	for _, excludedItem := range result {
-		excluded = append(excluded, dataSourceZoneExcludedToMap(excludedItem))
+func DataSourceIBMCbrZoneAddressServiceRefToMap(model *contextbasedrestrictionsv1.AddressServiceRef) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
 	}
-
-	return excluded
+	if model.Ref != nil {
+		refMap, err := DataSourceIBMCbrZoneServiceRefValueToMap(model.Ref)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["ref"] = []map[string]interface{}{refMap}
+	}
+	return modelMap, nil
 }
 
-func dataSourceZoneExcludedToMap(excludedItem contextbasedrestrictionsv1.AddressIntf) (excludedMap map[string]interface{}) {
-
-	buf, err := json.Marshal(excludedItem)
-
-	if err == nil {
-		err = json.Unmarshal(buf, &excludedMap)
+func DataSourceIBMCbrZoneAddressSubnetToMap(model *contextbasedrestrictionsv1.AddressSubnet) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
 	}
-
-	if err != nil {
-		panic(err)
+	if model.Value != nil {
+		modelMap["value"] = *model.Value
 	}
-
-	return excludedMap
+	return modelMap, nil
 }
 
-func dataSourceZoneExcludedRefToMap(refItem contextbasedrestrictionsv1.ServiceRefValue) (refMap map[string]interface{}) {
-	refMap = map[string]interface{}{}
+func DataSourceIBMCbrZoneAddressIPAddressRangeToMap(model *contextbasedrestrictionsv1.AddressIPAddressRange) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
+	}
+	if model.Value != nil {
+		modelMap["value"] = *model.Value
+	}
+	return modelMap, nil
+}
 
-	if refItem.AccountID != nil {
-		refMap["account_id"] = refItem.AccountID
+func DataSourceIBMCbrZoneAddressVPCToMap(model *contextbasedrestrictionsv1.AddressVPC) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
 	}
-	if refItem.ServiceType != nil {
-		refMap["service_type"] = refItem.ServiceType
+	if model.Value != nil {
+		modelMap["value"] = *model.Value
 	}
-	if refItem.ServiceName != nil {
-		refMap["service_name"] = refItem.ServiceName
-	}
-	if refItem.ServiceInstance != nil {
-		refMap["service_instance"] = refItem.ServiceInstance
-	}
-
-	return refMap
+	return modelMap, nil
 }

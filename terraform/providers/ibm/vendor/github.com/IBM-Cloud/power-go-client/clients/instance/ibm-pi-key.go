@@ -12,19 +12,19 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPIKeyClient ...
+// IBMPIKeyClient
 type IBMPIKeyClient struct {
 	IBMPIClient
 }
 
-// NewIBMPIKeyClient ...
+// NewIBMPIKeyClient
 func NewIBMPIKeyClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPIKeyClient {
 	return &IBMPIKeyClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
 	}
 }
 
-// Get Key...
+// Get a SSH Key
 func (f *IBMPIKeyClient) Get(id string) (*models.SSHKey, error) {
 	var tenantid = f.session.Options.UserAccount
 	params := p_cloud_tenants_ssh_keys.NewPcloudTenantsSshkeysGetParams().
@@ -40,7 +40,7 @@ func (f *IBMPIKeyClient) Get(id string) (*models.SSHKey, error) {
 	return resp.Payload, nil
 }
 
-// GetAll Information about all the PVM Instances for a Client
+// Get All SSH Keys
 func (f *IBMPIKeyClient) GetAll() (*models.SSHKeys, error) {
 	var tenantid = f.session.Options.UserAccount
 	params := p_cloud_tenants_ssh_keys.NewPcloudTenantsSshkeysGetallParams().
@@ -56,7 +56,7 @@ func (f *IBMPIKeyClient) GetAll() (*models.SSHKeys, error) {
 	return resp.Payload, nil
 }
 
-// Create PI Key ...
+// Create a SSH Key
 func (f *IBMPIKeyClient) Create(body *models.SSHKey) (*models.SSHKey, error) {
 	var tenantid = f.session.Options.UserAccount
 	params := p_cloud_tenants_ssh_keys.NewPcloudTenantsSshkeysPostParams().
@@ -75,7 +75,7 @@ func (f *IBMPIKeyClient) Create(body *models.SSHKey) (*models.SSHKey, error) {
 	return nil, fmt.Errorf("failed to Create PI Key")
 }
 
-// Delete ...
+// Delete a SSH Key
 func (f *IBMPIKeyClient) Delete(id string) error {
 	var tenantid = f.session.Options.UserAccount
 	params := p_cloud_tenants_ssh_keys.NewPcloudTenantsSshkeysDeleteParams().

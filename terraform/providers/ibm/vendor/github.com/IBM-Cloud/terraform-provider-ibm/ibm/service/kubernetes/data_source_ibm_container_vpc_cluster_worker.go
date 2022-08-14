@@ -76,6 +76,11 @@ func DataSourceIBMContainerVPCClusterWorker() *schema.Resource {
 				Optional:    true,
 				Description: "ID of the resource group.",
 			},
+			"host_pool_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of the dedicated host pool this worker is associated with",
+			},
 			flex.ResourceControllerURL: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -111,6 +116,7 @@ func dataSourceIBMContainerVPCClusterWorkerRead(d *schema.ResourceData, meta int
 	d.Set("state", workerFields.Health.State)
 	d.Set("pool_id", workerFields.PoolID)
 	d.Set("pool_name", workerFields.PoolName)
+	d.Set("host_pool_id", workerFields.HostPoolID)
 	d.Set("network_interfaces", flex.FlattenNetworkInterfaces(workerFields.NetworkInterfaces))
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {

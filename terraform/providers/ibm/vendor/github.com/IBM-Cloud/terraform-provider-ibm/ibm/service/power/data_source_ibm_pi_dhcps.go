@@ -8,7 +8,6 @@ import (
 	"log"
 
 	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -21,38 +20,50 @@ import (
 Datasource to get the list of dhcp servers in a power instance
 */
 
-const PIDhcpServers = "servers"
-
 func DataSourceIBMPIDhcps() *schema.Resource {
 
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIDhcpServersRead,
 		Schema: map[string]*schema.Schema{
-			helpers.PICloudInstanceId: {
+
+			// Required Arguments
+			Arg_CloudInstanceID: {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			// Computed Attributes
-			PIDhcpServers: {
-				Type:     schema.TypeList,
-				Computed: true,
+
+			// Attributes
+			Attr_DhcpServers: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The list of all the DHCP Servers",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						PIDhcpId: {
+						Attr_DhcpID: {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The ID of the DHCP Server",
 						},
-						PIDhcpStatus: {
+						Attr_DhcpNetworkDeprecated: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The ID of the DHCP Server private network (deprecated - replaced by network_id)",
+						},
+						Attr_DhcpNetworkID: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The ID of the DHCP Server private network",
+						},
+						Attr_DhcpNetworkName: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name of the DHCP Server private network",
+						},
+						Attr_DhcpStatus: {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The status of the DHCP Server",
-						},
-						PIDhcpNetwork: {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The DHCP Server private network",
 						},
 					},
 				},
@@ -62,37 +73,41 @@ func DataSourceIBMPIDhcps() *schema.Resource {
 }
 
 func dataSourceIBMPIDhcpServersRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+
+	// session and client
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	// arguments
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 
+	// client
 	client := st.NewIBMPIDhcpClient(ctx, sess, cloudInstanceID)
+
+	// get all dhcp
 	dhcpServers, err := client.GetAll()
 	if err != nil {
 		log.Printf("[DEBUG] get all DHCP failed %v", err)
 		return diag.FromErr(err)
 	}
 
-	result := make([]map[string]interface{}, 0, len(dhcpServers))
+	// set attributes
+	servers := make([]map[string]interface{}, 0, len(dhcpServers))
 	for _, dhcpServer := range dhcpServers {
 		server := map[string]interface{}{
-			PIDhcpId:     *dhcpServer.ID,
-			PIDhcpStatus: *dhcpServer.Status,
+			Attr_DhcpID:                *dhcpServer.ID,
+			Attr_DhcpNetworkDeprecated: *dhcpServer.Network.ID,
+			Attr_DhcpNetworkID:         *dhcpServer.Network.ID,
+			Attr_DhcpNetworkName:       *dhcpServer.Network.Name,
+			Attr_DhcpStatus:            *dhcpServer.Status,
 		}
-
-		dhcpNetwork := dhcpServer.Network
-		if dhcpNetwork != nil {
-			server[PIDhcpNetwork] = *dhcpNetwork.ID
-		}
-		result = append(result, server)
+		servers = append(servers, server)
 	}
-
 	var genID, _ = uuid.GenerateUUID()
 	d.SetId(genID)
-	d.Set(PIDhcpServers, result)
+	d.Set(Attr_DhcpServers, servers)
 
 	return nil
 }
