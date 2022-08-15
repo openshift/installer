@@ -69,7 +69,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10
+	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab
 	google.golang.org/api v0.44.0
 	google.golang.org/genproto v0.0.0-20220107163113-42d7afdf6368
 	google.golang.org/grpc v1.46.0
@@ -81,7 +81,7 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.70.1
-	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
+	k8s.io/utils v0.0.0-20220812165043-ad590609e2e5
 	sigs.k8s.io/cluster-api-provider-openstack v0.0.0
 	sigs.k8s.io/controller-tools v0.9.2
 	sigs.k8s.io/yaml v1.3.0
@@ -108,7 +108,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	sigs.k8s.io/controller-runtime v0.11.0 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
 require (
@@ -166,7 +166,7 @@ require (
 	github.com/hashicorp/terraform-json v0.14.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -174,8 +174,8 @@ require (
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -193,7 +193,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
-	golang.org/x/net v0.0.0-20220728181054-f92ba40d432d // indirect
+	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
 )
 
 // OpenShift Forks
