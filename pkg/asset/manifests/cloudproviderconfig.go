@@ -175,11 +175,17 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			cm.Data[cloudProviderEndpointsKey] = string(b)
 		}
 	case gcptypes.Name:
+		network := fmt.Sprintf("%s-network", clusterID.InfraID)
+		if installConfig.Config.GCP.Network != "" {
+			network = installConfig.Config.GCP.Network
+		}
+
 		subnet := fmt.Sprintf("%s-worker-subnet", clusterID.InfraID)
 		if installConfig.Config.GCP.ComputeSubnet != "" {
 			subnet = installConfig.Config.GCP.ComputeSubnet
 		}
-		gcpConfig, err := gcpmanifests.CloudProviderConfig(clusterID.InfraID, installConfig.Config.GCP.ProjectID, subnet)
+
+		gcpConfig, err := gcpmanifests.CloudProviderConfig(clusterID.InfraID, installConfig.Config.GCP.ProjectID, network, subnet)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
