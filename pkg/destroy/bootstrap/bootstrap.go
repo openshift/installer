@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/cluster"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
@@ -34,6 +35,11 @@ func Destroy(dir string) (err error) {
 		imageName := metadata.InfraID + "-ignition"
 		if err := osp.DeleteGlanceImage(imageName, metadata.OpenStack.Cloud); err != nil {
 			return errors.Wrapf(err, "Failed to delete glance image %s", imageName)
+		}
+
+		if err := osp.DeleteSwiftContainer(metadata.InfraID, metadata.OpenStack.Cloud); err != nil {
+			// Dose not return for environments without swift storage
+			logrus.Warningf("Failed to delete swift container %s: %v", metadata.InfraID, err)
 		}
 	}
 

@@ -11,6 +11,8 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
+	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
@@ -18,9 +20,54 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/types"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 // Starting from OpenShift 4.4 we store bootstrap Ignition configs in Glance.
+// Now, if we cannot store in Glance, store it in Swift.
+
+// createBootstrapSwiftObject creates a container and object in swift with the bootstrap ignition config.
+func createBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID string) (string, error) {
+	logrus.Debugln("Creating a Swift container for your bootstrap ignition...")
+
+	conn, err := clientconfig.NewServiceClient("object-store", openstackdefaults.DefaultClientOpts(cloud))
+	if err != nil {
+		return "", err
+	}
+
+	containerCreateOpts := containers.CreateOpts{
+		ContainerRead: ".r:*",
+
+		Metadata: map[string]string{
+			"Name":               fmt.Sprintf("%s-ignition", clusterID),
+			"openshiftClusterID": clusterID,
+		},
+	}
+
+	_, err = containers.Create(conn, clusterID, containerCreateOpts).Extract()
+	if err != nil {
+		return "", err
+	}
+	logrus.Debugf("Container %s was created.", clusterID)
+
+	logrus.Debugf("Creating a Swift object in container %s containing your bootstrap ignition...", clusterID)
+	objectCreateOpts := objects.CreateOpts{
+		ContentType: "text/plain",
+		Content:     strings.NewReader(bootstrapIgn),
+		DeleteAfter: 3600,
+	}
+
+	objID := rand.String(16)
+
+	_, err = objects.Create(conn, clusterID, objID, objectCreateOpts).Extract()
+	if err != nil {
+		return "", err
+	}
+	logrus.Debugf("The object was created.")
+
+	return objID, nil
+}
 
 // uploadBootstrapConfig uploads the bootstrap Ignition config in Glance and returns its location
 func uploadBootstrapConfig(cloud string, bootstrapIgn string, clusterID string) (string, error) {

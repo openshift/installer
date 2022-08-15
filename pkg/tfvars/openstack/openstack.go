@@ -22,6 +22,7 @@ import (
 	types_openstack "github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
@@ -222,9 +223,24 @@ func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1
 		return nil, err
 	}
 
+	var bootstrapConfigURL string
 	configLocation, err := uploadBootstrapConfig(cloud, bootstrapIgn, infraID)
 	if err != nil {
-		return nil, err
+		logrus.Infof("Switch to Swift storage: %v", err)
+
+		swiftPublicURL, err := getSwiftPublicURL(serviceCatalog, clientConfigCloud.RegionName)
+		if err != nil {
+			return nil, err
+		}
+
+		objectID, err := createBootstrapSwiftObject(cloud, bootstrapIgn, infraID)
+		if err != nil {
+			return nil, err
+		}
+
+		bootstrapConfigURL = fmt.Sprintf("%s/%s/%s", swiftPublicURL, infraID, objectID)
+	} else {
+		bootstrapConfigURL = fmt.Sprintf("%s%s", glancePublicURL, configLocation)
 	}
 
 	tokenID, err := getAuthToken(cloud)
@@ -232,7 +248,6 @@ func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1
 		return nil, err
 	}
 
-	bootstrapConfigURL := fmt.Sprintf("%s%s", glancePublicURL, configLocation)
 	userCAIgnition, err := generateIgnitionShim(userCA, infraID, bootstrapConfigURL, tokenID, proxy)
 	if err != nil {
 		return nil, err
@@ -302,7 +317,7 @@ func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1
 	return json.MarshalIndent(cfg, "", "  ")
 }
 
-// We need to obtain Glance public endpoint that will be used by Ignition to download bootstrap ignition files.
+// We need to obtain Glance or Swift public endpoint that will be used by Ignition to download bootstrap ignition files.
 // By design this should be done by using https://www.terraform.io/docs/providers/openstack/d/identity_endpoint_v3.html
 // but OpenStack default policies forbid to use this API for regular users.
 // On the other hand when a user authenticates in OpenStack (i.e. gets a token), it includes the whole service
@@ -313,6 +328,7 @@ func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1
 // 1. In "getServiceCatalog" we authenticate in OpenStack (tokens.Create(..)),
 //    parse the token and extract the service catalog: (ExtractServiceCatalog())
 // 2. In getGlancePublicURL we iterate through the catalog and find "public" endpoint for "image".
+// 3. In getSwiftPublicURL we iterate through the catalog and find "public" endpoint for "object-store".
 
 // getGlancePublicURL obtains Glance public endpoint URL
 func getGlancePublicURL(serviceCatalog *tokens.ServiceCatalog, region string) (string, error) {
@@ -326,6 +342,20 @@ func getGlancePublicURL(serviceCatalog *tokens.ServiceCatalog, region string) (s
 	}
 
 	return glancePublicURL, nil
+}
+
+// getSwiftPublicURL obtains Swift public endpoint URL
+func getSwiftPublicURL(serviceCatalog *tokens.ServiceCatalog, region string) (string, error) {
+	swiftPublicURL, err := openstack.V3EndpointURL(serviceCatalog, gophercloud.EndpointOpts{
+		Type:         "object-store",
+		Availability: gophercloud.AvailabilityPublic,
+		Region:       region,
+	})
+	if err != nil {
+		return "", errors.Errorf("cannot retrieve Swift URL from the service catalog: %v", err)
+	}
+
+	return swiftPublicURL, nil
 }
 
 // getServiceCatalog fetches OpenStack service catalog with service endpoints
