@@ -39,6 +39,11 @@ variable "subnet" {
   description = "The subnetwork the master instances will be added to."
 }
 
+variable "tags" {
+  type        = list(string)
+  description = "The list of network tags which will be added to the control plane instances."
+}
+
 variable "root_volume_size" {
   type        = string
   description = "The size of the volume in gigabytes for the root block device."

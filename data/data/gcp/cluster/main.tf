@@ -36,6 +36,7 @@ module "master" {
   root_volume_type         = var.gcp_master_root_volume_type
   root_volume_kms_key_link = var.gcp_root_volume_kms_key_link
 
+  tags   = var.gcp_control_plane_tags
   labels = local.labels
 }
 
