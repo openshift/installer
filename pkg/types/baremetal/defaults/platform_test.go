@@ -164,3 +164,86 @@ func TestSetPlatformDefaults(t *testing.T) {
 		})
 	}
 }
+
+func TestBaremetalHostsSortByRole(t *testing.T) {
+	cases := []struct {
+		name          string
+		hosts         []*baremetal.Host
+		expectedHosts []string
+	}{
+		{
+			name: "default",
+			hosts: []*baremetal.Host{
+				{Name: "master-0", Role: "master"},
+				{Name: "master-1", Role: "master"},
+				{Name: "master-2", Role: "master"},
+				{Name: "worker-0", Role: "worker"},
+				{Name: "worker-1", Role: "worker"},
+			},
+			expectedHosts: []string{
+				"master-0", "master-1", "master-2", "worker-0", "worker-1",
+			},
+		},
+		{
+			name: "norole",
+			hosts: []*baremetal.Host{
+				{Name: "master-0"},
+				{Name: "master-1"},
+				{Name: "master-2"},
+				{Name: "worker-0"},
+				{Name: "worker-1"},
+			},
+			expectedHosts: []string{
+				"master-0", "master-1", "master-2", "worker-0", "worker-1",
+			},
+		},
+		{
+			name: "mixed",
+			hosts: []*baremetal.Host{
+				{Name: "worker-0", Role: "worker"},
+				{Name: "master-0", Role: "master"},
+				{Name: "worker-1", Role: "worker"},
+				{Name: "master-1", Role: "master"},
+				{Name: "master-2", Role: "master"},
+			},
+			expectedHosts: []string{
+				"master-0", "master-1", "master-2", "worker-0", "worker-1",
+			},
+		},
+		{
+			name: "mixed-norole",
+			hosts: []*baremetal.Host{
+				{Name: "worker-0", Role: "worker"},
+				{Name: "master-0", Role: "master"},
+				{Name: "worker-1", Role: ""},
+				{Name: "master-1", Role: "master"},
+				{Name: "master-2", Role: "master"},
+			},
+			expectedHosts: []string{
+				"master-0", "master-1", "master-2", "worker-0", "worker-1",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			ic := &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: testClusterName,
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						Hosts: tc.hosts,
+					},
+				},
+				BaseDomain: "test",
+			}
+			SetPlatformDefaults(ic.Platform.BareMetal, ic)
+
+			for i, h := range ic.Platform.BareMetal.Hosts {
+				assert.Equal(t, h.Name, tc.expectedHosts[i])
+			}
+		})
+	}
+}

@@ -28,7 +28,7 @@ module "masters" {
 
   master_count   = var.master_count
   ignition       = var.ignition_master
-  hosts          = var.hosts
+  masters        = var.masters
   properties     = var.properties
   root_devices   = var.root_devices
   driver_infos   = var.driver_infos

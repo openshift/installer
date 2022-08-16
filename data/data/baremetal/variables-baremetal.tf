@@ -28,9 +28,9 @@ variable "ironic_password" {
   description = "Password for authentication to Ironic"
 }
 
-variable "hosts" {
+variable "masters" {
   type        = list(map(string))
-  description = "Hardware details for hosts"
+  description = "Hardware details for masters"
 }
 
 variable "bridges" {
@@ -40,20 +40,20 @@ variable "bridges" {
 
 variable "properties" {
   type        = list(map(string))
-  description = "Properties for hosts"
+  description = "Properties for masters"
 }
 
 variable "root_devices" {
   type        = list(map(string))
-  description = "Root devices for hosts"
+  description = "Root devices for masters"
 }
 
 variable "driver_infos" {
   type        = list(map(string))
-  description = "BMC information for hosts"
+  description = "BMC information for masters"
 }
 
 variable "instance_infos" {
   type        = list(map(string))
-  description = "Instance information for hosts"
+  description = "Instance information for masters"
 }
