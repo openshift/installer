@@ -229,6 +229,16 @@ stringData:
   azure_region: <$REGION>
 ```
 
+NOTE: Any credentials for a credential request in Tech Preview must be excluded, or they will cause the
+installation to fail. As of 4.10, there is one credential request, for the `capi-opearator`, which is in
+tech preview. Any credential requests from a feature gate can simply be removed before you create the credentials:
+
+```shell
+$ grep "release.openshift.io/feature-gate" *
+0000_30_capi-operator_00_credentials-request.yaml:    release.openshift.io/feature-gate: TechPreviewNoUpgrade
+$ rm 0000_30_capi-operator_00_credentials-request.yaml
+```
+
 ### Set Cluster to use the Internal Certificate Authority (Optional)
 
 If your Azure Stack environment uses an internal CA, update `.spec.trustedCA.name` to use `user-ca-bundle` in `./manifests/cluster-proxy-01-config.yaml`:
