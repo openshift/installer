@@ -22,6 +22,10 @@ func Test_PrintFields(t *testing.T) {
     additionalTrustBundle <string>
       AdditionalTrustBundle is a PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted certificate store.
 
+    additionalTrustBundlePolicy <string>
+      Valid Values: "","Proxyonly","Always"
+      AdditionalTrustBundlePolicy determines when to add the AdditionalTrustBundle to the nodes' trusted certificate store. "Proxyonly" is the default. The field can be set to following specified values. "Proxyonly" : adds the AdditionalTrustBundle to nodes when http/https proxy is configured. "Always" : always adds AdditionalTrustBundle.
+
     apiVersion <string>
       APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 

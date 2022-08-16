@@ -21,6 +21,10 @@ The following `install-config.yaml` properties are available:
     The installer may also support older API versions.
 * `additionalTrustBundle` (optional string): a PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted certificate store.
     This trust bundle may also be used when [a proxy has been configured](#proxy).
+* `additionalTrustBundlePolicy` (optional string): determines when to add the AdditionalTrustBundle to the nodes'' trusted certificate store.
+    "Proxyonly" is the default. The field can be set to following specified values.
+    "Proxyonly" : adds the AdditionalTrustBundle to nodes when http/https proxy is configured.
+    "Always" : always adds AdditionalTrustBundle.
 * `baseDomain` (required string): The base domain to which the cluster should belong.
 * `capabilities` (optional [capabilities](#capabilities)): Capabilities configures the installation of optional core cluster components.
 * `controlPlane` (optional [machine-pool](#machine-pools)): The configuration for the machines that comprise the control plane.
