@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/agent"
+	"github.com/openshift/installer/pkg/types/agent/conversion"
 )
 
 var (
@@ -48,7 +49,7 @@ func (a *AgentConfig) Generate(dependencies asset.Parents) error {
 # which fields are available to aid you in creating your
 # own agent-config.yaml file.
 #
-apiVersion: v1
+apiVersion: v1alpha1
 kind: AgentConfig
 metadata:
   name: example-agent-config
@@ -125,6 +126,11 @@ func (a *AgentConfig) Load(f asset.FileFetcher) (bool, error) {
 	config := &agent.Config{}
 	if err := yaml.UnmarshalStrict(file.Data, config); err != nil {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", agentConfigFilename)
+	}
+
+	// Upconvert any deprecated fields
+	if err := conversion.ConvertAgentConfig(config); err != nil {
+		return false, err
 	}
 
 	a.File, a.Config = file, config

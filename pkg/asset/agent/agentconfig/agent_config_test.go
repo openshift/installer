@@ -27,7 +27,7 @@ import (
 // 			expectedConfig: &agent.Config{
 // 				TypeMeta: metav1.TypeMeta{
 // 					Kind:       "AgentConfig",
-// 					APIVersion: "v1",
+//					APIVersion: agent.AgentConfigVersion,
 // 				},
 // 				ObjectMeta: metav1.ObjectMeta{
 // 					Name:      "example-agent-config",
@@ -96,6 +96,7 @@ func TestAgentConfig_LoadedFromDisk(t *testing.T) {
 		{
 			name: "valid-config-single-node",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -120,6 +121,9 @@ hosts:
       interfaces:`,
 			expectedFound: true,
 			expectedConfig: &agent.Config{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: agent.AgentConfigVersion,
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
@@ -158,6 +162,7 @@ hosts:
 		{
 			name: "valid-config-multiple-nodes",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -189,6 +194,9 @@ hosts:
         macAddress: 28:d2:44:d2:b2:1b`,
 			expectedFound: true,
 			expectedConfig: &agent.Config{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: agent.AgentConfigVersion,
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
@@ -255,6 +263,7 @@ hosts:
 		{
 			name: "unknown-field",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-wrong
 wrongField: wrongValue`,
@@ -263,6 +272,7 @@ wrongField: wrongValue`,
 		{
 			name: "interface-missing-mac-address-error",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -277,6 +287,7 @@ hosts:
 		{
 			name: "unsupported wwn extension root device hint",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -292,6 +303,7 @@ hosts:
 		{
 			name: "unsupported wwn vendor extension root device hint",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -307,6 +319,7 @@ hosts:
 		{
 			name: "node-hostname-and-role-are-not-required",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -316,6 +329,9 @@ hosts:
         macAddress: 28:d2:44:d2:b2:1a`,
 			expectedFound: true,
 			expectedConfig: &agent.Config{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: agent.AgentConfigVersion,
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
@@ -335,6 +351,7 @@ hosts:
 		{
 			name: "host-roles-have-correct-values",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -349,6 +366,9 @@ hosts:
         macAddress: 28:d2:44:d2:b2:1b`,
 			expectedFound: true,
 			expectedConfig: &agent.Config{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: agent.AgentConfigVersion,
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
@@ -378,6 +398,7 @@ hosts:
 		{
 			name: "host-roles-have-incorrect-values",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
