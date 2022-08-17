@@ -159,6 +159,9 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 		if *installConfig.ControlPlane.Replicas != 1 {
 			fieldPath = field.NewPath("ControlPlane", "Replicas")
 			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("control plane replicas must be 1 for %s platform. Found %v", none.Name, *installConfig.ControlPlane.Replicas)))
+		} else if len(installConfig.Compute) == 0 {
+			fieldPath = field.NewPath("Compute", "Replicas")
+			allErrs = append(allErrs, field.Required(fieldPath, "Installing a Single Node Openshift requires explicitly setting compute replicas to zero"))
 		}
 
 		var workers int
