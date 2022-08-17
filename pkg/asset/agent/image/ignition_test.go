@@ -12,6 +12,7 @@ import (
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/api/v1beta1"
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
@@ -387,6 +388,18 @@ func buildIgnitionAssetDefaultDependencies() []asset.Asset {
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
 						WorkerAgents:       5,
+					},
+				},
+			},
+			NMStateConfigs: []*aiv1beta1.NMStateConfig{
+				{
+					Spec: aiv1beta1.NMStateConfigSpec{
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "eth0",
+								MacAddress: "00:01:02:03:04:05",
+							},
+						},
 					},
 				},
 			},
