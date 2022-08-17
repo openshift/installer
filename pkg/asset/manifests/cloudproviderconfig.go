@@ -190,6 +190,23 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
+		subnetNames := []string{}
+		cpSubnets, err := installConfig.IBMCloud.ControlPlaneSubnets(context.TODO())
+		if err != nil {
+			return errors.Wrap(err, "could not retrieve IBM Cloud control plane subnets")
+		}
+		for _, cpSubnet := range cpSubnets {
+			subnetNames = append(subnetNames, cpSubnet.Name)
+		}
+
+		computeSubnets, err := installConfig.IBMCloud.ComputeSubnets(context.TODO())
+		if err != nil {
+			return errors.Wrap(err, "could not retrieve IBM Cloud compute subnets")
+		}
+		for _, computeSubnet := range computeSubnets {
+			subnetNames = append(subnetNames, computeSubnet.Name)
+		}
+
 		controlPlane := &ibmcloudtypes.MachinePool{}
 		controlPlane.Set(installConfig.Config.Platform.IBMCloud.DefaultMachinePlatform)
 		controlPlane.Set(installConfig.Config.ControlPlane.Platform.IBMCloud)
@@ -210,8 +227,16 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			}
 		}
 
-		resourceGroupName := installConfig.Config.Platform.IBMCloud.ClusterResourceGroupName(clusterID.InfraID)
-		ibmcloudConfig, err := ibmcloudmanifests.CloudProviderConfig(clusterID.InfraID, accountID, installConfig.Config.IBMCloud.Region, resourceGroupName, controlPlane.Zones, compute.Zones)
+		ibmcloudConfig, err := ibmcloudmanifests.CloudProviderConfig(
+			clusterID.InfraID,
+			accountID,
+			installConfig.Config.IBMCloud.Region,
+			installConfig.Config.Platform.IBMCloud.ClusterResourceGroupName(clusterID.InfraID),
+			installConfig.Config.Platform.IBMCloud.GetVPCName(),
+			subnetNames,
+			controlPlane.Zones,
+			compute.Zones,
+		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}

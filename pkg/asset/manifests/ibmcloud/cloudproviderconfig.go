@@ -36,7 +36,18 @@ type provider struct {
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBMCloud platform.
-func CloudProviderConfig(infraID string, accountID string, region string, resourceGroupName string, controlPlaneZones []string, computeZones []string) (string, error) {
+func CloudProviderConfig(infraID string, accountID string, region string, resourceGroupName string, vpcName string, subnets []string, controlPlaneZones []string, computeZones []string) (string, error) {
+	if vpcName == "" {
+		vpcName = fmt.Sprintf("%s-vpc", infraID)
+	}
+
+	var subnetNames string
+	if len(subnets) > 0 {
+		subnetNames = strings.Join(subnets, ",")
+	} else {
+		subnetNames = getVpcSubnetNames(infraID, controlPlaneZones, computeZones)
+	}
+
 	config := &config{
 		Global: global{
 			Version: "1.1.0",
@@ -51,9 +62,9 @@ func CloudProviderConfig(infraID string, accountID string, region string, resour
 			Region:                   region,
 			G2CredentialsFilePath:    "/etc/vpc/ibmcloud_api_key",
 			G2ResourceGroupName:      resourceGroupName,
-			G2VPCName:                fmt.Sprintf("%s-vpc", infraID),
+			G2VPCName:                vpcName,
 			G2WorkerServiceAccountID: accountID,
-			G2VPCSubnetNames:         getVpcSubnetNames(infraID, controlPlaneZones, computeZones),
+			G2VPCSubnetNames:         subnetNames,
 		},
 	}
 	buf := &bytes.Buffer{}

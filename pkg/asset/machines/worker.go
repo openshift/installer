@@ -452,6 +452,16 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				machineSets = append(machineSets, set)
 			}
 		case ibmcloudtypes.Name:
+			subnets := map[string]string{}
+			if len(ic.Platform.IBMCloud.ComputeSubnets) > 0 {
+				subnetMetas, err := installConfig.IBMCloud.ComputeSubnets(ctx)
+				if err != nil {
+					return err
+				}
+				for _, subnet := range subnetMetas {
+					subnets[subnet.Zone] = subnet.Name
+				}
+			}
 			mpool := defaultIBMCloudMachinePoolPlatform()
 			mpool.Set(ic.Platform.IBMCloud.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.IBMCloud)
@@ -463,7 +473,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				mpool.Zones = azs
 			}
 			pool.Platform.IBMCloud = &mpool
-			sets, err := ibmcloud.MachineSets(clusterID.InfraID, ic, &pool, "worker", workerUserDataSecretName)
+			sets, err := ibmcloud.MachineSets(clusterID.InfraID, ic, subnets, &pool, "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
