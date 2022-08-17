@@ -19,6 +19,7 @@ import (
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
 
+	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/responses"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -26,6 +27,7 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
+	GetAPIKey() string
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
@@ -34,8 +36,8 @@ type API interface {
 	GetDedicatedHostProfiles(ctx context.Context, region string) ([]vpcv1.DedicatedHostProfile, error)
 	GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error)
 	GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error)
-	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]DNSZoneResponse, error)
-	GetEncryptionKey(ctx context.Context, keyCRN string) (*EncryptionKeyResponse, error)
+	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]responses.DNSZoneResponse, error)
+	GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
@@ -50,8 +52,7 @@ type API interface {
 
 // Client makes calls to the IBM Cloud API.
 type Client struct {
-	APIKey string
-
+	apiKey         string
 	managementAPI  *resourcemanagerv2.ResourceManagerV2
 	controllerAPI  *resourcecontrollerv2.ResourceControllerV2
 	vpcAPI         *vpcv1.VpcV1
@@ -81,39 +82,12 @@ func (e *VPCResourceNotFoundError) Error() string {
 	return "Not Found"
 }
 
-// DNSZoneResponse represents a DNS zone response.
-type DNSZoneResponse struct {
-	// Name is the domain name of the zone.
-	Name string
-
-	// ID is the zone's ID.
-	ID string
-
-	// InstanceID is the IBM Cloud Resource ID for the service instance where
-	// the DNS zone is managed.
-	InstanceID string
-
-	// InstanceCRN is the IBM Cloud Resource CRN for the service instance where
-	// the DNS zone is managed.
-	InstanceCRN string
-
-	// InstanceName is the display name of the service instance where the DNS zone
-	// is managed.
-	InstanceName string
-
-	// ResourceGroupID is the resource group ID of the service instance.
-	ResourceGroupID string
-}
-
-// EncryptionKeyResponse represents an encryption key response.
-type EncryptionKeyResponse struct{}
-
 // NewClient initializes a client with a session.
 func NewClient() (*Client, error) {
 	apiKey := os.Getenv("IC_API_KEY")
 
 	client := &Client{
-		APIKey: apiKey,
+		apiKey: apiKey,
 	}
 
 	if err := client.loadSDKServices(); err != nil {
@@ -141,10 +115,15 @@ func (c *Client) loadSDKServices() error {
 	return nil
 }
 
+// GetAPIKey gets the API Key.
+func (c *Client) GetAPIKey() string {
+	return c.apiKey
+}
+
 // GetAuthenticatorAPIKeyDetails gets detailed information on the API key used
 // for authentication to the IBM Cloud APIs
 func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
-	authenticator, err := NewIamAuthenticator(c.APIKey)
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +135,7 @@ func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentit
 	}
 
 	options := iamIdentityService.NewGetAPIKeysDetailsOptions()
-	options.SetIamAPIKey(c.APIKey)
+	options.SetIamAPIKey(c.GetAPIKey())
 	details, _, err := iamIdentityService.GetAPIKeysDetailsWithContext(ctx, options)
 	if err != nil {
 		return nil, err
@@ -247,7 +226,7 @@ func (c *Client) GetDedicatedHostProfiles(ctx context.Context, region string) ([
 // GetDNSRecordsByName gets DNS records in specific Cloud Internet Services instance
 // by its CRN, zone ID, and DNS record name.
 func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error) {
-	authenticator, err := NewIamAuthenticator(c.APIKey)
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +268,7 @@ func (c *Client) GetDNSZoneIDByName(ctx context.Context, name string, publish ty
 }
 
 // GetDNSZones returns all of the active DNS zones managed by DNS or CIS.
-func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]DNSZoneResponse, error) {
+func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]responses.DNSZoneResponse, error) {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
@@ -299,7 +278,7 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 	return c.getCISDNSZones(ctx)
 }
 
-func (c *Client) getDNSDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
+func (c *Client) getDNSDNSZones(ctx context.Context) ([]responses.DNSZoneResponse, error) {
 	options := c.controllerAPI.NewListResourceInstancesOptions()
 	options.SetResourceID(dnsServiceID)
 
@@ -308,9 +287,9 @@ func (c *Client) getDNSDNSZones(ctx context.Context) ([]DNSZoneResponse, error) 
 		return nil, errors.Wrap(err, "failed to get dns instance")
 	}
 
-	var allZones []DNSZoneResponse
+	var allZones []responses.DNSZoneResponse
 	for _, instance := range listResourceInstancesResponse.Resources {
-		authenticator, err := NewIamAuthenticator(c.APIKey)
+		authenticator, err := NewIamAuthenticator(c.GetAPIKey())
 		if err != nil {
 			return nil, err
 		}
@@ -331,7 +310,7 @@ func (c *Client) getDNSDNSZones(ctx context.Context) ([]DNSZoneResponse, error) 
 			stateLower := strings.ToLower(*zone.State)
 			// DNS Zones can be 'pending_network_add' (without a permitted network, added during TF)
 			if stateLower == dnszonesv1.Dnszone_State_Active || stateLower == dnszonesv1.Dnszone_State_PendingNetworkAdd {
-				zoneStruct := DNSZoneResponse{
+				zoneStruct := responses.DNSZoneResponse{
 					Name:            *zone.Name,
 					ID:              *zone.ID,
 					InstanceID:      *instance.GUID,
@@ -347,7 +326,7 @@ func (c *Client) getDNSDNSZones(ctx context.Context) ([]DNSZoneResponse, error) 
 	return allZones, nil
 }
 
-func (c *Client) getCISDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
+func (c *Client) getCISDNSZones(ctx context.Context) ([]responses.DNSZoneResponse, error) {
 	options := c.controllerAPI.NewListResourceInstancesOptions()
 	options.SetResourceID(cisServiceID)
 
@@ -356,9 +335,9 @@ func (c *Client) getCISDNSZones(ctx context.Context) ([]DNSZoneResponse, error) 
 		return nil, errors.Wrap(err, "failed to get cis instance")
 	}
 
-	var allZones []DNSZoneResponse
+	var allZones []responses.DNSZoneResponse
 	for _, instance := range listResourceInstancesResponse.Resources {
-		authenticator, err := NewIamAuthenticator(c.APIKey)
+		authenticator, err := NewIamAuthenticator(c.GetAPIKey())
 		if err != nil {
 			return nil, err
 		}
@@ -380,7 +359,7 @@ func (c *Client) getCISDNSZones(ctx context.Context) ([]DNSZoneResponse, error) 
 
 		for _, zone := range listZonesResponse.Result {
 			if *zone.Status == "active" {
-				zoneStruct := DNSZoneResponse{
+				zoneStruct := responses.DNSZoneResponse{
 					Name:            *zone.Name,
 					ID:              *zone.ID,
 					InstanceID:      *instance.GUID,
@@ -397,9 +376,9 @@ func (c *Client) getCISDNSZones(ctx context.Context) ([]DNSZoneResponse, error) 
 }
 
 // GetEncryptionKey gets data for an encryption key
-func (c *Client) GetEncryptionKey(ctx context.Context, keyCRN string) (*EncryptionKeyResponse, error) {
+func (c *Client) GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error) {
 	// TODO: IBM: Call KMS / Hyperprotect Crpyto APIs.
-	return &EncryptionKeyResponse{}, nil
+	return &responses.EncryptionKeyResponse{}, nil
 }
 
 // GetResourceGroup gets a resource group by its name or ID.
@@ -597,7 +576,7 @@ func (c *Client) getVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {
 }
 
 func (c *Client) loadResourceManagementAPI() error {
-	authenticator, err := NewIamAuthenticator(c.APIKey)
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
 	if err != nil {
 		return err
 	}
@@ -613,7 +592,7 @@ func (c *Client) loadResourceManagementAPI() error {
 }
 
 func (c *Client) loadResourceControllerAPI() error {
-	authenticator, err := NewIamAuthenticator(c.APIKey)
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
 	if err != nil {
 		return err
 	}
@@ -629,7 +608,7 @@ func (c *Client) loadResourceControllerAPI() error {
 }
 
 func (c *Client) loadVPCV1API() error {
-	authenticator, err := NewIamAuthenticator(c.APIKey)
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
 	if err != nil {
 		return err
 	}
@@ -644,7 +623,7 @@ func (c *Client) loadVPCV1API() error {
 }
 
 func (c *Client) loadDNSServicesAPI() error {
-	authenticator, err := NewIamAuthenticator(c.APIKey)
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
 	if err != nil {
 		return err
 	}

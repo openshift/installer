@@ -1,4 +1,4 @@
-package ibmcloud_test
+package ibmcloud
 
 import (
 	"errors"
@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -642,7 +641,7 @@ func TestValidate(t *testing.T) {
 	// Mocks: control plane subnet not found
 	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
 	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
-	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "missing-cp-subnet", validRegion).Return(nil, &ibmcloud.VPCResourceNotFoundError{})
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "missing-cp-subnet", validRegion).Return(nil, &VPCResourceNotFoundError{})
 
 	// Mocks: control plane subnet IBM error
 	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
@@ -701,7 +700,7 @@ func TestValidate(t *testing.T) {
 	// Mocks: compute subnet not found
 	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
 	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
-	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "missing-compute-subnet", validRegion).Return(nil, &ibmcloud.VPCResourceNotFoundError{})
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "missing-compute-subnet", validRegion).Return(nil, &VPCResourceNotFoundError{})
 
 	// Mocks: compute subnet IBM error
 	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
@@ -781,7 +780,7 @@ func TestValidate(t *testing.T) {
 				edit(editedInstallConfig)
 			}
 
-			aggregatedErrors := ibmcloud.Validate(ibmcloudClient, editedInstallConfig)
+			aggregatedErrors := Validate(ibmcloudClient, editedInstallConfig)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
@@ -832,8 +831,8 @@ func TestValidatePreExistingPublicDNS(t *testing.T) {
 
 	dnsRecordName := fmt.Sprintf("api.%s.%s", validClusterName, validBaseDomain)
 
-	metadata := ibmcloud.NewMetadata(validBaseDomain, "us-south", nil, nil)
-	metadata.SetCISInstanceCRN(validCISInstanceCRN)
+	metadata := NewMetadata(validBaseDomain, "us-south", nil, nil)
+	metadata.cisInstanceCRN = validCISInstanceCRN
 
 	// Mocks: no pre-existing External DNS records
 	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain, types.ExternalPublishingStrategy).Return(validDNSZoneID, nil)
@@ -856,7 +855,7 @@ func TestValidatePreExistingPublicDNS(t *testing.T) {
 			if tc.internal {
 				validInstallConfig.Publish = types.InternalPublishingStrategy
 			}
-			aggregatedErrors := ibmcloud.ValidatePreExistingPublicDNS(ibmcloudClient, validInstallConfig, metadata)
+			aggregatedErrors := ValidatePreExistingPublicDNS(ibmcloudClient, validInstallConfig, metadata)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {

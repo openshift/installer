@@ -22,7 +22,7 @@ type Metadata struct {
 
 	accountID           string
 	cisInstanceCRN      string
-	client              *Client
+	client              API
 	computeSubnets      map[string]Subnet
 	controlPlaneSubnets map[string]Subnet
 	dnsInstance         *DNSInstance
@@ -89,18 +89,13 @@ func (m *Metadata) CISInstanceCRN(ctx context.Context) (string, error) {
 
 		for _, z := range zones {
 			if z.Name == m.BaseDomain {
-				m.SetCISInstanceCRN(z.InstanceCRN)
+				m.cisInstanceCRN = z.InstanceCRN
 				return m.cisInstanceCRN, nil
 			}
 		}
 		return "", fmt.Errorf("cisInstanceCRN unknown due to DNS zone %q not found", m.BaseDomain)
 	}
 	return m.cisInstanceCRN, nil
-}
-
-// SetCISInstanceCRN sets Cloud Internet Services instance CRN to a string value.
-func (m *Metadata) SetCISInstanceCRN(crn string) {
-	m.cisInstanceCRN = crn
 }
 
 // DNSInstance returns a DNSInstance holding information about the DNS Services instance
@@ -219,7 +214,7 @@ func (m *Metadata) ControlPlaneSubnets(ctx context.Context) (map[string]Subnet, 
 }
 
 // Client returns a client used for making API calls to IBM Cloud services.
-func (m *Metadata) Client() (*Client, error) {
+func (m *Metadata) Client() (API, error) {
 	if m.client != nil {
 		return m.client, nil
 	}
