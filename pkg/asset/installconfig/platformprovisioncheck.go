@@ -100,7 +100,7 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		err = ibmcloudconfig.ValidatePreExitingPublicDNS(client, ic.Config, ic.IBMCloud)
+		err = ibmcloudconfig.ValidatePreExistingPublicDNS(client, ic.Config, ic.IBMCloud)
 		if err != nil {
 			return err
 		}

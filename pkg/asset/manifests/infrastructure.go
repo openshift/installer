@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -166,14 +167,25 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		})
 	case ibmcloud.Name:
 		config.Spec.PlatformSpec.Type = configv1.IBMCloudPlatformType
-		cisInstanceCRN, err := installConfig.IBMCloud.CISInstanceCRN(context.TODO())
-		if err != nil {
-			return errors.Wrap(err, "cannot retrieve IBM Cloud Internet Services instance CRN")
+		var cisInstanceCRN, dnsInstanceCRN string
+		if installConfig.Config.Publish == types.InternalPublishingStrategy {
+			dnsInstance, err := installConfig.IBMCloud.DNSInstance(context.TODO())
+			if err != nil {
+				return errors.Wrap(err, "cannot retrieve IBM DNS Services instance CRN")
+			}
+			dnsInstanceCRN = dnsInstance.CRN
+		} else {
+			crn, err := installConfig.IBMCloud.CISInstanceCRN(context.TODO())
+			if err != nil {
+				return errors.Wrap(err, "cannot retrieve IBM Cloud Internet Services instance CRN")
+			}
+			cisInstanceCRN = crn
 		}
 		config.Status.PlatformStatus.IBMCloud = &configv1.IBMCloudPlatformStatus{
 			Location:          installConfig.Config.Platform.IBMCloud.Region,
 			ResourceGroupName: installConfig.Config.Platform.IBMCloud.ClusterResourceGroupName(clusterID.InfraID),
 			CISInstanceCRN:    cisInstanceCRN,
+			DNSInstanceCRN:    dnsInstanceCRN,
 			ProviderType:      configv1.IBMCloudProviderTypeVPC,
 		}
 	case libvirt.Name:

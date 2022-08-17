@@ -9,12 +9,15 @@ import (
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
+
+	"github.com/openshift/installer/pkg/types"
 )
 
 // Zone represents a DNS Zone
 type Zone struct {
 	Name            string
-	CISInstanceCRN  string
+	ID              string
+	InstanceCRN     string
 	ResourceGroupID string
 }
 
@@ -27,7 +30,9 @@ func GetDNSZone() (*Zone, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	publicZones, err := client.GetDNSZones(ctx)
+	// IBM Cloud defaults to External (CIS) publish strategy during domain query
+	// TODO(cjschaef): Consider also offering Internal (DNS) based domains as well
+	publicZones, err := client.GetDNSZones(ctx, types.ExternalPublishingStrategy)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not retrieve base domains")
 	}
@@ -38,10 +43,11 @@ func GetDNSZone() (*Zone, error) {
 	var options []string
 	var optionToZoneMap = make(map[string]*Zone, len(publicZones))
 	for _, zone := range publicZones {
-		option := fmt.Sprintf("%s (%s)", zone.Name, zone.CISInstanceName)
+		option := fmt.Sprintf("%s (%s)", zone.Name, zone.InstanceName)
 		optionToZoneMap[option] = &Zone{
 			Name:            zone.Name,
-			CISInstanceCRN:  zone.CISInstanceCRN,
+			ID:              zone.ID,
+			InstanceCRN:     zone.InstanceCRN,
 			ResourceGroupID: zone.ResourceGroupID,
 		}
 		options = append(options, option)

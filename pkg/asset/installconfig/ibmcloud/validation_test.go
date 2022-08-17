@@ -418,27 +418,37 @@ func TestValidate(t *testing.T) {
 	}
 }
 
-func TestValidatePreExitingPublicDNS(t *testing.T) {
+func TestValidatePreExistingPublicDNS(t *testing.T) {
 	cases := []struct {
 		name     string
+		internal bool
 		edits    editFunctions
 		errorMsg string
 	}{
 		{
-			name:     "no pre-existing DNS records",
+			name:     "no pre-existing External DNS records",
+			internal: false,
 			errorMsg: "",
 		},
 		{
-			name:     "pre-existing DNS records",
+			name:     "pre-existing External DNS records",
+			internal: false,
 			errorMsg: `^record api\.valid-cluster-name\.valid\.base\.domain already exists in CIS zone \(valid-zone-id\) and might be in use by another cluster, please remove it to continue$`,
 		},
 		{
-			name:     "cannot get zone ID",
+			name:     "cannot get External zone ID",
+			internal: false,
 			errorMsg: `^baseDomain: Internal error$`,
 		},
 		{
-			name:     "cannot get DNS records",
+			name:     "cannot get External DNS records",
+			internal: false,
 			errorMsg: `^baseDomain: Internal error$`,
+		},
+		{
+			name:     "no validation of Internal PublishStrategy",
+			internal: true,
+			errorMsg: "",
 		},
 	}
 
@@ -452,25 +462,28 @@ func TestValidatePreExitingPublicDNS(t *testing.T) {
 	metadata := ibmcloud.NewMetadata(validBaseDomain, "us-south", nil, nil)
 	metadata.SetCISInstanceCRN(validCISInstanceCRN)
 
-	// Mocks: no pre-existing DNS records
-	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return(validDNSZoneID, nil)
+	// Mocks: no pre-existing External DNS records
+	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain, types.ExternalPublishingStrategy).Return(validDNSZoneID, nil)
 	ibmcloudClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName).Return(noDNSRecordsResponse, nil)
 
-	// Mocks: pre-existing DNS records
-	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return(validDNSZoneID, nil)
+	// Mocks: pre-existing External DNS records
+	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain, types.ExternalPublishingStrategy).Return(validDNSZoneID, nil)
 	ibmcloudClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName).Return(existingDNSRecordsResponse, nil)
 
-	// Mocks: cannot get zone ID
-	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return("", fmt.Errorf(""))
+	// Mocks: cannot get External zone ID
+	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain, types.ExternalPublishingStrategy).Return("", fmt.Errorf(""))
 
-	// Mocks: cannot get DNS records
-	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return(validDNSZoneID, nil)
+	// Mocks: cannot get External DNS records
+	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain, types.ExternalPublishingStrategy).Return(validDNSZoneID, nil)
 	ibmcloudClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName).Return(nil, fmt.Errorf(""))
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			validInstallConfig := validInstallConfig()
-			aggregatedErrors := ibmcloud.ValidatePreExitingPublicDNS(ibmcloudClient, validInstallConfig, metadata)
+			if tc.internal {
+				validInstallConfig.Publish = types.InternalPublishingStrategy
+			}
+			aggregatedErrors := ibmcloud.ValidatePreExistingPublicDNS(ibmcloudClient, validInstallConfig, metadata)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
