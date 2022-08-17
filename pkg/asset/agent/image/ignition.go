@@ -124,7 +124,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return errors.New("at least one NMState configuration must be provided")
 	}
 
-	nodeZeroIP, err := retrieveRendezvousIP(agentConfigAsset.Config, agentManifests.NMStateConfigs)
+	nodeZeroIP, err := RetrieveRendezvousIP(agentConfigAsset.Config, agentManifests.NMStateConfigs)
 	if err != nil {
 		return err
 	}
@@ -370,7 +370,8 @@ func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraM
 	}
 }
 
-func retrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.NMStateConfig) (string, error) {
+// RetrieveRendezvousIP Returns the Rendezvous IP from either AgentConfig or NMStateConfig
+func RetrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.NMStateConfig) (string, error) {
 	var err error
 	var rendezvousIP string
 

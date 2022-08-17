@@ -14,6 +14,8 @@ import (
 	"github.com/openshift/assisted-service/client/installer"
 	"github.com/openshift/assisted-service/models"
 
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 )
@@ -28,25 +30,32 @@ type NodeZeroRestClient struct {
 
 // NewNodeZeroRestClient Initialize a new rest client to interact with the Agent Rest API on node zero.
 func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestClient, error) {
+
 	restClient := &NodeZeroRestClient{}
+	agentManifests := &manifests.AgentManifests{}
+	agentConfigAsset := &agentconfig.AgentConfig{}
 
 	assetStore, err := assetstore.NewStore(assetDir)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create asset store")
 	}
-	nmState := &manifests.NMStateConfig{}
-	if err := assetStore.Fetch(nmState); err != nil {
-		return nil, errors.Wrapf(err, "failed to fetch %s", nmState.Name())
+
+	if agentConfigError := assetStore.Fetch(agentConfigAsset); agentConfigError != nil {
+		logrus.Debug(errors.Wrapf(agentConfigError, "failed to fetch %s", agentConfigAsset.Name()))
+	} else if manifestError := assetStore.Fetch(agentManifests); manifestError != nil {
+		logrus.Debug(errors.Wrapf(manifestError, "failed to fetch %s", agentManifests.Name()))
+		return nil, errors.New("failed to fetch AgentConfig or NMStateConfig")
 	}
 
-	NodeZeroIP, err := manifests.GetNodeZeroIP(nmState.Config)
+	RendezvousIP, err := image.RetrieveRendezvousIP(agentConfigAsset.Config, agentManifests.NMStateConfigs)
 	if err != nil {
 		return nil, err
 	}
+
 	config := client.Config{}
 	config.URL = &url.URL{
 		Scheme: "http",
-		Host:   net.JoinHostPort(NodeZeroIP, "8090"),
+		Host:   net.JoinHostPort(RendezvousIP, "8090"),
 		Path:   client.DefaultBasePath,
 	}
 	client := client.New(config)
@@ -54,7 +63,7 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 	restClient.Client = client
 	restClient.ctx = ctx
 	restClient.config = config
-	restClient.NodeZeroIP = NodeZeroIP
+	restClient.NodeZeroIP = RendezvousIP
 
 	return restClient, nil
 }
