@@ -261,11 +261,11 @@ spec:
 		{
 			name: "unknown-field",
 			data: `
-		metadata:
-		  name: agent-config-wrong
-		spec:
-		  wrongField: wrongValue`,
-			expectedError: "failed to unmarshal agent-config.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
+metadata:
+  name: agent-config-wrong
+spec:
+  wrongField: wrongValue`,
+			expectedError: "failed to unmarshal agent-config.yaml: error unmarshaling JSON: while decoding JSON: json: unknown field \"wrongField\"",
 		},
 		{
 			name: "interface-missing-mac-address-error",
