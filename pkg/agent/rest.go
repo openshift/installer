@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/client"
 	"github.com/openshift/assisted-service/client/events"
 	"github.com/openshift/assisted-service/client/installer"
@@ -18,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
+	"github.com/openshift/installer/pkg/types/agent"
 )
 
 // NodeZeroRestClient is a struct to interact with the Agent Rest API that is on node zero.
@@ -30,26 +32,43 @@ type NodeZeroRestClient struct {
 
 // NewNodeZeroRestClient Initialize a new rest client to interact with the Agent Rest API on node zero.
 func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestClient, error) {
-
 	restClient := &NodeZeroRestClient{}
-	agentManifests := &manifests.AgentManifests{}
 	agentConfigAsset := &agentconfig.AgentConfig{}
+	agentManifestsAsset := &manifests.AgentManifests{}
 
 	assetStore, err := assetstore.NewStore(assetDir)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create asset store")
 	}
 
-	if agentConfigError := assetStore.Fetch(agentConfigAsset); agentConfigError != nil {
-		logrus.Debug(errors.Wrapf(agentConfigError, "failed to fetch %s", agentConfigAsset.Name()))
-	} else if manifestError := assetStore.Fetch(agentManifests); manifestError != nil {
-		logrus.Debug(errors.Wrapf(manifestError, "failed to fetch %s", agentManifests.Name()))
-		return nil, errors.New("failed to fetch AgentConfig or NMStateConfig")
+	agentConfig, agentConfigError := assetStore.Load(agentConfigAsset)
+	agentManifests, manifestError := assetStore.Load(agentManifestsAsset)
+
+	if agentConfigError != nil {
+		logrus.Debug(errors.Wrapf(agentConfigError, "failed to load %s", agentConfigAsset.Name()))
+	}
+	if manifestError != nil {
+		logrus.Debug(errors.Wrapf(manifestError, "failed to load %s", agentManifestsAsset.Name()))
+	}
+	if agentConfigError != nil || manifestError != nil {
+		return nil, errors.New("failed to load AgentConfig or NMStateConfig")
 	}
 
-	RendezvousIP, err := image.RetrieveRendezvousIP(agentConfigAsset.Config, agentManifests.NMStateConfigs)
-	if err != nil {
-		return nil, err
+	var RendezvousIP string
+	var rendezvousIPError error
+	var emptyNMStateConfigs []*v1beta1.NMStateConfig
+
+	if agentConfig != nil && agentManifests != nil {
+		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(agentConfig.(*agentconfig.AgentConfig).Config, agentManifests.(*manifests.AgentManifests).NMStateConfigs)
+	} else if agentConfig == nil && agentManifests != nil {
+		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(&agent.Config{}, agentManifests.(*manifests.AgentManifests).NMStateConfigs)
+	} else if agentConfig != nil && agentManifests == nil {
+		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(agentConfig.(*agentconfig.AgentConfig).Config, emptyNMStateConfigs)
+	} else {
+		return nil, errors.New("both AgentConfig and NMStateConfig are empty")
+	}
+	if rendezvousIPError != nil {
+		return nil, rendezvousIPError
 	}
 
 	config := client.Config{}
