@@ -13,12 +13,6 @@ type Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec Spec `json:"spec,omitempty"`
-	// No status
-}
-
-// Spec contains additional configuration for the agent-based installer
-type Spec struct {
 	// ip address of node0
 	RendezvousIP string `json:"rendezvousIP,omitempty"`
 	Hosts        []Host `json:"hosts,omitempty"`

@@ -161,13 +161,11 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 		{
 			Name: "valid-agent-config-provided-with-RendezvousIP",
 			agentConfig: &agent.Config{
-				Spec: agent.Spec{
-					RendezvousIP: "192.168.122.21",
-					Hosts: []agent.Host{
-						{
-							Hostname: "control-0.example.org",
-							Role:     "master",
-						},
+				RendezvousIP: "192.168.122.21",
+				Hosts: []agent.Host{
+					{
+						Hostname: "control-0.example.org",
+						Role:     "master",
 					},
 				},
 			},
@@ -189,16 +187,14 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 		{
 			Name: "neither-agent-config-was-provided-with-RendezvousIP-nor-nmstateconfig-manifest",
 			agentConfig: &agent.Config{
-				Spec: agent.Spec{
-					Hosts: []agent.Host{
-						{
-							Hostname: "control-0.example.org",
-							Role:     "master",
-						},
+				Hosts: []agent.Host{
+					{
+						Hostname: "control-0.example.org",
+						Role:     "master",
 					},
 				},
 			},
-			expectedError: "missing Spec.RendezvousIP in agent-config or atleast one nmstateconfig manifest file",
+			expectedError: "missing rendezvousIP in agent-config or at least one NMStateConfig manifest",
 		},
 	}
 	for _, tc := range cases {
@@ -225,11 +221,9 @@ func TestAddHostConfig_Roles(t *testing.T) {
 			Name: "one-host-role-defined",
 			agentConfig: &agentconfig.AgentConfig{
 				Config: &agent.Config{
-					Spec: agent.Spec{
-						Hosts: []agent.Host{
-							{
-								Role: "master",
-							},
+					Hosts: []agent.Host{
+						{
+							Role: "master",
 						},
 					},
 				},
@@ -240,23 +234,21 @@ func TestAddHostConfig_Roles(t *testing.T) {
 			Name: "multiple-host-roles-defined",
 			agentConfig: &agentconfig.AgentConfig{
 				Config: &agent.Config{
-					Spec: agent.Spec{
-						Hosts: []agent.Host{
-							{
-								Role: "master",
-							},
-							{
-								Role: "master",
-							},
-							{
-								Role: "master",
-							},
-							{
-								Role: "worker",
-							},
-							{
-								Role: "worker",
-							},
+					Hosts: []agent.Host{
+						{
+							Role: "master",
+						},
+						{
+							Role: "master",
+						},
+						{
+							Role: "master",
+						},
+						{
+							Role: "worker",
+						},
+						{
+							Role: "worker",
 						},
 					},
 				},
@@ -393,9 +385,7 @@ func buildIgnitionAssetDefaultDependencies() []asset.Asset {
 		},
 		&agentconfig.AgentConfig{
 			Config: &agent.Config{
-				Spec: agent.Spec{
-					RendezvousIP: "192.168.111.80",
-				},
+				RendezvousIP: "192.168.111.80",
 			},
 			File: &asset.File{
 				Filename: "/cluster-manifests/agent-config.yaml",
