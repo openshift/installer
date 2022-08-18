@@ -287,7 +287,7 @@ spec:
     - name: "eth0"
       macAddress: "52:54:01:bb:bb:b1"`,
 			requiresNmstatectl: true,
-			expectedError:      "staticNetwork configuration is not valid.*",
+			expectedError:      "staticNetwork configuration is not valid",
 		},
 
 		{
@@ -314,7 +314,7 @@ spec:
     - name: "eth0"
       macAddress: "52:54:01:aa:aa:a1"`,
 			requiresNmstatectl: true,
-			expectedError:      "staticNetwork configuration is not valid.*",
+			expectedError:      "staticNetwork configuration is not valid",
 		},
 
 		{
@@ -383,7 +383,7 @@ spec:
 			found, err := asset.Load(fileFetcher)
 			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
 			if tc.expectedError != "" {
-				assert.Regexp(t, tc.expectedError, err.Error())
+				assert.ErrorContains(t, err, tc.expectedError)
 			} else {
 				assert.NoError(t, err)
 			}
