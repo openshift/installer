@@ -409,3 +409,169 @@ spec:
 		})
 	}
 }
+
+func TestGetNodeZeroIP(t *testing.T) {
+	cases := []struct {
+		name          string
+		expectedIP    string
+		expectedError string
+		configs       []string
+	}{
+		{
+			name:          "no interfaces",
+			expectedError: "no interface IPs set",
+		},
+		{
+			name:       "first interface",
+			expectedIP: "192.168.122.21",
+			configs: []string{
+				`
+interfaces:
+  - name: eth0
+    type: ethernet
+    ipv4:
+      address:
+        - ip: 192.168.122.21
+  - name: eth1
+    type: ethernet
+    ipv4:
+      address:
+        - ip: 192.168.122.22
+`,
+			},
+		},
+		{
+			name:       "second interface",
+			expectedIP: "192.168.122.22",
+			configs: []string{
+				`
+interfaces:
+  - name: eth0
+    type: ethernet
+  - name: eth1
+    type: ethernet
+    ipv4:
+      address:
+        - ip: 192.168.122.22
+`,
+			},
+		},
+		{
+			name:       "second host",
+			expectedIP: "192.168.122.22",
+			configs: []string{
+				`
+interfaces:
+  - name: eth0
+    type: ethernet
+  - name: eth1
+    type: ethernet
+`,
+				`
+interfaces:
+  - name: eth0
+    type: ethernet
+  - name: eth1
+    type: ethernet
+    ipv4:
+      address:
+        - ip: 192.168.122.22
+`,
+			},
+		},
+		{
+			name:       "ipv4 first",
+			expectedIP: "192.168.122.22",
+			configs: []string{
+				`
+interfaces:
+  - name: eth0
+    type: ethernet
+    ipv6:
+      address:
+        - ip: "2001:0db8::0001"
+    ipv4:
+      address:
+        - ip: 192.168.122.22
+`,
+			},
+		},
+		{
+			name:       "ipv6 host first",
+			expectedIP: "2001:0db8::0001",
+			configs: []string{
+				`
+interfaces:
+  - name: eth0
+    type: ethernet
+    ipv6:
+      address:
+        - ip: "2001:0db8::0001"
+`,
+				`
+interfaces:
+  - name: eth0
+    type: ethernet
+    ipv4:
+      address:
+        - ip: 192.168.122.31
+`,
+			},
+		},
+		{
+			name:       "ipv6 first",
+			expectedIP: "2001:0db8::0001",
+			configs: []string{
+				`
+interfaces:
+  - name: eth0
+    type: ethernet
+    ipv6:
+      address:
+        - ip: "2001:0db8::0001"
+  - name: eth1
+    type: ethernet
+    ipv4:
+      address:
+        - ip: 192.168.122.22
+`,
+			},
+		},
+		{
+			name:       "ipv6",
+			expectedIP: "2001:0db8::0001",
+			configs: []string{
+				`
+interfaces:
+  - name: eth0
+    type: ethernet
+    ipv6:
+      address:
+        - ip: "2001:0db8::0001"
+`,
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var configs []*aiv1beta1.NMStateConfig
+			for _, hostRaw := range tc.configs {
+				configs = append(configs, &aiv1beta1.NMStateConfig{
+					Spec: aiv1beta1.NMStateConfigSpec{
+						NetConfig: aiv1beta1.NetConfig{
+							Raw: aiv1beta1.RawNetConfig(hostRaw),
+						},
+					},
+				})
+			}
+
+			ip, err := GetNodeZeroIP(configs)
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedIP, ip)
+			} else {
+				assert.ErrorContains(t, err, tc.expectedError)
+			}
+		})
+	}
+}
