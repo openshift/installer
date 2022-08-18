@@ -104,6 +104,19 @@ variable "azure_client_id" {
 variable "azure_client_secret" {
   type = string
   description = "The password that should be used to interact with Azure API"
+  default = ""
+}
+
+variable "azure_certificate_path" {
+  type = string
+  description = "The location of the Azure Service Principal client certificates"
+  default = ""
+}
+
+variable "azure_certificate_password" {
+  type = string
+  description = "The password for the provided Azure Service Principal client certificates"
+  default = ""
 }
 
 variable "azure_tenant_id" {
