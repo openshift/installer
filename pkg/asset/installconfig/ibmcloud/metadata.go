@@ -23,7 +23,8 @@ type Metadata struct {
 	computeSubnets      map[string]Subnet
 	controlPlaneSubnets map[string]Subnet
 
-	mutex sync.Mutex
+	mutex       sync.Mutex
+	clientMutex sync.Mutex
 }
 
 // NewMetadata initializes a new Metadata object.
@@ -131,20 +132,22 @@ func (m *Metadata) ControlPlaneSubnets(ctx context.Context) (map[string]Subnet, 
 
 // Client returns a client used for making API calls to IBM Cloud services.
 func (m *Metadata) Client() (*Client, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	if m.client == nil {
-		client, err := NewClient()
-		if err != nil {
-			return nil, err
-		}
-		err = client.SetVPCServiceURLForRegion(context.TODO(), m.Region)
-		if err != nil {
-			return nil, err
-		}
-		m.client = client
+	if m.client != nil {
+		return m.client, nil
 	}
+
+	m.clientMutex.Lock()
+	defer m.clientMutex.Unlock()
+
+	client, err := NewClient()
+	if err != nil {
+		return nil, err
+	}
+	err = client.SetVPCServiceURLForRegion(context.TODO(), m.Region)
+	if err != nil {
+		return nil, err
+	}
+	m.client = client
 	return m.client, nil
 }
 
