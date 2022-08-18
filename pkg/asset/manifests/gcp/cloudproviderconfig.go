@@ -22,10 +22,12 @@ type global struct {
 	ExternalInstanceGroupsPrefix string   `gcfg:"external-instance-groups-prefix"`
 
 	SubnetworkName string `gcfg:"subnetwork-name"`
+
+	NetworkProjectID string `gcfg:"network-project-id"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the GCP platform.
-func CloudProviderConfig(infraID, projectID, subnet string) (string, error) {
+func CloudProviderConfig(infraID, projectID, subnet, networkProjectID string) (string, error) {
 	config := &config{
 		Global: global{
 			ProjectID: projectID,
@@ -41,8 +43,12 @@ func CloudProviderConfig(infraID, projectID, subnet string) (string, error) {
 
 			// Used for internal load balancers
 			SubnetworkName: subnet,
+
+			// Used for shared vpc installations,
+			NetworkProjectID: networkProjectID,
 		},
 	}
+
 	buf := &bytes.Buffer{}
 	template := template.Must(template.New("gce cloudproviderconfig").Parse(configTmpl))
 	if err := template.Execute(buf, config); err != nil {
@@ -61,5 +67,6 @@ node-tags       = {{$tag}}
 node-instance-prefix = {{.Global.NodeInstancePrefix}}
 external-instance-groups-prefix = {{.Global.ExternalInstanceGroupsPrefix}}
 subnetwork-name = {{.Global.SubnetworkName}}
+{{ if ne .Global.NetworkProjectID "" }}network-project-id = {{.Global.NetworkProjectID}}{{end}}
 
 `
