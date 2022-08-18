@@ -63,10 +63,10 @@ github.com/Azure/go-autorest/autorest/azure
 # github.com/Azure/go-autorest/autorest/adal v0.9.13
 ## explicit; go 1.12
 github.com/Azure/go-autorest/autorest/adal
-# github.com/Azure/go-autorest/autorest/azure/auth v0.4.1
+# github.com/Azure/go-autorest/autorest/azure/auth v0.5.1
 ## explicit; go 1.12
 github.com/Azure/go-autorest/autorest/azure/auth
-# github.com/Azure/go-autorest/autorest/azure/cli v0.3.1
+# github.com/Azure/go-autorest/autorest/azure/cli v0.4.0
 ## explicit; go 1.12
 github.com/Azure/go-autorest/autorest/azure/cli
 # github.com/Azure/go-autorest/autorest/date v0.3.0
@@ -1536,3 +1536,4 @@ sigs.k8s.io/yaml
 # sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 # github.com/openshift/api => github.com/openshift/api v0.0.0-20220823143838-5768cc618ba0
 # github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0
+# github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
