@@ -42,3 +42,8 @@ variable "private_subnets" {
   type        = list(string)
   description = "Existing private subnets into which the cluster should be installed."
 }
+
+variable "public_nodes" {
+  type = bool
+  description = "Whether to use public subnets for the nodes."
+}

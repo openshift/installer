@@ -32,7 +32,7 @@ module "masters" {
   tags = local.tags
 
   availability_zones               = var.aws_master_availability_zones
-  az_to_subnet_id                  = module.vpc.az_to_public_subnet_id
+  az_to_subnet_id                  = var.aws_public_nodes ? module.vpc.az_to_public_subnet_id : module.vpc.az_to_private_subnet_id
   instance_count                   = var.master_count
   master_sg_ids                    = [module.vpc.master_sg_id]
   root_volume_iops                 = var.aws_master_root_volume_iops
@@ -85,6 +85,7 @@ module "vpc" {
   public_subnets   = var.aws_public_subnets
   private_subnets  = var.aws_private_subnets
   publish_strategy = var.aws_publish_strategy
+  public_nodes     = var.aws_public_nodes
 
   availability_zones = distinct(
     concat(

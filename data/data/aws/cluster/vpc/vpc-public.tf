@@ -46,10 +46,10 @@ resource "aws_route" "igw_route" {
 resource "aws_subnet" "public_subnet" {
   count = var.public_subnets == null ? length(var.availability_zones) : 0
 
-  vpc_id            = data.aws_vpc.cluster_vpc.id
-  cidr_block        = cidrsubnet(local.new_public_cidr_range, ceil(log(length(var.availability_zones), 2)), count.index)
-  availability_zone = var.availability_zones[count.index]
-  map_public_ip_on_launch = true
+  vpc_id                  = data.aws_vpc.cluster_vpc.id
+  cidr_block              = cidrsubnet(local.new_public_cidr_range, ceil(log(length(var.availability_zones), 2)), count.index)
+  availability_zone       = var.availability_zones[count.index]
+  map_public_ip_on_launch = var.public_nodes
 
   tags = merge(
     {
@@ -84,8 +84,7 @@ resource "aws_eip" "nat_eip" {
 }
 
 resource "aws_nat_gateway" "nat_gw" {
-  #count = var.public_subnets == null ? length(var.availability_zones) : 0
-  count = 0
+  count = var.public_subnets == null && !var.public_nodes ? length(var.availability_zones) : 0
 
   allocation_id = aws_eip.nat_eip[count.index].id
   subnet_id     = aws_subnet.public_subnet[count.index].id

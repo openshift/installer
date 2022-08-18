@@ -38,6 +38,7 @@ type config struct {
 	MasterIAMRoleName            string            `json:"aws_master_iam_role_name,omitempty"`
 	WorkerIAMRoleName            string            `json:"aws_worker_iam_role_name,omitempty"`
 	MasterMetadataAuthentication string            `json:"aws_master_instance_metadata_authentication,omitempty"`
+	PublicNodes                  bool              `json:"aws_public_nodes,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -181,6 +182,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	if masterConfig.MetadataServiceOptions.Authentication != "" {
 		cfg.MasterMetadataAuthentication = strings.ToLower(string(masterConfig.MetadataServiceOptions.Authentication))
 	}
+
+	// FIXME: use an env var to set this (e.g OPENSHIFT_INSTALL_AWS_PUBLIC_NODES)
+	cfg.PublicNodes = true
 
 	return json.MarshalIndent(cfg, "", "  ")
 }

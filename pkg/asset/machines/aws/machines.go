@@ -83,7 +83,6 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create machineapi.TagSpecifications from UserTags")
 	}
-	usePublicIP := true
 	config := &machineapi.AWSMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -106,7 +105,6 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 		UserDataSecret:     &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret:  &corev1.LocalObjectReference{Name: "aws-cloud-credentials"},
 		Placement:          machineapi.Placement{Region: region, AvailabilityZone: zone},
-		PublicIP:           &usePublicIP,
 		SecurityGroups: []machineapi.AWSResourceReference{{
 			Filters: []machineapi.Filter{{
 				Name:   "tag:Name",
@@ -116,6 +114,7 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 	}
 
 	if subnet == "" {
+		// FIXME: only set this value to "public" if OPENSHIFT_INSTALL_AWS_PUBLIC_NODES is true
 		config.Subnet.Filters = []machineapi.Filter{{
 			Name:   "tag:Name",
 			Values: []string{fmt.Sprintf("%s-public-%s", clusterID, zone)},

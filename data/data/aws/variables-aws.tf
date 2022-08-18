@@ -167,3 +167,9 @@ variable "aws_worker_iam_role_name" {
   description = "The name of the IAM role that will be attached to worker instances."
   default = ""
 }
+
+variable "aws_public_nodes" {
+  type = bool
+  description = "Attach nodes to public subnets instead of private ones."
+  default = false
+}
