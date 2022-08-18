@@ -222,31 +222,41 @@ func (n *NMStateConfig) validateNMStateLabels() field.ErrorList {
 	return allErrs
 }
 
+func getFirstIP(nmStateConfig *nmStateConfig) string {
+	for _, intf := range nmStateConfig.Interfaces {
+		for _, addr4 := range intf.IPV4.Address {
+			if addr4.IP != "" {
+				return addr4.IP
+			}
+		}
+		for _, addr6 := range intf.IPV6.Address {
+			if addr6.IP != "" {
+				return addr6.IP
+			}
+		}
+	}
+	return ""
+}
+
 // GetNodeZeroIP retrieves the first IP from the user provided NMStateConfigs to set as the node0 IP
 func GetNodeZeroIP(nmStateConfigs []*aiv1beta1.NMStateConfig) (string, error) {
-	var nmStateConfig nmStateConfig
-	// Use entry for first host
-	err := yaml.Unmarshal(nmStateConfigs[0].Spec.NetConfig.Raw, &nmStateConfig)
-	if err != nil {
-		return "", fmt.Errorf("error unmarshalling nodeZero nmStateConfig: %v", err)
+	for i := range nmStateConfigs {
+		var nmStateConfig nmStateConfig
+		err := yaml.Unmarshal(nmStateConfigs[i].Spec.NetConfig.Raw, &nmStateConfig)
+		if err != nil {
+			return "", fmt.Errorf("error unmarshalling NMStateConfig: %v", err)
+		}
+		if nodeZeroIP := getFirstIP(&nmStateConfig); nodeZeroIP != "" {
+			if net.ParseIP(nodeZeroIP) == nil {
+				return "", fmt.Errorf("could not parse static IP: %s", nodeZeroIP)
+			}
+
+			return nodeZeroIP, nil
+		}
+
 	}
 
-	var nodeZeroIP string
-	if nmStateConfig.Interfaces == nil {
-		return "", fmt.Errorf("invalid NMStateConfig yaml, no valid interfaces set")
-	}
-
-	if nmStateConfig.Interfaces[0].IPV4.Address != nil {
-		nodeZeroIP = nmStateConfig.Interfaces[0].IPV4.Address[0].IP
-	}
-	if nmStateConfig.Interfaces[0].IPV6.Address != nil {
-		nodeZeroIP = nmStateConfig.Interfaces[0].IPV6.Address[0].IP
-	}
-	if net.ParseIP(nodeZeroIP) == nil {
-		return "", fmt.Errorf("could not parse nodeZeroIP: %s", nodeZeroIP)
-	}
-
-	return nodeZeroIP, nil
+	return "", fmt.Errorf("invalid NMStateConfig yaml, no interface IPs set")
 }
 
 // GetNMIgnitionFiles returns the list of NetworkManager configuration files
