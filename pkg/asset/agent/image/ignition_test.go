@@ -148,9 +148,9 @@ func TestIgnition_addStaticNetworkConfig(t *testing.T) {
 }
 
 func TestRetrieveRendezvousIP(t *testing.T) {
-	rawConfig := `interfaces: 
-  - ipv4: 
-      address: 
+	rawConfig := `interfaces:
+  - ipv4:
+      address:
         - ip: "192.168.122.21"`
 	cases := []struct {
 		Name                 string
@@ -204,7 +204,7 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
-			rendezvousIP, err := retrieveRendezvousIP(tc.agentConfig, tc.nmStateConfigs)
+			rendezvousIP, err := RetrieveRendezvousIP(tc.agentConfig, tc.nmStateConfigs)
 			if tc.expectedError != "" {
 				assert.Regexp(t, tc.expectedError, err.Error())
 			} else {
