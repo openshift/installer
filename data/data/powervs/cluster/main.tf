@@ -18,10 +18,12 @@ module "vpc" {
   }
   source = "./vpc"
 
-  cluster_id     = var.cluster_id
-  resource_group = var.powervs_resource_group
-  vpc_zone       = var.powervs_vpc_zone
-  wait_for_vpc   = var.powervs_wait_for_vpc
+  cluster_id      = var.cluster_id
+  resource_group  = var.powervs_resource_group
+  vpc_zone        = var.powervs_vpc_zone
+  vpc_subnet_name = var.powervs_vpc_subnet_name
+  vpc_name        = var.powervs_vpc_name
+  wait_for_vpc    = var.powervs_wait_for_vpc
 }
 
 module "pi_network" {
@@ -33,6 +35,8 @@ module "pi_network" {
   cluster_id        = var.cluster_id
   cloud_instance_id = var.powervs_cloud_instance_id
   resource_group    = var.powervs_resource_group
+  pvs_network_name  = var.powervs_network_name
+  cloud_conn_name   = var.powervs_ccon_name
   vpc_crn           = module.vpc.vpc_crn
 }
 

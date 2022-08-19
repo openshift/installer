@@ -155,14 +155,20 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to get PowerVS connection details")
 		}
-		err = bxCli.ValidateCloudConnectionInPowerVSRegion(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID)
-		if err != nil {
-			return errors.Wrap(err, "failed to meet the prerequisite for Cloud Connections")
-		}
 
-		err = bxCli.ValidateDhcpService(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID)
-		if err != nil {
-			return errors.Wrap(err, "failed to meet the prerequisite of one DHCP service per Power VS instance")
+		// Only check that there isn't an existing Cloud connection if we're not re-using one
+		if ic.Config.Platform.PowerVS.CloudConnectionName == "" {
+			err = bxCli.ValidateCloudConnectionInPowerVSRegion(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID)
+			if err != nil {
+				return errors.Wrap(err, "failed to meet the prerequisite for Cloud Connections")
+			}
+		}
+		// @TODO: This needs to check the DHCP CIDR for a conflict, not just the existence of one
+		if ic.Config.Platform.PowerVS.PVSNetworkName == "" {
+			err = bxCli.ValidateDhcpService(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID)
+			if err != nil {
+				return errors.Wrap(err, "failed to meet the prerequisite of one DHCP service per Power VS instance")
+			}
 		}
 	case alibabacloud.Name, azure.Name, baremetal.Name, ibmcloud.Name, libvirt.Name, none.Name, ovirt.Name, vsphere.Name, nutanix.Name:
 		// no special provisioning requirements to check

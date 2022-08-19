@@ -711,6 +711,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig)
 		}
 
+		var vpcSubnet string
+		if len(installConfig.Config.PowerVS.VPCSubnets) > 0 {
+			vpcSubnet = installConfig.Config.PowerVS.VPCSubnets[0]
+		}
+
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
@@ -723,6 +728,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ImageBucketName:      osImage[0],
 				ImageBucketFileName:  osImage[1],
 				NetworkName:          installConfig.Config.PowerVS.PVSNetworkName,
+				VPCName:              installConfig.Config.PowerVS.VPCName,
+				VPCSubnetName:        vpcSubnet,
+				CloudConnectionName:  installConfig.Config.PowerVS.CloudConnectionName,
 				CISInstanceCRN:       crn,
 			},
 		)
