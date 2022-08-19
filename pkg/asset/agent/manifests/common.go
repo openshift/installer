@@ -8,23 +8,26 @@ import (
 )
 
 func getAgentClusterInstallName(ic *agent.OptionalInstallConfig) string {
-	return ic.Config.ObjectMeta.Name
+	return ic.ClusterName()
 }
 
 func getClusterDeploymentName(ic *agent.OptionalInstallConfig) string {
-	return ic.Config.ObjectMeta.Name
+	return ic.ClusterName()
 }
 
 func getInfraEnvName(ic *agent.OptionalInstallConfig) string {
-	return ic.Config.ObjectMeta.Name
+	return ic.ClusterName()
 }
 
 func getPullSecretName(ic *agent.OptionalInstallConfig) string {
-	return ic.Config.ObjectMeta.Name + "-pull-secret"
+	return ic.ClusterName() + "-pull-secret"
 }
 
 func getObjectMetaNamespace(ic *agent.OptionalInstallConfig) string {
-	return ic.Config.Namespace
+	if ic.Config != nil {
+		return ic.Config.Namespace
+	}
+	return ""
 }
 
 func getNMStateConfigName(a *agentconfig.AgentConfig) string {
