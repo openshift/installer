@@ -75,7 +75,7 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 	var data string
 
 	if agentConfig.Config != nil {
-		for i, host := range agentConfig.Config.Spec.Hosts {
+		for i, host := range agentConfig.Config.Hosts {
 			nmStateConfig := aiv1beta1.NMStateConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "NMStateConfig",

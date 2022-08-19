@@ -320,10 +320,10 @@ func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesC
 func addMacAddressToHostnameMappings(
 	config *igntypes.Config,
 	agentConfigAsset *agentconfig.AgentConfig) {
-	if agentConfigAsset.Config == nil || len(agentConfigAsset.Config.Spec.Hosts) == 0 {
+	if agentConfigAsset.Config == nil || len(agentConfigAsset.Config.Hosts) == 0 {
 		return
 	}
-	for _, host := range agentConfigAsset.Config.Spec.Hosts {
+	for _, host := range agentConfigAsset.Config.Hosts {
 		if host.Hostname != "" {
 			file := ignition.FileFromBytes(filepath.Join(hostnamesPath,
 				strings.ToLower(filepath.Base(host.Interfaces[0].MacAddress))),
@@ -375,15 +375,15 @@ func RetrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.N
 	var err error
 	var rendezvousIP string
 
-	if agentConfig != nil && agentConfig.Spec.RendezvousIP != "" {
-		rendezvousIP = agentConfig.Spec.RendezvousIP
+	if agentConfig != nil && agentConfig.RendezvousIP != "" {
+		rendezvousIP = agentConfig.RendezvousIP
 		logrus.Debug("RendezvousIP from the AgentConfig ", rendezvousIP)
 
 	} else if len(nmStateConfigs) > 0 {
 		rendezvousIP, err = manifests.GetNodeZeroIP(nmStateConfigs)
 		logrus.Debug("RendezvousIP from the NMStateConfig ", rendezvousIP)
 	} else {
-		err = errors.New("missing Spec.RendezvousIP in agent-config or atleast one nmstateconfig manifest file")
+		err = errors.New("missing rendezvousIP in agent-config or at least one NMStateConfig manifest")
 	}
 	return rendezvousIP, err
 }

@@ -85,87 +85,85 @@ func getValidAgentConfig() *agentconfig.AgentConfig {
 				Name:      "ocp-edge-cluster-0",
 				Namespace: "cluster-0",
 			},
-			Spec: agenttypes.Spec{
-				RendezvousIP: "192.168.122.2",
-				Hosts: []agenttypes.Host{
-					{
-						Hostname: "control-0.example.org",
-						Role:     "master",
-						RootDeviceHints: baremetal.RootDeviceHints{
-							DeviceName:         "/dev/sda",
-							HCTL:               "hctl-value",
-							Model:              "model-value",
-							Vendor:             "vendor-value",
-							SerialNumber:       "serial-number-value",
-							MinSizeGigabytes:   20,
-							WWN:                "wwn-value",
-							WWNWithExtension:   "wwn-with-extension-value",
-							WWNVendorExtension: "wwn-vendor-extension-value",
-							Rotational:         new(bool),
+			RendezvousIP: "192.168.122.2",
+			Hosts: []agenttypes.Host{
+				{
+					Hostname: "control-0.example.org",
+					Role:     "master",
+					RootDeviceHints: baremetal.RootDeviceHints{
+						DeviceName:         "/dev/sda",
+						HCTL:               "hctl-value",
+						Model:              "model-value",
+						Vendor:             "vendor-value",
+						SerialNumber:       "serial-number-value",
+						MinSizeGigabytes:   20,
+						WWN:                "wwn-value",
+						WWNWithExtension:   "wwn-with-extension-value",
+						WWNVendorExtension: "wwn-vendor-extension-value",
+						Rotational:         new(bool),
+					},
+					Interfaces: []*v1beta1.Interface{
+						{
+							Name:       "enp2s0",
+							MacAddress: "98:af:65:a5:8d:01",
 						},
-						Interfaces: []*v1beta1.Interface{
-							{
-								Name:       "enp2s0",
-								MacAddress: "98:af:65:a5:8d:01",
-							},
-							{
-								Name:       "enp3s1",
-								MacAddress: "28:d2:44:d2:b2:1a",
-							},
-						},
-						NetworkConfig: v1beta1.NetConfig{
-							Raw: unmarshalJSON([]byte("interfaces:")),
+						{
+							Name:       "enp3s1",
+							MacAddress: "28:d2:44:d2:b2:1a",
 						},
 					},
-					{
-						Hostname: "control-1.example.org",
-						Role:     "master",
-						RootDeviceHints: baremetal.RootDeviceHints{
-							DeviceName:         "/dev/sdb",
-							HCTL:               "hctl-value",
-							Model:              "model-value",
-							Vendor:             "vendor-value",
-							SerialNumber:       "serial-number-value",
-							MinSizeGigabytes:   40,
-							WWN:                "wwn-value",
-							WWNWithExtension:   "wwn-with-extension-value",
-							WWNVendorExtension: "wwn-vendor-extension-value",
-							Rotational:         new(bool),
-						},
-						Interfaces: []*v1beta1.Interface{
-							{
-								Name:       "enp2t0",
-								MacAddress: "98:af:65:a5:8d:02",
-							},
-						},
-						NetworkConfig: v1beta1.NetConfig{
-							Raw: unmarshalJSON([]byte("interfaces:")),
+					NetworkConfig: v1beta1.NetConfig{
+						Raw: unmarshalJSON([]byte("interfaces:")),
+					},
+				},
+				{
+					Hostname: "control-1.example.org",
+					Role:     "master",
+					RootDeviceHints: baremetal.RootDeviceHints{
+						DeviceName:         "/dev/sdb",
+						HCTL:               "hctl-value",
+						Model:              "model-value",
+						Vendor:             "vendor-value",
+						SerialNumber:       "serial-number-value",
+						MinSizeGigabytes:   40,
+						WWN:                "wwn-value",
+						WWNWithExtension:   "wwn-with-extension-value",
+						WWNVendorExtension: "wwn-vendor-extension-value",
+						Rotational:         new(bool),
+					},
+					Interfaces: []*v1beta1.Interface{
+						{
+							Name:       "enp2t0",
+							MacAddress: "98:af:65:a5:8d:02",
 						},
 					},
-					{
-						Hostname: "control-2.example.org",
-						Role:     "master",
-						RootDeviceHints: baremetal.RootDeviceHints{
-							DeviceName:         "/dev/sdc",
-							HCTL:               "hctl-value",
-							Model:              "model-value",
-							Vendor:             "vendor-value",
-							SerialNumber:       "serial-number-value",
-							MinSizeGigabytes:   60,
-							WWN:                "wwn-value",
-							WWNWithExtension:   "wwn-with-extension-value",
-							WWNVendorExtension: "wwn-vendor-extension-value",
-							Rotational:         new(bool),
+					NetworkConfig: v1beta1.NetConfig{
+						Raw: unmarshalJSON([]byte("interfaces:")),
+					},
+				},
+				{
+					Hostname: "control-2.example.org",
+					Role:     "master",
+					RootDeviceHints: baremetal.RootDeviceHints{
+						DeviceName:         "/dev/sdc",
+						HCTL:               "hctl-value",
+						Model:              "model-value",
+						Vendor:             "vendor-value",
+						SerialNumber:       "serial-number-value",
+						MinSizeGigabytes:   60,
+						WWN:                "wwn-value",
+						WWNWithExtension:   "wwn-with-extension-value",
+						WWNVendorExtension: "wwn-vendor-extension-value",
+						Rotational:         new(bool),
+					},
+					Interfaces: []*v1beta1.Interface{
+						{
+							Name:       "enp2u0",
+							MacAddress: "98:af:65:a5:8d:03",
 						},
-						Interfaces: []*v1beta1.Interface{
-							{
-								Name:       "enp2u0",
-								MacAddress: "98:af:65:a5:8d:03",
-							},
-						},
-						NetworkConfig: v1beta1.NetConfig{
-							Raw: unmarshalJSON([]byte("interfaces:")),
-						},
+					},
+					NetworkConfig: v1beta1.NetConfig{
+						Raw: unmarshalJSON([]byte("interfaces:")),
 					},
 				},
 			},

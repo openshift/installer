@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/agent"
+	"github.com/openshift/installer/pkg/types/agent/conversion"
 )
 
 var (
@@ -45,44 +46,43 @@ func (a *AgentConfig) Generate(dependencies asset.Parents) error {
 	// Change this when its interactive survey is implemented.
 	agentConfigTemplate := `#
 # Note: This is a sample AgentConfig file showing
-# which fields are available to aid you in creating your 
+# which fields are available to aid you in creating your
 # own agent-config.yaml file.
 #
-apiVersion: v1
+apiVersion: v1alpha1
 kind: AgentConfig
 metadata:
   name: example-agent-config
   namespace: cluster0
-spec:
 # All fields are optional
-  rendezvousIP: your-node0-ip
-  hosts:
-  # If a host is listed, then at least one interface
-  # needs to be specified.
-  - hostname: change-to-hostname
-    role: master
-    # For more information about rootDeviceHints:
-    # https://docs.openshift.com/container-platform/4.10/installing/installing_bare_metal_ipi/ipi-install-installation-workflow.html#root-device-hints_ipi-install-installation-workflow
-    rootDeviceHints:
-	  deviceName: /dev/sda
-	# interfaces are used to identify the host to apply this configuration to
+rendezvousIP: your-node0-ip
+hosts:
+# If a host is listed, then at least one interface
+# needs to be specified.
+- hostname: change-to-hostname
+  role: master
+  # For more information about rootDeviceHints:
+  # https://docs.openshift.com/container-platform/4.10/installing/installing_bare_metal_ipi/ipi-install-installation-workflow.html#root-device-hints_ipi-install-installation-workflow
+  rootDeviceHints:
+ deviceName: /dev/sda
+ interfaces are used to identify the host to apply this configuration to
+  interfaces:
+    - macAddress: 00:00:00:00:00:00
+      name: host-network-interface-name
+  # networkConfig contains the network configuration for the host in NMState format.
+  # See https://nmstate.io/examples.html for examples.
+  networkConfig:
     interfaces:
-      - macAddress: 00:00:00:00:00:00
-        name: host-network-interface-name
-    # networkConfig contains the network configuration for the host in NMState format.
-    # See https://nmstate.io/examples.html for examples.
-    networkConfig:
-      interfaces:
-        - name: eth0
-          type: ethernet
-          state: up
-          mac-address: 00:00:00:00:00:00
-          ipv4:
-            enabled: true
-            address:
-              - ip: 192.168.122.2
-                prefix-length: 23
-            dhcp: false
+      - name: eth0
+        type: ethernet
+        state: up
+        mac-address: 00:00:00:00:00:00
+        ipv4:
+          enabled: true
+          address:
+            - ip: 192.168.122.2
+              prefix-length: 23
+          dhcp: false
 `
 
 	a.Template = agentConfigTemplate
@@ -128,6 +128,11 @@ func (a *AgentConfig) Load(f asset.FileFetcher) (bool, error) {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", agentConfigFilename)
 	}
 
+	// Upconvert any deprecated fields
+	if err := conversion.ConvertAgentConfig(config); err != nil {
+		return false, err
+	}
+
 	a.File, a.Config = file, config
 	if err = a.finish(); err != nil {
 		return false, err
@@ -165,14 +170,14 @@ func (a *AgentConfig) validateAgent() field.ErrorList {
 func (a *AgentConfig) validateNodesHaveAtLeastOneMacAddressDefined() field.ErrorList {
 	var allErrs field.ErrorList
 
-	if len(a.Config.Spec.Hosts) == 0 {
+	if len(a.Config.Hosts) == 0 {
 		return allErrs
 	}
 
-	rootPath := field.NewPath("Spec", "Hosts")
+	rootPath := field.NewPath("Hosts")
 
-	for i := range a.Config.Spec.Hosts {
-		node := a.Config.Spec.Hosts[i]
+	for i := range a.Config.Hosts {
+		node := a.Config.Hosts[i]
 		interfacePath := rootPath.Index(i).Child("Interfaces")
 		if len(node.Interfaces) == 0 {
 			allErrs = append(allErrs, field.Required(interfacePath, "at least one interface must be defined for each node"))
@@ -190,9 +195,9 @@ func (a *AgentConfig) validateNodesHaveAtLeastOneMacAddressDefined() field.Error
 
 func (a *AgentConfig) validateRootDeviceHints() field.ErrorList {
 	var allErrs field.ErrorList
-	rootPath := field.NewPath("Spec", "Hosts")
+	rootPath := field.NewPath("Hosts")
 
-	for i, host := range a.Config.Spec.Hosts {
+	for i, host := range a.Config.Hosts {
 		hostPath := rootPath.Index(i)
 		if host.RootDeviceHints.WWNWithExtension != "" {
 			allErrs = append(allErrs, field.Forbidden(
@@ -211,9 +216,9 @@ func (a *AgentConfig) validateRootDeviceHints() field.ErrorList {
 
 func (a *AgentConfig) validateRoles() field.ErrorList {
 	var allErrs field.ErrorList
-	rootPath := field.NewPath("Spec", "Hosts")
+	rootPath := field.NewPath("Hosts")
 
-	for i, host := range a.Config.Spec.Hosts {
+	for i, host := range a.Config.Hosts {
 		hostPath := rootPath.Index(i)
 		if len(host.Role) > 0 && host.Role != "master" && host.Role != "worker" {
 			allErrs = append(allErrs, field.Forbidden(
@@ -237,7 +242,7 @@ func (a *AgentConfig) HostConfigFiles() (HostConfigFileMap, error) {
 	}
 
 	files := HostConfigFileMap{}
-	for i, host := range a.Config.Spec.Hosts {
+	for i, host := range a.Config.Hosts {
 		name := fmt.Sprintf("host-%d", i)
 		if host.Hostname != "" {
 			name = host.Hostname

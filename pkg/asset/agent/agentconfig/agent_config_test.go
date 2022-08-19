@@ -27,7 +27,7 @@ import (
 // 			expectedConfig: &agent.Config{
 // 				TypeMeta: metav1.TypeMeta{
 // 					Kind:       "AgentConfig",
-// 					APIVersion: "v1",
+//					APIVersion: agent.AgentConfigVersion,
 // 				},
 // 				ObjectMeta: metav1.ObjectMeta{
 // 					Name:      "example-agent-config",
@@ -96,63 +96,64 @@ func TestAgentConfig_LoadedFromDisk(t *testing.T) {
 		{
 			name: "valid-config-single-node",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
-spec:
-  rendezvousIP: 192.168.111.80
-  hosts:
-    - hostname: control-0.example.org
-      role: master
-      rootDeviceHints:
-        deviceName: "/dev/sda"
-        hctl: "hctl-value"
-        model: "model-value"
-        vendor: "vendor-value"
-        serialNumber: "serial-number-value"
-        minSizeGigabytes: 20
-        wwn: "wwn-value"
-        rotational: false
-      interfaces:
-        - name: enp2s0
-          macAddress: 98:af:65:a5:8d:01
-        - name: enp3s1
-          macAddress: 28:d2:44:d2:b2:1a
-      networkConfig:
-        interfaces:`,
+rendezvousIP: 192.168.111.80
+hosts:
+  - hostname: control-0.example.org
+    role: master
+    rootDeviceHints:
+      deviceName: "/dev/sda"
+      hctl: "hctl-value"
+      model: "model-value"
+      vendor: "vendor-value"
+      serialNumber: "serial-number-value"
+      minSizeGigabytes: 20
+      wwn: "wwn-value"
+      rotational: false
+    interfaces:
+      - name: enp2s0
+        macAddress: 98:af:65:a5:8d:01
+      - name: enp3s1
+        macAddress: 28:d2:44:d2:b2:1a
+    networkConfig:
+      interfaces:`,
 			expectedFound: true,
 			expectedConfig: &agent.Config{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: agent.AgentConfigVersion,
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
-				Spec: agent.Spec{
-					RendezvousIP: "192.168.111.80",
-					Hosts: []agent.Host{
-						{
-							Hostname: "control-0.example.org",
-							Role:     "master",
-							RootDeviceHints: baremetal.RootDeviceHints{
-								DeviceName:       "/dev/sda",
-								HCTL:             "hctl-value",
-								Model:            "model-value",
-								Vendor:           "vendor-value",
-								SerialNumber:     "serial-number-value",
-								MinSizeGigabytes: 20,
-								WWN:              "wwn-value",
-								Rotational:       falsePtr,
+				RendezvousIP: "192.168.111.80",
+				Hosts: []agent.Host{
+					{
+						Hostname: "control-0.example.org",
+						Role:     "master",
+						RootDeviceHints: baremetal.RootDeviceHints{
+							DeviceName:       "/dev/sda",
+							HCTL:             "hctl-value",
+							Model:            "model-value",
+							Vendor:           "vendor-value",
+							SerialNumber:     "serial-number-value",
+							MinSizeGigabytes: 20,
+							WWN:              "wwn-value",
+							Rotational:       falsePtr,
+						},
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2s0",
+								MacAddress: "98:af:65:a5:8d:01",
 							},
-							Interfaces: []*aiv1beta1.Interface{
-								{
-									Name:       "enp2s0",
-									MacAddress: "98:af:65:a5:8d:01",
-								},
-								{
-									Name:       "enp3s1",
-									MacAddress: "28:d2:44:d2:b2:1a",
-								},
+							{
+								Name:       "enp3s1",
+								MacAddress: "28:d2:44:d2:b2:1a",
 							},
-							NetworkConfig: aiv1beta1.NetConfig{
-								Raw: unmarshalJSON([]byte("interfaces:")),
-							},
+						},
+						NetworkConfig: aiv1beta1.NetConfig{
+							Raw: unmarshalJSON([]byte("interfaces:")),
 						},
 					},
 				},
@@ -161,83 +162,84 @@ spec:
 		{
 			name: "valid-config-multiple-nodes",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
-spec:
-  rendezvousIP: 192.168.111.80
-  hosts:
-    - hostname: control-0.example.org
-      role: master
-      rootDeviceHints:
-        deviceName: "/dev/sda"
-        hctl: "hctl-value"
-        model: "model-value"
-        vendor: "vendor-value"
-        serialNumber: "serial-number-value"
-        minSizeGigabytes: 20
-        wwn: "wwn-value"
-        rotational: false
+rendezvousIP: 192.168.111.80
+hosts:
+  - hostname: control-0.example.org
+    role: master
+    rootDeviceHints:
+      deviceName: "/dev/sda"
+      hctl: "hctl-value"
+      model: "model-value"
+      vendor: "vendor-value"
+      serialNumber: "serial-number-value"
+      minSizeGigabytes: 20
+      wwn: "wwn-value"
+      rotational: false
+    interfaces:
+      - name: enp2s0
+        macAddress: 98:af:65:a5:8d:01
+      - name: enp3s1
+        macAddress: 28:d2:44:d2:b2:1a
+    networkConfig:
       interfaces:
-        - name: enp2s0
-          macAddress: 98:af:65:a5:8d:01
-        - name: enp3s1
-          macAddress: 28:d2:44:d2:b2:1a
-      networkConfig:
-        interfaces:
-    - hostname: control-1.example.org
-      role: master
-      interfaces:
-        - name: enp2s0
-          macAddress: 98:af:65:a5:8d:02
-        - name: enp3s1
-          macAddress: 28:d2:44:d2:b2:1b`,
+  - hostname: control-1.example.org
+    role: master
+    interfaces:
+      - name: enp2s0
+        macAddress: 98:af:65:a5:8d:02
+      - name: enp3s1
+        macAddress: 28:d2:44:d2:b2:1b`,
 			expectedFound: true,
 			expectedConfig: &agent.Config{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: agent.AgentConfigVersion,
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
-				Spec: agent.Spec{
-					RendezvousIP: "192.168.111.80",
-					Hosts: []agent.Host{
-						{
-							Hostname: "control-0.example.org",
-							Role:     "master",
-							RootDeviceHints: baremetal.RootDeviceHints{
-								DeviceName:       "/dev/sda",
-								HCTL:             "hctl-value",
-								Model:            "model-value",
-								Vendor:           "vendor-value",
-								SerialNumber:     "serial-number-value",
-								MinSizeGigabytes: 20,
-								WWN:              "wwn-value",
-								Rotational:       falsePtr,
+				RendezvousIP: "192.168.111.80",
+				Hosts: []agent.Host{
+					{
+						Hostname: "control-0.example.org",
+						Role:     "master",
+						RootDeviceHints: baremetal.RootDeviceHints{
+							DeviceName:       "/dev/sda",
+							HCTL:             "hctl-value",
+							Model:            "model-value",
+							Vendor:           "vendor-value",
+							SerialNumber:     "serial-number-value",
+							MinSizeGigabytes: 20,
+							WWN:              "wwn-value",
+							Rotational:       falsePtr,
+						},
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2s0",
+								MacAddress: "98:af:65:a5:8d:01",
 							},
-							Interfaces: []*aiv1beta1.Interface{
-								{
-									Name:       "enp2s0",
-									MacAddress: "98:af:65:a5:8d:01",
-								},
-								{
-									Name:       "enp3s1",
-									MacAddress: "28:d2:44:d2:b2:1a",
-								},
-							},
-							NetworkConfig: aiv1beta1.NetConfig{
-								Raw: unmarshalJSON([]byte("interfaces:")),
+							{
+								Name:       "enp3s1",
+								MacAddress: "28:d2:44:d2:b2:1a",
 							},
 						},
-						{
-							Hostname: "control-1.example.org",
-							Role:     "master",
-							Interfaces: []*aiv1beta1.Interface{
-								{
-									Name:       "enp2s0",
-									MacAddress: "98:af:65:a5:8d:02",
-								},
-								{
-									Name:       "enp3s1",
-									MacAddress: "28:d2:44:d2:b2:1b",
-								},
+						NetworkConfig: aiv1beta1.NetConfig{
+							Raw: unmarshalJSON([]byte("interfaces:")),
+						},
+					},
+					{
+						Hostname: "control-1.example.org",
+						Role:     "master",
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2s0",
+								MacAddress: "98:af:65:a5:8d:02",
+							},
+							{
+								Name:       "enp3s1",
+								MacAddress: "28:d2:44:d2:b2:1b",
 							},
 						},
 					},
@@ -261,84 +263,85 @@ spec:
 		{
 			name: "unknown-field",
 			data: `
-		metadata:
-		  name: agent-config-wrong
-		spec:
-		  wrongField: wrongValue`,
-			expectedError: "failed to unmarshal agent-config.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
+apiVersion: v1alpha1
+metadata:
+  name: agent-config-wrong
+wrongField: wrongValue`,
+			expectedError: "failed to unmarshal agent-config.yaml: error unmarshaling JSON: while decoding JSON: json: unknown field \"wrongField\"",
 		},
 		{
 			name: "interface-missing-mac-address-error",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
-spec:
-  rendezvousIP: 192.168.111.80
-  hosts:
-    - hostname: control-0.example.org
-      interfaces:
-        - name: enp2s0
-        - name: enp3s1
-          macAddress: 28:d2:44:d2:b2:1a`,
-			expectedError: "invalid Agent Config configuration: Spec.Hosts[0].Interfaces[0].macAddress: Required value: each interface must have a MAC address defined",
+rendezvousIP: 192.168.111.80
+hosts:
+  - hostname: control-0.example.org
+    interfaces:
+      - name: enp2s0
+      - name: enp3s1
+        macAddress: 28:d2:44:d2:b2:1a`,
+			expectedError: "invalid Agent Config configuration: Hosts[0].Interfaces[0].macAddress: Required value: each interface must have a MAC address defined",
 		},
 		{
 			name: "unsupported wwn extension root device hint",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
-spec:
-  rendezvousIP: 192.168.111.80
-  hosts:
-    - hostname: control-0.example.org
-      interfaces:
-        - name: enp2s0
-          macAddress: 98:af:65:a5:8d:01
-      rootDeviceHints:
-        wwnWithExtension: "wwn-with-extension-value"`,
-			expectedError: "invalid Agent Config configuration: Spec.Hosts[0].RootDeviceHints.WWNWithExtension: Forbidden: WWN extensions are not supported in root device hints",
+rendezvousIP: 192.168.111.80
+hosts:
+  - hostname: control-0.example.org
+    interfaces:
+      - name: enp2s0
+        macAddress: 98:af:65:a5:8d:01
+    rootDeviceHints:
+      wwnWithExtension: "wwn-with-extension-value"`,
+			expectedError: "invalid Agent Config configuration: Hosts[0].RootDeviceHints.WWNWithExtension: Forbidden: WWN extensions are not supported in root device hints",
 		},
 		{
 			name: "unsupported wwn vendor extension root device hint",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
-spec:
-  rendezvousIP: 192.168.111.80
-  hosts:
-    - hostname: control-0.example.org
-      interfaces:
-        - name: enp2s0
-          macAddress: 98:af:65:a5:8d:01
-      rootDeviceHints:
-        wwnVendorExtension: "wwn-with-vendor-extension-value"`,
-			expectedError: "invalid Agent Config configuration: Spec.Hosts[0].RootDeviceHints.WWNVendorExtension: Forbidden: WWN vendor extensions are not supported in root device hints",
+rendezvousIP: 192.168.111.80
+hosts:
+  - hostname: control-0.example.org
+    interfaces:
+      - name: enp2s0
+        macAddress: 98:af:65:a5:8d:01
+    rootDeviceHints:
+      wwnVendorExtension: "wwn-with-vendor-extension-value"`,
+			expectedError: "invalid Agent Config configuration: Hosts[0].RootDeviceHints.WWNVendorExtension: Forbidden: WWN vendor extensions are not supported in root device hints",
 		},
 		{
 			name: "node-hostname-and-role-are-not-required",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
-spec:
-  rendezvousIP: 192.168.111.80
-  hosts:
-    - interfaces:
-        - name: enp3s1
-          macAddress: 28:d2:44:d2:b2:1a`,
+rendezvousIP: 192.168.111.80
+hosts:
+  - interfaces:
+      - name: enp3s1
+        macAddress: 28:d2:44:d2:b2:1a`,
 			expectedFound: true,
 			expectedConfig: &agent.Config{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: agent.AgentConfigVersion,
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
-				Spec: agent.Spec{
-					RendezvousIP: "192.168.111.80",
-					Hosts: []agent.Host{
-						{
-							Interfaces: []*aiv1beta1.Interface{
-								{
-									Name:       "enp3s1",
-									MacAddress: "28:d2:44:d2:b2:1a",
-								},
+				RendezvousIP: "192.168.111.80",
+				Hosts: []agent.Host{
+					{
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp3s1",
+								MacAddress: "28:d2:44:d2:b2:1a",
 							},
 						},
 					},
@@ -348,43 +351,44 @@ spec:
 		{
 			name: "host-roles-have-correct-values",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
-spec:
-  rendezvousIP: 192.168.111.80
-  hosts:
-    - role: master
-      interfaces:
-        - name: enp3s1
-          macAddress: 28:d2:44:d2:b2:1a
-    - role: worker
-      interfaces:
-        - name: enp3s1
-          macAddress: 28:d2:44:d2:b2:1b`,
+rendezvousIP: 192.168.111.80
+hosts:
+  - role: master
+    interfaces:
+      - name: enp3s1
+        macAddress: 28:d2:44:d2:b2:1a
+  - role: worker
+    interfaces:
+      - name: enp3s1
+        macAddress: 28:d2:44:d2:b2:1b`,
 			expectedFound: true,
 			expectedConfig: &agent.Config{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: agent.AgentConfigVersion,
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "agent-config-cluster0",
 				},
-				Spec: agent.Spec{
-					RendezvousIP: "192.168.111.80",
-					Hosts: []agent.Host{
-						{
-							Role: "master",
-							Interfaces: []*aiv1beta1.Interface{
-								{
-									Name:       "enp3s1",
-									MacAddress: "28:d2:44:d2:b2:1a",
-								},
+				RendezvousIP: "192.168.111.80",
+				Hosts: []agent.Host{
+					{
+						Role: "master",
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp3s1",
+								MacAddress: "28:d2:44:d2:b2:1a",
 							},
 						},
-						{
-							Role: "worker",
-							Interfaces: []*aiv1beta1.Interface{
-								{
-									Name:       "enp3s1",
-									MacAddress: "28:d2:44:d2:b2:1b",
-								},
+					},
+					{
+						Role: "worker",
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp3s1",
+								MacAddress: "28:d2:44:d2:b2:1b",
 							},
 						},
 					},
@@ -394,16 +398,16 @@ spec:
 		{
 			name: "host-roles-have-incorrect-values",
 			data: `
+apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
-spec:
-  rendezvousIP: 192.168.111.80
-  hosts:
-    - role: invalid-role
-      interfaces:
-        - name: enp3s1
-          macAddress: 28:d2:44:d2:b2:1a`,
-			expectedError: "invalid Agent Config configuration: Spec.Hosts[0].Host: Forbidden: host role has incorrect value. Role must either be 'master' or 'worker'",
+rendezvousIP: 192.168.111.80
+hosts:
+  - role: invalid-role
+    interfaces:
+      - name: enp3s1
+        macAddress: 28:d2:44:d2:b2:1a`,
+			expectedError: "invalid Agent Config configuration: Hosts[0].Host: Forbidden: host role has incorrect value. Role must either be 'master' or 'worker'",
 		},
 	}
 	for _, tc := range cases {
