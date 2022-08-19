@@ -2,7 +2,6 @@ package manifests
 
 import (
 	"github.com/openshift/installer/pkg/asset/agent"
-	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/version"
 )
@@ -30,23 +29,13 @@ func getObjectMetaNamespace(ic *agent.OptionalInstallConfig) string {
 	return ""
 }
 
-func getNMStateConfigName(a *agentconfig.AgentConfig) string {
-	return a.Config.ObjectMeta.Name
+func getNMStateConfigName(ic *agent.OptionalInstallConfig) string {
+	return ic.ClusterName()
 }
 
-func getNMStateConfigNamespace(a *agentconfig.AgentConfig) string {
-	return a.Config.Namespace
-}
-
-func getNMStateConfigLabelsFromOptionalInstallConfig(ic *agent.OptionalInstallConfig) map[string]string {
+func getNMStateConfigLabels(ic *agent.OptionalInstallConfig) map[string]string {
 	return map[string]string{
 		"infraenvs.agent-install.openshift.io": getInfraEnvName(ic),
-	}
-}
-
-func getNMStateConfigLabelsFromAgentConfig(a *agentconfig.AgentConfig) map[string]string {
-	return map[string]string{
-		"infraenvs.agent-install.openshift.io": getNMStateConfigName(a),
 	}
 }
 

@@ -63,7 +63,7 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 					Name: getPullSecretName(installConfig),
 				},
 				NMStateConfigLabelSelector: metav1.LabelSelector{
-					MatchLabels: getNMStateConfigLabelsFromOptionalInstallConfig(installConfig),
+					MatchLabels: getNMStateConfigLabels(installConfig),
 				},
 			},
 		}
