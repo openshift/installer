@@ -3,7 +3,7 @@
 
 ARG libvirt_version="8.0.0"
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.17-openshift-4.11 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.18-openshift-4.11 AS builder
 ARG libvirt_version
 ARG TAGS="libvirt baremetal"
 RUN dnf install -y libvirt-devel-$libvirt_version && \
