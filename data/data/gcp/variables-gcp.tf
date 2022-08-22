@@ -6,7 +6,7 @@ variable "gcp_project_id" {
 variable "gcp_network_project_id" {
   type        = string
   description = "The project that the network and subnets exist in when they are not in the main ProjectID."
-  default     = null
+  default     = ""
 }
 
 variable "gcp_service_account" {
