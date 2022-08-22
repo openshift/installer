@@ -2480,6 +2480,9 @@ spec:
                           - address
                           - port
                           type: object
+                        name:
+                          description: Name is prism endpoint Name
+                          type: string
                         uuid:
                           description: UUID is the UUID of the Prism Element (cluster)
                           type: string
