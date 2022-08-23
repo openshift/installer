@@ -489,7 +489,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 		})
 	}
 	if platform.GCP != nil {
-		validate(gcp.Name, platform.GCP, func(f *field.Path) field.ErrorList { return gcpvalidation.ValidatePlatform(platform.GCP, f) })
+		validate(gcp.Name, platform.GCP, func(f *field.Path) field.ErrorList { return gcpvalidation.ValidatePlatform(platform.GCP, f, c) })
 	}
 	if platform.IBMCloud != nil {
 		validate(ibmcloud.Name, platform.IBMCloud, func(f *field.Path) field.ErrorList { return ibmcloudvalidation.ValidatePlatform(platform.IBMCloud, f) })

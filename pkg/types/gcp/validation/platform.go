@@ -7,8 +7,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
-
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -60,7 +60,7 @@ var (
 )
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *gcp.Platform, fldPath *field.Path) field.ErrorList {
+func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if p.Region == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "must provide a region"))
@@ -68,6 +68,15 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path) field.ErrorList {
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 		allErrs = append(allErrs, ValidateDefaultDiskType(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
+	}
+	if p.NetworkProjectID != "" {
+		if p.Network == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("network"), "must provide a network when a networkProjectID is specified"))
+		}
+		if ic.CredentialsMode != types.ManualCredentialsMode && ic.CredentialsMode != types.PassthroughCredentialsMode {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("credentialsMode"),
+				ic.CredentialsMode, []string{string(types.ManualCredentialsMode), string(types.PassthroughCredentialsMode)}))
+		}
 	}
 	if p.Network != "" {
 		if p.ComputeSubnet == "" {
