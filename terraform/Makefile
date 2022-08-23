@@ -14,10 +14,10 @@ all: go-build
 
 .PHONY: go-mod-tidy-vendor
 go-mod-tidy-vendor: $(GO_MOD_TIDY_TARGETS)
-# The -compat=1.17 is needed for the openstack provider. The provider uses golang.org/x/mod, which go 1.17 selects
+# The -compat=1.18 is needed for the openstack provider. The provider uses golang.org/x/mod, which go 1.18 selects
 # as v0.3.0 but go 1.16 selects as v0.4.2.
 $(GO_MOD_TIDY_TARGETS): go-mod-tidy-vendor.%:
-	cd providers/$* && go mod tidy -compat=1.17 && go mod vendor
+	cd providers/$* && go mod tidy -compat=1.18 && go mod vendor
 
 .PHONY: go-build
 go-build: $(GO_BUILD_TARGETS) go-build-terraform
