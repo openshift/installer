@@ -1,0 +1,42 @@
+apiVersion: v1
+baseDomain: shiftstack.example.com
+controlPlane:
+  hyperthreading: Enabled
+  architecture: amd64
+  name: master
+  platform:
+    openstack:
+      failureDomainNames:
+      - rack-1
+      - rack-2
+      type: ${COMPUTE_FLAVOR}
+  replicas: 3
+compute:
+- name: worker
+  platform:
+    openstack:
+      type: ${COMPUTE_FLAVOR}
+  replicas: 3
+metadata:
+  name: manifests1
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.0.128.0/17
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  openstack:
+    cloud: ${OS_CLOUD}
+    externalNetwork: ${EXTERNAL_NETWORK}
+    failureDomains:
+    - name: rack-1
+      computeZone: nova-1
+    - name: rack-2
+      computeZone: nova-2
+      subnet: d7ffd3d8-87e1-481f-a818-ff2f17787d40
+    apiFloatingIP: ${API_FIP}
+pullSecret: ${PULL_SECRET}
