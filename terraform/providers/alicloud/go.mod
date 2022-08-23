@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/alicloud
 
-go 1.17
+go 1.18
 
 require github.com/aliyun/terraform-provider-alicloud v1.148.0
 
