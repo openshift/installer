@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/vsphere
 
-go 1.17
+go 1.18
 
 require github.com/hashicorp/terraform-provider-vsphere v1.26.1-0.20220308165248-f78c6d6f1da6
 
