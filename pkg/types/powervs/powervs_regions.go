@@ -68,11 +68,6 @@ var Regions = map[string]Region{
 		VPCRegion:   "jp-tok",
 		Zones:       []string{"tok04"},
 	},
-	"us-east": {
-		Description: "Washington DC, USA",
-		VPCRegion:   "us-east",
-		Zones:       []string{"us-east"},
-	},
 }
 
 // VPCRegionForPowerVSRegion returns the VPC region for the specified PowerVS region.
