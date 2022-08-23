@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/ovirt
 
-go 1.17
+go 1.18
 
 require github.com/ovirt/terraform-provider-ovirt/v2 v2.1.4
 
