@@ -1,7 +1,6 @@
 package validation
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/openshift/installer/pkg/types"
@@ -21,33 +20,19 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 		}
 	}
 
-	err := validateFailureDomainsPlatform(p, c)
-	if err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomains"), p.FailureDomains, err.Error()))
+	for _, validate := range [...]platformValidation{
+		validateFailureDomainNamesNotEmpty,
+		validateFailureDomainNamesUnique,
+		validateFailureDomainMachinesSubnetDependency,
+	} {
+		if err := validate(p, c); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomains"), p.FailureDomains, err.Error()))
+		}
 	}
 
 	allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, "default", fldPath.Child("defaultMachinePlatform"))...)
 
 	return allErrs
-}
-
-func validateFailureDomainsPlatform(p *openstack.Platform, c *types.InstallConfig) error {
-	atLeastOneFailureDomainSetsASubnet := false
-	for _, domain := range p.FailureDomains {
-		if domain.Name == "" {
-			return errors.New(("must specify a failure domain name"))
-		}
-		if domain.Subnet != "" {
-			atLeastOneFailureDomainSetsASubnet = true
-		}
-	}
-
-	if len(p.FailureDomains) > 0 {
-		if atLeastOneFailureDomainSetsASubnet && p.MachinesSubnet == "" {
-			return errors.New(("must specify a machinesSubnet when failure domain subnets are specified"))
-		}
-	}
-	return nil
 }
 
 func validateClusterName(name string) (allErrs field.ErrorList) {
