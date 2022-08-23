@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/nutanix
 
-go 1.17
+go 1.18
 
 require github.com/terraform-providers/terraform-provider-nutanix v1.1.0
 
