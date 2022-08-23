@@ -58,45 +58,41 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	machines := make([]machineapi.Machine, 0, total)
 	providerConfigs := map[string]*openstackprovider.OpenstackProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
-		var subnet, volumeAZ, zone string
+		var failureDomain openstack.FailureDomain
 		if len(mpool.FailureDomainNames) > 0 {
 			failureDomainName := mpool.FailureDomainNames[idx%int64(len(mpool.FailureDomainNames))]
-			var fdIndex int
-			for i := range platform.FailureDomains {
-				if platform.FailureDomains[i].Name == failureDomainName {
-					fdIndex = i
+			for _, fd := range platform.FailureDomains {
+				if fd.Name == failureDomainName {
+					failureDomain = *fd
 					break
 				}
 			}
-			zone = platform.FailureDomains[fdIndex].ComputeZone
-			volumeAZ = platform.FailureDomains[fdIndex].StorageZone
-			subnet = platform.FailureDomains[fdIndex].Subnet
 		} else {
-			zone = mpool.Zones[int(idx)%len(mpool.Zones)]
-			volumeAZ = volumeAZs[int(idx)%len(volumeAZs)]
+			computeZone := mpool.Zones[int(idx)%len(mpool.Zones)]
+			failureDomain.Name = computeZone
+			failureDomain.ComputeZone = computeZone
+			failureDomain.StorageZone = volumeAZs[int(idx)%len(volumeAZs)]
 		}
 		var provider *openstackprovider.OpenstackProviderSpec
 
-		if _, ok := providerConfigs[zone]; !ok {
+		if _, ok := providerConfigs[failureDomain.Name]; !ok {
 			provider, err = generateProvider(
 				clusterID,
 				platform,
 				mpool,
 				osImage,
-				zone,
+				failureDomain,
 				role,
 				userDataSecret,
 				trunkSupport,
-				volumeAZ,
-				subnet,
 			)
 			if err != nil {
 				return nil, err
 			}
-			providerConfigs[zone] = provider
+			providerConfigs[failureDomain.Name] = provider
 		}
 
-		provider = providerConfigs[zone]
+		provider = providerConfigs[failureDomain.Name]
 
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
@@ -125,12 +121,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool, rootVolumeAZ string, subnet string) (*openstackprovider.OpenstackProviderSpec, error) {
+func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, failureDomain openstack.FailureDomain, role, userDataSecret string, trunkSupport bool) (*openstackprovider.OpenstackProviderSpec, error) {
 	var networks []openstackprovider.NetworkParam
-	if subnet != "" {
+	if failureDomain.Subnet != "" {
 		networks = []openstackprovider.NetworkParam{{
 			Subnets: []openstackprovider.SubnetParam{{
-				UUID: subnet,
+				UUID: failureDomain.Subnet,
 			}}},
 		}
 	} else if platform.MachinesSubnet != "" {
@@ -168,8 +164,8 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 	}
 
 	serverGroupName := clusterID + "-" + role
-	if az != "" {
-		serverGroupName += "-" + az
+	if failureDomain.ComputeZone != "" {
+		serverGroupName += "-" + failureDomain.ComputeZone
 	}
 	spec := openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
@@ -182,7 +178,7 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		UserDataSecret:   &corev1.SecretReference{Name: userDataSecret},
 		Networks:         networks,
 		PrimarySubnet:    platform.MachinesSubnet,
-		AvailabilityZone: az,
+		AvailabilityZone: failureDomain.ComputeZone,
 		SecurityGroups:   securityGroups,
 		ServerGroupName:  serverGroupName,
 		Trunk:            trunkSupport,
@@ -200,7 +196,7 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 			SourceType: "image",
 			SourceUUID: osImage,
 			VolumeType: mpool.RootVolume.Type,
-			Zone:       rootVolumeAZ,
+			Zone:       failureDomain.StorageZone,
 		}
 	} else {
 		spec.Image = osImage
