@@ -61,9 +61,16 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		var subnet, volumeAZ, zone string
 		if len(mpool.FailureDomainNames) > 0 {
 			failureDomainName := mpool.FailureDomainNames[idx%int64(len(mpool.FailureDomainNames))]
-			zone = platform.FailureDomains[int(idx)%len(failureDomainName)].ComputeZone
-			volumeAZ = platform.FailureDomains[int(idx)%len(failureDomainName)].StorageZone
-			subnet = platform.FailureDomains[int(idx)%len(failureDomainName)].Subnet
+			var fdIndex int
+			for i := range platform.FailureDomains {
+				if platform.FailureDomains[i].Name == failureDomainName {
+					fdIndex = i
+					break
+				}
+			}
+			zone = platform.FailureDomains[fdIndex].ComputeZone
+			volumeAZ = platform.FailureDomains[fdIndex].StorageZone
+			subnet = platform.FailureDomains[fdIndex].Subnet
 		} else {
 			zone = mpool.Zones[int(idx)%len(mpool.Zones)]
 			volumeAZ = volumeAZs[int(idx)%len(volumeAZs)]
