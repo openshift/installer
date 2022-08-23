@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/libvirt
 
-go 1.17
+go 1.18
 
 require github.com/dmacvicar/terraform-provider-libvirt v0.6.12
 
