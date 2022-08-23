@@ -18,5 +18,6 @@ type FailureDomain struct {
 	StorageZone string `json:"storageZone,omitempty"`
 
 	// Subnet is the UUID of the OpenStack subnet nodes will be provisioned on
-	Subnet string `json:"subnet"`
+	// +optional
+	Subnet string `json:"subnet,omitempty"`
 }

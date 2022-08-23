@@ -32,18 +32,19 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 }
 
 func validateFailureDomainsPlatform(p *openstack.Platform, c *types.InstallConfig) error {
+	atLeastOneFailureDomainSetsASubnet := false
 	for _, domain := range p.FailureDomains {
 		if domain.Name == "" {
 			return errors.New(("must specify a failure domain name"))
 		}
-		if domain.Subnet == "" {
-			return errors.New(("must specify a failure domain subnet"))
+		if domain.Subnet != "" {
+			atLeastOneFailureDomainSetsASubnet = true
 		}
 	}
 
 	if len(p.FailureDomains) > 0 {
-		if p.MachinesSubnet == "" {
-			return errors.New(("must specify a machinesSubnet when failure domains are specified"))
+		if atLeastOneFailureDomainSetsASubnet && p.MachinesSubnet == "" {
+			return errors.New(("must specify a machinesSubnet when failure domain subnets are specified"))
 		}
 	}
 	return nil
