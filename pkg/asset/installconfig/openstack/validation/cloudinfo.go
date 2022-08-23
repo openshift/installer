@@ -184,8 +184,8 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	}
 
 	for _, failureDomain := range ic.OpenStack.FailureDomains {
-		if failureDomain.Subnet != "" {
-			failureDomainSubnet, err := ci.getSubnet(failureDomain.Subnet)
+		if failureDomain.SubnetID != "" {
+			failureDomainSubnet, err := ci.getSubnet(failureDomain.SubnetID)
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch failure domain subnet info")
 			}

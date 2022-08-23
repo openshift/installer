@@ -123,10 +123,10 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, failureDomain openstack.FailureDomain, role, userDataSecret string, trunkSupport bool) (*openstackprovider.OpenstackProviderSpec, error) {
 	var networks []openstackprovider.NetworkParam
-	if failureDomain.Subnet != "" {
+	if failureDomain.SubnetID != "" {
 		networks = []openstackprovider.NetworkParam{{
 			Subnets: []openstackprovider.SubnetParam{{
-				UUID: failureDomain.Subnet,
+				UUID: failureDomain.SubnetID,
 			}}},
 		}
 	} else if platform.MachinesSubnet != "" {

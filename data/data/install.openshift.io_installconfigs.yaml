@@ -507,6 +507,12 @@ spec:
                           items:
                             type: string
                           type: array
+                        failureDomainNames:
+                          description: FailureDomainNames will be used to list all
+                            domains to deploy a machine pool.
+                          items:
+                            type: string
+                          type: array
                         rootVolume:
                           description: RootVolume defines the root volume for instances
                             in the machine pool. The instances use ephemeral disks
@@ -1154,8 +1160,8 @@ spec:
                           type: string
                         type: array
                       failureDomainNames:
-                        description: failureDomainNames contains a list of failure domains
-                          defined by `failureDomains`.
+                        description: FailureDomainNames will be used to list all domains
+                          to deploy a machine pool.
                         items:
                           type: string
                         type: array
@@ -2703,6 +2709,12 @@ spec:
                         items:
                           type: string
                         type: array
+                      failureDomainNames:
+                        description: FailureDomainNames will be used to list all domains
+                          to deploy a machine pool.
+                        items:
+                          type: string
+                        type: array
                       rootVolume:
                         description: RootVolume defines the root volume for instances
                           in the machine pool. The instances use ephemeral disks if
@@ -2765,32 +2777,40 @@ spec:
                       your OpenStack cluster.
                     type: string
                   failureDomains:
-                    description: FailureDomains contains a list of domains and their
-                      specifications.
+                    description: FailureDomains configures failure domain information
+                      for the OpenStack platform
                     items:
-                      description: FailureDomain stores the configuration for
-                        the domain.
+                      description: OpenStackFailureDomain specifies a failure domain
+                        for an OpenStack server. Specifically, it specifies a set
+                        of values which will be set on all machines using the failure
+                        domain.
                       properties:
-                        name:
-                          description: Name is the name of the failure domain.
-                          type: string
                         computeZone:
-                          description: Name of the availability zone where the instances
-                            should be deployed. If no zone is provided, all instances
-                            will be deployed on OpenStack Nova default availability zone.
+                          description: "computeZone specifies the OpenStack Compute
+                            availability zone for all servers in this failure domain.
+                            \n If not specified the servers are provisioned without
+                            reference to availability zones. Server placement is delegated
+                            to the OpenStack defaults."
+                          type: string
+                        name:
+                          description: name is an arbitrary, unique name for this
+                            failure domain. This name can be used to refer to this
+                            failure domain when building a BGP speaker configuration.
                           type: string
                         storageZone:
-                          description: Name of the availability zone where the volumes
-                            should be deployed. If no zone is provided, all instances
-                            will be deployed on OpenStack Cinder default availability zone.
+                          description: "storageZone specifies the OpenStack storage
+                            availability zone for all volumes in this failure domain.
+                            \n If not specified the volumes are provisioned without
+                            reference to availability zones. Volume placement is delegated
+                            to the OpenStack defaults."
                           type: string
-                        subnet:
-                          description: OpenStack Neutron subnet UUID where the instances
-                            should be connected to as a primary interface.
+                        subnetID:
+                          description: subnetID specifies an OpenStack subnet ID which
+                            will be attached as the first NIC of every server in this
+                            failure domain.
                           type: string
                       required:
                       - name
-                      - subnet
                       type: object
                     type: array
                   ingressFloatingIP:

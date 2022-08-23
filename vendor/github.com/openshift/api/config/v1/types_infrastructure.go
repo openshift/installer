@@ -505,9 +505,156 @@ type BareMetalPlatformStatus struct {
 	NodeDNSIP string `json:"nodeDNSIP,omitempty"`
 }
 
+type OpenStackAPIBGPPeer struct {
+	// asn is the Autonomous System number of the peer.
+	//
+	// +optional
+	ASN string `json:"asn,omitempty"`
+
+	// ip is the IP address of the peer, as reachable from the Control
+	// plane machine. It may be either IPv4 or IPv6
+	//
+	// +kubebuilder:validation:Format=ip
+	// +kubebuilder:validation:Required
+	IP string `json:"ip"`
+
+	// password for BGP authentication against the peer
+	//
+	// +optional
+	Password string `json:"password,omitempty"`
+}
+
+// OpenStackAPIBGPSpeaker describes the BGP autonomous system that will contain
+// the API VIP for a specific failure domain.
+type OpenStackAPIBGPSpeaker struct {
+	// failureDomain is the name of a failure domain which this BGP
+	// configuration applies to. A failure domain with that name must be
+	// defined in the OpenStack platform spec. If there are no failure
+	// domains defined, use "default".
+	//
+	// +kubebuilder:validation:Required
+	FailureDomain string `json:"failureDomain"`
+
+	// asn specifies the Autonomous System number to be used by the BGP
+	// speaker of the Control plane node. Control plane nodes in a failure
+	// domain where this field is not set are each assigned a distinct
+	// number: master-0 4273211230, master-1 4273211231, and master-2
+	// 4273211232. If multiple Control plane nodes are assigned the same
+	// failure domain, this field cannot be set.
+	//
+	// +optional
+	ASN string `json:"asn"`
+
+	// peers is a list of all BGP peers of the speaker for the VIPs of this
+	// failure domain. The list must contain at least one item.
+	//
+	// +kubebuilder:validation:MinItems:=1
+	Peers []OpenStackAPIBGPPeer `json:"peers"`
+}
+
+type OpenStackAPIBGPConfiguration struct {
+	// speakers is a list of BGP speaker configurations. We require a
+	// speaker configuration for every failure domain hosting a control
+	// plane node. The list must contain at least one item.
+	//
+	// +kubebuilder:validation:MinItems:=1
+	// +listType=map
+	// +listMapKey=failureDomain
+	Speakers []OpenStackAPIBGPSpeaker `json:"speakers"`
+}
+
+// OpenStackFailureDomain specifies a failure domain for an OpenStack server.
+// Specifically, it specifies a set of values which will be set on all machines
+// using the failure domain.
+type OpenStackFailureDomain struct {
+	// name is an arbitrary, unique name for this failure domain. This name
+	// can be used to refer to this failure domain when building a BGP
+	// speaker configuration.
+	//
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// computeZone specifies the OpenStack Compute availability zone for
+	// all servers in this failure domain.
+	//
+	// If not specified the servers are provisioned without reference to
+	// availability zones. Server placement is delegated to the OpenStack
+	// defaults.
+	// +optional
+	// + ---
+	// + TODO: define behaviour in case only one of computeZone and
+	// + storageZone is set.
+	ComputeZone string `json:"computeZone,omitempty"`
+
+	// storageZone specifies the OpenStack storage availability zone for
+	// all volumes in this failure domain.
+	//
+	// If not specified the volumes are provisioned without reference to
+	// availability zones. Volume placement is delegated to the OpenStack
+	// defaults.
+	// +optional
+	// + ---
+	// + TODO: define behaviour in case only one of computeZone and
+	// + storageZone is set.
+	StorageZone string `json:"storageZone,omitempty"`
+
+	// subnetID specifies an OpenStack subnet ID which will be attached as
+	// the first NIC of every server in this failure domain.
+	//
+	// +optional
+	SubnetID string `json:"subnetID,omitempty"`
+}
+
 // OpenStackPlatformSpec holds the desired state of the OpenStack infrastructure provider.
 // This only includes fields that can be modified in the cluster.
-type OpenStackPlatformSpec struct{}
+type OpenStackPlatformSpec struct {
+	// failureDomains is a list of failure domains available to Machines.
+	// Each failure domain has a name that can be referenced in Machines;
+	// Machines referencing a failure domain will be set the corresponding
+	// failure domain values.
+	// If no failure domain is defined, Machines can't reference any. If a
+	// Machine doesn't reference a failure domain, it is spun in the
+	// cluster subnet, using the OpenStack default availability zones.
+	//
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	FailureDomains []OpenStackFailureDomain `json:"failureDomains,omitempty"`
+
+	// apiLoadBalancer defines how traffic destined to the OpenShift API is
+	// routed to the API servers.
+	// When omitted, this means no opinion and the platform is left to
+	// choose a reasonable default. This default is subject to change over
+	// time.
+	// The current default configuration uses VRRP.
+	//
+	// +optional
+	APILoadBalancer OpenStackAPILoadBalancer `json:"apiLoadBalancer"`
+}
+
+// OpenStackAPILoadBalancer defines how inbound traffic is routed to the API
+// servers.
+type OpenStackAPILoadBalancer struct {
+	// apiLoadBalancerType defines the type of loadbalancer which will be
+	// configured for the API server. Permitted values are `VRRP` and
+	// `BGP`.
+	// When omitted, this means no opinion and the platform is left to
+	// choose a reasonable default. This default is subject to change over
+	// time.
+	// The current default value is `VRRP`.
+	//
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="VRRP";"BGP"
+	// +kubebuilder:validation:Required
+	APILoadBalancerType string `json:"type,omitempty"`
+
+	// bgpConfiguration describes the configuration of a BGP load balancer
+	// for the API server. It is only used if apiLoadBalancer is set to
+	// `BGP`.
+	//
+	// +optional
+	BGP *OpenStackAPIBGPConfiguration `json:"bgp,omitempty"`
+}
 
 // OpenStackPlatformStatus holds the current status of the OpenStack infrastructure provider.
 type OpenStackPlatformStatus struct {

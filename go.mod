@@ -245,9 +245,8 @@ replace k8s.io/client-go => k8s.io/client-go v0.25.0
 // Needed so that the InstallConfig CRD can be created. Later versions of controller-gen balk at using IPNet as a field.
 replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 
-// Override the OpenShift API version in hive
-
-replace github.com/openshift/api => github.com/openshift/api v0.0.0-20221004120407-c46852673d03
+// Use FailureDomain from https://github.com/openshift/api/pull/1243
+replace github.com/openshift/api => github.com/shiftstack/api v0.0.0-20221026154226-2bc540efa72a
 
 replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0
 

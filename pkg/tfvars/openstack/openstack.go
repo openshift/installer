@@ -182,9 +182,9 @@ func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1
 	}
 	for _, name := range failureDomainNames {
 		if len(failureDomains) > 0 {
-			for _, domain := range failureDomains {
-				if domain.Name == name {
-					cfg.MasterSubnets = append(cfg.MasterSubnets, domain.Subnet)
+			for _, failureDomain := range failureDomains {
+				if failureDomain.Name == name {
+					cfg.MasterSubnets = append(cfg.MasterSubnets, failureDomain.SubnetID)
 					break
 				}
 			}

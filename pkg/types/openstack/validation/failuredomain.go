@@ -46,7 +46,7 @@ func validateFailureDomainNamesUnique(platform *openstack.Platform, _ *types.Ins
 func validateFailureDomainMachinesSubnetDependency(platform *openstack.Platform, _ *types.InstallConfig) error {
 	if platform.MachinesSubnet == "" {
 		for _, failureDomain := range platform.FailureDomains {
-			if failureDomain.Subnet != "" {
+			if failureDomain.SubnetID != "" {
 				return fmt.Errorf("must specify a machinesSubnet when failure domain subnets are specified")
 			}
 		}
