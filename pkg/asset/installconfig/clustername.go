@@ -43,9 +43,8 @@ func (a *clusterName) Generate(parents asset.Parents) error {
 	}
 
 	if platform.Ovirt != nil {
-		// FIX-ME: As soon bz#1915122 get resolved remove the limitation of 14 chars for the clustername
 		validator = survey.ComposeValidators(validator, func(ans interface{}) error {
-			return validate.ClusterNameMaxLength(ans.(string), 14)
+			return validate.ClusterName(ans.(string))
 		})
 	}
 	if platform.VSphere != nil || platform.BareMetal != nil || platform.Nutanix != nil {
