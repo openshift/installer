@@ -24,23 +24,19 @@ class TestMachinesServerGroup(unittest.TestCase):
     def test_masters_spread(self):
         """Assert that Control plane machines are spread across provided compute zones."""
         computeZones = {}
+        highest_number_of_replicas = 0
         for machine in self.machines:
             computeZone = machine["spec"]["providerSpec"]["value"]["availabilityZone"]
-            computeZones[computeZone]++
-
-        highest_number_of_machines_in_zone = 0
-        for machines_in_zone in computeZones.items():
-            if machines_in_zone > highest_number_of_machines_in_zone:
-                highest_number_of_machines_in_zone = machines_in_zone
+            computeZones[computeZone] = computeZones.get(computeZone, 0) + 1
+            if computeZones[computeZone] > highest_number_of_replicas:
+                highest_number_of_replicas = computeZones[computeZone]
 
         self.assertIn("nova-1", computeZones)
         self.assertIn("nova-2", computeZones)
 
         for name in computeZones:
-            self.assertTrue(highest_number_of_machines_in_zone - computeZones[name]
-                        > 1, msg=f'Zone {name} has too few machines:
-                        {computeZones[name]} (highest number found:
-                        {highest_number_of_machines_in_zone})')
+            replicas = computeZones[name]
+            self.assertTrue(highest_number_of_replicas - replicas < 2, msg=f'Zone {name} has too few machines: {replicas} (highest number found: {highest_number_of_replicas})')
 
     def test_subnet_id(self):
         """Assert that the machines in rack-2 have the proper subnetID set."""
