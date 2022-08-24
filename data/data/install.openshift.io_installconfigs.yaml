@@ -58,6 +58,9 @@ spec:
                   enum:
                   - openshift-samples
                   - baremetal
+                  - Console
+                  - Insights
+                  - Storage
                   - marketplace
                   type: string
                 type: array
@@ -68,6 +71,7 @@ spec:
                 enum:
                 - None
                 - v4.11
+                - v4.12
                 - vCurrent
                 type: string
             type: object
