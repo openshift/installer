@@ -77,6 +77,7 @@ type bootstrapTemplateData struct {
 	PlatformData          platformTemplateData
 	BootstrapInPlace      *types.BootstrapInPlace
 	UseIPv6ForNodeIP      bool
+	BootstrapNodeIP       string
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -263,6 +264,12 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		platformData.VSphere = vsphere.GetTemplateData(installConfig.Config.Platform.VSphere)
 	}
 
+	bootstrapNodeIP := os.Getenv("OPENSHIFT_INSTALL_BOOTSTRAP_NODE_IP")
+	if bootstrapNodeIP != "" && net.ParseIP(bootstrapNodeIP) == nil {
+		logrus.Warnf("OPENSHIFT_INSTALL_BOOTSTRAP_NODE_IP must have valid ip address, given %s. Skipping it", bootstrapNodeIP)
+		bootstrapNodeIP = ""
+	}
+
 	var APIIntVIPonIPv6 bool
 	platformAPIVIP := apiVIP(&installConfig.Config.Platform)
 	if platformAPIVIP == "" {
@@ -295,6 +302,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		ClusterProfile:        clusterProfile,
 		BootstrapInPlace:      bootstrapInPlaceConfig,
 		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
+		BootstrapNodeIP:       bootstrapNodeIP,
 	}
 }
 
