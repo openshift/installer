@@ -2,7 +2,7 @@ module github.com/openshift/installer/terraform/providers/azurerm
 
 go 1.17
 
-require github.com/hashicorp/terraform-provider-azurerm v1.44.1-0.20220614054854-771c254f3b8b // v3.10.0
+require github.com/hashicorp/terraform-provider-azurerm v1.44.1-0.20220819162217-6be27548882d // v3.19.1
 
 require (
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect
@@ -27,7 +27,8 @@ require (
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-azure-helpers v0.33.0 // indirect
+	github.com/hashicorp/go-azure-helpers v0.39.1 // indirect
+	github.com/hashicorp/go-azure-sdk v0.20220815.1092453 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-cty v1.4.1-0.20200723130312-85980079f637 // indirect
@@ -36,16 +37,16 @@ require (
 	github.com/hashicorp/go-plugin v1.4.4 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
-	github.com/hashicorp/go-version v1.5.0 // indirect
-	github.com/hashicorp/hc-install v0.3.2 // indirect
-	github.com/hashicorp/hcl/v2 v2.12.0 // indirect
+	github.com/hashicorp/go-version v1.6.0 // indirect
+	github.com/hashicorp/hc-install v0.4.0 // indirect
+	github.com/hashicorp/hcl/v2 v2.13.0 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
-	github.com/hashicorp/terraform-exec v0.16.1 // indirect
+	github.com/hashicorp/terraform-exec v0.17.2 // indirect
 	github.com/hashicorp/terraform-json v0.14.0 // indirect
-	github.com/hashicorp/terraform-plugin-go v0.9.1 // indirect
+	github.com/hashicorp/terraform-plugin-go v0.10.0 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.4.1 // indirect
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0 // indirect
-	github.com/hashicorp/terraform-registry-address v0.0.0-20220510144317-d78f4a47ae27 // indirect
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.18.0 // indirect
+	github.com/hashicorp/terraform-registry-address v0.0.0-20220623143253-7d51757b572c // indirect
 	github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 // indirect
 	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87 // indirect
 	github.com/manicminer/hamilton v0.46.0 // indirect
