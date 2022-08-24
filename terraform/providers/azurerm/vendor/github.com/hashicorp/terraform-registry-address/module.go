@@ -9,14 +9,14 @@ import (
 	svchost "github.com/hashicorp/terraform-svchost"
 )
 
-// ModuleSourceRegistry is representing a module listed in a Terraform module
+// Module is representing a module listed in a Terraform module
 // registry.
-type ModuleSourceRegistry struct {
-	// PackageAddr is the registry package that the target module belongs to.
+type Module struct {
+	// Package is the registry package that the target module belongs to.
 	// The module installer must translate this into a ModuleSourceRemote
 	// using the registry API and then take that underlying address's
-	// PackageAddr in order to find the actual package location.
-	PackageAddr ModuleRegistryPackage
+	// Package in order to find the actual package location.
+	Package ModulePackage
 
 	// If Subdir is non-empty then it represents a sub-directory within the
 	// remote package that the registry address eventually resolves to.
@@ -36,22 +36,22 @@ const DefaultModuleRegistryHost = svchost.Hostname("registry.terraform.io")
 var moduleRegistryNamePattern = regexp.MustCompile("^[0-9A-Za-z](?:[0-9A-Za-z-_]{0,62}[0-9A-Za-z])?$")
 var moduleRegistryTargetSystemPattern = regexp.MustCompile("^[0-9a-z]{1,64}$")
 
-// ParseRawModuleSourceRegistry only accepts module registry addresses, and
+// ParseModuleSource only accepts module registry addresses, and
 // will reject any other address type.
-func ParseRawModuleSourceRegistry(raw string) (ModuleSourceRegistry, error) {
+func ParseModuleSource(raw string) (Module, error) {
 	var err error
 
 	var subDir string
 	raw, subDir = splitPackageSubdir(raw)
 	if strings.HasPrefix(subDir, "../") {
-		return ModuleSourceRegistry{}, fmt.Errorf("subdirectory path %q leads outside of the module package", subDir)
+		return Module{}, fmt.Errorf("subdirectory path %q leads outside of the module package", subDir)
 	}
 
 	parts := strings.Split(raw, "/")
 	// A valid registry address has either three or four parts, because the
 	// leading hostname part is optional.
 	if len(parts) != 3 && len(parts) != 4 {
-		return ModuleSourceRegistry{}, fmt.Errorf("a module registry source address must have either three or four slash-separated components")
+		return Module{}, fmt.Errorf("a module registry source address must have either three or four slash-separated components")
 	}
 
 	host := DefaultModuleRegistryHost
@@ -64,20 +64,20 @@ func ParseRawModuleSourceRegistry(raw string) (ModuleSourceRegistry, error) {
 			case strings.Contains(parts[0], "--"):
 				// Looks like possibly punycode, which we don't allow here
 				// to ensure that source addresses are written readably.
-				return ModuleSourceRegistry{}, fmt.Errorf("invalid module registry hostname %q; internationalized domain names must be given as direct unicode characters, not in punycode", parts[0])
+				return Module{}, fmt.Errorf("invalid module registry hostname %q; internationalized domain names must be given as direct unicode characters, not in punycode", parts[0])
 			default:
-				return ModuleSourceRegistry{}, fmt.Errorf("invalid module registry hostname %q", parts[0])
+				return Module{}, fmt.Errorf("invalid module registry hostname %q", parts[0])
 			}
 		}
 		if !strings.Contains(host.String(), ".") {
-			return ModuleSourceRegistry{}, fmt.Errorf("invalid module registry hostname: must contain at least one dot")
+			return Module{}, fmt.Errorf("invalid module registry hostname: must contain at least one dot")
 		}
 		// Discard the hostname prefix now that we've processed it
 		parts = parts[1:]
 	}
 
-	ret := ModuleSourceRegistry{
-		PackageAddr: ModuleRegistryPackage{
+	ret := Module{
+		Package: ModulePackage{
 			Host: host,
 		},
 
@@ -88,7 +88,7 @@ func ParseRawModuleSourceRegistry(raw string) (ModuleSourceRegistry, error) {
 		return ret, fmt.Errorf("can't use %q as a module registry host, because it's reserved for installing directly from version control repositories", host)
 	}
 
-	if ret.PackageAddr.Namespace, err = parseModuleRegistryName(parts[0]); err != nil {
+	if ret.Package.Namespace, err = parseModuleRegistryName(parts[0]); err != nil {
 		if strings.Contains(parts[0], ".") {
 			// Seems like the user omitted one of the latter components in
 			// an address with an explicit hostname.
@@ -96,10 +96,10 @@ func ParseRawModuleSourceRegistry(raw string) (ModuleSourceRegistry, error) {
 		}
 		return ret, fmt.Errorf("invalid namespace %q: %s", parts[0], err)
 	}
-	if ret.PackageAddr.Name, err = parseModuleRegistryName(parts[1]); err != nil {
+	if ret.Package.Name, err = parseModuleRegistryName(parts[1]); err != nil {
 		return ret, fmt.Errorf("invalid module name %q: %s", parts[1], err)
 	}
-	if ret.PackageAddr.TargetSystem, err = parseModuleRegistryTargetSystem(parts[2]); err != nil {
+	if ret.Package.TargetSystem, err = parseModuleRegistryTargetSystem(parts[2]); err != nil {
 		if strings.Contains(parts[2], "?") {
 			// The user was trying to include a query string, probably?
 			return ret, fmt.Errorf("module registry addresses may not include a query string portion")
@@ -108,6 +108,16 @@ func ParseRawModuleSourceRegistry(raw string) (ModuleSourceRegistry, error) {
 	}
 
 	return ret, nil
+}
+
+// MustParseModuleSource is a wrapper around ParseModuleSource that panics if
+// it returns an error.
+func MustParseModuleSource(raw string) (Module) {
+	mod, err := ParseModuleSource(raw)
+	if err != nil {
+		panic(err)
+	}
+	return mod
 }
 
 // parseModuleRegistryName validates and normalizes a string in either the
@@ -163,11 +173,11 @@ func parseModuleRegistryTargetSystem(given string) (string, error) {
 // We typically use this longer representation in error message, in case
 // the inclusion of normally-omitted components is helpful in debugging
 // unexpected behavior.
-func (s ModuleSourceRegistry) String() string {
+func (s Module) String() string {
 	if s.Subdir != "" {
-		return s.PackageAddr.String() + "//" + s.Subdir
+		return s.Package.String() + "//" + s.Subdir
 	}
-	return s.PackageAddr.String()
+	return s.Package.String()
 }
 
 // ForDisplay is similar to String but instead returns a representation of
@@ -177,11 +187,11 @@ func (s ModuleSourceRegistry) String() string {
 //
 // We typically use this shorter representation in informational messages,
 // such as the note that we're about to start downloading a package.
-func (s ModuleSourceRegistry) ForDisplay() string {
+func (s Module) ForDisplay() string {
 	if s.Subdir != "" {
-		return s.PackageAddr.ForDisplay() + "//" + s.Subdir
+		return s.Package.ForDisplay() + "//" + s.Subdir
 	}
-	return s.PackageAddr.ForDisplay()
+	return s.Package.ForDisplay()
 }
 
 // splitPackageSubdir detects whether the given address string has a
