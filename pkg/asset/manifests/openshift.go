@@ -181,12 +181,27 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case vspheretypes.Name:
+		vsphereCredList := make([]*VSphereCredsSecretData, 0)
+		if len(installConfig.Config.VSphere.VCenters) > 0 {
+			for _, vCenter := range installConfig.Config.VSphere.VCenters {
+				vsphereCred := VSphereCredsSecretData{
+					VCenter:              vCenter.Server,
+					Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(vCenter.Username)),
+					Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(vCenter.Password)),
+				}
+				vsphereCredList = append(vsphereCredList, &vsphereCred)
+			}
+		} else {
+			vCenter := installConfig.Config.VSphere
+			vsphereCred := VSphereCredsSecretData{
+				VCenter:              vCenter.VCenter,
+				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(vCenter.Username)),
+				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(vCenter.Password)),
+			}
+			vsphereCredList = append(vsphereCredList, &vsphereCred)
+		}
 		cloudCreds = cloudCredsSecretData{
-			VSphere: &VSphereCredsSecretData{
-				VCenter:              installConfig.Config.VSphere.VCenter,
-				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.VSphere.Username)),
-				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.VSphere.Password)),
-			},
+			VSphere: &vsphereCredList,
 		}
 	case ovirttypes.Name:
 		conf, err := ovirt.NewConfig()

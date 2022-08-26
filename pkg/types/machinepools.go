@@ -15,6 +15,13 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+const (
+	// MachinePoolComputeRoleName name associated with the compute machinepool
+	MachinePoolComputeRoleName = "worker"
+	// MachinePoolControlPlaneRoleName name associated with the control plane machinepool
+	MachinePoolControlPlaneRoleName = "master"
+)
+
 // HyperthreadingMode is the mode of hyperthreading for a machine.
 // +kubebuilder:validation:Enum="";Enabled;Disabled
 type HyperthreadingMode string

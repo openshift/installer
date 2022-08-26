@@ -710,6 +710,11 @@ spec:
                               format: int32
                               type: integer
                           type: object
+                        zones:
+                          description: Zones defines available zones
+                          items:
+                            type: string
+                          type: array
                       type: object
                   type: object
                 replicas:
@@ -1348,6 +1353,11 @@ spec:
                             format: int32
                             type: integer
                         type: object
+                      zones:
+                        description: Zones defines available zones
+                        items:
+                          type: string
+                        type: array
                     type: object
                 type: object
               replicas:
@@ -2976,7 +2986,67 @@ spec:
                             format: int32
                             type: integer
                         type: object
+                      zones:
+                        description: Zones defines available zones
+                        items:
+                          type: string
+                        type: array
                     type: object
+                  deploymentZones:
+                    description: vSphere location where openshift rhcos virtual machines
+                      will be deployed based on vCenter and failureDomain If this
+                      is omitted failure domains (regions and zones) will not be used.
+                    items:
+                      description: DeploymentZone holds the association between a
+                        vCenter, failure domain and the virtual machine placementConstraints
+                      properties:
+                        controlPlane:
+                          description: ControlPlane determines if this failure domain
+                            is suitable for use by control plane machines.
+                          enum:
+                          - Allowed
+                          - NotAllowed
+                          type: string
+                        failureDomain:
+                          description: failureDomain is the name of FailureDomain
+                            used for this DeploymentZone
+                          maxLength: 256
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name is the abritary name of the DeploymentZone
+                            This name will be used in the install MachinePool
+                          maxLength: 256
+                          minLength: 1
+                          type: string
+                        placementConstraint:
+                          description: PlacementConstraint encapsulates the placement
+                            constraints used within this deployment zone.
+                          properties:
+                            folder:
+                              description: folder is the name or inventory path of
+                                the folder in which the virtual machine is created/located.
+                              maxLength: 2048
+                              minLength: 1
+                              type: string
+                            resourcePool:
+                              description: resourcePool is the absolute path of the
+                                resource pool where virtual machines will be created.
+                                The absolute path is of the form /<datacenter>/host/<cluster>/Resources/<resourcepool>.
+                              maxLength: 2048
+                              minLength: 1
+                              type: string
+                          type: object
+                        server:
+                          description: server is the fully-qualified domain name or
+                            the IP address of the vCenter server.
+                          maxLength: 255
+                          type: string
+                      required:
+                      - name
+                      - placementConstraint
+                      type: object
+                    type: array
                   diskType:
                     description: DiskType is the name of the disk provisioning type,
                       valid values are thin, thick, and eagerZeroedThick. When not
@@ -2988,6 +3058,158 @@ spec:
                     - thick
                     - eagerZeroedThick
                     type: string
+                  failureDomains:
+                    description: failureDomains holds the VSpherePlatformFailureDomainSpec
+                      which contains the definition of region, zone and the vCenter
+                      topology. If this is omitted failure domains (regions and zones)
+                      will not be used.
+                    items:
+                      description: FailureDomain holds the region and zone failure
+                        domain and the vCenter topology of that failure domain.
+                      properties:
+                        name:
+                          description: name defines the name of the FailureDomain
+                            This name is abritrary but will be used in VSpherePlatformDeploymentZone
+                            for association.
+                          maxLength: 256
+                          minLength: 1
+                          type: string
+                        region:
+                          description: region defines a FailureDomainCoordinate which
+                            includes the name of the vCenter tag, the failure domain
+                            type and the name of the vCenter tag category.
+                          properties:
+                            name:
+                              description: name is the name of the vCenter tag that
+                                represents this failure domain
+                              maxLength: 80
+                              minLength: 1
+                              type: string
+                            tagCategory:
+                              description: tagCategory is the category used for the
+                                tag
+                              maxLength: 80
+                              minLength: 1
+                              type: string
+                            type:
+                              allOf:
+                              - enum:
+                                - HostGroup
+                                - Datacenter
+                                - ComputeCluster
+                              - enum:
+                                - HostGroup
+                                - Datacenter
+                                - ComputeCluster
+                              description: type is the name of the failure domain
+                                type, which includes Datacenter, ComputeCluster and
+                                HostGroup
+                              type: string
+                          required:
+                          - name
+                          - tagCategory
+                          - type
+                          type: object
+                        topology:
+                          description: Topology describes a given failure domain using
+                            vSphere constructs
+                          properties:
+                            computeCluster:
+                              description: computeCluster as the failure domain This
+                                is required to be a path
+                              maxLength: 2048
+                              minLength: 1
+                              type: string
+                            datacenter:
+                              description: datacenter is the vCenter datacenter in
+                                which virtual machines will be located and defined
+                                as the failure domain.
+                              maxLength: 80
+                              minLength: 1
+                              type: string
+                            datastore:
+                              description: datastore is the name or inventory path
+                                of the datastore in which the virtual machine is created/located.
+                              maxLength: 2048
+                              minLength: 1
+                              type: string
+                            hosts:
+                              description: Hosts has information required for placement
+                                of machines on VSphere hosts.
+                              properties:
+                                hostGroupName:
+                                  description: hostGroupName is the Host Gorup name
+                                    configured within a vCenter cluster defining a
+                                    group of ESXi hosts.
+                                  maxLength: 80
+                                  minLength: 1
+                                  type: string
+                                vmGroupName:
+                                  description: vmGroupName is the Virtual Machine
+                                    Group name configured within a vCenter cluster
+                                    that is associated with the corresponding Host
+                                    Group.
+                                  maxLength: 80
+                                  minLength: 1
+                                  type: string
+                              required:
+                              - hostGroupName
+                              - vmGroupName
+                              type: object
+                            networks:
+                              description: networks is the list of networks within
+                                this failure domain
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - computeCluster
+                          - datacenter
+                          - datastore
+                          type: object
+                        zone:
+                          description: zone defines a VSpherePlatformFailureDomain
+                            which includes the name of the vCenter tag, the failure
+                            domain type and the name of the vCenter tag category.
+                          properties:
+                            name:
+                              description: name is the name of the vCenter tag that
+                                represents this failure domain
+                              maxLength: 80
+                              minLength: 1
+                              type: string
+                            tagCategory:
+                              description: tagCategory is the category used for the
+                                tag
+                              maxLength: 80
+                              minLength: 1
+                              type: string
+                            type:
+                              allOf:
+                              - enum:
+                                - HostGroup
+                                - Datacenter
+                                - ComputeCluster
+                              - enum:
+                                - HostGroup
+                                - Datacenter
+                                - ComputeCluster
+                              description: type is the name of the failure domain
+                                type, which includes Datacenter, ComputeCluster and
+                                HostGroup
+                              type: string
+                          required:
+                          - name
+                          - tagCategory
+                          - type
+                          type: object
+                      required:
+                      - name
+                      - region
+                      - topology
+                      - zone
+                      type: object
+                    type: array
                   folder:
                     description: Folder is the absolute path of the folder that will
                       be used and/or created for virtual machines. The absolute path
@@ -3016,6 +3238,49 @@ spec:
                   vCenter:
                     description: VCenter is the domain name or IP address of the vCenter.
                     type: string
+                  vcenters:
+                    description: vcenters holds the connection details for services
+                      to communicate with vCenter. Currently only a single vCenter
+                      is supported.
+                    items:
+                      description: VCenter stores the vCenter connection fields https://github.com/kubernetes/cloud-provider-vsphere/blob/master/pkg/common/config/types_yaml.go
+                      properties:
+                        datacenters:
+                          description: Datacenter in which VMs are located.
+                          items:
+                            type: string
+                          minItems: 1
+                          type: array
+                        password:
+                          description: Password is the password for the user to use
+                            to connect to the vCenter.
+                          type: string
+                        port:
+                          default: 443
+                          description: port is the TCP port that will be used to communicate
+                            to the vCenter endpoint. This is typically unchanged from
+                            the default of HTTPS TCP/443.
+                          maximum: 32767
+                          minimum: 1
+                          type: integer
+                        server:
+                          description: server is the fully-qualified domain name or
+                            the IP address of the vCenter server.
+                          maxLength: 255
+                          type: string
+                        user:
+                          description: Username is the username that will be used
+                            to connect to vCenter
+                          type: string
+                      required:
+                      - datacenters
+                      - password
+                      - server
+                      - user
+                      type: object
+                    maxItems: 1
+                    minItems: 1
+                    type: array
                 required:
                 - datacenter
                 - defaultDatastore

@@ -3,6 +3,7 @@ package vsphere
 
 import (
 	"fmt"
+	"regexp"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/pkg/errors"
@@ -22,20 +23,72 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if poolPlatform := pool.Platform.Name(); poolPlatform != vsphere.Name {
 		return nil, fmt.Errorf("non-VSphere machine-pool: %q", poolPlatform)
 	}
+
+	var machines []machineapi.Machine
+
 	platform := config.Platform.VSphere
 	mpool := pool.Platform.VSphere
 
-	total := int64(1)
-	if pool.Replicas != nil {
-		total = *pool.Replicas
+	azs := mpool.Zones
+	numOfAZs := len(azs)
+	definedZones := make(map[string]*vsphere.Platform)
+
+	if numOfAZs > 0 {
+		for _, az := range azs {
+			for _, deploymentZone := range platform.DeploymentZones {
+				if az == deploymentZone.Name {
+					if deploymentZone.ControlPlane == vsphere.NotAllowed {
+						return nil, fmt.Errorf("zone %s is not allowed to host control plane nodes", az)
+					}
+					break
+				}
+			}
+		}
+		zones, err := getDefinedZones(platform, true)
+		if err != nil {
+			return machines, err
+		}
+		definedZones = zones
 	}
-	var machines []machineapi.Machine
-	for idx := int64(0); idx < total; idx++ {
+
+	replicas := int64(1)
+	if pool.Replicas != nil {
+		replicas = *pool.Replicas
+	}
+
+	for idx := int64(0); idx < replicas; idx++ {
+		var failureDomain *vsphere.FailureDomain
+		if numOfAZs > 0 {
+			desiredZone := mpool.Zones[int(idx)%numOfAZs]
+			if _, exists := definedZones[desiredZone]; !exists {
+				return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
+			}
+			deploymentZone, err := getDeploymentZone(desiredZone, config.Platform.VSphere)
+			if err != nil {
+				return nil, errors.Errorf("deployment zone [%s] specified by machinepool is not defined", desiredZone)
+			}
+			failureDomain, err = getFailureDomain(deploymentZone.FailureDomain, config.Platform.VSphere)
+			if err != nil {
+				return nil, errors.Errorf("failure domain [%s] specified by deployment zone is not defined", deploymentZone.FailureDomain)
+			}
+
+			platform = definedZones[desiredZone]
+		}
+
 		provider, err := provider(clusterID, platform, mpool, osImage, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
 
+		machineLabels := map[string]string{
+			"machine.openshift.io/cluster-api-cluster":      clusterID,
+			"machine.openshift.io/cluster-api-machine-role": role,
+			"machine.openshift.io/cluster-api-machine-type": role,
+		}
+		if failureDomain != nil {
+			machineLabels["machine.openshift.io/zone"] = failureDomain.Zone.Name
+			machineLabels["machine.openshift.io/region"] = failureDomain.Region.Name
+		}
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -44,11 +97,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "openshift-machine-api",
 				Name:      fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
-				Labels: map[string]string{
-					"machine.openshift.io/cluster-api-cluster":      clusterID,
-					"machine.openshift.io/cluster-api-machine-role": role,
-					"machine.openshift.io/cluster-api-machine-type": role,
-				},
+				Labels:    machineLabels,
 			},
 			Spec: machineapi.MachineSpec{
 				ProviderSpec: machineapi.ProviderSpec{
@@ -64,7 +113,14 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.MachinePool, osImage string, userDataSecret string) (*machineapi.VSphereMachineProviderSpec, error) {
 	folder := fmt.Sprintf("/%s/vm/%s", platform.Datacenter, clusterID)
+
 	resourcePool := fmt.Sprintf("/%s/host/%s/Resources", platform.Datacenter, platform.Cluster)
+	resourcePoolPrefix := "^\\/(.*?)\\/host\\/(.*?)"
+	hasFullPath, _ := regexp.MatchString(resourcePoolPrefix, platform.Cluster)
+	if hasFullPath {
+		resourcePool = fmt.Sprintf("%s/Resources", platform.Cluster)
+	}
+
 	if platform.Folder != "" {
 		folder = platform.Folder
 	}

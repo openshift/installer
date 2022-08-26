@@ -59,6 +59,7 @@ func (*Infrastructure) Dependencies() []asset.Asset {
 
 // Generate generates the Infrastructure config and its CRD.
 func (i *Infrastructure) Generate(dependencies asset.Parents) error {
+	cloudProviderConfigMapKey := cloudProviderConfigDataKey
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	cloudproviderconfig := &CloudProviderConfig{}
@@ -193,6 +194,10 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 				IngressIP:           installConfig.Config.VSphere.IngressVIP,
 			}
 		}
+		if _, exists := cloudproviderconfig.ConfigMap.Data["vsphere.conf"]; exists {
+			cloudProviderConfigMapKey = "vsphere.conf"
+		}
+
 	case ovirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.OvirtPlatformType
 		config.Status.PlatformStatus.Ovirt = &configv1.OvirtPlatformStatus{
@@ -262,7 +267,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 
 	if cloudproviderconfig.ConfigMap != nil {
 		// set the configmap reference.
-		config.Spec.CloudConfig = configv1.ConfigMapFileReference{Name: cloudproviderconfig.ConfigMap.Name, Key: cloudProviderConfigDataKey}
+		config.Spec.CloudConfig = configv1.ConfigMapFileReference{Name: cloudproviderconfig.ConfigMap.Name, Key: cloudProviderConfigMapKey}
 		i.FileList = append(i.FileList, cloudproviderconfig.File)
 	}
 
