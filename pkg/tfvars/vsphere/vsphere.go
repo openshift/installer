@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/openshift/installer/pkg/asset/installconfig"
-
 	"github.com/pkg/errors"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	vtypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -39,10 +38,10 @@ type config struct {
 	PreexistingFolder bool            `json:"vsphere_preexisting_folder"`
 	DiskType          vtypes.DiskType `json:"vsphere_disk_type"`
 
-	VCenters          map[string]vtypes.VCenterSpec         `json:"vsphere_vcenters"`
-	DeploymentZone    map[string]*vtypes.DeploymentZoneSpec `json:"vsphere_deployment_zone"`
-	FailureDomainZone map[string]vtypes.FailureDomainSpec   `json:"vsphere_failure_zone"`
-	NetworkZone       map[string]string                     `json:"vsphere_network_zone"`
+	VCenters          map[string]vtypes.VCenter         `json:"vsphere_vcenters"`
+	DeploymentZone    map[string]*vtypes.DeploymentZone `json:"vsphere_deployment_zone"`
+	FailureDomainZone map[string]vtypes.FailureDomain   `json:"vsphere_failure_zone"`
+	NetworkZone       map[string]string                 `json:"vsphere_network_zone"`
 
 	FolderZone map[string]*folder `json:"vsphere_folder_zone"`
 
@@ -116,7 +115,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	return json.MarshalIndent(cfg, "", "  ")
 }
 
-func createFolderZoneMap(infraID string, deploymentZone map[string]*vtypes.DeploymentZoneSpec, failureDomainZones map[string]vtypes.FailureDomainSpec) map[string]*folder {
+func createFolderZoneMap(infraID string, deploymentZone map[string]*vtypes.DeploymentZone, failureDomainZones map[string]vtypes.FailureDomain) map[string]*folder {
 	folders := make(map[string]*folder)
 
 	for k, v := range deploymentZone {
@@ -136,8 +135,8 @@ func createFolderZoneMap(infraID string, deploymentZone map[string]*vtypes.Deplo
 	return folders
 }
 
-func convertDeploymentZonesToMap(values []vtypes.DeploymentZoneSpec) map[string]*vtypes.DeploymentZoneSpec {
-	deploymentZoneMap := make(map[string]*vtypes.DeploymentZoneSpec)
+func convertDeploymentZonesToMap(values []vtypes.DeploymentZone) map[string]*vtypes.DeploymentZone {
+	deploymentZoneMap := make(map[string]*vtypes.DeploymentZone)
 
 	for i := range values {
 		tempValue := &values[i]
@@ -151,7 +150,7 @@ func convertControlPlaneToMap(values []machineapi.Machine, installConfig *instal
 
 	var region string
 	var zone string
-	var deploymentZone vtypes.DeploymentZoneSpec
+	var deploymentZone vtypes.DeploymentZone
 	var failureDomainName string
 
 	for i, v := range values {
@@ -185,16 +184,16 @@ func convertControlPlaneToMap(values []machineapi.Machine, installConfig *instal
 	return controlPlaneZonalConfigs
 }
 
-func convertFailureZoneToMap(values []vtypes.FailureDomainSpec) map[string]vtypes.FailureDomainSpec {
-	failureDomainMap := make(map[string]vtypes.FailureDomainSpec)
+func convertFailureZoneToMap(values []vtypes.FailureDomain) map[string]vtypes.FailureDomain {
+	failureDomainMap := make(map[string]vtypes.FailureDomain)
 	for _, v := range values {
 		failureDomainMap[v.Name] = v
 	}
 	return failureDomainMap
 }
 
-func convertVCentersToMap(values []vtypes.VCenterSpec) map[string]vtypes.VCenterSpec {
-	vcenterMap := make(map[string]vtypes.VCenterSpec)
+func convertVCentersToMap(values []vtypes.VCenter) map[string]vtypes.VCenter {
+	vcenterMap := make(map[string]vtypes.VCenter)
 	for _, v := range values {
 		vcenterMap[v.Server] = v
 	}

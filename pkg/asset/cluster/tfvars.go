@@ -751,6 +751,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 
 		controlPlaneConfigs := make([]*machinev1beta1.VSphereMachineProviderSpec, len(controlPlanes))
+		for i, c := range controlPlanes {
+			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
+		}
 
 		vim25Client, _, cleanup, err := vsphereconfig.CreateVSphereClients(context.TODO(),
 			installConfig.Config.VSphere.VCenter,
@@ -767,7 +770,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		 * The zone could be unused or just defined for compute machines
 		 */
 		for _, deploymentZone := range installConfig.Config.VSphere.DeploymentZones {
-			var failureDomain vsphere.FailureDomainSpec
+			var failureDomain vsphere.FailureDomain
 
 			for _, fd := range installConfig.Config.VSphere.FailureDomains {
 				if fd.Name == deploymentZone.FailureDomain {
@@ -790,18 +793,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
-		for i, c := range controlPlanes {
-			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
-			networkID, err = vsphereconfig.GetNetworkMoID(context.TODO(),
-				vim25Client,
-				finder,
-				controlPlaneConfigs[i].Workspace.Datacenter,
-				installConfig.Config.VSphere.Cluster,
-				controlPlaneConfigs[i].Network.Devices[0].NetworkName)
-			if err != nil {
-				return errors.Wrap(err, "failed to get vSphere network ID")
-			}
-
+		networkID, err = vsphereconfig.GetNetworkMoID(context.TODO(),
+			vim25Client,
+			finder,
+			controlPlaneConfigs[0].Workspace.Datacenter,
+			installConfig.Config.VSphere.Cluster,
+			controlPlaneConfigs[0].Network.Devices[0].NetworkName)
+		if err != nil {
+			return errors.Wrap(err, "failed to get vSphere network ID")
 		}
 
 		// Set this flag to use an existing folder specified in the install-config. Otherwise, create one.
