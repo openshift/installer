@@ -15,7 +15,7 @@ func SetPlatformDefaults(p *vsphere.Platform, installConfig *types.InstallConfig
 	// are not defined we must use the default for the datacenter
 	// and cluster.
 	for i, v := range p.DeploymentZones {
-		var failureDomain vsphere.FailureDomainSpec
+		var failureDomain vsphere.FailureDomain
 		for _, f := range p.FailureDomains {
 			if v.FailureDomain == f.Name {
 				failureDomain = f
