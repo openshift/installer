@@ -468,8 +468,8 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 	}
 	switch {
 	case platform.BareMetal != nil:
-		ensureIPv4IsFirstInDualStackSlice(&platform.BareMetal.APIVIPs)
-		ensureIPv4IsFirstInDualStackSlice(&platform.BareMetal.IngressVIPs)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.BareMetal.APIVIPs, fldPath.Child(baremetal.Name, newVIPsFields.APIVIPs))...)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.BareMetal.IngressVIPs, fldPath.Child(baremetal.Name, newVIPsFields.IngressVIPs))...)
 
 		virtualIPs = vips{
 			API:     platform.BareMetal.APIVIPs,
@@ -478,8 +478,8 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 
 		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, network, fldPath.Child(baremetal.Name))...)
 	case platform.Nutanix != nil:
-		ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.APIVIPs)
-		ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.IngressVIPs)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.APIVIPs, fldPath.Child(nutanix.Name, newVIPsFields.APIVIPs))...)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.IngressVIPs, fldPath.Child(nutanix.Name, newVIPsFields.IngressVIPs))...)
 
 		virtualIPs = vips{
 			API:     platform.Nutanix.APIVIPs,
@@ -488,8 +488,8 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 
 		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, network, fldPath.Child(nutanix.Name))...)
 	case platform.OpenStack != nil:
-		ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.APIVIPs)
-		ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.IngressVIPs)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.APIVIPs, fldPath.Child(openstack.Name, newVIPsFields.APIVIPs))...)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.IngressVIPs, fldPath.Child(openstack.Name, newVIPsFields.IngressVIPs))...)
 
 		virtualIPs = vips{
 			API:     platform.OpenStack.APIVIPs,
@@ -498,8 +498,8 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 
 		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, network, fldPath.Child(openstack.Name))...)
 	case platform.VSphere != nil:
-		ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.APIVIPs)
-		ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.IngressVIPs)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.APIVIPs, fldPath.Child(vsphere.Name, newVIPsFields.APIVIPs))...)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.IngressVIPs, fldPath.Child(vsphere.Name, newVIPsFields.IngressVIPs))...)
 
 		virtualIPs = vips{
 			API:     platform.VSphere.APIVIPs,
@@ -508,8 +508,8 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 
 		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, network, fldPath.Child(vsphere.Name))...)
 	case platform.Ovirt != nil:
-		ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.APIVIPs)
-		ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.IngressVIPs)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.APIVIPs, fldPath.Child(ovirt.Name, newVIPsFields.APIVIPs))...)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.IngressVIPs, fldPath.Child(ovirt.Name, newVIPsFields.IngressVIPs))...)
 
 		newVIPsFields = vipFields{
 			APIVIPs:     "api_vips",
@@ -528,10 +528,12 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 	return allErrs
 }
 
-func ensureIPv4IsFirstInDualStackSlice(vips *[]string) error {
+func ensureIPv4IsFirstInDualStackSlice(vips *[]string, fldPath *field.Path) field.ErrorList {
+	errList := field.ErrorList{}
 	isDualStack, err := utilsnet.IsDualStackIPStrings(*vips)
 	if err != nil {
-		return err
+		errList = append(errList, field.Invalid(fldPath, vips, err.Error()))
+		return errList
 	}
 
 	if isDualStack {
@@ -540,11 +542,12 @@ func ensureIPv4IsFirstInDualStackSlice(vips *[]string) error {
 				(*vips)[0], (*vips)[1] = (*vips)[1], (*vips)[0]
 			}
 		} else {
-			return fmt.Errorf("wrong number of VIPs given. Expecting 2 VIPs for dual stack")
+			errList = append(errList, field.Invalid(fldPath, vips, "wrong number of VIPs given. Expecting 2 VIPs for dual stack"))
+			return errList
 		}
 	}
 
-	return nil
+	return errList
 }
 
 // validateAPIAndIngressVIPs validates the API and Ingress VIPs
