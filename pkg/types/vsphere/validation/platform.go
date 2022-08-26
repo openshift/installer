@@ -58,11 +58,6 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 		allErrs = append(allErrs, validateMultiVCenter(p, fldPath)...)
 	}
 
-	// If all VIPs are empty, skip IP validation.  All VIPs are required to be defined together.
-	if strings.Join([]string{p.APIVIP, p.IngressVIP}, "") != "" {
-		allErrs = append(allErrs, validateVIPs(p, fldPath)...)
-	}
-
 	return allErrs
 }
 
