@@ -11,6 +11,9 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
+// AWS supports <=50 tags on resources, this reserves 10 for Managed OpenShift use
+const AWS_CUSTOMER_TAG_COUNT = 40
+
 // tagRegex is used to check that the keys and values of a tag contain only valid characters.
 var tagRegex = regexp.MustCompile(`^[0-9A-Za-z_.:/=+-@]*$`)
 
@@ -48,8 +51,8 @@ func validateUserTags(tags map[string]string, propagatingTags bool, fldPath *fie
 	if len(tags) == 0 {
 		return allErrs
 	}
-	if len(tags) > 8 {
-		allErrs = append(allErrs, field.Invalid(fldPath, len(tags), "number of user tags cannot be more than 8"))
+	if len(tags) > AWS_CUSTOMER_TAG_COUNT {
+		allErrs = append(allErrs, field.Invalid(fldPath, len(tags), fmt.Sprintf("number of user tags cannot be more than %d", AWS_CUSTOMER_TAG_COUNT)))
 	}
 	for key, value := range tags {
 		if strings.EqualFold(key, "Name") {
