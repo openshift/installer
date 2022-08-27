@@ -3,6 +3,12 @@ variable "gcp_project_id" {
   description = "The target GCP project for the cluster."
 }
 
+variable "gcp_network_project_id" {
+  type        = string
+  description = "The project that the network and subnets exist in when they are not in the main ProjectID."
+  default     = ""
+}
+
 variable "gcp_service_account" {
   type        = string
   description = "The service account for authenticating with GCP APIs."
