@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/coreos/ignition/v2/config/util"
@@ -141,11 +142,16 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	// Get the mirror for release image
 	releaseImageMirror := ""
-	source := strings.Split(agentManifests.ClusterImageSet.Spec.ReleaseImage, ":")
+	source := regexp.MustCompile(`^(.+?)(@sha256)?:(.+)`).FindStringSubmatch(agentManifests.ClusterImageSet.Spec.ReleaseImage)
 	for _, config := range registriesConfig.MirrorConfig {
-		if config.Location == source[0] {
+		if config.Location == source[1] {
 			// include the tag with the build release image
-			releaseImageMirror = fmt.Sprintf("%s:%s", config.Mirror, source[1])
+			if len(source) == 4 {
+				// Has Sha256
+				releaseImageMirror = fmt.Sprintf("%s%s:%s\n", config.Mirror, source[2], source[3])
+			} else if len(source) == 3 {
+				releaseImageMirror = fmt.Sprintf("%s:%s\n", config.Mirror, source[2])
+			}
 		}
 	}
 
