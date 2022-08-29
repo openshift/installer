@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/find"
+	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25"
 	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -19,9 +20,10 @@ import (
 )
 
 type validationContext struct {
-	User   string
-	Finder Finder
-	Client *vim25.Client
+	User        string
+	AuthManager AuthManager
+	Finder      Finder
+	Client      *vim25.Client
 }
 
 // Validate executes platform-specific validation.
@@ -43,9 +45,10 @@ func getVCenterClient(deploymentZone vsphere.DeploymentZone, ic *types.InstallCo
 				vcenter.Password)
 
 			validationCtx := validationContext{
-				User:   vcenter.Username,
-				Finder: find.NewFinder(vim25Client),
-				Client: vim25Client,
+				User:        vcenter.Username,
+				AuthManager: newAuthManager(vim25Client),
+				Finder:      find.NewFinder(vim25Client),
+				Client:      vim25Client,
 			}
 			return &validationCtx, cleanup, err
 		}
@@ -114,7 +117,11 @@ func validateMultiZoneProvisioning(validationCtx *validationContext, failureDoma
 		return append(allErrs, field.Invalid(topologyField.Child("computeCluster"), computeCluster, "full path of cluster is required"))
 	}
 	computeClusterName := clusterPathParts[2]
-	errs := computeClusterExists(validationCtx, computeCluster, topologyField.Child("computeCluster"))
+	errs := validateVcenterPrivileges(validationCtx, topologyField.Child("server"))
+	if len(errs) > 0 {
+		return append(allErrs, errs...)
+	}
+	errs = computeClusterExists(validationCtx, computeCluster, topologyField.Child("computeCluster"))
 	if len(errs) > 0 {
 		return append(allErrs, errs...)
 	}
@@ -155,9 +162,10 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 
 	finder := NewFinder(vim25Client)
 	validationCtx := &validationContext{
-		User:   ic.VSphere.Username,
-		Finder: finder,
-		Client: vim25Client,
+		User:        ic.VSphere.Username,
+		AuthManager: object.NewAuthorizationManager(vim25Client),
+		Finder:      finder,
+		Client:      vim25Client,
 	}
 
 	return validateProvisioning(validationCtx, ic)
@@ -168,6 +176,7 @@ func validateProvisioning(validationCtx *validationContext, ic *types.InstallCon
 	platform := ic.Platform.VSphere
 	vsphereField := field.NewPath("platform").Child("vsphere")
 	allErrs = append(allErrs, validation.ValidateForProvisioning(platform, vsphereField)...)
+	allErrs = append(allErrs, validateVcenterPrivileges(validationCtx, vsphereField.Child("vcenter"))...)
 	allErrs = append(allErrs, folderExists(validationCtx, ic.VSphere.Folder, vsphereField.Child("folder"))...)
 	allErrs = append(allErrs, resourcePoolExists(validationCtx, ic.VSphere.ResourcePool, vsphereField.Child("resourcePool"))...)
 
@@ -215,9 +224,15 @@ func folderExists(validationCtx *validationContext, folderPath string, fldPath *
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
-	_, err := finder.Folder(ctx, folderPath)
+	folder, err := finder.Folder(ctx, folderPath)
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, folderPath, err.Error()))
+	}
+	permissionGroup := permissions[permissionFolder]
+
+	err = comparePrivileges(ctx, validationCtx, folder.Reference(), permissionGroup)
+	if err != nil {
+		return append(allErrs, field.InternalError(fldPath, err))
 	}
 	return allErrs
 }
@@ -245,9 +260,14 @@ func validateNetwork(validationCtx *validationContext, datacenterName string, cl
 	// Remove any trailing backslash before getting networkMoID
 	trimmedPath := strings.TrimPrefix(dataCenter.InventoryPath, "/")
 
-	_, err = GetNetworkMo(ctx, client, finder, trimmedPath, clusterName, networkName)
+	network, err := GetNetworkMo(ctx, client, finder, trimmedPath, clusterName, networkName)
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, networkName, err.Error())}
+	}
+	permissionGroup := permissions[permissionPortgroup]
+	err = comparePrivileges(ctx, validationCtx, network.Reference(), permissionGroup)
+	if err != nil {
+		return field.ErrorList{field.InternalError(fldPath, err)}
 	}
 	return field.ErrorList{}
 }
@@ -261,10 +281,13 @@ func computeClusterExists(validationCtx *validationContext, computeCluster strin
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
-	_, err := validationCtx.Finder.ClusterComputeResource(ctx, computeCluster)
+	computeClusterMo, err := validationCtx.Finder.ClusterComputeResource(ctx, computeCluster)
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, computeCluster, err.Error())}
 	}
+	permissionGroup := permissions[permissionCluster]
+	err = comparePrivileges(ctx, validationCtx, computeClusterMo.Reference(), permissionGroup)
+
 	if err != nil {
 		return field.ErrorList{field.InternalError(fldPath, err)}
 	}
@@ -274,6 +297,8 @@ func computeClusterExists(validationCtx *validationContext, computeCluster strin
 
 // resourcePoolExists returns an error if a resourcePool is specified in the vSphere platform but a resourcePool with that name is not found in the datacenter.
 func resourcePoolExists(validationCtx *validationContext, resourcePool string, fldPath *field.Path) field.ErrorList {
+	finder := validationCtx.Finder
+
 	// If no resourcePool is specified, skip this check as the root resourcePool will be used.
 	if resourcePool == "" {
 		return field.ErrorList{}
@@ -282,8 +307,14 @@ func resourcePoolExists(validationCtx *validationContext, resourcePool string, f
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
-	if _, err := validationCtx.Finder.ResourcePool(ctx, resourcePool); err != nil {
+	resourcePoolMo, err := finder.ResourcePool(ctx, resourcePool)
+	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, resourcePool, err.Error())}
+	}
+	permissionGroup := permissions[permissionResourcePool]
+	err = comparePrivileges(ctx, validationCtx, resourcePoolMo.Reference(), permissionGroup)
+	if err != nil {
+		return field.ErrorList{field.InternalError(fldPath, err)}
 	}
 	return field.ErrorList{}
 }
@@ -296,9 +327,14 @@ func datacenterExists(validationCtx *validationContext, datacenterName string, f
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
-	_, err := finder.Datacenter(ctx, datacenterName)
+	dataCenter, err := finder.Datacenter(ctx, datacenterName)
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, datacenterName, err.Error())}
+	}
+	permissionGroup := permissions[permissionDatacenter]
+	err = comparePrivileges(ctx, validationCtx, dataCenter.Reference(), permissionGroup)
+	if err != nil {
+		return field.ErrorList{field.InternalError(fldPath, err)}
 	}
 	return field.ErrorList{}
 }
@@ -336,7 +372,26 @@ func datastoreExists(validationCtx *validationContext, datacenterName string, da
 	if datastoreMo == nil {
 		return field.ErrorList{field.Invalid(fldPath, datastoreName, fmt.Sprintf("could not find datastore %s", datastoreName))}
 	}
+	permissionGroup := permissions[permissionDatastore]
+	err = comparePrivileges(ctx, validationCtx, datastoreMo.Reference(), permissionGroup)
 
+	if err != nil {
+		return field.ErrorList{field.InternalError(fldPath, err)}
+	}
+	return field.ErrorList{}
+}
+
+// validateVcenterPrivileges verifies the privileges associated with
+func validateVcenterPrivileges(validationCtx *validationContext, fldPath *field.Path) field.ErrorList {
+	finder := validationCtx.Finder
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+	rootFolder, err := finder.Folder(ctx, "/")
+	if err != nil {
+		return field.ErrorList{field.InternalError(fldPath, err)}
+	}
+	permissionGroup := permissions[permissionVcenter]
+	err = comparePrivileges(ctx, validationCtx, rootFolder.Reference(), permissionGroup)
 	if err != nil {
 		return field.ErrorList{field.InternalError(fldPath, err)}
 	}

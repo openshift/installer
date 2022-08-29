@@ -9,7 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/govmomi/object"
-	types2 "github.com/vmware/govmomi/vim25/types"
+	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/vsphere/mock"
@@ -35,6 +35,7 @@ func validIPIInstallConfig(dcName string, fName string) *types.InstallConfig {
 				Cluster:          fmt.Sprintf("%s/%s_C0", fName, dcName),
 				Datacenter:       fmt.Sprintf("%s/%s", fName, dcName),
 				DefaultDatastore: "LocalDS_0",
+				ResourcePool:     "/DC0/host/DC0_C0/Resources/test-resourcepool",
 				Network:          fmt.Sprintf("%s_DVPG0", dcName),
 				Password:         "valid_password",
 				Username:         "valid_username",
@@ -251,16 +252,22 @@ func TestValidate(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, err = resourcePools[0].Create(ctx, "test-resourcepool", types2.DefaultResourceConfigSpec())
+	_, err = resourcePools[0].Create(ctx, "test-resourcepool", vim25types.DefaultResourceConfigSpec())
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	validPermissionsAuthManagerClient, err := buildAuthManagerClient(ctx, ctrl, finder, "test_username", nil)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
 	validationCtx := &validationContext{
-		User:   "test_username",
-		Finder: finder,
-		Client: client,
+		User:        "test_username",
+		AuthManager: validPermissionsAuthManagerClient,
+		Finder:      finder,
+		Client:      client,
 	}
 
 	for _, test := range tests {
