@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 	"testing"
@@ -83,6 +84,11 @@ func TestIgnition_getTemplateData(t *testing.T) {
 }
 
 func TestIgnition_addStaticNetworkConfig(t *testing.T) {
+	_, execErr := exec.LookPath("nmstatectl")
+	if execErr != nil {
+		t.Skip("No nmstatectl binary available")
+	}
+
 	cases := []struct {
 		Name                string
 		staticNetworkConfig []*models.HostStaticNetworkConfig

@@ -338,7 +338,8 @@ spec:
   interfaces:
     - name: "eth0"
       macAddress: "52:54:01:aa:aa:a1"`,
-			expectedError: "invalid NMStateConfig configuration: ObjectMeta.Labels: Required value: mynmstateconfig does not have any label set",
+			requiresNmstatectl: true,
+			expectedError:      "invalid NMStateConfig configuration: ObjectMeta.Labels: Required value: mynmstateconfig does not have any label set",
 		},
 
 		{
@@ -357,15 +358,14 @@ spec:
 		},
 	}
 	for _, tc := range cases {
-		// nmstate may not be installed yet in CI so skip this test if not
-		if tc.requiresNmstatectl {
-			_, execErr := exec.LookPath("nmstatectl")
-			if execErr != nil {
-				continue
-			}
-		}
-
 		t.Run(tc.name, func(t *testing.T) {
+			// nmstate may not be installed yet in CI so skip this test if not
+			if tc.requiresNmstatectl {
+				_, execErr := exec.LookPath("nmstatectl")
+				if execErr != nil {
+					t.Skip("No nmstatectl binary available")
+				}
+			}
 
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
