@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
+	"github.com/openshift/installer/pkg/types/vsphere/validation"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -85,7 +86,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			"machine.openshift.io/cluster-api-machine-role": role,
 			"machine.openshift.io/cluster-api-machine-type": role,
 		}
-		if failureDomain != nil {
+		if validation.IsMultiZoneInstallation(platform) && failureDomain != nil {
 			machineLabels["machine.openshift.io/zone"] = failureDomain.Zone.Name
 			machineLabels["machine.openshift.io/region"] = failureDomain.Region.Name
 		}

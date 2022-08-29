@@ -48,6 +48,14 @@ const (
 	// NotAllowed indicates that the deployment is not suitable for
 	// control plane nodes.
 	NotAllowed DeploymentSuitable = "NotAllowed"
+
+	// SingleZoneFailureDomain name of the generated failure domain created in response
+	// to a legacy installation install-config.
+	SingleZoneFailureDomain string = "__reserved_single-zone-fd"
+
+	// SingleZoneDeploymentZone name of the generated deployment zone created in response
+	// to a legacy installation install-config.
+	SingleZoneDeploymentZone string = "__reserved_single-zone-dz"
 )
 
 // Platform stores any global configuration used for vsphere platforms

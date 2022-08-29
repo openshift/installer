@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
+	"github.com/openshift/installer/pkg/types/vsphere/validation"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -165,13 +166,18 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			if err != nil {
 				return nil, err
 			}
+
 			failureDomainName := deploymentZone.FailureDomain
-			failureDomain, err := getFailureDomain(failureDomainName, platform)
-			if err != nil {
-				return nil, err
+			osImageForZone := osImage
+			if validation.IsMultiZoneInstallation(platform) {
+				failureDomain, err := getFailureDomain(failureDomainName, platform)
+				if err != nil {
+					return nil, err
+				}
+
+				osImageForZone = fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region.Name, failureDomain.Zone.Name)
 			}
 
-			osImageForZone := fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region.Name, failureDomain.Zone.Name)
 			machineset, err := getMachineSetWithPlatform(
 				clusterID,
 				name,

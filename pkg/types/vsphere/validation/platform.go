@@ -53,6 +53,13 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 		allErrs = append(allErrs, validateDiskType(p, fldPath)...)
 	}
 
+	if len(p.DeploymentZones) == 0 &&
+		len(p.VCenters) == 0 &&
+		len(p.FailureDomains) == 0 {
+		// legacy platform spec passes validation and there are no deployment zones defined
+		generateSingleZonePlatformConfig(p)
+	}
+
 	if len(p.VCenters) > 0 {
 		allErrs = append(allErrs, validateMultiVCenter(p, fldPath)...)
 	}
@@ -67,6 +74,10 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 
 func validateMultiVCenter(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	if IsMultiZoneInstallation(p) == false {
+		return allErrs
+	}
+
 	allErrs = append(allErrs, validateVCenters(p, fldPath.Child("vcenters"))...)
 	if len(allErrs) > 0 {
 		// if vcenters fails validation, this will cascade to failureDomains and deploymentZones
@@ -148,6 +159,7 @@ func validateFailureDomain(failureDomain *vsphere.FailureDomainCoordinate, fldPa
 
 func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+
 	topologyFld := fldPath.Child("topology")
 	for _, failureDomain := range p.FailureDomains {
 		if len(failureDomain.Name) == 0 {
@@ -279,6 +291,55 @@ func validateDeploymentZones(p *vsphere.Platform, fldPath *field.Path) field.Err
 		}
 	}
 	return allErrs
+}
+
+func generateSingleZonePlatformConfig(p *vsphere.Platform) {
+	p.VCenters = []vsphere.VCenter{
+		{
+			Server:      p.VCenter,
+			Port:        443,
+			Username:    p.Username,
+			Password:    p.Password,
+			Datacenters: []string{p.Datacenter},
+		},
+	}
+	p.DeploymentZones = []vsphere.DeploymentZone{
+		{
+			Name:          vsphere.SingleZoneDeploymentZone,
+			Server:        p.VCenter,
+			FailureDomain: vsphere.SingleZoneFailureDomain,
+			ControlPlane:  vsphere.Allowed,
+			PlacementConstraint: vsphere.PlacementConstraint{
+				ResourcePool: p.ResourcePool,
+				Folder:       p.Folder,
+			},
+		},
+	}
+	p.FailureDomains = []vsphere.FailureDomain{
+		{
+			Name:   vsphere.SingleZoneFailureDomain,
+			Region: vsphere.FailureDomainCoordinate{},
+			Zone:   vsphere.FailureDomainCoordinate{},
+			Topology: vsphere.Topology{
+				Datacenter:     p.Datacenter,
+				ComputeCluster: fmt.Sprintf("/%s/host/%s", p.Datacenter, p.Cluster),
+				Networks:       []string{p.Network},
+				Datastore:      p.DefaultDatastore,
+			},
+		},
+	}
+}
+
+// IsMultiZoneInstallation checks the platform spec for the presence of a generated deployment zone.
+// If a generated deployment zone is not found, it is assumed that the install-config author is
+// configuring a multi-zone installation.
+func IsMultiZoneInstallation(p *vsphere.Platform) bool {
+	for _, deploymentZone := range p.DeploymentZones {
+		if deploymentZone.Name == vsphere.SingleZoneDeploymentZone {
+			return false
+		}
+	}
+	return true
 }
 
 // ValidateForProvisioning checks that the specified platform is valid.
