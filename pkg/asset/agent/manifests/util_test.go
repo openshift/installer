@@ -22,8 +22,6 @@ var (
 	ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain`
 	// TestSecret provides a ssh key for unit tests
 	TestSecret = `'{"auths":{"cloud.openshift.com":{"auth":"b3BlUTA=","email":"test@redhat.com"}}}`
-	// TestReleaseImage provides a release image url for unit tests
-	TestReleaseImage = "registry.ci.openshift.org/origin/release:4.11"
 )
 
 // GetValidOptionalInstallConfig returns a valid optional install config

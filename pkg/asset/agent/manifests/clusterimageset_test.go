@@ -18,6 +18,9 @@ import (
 )
 
 func TestClusterImageSet_Generate(t *testing.T) {
+	currentRelease, err := releaseimage.Default()
+	assert.NoError(t, err)
+
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -38,14 +41,14 @@ func TestClusterImageSet_Generate(t *testing.T) {
 				getValidOptionalInstallConfig(),
 				&releaseimage.Image{},
 			},
-			expectedError: "invalid ClusterImageSet configuration: Spec.ReleaseImage: Forbidden: value must be equal to " + TestReleaseImage,
+			expectedError: "invalid ClusterImageSet configuration: Spec.ReleaseImage: Forbidden: value must be equal to " + currentRelease,
 		},
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
 				getValidOptionalInstallConfig(),
 				&releaseimage.Image{
-					PullSpec: TestReleaseImage,
+					PullSpec: currentRelease,
 				},
 			},
 			expectedConfig: &hivev1.ClusterImageSet{
@@ -54,7 +57,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
 				},
 				Spec: hivev1.ClusterImageSetSpec{
-					ReleaseImage: TestReleaseImage,
+					ReleaseImage: currentRelease,
 				},
 			},
 		},
