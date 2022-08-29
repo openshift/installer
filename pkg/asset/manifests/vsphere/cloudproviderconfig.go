@@ -3,7 +3,6 @@ package vsphere
 import (
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/go-yaml/yaml"
@@ -27,39 +26,6 @@ func getFailureDomain(deploymentZone vspheretypes.DeploymentZone, p *vspheretype
 	return nil, fmt.Errorf("failure domain %s not found", deploymentZone.FailureDomain)
 }
 
-func appendTagCategory(tagCategory string, tagCategories []string) []string {
-	tagDefined := false
-	for _, regionTagCategory := range tagCategories {
-		if regionTagCategory == tagCategory {
-			tagDefined = true
-			break
-		}
-	}
-	if tagDefined == false {
-		return append(tagCategories, tagCategory)
-	}
-	return tagCategories
-}
-
-func getTagCategoriesForVcenter(p *vspheretypes.Platform) (string, string, error) {
-	regionTagCategories := make([]string, 0)
-	zoneTagCategories := make([]string, 0)
-	for _, vCenter := range p.VCenters {
-		for _, deploymentZone := range p.DeploymentZones {
-			if deploymentZone.Server != vCenter.Server {
-				continue
-			}
-			failureDomain, err := getFailureDomain(deploymentZone, p)
-			if err != nil {
-				return "", "", err
-			}
-			regionTagCategories = appendTagCategory(failureDomain.Region.TagCategory, regionTagCategories)
-			zoneTagCategories = appendTagCategory(failureDomain.Zone.TagCategory, zoneTagCategories)
-		}
-	}
-	return strings.Join(regionTagCategories, ","), strings.Join(zoneTagCategories, ","), nil
-}
-
 // MultiZoneYamlCloudProviderConfig generates the yaml out of tree cloud provider config for the vSphere platform.
 func MultiZoneYamlCloudProviderConfig(p *vspheretypes.Platform) (string, error) {
 	vCenters := make(map[string]*cloudconfig.VirtualCenterConfigYAML)
@@ -77,10 +43,6 @@ func MultiZoneYamlCloudProviderConfig(p *vspheretypes.Platform) (string, error) 
 		vCenters[vCenter.Server] = &vCenterConfig
 	}
 
-	regionTagCategory, zoneTagCategory, err := getTagCategoriesForVcenter(p)
-	if err != nil {
-		return "", err
-	}
 	cloudProviderConfig := cloudconfig.CommonConfigYAML{
 		Global: cloudconfig.GlobalYAML{
 			SecretName:      "vsphere-creds",
@@ -88,8 +50,8 @@ func MultiZoneYamlCloudProviderConfig(p *vspheretypes.Platform) (string, error) 
 		},
 		Vcenter: vCenters,
 		Labels: cloudconfig.LabelsYAML{
-			Zone:   zoneTagCategory,
-			Region: regionTagCategory,
+			Zone:   "openshift-zone",
+			Region: "openshift-region",
 		},
 	}
 
@@ -130,14 +92,9 @@ func MultiZoneIniCloudProviderConfig(folderPath string, p *vspheretypes.Platform
 	printIfNotEmpty(buf, "resourcepool-path", p.ResourcePool)
 	fmt.Fprintln(buf, "")
 
-	regionTagCategory, zoneTagCategory, err := getTagCategoriesForVcenter(p)
-	if err != nil {
-		return "", errors.Wrap(err, "error adding zones to the cloud-config")
-	}
-
 	fmt.Fprintln(buf, "[Labels]")
-	printIfNotEmpty(buf, "region", regionTagCategory)
-	printIfNotEmpty(buf, "zone", zoneTagCategory)
+	printIfNotEmpty(buf, "region", "openshift-region")
+	printIfNotEmpty(buf, "zone", "openshift-zone")
 
 	return buf.String(), nil
 }
