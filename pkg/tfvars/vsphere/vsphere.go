@@ -19,6 +19,11 @@ type folder struct {
 	Datacenter string `json:"vsphere_datacenter"`
 }
 
+type controlplane struct {
+	DeploymentZone     string                                 `json:"name"`
+	ControlPlaneConfig *machineapi.VSphereMachineProviderSpec `json:"vsphere_control_plane"`
+}
+
 type config struct {
 	VSphereURL        string          `json:"vsphere_url"`
 	VSphereUsername   string          `json:"vsphere_username"`
@@ -44,6 +49,8 @@ type config struct {
 	NetworkZone       map[string]string                 `json:"vsphere_network_zone"`
 
 	FolderZone map[string]*folder `json:"vsphere_folder_zone"`
+
+	ControlPlanes []controlplane `json:"vsphere_control_planes"`
 
 	ControlPlaneConfigZone map[string]*machineapi.VSphereMachineProviderSpec `json:"vsphere_control_planes_zone"`
 }
@@ -82,7 +89,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	deploymentZones := convertDeploymentZonesToMap(sources.InstallConfig.Config.VSphere.DeploymentZones)
 	vcenterZones := convertVCentersToMap(sources.InstallConfig.Config.VSphere.VCenters)
 	failureDomainZones := convertFailureZoneToMap(sources.InstallConfig.Config.VSphere.FailureDomains)
-	controlPlaneConfigZone := convertControlPlaneToMap(sources.ControlPlaneMachines, sources.InstallConfig)
+	controlPlaneConfigZone, controlPlanes := convertControlPlaneToMap(sources.ControlPlaneMachines, sources.InstallConfig)
 	folderZone := createFolderZoneMap(sources.InfraID, deploymentZones, failureDomainZones)
 
 	cfg := &config{
@@ -110,6 +117,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		DeploymentZone:         deploymentZones,
 		FailureDomainZone:      failureDomainZones,
 		ControlPlaneConfigZone: controlPlaneConfigZone,
+
+		ControlPlanes: controlPlanes,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
@@ -145,8 +154,9 @@ func convertDeploymentZonesToMap(values []vtypes.DeploymentZone) map[string]*vty
 	return deploymentZoneMap
 }
 
-func convertControlPlaneToMap(values []machineapi.Machine, installConfig *installconfig.InstallConfig) map[string]*machineapi.VSphereMachineProviderSpec {
+func convertControlPlaneToMap(values []machineapi.Machine, installConfig *installconfig.InstallConfig) (map[string]*machineapi.VSphereMachineProviderSpec, []controlplane) {
 	controlPlaneZonalConfigs := make(map[string]*machineapi.VSphereMachineProviderSpec)
+	var controlPlaneConfigs []controlplane
 
 	var region string
 	var zone string
@@ -179,9 +189,14 @@ func convertControlPlaneToMap(values []machineapi.Machine, installConfig *instal
 			}
 		}
 		controlPlaneZonalConfigs[deploymentZone.Name] = values[i].Spec.ProviderSpec.Value.Object.(*machineapi.VSphereMachineProviderSpec)
+
+		controlPlaneConfigs[i] = controlplane{
+			ControlPlaneConfig: values[i].Spec.ProviderSpec.Value.Object.(*machineapi.VSphereMachineProviderSpec),
+			DeploymentZone:     deploymentZone.Name,
+		}
 	}
 
-	return controlPlaneZonalConfigs
+	return controlPlaneZonalConfigs, controlPlaneConfigs
 }
 
 func convertFailureZoneToMap(values []vtypes.FailureDomain) map[string]vtypes.FailureDomain {
