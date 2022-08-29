@@ -1,7 +1,7 @@
 locals {
-  description        = "Created By OpenShift Installer"
+  description = "Created By OpenShift Installer"
   //control_plane_keys = keys(var.vsphere_control_planes_zone)
-  vcenter_key        = keys(var.vsphere_vcenters)[0]
+  vcenter_key = keys(var.vsphere_vcenters)[0]
 }
 
 
@@ -54,12 +54,12 @@ resource "vsphere_virtual_machine" "vm_master" {
     label = "disk0"
     size  = var.vsphere_control_planes[count.index].vsphere_control_plane.diskGiB
 
-    eagerly_scrub    =  var.template[var.vsphere_control_planes[count.index].DeploymentZone].disks.0.eagerly_scrub
-    thin_provisioned =  var.template[var.vsphere_control_planes[count.index].DeploymentZone].disks.0.thin_provisioned
+    eagerly_scrub    = var.template[var.vsphere_control_planes[count.index].DeploymentZone].disks.0.eagerly_scrub
+    thin_provisioned = var.template[var.vsphere_control_planes[count.index].DeploymentZone].disks.0.thin_provisioned
   }
 
   clone {
-    template_uuid =  var.template[var.vsphere_control_planes[count.index].DeploymentZone].uuid
+    template_uuid = var.template[var.vsphere_control_planes[count.index].DeploymentZone].uuid
   }
 
   extra_config = {
