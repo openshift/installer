@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
+	"github.com/openshift/installer/pkg/types/vsphere/validation"
 	"github.com/pkg/errors"
 
 	corev1 "k8s.io/api/core/v1"
@@ -282,7 +283,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		cm.Data[cloudProviderConfigDataKey] = powervsConfig
 	case vspheretypes.Name:
 		vSphere := installConfig.Config.Platform.VSphere
-		if len(vSphere.VCenters) > 0 {
+		if validation.IsMultiZoneInstallation(vSphere) {
 			folderPath := installConfig.Config.Platform.VSphere.Folder
 			if len(folderPath) == 0 {
 				dataCenter := installConfig.Config.Platform.VSphere.Datacenter
