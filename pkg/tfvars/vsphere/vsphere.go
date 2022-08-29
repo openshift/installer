@@ -156,7 +156,9 @@ func convertDeploymentZonesToMap(values []vtypes.DeploymentZone) map[string]*vty
 
 func convertControlPlaneToMap(values []machineapi.Machine, installConfig *installconfig.InstallConfig) (map[string]*machineapi.VSphereMachineProviderSpec, []controlplane) {
 	controlPlaneZonalConfigs := make(map[string]*machineapi.VSphereMachineProviderSpec)
-	var controlPlaneConfigs []controlplane
+
+	controlPlaneConfigs := make([]controlplane, len(values))
+	//var controlPlaneConfigs []controlplane
 
 	var region string
 	var zone string
