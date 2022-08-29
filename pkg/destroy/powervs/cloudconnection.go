@@ -34,10 +34,13 @@ func (o *ClusterUninstaller) listCloudConnections() (cloudResources, error) {
 		log.Fatalf("Failed to list cloud connections: %v", err)
 	}
 
+	var foundOne = false
+
 	result := []cloudResource{}
 	for _, cloudConnection = range cloudConnections.CloudConnections {
 		if strings.Contains(*cloudConnection.Name, o.InfraID) {
 			o.Logger.Debugf("listCloudConnections: FOUND: %s (%s)", *cloudConnection.Name, *cloudConnection.CloudConnectionID)
+			foundOne = true
 
 			jobReference, err = o.cloudConnectionClient.Delete(*cloudConnection.CloudConnectionID)
 			if err != nil {
@@ -53,6 +56,12 @@ func (o *ClusterUninstaller) listCloudConnections() (cloudResources, error) {
 				typeName: jobTypeName,
 				id:       *jobReference.ID,
 			})
+		}
+	}
+	if !foundOne {
+		o.Logger.Debugf("listCloudConnections: NO matching cloud connections against: %s", o.InfraID)
+		for _, cloudConnection = range cloudConnections.CloudConnections {
+			o.Logger.Debugf("listCloudConnections: only found cloud connection: %s", *cloudConnection.Name)
 		}
 	}
 

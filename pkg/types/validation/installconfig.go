@@ -131,7 +131,7 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 
 	if c.Publish == types.InternalPublishingStrategy {
 		switch platformName := c.Platform.Name(); platformName {
-		case aws.Name, azure.Name, gcp.Name, alibabacloud.Name:
+		case aws.Name, azure.Name, gcp.Name, alibabacloud.Name, powervs.Name:
 		default:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("publish"), c.Publish, fmt.Sprintf("Internal publish strategy is not supported on %q platform", platformName)))
 		}

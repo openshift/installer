@@ -7,15 +7,15 @@ import (
 )
 
 const (
-	instanceTypeName = "instance"
+	powerInstanceTypeName = "powerInstance"
 )
 
-// listInstances lists instances in the vpc.
-func (o *ClusterUninstaller) listInstances() (cloudResources, error) {
+// listPowerInstances lists instances in the Power server.
+func (o *ClusterUninstaller) listPowerInstances() (cloudResources, error) {
 	// https://github.com/IBM-Cloud/power-go-client/blob/v1.0.88/power/models/p_vm_instance_network.go#L16-L44
 	var network *models.PVMInstanceNetwork
 
-	o.Logger.Debugf("Listing virtual service instances")
+	o.Logger.Debugf("Listing virtual Power service instances")
 
 	instances, err := o.instanceClient.GetAll()
 	if err != nil {
@@ -30,12 +30,12 @@ func (o *ClusterUninstaller) listInstances() (cloudResources, error) {
 		// https://github.com/IBM-Cloud/power-go-client/blob/master/power/models/p_vm_instance.go
 		if strings.Contains(*instance.ServerName, o.InfraID) {
 			foundOne = true
-			o.Logger.Debugf("listInstances: FOUND: %s, %s, %s", *instance.PvmInstanceID, *instance.ServerName, *instance.Status)
+			o.Logger.Debugf("listPowerInstances: FOUND: %s, %s, %s", *instance.PvmInstanceID, *instance.ServerName, *instance.Status)
 			result = append(result, cloudResource{
 				key:      *instance.PvmInstanceID,
 				name:     *instance.ServerName,
 				status:   *instance.Status,
-				typeName: instanceTypeName,
+				typeName: powerInstanceTypeName,
 				id:       *instance.PvmInstanceID,
 			})
 
@@ -47,7 +47,7 @@ func (o *ClusterUninstaller) listInstances() (cloudResources, error) {
 		}
 	}
 	if !foundOne {
-		o.Logger.Debugf("listInstances: NO matching virtual instance against: %s", o.InfraID)
+		o.Logger.Debugf("listPowerInstances: NO matching virtual instance against: %s", o.InfraID)
 		for _, instance := range instances.PvmInstances {
 			o.Logger.Debugf("listInstances: only found virtual instance: %s", *instance.ServerName)
 		}
@@ -56,17 +56,18 @@ func (o *ClusterUninstaller) listInstances() (cloudResources, error) {
 	return cloudResources{}.insert(result...), nil
 }
 
-func (o *ClusterUninstaller) destroyInstance(item cloudResource) error {
+// destroyPowerInstance deletes a given instance.
+func (o *ClusterUninstaller) destroyPowerInstance(item cloudResource) error {
 	var err error
 
 	_, err = o.instanceClient.Get(item.id)
 	if err != nil {
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted instance %q", item.name)
+		o.Logger.Infof("Deleted Power instance %q", item.name)
 		return nil
 	}
 
-	o.Logger.Debugf("Deleting instance %q", item.name)
+	o.Logger.Debugf("Deleting Power instance %q", item.name)
 
 	err = o.instanceClient.Delete(item.id)
 	if err != nil {
@@ -75,20 +76,20 @@ func (o *ClusterUninstaller) destroyInstance(item cloudResource) error {
 	}
 
 	o.deletePendingItems(item.typeName, []cloudResource{item})
-	o.Logger.Infof("Deleted instance %q", item.name)
+	o.Logger.Infof("Deleted Power instance %q", item.name)
 
 	return nil
 }
 
-// destroyInstances searches for instances that have a name that starts with
+// destroyPowerInstances searches for Power instances that have a name that starts with
 // the cluster's infra ID.
-func (o *ClusterUninstaller) destroyInstances() error {
-	found, err := o.listInstances()
+func (o *ClusterUninstaller) destroyPowerInstances() error {
+	found, err := o.listPowerInstances()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(instanceTypeName, found.list())
+	items := o.insertPendingItems(powerInstanceTypeName, found.list())
 
 	ctx, _ := o.contextWithTimeout()
 
@@ -96,7 +97,7 @@ func (o *ClusterUninstaller) destroyInstances() error {
 		for _, item := range items {
 			select {
 			case <-o.Context.Done():
-				o.Logger.Debugf("destroyInstances: case <-o.Context.Done()")
+				o.Logger.Debugf("destroyPowerInstances: case <-o.Context.Done()")
 				return o.Context.Err() // we're cancelled, abort
 			default:
 			}
@@ -104,23 +105,23 @@ func (o *ClusterUninstaller) destroyInstances() error {
 			if _, ok := found[item.key]; !ok {
 				// This item has finished deletion.
 				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted instance %q", item.name)
+				o.Logger.Infof("Deleted Power instance %q", item.name)
 				continue
 			}
-			err := o.destroyInstance(item)
+			err := o.destroyPowerInstance(item)
 			if err != nil {
 				o.errorTracker.suppressWarning(item.key, err, o.Logger)
 			}
 		}
 
-		items = o.getPendingItems(instanceTypeName)
+		items = o.getPendingItems(powerInstanceTypeName)
 		if len(items) == 0 {
 			break
 		}
 	}
 
-	if items = o.getPendingItems(instanceTypeName); len(items) > 0 {
-		return errors.Errorf("destroyInstances: %d undeleted items pending", len(items))
+	if items = o.getPendingItems(powerInstanceTypeName); len(items) > 0 {
+		return errors.Errorf("destroyPowerInstances: %d undeleted items pending", len(items))
 	}
 	return nil
 }

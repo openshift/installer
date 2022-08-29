@@ -36,7 +36,7 @@ import (
 )
 
 var (
-	defaultTimeout = 15 * time.Minute
+	defaultTimeout = 30 * time.Minute
 	stageTimeout   = 5 * time.Minute
 )
 
@@ -274,11 +274,15 @@ func (o *ClusterUninstaller) destroyCluster() error {
 		name    string
 		execute func() error
 	}{{
-		{name: "Instances", execute: o.destroyInstances},
+		{name: "Cloud Instances", execute: o.destroyCloudInstances},
+	}, {
+		{name: "Power Instances", execute: o.destroyPowerInstances},
 	}, {
 		{name: "Load Balancers", execute: o.destroyLoadBalancers},
 	}, {
 		{name: "Subnets", execute: o.destroySubnets},
+	}, {
+		{name: "Public Gateways", execute: o.destroyPublicGateways},
 	}, {
 		{name: "DHCPs", execute: o.destroyDHCPNetworks},
 	}, {
@@ -290,7 +294,8 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "Cloud Object Storage Instances", execute: o.destroyCOSInstances},
 		{name: "DNS Records", execute: o.destroyDNSRecords},
-		{name: "SSH Keys", execute: o.destroySSHKeys},
+		{name: "Cloud SSH Keys", execute: o.destroyCloudSSHKeys},
+		{name: "Power SSH Keys", execute: o.destroyPowerSSHKeys},
 	}}
 
 	for _, stage := range stagedFuncs {

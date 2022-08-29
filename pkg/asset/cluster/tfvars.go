@@ -733,6 +733,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				VPCSubnetName:        vpcSubnet,
 				CloudConnectionName:  installConfig.Config.PowerVS.CloudConnectionName,
 				CISInstanceCRN:       crn,
+				PublishStrategy:      installConfig.Config.Publish,
 			},
 		)
 		if err != nil {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	machinev1 "github.com/openshift/api/machine/v1"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/powervs"
 )
 
@@ -34,6 +35,7 @@ type config struct {
 	MasterProcessors     string `json:"powervs_master_processors"`
 	ProcType             string `json:"powervs_proc_type"`
 	SysType              string `json:"powervs_sys_type"`
+	PublishStrategy      string `json:"powervs_publish_strategy"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -51,6 +53,7 @@ type TFVarsSources struct {
 	CISInstanceCRN       string
 	VPCName              string
 	VPCSubnetName        string
+	PublishStrategy      types.PublishingStrategy
 }
 
 // TFVars generates Power VS-specific Terraform variables launching the cluster.
@@ -99,6 +102,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterProcessors:     processor,
 		ProcType:             strings.ToLower(string(masterConfig.ProcessorType)),
 		SysType:              masterConfig.SystemType,
+		PublishStrategy:      string(sources.PublishStrategy),
 	}
 	if masterConfig.Network.Name != nil {
 		cfg.NetworkName = *masterConfig.Network.Name

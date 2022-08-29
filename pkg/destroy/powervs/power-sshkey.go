@@ -7,15 +7,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-const sshKeyTypeName = "sshKey"
+const powerSSHKeyTypeName = "powerSshKey"
 
-// listSSHKeys lists images in the vpc.
-func (o *ClusterUninstaller) listSSHKeys() (cloudResources, error) {
-	o.Logger.Debugf("Listing SSHKeys")
+// listPowerSSHKeys lists ssh keys in the Power server.
+func (o *ClusterUninstaller) listPowerSSHKeys() (cloudResources, error) {
+	o.Logger.Debugf("Listing Power SSHKeys")
 
 	select {
 	case <-o.Context.Done():
-		o.Logger.Debugf("listSSHKeys: case <-o.Context.Done()")
+		o.Logger.Debugf("listPowerSSHKeys: case <-o.Context.Done()")
 		return nil, o.Context.Err() // we're cancelled, abort
 	default:
 	}
@@ -25,7 +25,7 @@ func (o *ClusterUninstaller) listSSHKeys() (cloudResources, error) {
 
 	sshKeys, err = o.keyClient.GetAll()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list sshkeys: %v", err)
+		return nil, errors.Wrapf(err, "failed to list Power sshkeys: %v", err)
 	}
 
 	var sshKey *models.SSHKey
@@ -35,62 +35,63 @@ func (o *ClusterUninstaller) listSSHKeys() (cloudResources, error) {
 	for _, sshKey = range sshKeys.SSHKeys {
 		if strings.Contains(*sshKey.Name, o.InfraID) {
 			foundOne = true
-			o.Logger.Debugf("listSSHKeys: FOUND: %v", *sshKey.Name)
+			o.Logger.Debugf("listPowerSSHKeys: FOUND: %v", *sshKey.Name)
 			result = append(result, cloudResource{
 				key:      *sshKey.Name,
 				name:     *sshKey.Name,
 				status:   "",
-				typeName: sshKeyTypeName,
+				typeName: powerSSHKeyTypeName,
 				id:       *sshKey.Name,
 			})
 		}
 	}
 	if !foundOne {
-		o.Logger.Debugf("listSSHKeys: NO matching sshKey against: %s", o.InfraID)
+		o.Logger.Debugf("listPowerSSHKeys: NO matching sshKey against: %s", o.InfraID)
 		for _, sshKey := range sshKeys.SSHKeys {
-			o.Logger.Debugf("listSSHKeys: sshKey: %s", *sshKey.Name)
+			o.Logger.Debugf("listPowerSSHKeys: sshKey: %s", *sshKey.Name)
 		}
 	}
 
 	return cloudResources{}.insert(result...), nil
 }
 
-func (o *ClusterUninstaller) deleteSSHKey(item cloudResource) error {
+// deletePowerSSHKey deleted a given ssh key.
+func (o *ClusterUninstaller) deletePowerSSHKey(item cloudResource) error {
 	var err error
 
 	_, err = o.keyClient.Get(item.id)
 	if err != nil {
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted sshKey %q", item.name)
+		o.Logger.Infof("Deleted Power sshKey %q", item.name)
 		return nil
 	}
 
-	o.Logger.Debugf("Deleting sshKey %q", item.name)
+	o.Logger.Debugf("Deleting Power sshKey %q", item.name)
 
 	select {
 	case <-o.Context.Done():
-		o.Logger.Debugf("destroySSHKey: case <-o.Context.Done()")
+		o.Logger.Debugf("deletePowerSSHKey: case <-o.Context.Done()")
 		return o.Context.Err() // we're cancelled, abort
 	default:
 	}
 
 	err = o.keyClient.Delete(item.id)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete sshKey %s", item.name)
+		return errors.Wrapf(err, "failed to delete Power sshKey %s", item.name)
 	}
 
 	return nil
 }
 
-// destroySSHKeys removes all image resources that have a name prefixed
+// destroyPowerSSHKeys removes all ssh keys that have a name prefixed
 // with the cluster's infra ID.
-func (o *ClusterUninstaller) destroySSHKeys() error {
-	found, err := o.listSSHKeys()
+func (o *ClusterUninstaller) destroyPowerSSHKeys() error {
+	found, err := o.listPowerSSHKeys()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(sshKeyTypeName, found.list())
+	items := o.insertPendingItems(powerSSHKeyTypeName, found.list())
 
 	ctx, _ := o.contextWithTimeout()
 
@@ -98,7 +99,7 @@ func (o *ClusterUninstaller) destroySSHKeys() error {
 		for _, item := range items {
 			select {
 			case <-o.Context.Done():
-				o.Logger.Debugf("destroySSHKeys: case <-o.Context.Done()")
+				o.Logger.Debugf("destroyPowerSSHKeys: case <-o.Context.Done()")
 				return o.Context.Err() // we're cancelled, abort
 			default:
 			}
@@ -109,20 +110,20 @@ func (o *ClusterUninstaller) destroySSHKeys() error {
 				o.Logger.Infof("Deleted sshKey %q", item.name)
 				continue
 			}
-			err := o.deleteSSHKey(item)
+			err := o.deletePowerSSHKey(item)
 			if err != nil {
 				o.errorTracker.suppressWarning(item.key, err, o.Logger)
 			}
 		}
 
-		items = o.getPendingItems(sshKeyTypeName)
+		items = o.getPendingItems(powerSSHKeyTypeName)
 		if len(items) == 0 {
 			break
 		}
 	}
 
-	if items = o.getPendingItems(sshKeyTypeName); len(items) > 0 {
-		return errors.Errorf("destroySSHKeys: %d undeleted items pending", len(items))
+	if items = o.getPendingItems(powerSSHKeyTypeName); len(items) > 0 {
+		return errors.Errorf("destroyPower1SSHKeys: %d undeleted items pending", len(items))
 	}
 	return nil
 }
