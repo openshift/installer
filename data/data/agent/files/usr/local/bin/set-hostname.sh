@@ -15,15 +15,15 @@
 
 HOSTNAMES_PATH=/etc/assisted/hostnames
 FILES=$(ls $HOSTNAMES_PATH)
-for filename in $FILES
+for filename in ${FILES}
 do
-    MATCHED_MAC_ADDRESS_WITH_HOST=$(ip address | grep $filename)
+    MATCHED_MAC_ADDRESS_WITH_HOST=$(ip address | grep "${filename}")
     if [ "$MATCHED_MAC_ADDRESS_WITH_HOST" != "" ]; then
-        HOSTNAME=$(cat ${HOSTNAMES_PATH}/${filename})
-        echo "Host has matching MAC address: $filename" 1>&2
-        echo "Setting hostname to $HOSTNAME" 1>&2
-        hostnamectl set-hostname $HOSTNAME
+        HOSTNAME="$(cat "${HOSTNAMES_PATH}/${filename}")"
+        echo "Host has matching MAC address: ${filename}" 1>&2
+        echo "Setting hostname to ${HOSTNAME}" 1>&2
+        hostnamectl set-hostname "${HOSTNAME}"
     else
-        echo "MAC address, $filename, does not exist on this host" 1>&2
+        echo "MAC address, ${filename}, does not exist on this host" 1>&2
     fi
 done
