@@ -414,3 +414,84 @@ func buildIgnitionAssetDefaultDependencies() []asset.Asset {
 		&tls.AdminKubeConfigClientCertKey{},
 	}
 }
+
+func TestIgnition_getMirrorFromRelease(t *testing.T) {
+
+	cases := []struct {
+		name           string
+		release        string
+		registriesConf mirror.RegistriesConf
+		expectedMirror string
+	}{
+		{
+			name:           "no-mirror",
+			release:        "registry.ci.openshift.org/ocp/release:latest",
+			registriesConf: mirror.RegistriesConf{},
+			expectedMirror: "",
+		},
+		{
+			name:    "mirror-no-match",
+			release: "registry.ci.openshift.org/ocp/release:4.11.0-0.nightly-foo",
+			registriesConf: mirror.RegistriesConf{
+				File: &asset.File{
+					Filename: "registries.conf",
+					Data:     []byte(""),
+				},
+				MirrorConfig: []mirror.RegistriesConfig{
+					{
+						Location: "some.registry.org/release",
+						Mirror:   "some.mirror.org",
+					},
+				},
+			},
+			expectedMirror: "",
+		},
+		{
+			name:    "mirror-match",
+			release: "registry.ci.openshift.org/ocp/release:4.11.0-0.nightly-foo",
+			registriesConf: mirror.RegistriesConf{
+				File: &asset.File{
+					Filename: "registries.conf",
+					Data:     []byte(""),
+				},
+				MirrorConfig: []mirror.RegistriesConfig{
+					{
+						Location: "registry.ci.openshift.org/ocp/release",
+						Mirror:   "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+					},
+				},
+			},
+			expectedMirror: "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image:4.11.0-0.nightly-foo",
+		},
+		{
+			name:    "mirror-match-with-checksum",
+			release: "quay.io/openshift-release-dev/ocp-release@sha256:300bce8246cf880e792e106607925de0a404484637627edf5f517375517d54a4",
+			registriesConf: mirror.RegistriesConf{
+				File: &asset.File{
+					Filename: "registries.conf",
+					Data:     []byte(""),
+				},
+				MirrorConfig: []mirror.RegistriesConfig{
+					{
+						Location: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+						Mirror:   "localhost:5000/openshift4/openshift/release",
+					},
+					{
+						Location: "quay.io/openshift-release-dev/ocp-release",
+						Mirror:   "localhost:5000/openshift-release-dev/ocp-release",
+					},
+				},
+			},
+			expectedMirror: "localhost:5000/openshift-release-dev/ocp-release@sha256:300bce8246cf880e792e106607925de0a404484637627edf5f517375517d54a4",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			mirror := getMirrorFromRelease(tc.release, &tc.registriesConf)
+
+			assert.Equal(t, tc.expectedMirror, mirror)
+
+		})
+	}
+}
