@@ -4,19 +4,22 @@
 data "google_compute_network" "preexisting_cluster_network" {
   count = var.preexisting_network ? 1 : 0
 
-  name = var.cluster_network
+  name    = var.cluster_network
+  project = var.network_project_id
 }
 
 data "google_compute_subnetwork" "preexisting_master_subnet" {
   count = var.preexisting_network ? 1 : 0
 
-  name = var.master_subnet
+  name    = var.master_subnet
+  project = var.network_project_id
 }
 
 data "google_compute_subnetwork" "preexisting_worker_subnet" {
   count = var.preexisting_network ? 1 : 0
 
-  name = var.worker_subnet
+  name    = var.worker_subnet
+  project = var.network_project_id
 }
 
 locals {
