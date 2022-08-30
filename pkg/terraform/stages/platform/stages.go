@@ -57,9 +57,7 @@ func StagesForPlatform(platform string) []terraform.Stage {
 		return openstack.PlatformStages
 	case ovirttypes.Name:
 		return ovirt.PlatformStages
-	case vspheretypes.Name:
-		return vsphere.PlatformStages
-	case vspheretypes.ZoningTerraformName:
+	case vspheretypes.Name, vspheretypes.ZoningTerraformName:
 		return vsphere.ZoningPlatformStages
 
 	default:
