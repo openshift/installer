@@ -120,5 +120,5 @@ variable "vsphere_control_planes_zone" {
 
 variable "vsphere_control_planes" {
   type    = list(any)
-  default = {}
+  default = []
 }
