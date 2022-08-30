@@ -113,11 +113,6 @@ variable "vsphere_folder_zone" {
   default = {}
 }
 
-variable "vsphere_control_planes_zone" {
-  type    = map(any)
-  default = {}
-}
-
 variable "vsphere_control_planes" {
   type    = list(any)
   default = []
