@@ -3,6 +3,8 @@ package validation
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -11,23 +13,26 @@ import (
 )
 
 type flavorRequirements struct {
-	RAM, VCPUs, Disk int
+	RAM, VCPUs, Disk, RecommendedDisk int
 }
 
 const (
-	minimumStorage = 25
+	minimumStorage     = 25
+	recommendedStorage = 100
 )
 
 var (
 	ctrlPlaneFlavorMinimums = flavorRequirements{
-		RAM:   16384,
-		VCPUs: 4,
-		Disk:  minimumStorage,
+		RAM:             16384,
+		VCPUs:           4,
+		Disk:            minimumStorage,
+		RecommendedDisk: recommendedStorage,
 	}
 	computeFlavorMinimums = flavorRequirements{
-		RAM:   8192,
-		VCPUs: 2,
-		Disk:  minimumStorage,
+		RAM:             8192,
+		VCPUs:           2,
+		Disk:            minimumStorage,
+		RecommendedDisk: recommendedStorage,
 	}
 )
 
@@ -40,7 +45,9 @@ func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, controlPlane b
 	if p.RootVolume != nil {
 		allErrs = append(allErrs, validateVolumeTypes(p.RootVolume.Type, ci.VolumeTypes, fldPath.Child("rootVolume").Child("type"))...)
 		if p.RootVolume.Size < minimumStorage {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("rootVolume").Child("size"), p.RootVolume.Size, fmt.Sprintf("Volume size must be greater than %d to use root volumes, had %d", minimumStorage, p.RootVolume.Size)))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("rootVolume").Child("size"), p.RootVolume.Size, fmt.Sprintf("Volume size must be greater than %d GB to use root volumes, had %d GB", minimumStorage, p.RootVolume.Size)))
+		} else if p.RootVolume.Size < recommendedStorage {
+			logrus.Warnf("Volume size is recommended to be greater than %d GB to use root volumes, had %d GB", recommendedStorage, p.RootVolume.Size)
 		}
 
 		allErrs = append(allErrs, validateZones(p.RootVolume.Zones, ci.VolumeZones, fldPath.Child("rootVolume").Child("zones"))...)
@@ -149,8 +156,12 @@ func validateFlavor(flavorName string, ci *CloudInfo, req flavorRequirements, fl
 	if flavor.VCPUs < req.VCPUs {
 		errs = append(errs, fmt.Sprintf("Must have minimum of %d VCPUs, had %d", req.VCPUs, flavor.VCPUs))
 	}
-	if flavor.Disk < req.Disk && storage {
-		errs = append(errs, fmt.Sprintf("Must have minimum of %d GB Disk, had %d GB", req.Disk, flavor.Disk))
+	if storage {
+		if flavor.Disk < req.Disk {
+			errs = append(errs, fmt.Sprintf("Must have minimum of %d GB Disk, had %d GB", req.Disk, flavor.Disk))
+		} else if flavor.Disk < req.RecommendedDisk {
+			logrus.Warnf("Flavor does not meet the following recommended requirements: It is recommended to have %d GB Disk, had %d GB", req.RecommendedDisk, flavor.Disk)
+		}
 	}
 
 	if len(errs) == 0 {

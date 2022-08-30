@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/openshift/installer/pkg/types/openstack"
+	logrusTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -21,13 +22,16 @@ const (
 
 	invalidComputeFlavor   = "invalid-compute-flavor"
 	invalidCtrlPlaneFlavor = "invalid-control-plane-flavor"
+	warningComputeFlavor   = "warning-compute-flavor"
+	warningCtrlPlaneFlavor = "warning-control-plane-flavor"
 
 	baremetalFlavor = "baremetal-flavor"
 
-	volumeType      = "performance"
-	invalidType     = "invalid-type"
-	volumeSmallSize = 10
-	volumeLargeSize = 25
+	volumeType       = "performance"
+	invalidType      = "invalid-type"
+	volumeSmallSize  = 10
+	volumeMediumSize = 40
+	volumeLargeSize  = 100
 )
 
 func validMachinePool() *openstack.MachinePool {
@@ -44,6 +48,18 @@ func invalidMachinePoolSmallVolume() *openstack.MachinePool {
 		RootVolume: &openstack.RootVolume{
 			Type:  volumeType,
 			Size:  volumeSmallSize,
+			Zones: []string{""},
+		},
+	}
+}
+
+func warningMachinePoolMediumVolume() *openstack.MachinePool {
+	return &openstack.MachinePool{
+		FlavorName: validCtrlPlaneFlavor,
+		Zones:      []string{""},
+		RootVolume: &openstack.RootVolume{
+			Type:  volumeType,
+			Size:  volumeMediumSize,
 			Zones: []string{""},
 		},
 	}
@@ -68,7 +84,7 @@ func validMpoolCloudInfo() *CloudInfo {
 				Flavor: flavors.Flavor{
 					Name:  validCtrlPlaneFlavor,
 					RAM:   16384,
-					Disk:  25,
+					Disk:  100,
 					VCPUs: 4,
 				},
 			},
@@ -76,7 +92,7 @@ func validMpoolCloudInfo() *CloudInfo {
 				Flavor: flavors.Flavor{
 					Name:  validComputeFlavor,
 					RAM:   8192,
-					Disk:  25,
+					Disk:  100,
 					VCPUs: 2,
 				},
 			},
@@ -84,7 +100,7 @@ func validMpoolCloudInfo() *CloudInfo {
 				Flavor: flavors.Flavor{
 					Name:  invalidCtrlPlaneFlavor,
 					RAM:   8192, // too low
-					Disk:  25,
+					Disk:  100,
 					VCPUs: 2, // too low
 				},
 			},
@@ -93,6 +109,22 @@ func validMpoolCloudInfo() *CloudInfo {
 					Name:  invalidComputeFlavor,
 					RAM:   8192,
 					Disk:  10, // too low
+					VCPUs: 2,
+				},
+			},
+			warningCtrlPlaneFlavor: {
+				Flavor: flavors.Flavor{
+					Name:  warningCtrlPlaneFlavor,
+					RAM:   16384,
+					Disk:  40, // not recommended
+					VCPUs: 4,
+				},
+			},
+			warningComputeFlavor: {
+				Flavor: flavors.Flavor{
+					Name:  invalidComputeFlavor,
+					RAM:   8192,
+					Disk:  40, // not recommended
 					VCPUs: 2,
 				},
 			},
@@ -120,12 +152,13 @@ func validMpoolCloudInfo() *CloudInfo {
 
 func TestOpenStackMachinepoolValidation(t *testing.T) {
 	cases := []struct {
-		name           string
-		controlPlane   bool // only matters for flavor
-		mpool          *openstack.MachinePool
-		cloudInfo      *CloudInfo
-		expectedError  bool
-		expectedErrMsg string // NOTE: this is a REGEXP
+		name            string
+		controlPlane    bool // only matters for flavor
+		mpool           *openstack.MachinePool
+		cloudInfo       *CloudInfo
+		expectedError   bool
+		expectedErrMsg  string // NOTE: this is a REGEXP
+		expectedWarnMsg string //NOTE: this is a REGEXP
 	}{
 		{
 			name:           "valid control plane",
@@ -233,6 +266,28 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			expectedErrMsg: `compute\[0\].platform.openstack.type: Invalid value: "invalid-compute-flavor": Flavor did not meet the following minimum requirements: Must have minimum of 25 GB Disk, had 10 GB`,
 		},
 		{
+			name:         "warning control plane flavorName",
+			controlPlane: true,
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePool()
+				mp.FlavorName = warningCtrlPlaneFlavor
+				return mp
+			}(),
+			cloudInfo:       validMpoolCloudInfo(),
+			expectedWarnMsg: `Flavor does not meet the following recommended requirements: It is recommended to have 100 GB Disk, had 40 GB`,
+		},
+		{
+			name:         "warning compute flavorName",
+			controlPlane: false,
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePool()
+				mp.FlavorName = warningComputeFlavor
+				return mp
+			}(),
+			cloudInfo:       validMpoolCloudInfo(),
+			expectedWarnMsg: `Flavor does not meet the following recommended requirements: It is recommended to have 100 GB Disk, had 40 GB`,
+		},
+		{
 			name:         "valid baremetal compute",
 			controlPlane: false,
 			mpool: func() *openstack.MachinePool {
@@ -254,7 +309,18 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			}(),
 			cloudInfo:      validMpoolCloudInfo(),
 			expectedError:  true,
-			expectedErrMsg: "Volume size must be greater than 25 to use root volumes, had 10",
+			expectedErrMsg: "Volume size must be greater than 25 GB to use root volumes, had 10 GB",
+		},
+		{
+			name:         "volume not recommended",
+			controlPlane: false,
+			mpool: func() *openstack.MachinePool {
+				mp := warningMachinePoolMediumVolume()
+				mp.FlavorName = invalidCtrlPlaneFlavor
+				return mp
+			}(),
+			cloudInfo:       validMpoolCloudInfo(),
+			expectedWarnMsg: "Volume size is recommended to be greater than 100 GB to use root volumes, had 40 GB",
 		},
 		{
 			name:         "volume big enough",
@@ -338,11 +404,15 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 				fieldPath = field.NewPath("compute").Index(0).Child("platform", "openstack")
 			}
 
+			hook := logrusTest.NewGlobal()
 			aggregatedErrors := ValidateMachinePool(tc.mpool, tc.cloudInfo, tc.controlPlane, fieldPath).ToAggregate()
 			if tc.expectedError {
 				assert.Regexp(t, tc.expectedErrMsg, aggregatedErrors)
 			} else {
 				assert.NoError(t, aggregatedErrors)
+			}
+			if len(tc.expectedWarnMsg) > 0 {
+				assert.Regexp(t, tc.expectedWarnMsg, hook.LastEntry().Message)
 			}
 		})
 	}

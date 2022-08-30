@@ -20,7 +20,7 @@ in OpenShift, and that your tenant has access to them. Your OpenStack cluster mu
 - One instance from the RHOSP quota
 - One port attached to the machines subnet
 - One port for each SR-IOV Virtual Function
-- A flavor with at least 16 GB memory, 4 vCPUs, and 25 GB storage space
+- A flavor with at least 16 GB memory, 4 vCPUs, and 100 GB storage space
 
 For all clusters that use single-root input/output virtualization (SR-IOV), RHOSP compute nodes require a flavor that supports [huge pages][huge-pages].
 Deploying worker nodes with SR-IOV networks is supported as a post-install operation for both IPI and UPI workflows. After you verify that your OpenStack cluster can support SR-IOV in OpenShift and you install an OpenShift cluster that meets the [minimum requirements](README.md#openstack-requirements), use the following steps and examples to create worker nodes with SR-IOV NICs.
