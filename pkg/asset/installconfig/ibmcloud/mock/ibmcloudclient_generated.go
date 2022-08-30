@@ -15,6 +15,7 @@ import (
 	vpcv1 "github.com/IBM/vpc-go-sdk/vpcv1"
 	gomock "github.com/golang/mock/gomock"
 	ibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
+	types "github.com/openshift/installer/pkg/types"
 )
 
 // MockAPI is a mock of API interface.
@@ -70,6 +71,21 @@ func (mr *MockAPIMockRecorder) GetCISInstance(ctx, crnstr interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCISInstance", reflect.TypeOf((*MockAPI)(nil).GetCISInstance), ctx, crnstr)
 }
 
+// GetDNSInstance mocks base method.
+func (m *MockAPI) GetDNSInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDNSInstance", ctx, crnstr)
+	ret0, _ := ret[0].(*resourcecontrollerv2.ResourceInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDNSInstance indicates an expected call of GetDNSInstance.
+func (mr *MockAPIMockRecorder) GetDNSInstance(ctx, crnstr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSInstance", reflect.TypeOf((*MockAPI)(nil).GetDNSInstance), ctx, crnstr)
+}
+
 // GetDNSRecordsByName mocks base method.
 func (m *MockAPI) GetDNSRecordsByName(ctx context.Context, crnstr, zoneID, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error) {
 	m.ctrl.T.Helper()
@@ -86,33 +102,33 @@ func (mr *MockAPIMockRecorder) GetDNSRecordsByName(ctx, crnstr, zoneID, recordNa
 }
 
 // GetDNSZoneIDByName mocks base method.
-func (m *MockAPI) GetDNSZoneIDByName(ctx context.Context, name string) (string, error) {
+func (m *MockAPI) GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDNSZoneIDByName", ctx, name)
+	ret := m.ctrl.Call(m, "GetDNSZoneIDByName", ctx, name, publish)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDNSZoneIDByName indicates an expected call of GetDNSZoneIDByName.
-func (mr *MockAPIMockRecorder) GetDNSZoneIDByName(ctx, name interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetDNSZoneIDByName(ctx, name, publish interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZoneIDByName", reflect.TypeOf((*MockAPI)(nil).GetDNSZoneIDByName), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZoneIDByName", reflect.TypeOf((*MockAPI)(nil).GetDNSZoneIDByName), ctx, name, publish)
 }
 
 // GetDNSZones mocks base method.
-func (m *MockAPI) GetDNSZones(ctx context.Context) ([]ibmcloud.DNSZoneResponse, error) {
+func (m *MockAPI) GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]ibmcloud.DNSZoneResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDNSZones", ctx)
+	ret := m.ctrl.Call(m, "GetDNSZones", ctx, publish)
 	ret0, _ := ret[0].([]ibmcloud.DNSZoneResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDNSZones indicates an expected call of GetDNSZones.
-func (mr *MockAPIMockRecorder) GetDNSZones(ctx interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetDNSZones(ctx, publish interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZones", reflect.TypeOf((*MockAPI)(nil).GetDNSZones), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZones", reflect.TypeOf((*MockAPI)(nil).GetDNSZones), ctx, publish)
 }
 
 // GetDedicatedHostByName mocks base method.

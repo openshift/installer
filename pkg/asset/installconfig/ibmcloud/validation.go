@@ -323,9 +323,14 @@ func validateSubnetZone(client API, subnetID string, validZones sets.String, sub
 	return allErrs
 }
 
-// ValidatePreExitingPublicDNS ensure no pre-existing DNS record exists in the CIS
+// ValidatePreExistingPublicDNS ensure no pre-existing DNS record exists in the CIS
 // DNS zone for cluster's Kubernetes API.
-func ValidatePreExitingPublicDNS(client API, ic *types.InstallConfig, metadata *Metadata) error {
+func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig, metadata *Metadata) error {
+	// If this is an internal cluster, this check is not necessary
+	if ic.Publish == types.InternalPublishingStrategy {
+		return nil
+	}
+
 	// Get CIS CRN
 	crn, err := metadata.CISInstanceCRN(context.TODO())
 	if err != nil {
@@ -333,7 +338,7 @@ func ValidatePreExitingPublicDNS(client API, ic *types.InstallConfig, metadata *
 	}
 
 	// Get CIS zone ID by name
-	zoneID, err := client.GetDNSZoneIDByName(context.TODO(), ic.BaseDomain)
+	zoneID, err := client.GetDNSZoneIDByName(context.TODO(), ic.BaseDomain, ic.Publish)
 	if err != nil {
 		return field.InternalError(field.NewPath("baseDomain"), err)
 	}
