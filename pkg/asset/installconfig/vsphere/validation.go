@@ -85,9 +85,13 @@ func ValidateMultiZoneForProvisioning(ic *types.InstallConfig) error {
 
 func validateMultiZoneProvisioning(validationCtx *validationContext, failureDomain *vsphere.FailureDomain) field.ErrorList {
 	allErrs := field.ErrorList{}
+	checkDatacenterPrivileges := true
+	checkComputeClusterPrivileges := true
+
 	resourcePool := fmt.Sprintf("%s/Resources", failureDomain.Topology.ComputeCluster)
 	if len(failureDomain.Topology.ResourcePool) != 0 {
 		resourcePool = failureDomain.Topology.ResourcePool
+		checkComputeClusterPrivileges = false
 	}
 
 	vsphereField := field.NewPath("platform").Child("vsphere")
@@ -97,6 +101,7 @@ func validateMultiZoneProvisioning(validationCtx *validationContext, failureDoma
 
 	if len(failureDomain.Topology.Folder) > 0 {
 		allErrs = append(allErrs, folderExists(validationCtx, failureDomain.Topology.Folder, topologyField.Child("folder"))...)
+		checkDatacenterPrivileges = false
 	}
 
 	computeCluster := failureDomain.Topology.ComputeCluster
@@ -110,11 +115,11 @@ func validateMultiZoneProvisioning(validationCtx *validationContext, failureDoma
 	if len(errs) > 0 {
 		return append(allErrs, errs...)
 	}
-	errs = computeClusterExists(validationCtx, computeCluster, topologyField.Child("computeCluster"))
+	errs = computeClusterExists(validationCtx, computeCluster, topologyField.Child("computeCluster"), checkComputeClusterPrivileges)
 	if len(errs) > 0 {
 		return append(allErrs, errs...)
 	}
-	errs = datacenterExists(validationCtx, failureDomain.Topology.Datacenter, topologyField.Child("datacenter"))
+	errs = datacenterExists(validationCtx, failureDomain.Topology.Datacenter, topologyField.Child("datacenter"), checkDatacenterPrivileges)
 	if len(errs) > 0 {
 		return append(allErrs, errs...)
 	}
@@ -164,6 +169,8 @@ func validateProvisioning(validationCtx *validationContext, ic *types.InstallCon
 	allErrs := field.ErrorList{}
 	platform := ic.Platform.VSphere
 	vsphereField := field.NewPath("platform").Child("vsphere")
+	checkDatacenterPrivileges := ic.VSphere.Folder == ""
+	checkComputeClusterPrivileges := ic.VSphere.ResourcePool == ""
 	allErrs = append(allErrs, validation.ValidateForProvisioning(platform, vsphereField)...)
 	allErrs = append(allErrs, validateVcenterPrivileges(validationCtx, vsphereField.Child("vcenter"))...)
 	allErrs = append(allErrs, folderExists(validationCtx, ic.VSphere.Folder, vsphereField.Child("folder"))...)
@@ -171,7 +178,7 @@ func validateProvisioning(validationCtx *validationContext, ic *types.InstallCon
 
 	// if the datacenter or cluster fail to be found or is missing privileges, this will cascade through the balance
 	// of checks.  exit if they fail to limit multiple errors from being thrown.
-	errs := datacenterExists(validationCtx, platform.Datacenter, vsphereField.Child("datacenter"))
+	errs := datacenterExists(validationCtx, platform.Datacenter, vsphereField.Child("datacenter"), checkDatacenterPrivileges)
 	if len(errs) > 0 {
 		allErrs = append(allErrs, errs...)
 		return allErrs.ToAggregate()
@@ -185,7 +192,7 @@ func validateProvisioning(validationCtx *validationContext, ic *types.InstallCon
 	if len(clusterPathParts) < 3 {
 		computeCluster = fmt.Sprintf("/%s/host/%s", platform.Datacenter, computeCluster)
 	}
-	errs = computeClusterExists(validationCtx, computeCluster, vsphereField.Child("cluster"))
+	errs = computeClusterExists(validationCtx, computeCluster, vsphereField.Child("cluster"), checkComputeClusterPrivileges)
 	if len(errs) > 0 {
 		allErrs = append(allErrs, errs...)
 		return allErrs.ToAggregate()
@@ -262,7 +269,7 @@ func validateNetwork(validationCtx *validationContext, datacenterName string, cl
 }
 
 // resourcePoolExists returns an error if a resourcePool is specified in the vSphere platform but a resourcePool with that name is not found in the datacenter.
-func computeClusterExists(validationCtx *validationContext, computeCluster string, fldPath *field.Path) field.ErrorList {
+func computeClusterExists(validationCtx *validationContext, computeCluster string, fldPath *field.Path, checkPrivileges bool) field.ErrorList {
 	if computeCluster == "" {
 		return field.ErrorList{field.Required(fldPath, "must specify the cluster")}
 	}
@@ -274,11 +281,14 @@ func computeClusterExists(validationCtx *validationContext, computeCluster strin
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, computeCluster, err.Error())}
 	}
-	permissionGroup := permissions[permissionCluster]
-	err = comparePrivileges(ctx, validationCtx, computeClusterMo.Reference(), permissionGroup)
 
-	if err != nil {
-		return field.ErrorList{field.InternalError(fldPath, err)}
+	if checkPrivileges {
+		permissionGroup := permissions[permissionCluster]
+		err = comparePrivileges(ctx, validationCtx, computeClusterMo.Reference(), permissionGroup)
+
+		if err != nil {
+			return field.ErrorList{field.InternalError(fldPath, err)}
+		}
 	}
 
 	return field.ErrorList{}
@@ -305,12 +315,13 @@ func resourcePoolExists(validationCtx *validationContext, resourcePool string, f
 	if err != nil {
 		return field.ErrorList{field.InternalError(fldPath, err)}
 	}
+
 	return field.ErrorList{}
 }
 
 // datacenterExists returns an error if a datacenter is specified in the vSphere platform but a datacenter with that
 // name is not found in the datacenter or the user does not hold adequate privileges for the datacenter.
-func datacenterExists(validationCtx *validationContext, datacenterName string, fldPath *field.Path) field.ErrorList {
+func datacenterExists(validationCtx *validationContext, datacenterName string, fldPath *field.Path, checkPrivileges bool) field.ErrorList {
 	finder := validationCtx.Finder
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
@@ -320,10 +331,12 @@ func datacenterExists(validationCtx *validationContext, datacenterName string, f
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, datacenterName, err.Error())}
 	}
-	permissionGroup := permissions[permissionDatacenter]
-	err = comparePrivileges(ctx, validationCtx, dataCenter.Reference(), permissionGroup)
-	if err != nil {
-		return field.ErrorList{field.InternalError(fldPath, err)}
+	if checkPrivileges {
+		permissionGroup := permissions[permissionDatacenter]
+		err = comparePrivileges(ctx, validationCtx, dataCenter.Reference(), permissionGroup)
+		if err != nil {
+			return field.ErrorList{field.InternalError(fldPath, err)}
+		}
 	}
 	return field.ErrorList{}
 }
