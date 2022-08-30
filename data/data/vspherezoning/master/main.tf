@@ -33,13 +33,13 @@ resource "vsphere_virtual_machine" "vm_master" {
   count = var.master_count
 
   name                        = "${var.cluster_id}-master-${count.index}"
-  resource_pool_id            = var.resource_pool[var.vsphere_control_planes[count.index].DeploymentZone].id
-  datastore_id                = var.datastore[var.vsphere_control_planes[count.index].DeploymentZone].id
-  num_cpus                    = var.vsphere_control_planes[count.index].vsphere_control_plane.numCPUs
-  num_cores_per_socket        = var.vsphere_control_planes[count.index].vsphere_control_plane.numCoresPerSocket
-  memory                      = var.vsphere_control_planes[count.index].vsphere_control_plane.memoryMiB
-  guest_id                    = var.template[var.vsphere_control_planes[count.index].DeploymentZone].guest_id
-  folder                      = var.vsphere_control_planes[count.index].vsphere_control_plane.workspace.folder
+  resource_pool_id            = var.resource_pool[var.vsphere_control_planes[count.index].dz_name].id
+  datastore_id                = var.datastore[var.vsphere_control_planes[count.index].dz_name].id
+  num_cpus                    = var.vsphere_control_planes[count.index].provider_spec.numCPUs
+  num_cores_per_socket        = var.vsphere_control_planes[count.index].provider_spec.numCoresPerSocket
+  memory                      = var.vsphere_control_planes[count.index].provider_spec.memoryMiB
+  guest_id                    = var.template[var.vsphere_control_planes[count.index].dz_name].guest_id
+  folder                      = var.vsphere_control_planes[count.index].provider_spec.workspace.folder
   enable_disk_uuid            = "true"
   annotation                  = local.description
   wait_for_guest_net_timeout  = "0"
@@ -47,19 +47,19 @@ resource "vsphere_virtual_machine" "vm_master" {
   tags                        = var.tags
 
   network_interface {
-    network_id = var.template[var.vsphere_control_planes[count.index].DeploymentZone].network_interfaces.0.network_id
+    network_id = var.template[var.vsphere_control_planes[count.index].dz_name].network_interfaces.0.network_id
   }
 
   disk {
     label = "disk0"
-    size  = var.vsphere_control_planes[count.index].vsphere_control_plane.diskGiB
+    size  = var.vsphere_control_planes[count.index].provider_spec.diskGiB
 
-    eagerly_scrub    = var.template[var.vsphere_control_planes[count.index].DeploymentZone].disks.0.eagerly_scrub
-    thin_provisioned = var.template[var.vsphere_control_planes[count.index].DeploymentZone].disks.0.thin_provisioned
+    eagerly_scrub    = var.template[var.vsphere_control_planes[count.index].dz_name].disks.0.eagerly_scrub
+    thin_provisioned = var.template[var.vsphere_control_planes[count.index].dz_name].disks.0.thin_provisioned
   }
 
   clone {
-    template_uuid = var.template[var.vsphere_control_planes[count.index].DeploymentZone].uuid
+    template_uuid = var.template[var.vsphere_control_planes[count.index].dz_name].uuid
   }
 
   extra_config = {

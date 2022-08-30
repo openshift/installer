@@ -20,8 +20,8 @@ type folder struct {
 }
 
 type controlplane struct {
-	DeploymentZone     string                                 `json:"name"`
-	ControlPlaneConfig *machineapi.VSphereMachineProviderSpec `json:"vsphere_control_plane"`
+	DeploymentZone     string                                 `json:"dz_name"`
+	ControlPlaneConfig *machineapi.VSphereMachineProviderSpec `json:"provider_spec"`
 }
 
 type config struct {
