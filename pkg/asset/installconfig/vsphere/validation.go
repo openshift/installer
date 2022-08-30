@@ -66,6 +66,12 @@ func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConf
 // infrastructure for vSphere clusters.
 func ValidateMultiZoneForProvisioning(ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
+
+	err := ValidateForProvisioning(ic)
+	if err != nil {
+		return err
+	}
+
 	var clients = make(map[string]*validationContext, 0)
 	for _, failureDomain := range ic.VSphere.FailureDomains {
 		if _, exists := clients[failureDomain.Server]; !exists {
