@@ -3,8 +3,8 @@ locals {
   nodes_cidr_block = var.machine_v4_cidrs[0]
   nodes_subnet_id  = var.openstack_machines_subnet_id != "" ? var.openstack_machines_subnet_id : openstack_networking_subnet_v2.nodes[0].id
   nodes_network_id = var.openstack_machines_network_id != "" ? var.openstack_machines_network_id : openstack_networking_network_v2.openshift-private[0].id
-  create_network   = var.openstack_machines_subnet_id == "" && length(var.openstack_master_subnets) == 0 ? 1 : 0
-  create_router    = var.openstack_machines_subnet_id == "" && length(var.openstack_master_subnets) == 0 && var.openstack_external_network != "" ? 1 : 0
+  create_network   = (var.openstack_machines_subnet_id == "" && length(var.openstack_master_subnets) == 0) ? 1 : 0
+  create_router    = (var.openstack_machines_subnet_id == "" && length(var.openstack_master_subnets) == 0 && var.openstack_external_network != "") ? 1 : 0
 }
 
 data "openstack_networking_network_v2" "external_network" {
