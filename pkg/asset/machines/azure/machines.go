@@ -191,7 +191,12 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
 func ConfigMasters(machines []machineapi.Machine, clusterID string) {
-	//TODO
+	internalLB := fmt.Sprintf("%s-internal", clusterID)
+
+	for _, machine := range machines {
+		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*machineapi.AzureMachineProviderSpec)
+		providerSpec.InternalLoadBalancer = internalLB
+	}
 }
 
 func getNetworkInfo(platform *azure.Platform, clusterID, role string) (string, string, string, error) {
