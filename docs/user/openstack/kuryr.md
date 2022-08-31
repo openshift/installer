@@ -37,7 +37,7 @@ When using Kuryr SDN, as the pods, services, namespaces, network policies, etc.,
 * Ports: 1500
 * RAM: 112 GB
 * vCPUs: 28
-* Volume Storage: 175 GB
+* Volume Storage: 700 GB
 * Instances: 7
 * Load Balancers: 100 (1 needed per OpenShift service)
 * Load Balancer Listeners: 500 (1 per port exposed on the services)
