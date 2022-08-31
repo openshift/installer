@@ -51,7 +51,7 @@ func validateUserTags(tags map[string]string, propagatingTags bool, fldPath *fie
 	if len(tags) == 0 {
 		return allErrs
 	}
-	if len(tags) > AWS_CUSTOMER_TAG_COUNT {
+	if len(tags) > AWS_CUSTOMER_TAG_LIMIT {
 		allErrs = append(allErrs, field.Invalid(fldPath, len(tags), fmt.Sprintf("number of user tags cannot be more than %d", AWS_CUSTOMER_TAG_LIMIT)))
 	}
 	for key, value := range tags {
