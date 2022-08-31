@@ -1,6 +1,6 @@
-variable "cis_id" {
+variable "service_id" {
   type        = string
-  description = "The ID of the IBM Cloud CIS instance that will be used for the DNS records."
+  description = "The ID of the IBM Cloud CIS instance, or IBM Cloud DNS instance, that will be used for the DNS records."
 }
 
 variable "base_domain" {
@@ -26,6 +26,11 @@ variable "load_balancer_int_hostname" {
 variable "cluster_id" {
   type        = string
   description = "The ID created by the installer to uniquely identify the created cluster."
+}
+
+variable "vpc_crn" {
+  type        = string
+  description = "The CRN of the VPC."
 }
 
 variable "vpc_id" {
@@ -60,3 +65,4 @@ variable "publish_strategy" {
   description = "The cluster publishing strategy, either Internal or External"
   default     = "External"
 }
+

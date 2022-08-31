@@ -4,6 +4,7 @@ package powervs
 type Metadata struct {
 	BaseDomain           string `json:"BaseDomain"`
 	CISInstanceCRN       string `json:"cisInstanceCRN"`
+	DNSInstanceCRN       string `json:"dnsInstanceCRN"`
 	PowerVSResourceGroup string `json:"powerVSResourceGroup"`
 	Region               string `json:"region"`
 	VPCRegion            string `json:"vpcRegion"`

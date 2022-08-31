@@ -8,6 +8,7 @@ import (
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
 )
 
@@ -27,21 +28,20 @@ func GetDNSZone() (*Zone, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	publicZones, err := client.GetDNSZones(ctx)
+	// Default to offering only external DNS entries, as IBM Cloud does in their provider
+	// TODO(mjturek): Offer private zones (IBM DNS) when deploying a private cluster
+	publicZones, err := client.GetDNSZones(ctx, types.ExternalPublishingStrategy)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not retrieve base domains")
-	}
-	if len(publicZones) == 0 {
-		return nil, errors.New("no domain names found in project")
 	}
 
 	var options []string
 	var optionToZoneMap = make(map[string]*Zone, len(publicZones))
 	for _, zone := range publicZones {
-		option := fmt.Sprintf("%s (%s)", zone.Name, zone.CISInstanceName)
+		option := fmt.Sprintf("%s (%s)", zone.Name, zone.InstanceName)
 		optionToZoneMap[option] = &Zone{
 			Name:            zone.Name,
-			CISInstanceCRN:  zone.CISInstanceCRN,
+			CISInstanceCRN:  zone.InstanceCRN,
 			ResourceGroupID: zone.ResourceGroupID,
 		}
 		options = append(options, option)
