@@ -12,15 +12,17 @@ resource "ibm_pi_dhcp" "new_dhcp_service" {
   count                  = var.pvs_network_name == "" ? 1 : 0
   pi_cloud_instance_id   = var.cloud_instance_id
   pi_cloud_connection_id = data.ibm_pi_cloud_connection.cloud_connection.id
+  pi_dns_server          = "1.1.1.1"
 }
 
 resource "ibm_pi_cloud_connection" "new_cloud_connection" {
-  count                           = var.cloud_conn_name == "" ? 1 : 0
-  pi_cloud_instance_id            = var.cloud_instance_id
-  pi_cloud_connection_name        = "cloud-con-${var.cluster_id}"
-  pi_cloud_connection_speed       = 50
-  pi_cloud_connection_vpc_enabled = true
-  pi_cloud_connection_vpc_crns    = [var.vpc_crn]
+  count                              = var.cloud_conn_name == "" ? 1 : 0
+  pi_cloud_instance_id               = var.cloud_instance_id
+  pi_cloud_connection_name           = "cloud-con-${var.cluster_id}"
+  pi_cloud_connection_speed          = 50
+  pi_cloud_connection_global_routing = true
+  pi_cloud_connection_vpc_enabled    = true
+  pi_cloud_connection_vpc_crns       = [var.vpc_crn]
 }
 
 data "ibm_pi_cloud_connection" "cloud_connection" {
