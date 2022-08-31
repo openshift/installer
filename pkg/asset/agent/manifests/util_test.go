@@ -63,6 +63,7 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 					ServiceNetwork: []ipnet.IPNet{
 						*ipnet.MustParseCIDR("172.30.0.0/16"),
 					},
+					NetworkType: "OVNKubernetes",
 				},
 				Platform: types.Platform{
 					BareMetal: &baremetal.Platform{

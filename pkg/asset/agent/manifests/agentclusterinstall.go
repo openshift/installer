@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/validate"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -106,6 +107,15 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			},
 		}
 
+		if installConfig.Config.NetworkType != "" {
+			agentClusterInstall.Spec.Networking.NetworkType = installConfig.Config.NetworkType
+		} else {
+			// default NetworkType to OpenShiftSDN if unspecified
+			// https://docs.openshift.com/container-platform/4.11/installing/installing_aws/installing-aws-network-customizations.html#installation-configuration-parameters-network_installing-aws-network-customizations
+			logrus.Info("NetworkType is not specified in install config. Defaulting to OpenShiftSDN.")
+			agentClusterInstall.Spec.Networking.NetworkType = "OpenShiftSDN"
+		}
+
 		// TODO: Handle the case where both IPv4 and IPv6 VIPs are specified
 		apiVIP, ingressVIP := getVIPs(&installConfig.Config.Platform)
 
@@ -157,6 +167,14 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 		err = errors.Wrapf(err, "failed to unmarshal %s", agentClusterInstallFilename)
 		return false, err
 	}
+
+	if agentClusterInstall.Spec.Networking.NetworkType == "" {
+		// default NetworkType to OpenShiftSDN if unspecified
+		// https://docs.openshift.com/container-platform/4.11/installing/installing_aws/installing-aws-network-customizations.html#installation-configuration-parameters-network_installing-aws-network-customizations
+		logrus.Info("NetworkType is not specified in AgentClusterInstall. Defaulting to OpenShiftSDN.")
+		agentClusterInstall.Spec.Networking.NetworkType = "OpenShiftSDN"
+	}
+
 	a.Config = agentClusterInstall
 
 	if err = a.finish(); err != nil {
@@ -169,6 +187,14 @@ func (a *AgentClusterInstall) finish() error {
 
 	if a.Config == nil {
 		return errors.New("missing configuration or manifest file")
+	}
+
+	switch a.Config.Spec.Networking.NetworkType {
+	case
+		"OVNKubernetes",
+		"OpenShiftSDN":
+	default:
+		return errors.New("networkType has incorrect value. Expect value to be either 'OpenShiftSDN' or 'OVNKubernetes'")
 	}
 
 	return nil

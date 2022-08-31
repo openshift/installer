@@ -21,6 +21,9 @@ import (
 
 func TestAgentClusterInstall_Generate(t *testing.T) {
 
+	installConfigWithBadNetworkType := getValidOptionalInstallConfig()
+	installConfigWithBadNetworkType.Config.NetworkType = "bad-network-type-value"
+
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -33,6 +36,13 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&agent.OptionalInstallConfig{},
 			},
 			expectedError: "missing configuration or manifest file",
+		},
+		{
+			name: "install config has bad network type value",
+			dependencies: []asset.Asset{
+				installConfigWithBadNetworkType,
+			},
+			expectedError: "networkType has incorrect value. Expect value to be either 'OpenShiftSDN' or 'OVNKubernetes'",
 		},
 		{
 			name: "valid configuration",
@@ -59,6 +69,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 							},
 						},
 						ServiceNetwork: []string{"172.30.0.0/16"},
+						NetworkType:    "OVNKubernetes",
 					},
 					SSHPublicKey: strings.Trim(TestSSHKey, "|\n\t"),
 					ProvisionRequirements: hiveext.ProvisionRequirements{
@@ -152,6 +163,9 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 
 func TestAgentClusterInstall_LoadedFromDisk(t *testing.T) {
 
+	emptyACI := &hiveext.AgentClusterInstall{}
+	emptyACI.Spec.Networking.NetworkType = "OpenShiftSDN"
+
 	cases := []struct {
 		name           string
 		data           string
@@ -209,6 +223,7 @@ spec:
 						ServiceNetwork: []string{
 							"172.30.0.0/16",
 						},
+						NetworkType: "OpenShiftSDN",
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -227,7 +242,7 @@ spec:
 			name:           "empty",
 			data:           "",
 			expectedFound:  true,
-			expectedConfig: &hiveext.AgentClusterInstall{},
+			expectedConfig: emptyACI,
 			expectedError:  false,
 		},
 		{
