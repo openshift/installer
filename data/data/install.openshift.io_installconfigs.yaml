@@ -1916,6 +1916,13 @@ spec:
                     description: VirtualNetwork specifies the name of an existing
                       VNet for the installer to use
                     type: string
+                  userTags:
+                    additionalProperties:
+                      type: string
+                    description: UserTags additional keys and values that the installer
+                      will add as tags to all resources that it creates. Resources
+                      created by the cluster itself may not include these tags.
+                    type: object
                 required:
                 - region
                 type: object
