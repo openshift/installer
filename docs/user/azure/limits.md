@@ -42,7 +42,7 @@ allows for many clusters to be created. The network security groups which exist 
 
 ## Instance Limits
 
-By default, a cluster will create:
+By default, an x86 cluster will create:
 
 * One Standard_D4s_v3 bootstrap machine (removed after install)
 * Three Standard_D8s_v3 master nodes.
@@ -76,6 +76,32 @@ The specs for the VM sizes (Dsv3-series) are as follows:
    * 4 data disks max
 
 More details on VM sizes can be found [here][sizes-general].
+
+By default, an arm64 cluster will create:
+
+* One Standard_D8ps_v5 bootstrap machine (removed after install)
+* Three Standard_D8ps_v5 master nodes.
+* Three Standard_D4ps_v5 worker nodes.
+
+The specs for the VM sizes (Dpsv5-series) are as follows:
+
+* Standard_D8ps_v5
+   * 8 vCPU's, 32GiB ram
+   * IOPs / Throughput (Mbps): (uncached burst) 20000 / 1200
+   * IOPs / Throughput (Mbps): (uncached) 12800 / 290
+   * NICs / Bandwidth (Mbps): 4 / 12500
+   * 16 data disks max
+   * Remote Storage Only
+
+* Standard_D4ps_v5
+   * 4 vCPU's, 16GiB ram
+   * IOPs / Throughput (Mbps): (uncached burst) 20000 / 1200
+   * IOPs / Throughput (Mbps): (uncached) 6400 / 145
+   * NICs / Bandwidth (Mbps): 2 / 12500
+   * 8 data disks max
+   * Remote Storage Only
+
+More details on VM sizes can be found [here][sizes-arm64]. All VMs are Gen2 only.
 
 The default subscription only allows for 20 vCPU's and will need to be [increased](#increasing-limits) to at least 22.
 If you intend to start with a higher number of workers, enable autoscaling and large workloads
@@ -137,3 +163,4 @@ You will then review and submit your request.
 [load-balancing]: https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview
 [service-limits]: https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits
 [sizes-general]: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general
+[sizes-arm64]: https://docs.microsoft.com/en-us/azure/virtual-machines/dpsv5-dpdsv5-series

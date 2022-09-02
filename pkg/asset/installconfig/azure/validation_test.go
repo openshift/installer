@@ -38,29 +38,47 @@ var (
 	validResourceSkuRegions        = "southeastasia"
 
 	instanceTypeSku = []*azsku.ResourceSku{
-		{Name: to.StringPtr("Standard_D4s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_A1_v2"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("1")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("2")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("False")}}},
-		{Name: to.StringPtr("Standard_D2_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("2")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("8")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_D4_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_D2s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_D8s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}}},
-		{Name: to.StringPtr("Standard_Dc4_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V2")}}},
+		{Name: to.StringPtr("Standard_D4s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}, {Name: to.StringPtr("CpuArchitectureType"), Value: to.StringPtr("x64")}}},
+		{Name: to.StringPtr("Standard_A1_v2"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("1")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("2")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("False")}, {Name: to.StringPtr("CpuArchitectureType"), Value: to.StringPtr("x64")}}},
+		{Name: to.StringPtr("Standard_D2_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("2")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("8")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}, {Name: to.StringPtr("CpuArchitectureType"), Value: to.StringPtr("x64")}}},
+		{Name: to.StringPtr("Standard_D4_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}, {Name: to.StringPtr("CpuArchitectureType"), Value: to.StringPtr("x64")}}},
+		{Name: to.StringPtr("Standard_D2s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}, {Name: to.StringPtr("CpuArchitectureType"), Value: to.StringPtr("x64")}}},
+		{Name: to.StringPtr("Standard_D8s_v3"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V1,V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}, {Name: to.StringPtr("CpuArchitectureType"), Value: to.StringPtr("x64")}}},
+		{Name: to.StringPtr("Standard_Dc4_v4"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V2")}, {Name: to.StringPtr("CpuArchitectureType"), Value: to.StringPtr("x64")}}},
+		{Name: to.StringPtr("Standard_D4ps_v5"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("4")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("16")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}, {Name: to.StringPtr("CpuArchitectureType"), Value: to.StringPtr("Arm64")}}},
+		{Name: to.StringPtr("Standard_D8ps_v5"), Capabilities: &[]azsku.ResourceSkuCapabilities{{Name: to.StringPtr("vCPUsAvailable"), Value: to.StringPtr("8")}, {Name: to.StringPtr("MemoryGB"), Value: to.StringPtr("32")}, {Name: to.StringPtr("PremiumIO"), Value: to.StringPtr("True")}, {Name: to.StringPtr("HyperVGenerations"), Value: to.StringPtr("V2")}, {Name: to.StringPtr("AcceleratedNetworkingEnabled"), Value: to.StringPtr("True")}, {Name: to.StringPtr("CpuArchitectureType"), Value: to.StringPtr("Arm64")}}},
 	}
 	vmCapabilities = map[string]map[string]string{
-		"Standard_D8s_v3": {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True"},
-		"Standard_D4s_v3": {"vCPUsAvailable": "4", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V1", "AcceleratedNetworkingEnabled": "True"},
-		"Standard_A1_v2":  {"vCPUsAvailable": "1", "MemoryGB": "2", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False"},
-		"Standard_D2_v4":  {"vCPUsAvailable": "2", "MemoryGB": "8", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True"},
-		"Standard_D4_v4":  {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "False", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True"},
-		"Standard_D2s_v3": {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True"},
-		"Standard_Dc4_v4": {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2"},
-		"Standard_B4ms":   {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False"},
+		"Standard_D8s_v3":  {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D4s_v3":  {"vCPUsAvailable": "4", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V1", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_A1_v2":   {"vCPUsAvailable": "1", "MemoryGB": "2", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64"},
+		"Standard_D2_v4":   {"vCPUsAvailable": "2", "MemoryGB": "8", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D4_v4":   {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "False", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D2s_v3":  {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_Dc4_v4":  {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "CpuArchitectureType": "x64"},
+		"Standard_B4ms":    {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64"},
+		"Standard_D8ps_v5": {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64"},
+		"Standard_D4ps_v5": {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64"},
 	}
 
 	validInstanceTypes = func(ic *types.InstallConfig) {
 		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D4s_v3"
 		ic.ControlPlane.Platform.Azure.InstanceType = "Standard_D8s_v3"
 		ic.Compute[0].Platform.Azure.InstanceType = "Standard_D4s_v3"
+	}
+
+	validArm64InstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D4ps_v5"
+		ic.ControlPlane.Architecture = types.ArchitectureARM64
+		ic.ControlPlane.Platform.Azure.InstanceType = "Standard_D8ps_v5"
+		ic.Compute[0].Architecture = types.ArchitectureARM64
+		ic.Compute[0].Platform.Azure.InstanceType = "Standard_D4ps_v5"
+	}
+
+	invalidArchInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D4ps_v5"
+		ic.ControlPlane.Platform.Azure.InstanceType = "Standard_D8ps_v5"
+		ic.Compute[0].Platform.Azure.InstanceType = "Standard_D4ps_v5"
 	}
 
 	invalidateDefaultInstanceTypes = func(ic *types.InstallConfig) {
@@ -266,11 +284,13 @@ func validInstallConfig() *types.InstallConfig {
 			},
 		},
 		ControlPlane: &types.MachinePool{
+			Architecture: types.ArchitectureAMD64,
 			Platform: types.MachinePoolPlatform{
 				Azure: &azure.MachinePool{},
 			},
 		},
 		Compute: []types.MachinePool{{
+			Architecture: types.ArchitectureAMD64,
 			Platform: types.MachinePoolPlatform{
 				Azure: &azure.MachinePool{},
 			},
@@ -323,6 +343,16 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			name:     "Valid instance types",
 			edits:    editFunctions{validInstanceTypes},
 			errorMsg: "",
+		},
+		{
+			name:     "Valid Arm64 instance types",
+			edits:    editFunctions{validArm64InstanceTypes},
+			errorMsg: "",
+		},
+		{
+			name:     "Invalid arch instance types",
+			edits:    editFunctions{invalidArchInstanceTypes},
+			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Standard_D8ps_v5": instance type architecture 'Arm64' does not match install config architecture amd64, compute\[0\].platform.azure.type: Invalid value: "Standard_D4ps_v5": instance type architecture 'Arm64' does not match install config architecture amd64, platform.azure.defaultMachinePlatform.type: Invalid value: "Standard_D4ps_v5": instance type architecture 'Arm64' does not match install config architecture amd64\]`,
 		},
 		{
 			name:     "Invalid default machine type",
