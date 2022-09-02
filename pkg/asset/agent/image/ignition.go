@@ -121,10 +121,6 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		},
 	}
 
-	if len(agentManifests.NMStateConfigs) == 0 {
-		return errors.New("at least one NMState configuration must be provided")
-	}
-
 	nodeZeroIP, err := RetrieveRendezvousIP(agentConfigAsset.Config, agentManifests.NMStateConfigs)
 	if err != nil {
 		return err
