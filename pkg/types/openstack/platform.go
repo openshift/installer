@@ -69,15 +69,45 @@ type Platform struct {
 	// +optional
 	ClusterOSImageProperties map[string]string `json:"clusterOSImageProperties,omitempty"`
 
-	// APIVIP is the static IP on the nodes subnet that the api port for openshift will be assigned
+	// DeprecatedAPIVIP is the static IP on the nodes subnet that the api port for openshift will be assigned
 	// Default: will be set to the 5 on the first entry in the machineNetwork CIDR
+	// Deprecated: Use APIVIPs
+	//
+	// +kubebuilder:validation:Format=ip
 	// +optional
-	APIVIP string `json:"apiVIP,omitempty"`
+	DeprecatedAPIVIP string `json:"apiVIP,omitempty"`
 
-	// IngressVIP is the static IP on the nodes subnet that the apps port for openshift will be assigned
-	// Default: will be set to the 7 on the first entry in the machineNewtwork CIDR
+	// APIVIPs contains the VIP(s) on the nodes subnet that the api port for
+	// openshift will be assigned. In dual stack clusters it contains an IPv4
+	// and IPv6 address, otherwise only one VIP
+	// Default: will be set to the 5 on the first entry in the machineNetwork
+	// CIDR
+	//
+	// +kubebuilder:validation:MaxItems=2
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:Format=ip
 	// +optional
-	IngressVIP string `json:"ingressVIP,omitempty"`
+	APIVIPs []string `json:"apiVIPs,omitempty"`
+
+	// DeprecatedIngressVIP is the static IP on the nodes subnet that the apps port for openshift will be assigned
+	// Default: will be set to the 7 on the first entry in the machineNetwork CIDR
+	// Deprecated: Use IngressVIPs
+	//
+	// +kubebuilder:validation:Format=ip
+	// +optional
+	DeprecatedIngressVIP string `json:"ingressVIP,omitempty"`
+
+	// IngressVIPs contains the VIP(s) on the nodes subnet that the apps port
+	// for openshift will be assigned. In dual stack clusters it contains an
+	// IPv4 and IPv6 address, otherwise only one VIP
+	// Default: will be set to the 7 on the first entry in the machineNetwork
+	// CIDR
+	//
+	// +kubebuilder:validation:MaxItems=2
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:Format=ip
+	// +optional
+	IngressVIPs []string `json:"ingressVIPs,omitempty"`
 
 	// MachinesSubnet is the UUIDv4 of an openstack subnet. This subnet will be used by all nodes created by the installer.
 	// By setting this, the installer will no longer create a network and subnet.

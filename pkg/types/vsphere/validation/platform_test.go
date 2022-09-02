@@ -141,65 +141,6 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.defaultDatastore: Required value: must specify the default datastore$`,
 		},
 		{
-			name: "valid VIPs",
-			platform: func() *vsphere.Platform {
-				p := validPlatform()
-				p.APIVIP = "192.168.111.2"
-				p.IngressVIP = "192.168.111.3"
-				return p
-			}(),
-		},
-		{
-			name: "missing API VIP",
-			platform: func() *vsphere.Platform {
-				p := validPlatform()
-				p.APIVIP = ""
-				p.IngressVIP = "192.168.111.3"
-				return p
-			}(),
-			expectedError: `^test-path\.apiVIP: Required value: must specify a VIP for the API`,
-		},
-		{
-			name: "missing Ingress VIP",
-			platform: func() *vsphere.Platform {
-				p := validPlatform()
-				p.APIVIP = "192.168.111.2"
-				p.IngressVIP = ""
-				return p
-			}(),
-			expectedError: `^test-path\.ingressVIP: Required value: must specify a VIP for Ingress`,
-		},
-		{
-			name: "Invalid API VIP",
-			platform: func() *vsphere.Platform {
-				p := validPlatform()
-				p.APIVIP = "192.168.111"
-				p.IngressVIP = "192.168.111.2"
-				return p
-			}(),
-			expectedError: `^test-path.apiVIP: Invalid value: "192.168.111": "192.168.111" is not a valid IP`,
-		},
-		{
-			name: "Invalid Ingress VIP",
-			platform: func() *vsphere.Platform {
-				p := validPlatform()
-				p.APIVIP = "192.168.111.1"
-				p.IngressVIP = "192.168.111"
-				return p
-			}(),
-			expectedError: `^test-path.ingressVIP: Invalid value: "192.168.111": "192.168.111" is not a valid IP`,
-		},
-		{
-			name: "Same API and Ingress VIP",
-			platform: func() *vsphere.Platform {
-				p := validPlatform()
-				p.APIVIP = "192.168.111.1"
-				p.IngressVIP = "192.168.111.1"
-				return p
-			}(),
-			expectedError: `^test-path.apiVIP: Invalid value: "192.168.111.1": IPs for both API and Ingress should not be the same`,
-		},
-		{
 			name: "Capital letters in vCenter",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()

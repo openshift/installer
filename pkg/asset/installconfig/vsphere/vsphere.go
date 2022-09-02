@@ -77,8 +77,8 @@ func Platform() (*vsphere.Platform, error) {
 		VCenter:          vCenter.VCenter,
 		Username:         vCenter.Username,
 		Password:         vCenter.Password,
-		APIVIP:           apiVIP,
-		IngressVIP:       ingressVIP,
+		APIVIPs:          []string{apiVIP},
+		IngressVIPs:      []string{ingressVIP},
 	}
 	return platform, nil
 }

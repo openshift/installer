@@ -103,3 +103,39 @@ func askVNICProfileID(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 	}
 	return nil
 }
+
+func askVIPs(p *ovirt.Platform) error {
+	//TODO: Add support to specify multiple VIPs (-> dual-stack)
+	var apiVIP, ingressVIP string
+	err := survey.Ask([]*survey.Question{
+		{
+			Prompt: &survey.Input{
+				Message: "Internal API virtual IP",
+				Help:    "This is the virtual IP address that will be used to address the OpenShift control plane. Make sure the IP address is not in use.",
+				Default: "",
+			},
+			Validate: survey.ComposeValidators(survey.Required),
+		},
+	}, &apiVIP)
+	if err != nil {
+		return errors.Wrap(err, "failed UserInput")
+	}
+	p.APIVIPs = []string{apiVIP}
+
+	err = survey.Ask([]*survey.Question{
+		{
+			Prompt: &survey.Input{
+				Message: "Ingress virtual IP",
+				Help:    "This is the virtual IP address that will be used to address the OpenShift ingress routers. Make sure the IP address is not in use.",
+				Default: "",
+			},
+			Validate: survey.ComposeValidators(survey.Required),
+		},
+	}, &ingressVIP)
+	if err != nil {
+		return errors.Wrap(err, "failed UserInput")
+	}
+	p.IngressVIPs = []string{ingressVIP}
+
+	return nil
+}

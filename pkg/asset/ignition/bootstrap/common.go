@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
+	utilsnet "k8s.io/utils/net"
 
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
@@ -271,13 +272,8 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		bootstrapNodeIP = ""
 	}
 
-	var APIIntVIPonIPv6 bool
-	platformAPIVIP := apiVIP(&installConfig.Config.Platform)
-	if platformAPIVIP == "" {
-		APIIntVIPonIPv6 = false
-	} else {
-		APIIntVIPonIPv6 = net.ParseIP(platformAPIVIP).To4() == nil
-	}
+	platformFirstAPIVIP := firstAPIVIP(&installConfig.Config.Platform)
+	APIIntVIPonIPv6 := utilsnet.IsIPv6String(platformFirstAPIVIP)
 
 	// Set cluster profile
 	clusterProfile := ""
@@ -635,23 +631,33 @@ func warnIfCertificatesExpired(config *igntypes.Config) {
 	}
 }
 
-// APIVIP returns a string representation of the platform's API VIP
-// It returns an empty string if the platform does not configure a VIP
-func apiVIP(p *types.Platform) string {
+// APIVIPs returns the string representations of the platform's API VIPs
+// It returns nil if the platform does not configure VIPs
+func apiVIPs(p *types.Platform) []string {
 	switch {
 	case p == nil:
-		return ""
+		return nil
 	case p.BareMetal != nil:
-		return p.BareMetal.APIVIP
+		return p.BareMetal.APIVIPs
 	case p.OpenStack != nil:
-		return p.OpenStack.APIVIP
+		return p.OpenStack.APIVIPs
 	case p.VSphere != nil:
-		return p.VSphere.APIVIP
+		return p.VSphere.APIVIPs
 	case p.Ovirt != nil:
-		return p.Ovirt.APIVIP
+		return p.Ovirt.APIVIPs
 	case p.Nutanix != nil:
-		return p.Nutanix.APIVIP
+		return p.Nutanix.APIVIPs
 	default:
-		return ""
+		return nil
 	}
+}
+
+// firstAPIVIP returns the first VIP of the API server (e.g. in case of
+// dual-stack)
+func firstAPIVIP(p *types.Platform) string {
+	for _, vip := range apiVIPs(p) {
+		return vip
+	}
+
+	return ""
 }

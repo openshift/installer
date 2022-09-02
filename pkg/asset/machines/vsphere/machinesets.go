@@ -117,8 +117,8 @@ func getDefinedZones(platformSpec *vsphere.Platform, controlPlane bool) (map[str
 			Folder:           deploymentZone.PlacementConstraint.Folder,
 			Cluster:          failureDomain.Topology.ComputeCluster,
 			ResourcePool:     deploymentZone.PlacementConstraint.ResourcePool,
-			APIVIP:           platformSpec.APIVIP,
-			IngressVIP:       platformSpec.IngressVIP,
+			APIVIPs:          platformSpec.APIVIPs,
+			IngressVIPs:      platformSpec.IngressVIPs,
 			Network:          failureDomain.Topology.Networks[0],
 			DiskType:         platformSpec.DiskType,
 		}

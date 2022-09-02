@@ -5,12 +5,8 @@ import (
 	"net"
 	"testing"
 
-	"github.com/pborman/uuid"
-	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
-
 	configv1 "github.com/openshift/api/config/v1"
+	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
@@ -26,6 +22,12 @@ import (
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/pborman/uuid"
+	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/pointer"
+	utilsslice "k8s.io/utils/strings/slices"
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -148,8 +150,8 @@ func validBareMetalPlatform() *baremetal.Platform {
 		ExternalBridge:         iface[0].Name,
 		ProvisioningBridge:     iface[0].Name,
 		DefaultMachinePlatform: &baremetal.MachinePool{},
-		APIVIP:                 "10.0.0.5",
-		IngressVIP:             "10.0.0.4",
+		APIVIPs:                []string{"10.0.0.5"},
+		IngressVIPs:            []string{"10.0.0.4"},
 	}
 }
 
@@ -160,6 +162,8 @@ func validOpenStackPlatform() *openstack.Platform {
 		DefaultMachinePlatform: &openstack.MachinePool{
 			FlavorName: "test-flavor",
 		},
+		APIVIPs:     []string{"10.0.0.5"},
+		IngressVIPs: []string{"10.0.0.4"},
 	}
 }
 
@@ -250,8 +254,8 @@ func validOvirtPlatform() *ovirt.Platform {
 	return &ovirt.Platform{
 		ClusterID:       uuid.NewRandom().String(),
 		StorageDomainID: uuid.NewRandom().String(),
-		APIVIP:          "1.1.1.1",
-		IngressVIP:      "1.1.1.3",
+		APIVIPs:         []string{"10.0.1.1"},
+		IngressVIPs:     []string{"10.0.1.3"},
 	}
 }
 
@@ -614,18 +618,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
-			name: "invalid openstack platform",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					OpenStack: validOpenStackPlatform(),
-				}
-				c.Platform.OpenStack.APIVIP = "123.456.789.000"
-				return c
-			}(),
-			expectedError: `^platform\.openstack\.apiVIP: Invalid value: "123.456.789.000": "123.456.789.000" is not a valid IP$`,
-		},
-		{
 			name: "valid baremetal platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -636,91 +628,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
-			name: "invalid baremetal platform",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					BareMetal: validBareMetalPlatform(),
-				}
-				c.Platform.BareMetal.APIVIP = ""
-				return c
-			}(),
-			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "": "" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "": IP expected to be in one of the machine networks: 10.0.0.0/16]$`,
-		},
-		{
-			name: "baremetal API VIP not an IP",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					BareMetal: validBareMetalPlatform(),
-				}
-				c.Platform.BareMetal.APIVIP = "test"
-				return c
-			}(),
-			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "test": IP expected to be in one of the machine networks: 10.0.0.0/16]$`,
-		},
-		{
-			name: "baremetal API VIP set to an incorrect value",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					BareMetal: validBareMetalPlatform(),
-				}
-				c.Platform.BareMetal.APIVIP = "10.1.0.5"
-				return c
-			}(),
-			expectedError: `^platform\.baremetal\.apiVIP: Invalid value: "10\.1\.0\.5": IP expected to be in one of the machine networks: 10.0.0.0/16$`,
-		},
-		{
-			name: "baremetal API VIP set to an incorrect IP Family",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Networking = validDualStackNetworkingConfig()
-				c.Platform = types.Platform{
-					BareMetal: validBareMetalPlatform(),
-				}
-				c.Platform.BareMetal.APIVIP = "ffd0::"
-				return c
-			}(),
-			expectedError: `networking.baremetal.apiVIP: Invalid value: "ffd0::": VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6`,
-		},
-		{
-			name: "baremetal Ingress VIP not an IP",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					BareMetal: validBareMetalPlatform(),
-				}
-				c.Platform.BareMetal.IngressVIP = "test"
-				return c
-			}(),
-			expectedError: `^\[platform\.baremetal\.ingressVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.ingressVIP: Invalid value: "test": IP expected to be in one of the machine networks: 10.0.0.0/16]$`,
-		},
-		{
-			name: "baremetal Ingress VIP set to an incorrect IP Family",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Networking = validDualStackNetworkingConfig()
-				c.Platform = types.Platform{
-					BareMetal: validBareMetalPlatform(),
-				}
-				c.Platform.BareMetal.IngressVIP = "ffd0::"
-				return c
-			}(),
-			expectedError: `networking.baremetal.ingressVIP: Invalid value: "ffd0::": VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6`,
-		},
-		{
-			name: "baremetal Ingress VIP set to an incorrect value",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					BareMetal: validBareMetalPlatform(),
-				}
-				c.Platform.BareMetal.IngressVIP = "10.1.0.7"
-				return c
-			}(),
-			expectedError: `^platform\.baremetal\.ingressVIP: Invalid value: "10\.1\.0\.7": IP expected to be in one of the machine networks: 10.0.0.0/16$`,
-		}, {
 			name: "valid vsphere platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -1565,6 +1472,533 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `capabilities.additionalEnabledCapabilities\[0\]: Unsupported value: "not-valid": supported values: .*`,
 		},
+		//VIP tests
+		{
+			name: "apivip_v4_not_in_machinenetwork_cidr",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					{CIDR: *ipnet.MustParseCIDR("fe80::/10")},
+				}
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"192.168.222.1"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"192.168.222.1\": IP expected to be in one of the machine networks: 10.0.0.0/16,fe80::/10",
+		},
+		{
+			name: "apivip_v6_not_in_machinenetwork_cidr",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					{CIDR: *ipnet.MustParseCIDR("fe80::/10")},
+				}
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"2001::1"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"2001::1\": IP expected to be in one of the machine networks: 10.0.0.0/16,fe80::/10",
+		},
+		{
+			name: "apivips_v6_on_openshiftsdn",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = validIPv6NetworkingConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOpenShiftSDN)
+
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"ffd0::1"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"ffd0::1\": IPv6 is not supported on OpenShiftSDN",
+		},
+		{
+			name: "ingressvips_v6_on_openshiftsdn",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = validIPv6NetworkingConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOpenShiftSDN)
+
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIPs = []string{"ffd0::1"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \"ffd0::1\": IPv6 is not supported on OpenShiftSDN",
+		},
+		{
+			name: "too_many_apivips",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"fe80::1", "fe80::2", "fe80::3"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Too many: 3: must have at most 2 items",
+		},
+		{
+			name: "invalid_apivip",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{""}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"\": \"\" is not a valid IP",
+		},
+		{
+			name: "invalid_apivip_2",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"123.456.789.000"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"123.456.789.000\": \"123.456.789.000\" is not a valid IP",
+		},
+		{
+			name: "invalid_apivip_format",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"foobar"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"foobar\": \"foobar\" is not a valid IP",
+		},
+		{
+			name: "invalid_apivip_format_one_of_many",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"192.168.1.0", "foobar"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"foobar\": \"foobar\" is not a valid IP",
+		},
+		{
+			name: "invalid_apivips_both_ipv4",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"192.168.111.1", "192.168.111.2"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \\[\\]string\\{\"192.168.111.1\", \"192.168.111.2\"\\}: If two API VIPs are given, one must be an IPv4 address, the other an IPv6",
+		},
+		{
+			name: "invalid_apis_both_ipv6",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"fe80::1", "fe80::2"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \\[\\]string\\{\"fe80::1\", \"fe80::2\"\\}: If two API VIPs are given, one must be an IPv4 address, the other an IPv6",
+		},
+		{
+			name: "ingressvip_v4_not_in_machinenetwork_cidr",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					{CIDR: *ipnet.MustParseCIDR("fe80::/10")},
+				}
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIPs = []string{"192.168.222.4"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \"192.168.222.4\": IP expected to be in one of the machine networks: 10.0.0.0/16,fe80::/10",
+		},
+		{
+			name: "ingressvip_v6_not_in_machinenetwork_cidr",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					{CIDR: *ipnet.MustParseCIDR("fe80::/10")},
+				}
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIPs = []string{"2001::1"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \"2001::1\": IP expected to be in one of the machine networks: 10.0.0.0/16,fe80::/10",
+		},
+		{
+			name: "too_many_ingressvips",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIPs = []string{"fe80::1", "fe80::2", "fe80::3"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.ingressVIPs: Too many: 3: must have at most 2 items",
+		},
+		{
+			name: "invalid_ingressvip",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIPs = []string{""}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \"\": \"\" is not a valid IP",
+		},
+		{
+			name: "invalid_ingressvip_format",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIPs = []string{"foobar"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \"foobar\": \"foobar\" is not a valid IP",
+		},
+		{
+			name: "invalid_ingressvip_format_one_of_many",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIPs = []string{"192.1.1.1", "foobar"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \"foobar\": \"foobar\" is not a valid IP",
+		},
+		{
+			name: "invalid_ingressvips_both_ipv4",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIPs = []string{"192.168.111.4", "192.168.111.5"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \\[\\]string\\{\"192.168.111.4\", \"192.168.111.5\"\\}: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6",
+		},
+		{
+			name: "invalid_ingressvips_both_ipv6",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIPs = []string{"fe80::1", "fe80::2"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \\[\\]string\\{\"fe80::1\", \"fe80::2\"\\}: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6",
+		},
+		{
+			name: "identical_apivip_ingressvip",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"fe80::1"}
+				c.Platform.BareMetal.IngressVIPs = []string{"fe80::1"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"fe80::1\": VIP for API must not be one of the Ingress VIPs",
+		},
+		{
+			name: "identical_apivips_ingressvips_multiple_ips",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"fe80::1", "192.1.2.3"}
+				c.Platform.BareMetal.IngressVIPs = []string{"fe80::1", "192.1.2.4"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"fe80::1\": VIP for API must not be one of the Ingress VIPs",
+		},
+		{
+			name: "apivip_ingressvip_are_synonyms",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"2001:db8::5"}
+				c.Platform.BareMetal.IngressVIPs = []string{"2001:db8:0::5"}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"2001:db8::5\": VIP for API must not be one of the Ingress VIPs",
+		},
+		{
+			name: "empty_api_vip_fields",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.DeprecatedAPIVIP = ""
+				c.Platform.BareMetal.APIVIPs = []string{}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Required value: must specify at least one VIP for the API",
+		},
+		{
+			name: "empty_ingress_vip_fields",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.DeprecatedIngressVIP = ""
+				c.Platform.BareMetal.IngressVIPs = []string{}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.ingressVIPs: Required value: must specify at least one VIP for the Ingress",
+		},
+		{
+			name: "baremetal API VIP set to an incorrect IP Family",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = validDualStackNetworkingConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"ffd0::"}
+				return c
+			}(),
+			expectedError: `platform.baremetal.apiVIPs: Invalid value: "ffd0::": VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6`,
+		},
+		{
+			name: "baremetal Ingress VIP set to an incorrect IP Family",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = validDualStackNetworkingConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIPs = []string{"ffd0::"}
+				return c
+			}(),
+			expectedError: `platform.baremetal.ingressVIPs: Invalid value: "ffd0::": VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6`,
+		},
+		{
+			name: "should validate vips on baremetal (required)",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.DeprecatedAPIVIP = ""
+				c.Platform.BareMetal.APIVIPs = []string{}
+
+				return c
+			}(),
+			expectedError: "platform.baremetal.apiVIPs: Required value: must specify at least one VIP for the API",
+		},
+		{
+			name: "should validate vips on OpenStack (vips are required on openstack)",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					OpenStack: validOpenStackPlatform(),
+				}
+				c.Platform.OpenStack.DeprecatedAPIVIP = ""
+				c.Platform.OpenStack.APIVIPs = []string{}
+
+				return c
+			}(),
+			expectedError: "platform.openstack.apiVIPs: Required value: must specify at least one VIP for the API",
+		},
+		// {
+		// 	name: "should not validate vips on OpenStack if not set (vips are not required on openstack)",
+		// 	installConfig: func() *types.InstallConfig {
+		// 		c := validInstallConfig()
+		// 		c.Platform = types.Platform{
+		// 			OpenStack: validOpenStackPlatform(),
+		// 		}
+		// 		c.Platform.OpenStack.DeprecatedAPIVIP = ""
+		// 		c.Platform.OpenStack.APIVIPs = []string{}
+
+		// 		return c
+		// 	}(),
+		// },
+		{
+			name: "should validate vips on OpenStack if set (vips are not required on openstack)",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					OpenStack: validOpenStackPlatform(),
+				}
+				c.Platform.OpenStack.APIVIPs = []string{"foobar"}
+
+				return c
+			}(),
+			expectedError: "platform.openstack.apiVIPs: Invalid value: \"foobar\": \"foobar\" is not a valid IP",
+		},
+		{
+			name: "should not validate vips on VSphere if not set (vips are not required on VSphere)",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.DeprecatedAPIVIP = ""
+				c.Platform.VSphere.APIVIPs = []string{}
+
+				return c
+			}(),
+		},
+		{
+			name: "should validate vips on VSphere if set (vips are not required on VSphere)",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.APIVIPs = []string{"foobar"}
+
+				return c
+			}(),
+			expectedError: "platform.vsphere.apiVIPs: Invalid value: \"foobar\": \"foobar\" is not a valid IP",
+		},
+		{
+			name: "should not validate vips on Nutanix if not set (vips are not required on Nutanix)",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Nutanix: validNutanixPlatform(),
+				}
+				c.Platform.Nutanix.DeprecatedAPIVIP = ""
+				c.Platform.Nutanix.APIVIPs = []string{}
+
+				return c
+			}(),
+		},
+		{
+			name: "should validate vips on Nutanix if set (vips are not required on Nutanix)",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Nutanix: validNutanixPlatform(),
+				}
+				c.Platform.Nutanix.APIVIPs = []string{"foobar"}
+
+				return c
+			}(),
+			expectedError: "platform.nutanix.apiVIPs: Invalid value: \"foobar\": \"foobar\" is not a valid IP",
+		},
+		{
+			name: "should return error on missing vips on Ovirt if not set (vips are required on Ovirt)",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Ovirt: validOvirtPlatform(),
+				}
+				c.Platform.Ovirt.DeprecatedAPIVIP = ""
+				c.Platform.Ovirt.APIVIPs = []string{}
+
+				return c
+			}(),
+			expectedError: "platform.ovirt.api_vips: Required value: must specify at least one VIP for the API",
+		},
+		{
+			name: "should validate vips on Ovirt (vips are required on Ovirt)",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Ovirt: validOvirtPlatform(),
+				}
+				c.Platform.Ovirt.APIVIPs = []string{"foobar"}
+
+				return c
+			}(),
+			expectedError: "platform.ovirt.api_vips: Invalid value: \"foobar\": \"foobar\" is not a valid IP",
+		},
+		{
+			name: "should return error if only API VIP is set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.APIVIPs = []string{"10.0.0.1"}
+				c.Platform.VSphere.IngressVIPs = []string{}
+
+				return c
+			}(),
+			expectedError: "platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set",
+		},
+		{
+			name: "should return error if only Ingress VIP is set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.APIVIPs = []string{}
+				c.Platform.VSphere.IngressVIPs = []string{"10.0.0.1"}
+
+				return c
+			}(),
+			expectedError: "platform.vsphere.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1573,6 +2007,50 @@ func TestValidateInstallConfig(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Regexp(t, tc.expectedError, err)
+			}
+		})
+	}
+}
+
+func Test_ensureIPv4IsFirstInDualStackSlice(t *testing.T) {
+	tests := []struct {
+		name    string
+		vips    []string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:    "should switch VIPs",
+			vips:    []string{"fe80::0", "192.168.1.1"},
+			want:    []string{"192.168.1.1", "fe80::0"},
+			wantErr: false,
+		},
+		{
+			name:    "should do nothing on single stack",
+			vips:    []string{"192.168.1.1"},
+			want:    []string{"192.168.1.1"},
+			wantErr: false,
+		},
+		{
+			name:    "should do nothing on correct order",
+			vips:    []string{"192.168.1.1", "fe80::0"},
+			want:    []string{"192.168.1.1", "fe80::0"},
+			wantErr: false,
+		},
+		{
+			name:    "return error on invalid number of vips",
+			vips:    []string{"192.168.1.1", "fe80::0", "192.168.1.1"},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ensureIPv4IsFirstInDualStackSlice(&tt.vips, field.NewPath("test")); (len(err) > 0) != tt.wantErr {
+				t.Errorf("ensureIPv4IsFirstInDualStackSlice() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !tt.wantErr && !utilsslice.Equal(tt.vips, tt.want) && len(tt.vips) == 2 {
+				t.Errorf("ensureIPv4IsFirstInDualStackSlice() changed to %v, expected %v", tt.vips, tt.want)
 			}
 		})
 	}

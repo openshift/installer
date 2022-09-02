@@ -47,6 +47,7 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 	vspherevalidation "github.com/openshift/installer/pkg/types/vsphere/validation"
 	"github.com/openshift/installer/pkg/validate"
+	utilsnet "k8s.io/utils/net"
 )
 
 // list of known plugins that require hostPrefix to be set
@@ -104,6 +105,7 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		allErrs = append(allErrs, validateNetworking(c.Networking, c.IsSingleNodeOpenShift(), field.NewPath("networking"))...)
 		allErrs = append(allErrs, validateNetworkingIPVersion(c.Networking, &c.Platform)...)
 		allErrs = append(allErrs, validateNetworkingForPlatform(c.Networking, &c.Platform, field.NewPath("networking"))...)
+		allErrs = append(allErrs, validateVIPsForPlatform(c.Networking, &c.Platform, field.NewPath("platform"))...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
@@ -227,23 +229,10 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		case p.Azure != nil && experimentalDualStackEnabled:
 			logrus.Warnf("Using experimental Azure dual-stack support")
 		case p.BareMetal != nil:
-			apiVIPIPFamily := corev1.IPv6Protocol
-			if net.ParseIP(p.BareMetal.APIVIP).To4() != nil {
-				apiVIPIPFamily = corev1.IPv4Protocol
-			}
-
-			if apiVIPIPFamily != presence["machineNetwork"].Primary {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "baremetal", "apiVIP"), p.BareMetal.APIVIP, "VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6"))
-			}
-
-			ingressVIPIPFamily := corev1.IPv6Protocol
-			if net.ParseIP(p.BareMetal.IngressVIP).To4() != nil {
-				ingressVIPIPFamily = corev1.IPv4Protocol
-			}
-
-			if ingressVIPIPFamily != presence["machineNetwork"].Primary {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "baremetal", "ingressVIP"), p.BareMetal.IngressVIP, "VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6"))
-			}
+		case p.VSphere != nil:
+		case p.OpenStack != nil:
+		case p.Ovirt != nil:
+		case p.Nutanix != nil:
 		case p.None != nil:
 		default:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", "dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address"))
@@ -271,6 +260,10 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 
 		switch {
 		case p.BareMetal != nil:
+		case p.VSphere != nil:
+		case p.OpenStack != nil:
+		case p.Ovirt != nil:
+		case p.Nutanix != nil:
 		case p.None != nil:
 		case p.Azure != nil && p.Azure.CloudName == azure.StackCloud:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "Azure Stack does not support IPv6"))
@@ -450,6 +443,228 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 	return allErrs
 }
 
+// vips defines the VIPs to validate
+type vips struct {
+	API     []string
+	Ingress []string
+}
+
+// vipFields defines the field names to which validation errors for each VIP
+// type should be assigned to
+type vipFields struct {
+	APIVIPs     string
+	IngressVIPs string
+}
+
+// validateVIPsForPlatform validates the VIPs (for API and Ingress) for the
+// given platform
+func validateVIPsForPlatform(network *types.Networking, platform *types.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	virtualIPs := vips{}
+	newVIPsFields := vipFields{
+		APIVIPs:     "apiVIPs",
+		IngressVIPs: "ingressVIPs",
+	}
+	switch {
+	case platform.BareMetal != nil:
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.BareMetal.APIVIPs, fldPath.Child(baremetal.Name, newVIPsFields.APIVIPs))...)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.BareMetal.IngressVIPs, fldPath.Child(baremetal.Name, newVIPsFields.IngressVIPs))...)
+
+		virtualIPs = vips{
+			API:     platform.BareMetal.APIVIPs,
+			Ingress: platform.BareMetal.IngressVIPs,
+		}
+
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, network, fldPath.Child(baremetal.Name))...)
+	case platform.Nutanix != nil:
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.APIVIPs, fldPath.Child(nutanix.Name, newVIPsFields.APIVIPs))...)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.IngressVIPs, fldPath.Child(nutanix.Name, newVIPsFields.IngressVIPs))...)
+
+		virtualIPs = vips{
+			API:     platform.Nutanix.APIVIPs,
+			Ingress: platform.Nutanix.IngressVIPs,
+		}
+
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, network, fldPath.Child(nutanix.Name))...)
+	case platform.OpenStack != nil:
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.APIVIPs, fldPath.Child(openstack.Name, newVIPsFields.APIVIPs))...)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.IngressVIPs, fldPath.Child(openstack.Name, newVIPsFields.IngressVIPs))...)
+
+		virtualIPs = vips{
+			API:     platform.OpenStack.APIVIPs,
+			Ingress: platform.OpenStack.IngressVIPs,
+		}
+
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, network, fldPath.Child(openstack.Name))...)
+	case platform.VSphere != nil:
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.APIVIPs, fldPath.Child(vsphere.Name, newVIPsFields.APIVIPs))...)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.IngressVIPs, fldPath.Child(vsphere.Name, newVIPsFields.IngressVIPs))...)
+
+		virtualIPs = vips{
+			API:     platform.VSphere.APIVIPs,
+			Ingress: platform.VSphere.IngressVIPs,
+		}
+
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, network, fldPath.Child(vsphere.Name))...)
+	case platform.Ovirt != nil:
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.APIVIPs, fldPath.Child(ovirt.Name, newVIPsFields.APIVIPs))...)
+		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.IngressVIPs, fldPath.Child(ovirt.Name, newVIPsFields.IngressVIPs))...)
+
+		newVIPsFields = vipFields{
+			APIVIPs:     "api_vips",
+			IngressVIPs: "ingress_vips",
+		}
+		virtualIPs = vips{
+			API:     platform.Ovirt.APIVIPs,
+			Ingress: platform.Ovirt.IngressVIPs,
+		}
+
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, network, fldPath.Child(ovirt.Name))...)
+	default:
+		//no vips to validate on this platform
+	}
+
+	return allErrs
+}
+
+func ensureIPv4IsFirstInDualStackSlice(vips *[]string, fldPath *field.Path) field.ErrorList {
+	errList := field.ErrorList{}
+	isDualStack, err := utilsnet.IsDualStackIPStrings(*vips)
+	if err != nil {
+		errList = append(errList, field.Invalid(fldPath, vips, err.Error()))
+		return errList
+	}
+
+	if isDualStack {
+		if len(*vips) == 2 {
+			if utilsnet.IsIPv4String((*vips)[1]) && utilsnet.IsIPv6String((*vips)[0]) {
+				(*vips)[0], (*vips)[1] = (*vips)[1], (*vips)[0]
+			}
+		} else {
+			errList = append(errList, field.Invalid(fldPath, vips, "wrong number of VIPs given. Expecting 2 VIPs for dual stack"))
+			return errList
+		}
+	}
+
+	return errList
+}
+
+// validateAPIAndIngressVIPs validates the API and Ingress VIPs
+func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired bool, n *types.Networking, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if len(vips.API) == 0 {
+		if vipIsRequired {
+			allErrs = append(allErrs, field.Required(fldPath.Child(fieldNames.APIVIPs), "must specify at least one VIP for the API"))
+		}
+	} else if len(vips.API) <= 2 {
+		for _, vip := range vips.API {
+			if err := validate.IP(vip); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, err.Error()))
+			}
+
+			for _, ingressVIP := range vips.Ingress {
+				apiVIPNet := net.ParseIP(vip)
+				ingressVIPNet := net.ParseIP(ingressVIP)
+
+				if apiVIPNet.Equal(ingressVIPNet) {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, "VIP for API must not be one of the Ingress VIPs"))
+				}
+			}
+
+			if err := validateIPinMachineCIDR(vip, n); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, err.Error()))
+			}
+
+			if utilsnet.IsIPv6String(vip) && n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, "IPv6 is not supported on OpenShiftSDN"))
+			}
+		}
+
+		if len(vips.Ingress) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child(fieldNames.IngressVIPs), "must specify VIP for ingress, when VIP for API is set"))
+		}
+
+		if len(vips.API) == 1 {
+			hasIPv4, hasIPv6, presence, _ := inferIPVersionFromInstallConfig(n)
+
+			apiVIPIPFamily := corev1.IPv4Protocol
+			if utilsnet.IsIPv6String(vips.API[0]) {
+				apiVIPIPFamily = corev1.IPv6Protocol
+			}
+
+			if hasIPv4 && hasIPv6 && apiVIPIPFamily != presence["machineNetwork"].Primary {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vips.API[0], "VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6"))
+			}
+		} else if len(vips.API) == 2 {
+			if isDualStack, _ := utilsnet.IsDualStackIPStrings(vips.API); !isDualStack {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vips.API, "If two API VIPs are given, one must be an IPv4 address, the other an IPv6"))
+			}
+		}
+	} else {
+		allErrs = append(allErrs, field.TooMany(fldPath.Child(fieldNames.APIVIPs), len(vips.API), 2))
+	}
+
+	if len(vips.Ingress) == 0 {
+		if vipIsRequired {
+			allErrs = append(allErrs, field.Required(fldPath.Child(fieldNames.IngressVIPs), "must specify at least one VIP for the Ingress"))
+		}
+	} else if len(vips.Ingress) <= 2 {
+		for _, vip := range vips.Ingress {
+			if err := validate.IP(vip); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
+			}
+
+			if err := validateIPinMachineCIDR(vip, n); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
+			}
+
+			if utilsnet.IsIPv6String(vip) && n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, "IPv6 is not supported on OpenShiftSDN"))
+			}
+		}
+
+		if len(vips.API) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child(fieldNames.APIVIPs), "must specify VIP for API, when VIP for ingress is set"))
+		}
+
+		if len(vips.Ingress) == 1 {
+			hasIPv4, hasIPv6, presence, _ := inferIPVersionFromInstallConfig(n)
+
+			ingressVIPIPFamily := corev1.IPv4Protocol
+			if utilsnet.IsIPv6String(vips.Ingress[0]) {
+				ingressVIPIPFamily = corev1.IPv6Protocol
+			}
+
+			if hasIPv4 && hasIPv6 && ingressVIPIPFamily != presence["machineNetwork"].Primary {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vips.Ingress[0], "VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6"))
+			}
+		} else if len(vips.Ingress) == 2 {
+			if isDualStack, _ := utilsnet.IsDualStackIPStrings(vips.Ingress); !isDualStack {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vips.Ingress, "If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6"))
+			}
+		}
+	} else {
+		allErrs = append(allErrs, field.TooMany(fldPath.Child(fieldNames.IngressVIPs), len(vips.Ingress), 2))
+	}
+
+	return allErrs
+}
+
+func validateIPinMachineCIDR(vip string, n *types.Networking) error {
+	var networks []string
+
+	for _, network := range n.MachineNetwork {
+		if network.CIDR.Contains(net.ParseIP(vip)) {
+			return nil
+		}
+		networks = append(networks, network.CIDR.String())
+	}
+
+	return fmt.Errorf("IP expected to be in one of the machine networks: %s", strings.Join(networks, ","))
+}
+
 func validatePlatform(platform *types.Platform, fldPath *field.Path, network *types.Networking, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	activePlatform := platform.Name()
@@ -498,7 +713,9 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 		validate(powervs.Name, platform.PowerVS, func(f *field.Path) field.ErrorList { return powervsvalidation.ValidatePlatform(platform.PowerVS, f) })
 	}
 	if platform.VSphere != nil {
-		validate(vsphere.Name, platform.VSphere, func(f *field.Path) field.ErrorList { return vspherevalidation.ValidatePlatform(platform.VSphere, f) })
+		validate(vsphere.Name, platform.VSphere, func(f *field.Path) field.ErrorList {
+			return vspherevalidation.ValidatePlatform(platform.VSphere, f)
+		})
 	}
 	if platform.BareMetal != nil {
 		validate(baremetal.Name, platform.BareMetal, func(f *field.Path) field.ErrorList {

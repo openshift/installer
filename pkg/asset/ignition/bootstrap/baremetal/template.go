@@ -78,11 +78,15 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 
 	templateData.ProvisioningIP = config.BootstrapProvisioningIP
 	templateData.ProvisioningNetwork = string(config.ProvisioningNetwork)
-	templateData.BaremetalEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIP, "6385"))
-	templateData.BaremetalIntrospectionEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIP, "5050"))
 	templateData.ExternalStaticIP = config.BootstrapExternalStaticIP
 	templateData.ExternalStaticGateway = config.BootstrapExternalStaticGateway
 	templateData.ExternalMACAddress = config.ExternalMACAddress
+
+	if len(config.APIVIPs) > 0 {
+		templateData.APIVIP = config.APIVIPs[0]
+		templateData.BaremetalEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIPs[0], "6385"))
+		templateData.BaremetalIntrospectionEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIPs[0], "5050"))
+	}
 
 	if config.BootstrapExternalStaticIP != "" {
 		for _, network := range networks {
@@ -134,7 +138,6 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	templateData.IronicUsername = ironicUsername
 	templateData.IronicPassword = ironicPassword
 	templateData.ClusterOSImage = config.ClusterOSImage
-	templateData.APIVIP = config.APIVIP
 
 	return &templateData
 }

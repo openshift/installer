@@ -44,25 +44,6 @@ func TestValidatePlatform(t *testing.T) {
 				BootstrapProvisioningIP("fd2e:6f44:5dd8:b856::2").build(),
 		},
 		{
-			name: "invalid_apivip",
-			platform: platform().
-				APIVIP("192.168.222.2").build(),
-			expected: "Invalid value: \"192.168.222.2\": IP expected to be in one of the machine networks: 192.168.111.0/24",
-		},
-		{
-			name: "invalid_ingressvip",
-			platform: platform().
-				IngressVIP("192.168.222.4").build(),
-			expected: "Invalid value: \"192.168.222.4\": IP expected to be in one of the machine networks: 192.168.111.0/24",
-		},
-		{
-			name: "identical_apivip_ingressvip",
-			platform: platform().
-				APIVIP("192.168.111.100").
-				IngressVIP("192.168.111.100").build(),
-			expected: "apiVIP and ingressVIP must not be set to the same value",
-		},
-		{
 			name: "invalid_hosts",
 			platform: platform().
 				Hosts().build(),
@@ -789,8 +770,8 @@ type platformBuilder struct {
 func platform() *platformBuilder {
 	return &platformBuilder{
 		baremetal.Platform{
-			APIVIP:                       "192.168.111.2",
-			IngressVIP:                   "192.168.111.4",
+			APIVIPs:                      []string{"192.168.111.2"},
+			IngressVIPs:                  []string{"192.168.111.4"},
 			Hosts:                        []*baremetal.Host{},
 			LibvirtURI:                   "qemu://system",
 			ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
@@ -839,16 +820,6 @@ func (pb *platformBuilder) ClusterOSImage(value string) *platformBuilder {
 
 func (pb *platformBuilder) ProvisioningDHCPRange(value string) *platformBuilder {
 	pb.Platform.ProvisioningDHCPRange = value
-	return pb
-}
-
-func (pb *platformBuilder) APIVIP(value string) *platformBuilder {
-	pb.Platform.APIVIP = value
-	return pb
-}
-
-func (pb *platformBuilder) IngressVIP(value string) *platformBuilder {
-	pb.Platform.IngressVIP = value
 	return pb
 }
 
