@@ -106,6 +106,7 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			},
 		}
 
+		// TODO: Handle the case where both IPv4 and IPv6 VIPs are specified
 		apiVIP, ingressVIP := getVIPs(&installConfig.Config.Platform)
 
 		// set APIVIP and IngressVIP only for non SNO cluster for Baremetal and Vsphere platforms

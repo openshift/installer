@@ -68,8 +68,8 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 				},
 				Platform: types.Platform{
 					BareMetal: &baremetal.Platform{
-						APIVIP:     "192.168.122.10",
-						IngressVIP: "192.168.122.11",
+						APIVIPs:     []string{"192.168.122.10"},
+						IngressVIPs: []string{"192.168.122.11"},
 					},
 				},
 			},

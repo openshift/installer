@@ -59,9 +59,9 @@ func getVIPs(p *types.Platform) (string, string) {
 	case p == nil:
 		return "", ""
 	case p.BareMetal != nil:
-		return p.BareMetal.APIVIP, p.BareMetal.IngressVIP
+		return p.BareMetal.APIVIPs[0], p.BareMetal.IngressVIPs[0]
 	case p.VSphere != nil:
-		return p.VSphere.APIVIP, p.VSphere.IngressVIP
+		return p.VSphere.APIVIPs[0], p.VSphere.IngressVIPs[0]
 	default:
 		return "", ""
 	}

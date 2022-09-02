@@ -40,7 +40,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: `invalid install-config configuration: Platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "none"`,
 		},
 		{
-			name: "apiVip not set for baremetal platform",
+			name: "apiVips not set for baremetal platform",
 			data: `
 apiVersion: v1
 metadata:
@@ -51,14 +51,15 @@ platform:
     hosts:
       - name: host1
         bootMACAddress: 52:54:01:xx:zz:z1
-    ingressVip: 192.168.122.11
+    ingressVips:
+      - 192.168.122.11
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Platform.Baremetal.ApiVip: Required value: apiVip must be set for baremetal platform",
+			expectedError: "invalid install-config configuration: Platform.Baremetal.ApiVips: Required value: apiVips must be set for baremetal platform",
 		},
 		{
-			name: "ingressVip not set for vsphere platform",
+			name: "ingressVips not set for vsphere platform",
 			data: `
 apiVersion: v1
 metadata:
@@ -66,11 +67,12 @@ metadata:
 baseDomain: test-domain
 platform:
   vsphere:
-    apiVip: 192.168.122.10
+    apiVips:
+      - 192.168.122.10
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Platform.VSphere.IngressVip: Required value: ingressVip must be set for vsphere platform",
+			expectedError: "invalid install-config configuration: Platform.VSphere.IngressVips: Required value: ingressVips must be set for vsphere platform",
 		},
 		{
 			name: "invalid configuration for none platform for sno",

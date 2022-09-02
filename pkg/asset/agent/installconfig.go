@@ -127,24 +127,24 @@ func (a *OptionalInstallConfig) validateVIPsAreSet(installConfig *types.InstallC
 	var fieldPath *field.Path
 
 	if installConfig.Platform.Name() == baremetal.Name {
-		if installConfig.Platform.BareMetal.APIVIP == "" {
-			fieldPath = field.NewPath("Platform", "Baremetal", "ApiVip")
-			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("apiVip must be set for %s platform", baremetal.Name)))
+		if len(installConfig.Platform.BareMetal.APIVIPs) == 0 {
+			fieldPath = field.NewPath("Platform", "Baremetal", "ApiVips")
+			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("apiVips must be set for %s platform", baremetal.Name)))
 		}
-		if installConfig.Platform.BareMetal.IngressVIP == "" {
-			fieldPath = field.NewPath("Platform", "Baremetal", "IngressVip")
-			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("ingressVip must be set for %s platform", baremetal.Name)))
+		if len(installConfig.Platform.BareMetal.IngressVIPs) == 0 {
+			fieldPath = field.NewPath("Platform", "Baremetal", "IngressVips")
+			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("ingressVips must be set for %s platform", baremetal.Name)))
 		}
 	}
 
 	if installConfig.Platform.Name() == vsphere.Name {
-		if installConfig.Platform.VSphere.APIVIP == "" {
-			fieldPath = field.NewPath("Platform", "VSphere", "ApiVip")
-			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("apiVip must be set for %s platform", vsphere.Name)))
+		if len(installConfig.Platform.VSphere.APIVIPs) == 0 {
+			fieldPath = field.NewPath("Platform", "VSphere", "ApiVips")
+			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("apiVips must be set for %s platform", vsphere.Name)))
 		}
-		if installConfig.Platform.VSphere.IngressVIP == "" {
-			fieldPath = field.NewPath("Platform", "VSphere", "IngressVip")
-			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("ingressVip must be set for %s platform", vsphere.Name)))
+		if len(installConfig.Platform.VSphere.IngressVIPs) == 0 {
+			fieldPath = field.NewPath("Platform", "VSphere", "IngressVips")
+			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("ingressVips must be set for %s platform", vsphere.Name)))
 		}
 	}
 	return allErrs
