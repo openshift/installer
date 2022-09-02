@@ -91,7 +91,11 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		err = gcpconfig.ValidatePreExitingPublicDNS(client, ic.Config)
+		err = gcpconfig.ValidatePreExistingPublicDNS(client, ic.Config)
+		if err != nil {
+			return err
+		}
+		err = gcpconfig.ValidatePreExistingPrivateDNS(client, ic.Config)
 		if err != nil {
 			return err
 		}

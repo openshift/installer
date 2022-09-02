@@ -3,6 +3,7 @@ package gcp
 import (
 	"fmt"
 	"net"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -31,8 +32,19 @@ var (
 	validCPSubnet      = "valid-controlplane-subnet"
 	validCIDR          = "10.0.0.0/16"
 	validClusterName   = "valid-cluster"
+	validPrivateZone   = "valid-short-private-zone"
 	validPublicZone    = "valid-short-public-zone"
 	invalidPublicZone  = "invalid-short-public-zone"
+	validBaseDomain    = "example.installer.domain."
+
+	validPrivateDNSZone = dns.ManagedZone{
+		Name:    validPrivateZone,
+		DnsName: fmt.Sprintf("%s.%s", validClusterName, strings.TrimSuffix(validBaseDomain, ".")),
+	}
+	validPublicDNSZone = dns.ManagedZone{
+		Name:    validPublicZone,
+		DnsName: validBaseDomain,
+	}
 
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
@@ -76,7 +88,7 @@ var (
 		ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID = validPublicZone, validProjectName
 	}
 	invalidManagedZone = func(ic *types.InstallConfig) {
-		ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID = invalidPublicZone, validPublicZone
+		ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID = invalidPublicZone, validProjectName
 	}
 	invalidZoneProject = func(ic *types.InstallConfig) {
 		ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID = validPublicZone, invalidProjectName
@@ -102,6 +114,7 @@ var (
 
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
+		BaseDomain: validBaseDomain,
 		ObjectMeta: metav1.ObjectMeta{
 			Name: validClusterName,
 		},
@@ -123,7 +136,7 @@ func validInstallConfig() *types.InstallConfig {
 					ProjectID: validProjectName,
 				},
 				PrivateDNSZone: &gcp.DNSZone{
-					ID:        validPublicZone,
+					ID:        validPrivateZone,
 					ProjectID: validProjectName,
 				},
 			},
@@ -280,10 +293,11 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name:           "Valid project & invalid zone",
-			edits:          editFunctions{invalidManagedZone},
-			expectedError:  true,
-			expectedErrMsg: fmt.Sprintf("platform.gcp.PublicDNSZone.ID: Invalid value: \"%s\": invalid public managed zone", invalidPublicZone),
+			name:          "Valid project & invalid zone",
+			edits:         editFunctions{invalidManagedZone},
+			expectedError: true,
+			// slips through the switch for GCP error types and into the base domain errors
+			expectedErrMsg: fmt.Sprintf("baseDomain: Internal error: no matching DNS Zone found"),
 		},
 		{
 			name:           "Valid zone & invalid project",
@@ -333,7 +347,8 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	gcpClient.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: []byte("fake creds")}).AnyTimes()
 
 	// Expected results for the managed zone tests
-	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), validPublicZone).Return(&dns.ManagedZone{}, nil).AnyTimes()
+	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), validPublicZone).Return(&validPublicDNSZone, nil).AnyTimes()
+	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), validPrivateZone).Return(&validPrivateDNSZone, nil).AnyTimes()
 	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), invalidPublicZone).Return(nil, fmt.Errorf("no matching DNS Zone found")).AnyTimes()
 
 	for _, tc := range cases {
@@ -353,7 +368,7 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	}
 }
 
-func TestValidatePreExitingPublicDNS(t *testing.T) {
+func TestValidatePreExistingPublicDNS(t *testing.T) {
 	cases := []struct {
 		name    string
 		records []*dns.ResourceRecordSet
@@ -383,7 +398,7 @@ func TestValidatePreExitingPublicDNS(t *testing.T) {
 			gcpClient.EXPECT().GetPublicDNSZone(gomock.Any(), "project-id", "base-domain").Return(&dns.ManagedZone{Name: "zone-name"}, nil).AnyTimes()
 			gcpClient.EXPECT().GetRecordSets(gomock.Any(), gomock.Eq("project-id"), gomock.Eq("zone-name")).Return(test.records, nil).AnyTimes()
 
-			err := ValidatePreExitingPublicDNS(gcpClient, &types.InstallConfig{
+			err := ValidatePreExistingPublicDNS(gcpClient, &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster-name"},
 				BaseDomain: "base-domain",
 				Platform:   types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},

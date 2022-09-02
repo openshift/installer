@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"net/http"
 	"sort"
 	"time"
 
@@ -74,11 +75,17 @@ func GetBaseDomain(project string) (string, error) {
 // indicating that a given service account cannot access the specified project.
 func IsForbidden(err error) bool {
 	gErr, ok := err.(*googleapi.Error)
-	return ok && gErr.Code == 403
+	return ok && gErr.Code == http.StatusForbidden
 }
 
 // IsThrottled checks whether a response from the GPC API returns Too Many Requests
 func IsThrottled(err error) bool {
 	gErr, ok := err.(*googleapi.Error)
-	return ok && gErr.Code == 429
+	return ok && gErr.Code == http.StatusTooManyRequests
+}
+
+// IsNotFound checks whether a response from the GPC API was not found.
+func IsNotFound(err error) bool {
+	gErr, ok := err.(*googleapi.Error)
+	return ok && gErr.Code == http.StatusNotFound
 }

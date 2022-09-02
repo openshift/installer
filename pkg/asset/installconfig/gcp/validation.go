@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"net/http"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -141,66 +142,137 @@ func validateZoneProjects(client API, ic *types.InstallConfig, fieldPath *field.
 	return allErrs
 }
 
+// findProject finds the correct project to use during installation. If the project id is
+// provided in the zone use the project id, otherwise use the default project.
+func findProject(zone *gcp.DNSZone, defaultProject string) string {
+	if zone != nil && zone.ProjectID != "" {
+		return zone.ProjectID
+	}
+	return defaultProject
+}
+
+// findDNSZone finds a zone in a project. If a project is provided in the zone, the project
+// is used otherwise the default project is used.
+func findDNSZone(client API, zone *gcp.DNSZone, project string) (*dns.ManagedZone, error) {
+	returnedZone, err := client.GetDNSZoneByName(context.TODO(), project, zone.ID)
+	if err != nil {
+		return nil, err
+	}
+	return returnedZone, nil
+}
+
 // validateManagedZones will validate the public and private managed zones if they exist.
 func validateManagedZones(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
-	commonZoneLookup := func(dnsZone, zoneProject, defaultProject string) error {
-		project := zoneProject
-		if project == "" {
-			project = defaultProject
-		}
-
-		if _, err := client.GetDNSZoneByName(context.TODO(), project, dnsZone); err != nil {
-			return err
-		}
-		return nil
-	}
-
 	allErrs := field.ErrorList{}
 
 	if ic.GCP.PublicDNSZone != nil && ic.GCP.PublicDNSZone.ID != "" {
-		if err := commonZoneLookup(ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID, ic.GCP.ProjectID); err != nil {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("PublicDNSZone").Child("ID"), ic.GCP.PublicDNSZone.ID, "invalid public managed zone"))
+		project := findProject(ic.GCP.PublicDNSZone, ic.GCP.ProjectID)
+		returnedZone, err := findDNSZone(client, ic.Platform.GCP.PublicDNSZone, project)
+		if err != nil {
+			switch {
+			case IsNotFound(err):
+				allErrs = append(allErrs, field.NotFound(field.NewPath("baseDomain"), errors.Wrapf(err, "dns zone (%s/%s)", project, ic.BaseDomain).Error()))
+			case IsForbidden(err):
+				errMsg := errors.Wrapf(err, "unable to fetch public dns zone information: %s", ic.BaseDomain).Error()
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("publicManagedZone"), ic.GCP.PublicDNSZone.ID, errMsg))
+			default:
+				allErrs = append(allErrs, field.InternalError(field.NewPath("baseDomain"), err))
+			}
+		} else {
+			// verify that the managed zone exists in the BaseDomain - Trim both values just in case
+			if !strings.EqualFold(strings.TrimSuffix(returnedZone.DnsName, "."), strings.TrimSuffix(ic.BaseDomain, ".")) {
+				errMsg := fmt.Sprintf("publicDNSZone does not exist in baseDomain %s", ic.BaseDomain)
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("publicDNSZone").Child("id"), ic.Platform.GCP.PublicDNSZone.ID, errMsg))
+			}
 		}
 	}
 
 	if ic.GCP.PrivateDNSZone != nil && ic.GCP.PrivateDNSZone.ID != "" {
-		if err := commonZoneLookup(ic.GCP.PrivateDNSZone.ID, ic.GCP.PrivateDNSZone.ProjectID, ic.GCP.ProjectID); err != nil {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("PrivateDNSZone").Child("ID"), ic.GCP.PrivateDNSZone.ID, "invalid private managed zone"))
+		project := findProject(ic.GCP.PrivateDNSZone, ic.GCP.ProjectID)
+		returnedZone, err := findDNSZone(client, ic.Platform.GCP.PrivateDNSZone, ic.GCP.ProjectID)
+		if err != nil {
+			switch {
+			case IsNotFound(err):
+				allErrs = append(allErrs, field.NotFound(field.NewPath("clusterDomain"), errors.Wrapf(err, "dns zone (%s/%s)", project, ic.ClusterDomain()).Error()))
+			case IsForbidden(err):
+				errMsg := errors.Wrapf(err, "unable to fetch private dns zone information: %s", ic.ClusterDomain()).Error()
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("privateDNSZone").Child("id"), ic.GCP.PrivateDNSZone.ID, errMsg))
+			default:
+				allErrs = append(allErrs, field.InternalError(field.NewPath("clusterDomain"), err))
+			}
+		} else {
+			if !strings.EqualFold(strings.TrimSuffix(returnedZone.DnsName, "."), strings.TrimSuffix(ic.ClusterDomain(), ".")) {
+				errMsg := fmt.Sprintf("dns zone %s did not match expected %s", returnedZone.DnsName, ic.ClusterDomain())
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("privateManagedZone"), ic.GCP.PrivateDNSZone.ID, errMsg))
+			}
 		}
 	}
 
 	return allErrs
 }
 
-// ValidatePreExitingPublicDNS ensure no pre-existing DNS record exists in the public
-// DNS zone for cluster's Kubernetes API.
-func ValidatePreExitingPublicDNS(client API, ic *types.InstallConfig) error {
+// ValidatePreExistingPrivateDNS ensure that the PrivateZone exists in the cluster domain
+func ValidatePreExistingPrivateDNS(client API, ic *types.InstallConfig) error {
+	record := fmt.Sprintf("api.%s.", strings.TrimSuffix(ic.ClusterDomain(), "."))
+	project := findProject(ic.GCP.PrivateDNSZone, ic.GCP.ProjectID)
+
+	if ic.GCP.PrivateDNSZone != nil && ic.GCP.PrivateDNSZone.ID != "" {
+		zone, err := client.GetDNSZoneByName(context.TODO(), project, ic.GCP.PrivateDNSZone.ID)
+		if err != nil {
+			return fmt.Errorf("failed to find public zone in project %s", project)
+		}
+
+		rrSets, err := client.GetRecordSets(context.TODO(), project, zone.Name)
+		if err != nil {
+			return field.InternalError(field.NewPath("baseDomain"), err)
+		}
+
+		for _, r := range rrSets {
+			if strings.EqualFold(r.Name, record) {
+				errMsg := fmt.Sprintf("record %s already exists in DNS Zone (%s/%s) and might be in use by another cluster, please remove it to continue", record, project, zone.Name)
+				return field.Invalid(field.NewPath("metadata", "name"), ic.ObjectMeta.Name, errMsg)
+			}
+		}
+	}
+	return nil
+}
+
+// ValidatePreExistingPublicDNS ensure no pre-existing DNS record exists in the public
+// DNS zone for cluster's Kubernetes API. If a PublicDNSZone is provided, the provided
+// zone is verified against the BaseDomain. If no zone is provided, the base domain is
+// checked for any public zone that can be used.
+func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig) error {
 	// If this is an internal cluster, this check is not necessary
 	if ic.Publish == types.InternalPublishingStrategy {
 		return nil
 	}
 
 	record := fmt.Sprintf("api.%s.", strings.TrimSuffix(ic.ClusterDomain(), "."))
+	project := findProject(ic.GCP.PublicDNSZone, ic.GCP.ProjectID)
+	zoneName := ""
 
-	zone, err := client.GetPublicDNSZone(context.TODO(), ic.Platform.GCP.ProjectID, ic.BaseDomain)
-	if err != nil {
-		var gErr *googleapi.Error
-		if errors.As(err, &gErr) {
-			if gErr.Code == http.StatusNotFound {
-				return field.NotFound(field.NewPath("baseDomain"), fmt.Sprintf("DNS Zone (%s/%s)", ic.Platform.GCP.ProjectID, ic.BaseDomain))
-			}
-		}
-		return field.InternalError(field.NewPath("baseDomain"), err)
+	if ic.GCP.PublicDNSZone != nil && ic.GCP.PublicDNSZone.ID != "" {
+		zoneName = ic.GCP.PublicDNSZone.ID
 	}
 
-	rrSets, err := client.GetRecordSets(context.TODO(), ic.Platform.GCP.ProjectID, zone.Name)
+	if zoneName == "" {
+		zone, err := client.GetPublicDNSZone(context.TODO(), project, ic.BaseDomain)
+		if err != nil {
+			return errors.Wrapf(err, "failed to find public zone in project %s", project)
+		}
+
+		zoneName = zone.Name
+	}
+
+	rrSets, err := client.GetRecordSets(context.TODO(), project, zoneName)
 	if err != nil {
 		return field.InternalError(field.NewPath("baseDomain"), err)
 	}
 
 	for _, r := range rrSets {
 		if strings.EqualFold(r.Name, record) {
-			return field.Invalid(field.NewPath("metadata", "name"), ic.ObjectMeta.Name, fmt.Sprintf("record %s already exists in DNS Zone (%s/%s) and might be in use by another cluster, please remove it to continue", record, ic.Platform.GCP.ProjectID, zone.Name))
+			errMsg := fmt.Sprintf("record %s already exists in DNS Zone (%s/%s) and might be in use by another cluster, please remove it to continue", record, project, zoneName)
+			return field.Invalid(field.NewPath("metadata", "name"), ic.ObjectMeta.Name, errMsg)
 		}
 	}
 	return nil
@@ -318,12 +390,9 @@ func ValidateEnabledServices(ctx context.Context, client API, project string) er
 	projectServices, err := client.GetEnabledServices(ctx, project)
 
 	if err != nil {
-		var gErr *googleapi.Error
-		if errors.As(err, &gErr) {
-			if gErr.Code == http.StatusForbidden {
-				logrus.Warn("Permission denied. Unable to fetch enabled services for project.")
-				return nil
-			}
+		if IsForbidden(err) {
+			logrus.Warn("Permission denied. Unable to fetch enabled services for project.")
+			return nil
 		}
 		return err
 	}
