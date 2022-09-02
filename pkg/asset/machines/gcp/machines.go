@@ -107,6 +107,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		}},
 		NetworkInterfaces: []*machineapi.GCPNetworkInterface{{
 			Network:    network,
+			ProjectID:  platform.NetworkProjectID,
 			Subnetwork: subnetwork,
 		}},
 		ServiceAccounts: []machineapi.GCPServiceAccount{{
