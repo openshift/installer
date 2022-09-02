@@ -2,17 +2,10 @@
 
 This document describes the relevant changes between releases of the SDK.
 
-== 4.4.4 / Mar 04 2021
 
-Update to model 4.4.25
+== 4.4.3 / Apr 19 2021
 
-Bug Fixes:
-
-* None
-
-== 4.4.3 / Jan 11 2021
-
-Update to model 4.4.22 and metamodel 1.3.4
+Update to model 4.4.28 and metamodel 1.3.4
 
 Bug Fixes:
 

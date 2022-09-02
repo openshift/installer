@@ -1,0 +1,12 @@
+[Unit]
+Description=Identify node zero to run OpenShift Assisted Installation Service on
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=True
+ExecStart=/usr/local/bin/set-node-zero.sh
+
+[Install]
+WantedBy=multi-user.target

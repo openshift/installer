@@ -15,6 +15,7 @@
 package util
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -51,5 +52,40 @@ func IsInvalidInConfig(k reflect.Kind) bool {
 		return false
 	default:
 		return true
+	}
+}
+
+// Return a fully non-zero value for the specified type, recursively
+// setting all fields and slices.
+func NonZeroValue(t reflect.Type) reflect.Value {
+	v := reflect.New(t).Elem()
+	setNonZero(v)
+	return v
+}
+
+func setNonZero(v reflect.Value) {
+	switch v.Kind() {
+	case reflect.Bool:
+		v.SetBool(true)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		v.SetInt(1)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		v.SetUint(1)
+	case reflect.Float32, reflect.Float64:
+		v.SetFloat(1)
+	case reflect.String:
+		v.SetString("aardvark")
+	case reflect.Ptr:
+		v.Set(reflect.New(v.Type().Elem()))
+		setNonZero(v.Elem())
+	case reflect.Slice:
+		v.Set(reflect.MakeSlice(v.Type(), 1, 1))
+		setNonZero(v.Index(0))
+	case reflect.Struct:
+		for i := 0; i < v.NumField(); i++ {
+			setNonZero(v.Field(i))
+		}
+	default:
+		panic(fmt.Sprintf("unexpected kind %s", v.Kind()))
 	}
 }

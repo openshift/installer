@@ -56,7 +56,7 @@ func (atbc *AdditionalTrustBundleConfig) Generate(dependencies asset.Parents) er
 	if installConfig.Config.AdditionalTrustBundle == "" {
 		return nil
 	}
-	data, err := parseCertificates(installConfig.Config.AdditionalTrustBundle)
+	data, err := ParseCertificates(installConfig.Config.AdditionalTrustBundle)
 
 	if err != nil {
 		return err
@@ -99,7 +99,8 @@ func (atbc *AdditionalTrustBundleConfig) Load(f asset.FileFetcher) (bool, error)
 	return false, nil
 }
 
-func parseCertificates(certificates string) (map[string]string, error) {
+// ParseCertificates parses and verifies a PEM certificate bundle
+func ParseCertificates(certificates string) (map[string]string, error) {
 	rest := []byte(certificates)
 	var sb strings.Builder
 	for {

@@ -33,3 +33,11 @@ func NilOrEmpty(s *string) bool {
 func NotEmpty(s *string) bool {
 	return s != nil && *s != ""
 }
+
+func IsTrue(b *bool) bool {
+	return b != nil && *b
+}
+
+func IsFalse(b *bool) bool {
+	return b != nil && !*b
+}

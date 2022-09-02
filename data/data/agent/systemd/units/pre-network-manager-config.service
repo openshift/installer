@@ -1,0 +1,18 @@
+[Unit]
+Description=Prepare network manager config content
+Before=dracut-initqueue.service
+After=dracut-cmdline.service
+DefaultDependencies=no
+
+[Service]
+User=root
+ExecStart=/usr/local/bin/pre-network-manager-config.sh
+
+TimeoutSec=60
+KillMode=none
+Type=oneshot
+PrivateTmp=true
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target
