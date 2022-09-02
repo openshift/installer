@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
@@ -92,8 +93,14 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 				},
 			)
 			if err != nil {
-				err = errors.Wrap(err, "get tagged resources")
-				o.Logger.Info(err)
+				err2 := errors.Wrap(err, "get tagged resources")
+				o.Logger.Info(err2)
+				if aerr, ok := err.(awserr.Error); ok {
+					switch aerr.Code() {
+					case resourcegroupstaggingapi.ErrorCodeInvalidParameterException:
+						continue
+					}
+				}
 				nextTagClients = append(nextTagClients, tagClient)
 				continue
 			}
