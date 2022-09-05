@@ -61,7 +61,7 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 	} else if len(platform.DeploymentZones) > 0 {
 		for _, deploymentZone := range platform.DeploymentZones {
 			if machinePool.Name == types.MachinePoolControlPlaneRoleName {
-				if deploymentZone.ControlPlane != vsphere.Allowed {
+				if deploymentZone.ControlPlane == vsphere.NotAllowed {
 					continue
 				}
 			}

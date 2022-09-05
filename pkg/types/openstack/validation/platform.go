@@ -1,8 +1,6 @@
 package validation
 
 import (
-	"errors"
-	"net"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -24,33 +22,9 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 		}
 	}
 
-	err := validateVIP(p.APIVIP, n)
-	if err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
-	}
-
-	err = validateVIP(p.IngressVIP, n)
-	if err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
-	}
-
 	allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, "default", fldPath.Child("defaultMachinePlatform"))...)
 
 	return allErrs
-}
-
-// validateVIP is a convenience function for validating VIP port and usage
-func validateVIP(vip string, n *types.Networking) error {
-	if vip != "" {
-		if err := validate.IP(vip); err != nil {
-			return err
-		}
-
-		if !n.MachineNetwork[0].CIDR.Contains(net.ParseIP(vip)) {
-			return errors.New("IP is not in the machineNetwork")
-		}
-	}
-	return nil
 }
 
 func validateClusterName(name string) (allErrs field.ErrorList) {

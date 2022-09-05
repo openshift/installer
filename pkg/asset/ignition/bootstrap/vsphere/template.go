@@ -14,7 +14,7 @@ type TemplateData struct {
 func GetTemplateData(config *vsphere.Platform) *TemplateData {
 	var templateData TemplateData
 
-	templateData.UserProvidedVIPs = config.APIVIP != ""
+	templateData.UserProvidedVIPs = len(config.APIVIPs) > 0
 
 	return &templateData
 }

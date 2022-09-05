@@ -15,17 +15,37 @@ type Platform struct {
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 
-	// APIVIP is the virtual IP address for the api endpoint
+	// DeprecatedAPIVIP is the virtual IP address for the api endpoint
+	// Deprecated: use APIVIPs
 	//
 	// +kubebuilder:validation:format=ip
 	// +optional
-	APIVIP string `json:"apiVIP,omitempty"`
+	DeprecatedAPIVIP string `json:"apiVIP,omitempty"`
 
-	// IngressVIP is the virtual IP address for ingress
+	// APIVIPs contains the VIP(s) for the api endpoint. In dual stack clusters
+	// it contains an IPv4 and IPv6 address, otherwise only one VIP
+	//
+	// +kubebuilder:validation:MaxItems=2
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:Format=ip
+	// +optional
+	APIVIPs []string `json:"apiVIPs,omitempty"`
+
+	// DeprecatedIngressVIP is the virtual IP address for ingress
+	// Deprecated: use IngressVIPs
 	//
 	// +kubebuilder:validation:format=ip
 	// +optional
-	IngressVIP string `json:"ingressVIP,omitempty"`
+	DeprecatedIngressVIP string `json:"ingressVIP,omitempty"`
+
+	// IngressVIPs contains the VIP(s) for ingress. In dual stack clusters
+	// it contains an IPv4 and IPv6 address, otherwise only one VIP
+	//
+	// +kubebuilder:validation:MaxItems=2
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:validation:Format=ip
+	// +optional
+	IngressVIPs []string `json:"ingressVIPs,omitempty"`
 
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on Nutanix for machine pools which do not define their own

@@ -21,8 +21,6 @@ const (
 	ExternalBridge          = "baremetal"
 	ProvisioningBridge      = "provisioning"
 	HardwareProfile         = "default"
-	APIVIP                  = ""
-	IngressVIP              = ""
 	BootMode                = baremetal.UEFI
 	ExternalMACAddress      = ""
 	ProvisioningMACAddress  = ""
@@ -137,25 +135,25 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 		}
 	}
 
-	if p.APIVIP == APIVIP {
+	if len(p.APIVIPs) == 0 && p.DeprecatedAPIVIP == "" {
 		// This name should resolve to exactly one address
 		vip, err := lookupHost("api." + c.ClusterDomain())
 		if err != nil {
 			// This will fail validation and abort the install
-			p.APIVIP = fmt.Sprintf("DNS lookup failure: %s", err.Error())
+			p.APIVIPs = []string{fmt.Sprintf("DNS lookup failure: %s", err.Error())}
 		} else {
-			p.APIVIP = vip[0]
+			p.APIVIPs = []string{vip[0]}
 		}
 	}
 
-	if p.IngressVIP == IngressVIP {
+	if len(p.IngressVIPs) == 0 && p.DeprecatedIngressVIP == "" {
 		// This name should resolve to exactly one address
 		vip, err := lookupHost("test.apps." + c.ClusterDomain())
 		if err != nil {
 			// This will fail validation and abort the install
-			p.IngressVIP = fmt.Sprintf("DNS lookup failure: %s", err.Error())
+			p.IngressVIPs = []string{fmt.Sprintf("DNS lookup failure: %s", err.Error())}
 		} else {
-			p.IngressVIP = vip[0]
+			p.IngressVIPs = []string{vip[0]}
 		}
 	}
 

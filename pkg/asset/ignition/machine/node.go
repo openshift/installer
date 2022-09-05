@@ -33,18 +33,18 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 	case baremetaltypes.Name:
 		// Baremetal needs to point directly at the VIP because we don't have a
 		// way to configure DNS before Ignition runs.
-		ignitionHost = net.JoinHostPort(installConfig.BareMetal.APIVIP, "22623")
+		ignitionHost = net.JoinHostPort(installConfig.BareMetal.APIVIPs[0], "22623")
 	case nutanixtypes.Name:
-		if installConfig.Nutanix.APIVIP != "" {
-			ignitionHost = net.JoinHostPort(installConfig.Nutanix.APIVIP, "22623")
+		if len(installConfig.Nutanix.APIVIPs) > 0 {
+			ignitionHost = net.JoinHostPort(installConfig.Nutanix.APIVIPs[0], "22623")
 		}
 	case openstacktypes.Name:
-		ignitionHost = net.JoinHostPort(installConfig.OpenStack.APIVIP, "22623")
+		ignitionHost = net.JoinHostPort(installConfig.OpenStack.APIVIPs[0], "22623")
 	case ovirttypes.Name:
-		ignitionHost = net.JoinHostPort(installConfig.Ovirt.APIVIP, "22623")
+		ignitionHost = net.JoinHostPort(installConfig.Ovirt.APIVIPs[0], "22623")
 	case vspheretypes.Name:
-		if installConfig.VSphere.APIVIP != "" {
-			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIP, "22623")
+		if len(installConfig.VSphere.APIVIPs) > 0 {
+			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIPs[0], "22623")
 		}
 	}
 	return &igntypes.Config{

@@ -65,13 +65,6 @@ func validateIPNotinMachineCIDR(ip string, n *types.Networking) error {
 	return nil
 }
 
-func validateAPIVIPIsDifferentFromINGRESSVIP(apiVIP string, ingressVIP string) error {
-	if apiVIP == ingressVIP {
-		return fmt.Errorf("apiVIP and ingressVIP must not be set to the same value")
-	}
-	return nil
-}
-
 func validateNoOverlapMachineCIDR(target *net.IPNet, n *types.Networking) error {
 	allIPv4 := ipnet.MustParseCIDR("0.0.0.0/0")
 	allIPv6 := ipnet.MustParseCIDR("::/0")
@@ -407,32 +400,11 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
-	if err := validate.IP(p.APIVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
-	}
-
-	if err := validateIPinMachineCIDR(p.APIVIP, n); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
-	}
-
-	if err := validate.IP(p.IngressVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
-	}
-
-	if err := validateIPinMachineCIDR(p.IngressVIP, n); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
-	}
-
 	if err := validateHostsCount(p.Hosts, c); err != nil {
 		allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
 	}
 
-	if err := validateAPIVIPIsDifferentFromINGRESSVIP(p.APIVIP, p.IngressVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
-	}
-
 	allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
-
 	allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath.Child("Hosts"))...)
 	allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath.Child("Hosts"))...)
 

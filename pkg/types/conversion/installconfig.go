@@ -11,7 +11,11 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/vsphere"
+	utilsslice "k8s.io/utils/strings/slices"
 )
 
 // ConvertInstallConfig is modeled after the k8s conversion schemes, which is
@@ -35,12 +39,24 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 		if err := convertBaremetal(config); err != nil {
 			return err
 		}
+	case nutanix.Name:
+		if err := convertNutanix(config); err != nil {
+			return err
+		}
 	case openstack.Name:
 		if err := convertOpenStack(config); err != nil {
 			return err
 		}
 	case aws.Name:
 		if err := convertAWS(config); err != nil {
+			return err
+		}
+	case vsphere.Name:
+		if err := convertVSphere(config); err != nil {
+			return err
+		}
+	case ovirt.Name:
+		if err := convertOVirt(config); err != nil {
 			return err
 		}
 	}
@@ -91,10 +107,11 @@ func convertNetworking(config *types.InstallConfig) {
 	}
 }
 
-// convertBaremetal upconverts deprecated fields in the baremetal
-// platform. ProvisioningDHCPExternal has been replaced by setting
-// the ProvisioningNetwork field to "Unmanaged" and ProvisioningHostIP
-// has been replaced by ClusterProvisioningIP.
+// convertBaremetal upconverts deprecated fields in the baremetal platform.
+// ProvisioningDHCPExternal has been replaced by setting the ProvisioningNetwork
+// field to "Unmanaged", ProvisioningHostIP has been replaced by
+// ClusterProvisioningIP, apiVIP has been replaced by apiVIPs and ingressVIP has
+// been replaced by ingressVIPs.
 func convertBaremetal(config *types.InstallConfig) error {
 	if config.Platform.BareMetal.DeprecatedProvisioningDHCPExternal && config.Platform.BareMetal.ProvisioningNetwork == "" {
 		config.Platform.BareMetal.ProvisioningNetwork = baremetal.UnmanagedProvisioningNetwork
@@ -109,6 +126,14 @@ func convertBaremetal(config *types.InstallConfig) error {
 		config.Platform.BareMetal.DeprecatedProvisioningHostIP != config.Platform.BareMetal.ClusterProvisioningIP {
 		return field.Invalid(field.NewPath("platform").Child("baremetal").Child("provisioningHostIP"),
 			config.Platform.BareMetal.DeprecatedProvisioningHostIP, "provisioningHostIP is deprecated; only clusterProvisioningIP needs to be specified")
+	}
+
+	if err := upconvertVIP(&config.Platform.BareMetal.APIVIPs, config.Platform.BareMetal.DeprecatedAPIVIP, "apiVIP", "apiVIPs", field.NewPath("platform").Child("baremetal")); err != nil {
+		return err
+	}
+
+	if err := upconvertVIP(&config.Platform.BareMetal.IngressVIPs, config.Platform.BareMetal.DeprecatedIngressVIP, "ingressVIP", "ingressVIPs", field.NewPath("platform").Child("baremetal")); err != nil {
+		return err
 	}
 
 	return nil
@@ -138,6 +163,69 @@ func convertOpenStack(config *types.InstallConfig) error {
 		}
 
 		config.Platform.OpenStack.DefaultMachinePlatform.FlavorName = config.Platform.OpenStack.DeprecatedFlavorName
+	}
+
+	if err := upconvertVIP(&config.Platform.OpenStack.APIVIPs, config.Platform.OpenStack.DeprecatedAPIVIP, "apiVIP", "apiVIPs", field.NewPath("platform").Child("openstack")); err != nil {
+		return err
+	}
+
+	if err := upconvertVIP(&config.Platform.OpenStack.IngressVIPs, config.Platform.OpenStack.DeprecatedIngressVIP, "ingressVIP", "ingressVIPs", field.NewPath("platform").Child("openstack")); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// convertNutanix upconverts deprecated fields in the Nutanix platform.
+func convertNutanix(config *types.InstallConfig) error {
+	if err := upconvertVIP(&config.Platform.Nutanix.APIVIPs, config.Platform.Nutanix.DeprecatedAPIVIP, "apiVIP", "apiVIPs", field.NewPath("platform").Child("nutanix")); err != nil {
+		return err
+	}
+
+	if err := upconvertVIP(&config.Platform.Nutanix.IngressVIPs, config.Platform.Nutanix.DeprecatedIngressVIP, "ingressVIP", "ingressVIPs", field.NewPath("platform").Child("nutanix")); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// convertVSphere upconverts deprecated fields in the VSphere platform.
+func convertVSphere(config *types.InstallConfig) error {
+	if err := upconvertVIP(&config.Platform.VSphere.APIVIPs, config.Platform.VSphere.DeprecatedAPIVIP, "apiVIP", "apiVIPs", field.NewPath("platform").Child("vsphere")); err != nil {
+		return err
+	}
+
+	if err := upconvertVIP(&config.Platform.VSphere.IngressVIPs, config.Platform.VSphere.DeprecatedIngressVIP, "ingressVIP", "ingressVIPs", field.NewPath("platform").Child("vsphere")); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// convertOVirt upconverts deprecated fields in the OVirt platform.
+func convertOVirt(config *types.InstallConfig) error {
+	if err := upconvertVIP(&config.Platform.Ovirt.APIVIPs, config.Platform.Ovirt.DeprecatedAPIVIP, "api_vip", "api_vips", field.NewPath("platform").Child("ovirt")); err != nil {
+		return err
+	}
+
+	if err := upconvertVIP(&config.Platform.Ovirt.IngressVIPs, config.Platform.Ovirt.DeprecatedIngressVIP, "ingress_vip", "ingress_vips", field.NewPath("platform").Child("ovirt")); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// upconvertVIP upconverts the deprecated VIP (oldVIPValue) to the new VIPs
+// slice (newVIPValues). It returns errors, if both fields are set and all
+// contain unique values
+func upconvertVIP(newVIPValues *[]string, oldVIPValue, newFieldName, oldFieldName string, fldPath *field.Path) error {
+	if oldVIPValue != "" && len(*newVIPValues) == 0 {
+		*newVIPValues = []string{oldVIPValue}
+	} else if oldVIPValue != "" &&
+		len(*newVIPValues) > 0 &&
+		!utilsslice.Contains(*newVIPValues, oldVIPValue) {
+
+		return field.Invalid(fldPath.Child(oldFieldName), oldVIPValue, fmt.Sprintf("%s is deprecated; only %s needs to be specified", oldFieldName, newFieldName))
 	}
 
 	return nil

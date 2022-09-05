@@ -1931,9 +1931,20 @@ spec:
                   bare metal.
                 properties:
                   apiVIP:
-                    description: APIVIP is the VIP to use for internal API communication
+                    description: 'DeprecatedAPIVIP is the VIP to use for internal
+                      API communication Deprecated: Use APIVIPs'
                     format: ip
                     type: string
+                  apiVIPs:
+                    description: APIVIPs contains the VIP(s) to use for internal API
+                      communication. In dual stack clusters it contains an IPv4 and
+                      IPv6 address, otherwise only one VIP
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
                   bootstrapExternalStaticGateway:
                     description: BootstrapExternalStaticGateway is the static network
                       gateway of the bootstrap node. This can be useful in environments
@@ -2083,9 +2094,20 @@ spec:
                       type: object
                     type: array
                   ingressVIP:
-                    description: IngressVIP is the VIP to use for ingress traffic
+                    description: 'DeprecatedIngressVIP is the VIP to use for ingress
+                      traffic Deprecated: Use IngressVIPs'
                     format: ip
                     type: string
+                  ingressVIPs:
+                    description: IngressVIPs contains the VIP(s) to use for ingress
+                      traffic. In dual stack clusters it contains an IPv4 and IPv6
+                      address, otherwise only one VIP
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
                   libvirtURI:
                     default: qemu:///system
                     description: LibvirtURI is the identifier for the libvirtd connection.  It
@@ -2138,9 +2160,7 @@ spec:
                       to the provisioning network.
                     type: string
                 required:
-                - apiVIP
                 - hosts
-                - ingressVIP
                 type: object
               gcp:
                 description: GCP is the configuration used when installing on Google
@@ -2398,8 +2418,19 @@ spec:
                   Nutanix.
                 properties:
                   apiVIP:
-                    description: APIVIP is the virtual IP address for the api endpoint
+                    description: 'DeprecatedAPIVIP is the virtual IP address for the
+                      api endpoint Deprecated: use APIVIPs'
                     type: string
+                  apiVIPs:
+                    description: APIVIPs contains the VIP(s) for the api endpoint.
+                      In dual stack clusters it contains an IPv4 and IPv6 address,
+                      otherwise only one VIP
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
                   clusterOSImage:
                     description: ClusterOSImage overrides the url provided in rhcos.json
                       to download the RHCOS Image
@@ -2437,8 +2468,19 @@ spec:
                         type: object
                     type: object
                   ingressVIP:
-                    description: IngressVIP is the virtual IP address for ingress
+                    description: 'DeprecatedIngressVIP is the virtual IP address for
+                      ingress Deprecated: use IngressVIPs'
                     type: string
+                  ingressVIPs:
+                    description: IngressVIPs contains the VIP(s) for ingress. In dual
+                      stack clusters it contains an IPv4 and IPv6 address, otherwise
+                      only one VIP
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
                   prismCentral:
                     description: PrismCentral is the endpoint (address and port) and
                       credentials to connect to the Prism Central.
@@ -2534,10 +2576,24 @@ spec:
                       API load balancer.
                     type: string
                   apiVIP:
-                    description: 'APIVIP is the static IP on the nodes subnet that
-                      the api port for openshift will be assigned Default: will be
-                      set to the 5 on the first entry in the machineNetwork CIDR'
+                    description: 'DeprecatedAPIVIP is the static IP on the nodes subnet
+                      that the api port for openshift will be assigned Default: will
+                      be set to the 5 on the first entry in the machineNetwork CIDR
+                      Deprecated: Use APIVIPs'
+                    format: ip
                     type: string
+                  apiVIPs:
+                    description: 'APIVIPs contains the VIP(s) on the nodes subnet
+                      that the api port for openshift will be assigned. In dual stack
+                      clusters it contains an IPv4 and IPv6 address, otherwise only
+                      one VIP Default: will be set to the 5 on the first entry in
+                      the machineNetwork CIDR'
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
                   cloud:
                     description: Cloud is the name of OpenStack cloud to use from
                       clouds.yaml.
@@ -2646,10 +2702,24 @@ spec:
                       OpenShift ingress port
                     type: string
                   ingressVIP:
-                    description: 'IngressVIP is the static IP on the nodes subnet
-                      that the apps port for openshift will be assigned Default: will
-                      be set to the 7 on the first entry in the machineNewtwork CIDR'
+                    description: 'DeprecatedIngressVIP is the static IP on the nodes
+                      subnet that the apps port for openshift will be assigned Default:
+                      will be set to the 7 on the first entry in the machineNetwork
+                      CIDR Deprecated: Use IngressVIPs'
+                    format: ip
                     type: string
+                  ingressVIPs:
+                    description: 'IngressVIPs contains the VIP(s) on the nodes subnet
+                      that the apps port for openshift will be assigned. In dual stack
+                      clusters it contains an IPv4 and IPv6 address, otherwise only
+                      one VIP Default: will be set to the 7 on the first entry in
+                      the machineNetwork CIDR'
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
                   lbFloatingIP:
                     description: 'LbFloatingIP is the IP address of an available floating
                       IP in your OpenStack cluster to associate with the OpenShift
@@ -2710,9 +2780,22 @@ spec:
                       type: object
                     type: array
                   api_vip:
-                    description: APIVIP is an IP which will be served by bootstrap
-                      and then pivoted masters, using keepalived
+                    description: 'DeprecatedAPIVIP is an IP which will be served by
+                      bootstrap and then pivoted masters, using keepalived Deprecated:
+                      Use APIVIPs'
+                    format: ip
                     type: string
+                  api_vips:
+                    description: APIVIPs contains the VIP(s) which will be served
+                      by bootstrap and then pivoted masters, using keepalived. In
+                      dual stack clusters it contains an IPv4 and IPv6 address, otherwise
+                      only one VIP
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on ovirt for machine pools which do not
@@ -2818,10 +2901,24 @@ spec:
                         type: string
                     type: object
                   ingress_vip:
-                    description: IngressIP is an external IP which routes to the default
-                      ingress controller. The IP is a suitable target of a wildcard
-                      DNS record used to resolve default route host names.
+                    description: 'IngressIP is an external IP which routes to the
+                      default ingress controller. The IP is a suitable target of a
+                      wildcard DNS record used to resolve default route host names.
+                      Deprecated: Use IngressVIPs'
+                    format: ip
                     type: string
+                  ingress_vips:
+                    description: IngressVIPs are external IP(s) which route to the
+                      default ingress controller. The VIPs are suitable targets of
+                      wildcard DNS records used to resolve default route host names.
+                      In dual stack clusters it contains an IPv4 and IPv6 address,
+                      otherwise only one VIP
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
                   ovirt_cluster_id:
                     description: The target cluster under which all VMs will run
                     type: string
@@ -2843,8 +2940,6 @@ spec:
                       set the vnicProfileID.
                     type: string
                 required:
-                - api_vip
-                - ingress_vip
                 - ovirt_cluster_id
                 - ovirt_storage_domain_id
                 type: object
@@ -2948,8 +3043,19 @@ spec:
                   vSphere.
                 properties:
                   apiVIP:
-                    description: APIVIP is the virtual IP address for the api endpoint
+                    description: 'DeprecatedAPIVIP is the virtual IP address for the
+                      api endpoint Deprecated: Use APIVIPs'
                     type: string
+                  apiVIPs:
+                    description: APIVIPs contains the VIP(s) for the api endpoint.
+                      In dual stack clusters it contains an IPv4 and IPv6 address,
+                      otherwise only one VIP
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
                   cluster:
                     description: Cluster is the name of the cluster virtual machines
                       will be cloned into.
@@ -3223,8 +3329,19 @@ spec:
                       is of the form /<datacenter>/vm/<folder>/<subfolder>.
                     type: string
                   ingressVIP:
-                    description: IngressVIP is the virtual IP address for ingress
+                    description: 'DeprecatedIngressVIP is the virtual IP address for
+                      ingress Deprecated: Use IngressVIPs'
                     type: string
+                  ingressVIPs:
+                    description: IngressVIPs contains the VIP(s) for ingress. In dual
+                      stack clusters it contains an IPv4 and IPv6 address, otherwise
+                      only one VIP
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
                   network:
                     description: Network specifies the name of the network to be used
                       by the cluster.
