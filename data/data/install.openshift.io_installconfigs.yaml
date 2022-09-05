@@ -1912,10 +1912,6 @@ spec:
                       cluster. If empty, a new resource group will created for the
                       cluster.
                     type: string
-                  virtualNetwork:
-                    description: VirtualNetwork specifies the name of an existing
-                      VNet for the installer to use
-                    type: string
                   userTags:
                     additionalProperties:
                       type: string
@@ -1923,6 +1919,10 @@ spec:
                       will add as tags to all resources that it creates. Resources
                       created by the cluster itself may not include these tags.
                     type: object
+                  virtualNetwork:
+                    description: VirtualNetwork specifies the name of an existing
+                      VNet for the installer to use
+                    type: string
                 required:
                 - region
                 type: object
