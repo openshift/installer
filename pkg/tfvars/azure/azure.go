@@ -51,6 +51,7 @@ type config struct {
 	HyperVGeneration                string            `json:"azure_hypervgeneration_version"`
 	VMNetworkingType                bool              `json:"azure_control_plane_vm_networking_type"`
 	RandomStringPrefix              string            `json:"random_storage_account_suffix"`
+	VMArchitecture                  string            `json:"azure_vm_architecture"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -69,6 +70,7 @@ type TFVarsSources struct {
 	BootstrapIgnStub                string
 	BootstrapIgnitionURLPlaceholder string
 	HyperVGeneration                string
+	VMArchitecture                  types.Architecture
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
@@ -95,6 +97,11 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	var masterDiskEncryptionSetID string
 	if masterConfig.OSDisk.ManagedDisk.DiskEncryptionSet != nil {
 		masterDiskEncryptionSetID = masterConfig.OSDisk.ManagedDisk.DiskEncryptionSet.ID
+	}
+
+	vmarch := "x64"
+	if sources.VMArchitecture == types.ArchitectureARM64 {
+		vmarch = "Arm64"
 	}
 
 	cfg := &config{
@@ -124,6 +131,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		HyperVGeneration:                sources.HyperVGeneration,
 		VMNetworkingType:                masterConfig.AcceleratedNetworking,
 		RandomStringPrefix:              randomStringPrefixFunction(),
+		VMArchitecture:                  vmarch,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

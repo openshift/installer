@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"strings"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
@@ -110,10 +111,13 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		image.SKU = mpool.OSImage.SKU
 		image.Version = mpool.OSImage.Version
 	} else {
-		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
+		// image gallery names cannot have dashes
+		galleryName := strings.Replace(clusterID, "-", "_", -1)
+		id := clusterID
 		if hyperVGen == "V2" {
-			imageID += "-gen2"
+			id += "-gen2"
 		}
+		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/0.0.1", rg, galleryName, id)
 		image.ResourceID = imageID
 	}
 

@@ -365,6 +365,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				BootstrapIgnStub:                bootstrapIgnStub,
 				BootstrapIgnitionURLPlaceholder: bootstrapIgnURLPlaceholder,
 				HyperVGeneration:                hyperVGeneration,
+				VMArchitecture:                  installConfig.Config.ControlPlane.Architecture,
 			},
 		)
 		if err != nil {
