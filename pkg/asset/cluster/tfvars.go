@@ -378,6 +378,21 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+
+		instanceServiceAccount := ""
+		if installConfig.Config.CredentialsMode == types.PassthroughCredentialsMode {
+			var found bool
+			serviceAccount := make(map[string]interface{})
+			err := json.Unmarshal([]byte(sess.Credentials.JSON), &serviceAccount)
+			if err != nil {
+				return err
+			}
+			instanceServiceAccount, found = serviceAccount["client_email"].(string)
+			if !found {
+				return errors.New("could not find google service account")
+			}
+		}
+
 		auth := gcptfvars.Auth{
 			ProjectID:        installConfig.Config.GCP.ProjectID,
 			NetworkProjectID: installConfig.Config.GCP.NetworkProjectID,
@@ -429,14 +444,15 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		imageURL := fmt.Sprintf("https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz", img.Name)
 		data, err := gcptfvars.TFVars(
 			gcptfvars.TFVarsSources{
-				Auth:               auth,
-				MasterConfigs:      masterConfigs,
-				WorkerConfigs:      workerConfigs,
-				ImageURI:           imageURL,
-				ImageLicenses:      installConfig.Config.GCP.Licenses,
-				PublicZoneName:     publicZoneName,
-				PublishStrategy:    installConfig.Config.Publish,
-				PreexistingNetwork: preexistingnetwork,
+				Auth:                   auth,
+				MasterConfigs:          masterConfigs,
+				WorkerConfigs:          workerConfigs,
+				ImageURI:               imageURL,
+				ImageLicenses:          installConfig.Config.GCP.Licenses,
+				InstanceServiceAccount: instanceServiceAccount,
+				PublicZoneName:         publicZoneName,
+				PublishStrategy:        installConfig.Config.Publish,
+				PreexistingNetwork:     preexistingnetwork,
 			},
 		)
 		if err != nil {
