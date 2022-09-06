@@ -73,7 +73,7 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 	staticNetworkConfig := []*models.HostStaticNetworkConfig{}
 	nmStateConfigs := []*aiv1beta1.NMStateConfig{}
 	var data string
-	var isNetWorkConfigAvailable bool
+	var isNetworkConfigAvailable bool
 
 	if agentConfig.Config != nil {
 		if len(agentConfig.Config.Hosts) == 0 {
@@ -81,7 +81,7 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 		}
 		for i, host := range agentConfig.Config.Hosts {
 			if host.NetworkConfig.Raw != nil {
-				isNetWorkConfigAvailable = true
+				isNetworkConfigAvailable = true
 
 				nmStateConfig := aiv1beta1.NMStateConfig{
 					TypeMeta: metav1.TypeMeta{
@@ -127,7 +127,7 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 			}
 		}
 
-		if isNetWorkConfigAvailable {
+		if isNetworkConfigAvailable {
 			n.Config = nmStateConfigs
 			n.StaticNetworkConfig = staticNetworkConfig
 
@@ -135,7 +135,6 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 				Filename: nmStateConfigFilename,
 				Data:     []byte(data),
 			}
-			return n.finish()
 		}
 	}
 	return n.finish()
