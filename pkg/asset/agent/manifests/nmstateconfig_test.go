@@ -25,11 +25,11 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		expectedConfig []*aiv1beta1.NMStateConfig
 	}{
 		{
-			name: "valid dhcp agent config no hosts",
+			name: "agent-config does not contain networkConfig",
 			dependencies: []asset.Asset{
 				getValidDHCPAgentConfigNoHosts(),
 			},
-			expectedConfig: []*aiv1beta1.NMStateConfig(nil),
+			expectedConfig: nil,
 		},
 		{
 			name: "valid dhcp agent config with some hosts without networkconfig",

@@ -288,16 +288,19 @@ func TestIgnition_Generate(t *testing.T) {
 	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
 	workingDirectory, _ := os.Getwd()
 	os.Chdir(path.Join(workingDirectory, "../../../../data"))
+	secretDataBytes, _ := base64.StdEncoding.DecodeString("super-secret")
 
 	cases := []struct {
-		name          string
-		overrideDeps  []asset.Asset
-		expectedError string
-		expectedFiles []string
+		name                                  string
+		overrideDeps                          []asset.Asset
+		expectedError                         string
+		expectedFiles                         []string
+		preNetworkManagerConfigServiceEnabled bool
 	}{
 		{
-			name:          "no-extra-manifests",
-			expectedFiles: []string{},
+			name:                                  "no-extra-manifests",
+			expectedFiles:                         []string{},
+			preNetworkManagerConfigServiceEnabled: true,
 		},
 		{
 			name: "default",
@@ -313,6 +316,40 @@ func TestIgnition_Generate(t *testing.T) {
 			expectedFiles: []string{
 				"/etc/assisted/extra-manifests/test-configmap.yaml",
 			},
+			preNetworkManagerConfigServiceEnabled: true,
+		},
+		{
+			name: "no nmstateconfigs defined, pre-network-manager-config.service should not be enabled",
+			overrideDeps: []asset.Asset{
+				&manifests.AgentManifests{
+					InfraEnv: &v1beta1.InfraEnv{
+						Spec: v1beta1.InfraEnvSpec{
+							SSHAuthorizedKey: "my-ssh-key",
+						},
+					},
+					ClusterImageSet: &hivev1.ClusterImageSet{
+						Spec: hivev1.ClusterImageSetSpec{
+							ReleaseImage: "registry.ci.openshift.org/origin/release:4.11",
+						},
+					},
+					PullSecret: &v1.Secret{
+						Data: map[string][]byte{
+							".dockerconfigjson": secretDataBytes,
+						},
+					},
+					AgentClusterInstall: &hiveext.AgentClusterInstall{
+						Spec: hiveext.AgentClusterInstallSpec{
+							APIVIP: "192.168.111.5",
+							ProvisionRequirements: hiveext.ProvisionRequirements{
+								ControlPlaneAgents: 3,
+								WorkerAgents:       5,
+							},
+						},
+					},
+				},
+			},
+			expectedFiles:                         []string{},
+			preNetworkManagerConfigServiceEnabled: false,
 		},
 	}
 	for _, tc := range cases {
@@ -352,6 +389,16 @@ func TestIgnition_Generate(t *testing.T) {
 						}
 					}
 					assert.True(t, found, fmt.Sprintf("Expected file %s not found", f))
+				}
+
+				for _, unit := range ignitionAsset.Config.Systemd.Units {
+					if unit.Name == "pre-network-manager-config.service" {
+						if unit.Enabled == nil {
+							assert.Equal(t, tc.preNetworkManagerConfigServiceEnabled, false)
+						} else {
+							assert.Equal(t, tc.preNetworkManagerConfigServiceEnabled, *unit.Enabled)
+						}
+					}
 				}
 			}
 		})
@@ -399,6 +446,14 @@ func buildIgnitionAssetDefaultDependencies() []asset.Asset {
 							},
 						},
 					},
+				},
+			},
+			StaticNetworkConfigs: []*models.HostStaticNetworkConfig{
+				{
+					MacInterfaceMap: models.MacInterfaceMap{
+						{LogicalNicName: "eth0", MacAddress: "00:01:02:03:04:05"},
+					},
+					NetworkYaml: "interfaces:\n- ipv4:\n    address:\n    - ip: 192.168.122.21\n      prefix-length: 24\n    enabled: true\n  mac-address: 00:01:02:03:04:05\n  name: eth0\n  state: up\n  type: ethernet\n",
 				},
 			},
 		},

@@ -65,7 +65,6 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 		&ClusterImageSet{},
 	} {
 		dependencies.Get(a)
-		m.FileList = append(m.FileList, a.Files()...)
 
 		switch v := a.(type) {
 		case *AgentPullSecret:
@@ -73,6 +72,11 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 		case *InfraEnv:
 			m.InfraEnv = v.Config
 		case *NMStateConfig:
+			// continue if there are no configs defined to avoid
+			// writing out a empty nmstateconfig.yaml file
+			if len(v.Config) == 0 {
+				continue
+			}
 			m.StaticNetworkConfigs = append(m.StaticNetworkConfigs, v.StaticNetworkConfig...)
 			m.NMStateConfigs = append(m.NMStateConfigs, v.Config...)
 		case *AgentClusterInstall:
@@ -82,6 +86,8 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 		case *ClusterImageSet:
 			m.ClusterImageSet = v.Config
 		}
+
+		m.FileList = append(m.FileList, a.Files()...)
 	}
 
 	asset.SortFiles(m.FileList)
