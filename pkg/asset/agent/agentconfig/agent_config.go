@@ -64,8 +64,8 @@ hosts:
   # For more information about rootDeviceHints:
   # https://docs.openshift.com/container-platform/4.10/installing/installing_bare_metal_ipi/ipi-install-installation-workflow.html#root-device-hints_ipi-install-installation-workflow
   rootDeviceHints:
- deviceName: /dev/sda
- interfaces are used to identify the host to apply this configuration to
+    deviceName: /dev/sda
+  # interfaces are used to identify the host to apply this configuration to
   interfaces:
     - macAddress: 00:00:00:00:00:00
       name: host-network-interface-name
