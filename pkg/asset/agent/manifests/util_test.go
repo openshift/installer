@@ -241,7 +241,7 @@ func getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig() *agentconfig.Age
 					Interfaces: []*v1beta1.Interface{
 						{
 							Name:       "enp2t0",
-							MacAddress: "98:af:65:a5:8d:02",
+							MacAddress: "98:af:65:a5:8d:03",
 						},
 					},
 				},
