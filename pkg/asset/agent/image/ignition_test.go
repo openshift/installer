@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/stretchr/testify/assert"
@@ -473,6 +474,7 @@ func buildIgnitionAssetDefaultDependencies() []asset.Asset {
 		&manifests.ExtraManifests{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
+		&password.KubeadminPassword{},
 		&tls.KubeAPIServerLBSignerCertKey{},
 		&tls.KubeAPIServerLocalhostSignerCertKey{},
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},

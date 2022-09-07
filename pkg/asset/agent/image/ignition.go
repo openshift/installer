@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/pkg/errors"
@@ -73,6 +74,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&tls.KubeAPIServerLocalhostSignerCertKey{},
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
+		&password.KubeadminPassword{},
 		&agentconfig.AgentConfig{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
@@ -285,6 +287,12 @@ func addTLSData(config *igntypes.Config, dependencies asset.Parents) {
 			config.Storage.Files = append(config.Storage.Files, f)
 		}
 	}
+
+	pwd := &password.KubeadminPassword{}
+	dependencies.Get(pwd)
+	config.Storage.Files = append(config.Storage.Files,
+		ignition.FileFromBytes("/opt/agent/tls/kubeadmin-password.hash", "root", 0600, pwd.PasswordHash))
+
 }
 
 func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesConf, registryCABundle *mirror.CaBundle) {
