@@ -38,12 +38,6 @@ func TestValidateClusterName(t *testing.T) {
 	errs := ValidatePlatform(validPlatform(), validNetworking(), field.NewPath("test-path"), &testConfig)
 	assert.NoError(t, errs.ToAggregate())
 
-	// too long cluster name (more than 14 chars)
-	testConfig.ObjectMeta.Name = "0123456789abcde"
-	errs = ValidatePlatform(validPlatform(), validNetworking(), field.NewPath("test-path"), &testConfig)
-	assert.True(t, len(errs) == 1)
-	assert.Equal(t, "cluster name is too long, please restrict it to 14 characters", errs[0].Detail)
-
 	// . in the name
 	testConfig.ObjectMeta.Name = "test.cluster"
 	errs = ValidatePlatform(validPlatform(), validNetworking(), field.NewPath("test-path"), &testConfig)

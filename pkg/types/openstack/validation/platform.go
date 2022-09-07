@@ -54,10 +54,6 @@ func validateVIP(vip string, n *types.Networking) error {
 }
 
 func validateClusterName(name string) (allErrs field.ErrorList) {
-	if len(name) > 14 {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), name, "cluster name is too long, please restrict it to 14 characters"))
-	}
-
 	if strings.Contains(name, ".") {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), name, "cluster name can't contain \".\" character"))
 	}
