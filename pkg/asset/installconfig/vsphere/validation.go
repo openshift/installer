@@ -44,6 +44,10 @@ func getVCenterClient(deploymentZone vsphere.DeploymentZone, ic *types.InstallCo
 				vcenter.Username,
 				vcenter.Password)
 
+			if err != nil {
+				return nil, nil, err
+			}
+
 			validationCtx := validationContext{
 				User:        vcenter.Username,
 				AuthManager: newAuthManager(vim25Client),
