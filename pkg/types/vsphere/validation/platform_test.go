@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,6 +28,10 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 		Password:         "test-password",
 		Datacenter:       "test-datacenter",
 		DefaultDatastore: "test-datastore",
+		Folder:           "/test-datacenter/vm/test-folder",
+		Cluster:          "test-cluster",
+		ResourcePool:     "/test-datacenter/host/test-cluster/Resources/test-resource-pool",
+		Network:          "test-network",
 		VCenters: []vsphere.VCenter{
 			{
 				Server:   "test-vcenter",
@@ -37,59 +43,76 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 				},
 			},
 		},
-		DeploymentZones: []vsphere.DeploymentZone{
-			{
-				Name:          "test-dz-east-1a",
-				Server:        "test-vcenter",
-				FailureDomain: "test-east-1a",
-				ControlPlane:  vsphere.Allowed,
-				PlacementConstraint: vsphere.PlacementConstraint{
-					ResourcePool: "/test-datacenter/host/cluster/Resources/test-resourcepool",
-					Folder:       "/test-datacenter/vm/test-folder",
-				},
-			},
-			{
-				Name:          "test-dz-east-2a",
-				Server:        "test-vcenter",
-				FailureDomain: "test-east-1a",
-				ControlPlane:  vsphere.NotAllowed,
-				PlacementConstraint: vsphere.PlacementConstraint{
-					ResourcePool: "/test-datacenter/host/cluster/Resources/test-resourcepool",
-					Folder:       "/test-datacenter/vm/test-folder",
-				},
-			},
-		},
 		FailureDomains: []vsphere.FailureDomain{
 			{
-				Name: "test-east-1a",
-				Region: vsphere.FailureDomainCoordinate{
-					Name:        "test-region-east",
-					Type:        "Datacenter",
-					TagCategory: "openshift-region",
-				},
-				Zone: vsphere.FailureDomainCoordinate{
-					Name:        "test-zone-1a",
-					Type:        "ComputeCluster",
-					TagCategory: "openshift-zone",
-				},
+				Name:   "test-east-1a",
+				Region: "test-east",
+				Zone:   "test-east-1a",
+				Server: "test-vcenter",
 				Topology: vsphere.Topology{
 					Datacenter:     "test-datacenter",
-					ComputeCluster: "/test-datacenter/host/cluster",
-					Hosts:          nil,
-					Networks: []string{
-						"test-network-1",
-					},
-					Datastore: "test-datastore",
-				}},
+					ComputeCluster: "/test-datacenter/host/test-cluster",
+					Datastore:      "test-datastore",
+					Networks:       []string{"test-portgroup"},
+					ResourcePool:   "test-resourcepool",
+					Folder:         "test-folder",
+				},
+			},
+			{
+				Name:   "test-east-2a",
+				Region: "test-east",
+				Zone:   "test-east-2a",
+				Server: "test-vcenter",
+				Topology: vsphere.Topology{
+					Datacenter:     "test-datacenter",
+					ComputeCluster: "/test-datacenter/host/test-cluster",
+					Datastore:      "test-datastore",
+					Networks:       []string{"test-portgroup"},
+					ResourcePool:   "test-resourcepool",
+					Folder:         "test-folder",
+				},
+			},
 		},
 	}
 }
 
+func checkIfFailureDomainDefaultsApplied(platform *vsphere.Platform) error {
+	for _, failureDomain := range platform.FailureDomains {
+		defaultsApplied := failureDomain.Server == platform.VCenter &&
+			failureDomain.Topology.ResourcePool == platform.ResourcePool &&
+			failureDomain.Topology.ComputeCluster == fmt.Sprintf("/%s/host/%s", platform.Datacenter, platform.Cluster) &&
+			failureDomain.Topology.Networks[0] == platform.Network &&
+			failureDomain.Topology.Datastore == platform.DefaultDatastore &&
+			failureDomain.Topology.Folder == platform.Folder &&
+			failureDomain.Topology.Datacenter == platform.Datacenter
+		if defaultsApplied == false {
+			return errors.New("defaults not applied")
+		}
+	}
+	return nil
+}
+
+func checkIfFailureDomainOverridesApplied(platform *vsphere.Platform) error {
+	for _, failureDomain := range platform.FailureDomains {
+		defaultsNotApplied := failureDomain.Topology.ResourcePool != platform.ResourcePool &&
+			failureDomain.Topology.ComputeCluster != fmt.Sprintf("/%s/host/%s", platform.Datacenter, platform.Cluster) &&
+			failureDomain.Topology.Networks[0] != platform.Network &&
+			failureDomain.Topology.Datastore != platform.DefaultDatastore &&
+			failureDomain.Topology.Folder != platform.Folder &&
+			failureDomain.Topology.Datacenter != platform.Datacenter
+		if defaultsNotApplied == false {
+			return errors.New("overrides not applied")
+		}
+	}
+	return nil
+}
+
 func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
-		name          string
-		platform      *vsphere.Platform
-		expectedError string
+		name                   string
+		platform               *vsphere.Platform
+		postValidationFunction func(*vsphere.Platform) error
+		expectedError          string
 	}{
 		{
 			name:     "minimal",
@@ -182,15 +205,6 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 		},
 		{
-			name: "Multi-zone platform missing deploymentZones",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.DeploymentZones = make([]vsphere.DeploymentZone, 0)
-				return p
-			}(),
-			expectedError: `^test-path.deploymentZones: Required value: must be defined if vcenters is defined`,
-		},
-		{
 			name: "Multi-zone platform missing failureDomains",
 			platform: func() *vsphere.Platform {
 				p := validMultiVCenterPlatform()
@@ -256,67 +270,13 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.vcenters.datacenters: Required value: must specify at least one datacenter$`,
 		},
 		{
-			name: "Multi-zone platform wrong vCenter name in deployment zone",
+			name: "Multi-zone platform wrong vCenter name in failureDomain zone",
 			platform: func() *vsphere.Platform {
 				p := validMultiVCenterPlatform()
-				p.DeploymentZones[0].Server = "bad-vcenter"
+				p.FailureDomains[0].Server = "bad-vcenter"
 				return p
 			}(),
-			expectedError: `^test-path\.deploymentZones\.server: Invalid value: "bad-vcenter": server does not exist in vcenters`,
-		},
-		{
-			name: "Multi-zone platform missing deployment zone name",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.DeploymentZones[0].Name = ""
-				return p
-			}(),
-			expectedError: `^test-path\.deploymentZones\.name: Required value: must specify the name`,
-		},
-		{
-			name: "Multi-zone platform missing failureDomain name in deployment zone",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.DeploymentZones[0].FailureDomain = ""
-				return p
-			}(),
-			expectedError: `^test-path\.deploymentZones\.failureDomain: Required value: must specify the failureDomain name`,
-		},
-		{
-			name: "Multi-zone platform failureDomain name does not exist in failureDomains",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.DeploymentZones[0].FailureDomain = "bad-domain"
-				return p
-			}(),
-			expectedError: `^test-path\.deploymentZones\.failureDomain: Invalid value: "bad-domain": does not exist in failureDomains`,
-		},
-		{
-			name: "Multi-zone platform controlPlane value invalid",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.DeploymentZones[0].ControlPlane = "maybe"
-				return p
-			}(),
-			expectedError: `^test-path\.deploymentZones\.controlPlane: Invalid value: "maybe": valid values are Allowed and NotAllowed`,
-		},
-		{
-			name: "Multi-zone platform folder placement constraint relative path",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.DeploymentZones[0].PlacementConstraint.Folder = "incomplete-path"
-				return p
-			}(),
-			expectedError: `^test-path\.deploymentZones\.placementConstraint\.folder: Invalid value: "incomplete-path": full path of folder must be provided in format /<datacenter>/vm/<folder>`,
-		},
-		{
-			name: "Multi-zone platform resource pool placement constraint relative path",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.DeploymentZones[0].PlacementConstraint.ResourcePool = "incomplete-path"
-				return p
-			}(),
-			expectedError: `^test-path\.deploymentZones\.placementConstraint\.resourcePool: Invalid value: "incomplete-path": full path of resource pool must be provided in format /<datacenter>/host/<cluster>/Resources/<resource-pool>`,
+			expectedError: `^test-path\.failureDomains\.server: Invalid value: "bad-vcenter": server does not exist in vcenters`,
 		},
 		{
 			name: "Multi-zone platform failure domain topology cluster relative path",
@@ -346,16 +306,6 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path.failureDomains.topology.datastore: Required value: must specify a datastore`,
 		},
 		{
-			name: "Multi-zone platform datacenter in failure domain topology is not defined",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.FailureDomains[0].Topology.Datacenter = "unknown-datacenter"
-				p.FailureDomains[0].Topology.ComputeCluster = "/unknown-datacenter/host/cluster"
-				return p
-			}(),
-			expectedError: `^test-path\.failureDomains\.topology\.datacenter: Invalid value: "unknown-datacenter": datacenter unknown-datacenter in failure domain topology does not exist in associated vCenter`,
-		},
-		{
 			name: "Multi-zone platform datacenter in failure domain topology doesn't match cluster datacenter",
 			platform: func() *vsphere.Platform {
 				p := validMultiVCenterPlatform()
@@ -377,64 +327,28 @@ func TestValidatePlatform(t *testing.T) {
 			name: "Multi-zone platform failureDomain region missing name",
 			platform: func() *vsphere.Platform {
 				p := validMultiVCenterPlatform()
-				p.FailureDomains[0].Region.Name = ""
+				p.FailureDomains[0].Region = ""
 				return p
 			}(),
-			expectedError: `^test-path\.failureDomains\.region\.name: Required value: must specify the name`,
-		},
-		{
-			name: "Multi-zone platform failureDomain region invalid type",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.FailureDomains[0].Region.Type = "invalid"
-				return p
-			}(),
-			expectedError: `^test-path\.failureDomains\.region\.type: Invalid value: "invalid": must be ComputeCluster or Datacenter`,
-		},
-		{
-			name: "Multi-zone platform failureDomain region missing tag category",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.FailureDomains[0].Region.TagCategory = ""
-				return p
-			}(),
-			expectedError: `^test-path\.failureDomains\.region\.tagCategory: Required value: must specify a tag category`,
+			expectedError: `^test-path\.failureDomains\.region: Required value: must specify region tag value`,
 		},
 		{
 			name: "Multi-zone platform failureDomain zone missing name",
 			platform: func() *vsphere.Platform {
 				p := validMultiVCenterPlatform()
-				p.FailureDomains[0].Zone.Name = ""
+				p.FailureDomains[0].Name = ""
 				return p
 			}(),
-			expectedError: `^test-path\.failureDomains\.zone\.name: Required value: must specify the name`,
-		},
-		{
-			name: "Multi-zone platform failureDomain zone invalid type",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.FailureDomains[0].Zone.Type = "invalid"
-				return p
-			}(),
-			expectedError: `^test-path\.failureDomains\.zone\.type: Invalid value: "invalid": must be ComputeCluster or Datacenter`,
-		},
-		{
-			name: "Multi-zone platform failureDomain HostGroup is not supported",
-			platform: func() *vsphere.Platform {
-				p := validMultiVCenterPlatform()
-				p.FailureDomains[0].Zone.Type = "HostGroup"
-				return p
-			}(),
-			expectedError: `^test-path\.failureDomains\.zone\.type: Invalid value: "HostGroup": is not supported`,
+			expectedError: `^test-path\.failureDomains\.name: Required value: must specify the name`,
 		},
 		{
 			name: "Multi-zone platform failureDomain zone missing tag category",
 			platform: func() *vsphere.Platform {
 				p := validMultiVCenterPlatform()
-				p.FailureDomains[0].Zone.TagCategory = ""
+				p.FailureDomains[0].Zone = ""
 				return p
 			}(),
-			expectedError: `^test-path\.failureDomains\.zone\.tagCategory: Required value: must specify a tag category`,
+			expectedError: `^test-path\.failureDomains\.zone: Required value: must specify zone tag value`,
 		},
 		{
 			name: "Multi-zone platform failureDomain topology missing datacenter",
@@ -446,28 +360,48 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.failureDomains\.topology\.datacenter: Required value: must specify a datacenter`,
 		},
 		{
-			name: "Multi-zone platform failureDomain topology hosts missing vmGroupName",
+			name: "Multi-zone platform failureDomain defaults applied",
 			platform: func() *vsphere.Platform {
 				p := validMultiVCenterPlatform()
-				p.FailureDomains[0].Topology.Hosts = &vsphere.FailureDomainHosts{
-					VMGroupName:   "",
-					HostGroupName: "test-host-group-name",
-				}
+				p.VCenters = []vsphere.VCenter{}
+				p.FailureDomains[0].Server = ""
+				p.FailureDomains[0].Topology = vsphere.Topology{}
+				p.FailureDomains[1].Server = ""
+				p.FailureDomains[1].Topology = vsphere.Topology{}
 				return p
 			}(),
-			expectedError: `^test-path\.failureDomains\.topology\.hosts\.vmGroupName: Required value: must specify the vmGroupName`,
+			postValidationFunction: checkIfFailureDomainDefaultsApplied,
 		},
 		{
-			name: "Multi-zone platform failureDomain topology hosts missing vmGroupName",
+			name: "Multi-zone platform failureDomain overrides applied",
 			platform: func() *vsphere.Platform {
 				p := validMultiVCenterPlatform()
-				p.FailureDomains[0].Topology.Hosts = &vsphere.FailureDomainHosts{
-					VMGroupName:   "test-vm-group-name",
-					HostGroupName: "",
+				p.VCenters = []vsphere.VCenter{}
+				p.FailureDomains[0].Server = "test-vcenter"
+				p.FailureDomains[0].Topology = vsphere.Topology{
+					Datacenter:     "dc1",
+					ComputeCluster: "/dc1/host/c1",
+					Networks: []string{
+						"network1",
+					},
+					Datastore:    "ds1",
+					ResourcePool: "/dc1/host/c1/Resources/rp1",
+					Folder:       "/dc1/vm/folder1",
+				}
+				p.FailureDomains[1].Server = "test-vcenter"
+				p.FailureDomains[1].Topology = vsphere.Topology{
+					Datacenter:     "dc2",
+					ComputeCluster: "/dc2/host/c2",
+					Networks: []string{
+						"network2",
+					},
+					Datastore:    "ds2",
+					ResourcePool: "/dc2/host/c2/Resources/rp2",
+					Folder:       "/dc2/vm/folder2",
 				}
 				return p
 			}(),
-			expectedError: `^test-path\.failureDomains\.topology\.hosts.hostGroupName: Required value: must specify the hostGroupName`,
+			postValidationFunction: checkIfFailureDomainOverridesApplied,
 		},
 	}
 	for _, tc := range cases {
@@ -477,6 +411,12 @@ func TestValidatePlatform(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Regexp(t, tc.expectedError, err)
+			}
+			if tc.postValidationFunction != nil {
+				err := tc.postValidationFunction(tc.platform)
+				if err != nil {
+					assert.NoError(t, err)
+				}
 			}
 		})
 	}

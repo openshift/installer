@@ -34,17 +34,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	definedZones := make(map[string]*vsphere.Platform)
 
 	if numOfAZs > 0 {
-		for _, az := range azs {
-			for _, deploymentZone := range platform.DeploymentZones {
-				if az == deploymentZone.Name {
-					if deploymentZone.ControlPlane == vsphere.NotAllowed {
-						return nil, fmt.Errorf("zone %s is not allowed to host control plane nodes", az)
-					}
-					break
-				}
-			}
-		}
-		zones, err := getDefinedZones(platform, true)
+		zones, err := getDefinedZones(platform)
 		if err != nil {
 			return machines, err
 		}
@@ -63,21 +53,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			if _, exists := definedZones[desiredZone]; !exists {
 				return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
 			}
-			deploymentZone, err := getDeploymentZone(desiredZone, config.Platform.VSphere)
-			if err != nil {
-				return nil, errors.Errorf("deployment zone [%s] specified by machinepool is not defined", desiredZone)
-			}
-			failureDomain, err = getFailureDomain(deploymentZone.FailureDomain, config.Platform.VSphere)
-			if err != nil {
-				return nil, errors.Errorf("failure domain [%s] specified by deployment zone is not defined", deploymentZone.FailureDomain)
-			}
-
 			platform = definedZones[desiredZone]
-		}
-
-		provider, err := provider(clusterID, platform, mpool, osImage, userDataSecret)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create provider")
+			for idx, knownFailureDomain := range platform.FailureDomains {
+				if knownFailureDomain.Name == desiredZone {
+					failureDomain = &platform.FailureDomains[idx]
+				}
+			}
 		}
 
 		machineLabels := map[string]string{
@@ -85,10 +66,18 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			"machine.openshift.io/cluster-api-machine-role": role,
 			"machine.openshift.io/cluster-api-machine-type": role,
 		}
+
+		osImageForZone := osImage
+
 		if failureDomain != nil {
-			machineLabels["machine.openshift.io/zone"] = failureDomain.Zone.Name
-			machineLabels["machine.openshift.io/region"] = failureDomain.Region.Name
+			osImageForZone = fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
 		}
+
+		provider, err := provider(clusterID, platform, mpool, osImageForZone, userDataSecret)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create provider")
+		}
+
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",

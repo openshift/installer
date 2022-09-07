@@ -40,8 +40,8 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 	}
 
 	if len(vspherePool.Zones) > 0 {
-		if len(platform.DeploymentZones) == 0 {
-			return append(allErrs, field.Required(fldPath.Child("zones"), "deploymentZones must be defined if zones are defined"))
+		if len(platform.FailureDomains) == 0 {
+			return append(allErrs, field.Required(fldPath.Child("zones"), "failureDomains must be defined if zones are defined"))
 		}
 		for _, zone := range vspherePool.Zones {
 			err := validate.ClusterName1035(zone)
@@ -49,23 +49,18 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), vspherePool.Zones, err.Error()))
 			}
 			zoneDefined := false
-			for _, deploymentZone := range platform.DeploymentZones {
-				if deploymentZone.Name == zone {
+			for _, failureDomain := range platform.FailureDomains {
+				if failureDomain.Name == zone {
 					zoneDefined = true
 				}
 			}
 			if zoneDefined == false {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), zone, "zone not defined in deploymentZones"))
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), zone, "zone not defined in failureDomains"))
 			}
 		}
-	} else if len(platform.DeploymentZones) > 0 {
-		for _, deploymentZone := range platform.DeploymentZones {
-			if machinePool.Name == types.MachinePoolControlPlaneRoleName {
-				if deploymentZone.ControlPlane == vsphere.NotAllowed {
-					continue
-				}
-			}
-			vspherePool.Zones = append(vspherePool.Zones, deploymentZone.Name)
+	} else if len(platform.FailureDomains) > 0 {
+		for _, failureDomain := range platform.FailureDomains {
+			vspherePool.Zones = append(vspherePool.Zones, failureDomain.Name)
 		}
 	}
 	return allErrs
