@@ -115,7 +115,7 @@ func TestValidateMachinePool(t *testing.T) {
 			name: "multi-zone invalid zone name",
 			platform: func() *vsphere.Platform {
 				platform := validMultiVCenterPlatform()
-				platform.DeploymentZones[0].Name = "Zone%^@112233"
+				platform.FailureDomains[0].Name = "Zone%^@112233"
 				return platform
 			}(),
 			pool: &types.MachinePool{
@@ -136,7 +136,7 @@ func TestValidateMachinePool(t *testing.T) {
 				Platform: types.MachinePoolPlatform{
 					VSphere: &vsphere.MachinePool{
 						Zones: []string{
-							"test-dz-east-1a",
+							"test-east-1a",
 						},
 					},
 				},
@@ -151,7 +151,7 @@ func TestValidateMachinePool(t *testing.T) {
 					VSphere: &vsphere.MachinePool{},
 				},
 			},
-			expectedZones:  &[]string{"test-dz-east-1a"},
+			expectedZones:  &[]string{"test-east-1a", "test-east-2a"},
 			expectedErrMsg: "",
 		},
 		{
@@ -163,7 +163,7 @@ func TestValidateMachinePool(t *testing.T) {
 					VSphere: &vsphere.MachinePool{},
 				},
 			},
-			expectedZones:  &[]string{"test-dz-east-1a", "test-dz-east-2a"},
+			expectedZones:  &[]string{"test-east-1a", "test-east-2a"},
 			expectedErrMsg: "",
 		},
 		{
@@ -178,25 +178,7 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expectedErrMsg: `^test-path.zones: Invalid value: "unknown-zone": zone not defined in deploymentZones$`,
-		},
-		{
-			name: "multi-zone missing deploymentZones",
-			platform: func() *vsphere.Platform {
-				platform := validMultiVCenterPlatform()
-				platform.DeploymentZones = make([]vsphere.DeploymentZone, 0)
-				return platform
-			}(),
-			pool: &types.MachinePool{
-				Platform: types.MachinePoolPlatform{
-					VSphere: &vsphere.MachinePool{
-						Zones: []string{
-							"test-dz-east-1a",
-						},
-					},
-				},
-			},
-			expectedErrMsg: `^test-path.zones: Required value: deploymentZones must be defined if zones are defined$`,
+			expectedErrMsg: `^test-path.zones: Invalid value: "unknown-zone": zone not defined in failureDomains$`,
 		},
 	}
 	for _, tc := range cases {
