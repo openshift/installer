@@ -350,7 +350,7 @@ func (a *Client) PcloudPvminstancesDelete(params *PcloudPvminstancesDeleteParams
 }
 
 /*
-  PcloudPvminstancesGet gets a p VM instance s current state information
+  PcloudPvminstancesGet gets a p VM instance s current state or information
 */
 func (a *Client) PcloudPvminstancesGet(params *PcloudPvminstancesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesGetOK, error) {
 	// TODO: Validate the params before sending

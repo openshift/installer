@@ -12,19 +12,19 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPIJobClient ...
+// IBMPIJobClient
 type IBMPIJobClient struct {
 	IBMPIClient
 }
 
-// NewIBMPIJobClient ...
+// NewIBMPIJobClient
 func NewIBMPIJobClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPIJobClient {
 	return &IBMPIJobClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
 	}
 }
 
-// Get information about a job
+// Get a Job
 func (f *IBMPIJobClient) Get(id string) (*models.Job, error) {
 	params := p_cloud_jobs.NewPcloudCloudinstancesJobsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -39,7 +39,7 @@ func (f *IBMPIJobClient) Get(id string) (*models.Job, error) {
 	return resp.Payload, nil
 }
 
-// Gell all jobs
+// Get All Jobs
 func (f *IBMPIJobClient) GetAll() (*models.Jobs, error) {
 	params := p_cloud_jobs.NewPcloudCloudinstancesJobsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -54,7 +54,7 @@ func (f *IBMPIJobClient) GetAll() (*models.Jobs, error) {
 	return resp.Payload, nil
 }
 
-// Delete a job
+// Delete a Job
 func (f *IBMPIJobClient) Delete(id string) error {
 	params := p_cloud_jobs.NewPcloudCloudinstancesJobsDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).

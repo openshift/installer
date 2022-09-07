@@ -41,6 +41,12 @@ func (o *PcloudV2VolumescloneExecutePostReader) ReadResponse(response runtime.Cl
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudV2VolumescloneExecutePostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudV2VolumescloneExecutePostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -143,6 +149,38 @@ func (o *PcloudV2VolumescloneExecutePostUnauthorized) GetPayload() *models.Error
 }
 
 func (o *PcloudV2VolumescloneExecutePostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2VolumescloneExecutePostForbidden creates a PcloudV2VolumescloneExecutePostForbidden with default headers values
+func NewPcloudV2VolumescloneExecutePostForbidden() *PcloudV2VolumescloneExecutePostForbidden {
+	return &PcloudV2VolumescloneExecutePostForbidden{}
+}
+
+/* PcloudV2VolumescloneExecutePostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudV2VolumescloneExecutePostForbidden struct {
+	Payload *models.Error
+}
+
+func (o *PcloudV2VolumescloneExecutePostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostForbidden  %+v", 403, o.Payload)
+}
+func (o *PcloudV2VolumescloneExecutePostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV2VolumescloneExecutePostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

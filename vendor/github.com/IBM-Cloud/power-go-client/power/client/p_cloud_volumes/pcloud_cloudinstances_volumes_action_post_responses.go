@@ -41,8 +41,20 @@ func (o *PcloudCloudinstancesVolumesActionPostReader) ReadResponse(response runt
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudCloudinstancesVolumesActionPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudCloudinstancesVolumesActionPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 409:
+		result := NewPcloudCloudinstancesVolumesActionPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -152,6 +164,38 @@ func (o *PcloudCloudinstancesVolumesActionPostUnauthorized) readResponse(respons
 	return nil
 }
 
+// NewPcloudCloudinstancesVolumesActionPostForbidden creates a PcloudCloudinstancesVolumesActionPostForbidden with default headers values
+func NewPcloudCloudinstancesVolumesActionPostForbidden() *PcloudCloudinstancesVolumesActionPostForbidden {
+	return &PcloudCloudinstancesVolumesActionPostForbidden{}
+}
+
+/* PcloudCloudinstancesVolumesActionPostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudCloudinstancesVolumesActionPostForbidden struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudinstancesVolumesActionPostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/action][%d] pcloudCloudinstancesVolumesActionPostForbidden  %+v", 403, o.Payload)
+}
+func (o *PcloudCloudinstancesVolumesActionPostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesVolumesActionPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudCloudinstancesVolumesActionPostNotFound creates a PcloudCloudinstancesVolumesActionPostNotFound with default headers values
 func NewPcloudCloudinstancesVolumesActionPostNotFound() *PcloudCloudinstancesVolumesActionPostNotFound {
 	return &PcloudCloudinstancesVolumesActionPostNotFound{}
@@ -173,6 +217,38 @@ func (o *PcloudCloudinstancesVolumesActionPostNotFound) GetPayload() *models.Err
 }
 
 func (o *PcloudCloudinstancesVolumesActionPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesVolumesActionPostConflict creates a PcloudCloudinstancesVolumesActionPostConflict with default headers values
+func NewPcloudCloudinstancesVolumesActionPostConflict() *PcloudCloudinstancesVolumesActionPostConflict {
+	return &PcloudCloudinstancesVolumesActionPostConflict{}
+}
+
+/* PcloudCloudinstancesVolumesActionPostConflict describes a response with status code 409, with default header values.
+
+Conflict
+*/
+type PcloudCloudinstancesVolumesActionPostConflict struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudinstancesVolumesActionPostConflict) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/action][%d] pcloudCloudinstancesVolumesActionPostConflict  %+v", 409, o.Payload)
+}
+func (o *PcloudCloudinstancesVolumesActionPostConflict) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesVolumesActionPostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

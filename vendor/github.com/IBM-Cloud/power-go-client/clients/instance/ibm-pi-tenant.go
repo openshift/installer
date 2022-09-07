@@ -10,19 +10,19 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPITenantClient ...
+// IBMPITenantClient
 type IBMPITenantClient struct {
 	IBMPIClient
 }
 
-// NewIBMPITenantClient ...
+// NewIBMPITenantClient
 func NewIBMPITenantClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPITenantClient {
 	return &IBMPITenantClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
 	}
 }
 
-// Get ..
+// Get a Tenant
 func (f *IBMPITenantClient) Get(tenantid string) (*models.Tenant, error) {
 	params := p_cloud_tenants.NewPcloudTenantsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -37,7 +37,7 @@ func (f *IBMPITenantClient) Get(tenantid string) (*models.Tenant, error) {
 	return resp.Payload, nil
 }
 
-// Get ..
+// Get own Tenant
 func (f *IBMPITenantClient) GetSelfTenant() (*models.Tenant, error) {
 	params := p_cloud_tenants.NewPcloudTenantsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
