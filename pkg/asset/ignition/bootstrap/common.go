@@ -164,10 +164,10 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 		},
 	}
 
-	if err := a.addStorageFiles("/", "bootstrap/files", templateData); err != nil {
+	if err := AddStorageFiles(a.Config, "/", "bootstrap/files", templateData); err != nil {
 		return err
 	}
-	if err := a.addSystemdUnits("bootstrap/systemd/units", templateData, commonEnabledServices); err != nil {
+	if err := AddSystemdUnits(a.Config, "bootstrap/systemd/units", templateData, commonEnabledServices); err != nil {
 		return err
 	}
 
@@ -177,7 +177,7 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 	directory, err := data.Assets.Open(platformFilePath)
 	if err == nil {
 		directory.Close()
-		err = a.addStorageFiles("/", platformFilePath, templateData)
+		err = AddStorageFiles(a.Config, "/", platformFilePath, templateData)
 		if err != nil {
 			return err
 		}
@@ -187,7 +187,7 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 	directory, err = data.Assets.Open(platformUnitPath)
 	if err == nil {
 		directory.Close()
-		if err = a.addSystemdUnits(platformUnitPath, templateData, commonEnabledServices); err != nil {
+		if err = AddSystemdUnits(a.Config, platformUnitPath, templateData, commonEnabledServices); err != nil {
 			return err
 		}
 	}
@@ -242,7 +242,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	}
 
 	registries := []sysregistriesv2.Registry{}
-	for _, group := range mergedMirrorSets(installConfig.Config.ImageContentSources) {
+	for _, group := range MergedMirrorSets(installConfig.Config.ImageContentSources) {
 		if len(group.Mirrors) == 0 {
 			continue
 		}
@@ -304,7 +304,13 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	}
 }
 
-func (a *Common) addStorageFiles(base string, uri string, templateData *bootstrapTemplateData) (err error) {
+// AddStorageFiles adds files to a Ignition config.
+// Parameters:
+// config - the ignition config to be modified
+// base - path were the files are written to in to config
+// uri - path under data/data specifying the files to be included
+// templateData - struct to used to render templates
+func AddStorageFiles(config *igntypes.Config, base string, uri string, templateData interface{}) (err error) {
 	file, err := data.Assets.Open(uri)
 	if err != nil {
 		return err
@@ -327,7 +333,7 @@ func (a *Common) addStorageFiles(base string, uri string, templateData *bootstra
 
 		for _, childInfo := range children {
 			name := childInfo.Name()
-			err = a.addStorageFiles(path.Join(base, name), path.Join(uri, name), templateData)
+			err = AddStorageFiles(config, path.Join(base, name), path.Join(uri, name), templateData)
 			if err != nil {
 				return err
 			}
@@ -348,7 +354,7 @@ func (a *Common) addStorageFiles(base string, uri string, templateData *bootstra
 	appendToFile := false
 	if parentDir == "bin" || parentDir == "dispatcher.d" {
 		mode = 0555
-	} else if filename == "motd" {
+	} else if filename == "motd" || filename == "containers.conf" {
 		mode = 0644
 		appendToFile = true
 	} else {
@@ -360,12 +366,18 @@ func (a *Common) addStorageFiles(base string, uri string, templateData *bootstra
 	}
 
 	// Replace files that already exist in the slice with ones added later, otherwise append them
-	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ign)
+	config.Storage.Files = replaceOrAppend(config.Storage.Files, ign)
 
 	return nil
 }
 
-func (a *Common) addSystemdUnits(uri string, templateData *bootstrapTemplateData, enabledServices []string) (err error) {
+// AddSystemdUnits adds systemd units to a Ignition config.
+// Parameters:
+// config - the ignition config to be modified
+// uri - path under data/data specifying the systemd units files to be included
+// templateData - struct to used to render templates
+// enabledServices - a list of systemd units to be enabled by default
+func AddSystemdUnits(config *igntypes.Config, uri string, templateData interface{}, enabledServices []string) (err error) {
 	enabled := make(map[string]struct{}, len(enabledServices))
 	for _, s := range enabledServices {
 		enabled[s] = struct{}{}
@@ -436,7 +448,7 @@ func (a *Common) addSystemdUnits(uri string, templateData *bootstrapTemplateData
 			if _, ok := enabled[name]; ok {
 				unit.Enabled = ignutil.BoolToPtr(true)
 			}
-			a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
+			config.Systemd.Units = append(config.Systemd.Units, unit)
 		} else {
 			name, contents, err := readFile(childInfo.Name(), file, templateData)
 			if err != nil {
@@ -450,7 +462,7 @@ func (a *Common) addSystemdUnits(uri string, templateData *bootstrapTemplateData
 			if _, ok := enabled[name]; ok {
 				unit.Enabled = ignutil.BoolToPtr(true)
 			}
-			a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
+			config.Systemd.Units = append(config.Systemd.Units, unit)
 		}
 	}
 

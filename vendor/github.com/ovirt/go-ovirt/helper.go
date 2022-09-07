@@ -15,7 +15,7 @@ func (c *Connection) WaitForVM(vmID string, status VmStatus, timeout time.Durati
 		timeout = DefaultVMTimeout
 	}
 	if vmID == "" {
-		return fmt.Errorf("Invalid VM ID")
+		return fmt.Errorf("the VM ID must not be empty")
 	}
 	vmService := c.SystemService().VmsService().VmService(vmID)
 	for {
@@ -24,7 +24,7 @@ func (c *Connection) WaitForVM(vmID string, status VmStatus, timeout time.Durati
 			return err
 		}
 		if timeout <= 0 {
-			return fmt.Errorf("Timeout for waiting for VM to %v", status)
+			return fmt.Errorf("timeout for waiting for VM to %v", status)
 		}
 
 		vm, ok := resp.Vm()
@@ -49,7 +49,7 @@ func (c *Connection) WaitForDisk(diskID string, status DiskStatus, timeout time.
 		timeout = DefaultDiskTimeout
 	}
 	if diskID == "" {
-		return fmt.Errorf("Invalid Disk ID")
+		return fmt.Errorf("the Disk ID must not be empty")
 	}
 	diskService := c.SystemService().DisksService().DiskService(diskID)
 	for {
@@ -58,7 +58,7 @@ func (c *Connection) WaitForDisk(diskID string, status DiskStatus, timeout time.
 			return err
 		}
 		if timeout <= 0 {
-			return fmt.Errorf("Timeout for waiting for Disk to %v", status)
+			return fmt.Errorf("timeout for waiting for Disk to %v", status)
 		}
 
 		disk, ok := resp.Disk()

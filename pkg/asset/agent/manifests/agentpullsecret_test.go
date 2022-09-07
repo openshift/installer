@@ -1,0 +1,197 @@
+package manifests
+
+import (
+	"os"
+	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
+)
+
+func TestAgentPullSecret_Generate(t *testing.T) {
+
+	cases := []struct {
+		name           string
+		dependencies   []asset.Asset
+		expectedError  string
+		expectedConfig *corev1.Secret
+	}{
+		{
+			name: "missing install config",
+			dependencies: []asset.Asset{
+				&agent.OptionalInstallConfig{},
+			},
+			expectedError: "missing configuration or manifest file",
+		},
+		{
+			name: "valid configuration",
+			dependencies: []asset.Asset{
+				getValidOptionalInstallConfig(),
+			},
+			expectedConfig: &corev1.Secret{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "Secret",
+					APIVersion: "v1",
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Name:      getPullSecretName(getValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+				},
+				StringData: map[string]string{
+					".dockerconfigjson": TestSecret,
+				},
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			parents := asset.Parents{}
+			parents.Add(tc.dependencies...)
+
+			asset := &AgentPullSecret{}
+			err := asset.Generate(parents)
+
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedConfig, asset.Config)
+				assert.NotEmpty(t, asset.Files())
+
+				configFile := asset.Files()[0]
+				assert.Equal(t, "cluster-manifests/pull-secret.yaml", configFile.Filename)
+
+				var actualConfig corev1.Secret
+				err = yaml.Unmarshal(configFile.Data, &actualConfig)
+				assert.NoError(t, err)
+				assert.Equal(t, *tc.expectedConfig, actualConfig)
+			}
+		})
+	}
+}
+
+func TestAgentPullSecret_LoadedFromDisk(t *testing.T) {
+
+	cases := []struct {
+		name           string
+		data           string
+		fetchError     error
+		expectedFound  bool
+		expectedError  string
+		expectedConfig *corev1.Secret
+	}{
+		{
+			name: "valid-config-file",
+			data: `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pull-secret
+  namespace: cluster-0
+stringData:
+  .dockerconfigjson: c3VwZXItc2VjcmV0Cg==`,
+			expectedFound: true,
+			expectedConfig: &corev1.Secret{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "Secret",
+					APIVersion: "v1",
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "pull-secret",
+					Namespace: "cluster-0",
+				},
+				StringData: map[string]string{
+					".dockerconfigjson": "c3VwZXItc2VjcmV0Cg==",
+				},
+			},
+		},
+		{
+			name:          "not-yaml",
+			data:          `This is not a yaml file`,
+			expectedError: "failed to unmarshal cluster-manifests/pull-secret.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1.Secret",
+		},
+		{
+			name:          "empty",
+			data:          "",
+			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret is empty",
+		},
+		{
+			name: "missing-string-data",
+			data: `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pull-secret
+  namespace: cluster-0`,
+			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret is empty",
+		},
+		{
+			name: "missing-secret-key",
+			data: `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pull-secret
+  namespace: cluster-0
+stringData:
+  .dockerconfigjson:`,
+			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret does not contain any data",
+		},
+		{
+			name:       "file-not-found",
+			fetchError: &os.PathError{Err: os.ErrNotExist},
+		},
+		{
+			name:          "error-fetching-file",
+			fetchError:    errors.New("fetch failed"),
+			expectedError: "failed to load cluster-manifests/pull-secret.yaml file: fetch failed",
+		},
+		{
+			name: "unknown-field",
+			data: `
+		metadata:
+		  name: pull-secret
+		  namespace: cluster0
+		spec:
+		  wrongField: wrongValue`,
+			expectedError: "failed to unmarshal cluster-manifests/pull-secret.yaml: error converting YAML to JSON: yaml: line 2: found character that cannot start any token",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			fileFetcher := mock.NewMockFileFetcher(mockCtrl)
+			fileFetcher.EXPECT().FetchByName(agentPullSecretFilename).
+				Return(
+					&asset.File{
+						Filename: agentPullSecretFilename,
+						Data:     []byte(tc.data)},
+					tc.fetchError,
+				)
+
+			asset := &AgentPullSecret{}
+			found, err := asset.Load(fileFetcher)
+			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+			if tc.expectedFound {
+				assert.Equal(t, tc.expectedConfig, asset.Config, "unexpected Config in AgentPullSecret")
+			}
+		})
+	}
+
+}

@@ -16,6 +16,7 @@ package types
 
 import (
 	"github.com/coreos/ignition/v2/config/shared/errors"
+	"github.com/coreos/ignition/v2/config/util"
 
 	"github.com/coreos/vcontext/path"
 	"github.com/coreos/vcontext/report"
@@ -127,7 +128,7 @@ func (n Disk) partitionsMixZeroesAndNonexistence() bool {
 	hasZero := false
 	hasShouldNotExist := false
 	for _, p := range n.Partitions {
-		hasShouldNotExist = hasShouldNotExist || (p.ShouldExist != nil && !*p.ShouldExist)
+		hasShouldNotExist = hasShouldNotExist || util.IsFalse(p.ShouldExist)
 		hasZero = hasZero || (p.Number == 0)
 	}
 	return hasZero && hasShouldNotExist

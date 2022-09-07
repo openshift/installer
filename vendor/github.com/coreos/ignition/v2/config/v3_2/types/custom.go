@@ -21,10 +21,6 @@ import (
 	"github.com/coreos/vcontext/report"
 )
 
-func (cu Custom) Key() string {
-	return cu.Pin
-}
-
 func (cu Custom) Validate(c path.ContextPath) (r report.Report) {
 	if cu.Pin == "" && cu.Config == "" {
 		return
