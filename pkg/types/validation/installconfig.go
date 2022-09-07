@@ -85,7 +85,7 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 	if c.Platform.GCP != nil || c.Platform.Azure != nil {
 		nameErr = validate.ClusterName1035(c.ObjectMeta.Name)
 	}
-	if c.Platform.VSphere != nil || c.Platform.BareMetal != nil || c.Platform.Nutanix != nil {
+	if c.Platform.VSphere != nil || c.Platform.BareMetal != nil || c.Platform.OpenStack != nil || c.Platform.Nutanix != nil {
 		nameErr = validate.OnPremClusterName(c.ObjectMeta.Name)
 	}
 	if nameErr != nil {
