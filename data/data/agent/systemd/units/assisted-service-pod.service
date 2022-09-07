@@ -11,6 +11,7 @@ Before=assisted-service-db.service assisted-service.service
 Environment=PODMAN_SYSTEMD_UNIT=%n
 Restart=on-failure
 TimeoutStopSec=70
+RestartSec=10
 ExecStartPre=/bin/rm -f %t/%n.pid %t/%N.pod-id
 ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/%n.pid --pod-id-file %t/%N.pod-id -n assisted-service --publish=8090:8090 --publish=8080:8080 --publish=8888:8888
 ExecStartPre=/usr/local/bin/get-container-images.sh
