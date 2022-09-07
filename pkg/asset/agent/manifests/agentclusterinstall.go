@@ -12,6 +12,8 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/defaults"
 	"github.com/openshift/installer/pkg/validate"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -110,10 +112,8 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 		if installConfig.Config.NetworkType != "" {
 			agentClusterInstall.Spec.Networking.NetworkType = installConfig.Config.NetworkType
 		} else {
-			// default NetworkType to OpenShiftSDN if unspecified
-			// https://docs.openshift.com/container-platform/4.11/installing/installing_aws/installing-aws-network-customizations.html#installation-configuration-parameters-network_installing-aws-network-customizations
-			logrus.Info("NetworkType is not specified in install config. Defaulting to OpenShiftSDN.")
-			agentClusterInstall.Spec.Networking.NetworkType = "OpenShiftSDN"
+			agentClusterInstall.Spec.Networking.NetworkType = a.getDefaultNetworkType(installConfig.Config)
+			logrus.Infof("NetworkType is not specified in install config. Defaulting to %s.", agentClusterInstall.Spec.Networking.NetworkType)
 		}
 
 		// TODO: Handle the case where both IPv4 and IPv6 VIPs are specified
@@ -169,10 +169,9 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	if agentClusterInstall.Spec.Networking.NetworkType == "" {
-		// default NetworkType to OpenShiftSDN if unspecified
-		// https://docs.openshift.com/container-platform/4.11/installing/installing_aws/installing-aws-network-customizations.html#installation-configuration-parameters-network_installing-aws-network-customizations
-		logrus.Info("NetworkType is not specified in AgentClusterInstall. Defaulting to OpenShiftSDN.")
-		agentClusterInstall.Spec.Networking.NetworkType = "OpenShiftSDN"
+		defaultInstallConfig := &types.InstallConfig{}
+		agentClusterInstall.Spec.Networking.NetworkType = a.getDefaultNetworkType(defaultInstallConfig)
+		logrus.Infof("NetworkType is not specified in AgentClusterInstall. Defaulting to %s.", agentClusterInstall.Spec.Networking.NetworkType)
 	}
 
 	a.Config = agentClusterInstall
@@ -198,4 +197,12 @@ func (a *AgentClusterInstall) finish() error {
 	}
 
 	return nil
+}
+
+func (a *AgentClusterInstall) getDefaultNetworkType(installConfig *types.InstallConfig) string {
+	// Returns default network type for a given install config.
+	// For 4.11, the default NetworkType is set to OpenShiftSDN if unspecified.
+	// https://docs.openshift.com/container-platform/4.11/installing/installing_aws/installing-aws-network-customizations.html#installation-configuration-parameters-network_installing-aws-network-customizations
+	defaults.SetInstallConfigDefaults(installConfig)
+	return installConfig.NetworkType
 }
