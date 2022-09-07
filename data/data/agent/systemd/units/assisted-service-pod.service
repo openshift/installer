@@ -10,6 +10,7 @@ Before=assisted-service-db.service assisted-service.service
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
 Restart=on-failure
+TimeoutStartSec=300
 TimeoutStopSec=70
 RestartSec=10
 ExecStartPre=/bin/rm -f %t/%n.pid %t/%N.pod-id
