@@ -80,6 +80,8 @@ type bootstrapTemplateData struct {
 	UseIPv6ForNodeIP      bool
 	IsOKD                 bool
 	BootstrapNodeIP       string
+	APIServerURL          string
+	APIIntServerURL       string
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -285,6 +287,9 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	if bootstrapInPlace {
 		bootstrapInPlaceConfig = installConfig.Config.BootstrapInPlace
 	}
+
+	apiURL := fmt.Sprintf("api.%s", installConfig.Config.ClusterDomain())
+	apiIntURL := fmt.Sprintf("api-int.%s", installConfig.Config.ClusterDomain())
 	return &bootstrapTemplateData{
 		AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
 		FIPS:                  installConfig.Config.FIPS,
@@ -301,6 +306,8 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
 		IsOKD:                 installConfig.Config.IsOKD(),
 		BootstrapNodeIP:       bootstrapNodeIP,
+		APIServerURL:          apiURL,
+		APIIntServerURL:       apiIntURL,
 	}
 }
 
