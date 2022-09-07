@@ -2,7 +2,10 @@ locals {
   # Common locals
   prefix    = var.cluster_id
   zones_all = distinct(concat(var.zones_master, var.zones_worker))
-  vpc_id    = var.preexisting_vpc ? data.ibm_is_vpc.vpc[0].id : ibm_is_vpc.vpc[0].id
+
+  # VPC locals
+  vpc_id  = var.preexisting_vpc ? data.ibm_is_vpc.vpc[0].id : ibm_is_vpc.vpc[0].id
+  vpc_crn = var.preexisting_vpc ? data.ibm_is_vpc.vpc[0].crn : ibm_is_vpc.vpc[0].crn
 
   # LB locals
   port_kubernetes_api   = 6443

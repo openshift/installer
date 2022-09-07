@@ -4,7 +4,8 @@ package ibmcloud
 type Metadata struct {
 	AccountID         string   `json:"accountID"`
 	BaseDomain        string   `json:"baseDomain"`
-	CISInstanceCRN    string   `json:"cisInstanceCRN"`
+	CISInstanceCRN    string   `json:"cisInstanceCRN,omitempty"`
+	DNSInstanceID     string   `json:"dnsInstanceID,omitempty"`
 	Region            string   `json:"region,omitempty"`
 	ResourceGroupName string   `json:"resourceGroupName,omitempty"`
 	VPC               string   `json:"vpc,omitempty"`

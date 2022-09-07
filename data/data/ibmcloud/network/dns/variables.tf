@@ -1,8 +1,12 @@
 ############################################
-# CIS module variables
+# DNS module variables
 ############################################
 
-variable "cis_id" {
+variable "dns_id" {
+  type = string
+}
+
+variable "vpc_crn" {
   type = string
 }
 
@@ -16,10 +20,6 @@ variable "cluster_domain" {
 
 variable "is_external" {
   type = bool
-}
-
-variable "lb_kubernetes_api_public_hostname" {
-  type = string
 }
 
 variable "lb_kubernetes_api_private_hostname" {
