@@ -14,7 +14,6 @@ import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/mock"
 )
 
@@ -23,16 +22,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
-		expectedError  string
 		expectedConfig []*aiv1beta1.NMStateConfig
 	}{
-		{
-			name: "missing-config",
-			dependencies: []asset.Asset{
-				&agentconfig.AgentConfig{},
-			},
-			expectedError: "missing configuration or manifest file",
-		},
 		{
 			name: "valid dhcp agent config no hosts",
 			dependencies: []asset.Asset{
@@ -158,35 +149,31 @@ func TestNMStateConfig_Generate(t *testing.T) {
 			asset := &NMStateConfig{}
 			err := asset.Generate(parents)
 
-			if tc.expectedError != "" {
-				assert.Equal(t, tc.expectedError, err.Error())
+			if len(tc.expectedConfig) == 0 {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedConfig, asset.Config)
 			} else {
-				if len(tc.expectedConfig) == 0 {
-					assert.NoError(t, err)
-					assert.Equal(t, tc.expectedConfig, asset.Config)
-				} else {
-					assert.NoError(t, err)
-					assert.Equal(t, tc.expectedConfig, asset.Config)
-					assert.NotEmpty(t, asset.Files())
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedConfig, asset.Config)
+				assert.NotEmpty(t, asset.Files())
 
-					configFile := asset.Files()[0]
-					assert.Equal(t, "cluster-manifests/nmstateconfig.yaml", configFile.Filename)
+				configFile := asset.Files()[0]
+				assert.Equal(t, "cluster-manifests/nmstateconfig.yaml", configFile.Filename)
 
-					// Split up the file into multiple YAMLs if it contains NMStateConfig for more than one node
-					var decoder nmStateConfigYamlDecoder
-					yamlList, err := getMultipleYamls(configFile.Data, &decoder)
+				// Split up the file into multiple YAMLs if it contains NMStateConfig for more than one node
+				var decoder nmStateConfigYamlDecoder
+				yamlList, err := getMultipleYamls(configFile.Data, &decoder)
 
-					assert.NoError(t, err)
-					assert.Equal(t, len(tc.expectedConfig), len(yamlList))
+				assert.NoError(t, err)
+				assert.Equal(t, len(tc.expectedConfig), len(yamlList))
 
-					for i := range tc.expectedConfig {
-						assert.Equal(t, tc.expectedConfig[i], yamlList[i])
+				for i := range tc.expectedConfig {
+					assert.Equal(t, tc.expectedConfig[i], yamlList[i])
 
-					}
-					assert.Equal(t, len(tc.expectedConfig), len(asset.StaticNetworkConfig))
 				}
-
+				assert.Equal(t, len(tc.expectedConfig), len(asset.StaticNetworkConfig))
 			}
+
 		})
 	}
 
