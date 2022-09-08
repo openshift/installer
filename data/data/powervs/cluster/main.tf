@@ -36,6 +36,7 @@ module "pi_network" {
   cloud_instance_id = var.powervs_cloud_instance_id
   resource_group    = var.powervs_resource_group
   pvs_network_name  = var.powervs_network_name
+  machine_cidr      = var.machine_v4_cidrs[0]
   cloud_conn_name   = var.powervs_ccon_name
   vpc_crn           = module.vpc.vpc_crn
 }

@@ -13,6 +13,7 @@ resource "ibm_pi_dhcp" "new_dhcp_service" {
   pi_cloud_instance_id   = var.cloud_instance_id
   pi_cloud_connection_id = data.ibm_pi_cloud_connection.cloud_connection.id
   pi_dns_server          = "1.1.1.1"
+  pi_cidr                = var.machine_cidr
 }
 
 resource "ibm_pi_cloud_connection" "new_cloud_connection" {

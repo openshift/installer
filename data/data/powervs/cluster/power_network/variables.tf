@@ -29,3 +29,8 @@ variable "cloud_conn_name" {
   description = "The name of a pre-created Power VS Cloud connection."
   default     = ""
 }
+
+variable "machine_cidr" {
+  type        = string
+  description = "The machine network (IPv4 only)"
+}
