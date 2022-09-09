@@ -22,20 +22,6 @@ func printIfNotEmpty(buf *bytes.Buffer, k, v string) {
 	}
 }
 
-func appendTagCategory(tagCategory string, tagCategories []string) []string {
-	tagDefined := false
-	for _, regionTagCategory := range tagCategories {
-		if regionTagCategory == tagCategory {
-			tagDefined = true
-			break
-		}
-	}
-	if tagDefined == false {
-		return append(tagCategories, tagCategory)
-	}
-	return tagCategories
-}
-
 // MultiZoneYamlCloudProviderConfig generates the yaml out of tree cloud provider config for the vSphere platform.
 func MultiZoneYamlCloudProviderConfig(p *vspheretypes.Platform) (string, error) {
 	vCenters := make(map[string]*cloudconfig.VirtualCenterConfigYAML)
@@ -60,8 +46,8 @@ func MultiZoneYamlCloudProviderConfig(p *vspheretypes.Platform) (string, error) 
 		},
 		Vcenter: vCenters,
 		Labels: cloudconfig.LabelsYAML{
-			Zone:   zoneTagCategory,
-			Region: regionTagCategory,
+			Zone:   vspheretypes.TagCategoryZone,
+			Region: vspheretypes.TagCategoryRegion,
 		},
 	}
 
@@ -122,8 +108,8 @@ func MultiZoneIniCloudProviderConfig(folderPath string, p *vspheretypes.Platform
 	fmt.Fprintln(buf, "")
 
 	fmt.Fprintln(buf, "[Labels]")
-	printIfNotEmpty(buf, "region", regionTagCategory)
-	printIfNotEmpty(buf, "zone", zoneTagCategory)
+	printIfNotEmpty(buf, "region", vspheretypes.TagCategoryRegion)
+	printIfNotEmpty(buf, "zone", vspheretypes.TagCategoryZone)
 
 	return buf.String(), nil
 }
