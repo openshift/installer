@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	operv1 "github.com/openshift/api/operator/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
@@ -19,6 +20,7 @@ import (
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 )
 
@@ -188,12 +190,8 @@ func (a *AgentClusterInstall) finish() error {
 		return errors.New("missing configuration or manifest file")
 	}
 
-	switch a.Config.Spec.Networking.NetworkType {
-	case
-		"OVNKubernetes",
-		"OpenShiftSDN":
-	default:
-		return errors.New("networkType has incorrect value. Expect value to be either 'OpenShiftSDN' or 'OVNKubernetes'")
+	if err := a.validateIPAddressAndNetworkType().ToAggregate(); err != nil {
+		return errors.Wrapf(err, "invalid NetworkType configured")
 	}
 
 	return nil
@@ -201,8 +199,57 @@ func (a *AgentClusterInstall) finish() error {
 
 func (a *AgentClusterInstall) getDefaultNetworkType(installConfig *types.InstallConfig) string {
 	// Returns default network type for a given install config.
-	// For 4.11, the default NetworkType is set to OpenShiftSDN if unspecified.
-	// https://docs.openshift.com/container-platform/4.11/installing/installing_aws/installing-aws-network-customizations.html#installation-configuration-parameters-network_installing-aws-network-customizations
+	// The default NetworkType is set to OVNKubernetes if unspecified.
 	defaults.SetInstallConfigDefaults(installConfig)
 	return installConfig.NetworkType
+}
+
+func isIPv4(ipAddress string) bool {
+	return strings.Count(ipAddress, ":") < 2
+}
+
+func isIPv6(ipAddress string) bool {
+	return strings.Count(ipAddress, ":") >= 2
+}
+
+func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	fieldPath := field.NewPath("spec", "networking", "networkType")
+
+	if a.Config.Spec.Networking.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+		hasIPv6 := false
+		hasIPv4 := false
+		for _, cn := range a.Config.Spec.Networking.ClusterNetwork {
+			if isIPv4(cn.CIDR) {
+				hasIPv4 = true
+			}
+			if isIPv6(cn.CIDR) {
+				hasIPv6 = true
+			}
+		}
+		if hasIPv6 && !hasIPv4 {
+			allErrs = append(allErrs, field.Required(fieldPath,
+				fmt.Sprintf("clusterNetwork CIDR is IPv6 and is not compatible with networkType %s",
+					operv1.NetworkTypeOpenShiftSDN)))
+		}
+
+		hasIPv6 = false
+		hasIPv4 = false
+		for _, ip := range a.Config.Spec.Networking.ServiceNetwork {
+			if isIPv4(ip) {
+				hasIPv4 = true
+			}
+			if isIPv6(ip) {
+				hasIPv6 = true
+			}
+		}
+		if hasIPv6 && !hasIPv4 {
+			allErrs = append(allErrs, field.Required(fieldPath,
+				fmt.Sprintf("serviceNetwork CIDR is IPv6 and is not compatible with networkType %s",
+					operv1.NetworkTypeOpenShiftSDN)))
+		}
+	}
+
+	return allErrs
 }

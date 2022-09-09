@@ -21,9 +21,6 @@ import (
 
 func TestAgentClusterInstall_Generate(t *testing.T) {
 
-	installConfigWithBadNetworkType := getValidOptionalInstallConfig()
-	installConfigWithBadNetworkType.Config.NetworkType = "bad-network-type-value"
-
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -36,13 +33,6 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&agent.OptionalInstallConfig{},
 			},
 			expectedError: "missing configuration or manifest file",
-		},
-		{
-			name: "install config has bad network type value",
-			dependencies: []asset.Asset{
-				installConfigWithBadNetworkType,
-			},
-			expectedError: "networkType has incorrect value. Expect value to be either 'OpenShiftSDN' or 'OVNKubernetes'",
 		},
 		{
 			name: "valid configuration",
@@ -164,14 +154,14 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 func TestAgentClusterInstall_LoadedFromDisk(t *testing.T) {
 
 	emptyACI := &hiveext.AgentClusterInstall{}
-	emptyACI.Spec.Networking.NetworkType = "OpenShiftSDN"
+	emptyACI.Spec.Networking.NetworkType = "OVNKubernetes"
 
 	cases := []struct {
 		name           string
 		data           string
 		fetchError     error
 		expectedFound  bool
-		expectedError  bool
+		expectedError  string
 		expectedConfig *hiveext.AgentClusterInstall
 	}{
 		{
@@ -193,6 +183,7 @@ spec:
       hostPrefix: 23
     serviceNetwork:
     - 172.30.0.0/16
+    networkType: "OVNKubernetes"
   provisionRequirements:
     controlPlaneAgents: 3
     workerAgents: 2
@@ -223,7 +214,7 @@ spec:
 						ServiceNetwork: []string{
 							"172.30.0.0/16",
 						},
-						NetworkType: "OpenShiftSDN",
+						NetworkType: "OVNKubernetes",
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -236,14 +227,13 @@ spec:
 		{
 			name:          "not-yaml",
 			data:          `This is not a yaml file`,
-			expectedError: true,
+			expectedError: "failed to unmarshal cluster-manifests/agent-cluster-install.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1beta1.AgentClusterInstall",
 		},
 		{
 			name:           "empty",
 			data:           "",
 			expectedFound:  true,
 			expectedConfig: emptyACI,
-			expectedError:  false,
 		},
 		{
 			name:       "file-not-found",
@@ -252,7 +242,7 @@ spec:
 		{
 			name:          "error-fetching-file",
 			fetchError:    errors.New("fetch failed"),
-			expectedError: true,
+			expectedError: "failed to load cluster-manifests/agent-cluster-install.yaml file: fetch failed",
 		},
 		{
 			name: "unknown-field",
@@ -262,7 +252,34 @@ metadata:
   namespace: cluster0
 spec:
   wrongField: wrongValue`,
-			expectedError: true,
+			expectedError: "failed to unmarshal cluster-manifests/agent-cluster-install.yaml: error unmarshaling JSON: while decoding JSON: json: unknown field \"wrongField\"",
+		},
+		{
+			name: "network-ip-address-incompatible-with-network-type",
+			data: `
+metadata:
+  name: test-agent-cluster-install
+  namespace: cluster0
+spec:
+  apiVIP: 192.168.111.5
+  ingressVIP: 192.168.111.4
+  clusterDeploymentRef:
+    name: ostest
+  imageSetRef:
+    name: openshift-v4.10.0
+  networking:
+    clusterNetwork:
+    - cidr: fd01::/48
+      hostPrefix: 23
+    serviceNetwork:
+    - fd02::/112
+    networkType: "OpenShiftSDN"
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 2
+  sshPublicKey: |
+    ssh-rsa AAAAmyKey`,
+			expectedError: "invalid NetworkType configured: [spec.networking.networkType: Required value: clusterNetwork CIDR is IPv6 and is not compatible with networkType OpenShiftSDN, spec.networking.networkType: Required value: serviceNetwork CIDR is IPv6 and is not compatible with networkType OpenShiftSDN]",
 		},
 	}
 	for _, tc := range cases {
@@ -283,10 +300,9 @@ spec:
 			asset := &AgentClusterInstall{}
 			found, err := asset.Load(fileFetcher)
 			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
-			if tc.expectedError {
-				assert.Error(t, err, "expected error from Load")
-			} else {
-				assert.NoError(t, err, "unexpected error from Load")
+
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
 			}
 			if tc.expectedFound {
 				assert.Equal(t, tc.expectedConfig, asset.Config, "unexpected Config in AgentClusterInstall")
