@@ -10,7 +10,7 @@ func Metadata(config *types.InstallConfig) *typesvsphere.Metadata {
 	terraformPlatform := "vsphere"
 
 	if vsphere := config.Platform.VSphere; vsphere != nil {
-		if len(vsphere.DeploymentZones) != 0 {
+		if len(vsphere.FailureDomains) != 0 {
 			terraformPlatform = typesvsphere.ZoningTerraformName
 		}
 	}

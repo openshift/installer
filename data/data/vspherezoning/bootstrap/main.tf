@@ -12,13 +12,13 @@ provider "vsphere" {
 
 resource "vsphere_virtual_machine" "vm_bootstrap" {
   name                        = "${var.cluster_id}-bootstrap"
-  resource_pool_id            = var.resource_pool[var.vsphere_control_planes[0].dz_name].id
-  datastore_id                = var.datastore[var.vsphere_control_planes[0].dz_name].id
-  num_cpus                    = var.vsphere_control_planes[0].provider_spec.numCPUs
-  num_cores_per_socket        = var.vsphere_control_planes[0].provider_spec.numCoresPerSocket
-  memory                      = var.vsphere_control_planes[0].provider_spec.memoryMiB
-  guest_id                    = var.template[var.vsphere_control_planes[0].dz_name].guest_id
-  folder                      = var.vsphere_control_planes[0].provider_spec.workspace.folder
+  resource_pool_id            = var.resource_pool[0].id
+  datastore_id                = var.datastore[0].id
+  num_cpus                    = var.vsphere_control_planes[0].numCPUs
+  num_cores_per_socket        = var.vsphere_control_planes[0].numCoresPerSocket
+  memory                      = var.vsphere_control_planes[0].memoryMiB
+  guest_id                    = var.template[0].guest_id
+  folder                      = var.vsphere_control_planes[0].workspace.folder
   enable_disk_uuid            = "true"
   annotation                  = local.description
   wait_for_guest_net_timeout  = "0"
@@ -26,19 +26,19 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
   tags                        = var.tags
 
   network_interface {
-    network_id = var.template[var.vsphere_control_planes[0].dz_name].network_interfaces.0.network_id
+    network_id = var.template[0].network_interfaces.0.network_id
   }
 
   disk {
     label = "disk0"
-    size  = var.vsphere_control_planes[0].provider_spec.diskGiB
+    size  = var.vsphere_control_planes[0].diskGiB
 
-    eagerly_scrub    = var.template[var.vsphere_control_planes[0].dz_name].disks.0.eagerly_scrub
-    thin_provisioned = var.template[var.vsphere_control_planes[0].dz_name].disks.0.thin_provisioned
+    eagerly_scrub    = var.template[0].disks.0.eagerly_scrub
+    thin_provisioned = var.template[0].disks.0.thin_provisioned
   }
 
   clone {
-    template_uuid = var.template[var.vsphere_control_planes[0].dz_name].uuid
+    template_uuid = var.template[0].uuid
   }
 
   extra_config = {

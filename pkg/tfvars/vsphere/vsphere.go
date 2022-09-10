@@ -3,25 +3,18 @@ package vsphere
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
-
-	"github.com/pkg/errors"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
-
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	vtypes "github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/pkg/errors"
+	"strings"
 )
 
 type folder struct {
 	Name       string `json:"name"`
 	Datacenter string `json:"vsphere_datacenter"`
-}
-
-type controlplane struct {
-	DeploymentZone     string                                 `json:"dz_name"`
-	ControlPlaneConfig *machineapi.VSphereMachineProviderSpec `json:"provider_spec"`
 }
 
 type config struct {
@@ -43,16 +36,15 @@ type config struct {
 	PreexistingFolder bool            `json:"vsphere_preexisting_folder"`
 	DiskType          vtypes.DiskType `json:"vsphere_disk_type"`
 
-	VCenters          map[string]vtypes.VCenter         `json:"vsphere_vcenters"`
-	DeploymentZone    map[string]*vtypes.DeploymentZone `json:"vsphere_deployment_zone"`
-	FailureDomainZone map[string]vtypes.FailureDomain   `json:"vsphere_failure_zone"`
-	NetworkZone       map[string]string                 `json:"vsphere_network_zone"`
+	// vcenters can still remain a map for easy lookups
+	VCenters       map[string]vtypes.VCenter `json:"vsphere_vcenters"`
+	FailureDomains []vtypes.FailureDomain    `json:"vsphere_failure_domains"`
 
-	FolderZone map[string]*folder `json:"vsphere_folder_zone"`
+	NetworksInFailureDomains map[string]string `json:"vsphere_networks"`
 
-	ControlPlanes []controlplane `json:"vsphere_control_planes"`
+	ControlPlanes []*machineapi.VSphereMachineProviderSpec `json:"vsphere_control_planes"`
 
-	ControlPlaneConfigZone map[string]*machineapi.VSphereMachineProviderSpec `json:"vsphere_control_planes_zone"`
+	DatacentersFolders map[string]*folder `json:"vsphere_folders"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -66,14 +58,14 @@ type TFVarsSources struct {
 	DiskType            vtypes.DiskType
 	NetworkID           string
 
-	NetworkZone   map[string]string
-	InstallConfig *installconfig.InstallConfig
-	InfraID       string
+	NetworksInFailureDomain map[string]string
+	InstallConfig           *installconfig.InstallConfig
+	InfraID                 string
 
 	ControlPlaneMachines []machineapi.Machine
 }
 
-//TFVars generate vSphere-specific Terraform variables
+// TFVars generate vSphere-specific Terraform variables
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	controlPlaneConfig := sources.ControlPlaneConfigs[0]
 	cachedImage, err := cache.DownloadImageFile(sources.ImageURL)
@@ -86,11 +78,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	// /<datacenter>/vm/<folder_path> so we can split on "vm/".
 	folderRelPath := strings.SplitAfterN(controlPlaneConfig.Workspace.Folder, "vm/", 2)[1]
 
-	deploymentZones := convertDeploymentZonesToMap(sources.InstallConfig.Config.VSphere.DeploymentZones)
 	vcenterZones := convertVCentersToMap(sources.InstallConfig.Config.VSphere.VCenters)
-	failureDomainZones := convertFailureZoneToMap(sources.InstallConfig.Config.VSphere.FailureDomains)
-	controlPlanes := controlPlaneDZAssoication(sources.ControlPlaneMachines, sources.InstallConfig)
-	folderZone := createFolderZoneMap(sources.InfraID, deploymentZones, failureDomainZones)
+	datacentersFolders := createDatacenterFolderMap(sources.InfraID, sources.InstallConfig.Config.VSphere.FailureDomains)
 
 	cfg := &config{
 		VSphereURL:        controlPlaneConfig.Workspace.Server,
@@ -111,97 +100,42 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PreexistingFolder: sources.PreexistingFolder,
 		DiskType:          sources.DiskType,
 
-		NetworkZone:       sources.NetworkZone,
-		FolderZone:        folderZone,
-		VCenters:          vcenterZones,
-		DeploymentZone:    deploymentZones,
-		FailureDomainZone: failureDomainZones,
-
-		ControlPlanes: controlPlanes,
+		VCenters:                 vcenterZones,
+		FailureDomains:           sources.InstallConfig.Config.VSphere.FailureDomains,
+		NetworksInFailureDomains: sources.NetworksInFailureDomain,
+		ControlPlanes:            sources.ControlPlaneConfigs,
+		DatacentersFolders:       datacentersFolders,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
 }
 
-func createFolderZoneMap(infraID string, deploymentZone map[string]*vtypes.DeploymentZone, failureDomainZones map[string]vtypes.FailureDomain) map[string]*folder {
+// createDatacenterFolderMap()
+// This function loops over the range of failure domains
+// Each failure domain defines the vCenter datacenter and folder
+// to be used for the virtual machines within that domain.
+// The datacenter could be reused but a folder could be
+// unique - the key then becomes a string that contains
+// both the datacenter name and the folder to be created.
+func createDatacenterFolderMap(infraID string, failureDomains []vtypes.FailureDomain) map[string]*folder {
 	folders := make(map[string]*folder)
 
-	for k, v := range deploymentZone {
+	for i, fd := range failureDomains {
+
 		tempFolder := new(folder)
 
-		tempFolder.Datacenter = failureDomainZones[v.FailureDomain].Topology.Datacenter
-		tempFolder.Name = v.PlacementConstraint.Folder
+		tempFolder.Datacenter = fd.Topology.Datacenter
+		tempFolder.Name = fd.Topology.Folder
 
 		if tempFolder.Name == "" {
 			tempFolder.Name = infraID
-			deploymentZone[k].PlacementConstraint.Folder = infraID
+			failureDomains[i].Topology.Folder = infraID
 		}
 
 		key := fmt.Sprintf("%s-%s", tempFolder.Datacenter, tempFolder.Name)
 		folders[key] = tempFolder
 	}
 	return folders
-}
-
-func convertDeploymentZonesToMap(values []vtypes.DeploymentZone) map[string]*vtypes.DeploymentZone {
-	deploymentZoneMap := make(map[string]*vtypes.DeploymentZone)
-
-	for i := range values {
-		tempValue := &values[i]
-		deploymentZoneMap[tempValue.Name] = tempValue
-	}
-	return deploymentZoneMap
-}
-
-func controlPlaneDZAssoication(values []machineapi.Machine, installConfig *installconfig.InstallConfig) []controlplane {
-	controlPlaneConfigs := make([]controlplane, len(values))
-
-	var region string
-	var zone string
-	var deploymentZone vtypes.DeploymentZone
-	var failureDomainName string
-
-	for i, v := range values {
-
-		// We need to know the region and zone of each master virtual machine
-		// to determine the name of the DeploymentZone
-		if val, ok := v.ObjectMeta.Labels["machine.openshift.io/region"]; ok {
-			region = val
-		}
-		if val, ok := v.ObjectMeta.Labels["machine.openshift.io/zone"]; ok {
-			zone = val
-		}
-		// Using failuredomains, region and zone names find the failureDomain
-		for _, fd := range installConfig.Config.VSphere.FailureDomains {
-			if fd.Region.Name == region {
-				if fd.Zone.Name == zone {
-					failureDomainName = fd.Name
-				}
-			}
-		}
-
-		// Using the deploymentzones and failuredomainname, find the deploymentzone
-		for _, dz := range installConfig.Config.VSphere.DeploymentZones {
-			if dz.FailureDomain == failureDomainName {
-				deploymentZone = dz
-			}
-		}
-
-		controlPlaneConfigs[i] = controlplane{
-			ControlPlaneConfig: values[i].Spec.ProviderSpec.Value.Object.(*machineapi.VSphereMachineProviderSpec),
-			DeploymentZone:     deploymentZone.Name,
-		}
-	}
-
-	return controlPlaneConfigs
-}
-
-func convertFailureZoneToMap(values []vtypes.FailureDomain) map[string]vtypes.FailureDomain {
-	failureDomainMap := make(map[string]vtypes.FailureDomain)
-	for _, v := range values {
-		failureDomainMap[v.Name] = v
-	}
-	return failureDomainMap
 }
 
 func convertVCentersToMap(values []vtypes.VCenter) map[string]vtypes.VCenter {

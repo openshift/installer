@@ -90,7 +90,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	if vsphere := installConfig.Config.Platform.VSphere; vsphere != nil {
-		if len(vsphere.DeploymentZones) != 0 {
+		if len(vsphere.FailureDomains) != 0 {
 			platform = typesvsphere.ZoningTerraformName
 		}
 	}

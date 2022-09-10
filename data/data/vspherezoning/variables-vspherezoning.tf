@@ -93,27 +93,22 @@ variable "vsphere_vcenters" {
   default = {}
 }
 
-variable "vsphere_deployment_zone" {
+variable "vsphere_networks" {
   type    = map(any)
   default = {}
 }
 
-variable "vsphere_failure_zone" {
-  type    = map(any)
-  default = {}
-}
-
-variable "vsphere_network_zone" {
-  type    = map(any)
-  default = {}
-}
-
-variable "vsphere_folder_zone" {
+variable "vsphere_folders" {
   type    = map(any)
   default = {}
 }
 
 variable "vsphere_control_planes" {
+  type    = list(any)
+  default = []
+}
+
+variable "vsphere_failure_domains" {
   type    = list(any)
   default = []
 }

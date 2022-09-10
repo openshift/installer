@@ -1,6 +1,7 @@
 locals {
-  description = "Created By OpenShift Installer"
-  vcenter_key = keys(var.vsphere_vcenters)[0]
+  description  = "Created By OpenShift Installer"
+  vcenter_key  = keys(var.vsphere_vcenters)[0]
+  template_map = { for t in var.template : t.name => t }
 }
 
 provider "vsphere" {
@@ -10,17 +11,35 @@ provider "vsphere" {
   allow_unverified_ssl = false
 }
 
+data "vsphere_datacenter" "datacenter" {
+  count = var.master_count
+  name  = var.vsphere_control_planes[count.index].workspace.datacenter
+}
+
+data "vsphere_resource_pool" "resource_pool" {
+  count = var.master_count
+  name  = var.vsphere_control_planes[count.index].workspace.resourcePool
+}
+
+data "vsphere_datastore" "datastore" {
+  count         = var.master_count
+  name          = var.vsphere_control_planes[count.index].workspace.datastore
+  datacenter_id = data.vsphere_datacenter.datacenter[count.index].id
+}
+
 resource "vsphere_virtual_machine" "vm_master" {
   count = var.master_count
 
-  name                        = "${var.cluster_id}-master-${count.index}"
-  resource_pool_id            = var.resource_pool[var.vsphere_control_planes[count.index].dz_name].id
-  datastore_id                = var.datastore[var.vsphere_control_planes[count.index].dz_name].id
-  num_cpus                    = var.vsphere_control_planes[count.index].provider_spec.numCPUs
-  num_cores_per_socket        = var.vsphere_control_planes[count.index].provider_spec.numCoresPerSocket
-  memory                      = var.vsphere_control_planes[count.index].provider_spec.memoryMiB
-  guest_id                    = var.template[var.vsphere_control_planes[count.index].dz_name].guest_id
-  folder                      = var.vsphere_control_planes[count.index].provider_spec.workspace.folder
+  name                 = "${var.cluster_id}-master-${count.index}"
+  resource_pool_id     = data.vsphere_resource_pool.resource_pool[count.index].id
+  datastore_id         = data.vsphere_datastore.datastore[count.index].id
+  num_cpus             = var.vsphere_control_planes[count.index].numCPUs
+  num_cores_per_socket = var.vsphere_control_planes[count.index].numCoresPerSocket
+  memory               = var.vsphere_control_planes[count.index].memoryMiB
+  folder               = var.vsphere_control_planes[count.index].workspace.folder
+
+  guest_id = local.template_map[var.vsphere_control_planes[count.index].template].guest_id
+
   enable_disk_uuid            = "true"
   annotation                  = local.description
   wait_for_guest_net_timeout  = "0"
@@ -28,19 +47,18 @@ resource "vsphere_virtual_machine" "vm_master" {
   tags                        = var.tags
 
   network_interface {
-    network_id = var.template[var.vsphere_control_planes[count.index].dz_name].network_interfaces.0.network_id
+    network_id = local.template_map[var.vsphere_control_planes[count.index].template].network_interfaces.0.network_id
   }
 
   disk {
-    label = "disk0"
-    size  = var.vsphere_control_planes[count.index].provider_spec.diskGiB
-
-    eagerly_scrub    = var.template[var.vsphere_control_planes[count.index].dz_name].disks.0.eagerly_scrub
-    thin_provisioned = var.template[var.vsphere_control_planes[count.index].dz_name].disks.0.thin_provisioned
+    label            = "disk0"
+    size             = var.vsphere_control_planes[count.index].diskGiB
+    eagerly_scrub    = local.template_map[var.vsphere_control_planes[count.index].template].disks.0.eagerly_scrub
+    thin_provisioned = local.template_map[var.vsphere_control_planes[count.index].template].disks.0.thin_provisioned
   }
 
   clone {
-    template_uuid = var.template[var.vsphere_control_planes[count.index].dz_name].uuid
+    template_uuid = local.template_map[var.vsphere_control_planes[count.index].template].uuid
   }
 
   extra_config = {
