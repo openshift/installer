@@ -5,10 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/simulator"
+	"github.com/vmware/govmomi/vapi/rest"
+	vapitags "github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/session"
 	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -21,6 +25,14 @@ import (
 
 var (
 	validCIDR = "10.0.0.0/16"
+)
+
+const (
+	tagTestCreateRegionCategory     = 0x01
+	tagTestCreateZoneCategory       = 0x02
+	tagTestAttachRegionTags         = 0x04
+	tagTestAttachZoneTags           = 0x08
+	tagTestNothingCreatedOrAttached = 0x10
 )
 
 func validIPIInstallConfig(dcName string, fName string) *types.InstallConfig {
@@ -80,6 +92,107 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 	}
 }
 
+func teardownTagAttachmentTest(ctx context.Context, tagMgr *vapitags.Manager) error {
+	tags, err := tagMgr.ListTags(ctx)
+	if err != nil {
+		return err
+	}
+	attachedMos, err := tagMgr.GetAttachedObjectsOnTags(ctx, tags)
+	if err != nil {
+		return err
+	}
+
+	for _, attachedMo := range attachedMos {
+		for _, mo := range attachedMo.ObjectIDs {
+			tagMgr.DetachTag(ctx, attachedMo.TagID, mo)
+			if err != nil {
+				return err
+			}
+		}
+		err := tagMgr.DeleteTag(ctx, attachedMo.Tag)
+		if err != nil {
+			return err
+		}
+	}
+
+	categories, err := tagMgr.GetCategories(ctx)
+	if err != nil {
+		return err
+	}
+	for _, category := range categories {
+		err := tagMgr.DeleteCategory(ctx, &category)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func setupTagAttachmentTest(ctx context.Context, restClient *rest.Client, finder Finder, attachmentMask int64) (*vapitags.Manager, error) {
+	tagMgr := vapitags.NewManager(restClient)
+
+	if attachmentMask&tagTestCreateRegionCategory != 0 {
+		categoryID, err := tagMgr.CreateCategory(ctx, &vapitags.Category{
+			Name:        "openshift-region",
+			Description: "region tag category",
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		if attachmentMask&tagTestAttachRegionTags != 0 {
+			tagID, err := tagMgr.CreateTag(ctx, &vapitags.Tag{
+				Name:       "us-east",
+				CategoryID: categoryID,
+			})
+			if err != nil {
+				return nil, err
+			}
+			datacenters, err := finder.DatacenterList(ctx, "/...")
+			if err != nil {
+				return nil, err
+			}
+			for _, datacenter := range datacenters {
+				err = tagMgr.AttachTag(ctx, tagID, datacenter)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+	if attachmentMask&tagTestCreateZoneCategory != 0 {
+		categoryId, err := tagMgr.CreateCategory(ctx, &vapitags.Category{
+			Name:        "openshift-zone",
+			Description: "zone tag category",
+		})
+		if err != nil {
+			return nil, err
+		}
+		if attachmentMask&tagTestAttachZoneTags != 0 {
+			tagId, err := tagMgr.CreateTag(ctx, &vapitags.Tag{
+				Name:       "us-east-1a",
+				CategoryID: categoryId,
+			})
+			if err != nil {
+				return nil, err
+			}
+			clusters, err := finder.ClusterComputeResourceList(ctx, "/...")
+			if err != nil {
+				return nil, err
+			}
+			for _, cluster := range clusters {
+				err = tagMgr.AttachTag(ctx, tagId, cluster)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+
+	}
+
+	return tagMgr, nil
+}
+
 func TestValidate(t *testing.T) {
 	server := mock.StartSimulator()
 	defer server.Close()
@@ -96,6 +209,7 @@ func TestValidate(t *testing.T) {
 		validationMethod          func(*validationContext, *types.InstallConfig) error
 		multiZoneValidationMethod func(*validationContext, *vsphere.FailureDomain) field.ErrorList
 		failureDomain             *vsphere.FailureDomain
+		tagTestMask               int64
 		expectErr                 string
 	}{{
 		name:             "valid IPI install config",
@@ -201,7 +315,33 @@ func TestValidate(t *testing.T) {
 		}(),
 		multiZoneValidationMethod: validateMultiZoneProvisioning,
 		expectErr:                 `^platform.vsphere.failureDomains.topology.folder: Invalid value: "/DC0/vm/invalid-folder": folder '/DC0/vm/invalid-folder' not found$`,
-	}}
+	}, {
+		name:                      "multi-zone tag categories present and tags attached",
+		multiZoneValidationMethod: validateMultiZoneProvisioning,
+		failureDomain:             &validMultiVCenterPlatform().FailureDomains[0],
+		tagTestMask: tagTestCreateZoneCategory |
+			tagTestCreateRegionCategory |
+			tagTestAttachRegionTags |
+			tagTestAttachZoneTags,
+	}, {
+		name:                      "multi-zone tag categories, missing zone tag attachment",
+		multiZoneValidationMethod: validateMultiZoneProvisioning,
+		failureDomain:             &validMultiVCenterPlatform().FailureDomains[0],
+		tagTestMask: tagTestCreateZoneCategory |
+			tagTestCreateRegionCategory |
+			tagTestAttachRegionTags,
+		expectErr: "platform.vsphere.failureDomains.topology.computeCluster: Internal error: tag associated with tag category openshift-zone not attached to this resource or ancestor",
+	}, {
+		name:                      "multi-zone tag categories, missing zone and region tag categories",
+		multiZoneValidationMethod: validateMultiZoneProvisioning,
+		failureDomain:             &validMultiVCenterPlatform().FailureDomains[0],
+		tagTestMask:               tagTestNothingCreatedOrAttached,
+		expectErr:                 "platform.vsphere: Internal error: tag categories openshift-zone and openshift-region must be created",
+	},
+	}
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
 
 	finder, err := mock.GetFinder(server)
 	if err != nil {
@@ -215,7 +355,14 @@ func TestValidate(t *testing.T) {
 		return
 	}
 
-	ctx := context.TODO()
+	restClient := rest.NewClient(client)
+
+	defer restClient.CloseIdleConnections()
+	err = restClient.Login(context.TODO(), simulator.DefaultLogin)
+	if err != nil {
+		t.Error(err)
+	}
+
 	rootFolder := object.NewRootFolder(client)
 	_, err = rootFolder.CreateFolder(ctx, "/DC0/vm/my-folder")
 	if err != nil {
@@ -258,7 +405,26 @@ func TestValidate(t *testing.T) {
 			if test.validationMethod != nil {
 				err = test.validationMethod(validationCtx, test.installConfig)
 			} else if test.multiZoneValidationMethod != nil {
+				var tagMgr *vapitags.Manager
+				if test.tagTestMask != 0 {
+					tagMgr, err = setupTagAttachmentTest(ctx, restClient, finder, test.tagTestMask)
+					if err != nil {
+						assert.NoError(t, err)
+					}
+					validationCtx.zoneTagCategoryID = ""
+					validationCtx.regionTagCategoryID = ""
+					validationCtx.TagManager = tagMgr
+				}
 				err = test.multiZoneValidationMethod(validationCtx, test.failureDomain).ToAggregate()
+				if test.tagTestMask != 0 {
+					err := teardownTagAttachmentTest(ctx, tagMgr)
+					if err != nil {
+						assert.NoError(t, err)
+					}
+					validationCtx.zoneTagCategoryID = ""
+					validationCtx.regionTagCategoryID = ""
+					validationCtx.TagManager = nil
+				}
 			} else {
 				err = errors.New("no test method defined")
 			}

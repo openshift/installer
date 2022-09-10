@@ -10,6 +10,8 @@ import (
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/simulator"
+	_ "github.com/vmware/govmomi/vapi/rest"
+	_ "github.com/vmware/govmomi/vapi/simulator"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/soap"
 )
@@ -24,7 +26,9 @@ func StartSimulator() *simulator.Server {
 	model.OpaqueNetwork = 1
 	model.Create()
 	model.Service.TLS = new(tls.Config)
+
 	model.Service.TLS.ServerName = "127.0.0.1"
+	model.Service.RegisterEndpoints = true
 	server := model.Service.NewServer()
 	return server
 }

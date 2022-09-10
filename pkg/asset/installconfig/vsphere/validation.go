@@ -3,12 +3,16 @@ package vsphere
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"github.com/vmware/govmomi/vim25/mo"
+	"net"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/find"
+	vapitags "github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
 	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -32,9 +36,12 @@ type TagManager interface {
 }
 
 type validationContext struct {
-	AuthManager AuthManager
-	Finder      Finder
-	Client      *vim25.Client
+	AuthManager         AuthManager
+	Finder              Finder
+	Client              *vim25.Client
+	TagManager          TagManager
+	regionTagCategoryID string
+	zoneTagCategoryID   string
 }
 
 // Validate executes platform-specific validation.
