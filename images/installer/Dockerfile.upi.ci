@@ -37,6 +37,7 @@ RUN yum update -y && \
       openssh-clients \
       openssl \
       PyYAML \
+      bind-utils \
       util-linux && \
     yum clean all && \
     rm -rf /var/cache/yum/* && \

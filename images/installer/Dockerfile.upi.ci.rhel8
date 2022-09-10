@@ -33,6 +33,7 @@ RUN yum update -y && \
       python3-pyOpenSSL \
       python2-pyyaml \
       python3-pyyaml \
+      bind-utils \
       util-linux && \
     yum clean all && \
     rm -rf /var/cache/yum/* && \
