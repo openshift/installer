@@ -67,7 +67,7 @@ import (
 // ./terraform/providers/mycloud/go.mod
 module github.com/openshift/installer/terraform/providers/mycloud
 
-go 1.17
+go 1.18
 
 require github.com/hashicorp/terraform-provider-mycloud v1.2.3
 ```

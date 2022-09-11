@@ -1,6 +1,6 @@
 module terraform
 
-go 1.17
+go 1.18
 
 require github.com/hashicorp/terraform v1.0.11
 

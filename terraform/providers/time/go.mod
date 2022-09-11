@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/time
 
-go 1.17
+go 1.18
 
 require github.com/hashicorp/terraform-provider-time v0.7.2
 
