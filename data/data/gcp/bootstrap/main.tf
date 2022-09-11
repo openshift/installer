@@ -29,10 +29,27 @@ resource "google_storage_bucket_object" "ignition" {
   content = var.ignition_bootstrap
 }
 
+resource "google_service_account" "bootstrap-node-sa" {
+  account_id   = "${var.cluster_id}-b"
+  display_name = "${var.cluster_id}-bootstrap-node"
+  description  = local.description
+}
+
+resource "google_service_account_key" "bootstrap" {
+  service_account_id = google_service_account.bootstrap-node-sa.name
+}
+
+resource "google_project_iam_member" "bootstrap-storage-admin" {
+  project = var.gcp_project_id
+  role    = "roles/storage.admin"
+  member  = "serviceAccount:${google_service_account.bootstrap-node-sa.email}"
+}
+
 data "google_storage_object_signed_url" "ignition_url" {
-  bucket   = google_storage_bucket.ignition.name
-  path     = "bootstrap.ign"
-  duration = "1h"
+  bucket      = google_storage_bucket.ignition.name
+  path        = "bootstrap.ign"
+  duration    = "1h"
+  credentials = base64decode(google_service_account_key.bootstrap.private_key)
 }
 
 data "ignition_config" "redirect" {
