@@ -508,7 +508,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	}
 
 	m.MachineFiles = make([]*asset.File, len(machines))
-	if controlPlaneMachineSet != nil {
+	if controlPlaneMachineSet != nil && *pool.Replicas > 1 {
 		data, err := yaml.Marshal(controlPlaneMachineSet)
 		if err != nil {
 			return errors.Wrapf(err, "marshal control plane machine set")
