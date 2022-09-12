@@ -38,6 +38,29 @@ var PlatformStages = []terraform.Stage{
 	),
 }
 
+// ZoningPlatformStages are the stages to run to provision the infrastructure in a
+// multiple region and zone vsphere environment.
+var ZoningPlatformStages = []terraform.Stage{
+	stages.NewStage(
+		"vspherezoning",
+		"pre-bootstrap",
+		[]providers.Provider{providers.VSphere, providers.VSpherePrivate},
+	),
+	stages.NewStage(
+		"vspherezoning",
+		"bootstrap",
+		[]providers.Provider{providers.VSphere},
+		stages.WithNormalBootstrapDestroy(),
+		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
+	),
+	stages.NewStage(
+		"vspherezoning",
+		"master",
+		[]providers.Provider{providers.VSphere},
+		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
+	),
+}
+
 func extractOutputHostAddresses(s stages.SplitStage, directory string, config *types.InstallConfig) (bootstrap string, port int, masters []string, err error) {
 	port = 22
 
