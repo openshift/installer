@@ -97,6 +97,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
+		new(rhcos.Release),
 		new(rhcos.BootstrapImage),
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
@@ -119,9 +120,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	workersAsset := &machines.Worker{}
 	manifestsAsset := &manifests.Manifests{}
 	rhcosImage := new(rhcos.Image)
+	rhcosRelease := new(rhcos.Release)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
 	ironicCreds := &baremetalbootstrap.IronicCreds{}
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosBootstrapImage, ironicCreds)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosRelease, rhcosBootstrapImage, ironicCreds)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -359,6 +361,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				MasterConfigs:                   masterConfigs,
 				WorkerConfigs:                   workerConfigs,
 				ImageURL:                        string(*rhcosImage),
+				ImageRelease:                    rhcosRelease.GetAzureReleaseVersion(),
 				PreexistingNetwork:              preexistingnetwork,
 				Publish:                         installConfig.Config.Publish,
 				OutboundType:                    installConfig.Config.Azure.OutboundType,

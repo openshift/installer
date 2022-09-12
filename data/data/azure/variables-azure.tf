@@ -199,3 +199,9 @@ variable "azure_vm_architecture" {
   type        = string
   description = "Architecture of the VMs - used when creating images in the image gallery"
 }
+
+variable "azure_image_release" {
+  type        = string
+  description = "RHCOS release image version - used when creating the image definition in the gallery"
+}
+

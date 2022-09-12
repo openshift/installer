@@ -128,7 +128,7 @@ resource "azurerm_shared_image" "clustergen2" {
 }
 
 resource "azurerm_shared_image_version" "cluster_image_version" {
-  name                = "0.0.1"
+  name                = var.azure_image_release
   gallery_name        = azurerm_shared_image.cluster.gallery_name
   image_name          = azurerm_shared_image.cluster.name
   resource_group_name = azurerm_shared_image.cluster.resource_group_name
@@ -144,7 +144,7 @@ resource "azurerm_shared_image_version" "cluster_image_version" {
 }
 
 resource "azurerm_shared_image_version" "clustergen2_image_version" {
-  name                = "0.0.1"
+  name                = var.azure_image_release
   gallery_name        = azurerm_shared_image.clustergen2.gallery_name
   image_name          = azurerm_shared_image.clustergen2.name
   resource_group_name = azurerm_shared_image.clustergen2.resource_group_name

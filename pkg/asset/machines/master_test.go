@@ -159,6 +159,7 @@ spec:
 					},
 				},
 				(*rhcos.Image)(pointer.StringPtr("test-image")),
+				(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 				&machine.Master{
 					File: &asset.File{
 						Filename: "master-ignition",
@@ -218,6 +219,7 @@ func TestControlPlaneIsNotModified(t *testing.T) {
 		},
 		&installConfig,
 		(*rhcos.Image)(pointer.StringPtr("test-image")),
+		(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 		&machine.Master{
 			File: &asset.File{
 				Filename: "master-ignition",
@@ -287,6 +289,7 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 		},
 		&installConfig,
 		(*rhcos.Image)(pointer.StringPtr("test-image")),
+		(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 		&machine.Master{
 			File: &asset.File{
 				Filename: "master-ignition",
