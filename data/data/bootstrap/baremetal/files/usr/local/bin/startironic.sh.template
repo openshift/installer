@@ -212,7 +212,7 @@ podman run -d --net host --privileged --name image-customization \
     --env HTTP_PROXY="$HTTP_PROXY" \
     --env HTTPS_PROXY="$HTTPS_PROXY" \
     --env NO_PROXY="$NO_PROXY" \
-    --entrypoint '["/image-customization-server", "--nmstate-dir=/tmp/nmstate/", "--images-publish-addr=http://0.0.0.0:8084"]' \
+    --entrypoint '["/image-customization-server", "--nmstate-dir=/tmp/nmstate/"]' \
     -v /tmp/nmstate/:/tmp/nmstate/ \
     -v $IRONIC_SHARED_VOLUME:/shared:z \
     -v /etc/containers:/tmp/containers:z \
