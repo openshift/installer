@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	nutanixclient "github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix"
-	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix/v3"
+	nutanixclient "github.com/nutanix-cloud-native/prism-go-client"
+	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
