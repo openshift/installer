@@ -999,7 +999,7 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
 
 		if c.GCP != nil && len(c.GCP.NetworkProjectID) > 0 {
-			allErrs = append(allErrs, field.Forbidden(field.NewPath("gcp", "networkProjectID"), errMsg))
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "networkProjectID"), errMsg))
 		}
 	}
 
