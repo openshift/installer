@@ -27,6 +27,7 @@
       os_cp_server_name: "{{ infraID }}-master"
       os_cp_server_group_name: "{{ infraID }}-master"
       os_compute_server_name: "{{ infraID }}-worker"
+      os_compute_server_group_name: "{{ infraID }}-worker"
       # Trunk names
       os_cp_trunk_name: "{{ infraID }}-master-trunk"
       os_compute_trunk_name: "{{ infraID }}-worker-trunk"
