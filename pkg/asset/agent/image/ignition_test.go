@@ -283,6 +283,11 @@ func TestAddHostConfig_Roles(t *testing.T) {
 }
 
 func TestIgnition_Generate(t *testing.T) {
+	// Generate calls addStaticNetworkConfig which calls nmstatectl
+	_, execErr := exec.LookPath("nmstatectl")
+	if execErr != nil {
+		t.Skip("No nmstatectl binary available")
+	}
 
 	// This patch currently allows testing the Ignition asset using the embedded resources.
 	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
