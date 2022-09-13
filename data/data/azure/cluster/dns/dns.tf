@@ -15,6 +15,8 @@ resource "azureprivatedns_zone_virtual_network_link" "network" {
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azureprivatedns_zone.private.name
   virtual_network_id    = var.virtual_network_id
+
+  depends_on = [azureprivatedns_zone.private]
 }
 
 resource "azureprivatedns_a_record" "apiint_internal" {
