@@ -139,3 +139,8 @@ variable "gcp_control_plane_tags" {
 
 }
 
+variable "gcp_create_firewall_rules" {
+  type = bool
+  default = true
+  description = "Create the cluster's network firewall rules."
+}

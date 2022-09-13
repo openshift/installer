@@ -5,6 +5,7 @@ import (
 
 	"sort"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -92,6 +93,14 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 			allErrs = append(allErrs, field.Required(fldPath.Child("controlPlaneSubnet"), "must provide a control plane subnet when a network is specified"))
 		}
 	}
+
+	if p.CreateFirewallRules != "" {
+		validCreateFirewallRules := sets.NewString(string(gcp.CreateFirewallRulesEnabled), string(gcp.CreateFirewallRulesDisabled))
+		if !validCreateFirewallRules.Has(string(p.CreateFirewallRules)) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("createFirewallRules"), p.CreateFirewallRules, validCreateFirewallRules.List()))
+		}
+	}
+
 	if (p.ComputeSubnet != "" || p.ControlPlaneSubnet != "") && p.Network == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "must provide a VPC network when supplying subnets"))
 	}

@@ -50,10 +50,11 @@ resource "google_compute_address" "bootstrap" {
 }
 
 resource "google_compute_firewall" "bootstrap_ingress_ssh" {
-  count       = var.gcp_network_project_id != "" ? 0 : 1
+  count       = var.gcp_create_firewall_rules ? 1 : 0
   name        = "${var.cluster_id}-bootstrap-in-ssh"
   network     = var.network
   description = local.description
+  project     = var.gcp_network_project_id
 
   allow {
     protocol = "tcp"

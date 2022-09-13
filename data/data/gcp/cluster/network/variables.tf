@@ -19,6 +19,11 @@ variable "cluster_network" {
   type = string
 }
 
+variable "create_firewall_rules" {
+  type    = bool
+  default = true
+}
+
 variable "master_subnet" {
   type = string
 }

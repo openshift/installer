@@ -2169,6 +2169,13 @@ spec:
                       control plane will be deployed. The value should be the name
                       of the subnet.
                     type: string
+                  createFirewallRules:
+                    description: CreateFirewallRules specifies if the installer should
+                      create the cluster firewall rules in the gcp cloud network.
+                    enum:
+                    - Enabled
+                    - Disabled
+                    type: string
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on GCP for machine pools which do not define
@@ -2264,9 +2271,9 @@ spec:
                       should be created rather than provisioning a new one.
                     type: string
                   networkProjectID:
-                    description: NetworkProjectID is currently unsupported. NetworkProjectID
-                      specifies which project the network and subnets exist in when
-                      they are not in the main ProjectID.
+                    description: NetworkProjectID is currently Technology Preview.
+                      NetworkProjectID specifies which project the network and subnets
+                      exist in when they are not in the main ProjectID.
                     type: string
                   projectID:
                     description: ProjectID is the the project that will be used for
