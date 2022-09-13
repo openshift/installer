@@ -3,39 +3,45 @@ locals {
 }
 
 resource "google_service_account" "master-node-sa" {
+  count        = var.service_account == "" ? 1 : 0
   account_id   = "${var.cluster_id}-m"
   display_name = "${var.cluster_id}-master-node"
   description  = local.description
 }
 
 resource "google_project_iam_member" "master-compute-admin" {
+  count   = var.service_account == "" ? 1 : 0
   project = var.project_id
   role    = "roles/compute.instanceAdmin"
-  member  = "serviceAccount:${google_service_account.master-node-sa.email}"
+  member  = "serviceAccount:${google_service_account.master-node-sa[0].email}"
 }
 
 resource "google_project_iam_member" "master-network-admin" {
+  count   = var.service_account == "" ? 1 : 0
   project = var.project_id
   role    = "roles/compute.networkAdmin"
-  member  = "serviceAccount:${google_service_account.master-node-sa.email}"
+  member  = "serviceAccount:${google_service_account.master-node-sa[0].email}"
 }
 
 resource "google_project_iam_member" "master-compute-security" {
+  count   = var.service_account == "" ? 1 : 0
   project = var.project_id
   role    = "roles/compute.securityAdmin"
-  member  = "serviceAccount:${google_service_account.master-node-sa.email}"
+  member  = "serviceAccount:${google_service_account.master-node-sa[0].email}"
 }
 
 resource "google_project_iam_member" "master-storage-admin" {
+  count   = var.service_account == "" ? 1 : 0
   project = var.project_id
   role    = "roles/storage.admin"
-  member  = "serviceAccount:${google_service_account.master-node-sa.email}"
+  member  = "serviceAccount:${google_service_account.master-node-sa[0].email}"
 }
 
 resource "google_project_iam_member" "master-service-account-user" {
+  count   = var.service_account == "" ? 1 : 0
   project = var.project_id
   role    = "roles/iam.serviceAccountUser"
-  member  = "serviceAccount:${google_service_account.master-node-sa.email}"
+  member  = "serviceAccount:${google_service_account.master-node-sa[0].email}"
 }
 
 resource "google_compute_instance" "master" {
@@ -71,7 +77,7 @@ resource "google_compute_instance" "master" {
   labels = var.labels
 
   service_account {
-    email  = google_service_account.master-node-sa.email
+    email  = var.service_account != "" ? var.service_account : google_service_account.master-node-sa[0].email
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 

@@ -2,9 +2,12 @@
 package gcp
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
-
 	machineapi "github.com/openshift/api/machine/v1beta1"
+	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +29,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	mpool := pool.Platform.GCP
 	azs := mpool.Zones
 
+	credentialsMode := config.CredentialsMode
+
 	total := int64(1)
 	if pool.Replicas != nil {
 		total = *pool.Replicas
@@ -34,7 +39,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		azIndex := int(idx) % len(azs)
-		provider, err := provider(clusterID, platform, mpool, osImage, azIndex, role, userDataSecret)
+		provider, err := provider(clusterID, platform, mpool, osImage, azIndex, role, userDataSecret, credentialsMode)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -66,7 +71,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, role, userDataSecret string) (*machineapi.GCPMachineProviderSpec, error) {
+func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, role, userDataSecret string, credentialsMode types.CredentialsMode) (*machineapi.GCPMachineProviderSpec, error) {
 	az := mpool.Zones[azIdx]
 	if len(platform.Licenses) > 0 {
 		osImage = fmt.Sprintf("%s-rhcos-image", clusterID)
@@ -87,6 +92,25 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 				Location:  mpool.OSDisk.EncryptionKey.KMSKey.Location,
 			},
 			KMSKeyServiceAccount: mpool.OSDisk.EncryptionKey.KMSKeyServiceAccount,
+		}
+	}
+
+	instanceServiceAccount := fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID)
+	if credentialsMode == types.PassthroughCredentialsMode {
+		sess, err := gcpconfig.GetSession(context.TODO())
+		if err != nil {
+			return nil, err
+		}
+
+		var found bool
+		serviceAccount := make(map[string]interface{})
+		err = json.Unmarshal([]byte(sess.Credentials.JSON), &serviceAccount)
+		if err != nil {
+			return nil, err
+		}
+		instanceServiceAccount, found = serviceAccount["client_email"].(string)
+		if !found {
+			return nil, errors.New("could not find google service account")
 		}
 	}
 
@@ -111,7 +135,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Subnetwork: subnetwork,
 		}},
 		ServiceAccounts: []machineapi.GCPServiceAccount{{
-			Email:  fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID),
+			Email:  instanceServiceAccount,
 			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
 		}},
 		Tags:        append(mpool.Tags, []string{fmt.Sprintf("%s-%s", clusterID, role)}...),
