@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
@@ -74,6 +75,10 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	installConfig := &installconfig.InstallConfig{}
 	terraformVariables := &TerraformVariables{}
 	parents.Get(clusterID, installConfig, terraformVariables)
+
+	if fs := installConfig.Config.FeatureSet; strings.HasSuffix(string(fs), "NoUpgrade") {
+		logrus.Warnf("FeatureSet %q is enabled. This FeatureSet does not allow upgrades and may affect the supportability of the cluster.", fs)
+	}
 
 	if installConfig.Config.Platform.None != nil {
 		return errors.New("cluster cannot be created with platform set to 'none'")
