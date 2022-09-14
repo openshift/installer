@@ -12,7 +12,7 @@ resource "azurerm_private_dns_zone" "private" {
 
 # Sleep injected due to https://github.com/hashicorp/terraform-provider-azurerm/issues/18350
 resource "time_sleep" "wait_30_seconds" {
-  depends_on = [azurerm_private_dns_zone.private]
+  depends_on      = [azurerm_private_dns_zone.private]
   create_duration = "30s"
 }
 
