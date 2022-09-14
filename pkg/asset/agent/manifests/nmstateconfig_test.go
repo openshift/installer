@@ -14,7 +14,6 @@ import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/mock"
 )
 
@@ -23,15 +22,44 @@ func TestNMStateConfig_Generate(t *testing.T) {
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
-		expectedError  string
 		expectedConfig []*aiv1beta1.NMStateConfig
 	}{
 		{
-			name: "missing-config",
+			name: "valid dhcp agent config no hosts",
 			dependencies: []asset.Asset{
-				&agentconfig.AgentConfig{},
+				getValidDHCPAgentConfigNoHosts(),
 			},
-			expectedError: "missing configuration or manifest file",
+			expectedConfig: []*aiv1beta1.NMStateConfig(nil),
+		},
+		{
+			name: "valid dhcp agent config with some hosts without networkconfig",
+			dependencies: []asset.Asset{
+				getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig(),
+			},
+			expectedConfig: []*aiv1beta1.NMStateConfig{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "NMStateConfig",
+						APIVersion: "agent-install.openshift.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fmt.Sprint(getNMStateConfigName(getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig()), "-0"),
+						Namespace: getNMStateConfigNamespace(getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig()),
+						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig()),
+					},
+					Spec: aiv1beta1.NMStateConfigSpec{
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2t0",
+								MacAddress: "98:af:65:a5:8d:02",
+							},
+						},
+						NetConfig: aiv1beta1.NetConfig{
+							Raw: unmarshalJSON([]byte("interfaces:")),
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "valid config",
@@ -121,8 +149,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 			asset := &NMStateConfig{}
 			err := asset.Generate(parents)
 
-			if tc.expectedError != "" {
-				assert.Equal(t, tc.expectedError, err.Error())
+			if len(tc.expectedConfig) == 0 {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedConfig, asset.Config)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedConfig, asset.Config)
@@ -142,9 +171,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					assert.Equal(t, tc.expectedConfig[i], yamlList[i])
 
 				}
-
 				assert.Equal(t, len(tc.expectedConfig), len(asset.StaticNetworkConfig))
 			}
+
 		})
 	}
 

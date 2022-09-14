@@ -73,61 +73,70 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 	staticNetworkConfig := []*models.HostStaticNetworkConfig{}
 	nmStateConfigs := []*aiv1beta1.NMStateConfig{}
 	var data string
+	var isNetworkConfigAvailable bool
 
 	if agentConfig.Config != nil {
+		if len(agentConfig.Config.Hosts) == 0 {
+			return nil
+		}
 		for i, host := range agentConfig.Config.Hosts {
-			nmStateConfig := aiv1beta1.NMStateConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "NMStateConfig",
-					APIVersion: "agent-install.openshift.io/v1beta1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf(getNMStateConfigName(agentConfig)+"-%d", i),
-					Namespace: getNMStateConfigNamespace(agentConfig),
-					Labels:    getNMStateConfigLabelsFromAgentConfig(agentConfig),
-				},
-				Spec: aiv1beta1.NMStateConfigSpec{
-					NetConfig: aiv1beta1.NetConfig{
-						Raw: []byte(host.NetworkConfig.Raw),
+			if host.NetworkConfig.Raw != nil {
+				isNetworkConfigAvailable = true
+
+				nmStateConfig := aiv1beta1.NMStateConfig{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "NMStateConfig",
+						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
-				},
-			}
-			for _, hostInterface := range host.Interfaces {
-				intrfc := aiv1beta1.Interface{
-					Name:       hostInterface.Name,
-					MacAddress: hostInterface.MacAddress,
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fmt.Sprintf(getNMStateConfigName(agentConfig)+"-%d", i),
+						Namespace: getNMStateConfigNamespace(agentConfig),
+						Labels:    getNMStateConfigLabelsFromAgentConfig(agentConfig),
+					},
+					Spec: aiv1beta1.NMStateConfigSpec{
+						NetConfig: aiv1beta1.NetConfig{
+							Raw: []byte(host.NetworkConfig.Raw),
+						},
+					},
 				}
-				nmStateConfig.Spec.Interfaces = append(nmStateConfig.Spec.Interfaces, &intrfc)
+				for _, hostInterface := range host.Interfaces {
+					intrfc := aiv1beta1.Interface{
+						Name:       hostInterface.Name,
+						MacAddress: hostInterface.MacAddress,
+					}
+					nmStateConfig.Spec.Interfaces = append(nmStateConfig.Spec.Interfaces, &intrfc)
 
+				}
+				nmStateConfigs = append(nmStateConfigs, &nmStateConfig)
+
+				staticNetworkConfig = append(staticNetworkConfig, &models.HostStaticNetworkConfig{
+					MacInterfaceMap: buildMacInterfaceMap(nmStateConfig),
+					NetworkYaml:     string(nmStateConfig.Spec.NetConfig.Raw),
+				})
+
+				// Marshal the nmStateConfig one at a time
+				// and add a yaml seperator with new line
+				// so as not to marshal the nmStateConfigs
+				// as a yaml list in the generated nmstateconfig.yaml
+				nmStateConfigData, err := k8syaml.Marshal(nmStateConfig)
+
+				if err != nil {
+					return errors.Wrap(err, "failed to marshal agent installer NMStateConfig")
+				}
+				data = fmt.Sprint(data, fmt.Sprint(string(nmStateConfigData), "---\n"))
 			}
-			nmStateConfigs = append(nmStateConfigs, &nmStateConfig)
-
-			staticNetworkConfig = append(staticNetworkConfig, &models.HostStaticNetworkConfig{
-				MacInterfaceMap: buildMacInterfaceMap(nmStateConfig),
-				NetworkYaml:     string(nmStateConfig.Spec.NetConfig.Raw),
-			})
-
-			// Marshal the nmStateConfig one at a time
-			// and add a yaml seperator with new line
-			// so as not to marshal the nmStateConfigs
-			// as a yaml list in the generated nmstateconfig.yaml
-			nmStateConfigData, err := k8syaml.Marshal(nmStateConfig)
-
-			if err != nil {
-				return errors.Wrap(err, "failed to marshal agent installer NMStateConfig")
-			}
-			data = fmt.Sprint(data, fmt.Sprint(string(nmStateConfigData), "---\n"))
 		}
 
-		n.Config = nmStateConfigs
-		n.StaticNetworkConfig = staticNetworkConfig
+		if isNetworkConfigAvailable {
+			n.Config = nmStateConfigs
+			n.StaticNetworkConfig = staticNetworkConfig
 
-		n.File = &asset.File{
-			Filename: nmStateConfigFilename,
-			Data:     []byte(data),
+			n.File = &asset.File{
+				Filename: nmStateConfigFilename,
+				Data:     []byte(data),
+			}
 		}
 	}
-
 	return n.finish()
 }
 
@@ -186,10 +195,6 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 }
 
 func (n *NMStateConfig) finish() error {
-
-	if n.Config == nil {
-		return errors.New("missing configuration or manifest file")
-	}
 
 	if err := n.validateNMStateConfig().ToAggregate(); err != nil {
 		return errors.Wrapf(err, "invalid NMStateConfig configuration")
