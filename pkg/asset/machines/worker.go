@@ -374,6 +374,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.InstanceType = azuredefaults.ComputeInstanceType(
 				installConfig.Config.Platform.Azure.CloudName,
 				installConfig.Config.Platform.Azure.Region,
+				pool.Architecture,
 			)
 			mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Azure)
