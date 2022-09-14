@@ -55,95 +55,60 @@ platform:
     defaultDatastore: datastore
     network: portgroup
     vcenters:
-    - server: your.first-vcenter.example.com
-      user: username
+    - server: your.vcenter.example.com
+      username: username
       password: password
-      datacenters:
-      - dc1
-      - dc2
-      - dc3
-      - dc4
-    deploymentZones:
+      datacenters: 
+      - datacenter
+    failureDomains:
     - name: deployzone-us-east-1a
-      server: your.first-vcenter.example.com
-      failureDomain: us-east-1a
-      placementConstraint:
+      server: your.vcenter.example.com
+      region: us-east
+      zone: us-east-1a
+      topology:
         resourcePool: /dc1/host/c1/Resources/rp1
         folder: /dc1/vm/folder1
-    - name: deployzone-us-east-2a
-      server: your.first-vcenter.example.com
-      failureDomain: us-east-2a
-      placementConstraint:
-        resourcePool: /dc2/host/c2/Resources/rp2
-        folder: /dc2/vm/folder2
-    - name: deployzone-us-east-3a
-      server: your.first-vcenter.example.com
-      failureDomain: us-east-3a
-      placementConstraint:
-        resourcePool: /dc3/host/c3/Resources/rp3
-        folder: /dc3/vm/folder3
-    failureDomains:
-    - name: us-east-1a
-      region:
-        name: us-east
-        type: Datacenter
-        tagCategory: openshift-region
-      zone:
-        name: us-east-1a
-        type: ComputeCluster
-        tagCategory: openshift-zone
-      topology:
         datacenter: dc1
         computeCluster: /dc1/host/c1
         networks:
         - network1
         datastore: datastore1
-    - name: us-east-2a
-      region:
-        name: us-east
-        type: Datacenter
-        tagCategory: openshift-region
-      zone:
-        name: us-east-2a
-        type: ComputeCluster
-        tagCategory: openshift-zone
+    - name: deployzone-us-east-2a
+      server: your.vcenter.example.com
+      region: us-east
+      zone: us-east-2a
       topology:
+        resourcePool: /dc2/host/c2/Resources/rp2
+        folder: /dc2/vm/folder2
         datacenter: dc2
         computeCluster: /dc2/host/c2
         networks:
-        - network2
+        - network1
         datastore: datastore2
-    - name: us-east-3a
-      region:
-        name: us-east
-        type: Datacenter
-        tagCategory: openshift-region
-      zone:
-        name: us-east-3a
-        type: ComputeCluster
-        tagCategory: openshift-zone
+    - name: deployzone-us-east-3a
+      server: your.vcenter.example.com
+      region: us-east
+      zone: us-east-3a
       topology:
+        resourcePool: /dc3/host/c3/Resources/rp3
+        folder: /dc3/vm/folder3
         datacenter: dc3
         computeCluster: /dc3/host/c3
         networks:
-        - network3
+        - network1
         datastore: datastore3
-    - name: us-east-4a
-      region:
-        name: us-east
-        type: Datacenter
-        tagCategory: openshift-region
-      zone:
-        name: us-east-4a
-        type: ComputeCluster
-        tagCategory: openshift-zone
+    - name: deployzone-us-east-4a
+      server: your.vcenter.example.com 
+      region: us-east
+      zone: us-east-4a
       topology:
+        resourcePool: /dc4/host/c4/Resources/rp4
+        folder: /dc4/vm/folder4
         datacenter: dc4
         computeCluster: /dc4/host/c4
         networks:
-        - network4
+        - network1
         datastore: datastore4
-
 pullSecret:
 sshKey:`
 
@@ -265,10 +230,7 @@ func TestConfigMasters(t *testing.T) {
 		return
 	}
 	defaultClusterResourcePool, err := parseInstallConfig()
-	defaultClusterResourcePool.VSphere.DeploymentZones[0].PlacementConstraint.ResourcePool = ""
-
-	controlPlaneRestrictedZone, err := parseInstallConfig()
-	controlPlaneRestrictedZone.VSphere.DeploymentZones[0].ControlPlane = "NotAllowed"
+	defaultClusterResourcePool.VSphere.FailureDomains[0].Topology.ResourcePool = ""
 
 	testCases := []struct {
 		testCase                   string
@@ -302,57 +264,27 @@ func TestConfigMasters(t *testing.T) {
 			installConfig:              installConfig,
 			workspaces: []machineapi.Workspace{
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
 					Datastore:    "datastore1",
 					ResourcePool: "/dc1/host/c1/Resources/rp1",
 				},
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
 					Datastore:    "datastore2",
 					ResourcePool: "/dc2/host/c2/Resources/rp2",
 				},
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc3",
 					Folder:       "/dc3/vm/folder3",
 					Datastore:    "datastore3",
 					ResourcePool: "/dc3/host/c3/Resources/rp3",
 				},
 			},
-		},
-		{
-			testCase:                   "including control plane restricted zone results in error",
-			machinePool:                &machinePoolValidZones,
-			maxAllowedWorkspaceMatches: 1,
-			installConfig:              controlPlaneRestrictedZone,
-			workspaces: []machineapi.Workspace{
-				{
-					Server:       "your.first-vcenter.example.com",
-					Datacenter:   "dc1",
-					Folder:       "/dc1/vm/folder1",
-					Datastore:    "datastore1",
-					ResourcePool: "/dc1/host/c1/Resources/rp1",
-				},
-				{
-					Server:       "your.first-vcenter.example.com",
-					Datacenter:   "dc2",
-					Folder:       "/dc2/vm/folder2",
-					Datastore:    "datastore2",
-					ResourcePool: "/dc2/host/c2/Resources/rp2",
-				},
-				{
-					Server:       "your.first-vcenter.example.com",
-					Datacenter:   "dc3",
-					Folder:       "/dc3/vm/folder3",
-					Datastore:    "datastore3",
-					ResourcePool: "/dc3/host/c3/Resources/rp3",
-				},
-			},
-			expectedError: "zone deployzone-us-east-1a is not allowed to host control plane nodes",
 		},
 		{
 			testCase:      "undefined zone in machinepool results in error",
@@ -368,14 +300,14 @@ func TestConfigMasters(t *testing.T) {
 			installConfig:              installConfig,
 			workspaces: []machineapi.Workspace{
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
 					Datastore:    "datastore1",
 					ResourcePool: "/dc1/host/c1/Resources/rp1",
 				},
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
 					Datastore:    "datastore2",
@@ -391,21 +323,21 @@ func TestConfigMasters(t *testing.T) {
 			installConfig:              defaultClusterResourcePool,
 			workspaces: []machineapi.Workspace{
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
 					Datastore:    "datastore1",
 					ResourcePool: "/dc1/host/c1/Resources",
 				},
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
 					Datastore:    "datastore2",
 					ResourcePool: "/dc2/host/c2/Resources/rp2",
 				},
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc3",
 					Folder:       "/dc3/vm/folder3",
 					Datastore:    "datastore3",

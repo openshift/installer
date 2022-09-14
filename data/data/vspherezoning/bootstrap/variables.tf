@@ -1,6 +1,6 @@
 variable "resource_pool" {
-  type    = map(any)
-  default = {}
+  type    = list(any)
+  default = []
 }
 
 variable "bootstrap_moid" {
@@ -19,18 +19,18 @@ variable "control_plane_moids" {
 }
 
 variable "datastore" {
-  type    = map(any)
-  default = {}
+  type    = list(any)
+  default = []
 }
 
 variable "datacenter" {
-  type    = map(any)
-  default = {}
+  type    = list(any)
+  default = []
 }
 
 variable "template" {
-  type    = map(any)
-  default = {}
+  type    = list(any)
+  default = []
 }
 
 variable "tags" {

@@ -792,7 +792,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 
 	case vsphere.Name:
-		networkZoneMap := make(map[string]string)
+		networkFailureDomainMap := make(map[string]string)
 		var networkID string
 		controlPlanes, err := mastersAsset.Machines()
 		if err != nil {
@@ -814,28 +814,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		defer cleanup()
 		finder := vsphereconfig.NewFinder(vim25Client)
 
-		/* Each deployment zone requires a template to be imported.
-		 * The control plane machinepool might not have that zone assigned.
-		 * The zone could be unused or just defined for compute machines
-		 */
-		for _, deploymentZone := range installConfig.Config.VSphere.DeploymentZones {
-			var failureDomain vsphere.FailureDomain
-
-			for _, fd := range installConfig.Config.VSphere.FailureDomains {
-				if fd.Name == deploymentZone.FailureDomain {
-					failureDomain = fd
-				}
-			}
+		for _, fd := range installConfig.Config.VSphere.FailureDomains {
 
 			// Must use the Managed Object ID for a port group (e.g. dvportgroup-5258)
 			// instead of the name since port group names aren't always unique in vSphere.
 			// https://bugzilla.redhat.com/show_bug.cgi?id=1918005
-			networkZoneMap[deploymentZone.Name], err = vsphereconfig.GetNetworkMoID(context.TODO(),
+			networkFailureDomainMap[fd.Name], err = vsphereconfig.GetNetworkMoID(context.TODO(),
 				vim25Client,
 				finder,
-				failureDomain.Topology.Datacenter,
-				failureDomain.Topology.ComputeCluster,
-				failureDomain.Topology.Networks[0])
+				fd.Topology.Datacenter,
+				fd.Topology.ComputeCluster,
+				fd.Topology.Networks[0])
 
 			if err != nil {
 				return errors.Wrap(err, "failed to get vSphere network ID")
@@ -866,10 +855,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				DiskType:            installConfig.Config.Platform.VSphere.DiskType,
 				NetworkID:           networkID,
 
-				NetworkZone:          networkZoneMap,
-				InfraID:              clusterID.InfraID,
-				InstallConfig:        installConfig,
-				ControlPlaneMachines: controlPlanes,
+				NetworksInFailureDomain: networkFailureDomainMap,
+				InfraID:                 clusterID.InfraID,
+				InstallConfig:           installConfig,
+				ControlPlaneMachines:    controlPlanes,
 			},
 		)
 		if err != nil {

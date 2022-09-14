@@ -68,13 +68,13 @@ func getMachineSetWithPlatform(
 	return mset, nil
 }
 
-func getVCenterFromServerName(server string, platformSpec *vsphere.Platform) *vsphere.VCenter {
+func getVCenterFromServerName(server string, platformSpec *vsphere.Platform) (*vsphere.VCenter, error) {
 	for _, vCenter := range platformSpec.VCenters {
 		if vCenter.Server == server {
-			return &vCenter
+			return &vCenter, nil
 		}
 	}
-	return nil
+	return nil, errors.Errorf("unable to find vCenter %s", server)
 }
 
 func getFailureDomain(domainName string, platformSpec *vsphere.Platform) (*vsphere.FailureDomain, error) {
@@ -86,25 +86,25 @@ func getFailureDomain(domainName string, platformSpec *vsphere.Platform) (*vsphe
 	return nil, errors.Errorf("%s is not a defined failure domain", domainName)
 }
 
-func getDeploymentZone(deploymentZoneName string, platformSpec *vsphere.Platform) (*vsphere.DeploymentZone, error) {
-	for _, deploymentZone := range platformSpec.DeploymentZones {
-		if deploymentZone.Name == deploymentZoneName {
-			return &deploymentZone, nil
+func getfailureDomain(failureDomainName string, platformSpec *vsphere.Platform) (*vsphere.FailureDomain, error) {
+	for _, failureDomain := range platformSpec.FailureDomains {
+		if failureDomain.Name == failureDomainName {
+			return &failureDomain, nil
 		}
 	}
-	return nil, errors.Errorf("%s is not a defined deployment zone", deploymentZoneName)
+	return nil, errors.Errorf("%s is not a defined deployment zone", failureDomainName)
 }
 
 // getDefinedZones retrieves zones and associated platform specs that are appropriate to the machine role
-func getDefinedZones(platformSpec *vsphere.Platform, controlPlane bool) (map[string]*vsphere.Platform, error) {
+func getDefinedZones(platformSpec *vsphere.Platform) (map[string]*vsphere.Platform, error) {
 	zones := make(map[string]*vsphere.Platform)
 
-	for _, deploymentZone := range platformSpec.DeploymentZones {
-		if controlPlane && deploymentZone.ControlPlane == "NotAllowed" {
-			continue
+	for _, failureDomain := range platformSpec.FailureDomains {
+		vCenter, err := getVCenterFromServerName(failureDomain.Server, platformSpec)
+		if err != nil {
+			return nil, err
 		}
-		vCenter := getVCenterFromServerName(deploymentZone.Server, platformSpec)
-		failureDomain, err := getFailureDomain(deploymentZone.FailureDomain, platformSpec)
+		failureDomain, err := getFailureDomain(failureDomain.Name, platformSpec)
 		if err != nil {
 			return nil, err
 		}
@@ -114,15 +114,16 @@ func getDefinedZones(platformSpec *vsphere.Platform, controlPlane bool) (map[str
 			Password:         vCenter.Password,
 			Datacenter:       failureDomain.Topology.Datacenter,
 			DefaultDatastore: failureDomain.Topology.Datastore,
-			Folder:           deploymentZone.PlacementConstraint.Folder,
+			Folder:           failureDomain.Topology.Folder,
 			Cluster:          failureDomain.Topology.ComputeCluster,
-			ResourcePool:     deploymentZone.PlacementConstraint.ResourcePool,
+			ResourcePool:     failureDomain.Topology.ResourcePool,
 			APIVIPs:          platformSpec.APIVIPs,
 			IngressVIPs:      platformSpec.IngressVIPs,
 			Network:          failureDomain.Topology.Networks[0],
 			DiskType:         platformSpec.DiskType,
+			FailureDomains:   platformSpec.FailureDomains,
 		}
-		zones[deploymentZone.Name] = &vcPlatform
+		zones[failureDomain.Name] = &vcPlatform
 	}
 
 	return zones, nil
@@ -146,7 +147,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	numOfAZs := len(azs)
 	var machinesets []*machineapi.MachineSet
 	if numOfAZs > 0 {
-		zones, err := getDefinedZones(platform, false)
+		zones, err := getDefinedZones(platform)
 		if err != nil {
 			return machinesets, err
 		}
@@ -161,17 +162,12 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			}
 			name := fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx)
 
-			deploymentZone, err := getDeploymentZone(desiredZone, platform)
-			if err != nil {
-				return nil, err
-			}
-			failureDomainName := deploymentZone.FailureDomain
-			failureDomain, err := getFailureDomain(failureDomainName, platform)
+			failureDomain, err := getFailureDomain(desiredZone, platform)
 			if err != nil {
 				return nil, err
 			}
 
-			osImageForZone := fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region.Name, failureDomain.Zone.Name)
+			osImageForZone := fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
 			machineset, err := getMachineSetWithPlatform(
 				clusterID,
 				name,
