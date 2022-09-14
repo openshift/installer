@@ -34,10 +34,12 @@ type Session struct {
 
 //Credentials is the data type for credentials as understood by the azure sdk
 type Credentials struct {
-	SubscriptionID string `json:"subscriptionId,omitempty"`
-	ClientID       string `json:"clientId,omitempty"`
-	ClientSecret   string `json:"clientSecret,omitempty"`
-	TenantID       string `json:"tenantId,omitempty"`
+	SubscriptionID            string `json:"subscriptionId,omitempty"`
+	ClientID                  string `json:"clientId,omitempty"`
+	ClientSecret              string `json:"clientSecret,omitempty"`
+	TenantID                  string `json:"tenantId,omitempty"`
+	ClientCertificatePath     string `json:"certificatePath,omitempty"`
+	ClientCertificatePassword string `json:"certificatePassword,omitempty"`
 }
 
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
@@ -68,7 +70,9 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 			return nil, err
 		}
 	}
-
+	if credentials.ClientCertificatePath != "" {
+		return newSessionFromCertificates(cloudEnv, credentials)
+	}
 	return newSessionFromCredentials(cloudEnv, credentials)
 }
 
@@ -128,18 +132,25 @@ func getCredentials(fs auth.FileSettings) (*Credentials, error) {
 		return nil, errors.New("could not retrieve clientId from auth file")
 	}
 	clientSecret := fs.Values[auth.ClientSecret]
-	if clientSecret == "" {
-		return nil, errors.New("could not retrieve clientSecret from auth file")
-	}
 	tenantID := fs.Values[auth.TenantID]
 	if tenantID == "" {
 		return nil, errors.New("could not retrieve tenantId from auth file")
 	}
+	clientCertificatePassword := fs.Values[auth.CertificatePassword]
+	clientCertificatePath := fs.Values[auth.CertificatePath]
+	if clientSecret == "" {
+		if clientCertificatePath == "" {
+			return nil, errors.New("could not retrieve either client secret or client certs from auth file")
+		}
+		logrus.Warnf("Using client certs to authenticate. Please be warned cluster does not support certs and only the installer does.")
+	}
 	return &Credentials{
-		SubscriptionID: subscriptionID,
-		ClientID:       clientID,
-		ClientSecret:   clientSecret,
-		TenantID:       tenantID,
+		SubscriptionID:            subscriptionID,
+		ClientID:                  clientID,
+		ClientSecret:              clientSecret,
+		TenantID:                  tenantID,
+		ClientCertificatePath:     clientCertificatePath,
+		ClientCertificatePassword: clientCertificatePassword,
 	}, nil
 }
 
@@ -222,6 +233,33 @@ func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Crede
 		ClientID:     credentials.ClientID,
 		ClientSecret: credentials.ClientSecret,
 		AADEndpoint:  cloudEnv.ActiveDirectoryEndpoint,
+	}
+	c.Resource = cloudEnv.TokenAudience
+	authorizer, err := c.Authorizer()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get client credentials authorizer")
+	}
+
+	c.Resource = cloudEnv.GraphEndpoint
+	graphAuthorizer, err := c.Authorizer()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get GraphEndpoint authorizer")
+	}
+	return &Session{
+		GraphAuthorizer: graphAuthorizer,
+		Authorizer:      authorizer,
+		Credentials:     *credentials,
+		Environment:     cloudEnv,
+	}, nil
+}
+
+func newSessionFromCertificates(cloudEnv azureenv.Environment, credentials *Credentials) (*Session, error) {
+	c := &auth.ClientCertificateConfig{
+		TenantID:            credentials.TenantID,
+		ClientID:            credentials.ClientID,
+		CertificatePath:     credentials.ClientCertificatePath,
+		CertificatePassword: credentials.ClientCertificatePassword,
+		AADEndpoint:         cloudEnv.ActiveDirectoryEndpoint,
 	}
 	c.Resource = cloudEnv.TokenAudience
 	authorizer, err := c.Authorizer()

@@ -306,10 +306,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 		auth := azuretfvars.Auth{
-			SubscriptionID: session.Credentials.SubscriptionID,
-			ClientID:       session.Credentials.ClientID,
-			ClientSecret:   session.Credentials.ClientSecret,
-			TenantID:       session.Credentials.TenantID,
+			SubscriptionID:            session.Credentials.SubscriptionID,
+			ClientID:                  session.Credentials.ClientID,
+			ClientSecret:              session.Credentials.ClientSecret,
+			TenantID:                  session.Credentials.TenantID,
+			ClientCertificatePath:     session.Credentials.ClientCertificatePath,
+			ClientCertificatePassword: session.Credentials.ClientCertificatePassword,
 		}
 		masters, err := mastersAsset.Machines()
 		if err != nil {

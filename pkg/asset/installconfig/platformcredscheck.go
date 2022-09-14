@@ -88,9 +88,12 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 	case baremetal.Name, libvirt.Name, none.Name, vsphere.Name, nutanix.Name:
 		// no creds to check
 	case azure.Name:
-		_, err = ic.Azure.Session()
+		azureSession, err := ic.Azure.Session()
 		if err != nil {
 			return errors.Wrap(err, "creating Azure session")
+		}
+		if azureSession.Credentials.ClientCertificatePath != "" && ic.Config.CredentialsMode != "manual" {
+			return fmt.Errorf("authentication with client certificates is only supported in manual credentials mode")
 		}
 	case ovirt.Name:
 		con, err := ovirtconfig.NewConnection()
