@@ -72,13 +72,19 @@ module "network" {
 module "dns" {
   source = "./dns"
 
-  cluster_id           = var.cluster_id
-  public_dns_zone_name = var.gcp_public_dns_zone_name
-  network              = module.network.network
-  cluster_domain       = var.cluster_domain
-  api_external_lb_ip   = module.network.cluster_public_ip
-  api_internal_lb_ip   = module.network.cluster_ip
-  public_endpoints     = local.public_endpoints
+  cluster_id                  = var.cluster_id
+  create_private_zone         = var.gcp_create_private_zone
+  create_private_zone_records = var.gcp_create_private_zone_records
+  private_zone_name           = var.gcp_private_zone_name
+  private_zone_project        = var.gcp_private_zone_project
+  create_public_zone_records  = var.gcp_create_public_zone_records
+  public_zone_project         = var.gcp_public_zone_project
+  public_zone_name            = var.gcp_public_zone_name
+  network                     = module.network.network
+  cluster_domain              = var.cluster_domain
+  api_external_lb_ip          = module.network.cluster_public_ip
+  api_internal_lb_ip          = module.network.cluster_ip
+  public_endpoints            = local.public_endpoints
 }
 
 resource "google_compute_image" "cluster" {

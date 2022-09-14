@@ -375,7 +375,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case gcp.Name:
-		var publicZoneName string
 		sess, err := gcpconfig.GetSession(ctx)
 		if err != nil {
 			return err
@@ -417,18 +416,45 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec)
 		}
-		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-			publicZone, err := gcpconfig.GetPublicZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
-			if err != nil {
-				return errors.Wrapf(err, "failed to get GCP public zone")
-			}
-			publicZoneName = publicZone.Name
-		}
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
 
 		createFirewallRules := true
 		if installConfig.Config.GCP.CreateFirewallRules == gcp.CreateFirewallRulesDisabled {
 			createFirewallRules = false
+		}
+
+		// Setup defaults for public dns zone
+		createPublicZoneRecords := true
+		publicZoneName := ""
+		publicZoneProject := installConfig.Config.GCP.ProjectID
+		if installConfig.Config.GCP.PublicDNSZone != nil && installConfig.Config.GCP.PublicDNSZone.ProjectID != "" {
+			publicZoneProject = installConfig.Config.GCP.PublicDNSZone.ProjectID
+		}
+
+		switch {
+		case installConfig.Config.Publish != types.ExternalPublishingStrategy:
+			// Do not create public records when not publishing externally.
+			createPublicZoneRecords = false
+		case installConfig.Config.GCP.PublicDNSZone != nil && installConfig.Config.GCP.PublicDNSZone.ID != "":
+			publicZoneName = installConfig.Config.GCP.PublicDNSZone.ID
+		default:
+			// Search the project for a dns zone with the specified base domain.
+			publicZone, err := gcpconfig.GetPublicZone(ctx, publicZoneProject, installConfig.Config.BaseDomain)
+			if err != nil {
+				return errors.Wrapf(err, "failed to get GCP public zone")
+			}
+			publicZoneName = publicZone.Name
+		}
+
+		// Setup defaults for private DNS Zone
+		createPrivateZone := true
+		createPrivateZoneRecords := true
+		privateZoneName := ""
+		privateZoneProject := ""
+		if installConfig.Config.GCP.PrivateDNSZone != nil && installConfig.Config.GCP.PrivateDNSZone.ID != "" {
+			createPrivateZone = false
+			privateZoneName = installConfig.Config.GCP.PrivateDNSZone.ID
+			privateZoneProject = installConfig.Config.GCP.PrivateDNSZone.ProjectID
 		}
 
 		archName := coreosarch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
@@ -451,16 +477,22 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		imageURL := fmt.Sprintf("https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz", img.Name)
 		data, err := gcptfvars.TFVars(
 			gcptfvars.TFVarsSources{
-				Auth:                   auth,
-				MasterConfigs:          masterConfigs,
-				WorkerConfigs:          workerConfigs,
-				CreateFirewallRules:    createFirewallRules,
-				ImageURI:               imageURL,
-				ImageLicenses:          installConfig.Config.GCP.Licenses,
-				InstanceServiceAccount: instanceServiceAccount,
-				PublicZoneName:         publicZoneName,
-				PublishStrategy:        installConfig.Config.Publish,
-				PreexistingNetwork:     preexistingnetwork,
+				Auth:                     auth,
+				MasterConfigs:            masterConfigs,
+				WorkerConfigs:            workerConfigs,
+				CreateFirewallRules:      createFirewallRules,
+				CreatePrivateZone:        createPrivateZone,
+				CreatePrivateZoneRecords: createPrivateZoneRecords,
+				CreatePublicZoneRecords:  createPublicZoneRecords,
+				ImageURI:                 imageURL,
+				ImageLicenses:            installConfig.Config.GCP.Licenses,
+				InstanceServiceAccount:   instanceServiceAccount,
+				PreexistingNetwork:       preexistingnetwork,
+				PrivateZoneName:          privateZoneName,
+				PrivateZoneProject:       privateZoneProject,
+				PublicZoneName:           publicZoneName,
+				PublicZoneProject:        publicZoneProject,
+				PublishStrategy:          installConfig.Config.Publish,
 			},
 		)
 		if err != nil {

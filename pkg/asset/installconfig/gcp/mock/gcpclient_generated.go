@@ -51,6 +51,21 @@ func (mr *MockAPIMockRecorder) GetCredentials() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentials", reflect.TypeOf((*MockAPI)(nil).GetCredentials))
 }
 
+// GetDNSZoneByName mocks base method.
+func (m *MockAPI) GetDNSZoneByName(ctx context.Context, project, zoneName string) (*dns.ManagedZone, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDNSZoneByName", ctx, project, zoneName)
+	ret0, _ := ret[0].(*dns.ManagedZone)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDNSZoneByName indicates an expected call of GetDNSZoneByName.
+func (mr *MockAPIMockRecorder) GetDNSZoneByName(ctx, project, zoneName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZoneByName", reflect.TypeOf((*MockAPI)(nil).GetDNSZoneByName), ctx, project, zoneName)
+}
+
 // GetEnabledServices mocks base method.
 func (m *MockAPI) GetEnabledServices(ctx context.Context, project string) ([]string, error) {
 	m.ctrl.T.Helper()

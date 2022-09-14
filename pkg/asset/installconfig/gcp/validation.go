@@ -45,6 +45,8 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateNetworkProject(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateRegion(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validateZoneProjects(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validateManagedZones(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 	allErrs = append(allErrs, validateCredentialMode(client, ic)...)
 
@@ -108,6 +110,62 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		if compute.Platform.GCP != nil && compute.Platform.GCP.InstanceType != "" {
 			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "gcp"), ic.GCP.ProjectID, zones[0].Name,
 				compute.Platform.GCP.InstanceType, computeReq)...)
+		}
+	}
+
+	return allErrs
+}
+
+// validateZoneProjects will validate the public and private zone projects when provided
+func validateZoneProjects(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	projects, err := client.GetProjects(context.TODO())
+	if err != nil {
+		return append(allErrs, field.InternalError(fieldPath.Child("project"), err))
+	}
+
+	// If the PublicZoneProject is empty, the value will default to ProjectID, and it won't be checked here
+	if ic.GCP.PublicDNSZone != nil && ic.GCP.PublicDNSZone.ProjectID != "" {
+		if _, found := projects[ic.GCP.PublicDNSZone.ProjectID]; !found {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("PublicDNSZone").Child("ProjectID"), ic.GCP.PublicDNSZone.ProjectID, "invalid public zone project"))
+		}
+	}
+
+	if ic.GCP.PrivateDNSZone != nil && ic.GCP.PrivateDNSZone.ProjectID != "" {
+		if _, found := projects[ic.GCP.PrivateDNSZone.ProjectID]; !found {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("PrivateDNSZone").Child("ProjectID"), ic.GCP.PrivateDNSZone.ProjectID, "invalid private zone project"))
+		}
+	}
+
+	return allErrs
+}
+
+// validateManagedZones will validate the public and private managed zones if they exist.
+func validateManagedZones(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	commonZoneLookup := func(dnsZone, zoneProject, defaultProject string) error {
+		project := zoneProject
+		if project == "" {
+			project = defaultProject
+		}
+
+		if _, err := client.GetDNSZoneByName(context.TODO(), project, dnsZone); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	allErrs := field.ErrorList{}
+
+	if ic.GCP.PublicDNSZone != nil && ic.GCP.PublicDNSZone.ID != "" {
+		if err := commonZoneLookup(ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID, ic.GCP.ProjectID); err != nil {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("PublicDNSZone").Child("ID"), ic.GCP.PublicDNSZone.ID, "invalid public managed zone"))
+		}
+	}
+
+	if ic.GCP.PrivateDNSZone != nil && ic.GCP.PrivateDNSZone.ID != "" {
+		if err := commonZoneLookup(ic.GCP.PrivateDNSZone.ID, ic.GCP.PrivateDNSZone.ProjectID, ic.GCP.ProjectID); err != nil {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("PrivateDNSZone").Child("ID"), ic.GCP.PrivateDNSZone.ID, "invalid private managed zone"))
 		}
 	}
 

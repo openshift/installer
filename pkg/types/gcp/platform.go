@@ -11,6 +11,21 @@ const (
 	CreateFirewallRulesDisabled CreateFirewallRules = "Disabled"
 )
 
+// DNSZone stores the information common and required to create DNS zones including
+// the project and id/name of the zone.
+type DNSZone struct {
+	// ID Technology Preview.
+	// ID or name of the zone.
+	// +optional
+	ID string `json:"id,omitempty"`
+
+	// ProjectID Technology Preview
+	// When the ProjectID is provided, the zone will be created in this project. When the ProjectID is
+	// empty, the DNS zone with this ID will be created and managed in the Service Project (GCP.ProjectID).
+	// +optional
+	ProjectID string `json:"project,omitempty"`
+}
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
@@ -59,4 +74,14 @@ type Platform struct {
 	// such as the current env OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE
 	// +optional
 	Licenses []string `json:"licenses,omitempty"`
+
+	// PrivateDNSZone Technology Preview.
+	// PrivateDNSZone contains the zone ID and project where the Private DNS zone will be created.
+	// +optional
+	PrivateDNSZone *DNSZone `json:"privateDNSZone,omitempty"`
+
+	// PublicDNSZone Technology Preview.
+	// PublicDNSZone contains the zone ID and project where the Public DNS zone will be created.
+	// +optional
+	PublicDNSZone *DNSZone `json:"publicDNSZone,omitempty"`
 }
