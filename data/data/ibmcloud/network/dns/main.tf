@@ -3,7 +3,8 @@
 ############################################
 
 resource "ibm_dns_permitted_network" "vpc" {
-  count = var.is_external ? 0 : 1
+  # Only create the Permitted Network if Internal (Private using DNS) and the VPC is not already a Permitted Network
+  count = ! var.is_external && ! var.vpc_permitted ? 1 : 0
 
   instance_id = var.dns_id
   zone_id     = local.dns_zone_id

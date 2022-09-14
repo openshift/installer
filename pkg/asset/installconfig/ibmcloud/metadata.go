@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -32,8 +33,9 @@ type Metadata struct {
 
 // DNSInstance holds information for a DNS Services instance
 type DNSInstance struct {
-	ID  string
-	CRN string
+	ID   string
+	CRN  string
+	Zone string
 }
 
 // NewMetadata initializes a new Metadata object.
@@ -129,8 +131,9 @@ func (m *Metadata) DNSInstance(ctx context.Context) (*DNSInstance, error) {
 					return nil, fmt.Errorf("dnsInstance has unknown ID/CRN: %q - %q", z.InstanceID, z.InstanceCRN)
 				}
 				m.dnsInstance = &DNSInstance{
-					ID:  z.InstanceID,
-					CRN: z.InstanceCRN,
+					ID:   z.InstanceID,
+					CRN:  z.InstanceCRN,
+					Zone: z.ID,
 				}
 				return m.dnsInstance, nil
 			}
@@ -138,6 +141,43 @@ func (m *Metadata) DNSInstance(ctx context.Context) (*DNSInstance, error) {
 		return nil, fmt.Errorf("dnsInstance unknown due to DNS zone %q not found", m.BaseDomain)
 	}
 	return m.dnsInstance, nil
+}
+
+// IsVPCPermittedNetwork checks if the VPC is a Permitted Network for the DNS Zone
+func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string) (bool, error) {
+	// An empty pre-existing VPC Name signifies a new VPC will be created (not pre-existing), so it won't be permitted
+	if vpcName == "" {
+		return false, nil
+	}
+	// Collect DNSInstance details if not already collected
+	if m.dnsInstance == nil {
+		_, err := m.DNSInstance(ctx)
+		if err != nil {
+			return false, errors.Wrap(err, "cannot collect DNS permitted networks without DNS Instance")
+		}
+	}
+
+	client, err := m.Client()
+	if err != nil {
+		return false, err
+	}
+
+	networks, err := client.GetDNSInstancePermittedNetworks(ctx, m.dnsInstance.ID, m.dnsInstance.Zone)
+	if err != nil {
+		return false, err
+	}
+	if len(networks) < 1 {
+		return false, nil
+	}
+
+	vpc, err := client.GetVPCByName(ctx, vpcName)
+	for _, network := range networks {
+		if network == *vpc.CRN {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // ComputeSubnets gets the Subnet details for compute subnets

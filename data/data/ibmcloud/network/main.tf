@@ -70,6 +70,7 @@ module "dns" {
 
   dns_id         = var.ibmcloud_dns_id
   vpc_crn        = module.vpc.vpc_crn
+  vpc_permitted  = var.ibmcloud_vpc_permitted
   base_domain    = var.base_domain
   cluster_domain = var.cluster_domain
   is_external    = local.public_endpoints
