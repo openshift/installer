@@ -24,6 +24,7 @@ import (
 
 func defaultInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
+		AdditionalTrustBundlePolicy: defaultAdditionalTrustBundlePolicy(),
 		Networking: &types.Networking{
 			MachineNetwork: []types.MachineNetworkEntry{
 				{CIDR: *defaultMachineCIDR},
@@ -83,6 +84,10 @@ func defaultOvirtInstallConfig() *types.InstallConfig {
 		ovirtdefaults.SetComputeDefaults(c.Platform.Ovirt, &c.Compute[i])
 	}
 	return c
+}
+
+func defaultAdditionalTrustBundlePolicy() types.PolicyType {
+	return types.PolicyProxyOnly
 }
 
 func defaultNoneInstallConfig() *types.InstallConfig {

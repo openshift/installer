@@ -119,4 +119,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		nutanixdefaults.SetPlatformDefaults(c.Platform.Nutanix)
 	}
 
+	if c.AdditionalTrustBundlePolicy == "" {
+		c.AdditionalTrustBundlePolicy = types.PolicyProxyOnly
+	}
 }

@@ -70,6 +70,17 @@ const (
 	InternalPublishingStrategy PublishingStrategy = "Internal"
 )
 
+// PolicyType is for usage polices that are applied to additionalTrustBundle.
+// +kubebuilder:validation:Enum="";Proxyonly;Always
+type PolicyType string
+
+const (
+	// PolicyProxyOnly  enables use of AdditionalTrustBundle when http/https proxy is configured.
+	PolicyProxyOnly PolicyType = "Proxyonly"
+	// PolicyAlways ignores all conditions and uses AdditionalTrustBundle.
+	PolicyAlways PolicyType = "Always"
+)
+
 //go:generate go run ../../vendor/sigs.k8s.io/controller-tools/cmd/controller-gen crd:crdVersions=v1 paths=. output:dir=../../data/data/
 
 // InstallConfig is the configuration for an OpenShift install.
@@ -84,6 +95,13 @@ type InstallConfig struct {
 	//
 	// +optional
 	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
+
+	// AdditionalTrustBundlePolicy determines when to add the AdditionalTrustBundle
+	// to the nodes' trusted certificate store. "Proxyonly" is the default.
+	// The field can be set to following specified values.
+	// "Proxyonly" : adds the AdditionalTrustBundle to nodes when http/https proxy is configured.
+	// "Always" : always adds AdditionalTrustBundle.
+	AdditionalTrustBundlePolicy PolicyType `json:"additionalTrustBundlePolicy,omitempty"`
 
 	// SSHKey is the public Secure Shell (SSH) key to provide access to instances.
 	// +optional

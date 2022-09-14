@@ -25,6 +25,17 @@ spec:
             description: AdditionalTrustBundle is a PEM-encoded X.509 certificate
               bundle that will be added to the nodes' trusted certificate store.
             type: string
+          additionalTrustBundlePolicy:
+            description: 'AdditionalTrustBundlePolicy determines when to add the AdditionalTrustBundle
+              to the nodes'' trusted certificate store. "Proxyonly" is the default.
+              The field can be set to following specified values. "Proxyonly" : adds
+              the AdditionalTrustBundle to nodes when http/https proxy is configured.
+              "Always" : always adds AdditionalTrustBundle.'
+            enum:
+            - ""
+            - Proxyonly
+            - Always
+            type: string
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
               of an object. Servers should convert recognized schemas to the latest
