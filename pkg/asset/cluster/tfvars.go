@@ -424,6 +424,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
 
+		createFirewallRules := true
+		if installConfig.Config.GCP.CreateFirewallRules == gcp.CreateFirewallRulesDisabled {
+			createFirewallRules = false
+		}
+
 		archName := coreosarch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
 		st, err := rhcospkg.FetchCoreOSBuild(ctx)
 		if err != nil {
@@ -447,6 +452,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				Auth:                   auth,
 				MasterConfigs:          masterConfigs,
 				WorkerConfigs:          workerConfigs,
+				CreateFirewallRules:    createFirewallRules,
 				ImageURI:               imageURL,
 				ImageLicenses:          installConfig.Config.GCP.Licenses,
 				InstanceServiceAccount: instanceServiceAccount,

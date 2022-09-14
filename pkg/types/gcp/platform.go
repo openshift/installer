@@ -1,5 +1,16 @@
 package gcp
 
+// CreateFirewallRules specifies if the installer should create firewall rules.
+// +kubebuilder:validation:Enum="Enabled";"Disabled"
+type CreateFirewallRules string
+
+const (
+	// CreateFirewallRulesEnabled is Enabled
+	CreateFirewallRulesEnabled CreateFirewallRules = "Enabled"
+	// CreateFirewallRulesDisabled is Disabled
+	CreateFirewallRulesDisabled CreateFirewallRules = "Disabled"
+)
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
@@ -8,6 +19,11 @@ type Platform struct {
 
 	// Region specifies the GCP region where the cluster will be created.
 	Region string `json:"region"`
+
+	// CreateFirewallRules specifies if the installer should create the
+	// cluster firewall rules in the gcp cloud network.
+	// +optional
+	CreateFirewallRules CreateFirewallRules `json:"createFirewallRules,omitempty"`
 
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on GCP for machine pools which do not define their own
@@ -20,7 +36,7 @@ type Platform struct {
 	// +optional
 	Network string `json:"network,omitempty"`
 
-	// NetworkProjectID is currently unsupported.
+	// NetworkProjectID is currently Technology Preview.
 	// NetworkProjectID specifies which project the network and subnets exist in when
 	// they are not in the main ProjectID.
 	// +optional

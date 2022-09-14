@@ -24,6 +24,7 @@ type config struct {
 	Auth                    `json:",inline"`
 	Region                  string   `json:"gcp_region,omitempty"`
 	BootstrapInstanceType   string   `json:"gcp_bootstrap_instance_type,omitempty"`
+	CreateFirewallRules     bool     `json:"gcp_create_firewall_rules"`
 	MasterInstanceType      string   `json:"gcp_master_instance_type,omitempty"`
 	MasterAvailabilityZones []string `json:"gcp_master_availability_zones"`
 	ImageURI                string   `json:"gcp_image_uri,omitempty"`
@@ -46,6 +47,7 @@ type config struct {
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
 	Auth                   Auth
+	CreateFirewallRules    bool
 	ImageURI               string
 	ImageLicenses          []string
 	InstanceServiceAccount string
@@ -69,6 +71,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Auth:                    sources.Auth,
 		Region:                  masterConfig.Region,
 		BootstrapInstanceType:   masterConfig.MachineType,
+		CreateFirewallRules:     sources.CreateFirewallRules,
 		MasterInstanceType:      masterConfig.MachineType,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		VolumeType:              masterConfig.Disks[0].Type,

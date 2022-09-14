@@ -65,6 +65,8 @@ module "network" {
   master_subnet       = var.gcp_control_plane_subnet
   worker_subnet       = var.gcp_compute_subnet
   network_project_id  = var.gcp_network_project_id
+
+  create_firewall_rules = var.gcp_create_firewall_rules
 }
 
 module "dns" {

@@ -152,6 +152,30 @@ func TestValidatePlatform(t *testing.T) {
 			credentialsMode: types.MintCredentialsMode,
 			valid:           false,
 		},
+		{
+			name: "Valid CreateFirewallRules: Enabled",
+			platform: &gcp.Platform{
+				CreateFirewallRules: "Enabled",
+				Region:              "us-east1",
+			},
+			valid: true,
+		},
+		{
+			name: "Valid CreateFirewallRules: Disabled",
+			platform: &gcp.Platform{
+				CreateFirewallRules: "Disabled",
+				Region:              "us-east1",
+			},
+			valid: true,
+		},
+		{
+			name: "Invalid CreateFirewallRules",
+			platform: &gcp.Platform{
+				CreateFirewallRules: "invalid",
+				Region:              "us-east1",
+			},
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
