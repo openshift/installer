@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -51,21 +52,34 @@ func (a *CVOIgnore) Generate(dependencies asset.Parents) error {
 	var files []*asset.File
 	files = append(files, operators.FileList...)
 	files = append(files, openshiftManifests.FileList...)
+
+	seen := make(map[string]string, len(files))
 	for _, file := range files {
 		u := &unstructured.Unstructured{}
 		if err := yaml.Unmarshal(file.Data, u); err != nil {
 			return errors.Wrapf(err, "could not unmarshal %q", file.Filename)
 		}
+		group := u.GetObjectKind().GroupVersionKind().Group
+		kind := u.GetKind()
+		namespace := u.GetNamespace()
+		name := u.GetName()
+
+		key := fmt.Sprintf("%s |! %s |! %s |! %s", group, kind, namespace, name)
+		if previousFile, ok := seen[key]; ok {
+			return fmt.Errorf("multiple manifests for group %s kind %s namespace %s name %s: %s, %s", group, kind, namespace, name, previousFile, file.Filename)
+		}
+		seen[key] = file.Filename
+
 		if file.Filename == cvoOverridesFilename {
 			clusterVersion = u
 			continue
 		}
 		ignoredResources = append(ignoredResources,
 			configv1.ComponentOverride{
-				Kind:      u.GetKind(),
-				Group:     u.GetObjectKind().GroupVersionKind().Group,
-				Namespace: u.GetNamespace(),
-				Name:      u.GetName(),
+				Kind:      kind,
+				Group:     group,
+				Namespace: namespace,
+				Name:      name,
 				Unmanaged: true,
 			})
 	}
