@@ -66,9 +66,10 @@ import (
 
 // Master generates the machines for the `master` machine pool.
 type Master struct {
-	UserDataFile       *asset.File
-	MachineConfigFiles []*asset.File
-	MachineFiles       []*asset.File
+	UserDataFile           *asset.File
+	MachineConfigFiles     []*asset.File
+	MachineFiles           []*asset.File
+	ControlPlaneMachineSet *asset.File
 
 	// SecretFiles is used by the baremetal platform to register the
 	// credential information for communicating with management
@@ -107,6 +108,9 @@ const (
 	// masterUserDataFileName is the filename used for the master
 	// user-data secret.
 	masterUserDataFileName = "99_openshift-cluster-api_master-user-data-secret.yaml"
+
+	// masterUserDataFileName is the filename used for the control plane machine sets.
+	controlPlaneMachineSetFileName = "99_openshift-machine-api_master-control-plane-machine-set.yaml"
 )
 
 var (
@@ -154,6 +158,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	pool := *ic.ControlPlane
 	var err error
 	machines := []machinev1beta1.Machine{}
+	var controlPlaneMachineSet *machinev1.ControlPlaneMachineSet
 	switch ic.Platform.Name() {
 	case alibabacloudtypes.Name:
 		client, err := installConfig.AlibabaCloud.Client()
@@ -242,7 +247,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 
 		pool.Platform.AWS = &mpool
-		machines, err = aws.Machines(
+		machines, controlPlaneMachineSet, err = aws.Machines(
 			clusterID.InfraID,
 			installConfig.Config.Platform.AWS.Region,
 			subnets,
@@ -254,7 +259,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		aws.ConfigMasters(machines, clusterID.InfraID, ic.Publish)
+		aws.ConfigMasters(machines, controlPlaneMachineSet, clusterID.InfraID, ic.Publish)
 	case gcptypes.Name:
 		mpool := defaultGCPMachinePoolPlatform()
 		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
@@ -503,6 +508,16 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	}
 
 	m.MachineFiles = make([]*asset.File, len(machines))
+	if controlPlaneMachineSet != nil && *pool.Replicas > 1 {
+		data, err := yaml.Marshal(controlPlaneMachineSet)
+		if err != nil {
+			return errors.Wrapf(err, "marshal control plane machine set")
+		}
+		m.ControlPlaneMachineSet = &asset.File{
+			Filename: filepath.Join(directory, controlPlaneMachineSetFileName),
+			Data:     data,
+		}
+	}
 	padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", len(machines))))
 	for i, machine := range machines {
 		data, err := yaml.Marshal(machine)
@@ -535,6 +550,9 @@ func (m *Master) Files() []*asset.File {
 	// reconcile a machine it can pick up the related host.
 	files = append(files, m.HostFiles...)
 	files = append(files, m.MachineFiles...)
+	if m.ControlPlaneMachineSet != nil {
+		files = append(files, m.ControlPlaneMachineSet)
+	}
 	return files
 }
 
