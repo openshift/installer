@@ -41,6 +41,34 @@
     - os_networking_type == "Kuryr"
     - "os_compute_trunk_name|string not in compute_trunks.stdout"
 
+  - name: 'List the Server groups'
+    command:
+      # os-compute-api-version 2.15 or higher is required for the 'soft-anti-affinity' policy
+      cmd: "openstack --os-compute-api-version=2.15 server group list -f json -c ID -c Name"
+    register: server_group_list
+
+  - name: 'Parse the Server group ID from existing'
+    set_fact:
+      server_group_id: "{{ (server_group_list.stdout | from_json | json_query(list_query) | first).ID }}"
+    vars:
+      list_query: "[?Name=='{{ os_compute_server_group_name }}']"
+    when:
+    - "os_compute_server_group_name|string in server_group_list.stdout"
+
+  - name: 'Create the Compute server group'
+    command:
+      # os-compute-api-version 2.15 or higher is required for the 'soft-anti-affinity' policy
+      cmd: "openstack --os-compute-api-version=2.15 server group create -f json -c id --policy=soft-anti-affinity {{ os_compute_server_group_name }}"
+    register: server_group_created
+    when:
+    - server_group_id is not defined
+
+  - name: 'Parse the Server group ID from creation'
+    set_fact:
+      server_group_id: "{{ (server_group_created.stdout | from_json).id }}"
+    when:
+    - server_group_id is not defined
+
   - name: 'Create the Compute servers'
     os_server:
       name: "{{ item.1 }}-{{ item.0 }}"
@@ -50,5 +78,7 @@
       userdata: "{{ lookup('file', 'worker.ign') | string }}"
       nics:
       - port-name: "{{ os_port_worker }}-{{ item.0 }}"
+      scheduler_hints:
+        group: "{{ server_group_id }}"
       meta: "{{ cluster_id_tag }}"
     with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
