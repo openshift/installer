@@ -67,7 +67,7 @@ resource "ibm_is_security_group" "bootstrap" {
 resource "ibm_is_security_group_rule" "bootstrap_ssh_inbound" {
   group     = ibm_is_security_group.bootstrap.id
   direction = "inbound"
-  remote    = local.public_endpoints ? "0.0.0.0/0" : var.control_plane_security_group_id_list.0.id
+  remote    = local.public_endpoints ? "0.0.0.0/0" : var.control_plane_security_group_id_list[0]
   tcp {
     port_min = 22
     port_max = 22

@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/openstack
 
-go 1.17
+go 1.18
 
 require github.com/terraform-provider-openstack/terraform-provider-openstack v1.46.0
 

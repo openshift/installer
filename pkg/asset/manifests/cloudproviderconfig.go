@@ -293,9 +293,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			if err != nil {
 				return errors.Wrap(err, "could not create cloud provider config")
 			}
-			cm.Data["vsphere.conf"] = vsphereConfig
-			cm.Name = "vsphere-cloud-config"
-			cm.Namespace = "openshift-config"
+			cm.Data[cloudProviderConfigDataKey] = vsphereConfig
 		} else {
 			folderPath := installConfig.Config.Platform.VSphere.Folder
 			if len(folderPath) == 0 {

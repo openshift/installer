@@ -14,6 +14,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -68,7 +69,10 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 			HTTPSProxy: installConfig.Config.Proxy.HTTPSProxy,
 			NoProxy:    installConfig.Config.Proxy.NoProxy,
 		}
+	}
 
+	if installConfig.Config.AdditionalTrustBundlePolicy == types.PolicyAlways ||
+		installConfig.Config.Proxy != nil {
 		if installConfig.Config.AdditionalTrustBundle != "" {
 			p.Config.Spec.TrustedCA = configv1.ConfigMapNameReference{
 				Name: additionalTrustBundleConfigMapName,

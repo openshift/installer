@@ -10,8 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kdomanski/iso9660"
-	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/pkg/nutanix/v3"
-	"github.com/nutanix-cloud-native/prism-go-client/pkg/utils"
+	"github.com/nutanix-cloud-native/prism-go-client/utils"
+	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"github.com/pkg/errors"
 )
 

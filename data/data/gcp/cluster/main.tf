@@ -23,17 +23,19 @@ provider "google" {
 module "master" {
   source = "./master"
 
-  image          = local.gcp_image
-  instance_count = var.master_count
-  machine_type   = var.gcp_master_instance_type
-  project_id     = var.gcp_project_id
-  cluster_id     = var.cluster_id
-  ignition       = var.ignition_master
-  subnet         = module.network.master_subnet
-  zones          = distinct(var.gcp_master_availability_zones)
+  image           = local.gcp_image
+  instance_count  = var.master_count
+  machine_type    = var.gcp_master_instance_type
+  project_id      = var.gcp_project_id
+  cluster_id      = var.cluster_id
+  service_account = var.gcp_instance_service_account
+  ignition        = var.ignition_master
+  subnet          = module.network.master_subnet
+  zones           = distinct(var.gcp_master_availability_zones)
 
-  root_volume_size         = var.gcp_master_root_volume_size
-  root_volume_type         = var.gcp_master_root_volume_type
+  root_volume_size = var.gcp_master_root_volume_size
+  root_volume_type = var.gcp_master_root_volume_type
+
   root_volume_kms_key_link = var.gcp_root_volume_kms_key_link
 
   tags   = var.gcp_control_plane_tags
@@ -45,6 +47,8 @@ module "iam" {
 
   project_id = var.gcp_project_id
   cluster_id = var.cluster_id
+
+  service_account = var.gcp_instance_service_account
 }
 
 module "network" {
@@ -61,6 +65,8 @@ module "network" {
   master_subnet       = var.gcp_control_plane_subnet
   worker_subnet       = var.gcp_compute_subnet
   network_project_id  = var.gcp_network_project_id
+
+  create_firewall_rules = var.gcp_create_firewall_rules
 }
 
 module "dns" {

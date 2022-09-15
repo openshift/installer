@@ -32,7 +32,7 @@ insecure-flag = "1"
 [VirtualCenter "test-vcenter"]
 port = "443"
 
-datacenters = "test-datacenter"
+datacenters = "test-datacenter,test-datacenter2"
 
 [Workspace]
 folder = "/test-datacenter/vm/clusterID"
@@ -102,40 +102,49 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 				},
 			},
 		},
-		DeploymentZones: []vsphere.DeploymentZone{
+		FailureDomains: []vsphere.FailureDomain{
 			{
-				Name:          "test-dz-east-1a",
-				Server:        "test-vcenter",
-				FailureDomain: "test-east-1a",
-				ControlPlane:  "Allowed",
-				PlacementConstraint: vsphere.PlacementConstraint{
+				Name:   "test-dz-east-1a",
+				Server: "test-vcenter",
+				Topology: vsphere.Topology{
+					Datacenter:     "test-datacenter",
+					ComputeCluster: "/test-datacenter/host/cluster",
+					Networks: []string{
+						"test-network-1",
+					},
+					Datastore:    "test-datastore",
 					ResourcePool: "/test-datacenter/host/cluster/Resources/test-resourcepool",
 					Folder:       "/test-datacenter/vm/test-folder",
 				},
 			},
-		},
-		FailureDomains: []vsphere.FailureDomain{
 			{
-				Name: "test-east-1a",
-				Region: vsphere.FailureDomainCoordinate{
-					Name:        "test-region-east",
-					Type:        "Datacenter",
-					TagCategory: "openshift-region",
-				},
-				Zone: vsphere.FailureDomainCoordinate{
-					Name:        "test-zone-1a",
-					Type:        "ComputeCluster",
-					TagCategory: "openshift-zone",
-				},
+				Name:   "test-dz-east-2a",
+				Server: "test-vcenter",
 				Topology: vsphere.Topology{
-					Datacenter:     "test-datacenter",
-					ComputeCluster: "/test-datacenter/host/cluster",
-					Hosts:          nil,
+					Datacenter:     "test-datacenter2",
+					ComputeCluster: "/test-datacenter2/host/cluster",
 					Networks: []string{
 						"test-network-1",
 					},
-					Datastore: "test-datastore",
-				}},
+					Datastore:    "test-datastore2",
+					ResourcePool: "/test-datacenter2/host/cluster/Resources/test-resourcepool",
+					Folder:       "/test-datacenter2/vm/test-folder",
+				},
+			},
+			{
+				Name:   "test-dz-east-3a",
+				Server: "test-vcenter",
+				Topology: vsphere.Topology{
+					Datacenter:     "test-datacenter2",
+					ComputeCluster: "/test-datacenter2/host/cluster",
+					Networks: []string{
+						"test-network-1",
+					},
+					Datastore:    "test-datastore2",
+					ResourcePool: "/test-datacenter2/host/cluster/Resources/test-resourcepool",
+					Folder:       "/test-datacenter2/vm/test-folder",
+				},
+			},
 		},
 	}
 }

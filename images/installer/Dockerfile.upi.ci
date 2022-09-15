@@ -37,6 +37,7 @@ RUN yum update -y && \
       openssh-clients \
       openssl \
       PyYAML \
+      bind-utils \
       util-linux && \
     yum clean all && \
     rm -rf /var/cache/yum/* && \
@@ -48,6 +49,11 @@ RUN echo "${YQ_HASH} -" > /tmp/sum.txt && \
   curl -L --fail "${YQ_URI}" | tee /bin/yq-go | sha256sum -c /tmp/sum.txt >/dev/null && \
   chmod +x /bin/yq-go && \
   rm /tmp/sum.txt
+
+ARG ALIYUN_URI=https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz
+RUN curl -sSL "${ALIYUN_URI}" --output /tmp/aliyun-cli-linux-latest-amd64.tgz && \
+  tar --directory=/bin/ -xvf /tmp/aliyun-cli-linux-latest-amd64.tgz && \
+  rm -f /tmp/aliyun-cli-linux-latest-amd64.tgz
 
 RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
 RUN python get-pip.py 'pip<21.0'

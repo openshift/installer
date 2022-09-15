@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/random
 
-go 1.17
+go 1.18
 
 require github.com/terraform-providers/terraform-provider-random v1.3.2-0.20220414190755-547bff479f02 // v3.1.3
 

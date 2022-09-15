@@ -1,0 +1,8 @@
+[Service]
+Type=oneshot
+ExecStartPre=checkmodule -M -m -o /root/assisted.mod /root/assisted.te
+ExecStartPre=semodule_package -o /root/assisted.pp -m /root/assisted.mod
+ExecStart=semodule -i /root/assisted.pp
+
+[Install]
+WantedBy=multi-user.target

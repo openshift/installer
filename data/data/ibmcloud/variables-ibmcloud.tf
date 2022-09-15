@@ -17,6 +17,13 @@ variable "ibmcloud_bootstrap_instance_type" {
 variable "ibmcloud_cis_crn" {
   type        = string
   description = "The CRN of CIS instance to use."
+  default     = ""
+}
+
+variable "ibmcloud_dns_id" {
+  type        = string
+  description = "The ID of DNS Service instance to use."
+  default     = ""
 }
 
 variable "ibmcloud_region" {
@@ -51,6 +58,12 @@ variable "ibmcloud_image_filepath" {
 variable "ibmcloud_preexisting_vpc" {
   type        = bool
   description = "Specifies whether an existing VPC should be used or a new one created for installation."
+  default     = false
+}
+
+variable "ibmcloud_vpc_permitted" {
+  type        = bool
+  description = "Specifies whether an existing VPC is already a Permitted Network for DNS Instance, for Private clusters."
   default     = false
 }
 

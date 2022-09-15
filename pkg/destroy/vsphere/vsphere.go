@@ -24,17 +24,19 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	installertypes "github.com/openshift/installer/pkg/types"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 var defaultTimeout = time.Minute * 5
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
-	ClusterID string
-	InfraID   string
-	vCenter   string
-	username  string
-	password  string
+	ClusterID         string
+	InfraID           string
+	vCenter           string
+	username          string
+	password          string
+	terraformPlatform string
 
 	Client     *vim25.Client
 	RestClient *rest.Client
@@ -47,13 +49,15 @@ type ClusterUninstaller struct {
 // New returns an VSphere destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (providers.Destroyer, error) {
 	return &ClusterUninstaller{
-		ClusterID: metadata.ClusterID,
-		InfraID:   metadata.InfraID,
-		vCenter:   metadata.VSphere.VCenter,
-		username:  metadata.VSphere.Username,
-		password:  metadata.VSphere.Password,
-		Logger:    logger,
-		context:   context.Background(),
+		ClusterID:         metadata.ClusterID,
+		InfraID:           metadata.InfraID,
+		vCenter:           metadata.VSphere.VCenter,
+		username:          metadata.VSphere.Username,
+		password:          metadata.VSphere.Password,
+		terraformPlatform: metadata.VSphere.TerraformPlatform,
+
+		Logger:  logger,
+		context: context.Background(),
 	}, nil
 }
 
@@ -127,8 +131,10 @@ func (o *ClusterUninstaller) deleteFolder() error {
 	// The installer should create at most one parent,
 	// the parent to the VirtualMachines.
 	// If there are more or less fail with error message.
-	if len(folderMoList) > 1 {
-		return errors.Errorf("Expected 1 Folder per tag but got %d", len(folderMoList))
+	if o.terraformPlatform != vspheretypes.ZoningTerraformName {
+		if len(folderMoList) > 1 {
+			return errors.Errorf("Expected 1 Folder per tag but got %d", len(folderMoList))
+		}
 	}
 
 	if len(folderMoList) == 0 {

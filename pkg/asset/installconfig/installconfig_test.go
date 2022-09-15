@@ -47,7 +47,8 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-cluster",
 		},
-		BaseDomain: "test-domain",
+		AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+		BaseDomain:                  "test-domain",
 		Networking: &types.Networking{
 			MachineNetwork: []types.MachineNetworkEntry{
 				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
@@ -113,7 +114,8 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-cluster",
 				},
-				BaseDomain: "test-domain",
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
 				Networking: &types.Networking{
 					MachineNetwork: []types.MachineNetworkEntry{
 						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
@@ -183,6 +185,7 @@ metadata:
 apiVersion: v1
 metadata:
   name: test-cluster
+additionalTrustBundlePolicy: Proxyonly
 baseDomain: test-domain
 platform:
   aws:
@@ -198,7 +201,8 @@ wrong_key: wrong_value
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-cluster",
 				},
-				BaseDomain: "test-domain",
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
 				Networking: &types.Networking{
 					MachineNetwork: []types.MachineNetworkEntry{
 						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
@@ -255,7 +259,8 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-cluster",
 				},
-				BaseDomain: "test-domain",
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
 				Networking: &types.Networking{
 					MachineNetwork: []types.MachineNetworkEntry{
 						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
@@ -314,7 +319,8 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-cluster",
 				},
-				BaseDomain: "test-domain",
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
 				Networking: &types.Networking{
 					MachineNetwork: []types.MachineNetworkEntry{
 						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
@@ -374,7 +380,8 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-cluster",
 				},
-				BaseDomain: "test-domain",
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
 				Networking: &types.Networking{
 					MachineNetwork: []types.MachineNetworkEntry{
 						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
@@ -434,7 +441,8 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-cluster",
 				},
-				BaseDomain: "test-domain",
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
 				Networking: &types.Networking{
 					MachineNetwork: []types.MachineNetworkEntry{
 						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},

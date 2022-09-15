@@ -24,11 +24,13 @@ type config struct {
 	Auth                    `json:",inline"`
 	Region                  string   `json:"gcp_region,omitempty"`
 	BootstrapInstanceType   string   `json:"gcp_bootstrap_instance_type,omitempty"`
+	CreateFirewallRules     bool     `json:"gcp_create_firewall_rules"`
 	MasterInstanceType      string   `json:"gcp_master_instance_type,omitempty"`
 	MasterAvailabilityZones []string `json:"gcp_master_availability_zones"`
 	ImageURI                string   `json:"gcp_image_uri,omitempty"`
 	Image                   string   `json:"gcp_image,omitempty"`
 	PreexistingImage        bool     `json:"gcp_preexisting_image"`
+	InstanceServiceAccount  string   `json:"gcp_instance_service_account,omitempty"`
 	ImageLicenses           []string `json:"gcp_image_licenses,omitempty"`
 	VolumeType              string   `json:"gcp_master_root_volume_type"`
 	VolumeSize              int64    `json:"gcp_master_root_volume_size"`
@@ -44,14 +46,16 @@ type config struct {
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
-	Auth               Auth
-	ImageURI           string
-	ImageLicenses      []string
-	MasterConfigs      []*machineapi.GCPMachineProviderSpec
-	WorkerConfigs      []*machineapi.GCPMachineProviderSpec
-	PublicZoneName     string
-	PublishStrategy    types.PublishingStrategy
-	PreexistingNetwork bool
+	Auth                   Auth
+	CreateFirewallRules    bool
+	ImageURI               string
+	ImageLicenses          []string
+	InstanceServiceAccount string
+	MasterConfigs          []*machineapi.GCPMachineProviderSpec
+	WorkerConfigs          []*machineapi.GCPMachineProviderSpec
+	PublicZoneName         string
+	PublishStrategy        types.PublishingStrategy
+	PreexistingNetwork     bool
 }
 
 // TFVars generates gcp-specific Terraform variables launching the cluster.
@@ -67,6 +71,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Auth:                    sources.Auth,
 		Region:                  masterConfig.Region,
 		BootstrapInstanceType:   masterConfig.MachineType,
+		CreateFirewallRules:     sources.CreateFirewallRules,
 		MasterInstanceType:      masterConfig.MachineType,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		VolumeType:              masterConfig.Disks[0].Type,
@@ -74,6 +79,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ImageURI:                sources.ImageURI,
 		Image:                   masterConfig.Disks[0].Image,
 		ImageLicenses:           sources.ImageLicenses,
+		InstanceServiceAccount:  sources.InstanceServiceAccount,
 		PublicZoneName:          sources.PublicZoneName,
 		PublishStrategy:         string(sources.PublishStrategy),
 		ClusterNetwork:          masterConfig.NetworkInterfaces[0].Network,

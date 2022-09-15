@@ -13,10 +13,12 @@ import (
 
 // Auth is the collection of credentials that will be used by terrform.
 type Auth struct {
-	SubscriptionID string `json:"azure_subscription_id,omitempty"`
-	ClientID       string `json:"azure_client_id,omitempty"`
-	ClientSecret   string `json:"azure_client_secret,omitempty"`
-	TenantID       string `json:"azure_tenant_id,omitempty"`
+	SubscriptionID            string `json:"azure_subscription_id,omitempty"`
+	ClientID                  string `json:"azure_client_id,omitempty"`
+	ClientSecret              string `json:"azure_client_secret,omitempty"`
+	TenantID                  string `json:"azure_tenant_id,omitempty"`
+	ClientCertificatePath     string `json:"azure_certificate_path,omitempty"`
+	ClientCertificatePassword string `json:"azure_certificate_password,omitempty"`
 }
 
 type config struct {

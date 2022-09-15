@@ -41,10 +41,10 @@ func (a *SingleNodeBootstrapInPlace) Generate(dependencies asset.Parents) error 
 	if err := a.generateConfig(dependencies, templateData); err != nil {
 		return err
 	}
-	if err := a.addStorageFiles("/", "bootstrap/bootstrap-in-place/files", templateData); err != nil {
+	if err := AddStorageFiles(a.Config, "/", "bootstrap/bootstrap-in-place/files", templateData); err != nil {
 		return err
 	}
-	if err := a.addSystemdUnits("bootstrap/bootstrap-in-place/systemd/units", templateData, bootstrapInPlaceEnabledServices); err != nil {
+	if err := AddSystemdUnits(a.Config, "bootstrap/bootstrap-in-place/systemd/units", templateData, bootstrapInPlaceEnabledServices); err != nil {
 		return err
 	}
 	if err := a.Common.generateFile(singleNodeBootstrapInPlaceIgnFilename); err != nil {

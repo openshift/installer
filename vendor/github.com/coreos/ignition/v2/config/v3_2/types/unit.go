@@ -21,6 +21,7 @@ import (
 
 	"github.com/coreos/ignition/v2/config/shared/errors"
 	"github.com/coreos/ignition/v2/config/shared/validations"
+	"github.com/coreos/ignition/v2/config/util"
 
 	"github.com/coreos/go-systemd/v22/unit"
 	cpath "github.com/coreos/vcontext/path"
@@ -41,8 +42,7 @@ func (u Unit) Validate(c cpath.ContextPath) (r report.Report) {
 	opts, err := validateUnitContent(u.Contents)
 	r.AddOnError(c, err)
 
-	isEnabled := u.Enabled != nil && *u.Enabled
-	r.AddOnWarn(c, validations.ValidateInstallSection(u.Name, isEnabled, (u.Contents == nil || *u.Contents == ""), opts))
+	r.AddOnWarn(c, validations.ValidateInstallSection(u.Name, util.IsTrue(u.Enabled), util.NilOrEmpty(u.Contents), opts))
 
 	return
 }

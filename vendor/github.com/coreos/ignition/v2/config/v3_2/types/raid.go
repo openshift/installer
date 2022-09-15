@@ -33,6 +33,9 @@ func (r Raid) IgnoreDuplicates() map[string]struct{} {
 
 func (ra Raid) Validate(c path.ContextPath) (r report.Report) {
 	r.AddOnError(c.Append("level"), ra.validateLevel())
+	if len(ra.Devices) == 0 {
+		r.AddOnError(c.Append("devices"), errors.ErrRaidDevicesRequired)
+	}
 	return
 }
 

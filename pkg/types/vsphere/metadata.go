@@ -8,4 +8,6 @@ type Metadata struct {
 	Username string `json:"username"`
 	// Password is the password for the user to use to connect to the vCenter.
 	Password string `json:"password"`
+	// TerraformPlatform is the type...
+	TerraformPlatform string `json:"terraform_platform"`
 }

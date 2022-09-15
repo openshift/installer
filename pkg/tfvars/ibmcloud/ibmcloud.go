@@ -26,6 +26,7 @@ type config struct {
 	Region                  string          `json:"ibmcloud_region,omitempty"`
 	BootstrapInstanceType   string          `json:"ibmcloud_bootstrap_instance_type,omitempty"`
 	CISInstanceCRN          string          `json:"ibmcloud_cis_crn,omitempty"`
+	DNSInstanceID           string          `json:"ibmcloud_dns_id,omitempty"`
 	ExtraTags               []string        `json:"ibmcloud_extra_tags,omitempty"`
 	MasterAvailabilityZones []string        `json:"ibmcloud_master_availability_zones"`
 	WorkerAvailabilityZones []string        `json:"ibmcloud_worker_availability_zones"`
@@ -37,6 +38,7 @@ type config struct {
 	ImageFilePath           string          `json:"ibmcloud_image_filepath,omitempty"`
 	PreexistingVPC          bool            `json:"ibmcloud_preexisting_vpc,omitempty"`
 	VPC                     string          `json:"ibmcloud_vpc,omitempty"`
+	VPCPermitted            bool            `json:"ibmcloud_vpc_permitted,omitempty"`
 	ControlPlaneSubnets     []string        `json:"ibmcloud_control_plane_subnets,omitempty"`
 	ComputeSubnets          []string        `json:"ibmcloud_compute_subnets,omitempty"`
 }
@@ -45,12 +47,14 @@ type config struct {
 type TFVarsSources struct {
 	Auth                 Auth
 	CISInstanceCRN       string
+	DNSInstanceID        string
 	ImageURL             string
 	MasterConfigs        []*ibmcloudprovider.IBMCloudMachineProviderSpec
 	MasterDedicatedHosts []DedicatedHost
 	PreexistingVPC       bool
 	PublishStrategy      types.PublishingStrategy
 	ResourceGroupName    string
+	VPCPermitted         bool
 	WorkerConfigs        []*ibmcloudprovider.IBMCloudMachineProviderSpec
 	WorkerDedicatedHosts []DedicatedHost
 }
@@ -90,6 +94,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Auth:                    sources.Auth,
 		BootstrapInstanceType:   masterConfig.Profile,
 		CISInstanceCRN:          sources.CISInstanceCRN,
+		DNSInstanceID:           sources.DNSInstanceID,
 		ImageFilePath:           cachedImage,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		MasterDedicatedHosts:    sources.MasterDedicatedHosts,
@@ -101,6 +106,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		WorkerDedicatedHosts:    sources.WorkerDedicatedHosts,
 		PreexistingVPC:          sources.PreexistingVPC,
 		VPC:                     vpc,
+		VPCPermitted:            sources.VPCPermitted,
 		ControlPlaneSubnets:     masterSubnets,
 		ComputeSubnets:          workerSubnets,
 

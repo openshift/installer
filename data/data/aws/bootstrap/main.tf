@@ -11,6 +11,18 @@ locals {
   volume_type      = "gp3"
   volume_size      = 30
   volume_iops      = local.volume_type == "io1" ? 100 : 0
+
+  // s3 object supports only 10 tags. The first 8 tags from
+  // the list of aws_extra_tags are used for s3 object
+  // slice function uses new_tag_len as excluding index
+  new_tag_len    = 8
+  sliced_tag_map = length(var.aws_extra_tags) <= local.new_tag_len ? var.aws_extra_tags : { for k in slice(keys(var.aws_extra_tags), 0, local.new_tag_len) : k => var.aws_extra_tags[k] }
+  s3_object_tags = merge(
+    {
+      "kubernetes.io/cluster/${var.cluster_id}" = "owned"
+    },
+    local.sliced_tag_map,
+  )
 }
 
 provider "aws" {
@@ -64,7 +76,7 @@ resource "aws_s3_bucket_object" "ignition" {
     {
       "Name" = "${var.cluster_id}-bootstrap"
     },
-    local.tags,
+    local.s3_object_tags,
   )
 
   lifecycle {

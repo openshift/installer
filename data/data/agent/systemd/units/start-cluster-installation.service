@@ -1,0 +1,17 @@
+[Unit]
+Description=Service that starts cluster installation
+Wants=network-online.target
+Requires=apply-host-config.service
+PartOf=assisted-service-pod.service
+After=network-online.target apply-host-config.service
+ConditionPathExists=/etc/assisted-service/node0
+
+[Service]
+ExecStart=/usr/local/bin/start-cluster-installation.sh
+
+KillMode=none
+Type=oneshot
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

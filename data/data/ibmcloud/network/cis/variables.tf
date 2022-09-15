@@ -14,6 +14,10 @@ variable "cluster_domain" {
   type = string
 }
 
+variable "is_external" {
+  type = bool
+}
+
 variable "lb_kubernetes_api_public_hostname" {
   type = string
 }

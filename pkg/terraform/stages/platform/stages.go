@@ -23,6 +23,7 @@ import (
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
@@ -59,6 +60,11 @@ func StagesForPlatform(platform string) []terraform.Stage {
 		return ovirt.PlatformStages
 	case vspheretypes.Name:
 		return vsphere.PlatformStages
+	case vspheretypes.ZoningTerraformName:
+		return vsphere.ZoningPlatformStages
+	case nonetypes.Name:
+		// terraform is not used when the platform is "none"
+		return []terraform.Stage{}
 	default:
 		panic(fmt.Sprintf("unsupported platform %q", platform))
 	}

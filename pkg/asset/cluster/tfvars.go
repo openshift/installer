@@ -306,10 +306,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 		auth := azuretfvars.Auth{
-			SubscriptionID: session.Credentials.SubscriptionID,
-			ClientID:       session.Credentials.ClientID,
-			ClientSecret:   session.Credentials.ClientSecret,
-			TenantID:       session.Credentials.TenantID,
+			SubscriptionID:            session.Credentials.SubscriptionID,
+			ClientID:                  session.Credentials.ClientID,
+			ClientSecret:              session.Credentials.ClientSecret,
+			TenantID:                  session.Credentials.TenantID,
+			ClientCertificatePath:     session.Credentials.ClientCertificatePath,
+			ClientCertificatePassword: session.Credentials.ClientCertificatePassword,
 		}
 		masters, err := mastersAsset.Machines()
 		if err != nil {
@@ -378,6 +380,21 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+
+		instanceServiceAccount := ""
+		if installConfig.Config.CredentialsMode == types.PassthroughCredentialsMode {
+			var found bool
+			serviceAccount := make(map[string]interface{})
+			err := json.Unmarshal([]byte(sess.Credentials.JSON), &serviceAccount)
+			if err != nil {
+				return err
+			}
+			instanceServiceAccount, found = serviceAccount["client_email"].(string)
+			if !found {
+				return errors.New("could not find google service account")
+			}
+		}
+
 		auth := gcptfvars.Auth{
 			ProjectID:        installConfig.Config.GCP.ProjectID,
 			NetworkProjectID: installConfig.Config.GCP.NetworkProjectID,
@@ -409,6 +426,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
 
+		createFirewallRules := true
+		if installConfig.Config.GCP.CreateFirewallRules == gcp.CreateFirewallRulesDisabled {
+			createFirewallRules = false
+		}
+
 		archName := coreosarch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
 		st, err := rhcospkg.FetchCoreOSBuild(ctx)
 		if err != nil {
@@ -429,14 +451,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		imageURL := fmt.Sprintf("https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz", img.Name)
 		data, err := gcptfvars.TFVars(
 			gcptfvars.TFVarsSources{
-				Auth:               auth,
-				MasterConfigs:      masterConfigs,
-				WorkerConfigs:      workerConfigs,
-				ImageURI:           imageURL,
-				ImageLicenses:      installConfig.Config.GCP.Licenses,
-				PublicZoneName:     publicZoneName,
-				PublishStrategy:    installConfig.Config.Publish,
-				PreexistingNetwork: preexistingnetwork,
+				Auth:                   auth,
+				MasterConfigs:          masterConfigs,
+				WorkerConfigs:          workerConfigs,
+				CreateFirewallRules:    createFirewallRules,
+				ImageURI:               imageURL,
+				ImageLicenses:          installConfig.Config.GCP.Licenses,
+				InstanceServiceAccount: instanceServiceAccount,
+				PublicZoneName:         publicZoneName,
+				PublishStrategy:        installConfig.Config.Publish,
+				PreexistingNetwork:     preexistingnetwork,
 			},
 		)
 		if err != nil {
@@ -526,22 +550,45 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
-		// Get CISInstanceCRN from InstallConfig metadata
-		crn, err := installConfig.IBMCloud.CISInstanceCRN(ctx)
-		if err != nil {
-			return err
+		var cisCRN, dnsID string
+		vpcPermitted := false
+
+		if installConfig.Config.Publish == types.InternalPublishingStrategy {
+			// Get DNSInstanceCRN from InstallConfig metadata
+			dnsInstance, err := installConfig.IBMCloud.DNSInstance(ctx)
+			if err != nil {
+				return err
+			}
+			if dnsInstance != nil {
+				dnsID = dnsInstance.ID
+			}
+			// If the VPC already exists and the cluster is Private, check if the VPC is already a Permitted Network on DNS Instance
+			if preexistingVPC {
+				vpcPermitted, err = installConfig.IBMCloud.IsVPCPermittedNetwork(ctx, installConfig.Config.Platform.IBMCloud.VPCName)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			// Get CISInstanceCRN from InstallConfig metadata
+			cisCRN, err = installConfig.IBMCloud.CISInstanceCRN(ctx)
+			if err != nil {
+				return err
+			}
 		}
 
 		data, err = ibmcloudtfvars.TFVars(
 			ibmcloudtfvars.TFVarsSources{
 				Auth:                 auth,
-				CISInstanceCRN:       crn,
+				CISInstanceCRN:       cisCRN,
+				DNSInstanceID:        dnsID,
 				ImageURL:             string(*rhcosImage),
 				MasterConfigs:        masterConfigs,
 				MasterDedicatedHosts: masterDedicatedHosts,
 				PreexistingVPC:       preexistingVPC,
 				PublishStrategy:      installConfig.Config.Publish,
 				ResourceGroupName:    installConfig.Config.Platform.IBMCloud.ResourceGroupName,
+				VPCPermitted:         vpcPermitted,
 				WorkerConfigs:        workerConfigs,
 				WorkerDedicatedHosts: workerDedicatedHosts,
 			},
@@ -745,41 +792,57 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 
 	case vsphere.Name:
+		networkFailureDomainMap := make(map[string]string)
+		var networkID string
 		controlPlanes, err := mastersAsset.Machines()
 		if err != nil {
 			return err
 		}
+
 		controlPlaneConfigs := make([]*machinev1beta1.VSphereMachineProviderSpec, len(controlPlanes))
 		for i, c := range controlPlanes {
 			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
 		}
 
-		// Set this flag to use an existing folder specified in the install-config. Otherwise, create one.
-		preexistingFolder := installConfig.Config.Platform.VSphere.Folder != ""
-
-		// Must use the Managed Object ID for a port group (e.g. dvportgroup-5258)
-		// instead of the name since port group names aren't always unique in vSphere.
-		// https://bugzilla.redhat.com/show_bug.cgi?id=1918005
-		controlPlaneConfig := controlPlaneConfigs[0]
 		vim25Client, _, cleanup, err := vsphereconfig.CreateVSphereClients(context.TODO(),
-			controlPlaneConfig.Workspace.Server,
+			installConfig.Config.VSphere.VCenter,
 			installConfig.Config.VSphere.Username,
 			installConfig.Config.VSphere.Password)
 		if err != nil {
-			return errors.Wrapf(err, "unable to connect to vCenter %s. Ensure provided information is correct and client certs have been added to system trust.", controlPlaneConfig.Workspace.Server)
+			return errors.Wrapf(err, "unable to connect to vCenter %s. Ensure provided information is correct and client certs have been added to system trust.", installConfig.Config.VSphere.VCenter)
 		}
 		defer cleanup()
-
 		finder := vsphereconfig.NewFinder(vim25Client)
-		networkID, err := vsphereconfig.GetNetworkMoID(context.TODO(),
+
+		for _, fd := range installConfig.Config.VSphere.FailureDomains {
+
+			// Must use the Managed Object ID for a port group (e.g. dvportgroup-5258)
+			// instead of the name since port group names aren't always unique in vSphere.
+			// https://bugzilla.redhat.com/show_bug.cgi?id=1918005
+			networkFailureDomainMap[fd.Name], err = vsphereconfig.GetNetworkMoID(context.TODO(),
+				vim25Client,
+				finder,
+				fd.Topology.Datacenter,
+				fd.Topology.ComputeCluster,
+				fd.Topology.Networks[0])
+
+			if err != nil {
+				return errors.Wrap(err, "failed to get vSphere network ID")
+			}
+		}
+
+		networkID, err = vsphereconfig.GetNetworkMoID(context.TODO(),
 			vim25Client,
 			finder,
-			controlPlaneConfig.Workspace.Datacenter,
+			controlPlaneConfigs[0].Workspace.Datacenter,
 			installConfig.Config.VSphere.Cluster,
-			controlPlaneConfig.Network.Devices[0].NetworkName)
+			controlPlaneConfigs[0].Network.Devices[0].NetworkName)
 		if err != nil {
 			return errors.Wrap(err, "failed to get vSphere network ID")
 		}
+
+		// Set this flag to use an existing folder specified in the install-config. Otherwise, create one.
+		preexistingFolder := installConfig.Config.Platform.VSphere.Folder != ""
 
 		data, err = vspheretfvars.TFVars(
 			vspheretfvars.TFVarsSources{
@@ -791,6 +854,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PreexistingFolder:   preexistingFolder,
 				DiskType:            installConfig.Config.Platform.VSphere.DiskType,
 				NetworkID:           networkID,
+
+				NetworksInFailureDomain: networkFailureDomainMap,
+				InfraID:                 clusterID.InfraID,
+				InstallConfig:           installConfig,
+				ControlPlaneMachines:    controlPlanes,
 			},
 		)
 		if err != nil {
@@ -800,6 +868,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
+
 	case alibabacloud.Name:
 		client, err := installConfig.AlibabaCloud.Client()
 		if err != nil {

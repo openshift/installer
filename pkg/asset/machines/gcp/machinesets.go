@@ -26,6 +26,8 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	mpool := pool.Platform.GCP
 	azs := mpool.Zones
 
+	credentialsMode := config.CredentialsMode
+
 	total := int64(0)
 	if pool.Replicas != nil {
 		total = *pool.Replicas
@@ -38,7 +40,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			replicas++
 		}
 
-		provider, err := provider(clusterID, platform, mpool, osImage, idx, role, userDataSecret)
+		provider, err := provider(clusterID, platform, mpool, osImage, idx, role, userDataSecret, credentialsMode)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}

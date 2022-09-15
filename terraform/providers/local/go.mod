@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/local
 
-go 1.17
+go 1.18
 
 require github.com/terraform-providers/terraform-provider-local v1.4.1-0.20210219154337-0885ebe56201 // v2.1.0
 

@@ -54,8 +54,27 @@ module "cis" {
   cis_id         = var.ibmcloud_cis_crn
   base_domain    = var.base_domain
   cluster_domain = var.cluster_domain
+  is_external    = local.public_endpoints
 
   lb_kubernetes_api_public_hostname  = module.vpc.lb_kubernetes_api_public_hostname
+  lb_kubernetes_api_private_hostname = module.vpc.lb_kubernetes_api_private_hostname
+}
+
+############################################
+# DNS module
+############################################
+
+module "dns" {
+  source     = "./dns"
+  depends_on = [module.vpc]
+
+  dns_id         = var.ibmcloud_dns_id
+  vpc_crn        = module.vpc.vpc_crn
+  vpc_permitted  = var.ibmcloud_vpc_permitted
+  base_domain    = var.base_domain
+  cluster_domain = var.cluster_domain
+  is_external    = local.public_endpoints
+
   lb_kubernetes_api_private_hostname = module.vpc.lb_kubernetes_api_private_hostname
 }
 

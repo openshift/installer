@@ -34,6 +34,10 @@ variable "machine_type" {
   description = "The machine type for the master instances."
 }
 
+variable "service_account" {
+  type        = string
+  description = "The service account used by the instances."
+}
 variable "subnet" {
   type        = string
   description = "The subnetwork the master instances will be added to."

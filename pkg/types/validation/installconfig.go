@@ -81,11 +81,16 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalTrustBundle"), c.AdditionalTrustBundle, err.Error()))
 		}
 	}
+	if c.AdditionalTrustBundlePolicy != "" {
+		if err := validateAdditionalCABundlePolicy(c); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalTrustBundlePolicy"), c.AdditionalTrustBundlePolicy, err.Error()))
+		}
+	}
 	nameErr := validate.ClusterName(c.ObjectMeta.Name)
 	if c.Platform.GCP != nil || c.Platform.Azure != nil {
 		nameErr = validate.ClusterName1035(c.ObjectMeta.Name)
 	}
-	if c.Platform.VSphere != nil || c.Platform.BareMetal != nil || c.Platform.Nutanix != nil {
+	if c.Platform.VSphere != nil || c.Platform.BareMetal != nil || c.Platform.OpenStack != nil || c.Platform.Nutanix != nil {
 		nameErr = validate.OnPremClusterName(c.ObjectMeta.Name)
 	}
 	if nameErr != nil {
@@ -741,6 +746,7 @@ func validateProxy(p *types.Proxy, c *types.InstallConfig, fldPath *field.Path) 
 	if p.HTTPProxy == "" && p.HTTPSProxy == "" {
 		allErrs = append(allErrs, field.Required(fldPath, "must include httpProxy or httpsProxy"))
 	}
+
 	if p.HTTPProxy != "" {
 		allErrs = append(allErrs, validateURI(p.HTTPProxy, fldPath.Child("httpProxy"), []string{"http"})...)
 		if c.Networking != nil {
@@ -960,4 +966,13 @@ func validateCapabilities(c *types.Capabilities, fldPath *field.Path) field.Erro
 		}
 	}
 	return allErrs
+}
+
+func validateAdditionalCABundlePolicy(c *types.InstallConfig) error {
+	switch c.AdditionalTrustBundlePolicy {
+	case types.PolicyProxyOnly, types.PolicyAlways:
+		return nil
+	default:
+		return fmt.Errorf("supported values \"Proxyonly\", \"Always\"")
+	}
 }

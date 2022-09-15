@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/azurestack
 
-go 1.17
+go 1.18
 
 require github.com/terraform-providers/terraform-provider-azurestack v0.10.0
 

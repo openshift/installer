@@ -7,7 +7,6 @@ import (
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	"github.com/stretchr/testify/assert"
 )
 
 var machineComputePoolValidZones = types.MachinePool{
@@ -119,12 +118,12 @@ func TestConfigMachinesets(t *testing.T) {
 	installConfig, err := parseInstallConfig()
 
 	if err != nil {
-		assert.Errorf(t, err, "unable to parse sample install config")
+		t.Errorf("unable to parse sample install config. %s", err.Error())
 		return
 	}
 
 	defaultClusterResourcePool, err := parseInstallConfig()
-	defaultClusterResourcePool.VSphere.DeploymentZones[0].PlacementConstraint.ResourcePool = ""
+	defaultClusterResourcePool.VSphere.FailureDomains[0].Topology.ResourcePool = ""
 
 	testCases := []struct {
 		testCase      string
@@ -162,21 +161,21 @@ func TestConfigMachinesets(t *testing.T) {
 			installConfig: installConfig,
 			workspaces: []machineapi.Workspace{
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
 					Datastore:    "datastore1",
 					ResourcePool: "/dc1/host/c1/Resources/rp1",
 				},
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
 					Datastore:    "datastore2",
 					ResourcePool: "/dc2/host/c2/Resources/rp2",
 				},
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc3",
 					Folder:       "/dc3/vm/folder3",
 					Datastore:    "datastore3",
@@ -199,14 +198,14 @@ func TestConfigMachinesets(t *testing.T) {
 			installConfig: installConfig,
 			workspaces: []machineapi.Workspace{
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
 					Datastore:    "datastore1",
 					ResourcePool: "/dc1/host/c1/Resources/rp1",
 				},
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
 					Datastore:    "datastore2",
@@ -223,14 +222,14 @@ func TestConfigMachinesets(t *testing.T) {
 			installConfig: installConfig,
 			workspaces: []machineapi.Workspace{
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
 					Datastore:    "datastore1",
 					ResourcePool: "/dc1/host/c1/Resources/rp1",
 				},
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
 					Datastore:    "datastore2",
@@ -247,21 +246,21 @@ func TestConfigMachinesets(t *testing.T) {
 			installConfig: defaultClusterResourcePool,
 			workspaces: []machineapi.Workspace{
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
 					Datastore:    "datastore1",
 					ResourcePool: "/dc1/host/c1/Resources",
 				},
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
 					Datastore:    "datastore2",
 					ResourcePool: "/dc2/host/c2/Resources/rp2",
 				},
 				{
-					Server:       "your.first-vcenter.example.com",
+					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc3",
 					Folder:       "/dc3/vm/folder3",
 					Datastore:    "datastore3",
@@ -270,7 +269,6 @@ func TestConfigMachinesets(t *testing.T) {
 			},
 		},
 	}
-
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
 			machineSets, err := MachineSets(clusterID, tc.installConfig, tc.machinePool, osImage, "", "")

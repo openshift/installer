@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/coreos/ignition/v2/config/shared/errors"
+	"github.com/coreos/ignition/v2/config/util"
 
 	vpath "github.com/coreos/vcontext/path"
 	"github.com/coreos/vcontext/report"
@@ -53,7 +54,7 @@ func (s Storage) Validate(c vpath.ContextPath) (r report.Report) {
 				r.AddOnError(c.Append("links", i), errors.ErrLinkUsedSymlink)
 			}
 		}
-		if l1.Hard == nil || !*l1.Hard {
+		if !util.IsTrue(l1.Hard) {
 			continue
 		}
 		target := path.Clean(l1.Target)

@@ -62,6 +62,12 @@ variable "gcp_image" {
   description = "URL to the Image for all nodes."
 }
 
+variable "gcp_instance_service_account" {
+  type = string
+  description = "The service account used by the instances."
+  default = ""
+}
+
 variable "gcp_preexisting_image" {
   type = bool
   default = true
@@ -133,3 +139,8 @@ variable "gcp_control_plane_tags" {
 
 }
 
+variable "gcp_create_firewall_rules" {
+  type = bool
+  default = true
+  description = "Create the cluster's network firewall rules."
+}

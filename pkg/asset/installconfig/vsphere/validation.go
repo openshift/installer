@@ -34,8 +34,8 @@ func Validate(ic *types.InstallConfig) error {
 	return validation.ValidatePlatform(ic.Platform.VSphere, field.NewPath("platform").Child("vsphere")).ToAggregate()
 }
 
-func getVCenterClient(deploymentZone vsphere.DeploymentZone, ic *types.InstallConfig) (*validationContext, ClientLogout, error) {
-	server := deploymentZone.Server
+func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConfig) (*validationContext, ClientLogout, error) {
+	server := failureDomain.Server
 	ctx := context.TODO()
 	for _, vcenter := range ic.VSphere.VCenters {
 		if vcenter.Server == server {
@@ -43,6 +43,10 @@ func getVCenterClient(deploymentZone vsphere.DeploymentZone, ic *types.InstallCo
 				vcenter.Server,
 				vcenter.Username,
 				vcenter.Password)
+
+			if err != nil {
+				return nil, nil, err
+			}
 
 			validationCtx := validationContext{
 				User:        vcenter.Username,
@@ -56,16 +60,6 @@ func getVCenterClient(deploymentZone vsphere.DeploymentZone, ic *types.InstallCo
 	return nil, nil, fmt.Errorf("vcenter %s not defined in vcenters", server)
 }
 
-func getAssociatedFailureDomain(deploymentZone vsphere.DeploymentZone, ic *types.InstallConfig) (*vsphere.FailureDomain, error) {
-	failureDomainName := deploymentZone.FailureDomain
-	for _, failureDomain := range ic.VSphere.FailureDomains {
-		if failureDomainName == failureDomain.Name {
-			return &failureDomain, nil
-		}
-	}
-	return nil, fmt.Errorf("failure domain %s not defined in failureDomains", failureDomainName)
-}
-
 // ValidateMultiZoneForProvisioning performs platform validation specifically
 // for multi-zone installer-provisioned infrastructure. In this case,
 // self-hosted networking is a requirement when the installer creates
@@ -73,41 +67,36 @@ func getAssociatedFailureDomain(deploymentZone vsphere.DeploymentZone, ic *types
 func ValidateMultiZoneForProvisioning(ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 	var clients = make(map[string]*validationContext, 0)
-	for _, deploymentZone := range ic.VSphere.DeploymentZones {
-		failureDomain, err := getAssociatedFailureDomain(deploymentZone, ic)
-		if err != nil {
-			return err
-		}
-		if _, exists := clients[deploymentZone.Server]; !exists {
-			validationCtx, cleanup, err := getVCenterClient(deploymentZone, ic)
+	for _, failureDomain := range ic.VSphere.FailureDomains {
+		if _, exists := clients[failureDomain.Server]; !exists {
+			validationCtx, cleanup, err := getVCenterClient(failureDomain, ic)
 			if err != nil {
 				return err
 			}
 			defer cleanup()
-			clients[deploymentZone.Server] = validationCtx
+			clients[failureDomain.Server] = validationCtx
 		}
 
-		validationCtx := clients[deploymentZone.Server]
-		allErrs = append(allErrs, validateMultiZoneProvisioning(validationCtx, failureDomain, &deploymentZone)...)
+		validationCtx := clients[failureDomain.Server]
+		allErrs = append(allErrs, validateMultiZoneProvisioning(validationCtx, &failureDomain)...)
 	}
 	return allErrs.ToAggregate()
 }
 
-func validateMultiZoneProvisioning(validationCtx *validationContext, failureDomain *vsphere.FailureDomain, deploymentZone *vsphere.DeploymentZone) field.ErrorList {
+func validateMultiZoneProvisioning(validationCtx *validationContext, failureDomain *vsphere.FailureDomain) field.ErrorList {
 	allErrs := field.ErrorList{}
 	resourcePool := fmt.Sprintf("%s/Resources", failureDomain.Topology.ComputeCluster)
-	if len(deploymentZone.PlacementConstraint.ResourcePool) != 0 {
-		resourcePool = deploymentZone.PlacementConstraint.ResourcePool
+	if len(failureDomain.Topology.ResourcePool) != 0 {
+		resourcePool = failureDomain.Topology.ResourcePool
 	}
 
 	vsphereField := field.NewPath("platform").Child("vsphere")
 	topologyField := vsphereField.Child("failureDomains").Child("topology")
-	placementConstraintField := vsphereField.Child("deploymentZones").Child("placementConstraint")
 
-	allErrs = append(allErrs, resourcePoolExists(validationCtx, resourcePool, placementConstraintField.Child("resourcePool"))...)
+	allErrs = append(allErrs, resourcePoolExists(validationCtx, resourcePool, topologyField.Child("resourcePool"))...)
 
-	if len(deploymentZone.PlacementConstraint.Folder) > 0 {
-		allErrs = append(allErrs, folderExists(validationCtx, deploymentZone.PlacementConstraint.Folder, placementConstraintField.Child("folder"))...)
+	if len(failureDomain.Topology.Folder) > 0 {
+		allErrs = append(allErrs, folderExists(validationCtx, failureDomain.Topology.Folder, topologyField.Child("folder"))...)
 	}
 
 	computeCluster := failureDomain.Topology.ComputeCluster
