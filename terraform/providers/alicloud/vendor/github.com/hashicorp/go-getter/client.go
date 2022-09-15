@@ -2,6 +2,7 @@ package getter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,13 +14,16 @@ import (
 	safetemp "github.com/hashicorp/go-safetemp"
 )
 
+// ErrSymlinkCopy means that a copy of a symlink was encountered on a request with DisableSymlinks enabled.
+var ErrSymlinkCopy = errors.New("copying of symlinks has been disabled")
+
 // Client is a client for downloading things.
 //
 // Top-level functions such as Get are shortcuts for interacting with a client.
 // Using a client directly allows more fine-grained control over how downloading
 // is done, as well as customizing the protocols supported.
 type Client struct {
- 	// Ctx for cancellation
+	// Ctx for cancellation
 	Ctx context.Context
 
 	// Src is the source URL to get.
@@ -38,6 +42,10 @@ type Client struct {
 	// Mode is the method of download the client will use. See ClientMode
 	// for documentation.
 	Mode ClientMode
+
+	// Umask is used to mask file permissions when storing local files or decompressing
+	// an archive
+	Umask os.FileMode
 
 	// Detectors is the list of detectors that are tried on the source.
 	// If this is nil, then the default Detectors will be used.
@@ -63,7 +71,33 @@ type Client struct {
 	// By default a no op progress listener is used.
 	ProgressListener ProgressTracker
 
+	// Insecure controls whether a client verifies the server's
+	// certificate chain and host name. If Insecure is true, crypto/tls
+	// accepts any certificate presented by the server and any host name in that
+	// certificate. In this mode, TLS is susceptible to machine-in-the-middle
+	// attacks unless custom verification is used. This should be used only for
+	// testing or in combination with VerifyConnection or VerifyPeerCertificate.
+	// This is identical to tls.Config.InsecureSkipVerify.
+	Insecure bool
+
+	// Disable symlinks
+	DisableSymlinks bool
+
 	Options []ClientOption
+}
+
+// umask returns the effective umask for the Client, defaulting to the process umask
+func (c *Client) umask() os.FileMode {
+	if c == nil {
+		return 0
+	}
+	return c.Umask
+}
+
+// mode returns file mode umasked by the Client umask
+func (c *Client) mode(mode os.FileMode) os.FileMode {
+	m := mode & ^c.umask()
+	return m
 }
 
 // Get downloads the configured source to the destination.
@@ -96,6 +130,17 @@ func (c *Client) Get() error {
 	dst := c.Dst
 	src, subDir := SourceDirSubdir(src)
 	if subDir != "" {
+		// Check if the subdirectory is attempting to traverse updwards, outside of
+		// the cloned repository path.
+		subDir := filepath.Clean(subDir)
+		if containsDotDot(subDir) {
+			return fmt.Errorf("subdirectory component contain path traversal out of the repository")
+		}
+		// Prevent absolute paths, remove a leading path separator from the subdirectory
+		if subDir[0] == os.PathSeparator {
+			subDir = subDir[1:]
+		}
+
 		td, tdcloser, err := safetemp.Dir("", "getter")
 		if err != nil {
 			return err
@@ -203,6 +248,10 @@ func (c *Client) Get() error {
 				filename = v
 			}
 
+			if containsDotDot(filename) {
+				return fmt.Errorf("filename query parameter contain path traversal")
+			}
+
 			dst = filepath.Join(dst, filename)
 		}
 	}
@@ -233,7 +282,7 @@ func (c *Client) Get() error {
 		if decompressor != nil {
 			// We have a decompressor, so decompress the current destination
 			// into the final destination with the proper mode.
-			err := decompressor.Decompress(decompressDst, dst, decompressDir)
+			err := decompressor.Decompress(decompressDst, dst, decompressDir, c.umask())
 			if err != nil {
 				return err
 			}
@@ -271,7 +320,7 @@ func (c *Client) Get() error {
 		// if we're specifying a subdir.
 		err := g.Get(dst, u)
 		if err != nil {
-			err = fmt.Errorf("error downloading '%s': %s", src, err)
+			err = fmt.Errorf("error downloading '%s': %s", RedactURL(u), err)
 			return err
 		}
 	}
@@ -281,7 +330,7 @@ func (c *Client) Get() error {
 		if err := os.RemoveAll(realDst); err != nil {
 			return err
 		}
-		if err := os.MkdirAll(realDst, 0755); err != nil {
+		if err := os.MkdirAll(realDst, c.mode(0755)); err != nil {
 			return err
 		}
 
@@ -291,7 +340,7 @@ func (c *Client) Get() error {
 			return err
 		}
 
-		return copyDir(c.Ctx, realDst, subDir, false)
+		return copyDir(c.Ctx, realDst, subDir, false, c.DisableSymlinks, c.umask())
 	}
 
 	return nil

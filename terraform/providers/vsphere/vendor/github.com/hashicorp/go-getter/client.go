@@ -2,6 +2,7 @@ package getter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -12,6 +13,9 @@ import (
 	urlhelper "github.com/hashicorp/go-getter/helper/url"
 	safetemp "github.com/hashicorp/go-safetemp"
 )
+
+// ErrSymlinkCopy means that a copy of a symlink was encountered on a request with DisableSymlinks enabled.
+var ErrSymlinkCopy = errors.New("copying of symlinks has been disabled")
 
 // Client is a client for downloading things.
 //
@@ -67,6 +71,18 @@ type Client struct {
 	// By default a no op progress listener is used.
 	ProgressListener ProgressTracker
 
+	// Insecure controls whether a client verifies the server's
+	// certificate chain and host name. If Insecure is true, crypto/tls
+	// accepts any certificate presented by the server and any host name in that
+	// certificate. In this mode, TLS is susceptible to machine-in-the-middle
+	// attacks unless custom verification is used. This should be used only for
+	// testing or in combination with VerifyConnection or VerifyPeerCertificate.
+	// This is identical to tls.Config.InsecureSkipVerify.
+	Insecure bool
+
+	// Disable symlinks
+	DisableSymlinks bool
+
 	Options []ClientOption
 }
 
@@ -114,6 +130,17 @@ func (c *Client) Get() error {
 	dst := c.Dst
 	src, subDir := SourceDirSubdir(src)
 	if subDir != "" {
+		// Check if the subdirectory is attempting to traverse updwards, outside of
+		// the cloned repository path.
+		subDir := filepath.Clean(subDir)
+		if containsDotDot(subDir) {
+			return fmt.Errorf("subdirectory component contain path traversal out of the repository")
+		}
+		// Prevent absolute paths, remove a leading path separator from the subdirectory
+		if subDir[0] == os.PathSeparator {
+			subDir = subDir[1:]
+		}
+
 		td, tdcloser, err := safetemp.Dir("", "getter")
 		if err != nil {
 			return err
@@ -221,6 +248,10 @@ func (c *Client) Get() error {
 				filename = v
 			}
 
+			if containsDotDot(filename) {
+				return fmt.Errorf("filename query parameter contain path traversal")
+			}
+
 			dst = filepath.Join(dst, filename)
 		}
 	}
@@ -289,7 +320,7 @@ func (c *Client) Get() error {
 		// if we're specifying a subdir.
 		err := g.Get(dst, u)
 		if err != nil {
-			err = fmt.Errorf("error downloading '%s': %s", src, err)
+			err = fmt.Errorf("error downloading '%s': %s", RedactURL(u), err)
 			return err
 		}
 	}
@@ -309,7 +340,7 @@ func (c *Client) Get() error {
 			return err
 		}
 
-		return copyDir(c.Ctx, realDst, subDir, false, c.umask())
+		return copyDir(c.Ctx, realDst, subDir, false, c.DisableSymlinks, c.umask())
 	}
 
 	return nil
