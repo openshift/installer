@@ -127,6 +127,7 @@ require (
 )
 
 replace (
+	github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
 	github.com/metal3-io/baremetal-operator/apis => github.com/metal3-io/baremetal-operator/apis v0.0.0-20220310151803-2b47127ed7ae
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0-20220310151803-2b47127ed7ae
 )
