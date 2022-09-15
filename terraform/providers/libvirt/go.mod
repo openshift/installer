@@ -38,8 +38,8 @@ require (
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20191121111010-e9629612a215 // indirect
 	github.com/hashicorp/terraform-json v0.4.0 // indirect
-	github.com/hashicorp/terraform-plugin-sdk v1.9.0 // indirect
-	github.com/hashicorp/terraform-plugin-test v1.2.0 // indirect
+	github.com/hashicorp/terraform-plugin-sdk v1.16.0
+	github.com/hashicorp/terraform-plugin-test/v2 v2.1.3
 	github.com/hashicorp/terraform-svchost v0.0.0-20191119180714-d2e4933b9136 // indirect
 	github.com/hashicorp/yamux v0.0.0-20190923154419-df201c70410d // indirect
 	github.com/hooklift/iso9660 v1.0.0 // indirect
@@ -81,3 +81,5 @@ require (
 	google.golang.org/grpc v1.27.1 // indirect
 	honnef.co/go/tools v0.0.1-2019.2.3 // indirect
 )
+
+replace github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2

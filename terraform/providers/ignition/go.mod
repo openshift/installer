@@ -79,3 +79,5 @@ require (
 	google.golang.org/protobuf v1.22.0 // indirect
 	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 )
+
+replace github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2

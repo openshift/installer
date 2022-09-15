@@ -165,3 +165,6 @@ require (
 replace google.golang.org/grpc v1.36.0 => google.golang.org/grpc v1.27.1
 
 replace k8s.io/client-go => k8s.io/client-go v0.0.0-20190620085101-78d2af792bab
+
+replace github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
+
