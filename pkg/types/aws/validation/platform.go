@@ -50,7 +50,6 @@ func validateUserTags(tags map[string]string, propagatingTags bool, fldPath *fie
 		return allErrs
 	}
 	if len(tags) > 8 {
-		allErrs = append(allErrs, field.Invalid(fldPath, len(tags), "number of user tags cannot be more than 8"))
 		logrus.Warnf("Due to a limit of 10 tags on S3 Bucket Objects, only the first eight lexicographically sorted tags will be applied to the bootstrap ignition object, which is a temporary resource only used during installation")
 	}
 
