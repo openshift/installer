@@ -6,7 +6,12 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
+
+	"golang.org/x/oauth2"
+	"google.golang.org/api/option"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
@@ -16,18 +21,28 @@ import (
 // a GCS bucket.
 type GCSGetter struct {
 	getter
+
+	// Timeout sets a deadline which all GCS operations should
+	// complete within. Zero value means no timeout.
+	Timeout time.Duration
 }
 
 func (g *GCSGetter) ClientMode(u *url.URL) (ClientMode, error) {
 	ctx := g.Context()
 
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
+
 	// Parse URL
-	bucket, object, err := g.parseURL(u)
+	bucket, object, _, err := g.parseURL(u)
 	if err != nil {
 		return 0, err
 	}
 
-	client, err := storage.NewClient(ctx)
+	client, err := g.getClient(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -58,8 +73,14 @@ func (g *GCSGetter) ClientMode(u *url.URL) (ClientMode, error) {
 func (g *GCSGetter) Get(dst string, u *url.URL) error {
 	ctx := g.Context()
 
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
+
 	// Parse URL
-	bucket, object, err := g.parseURL(u)
+	bucket, object, _, err := g.parseURL(u)
 	if err != nil {
 		return err
 	}
@@ -77,11 +98,11 @@ func (g *GCSGetter) Get(dst string, u *url.URL) error {
 	}
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), g.client.mode(0755)); err != nil {
 		return err
 	}
 
-	client, err := storage.NewClient(ctx)
+	client, err := g.getClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -105,7 +126,7 @@ func (g *GCSGetter) Get(dst string, u *url.URL) error {
 			}
 			objDst = filepath.Join(dst, objDst)
 			// Download the matching object.
-			err = g.getObject(ctx, client, objDst, bucket, obj.Name)
+			err = g.getObject(ctx, client, objDst, bucket, obj.Name, "")
 			if err != nil {
 				return err
 			}
@@ -117,42 +138,51 @@ func (g *GCSGetter) Get(dst string, u *url.URL) error {
 func (g *GCSGetter) GetFile(dst string, u *url.URL) error {
 	ctx := g.Context()
 
+	if g.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, g.Timeout)
+		defer cancel()
+	}
+
 	// Parse URL
-	bucket, object, err := g.parseURL(u)
+	bucket, object, fragment, err := g.parseURL(u)
 	if err != nil {
 		return err
 	}
 
-	client, err := storage.NewClient(ctx)
+	client, err := g.getClient(ctx)
 	if err != nil {
 		return err
 	}
-	return g.getObject(ctx, client, dst, bucket, object)
+	return g.getObject(ctx, client, dst, bucket, object, fragment)
 }
 
-func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object string) error {
-	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
+func (g *GCSGetter) getObject(ctx context.Context, client *storage.Client, dst, bucket, object, fragment string) error {
+	var rc *storage.Reader
+	var err error
+	if fragment != "" {
+		generation, err := strconv.ParseInt(fragment, 10, 64)
+		if err != nil {
+			return err
+		}
+		rc, err = client.Bucket(bucket).Object(object).Generation(generation).NewReader(ctx)
+	} else {
+		rc, err = client.Bucket(bucket).Object(object).NewReader(ctx)
+	}
 	if err != nil {
 		return err
 	}
 	defer rc.Close()
 
 	// Create all the parent directories
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), g.client.mode(0755)); err != nil {
 		return err
 	}
 
-	f, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = Copy(ctx, f, rc)
-	return err
+	return copyReader(dst, rc, 0666, g.client.umask())
 }
 
-func (g *GCSGetter) parseURL(u *url.URL) (bucket, path string, err error) {
+func (g *GCSGetter) parseURL(u *url.URL) (bucket, path, fragment string, err error) {
 	if strings.Contains(u.Host, "googleapis.com") {
 		hostParts := strings.Split(u.Host, ".")
 		if len(hostParts) != 3 {
@@ -167,6 +197,24 @@ func (g *GCSGetter) parseURL(u *url.URL) (bucket, path string, err error) {
 		}
 		bucket = pathParts[3]
 		path = pathParts[4]
+		fragment = u.Fragment
 	}
 	return
+}
+
+func (g *GCSGetter) getClient(ctx context.Context) (client *storage.Client, err error) {
+	var opts []option.ClientOption
+
+	if v, ok := os.LookupEnv("GOOGLE_OAUTH_ACCESS_TOKEN"); ok {
+		tokenSource := oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: v,
+		})
+		opts = append(opts, option.WithTokenSource(tokenSource))
+	}
+
+	newClient, err := storage.NewClient(ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return newClient, nil
 }
