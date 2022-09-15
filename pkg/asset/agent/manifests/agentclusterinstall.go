@@ -111,12 +111,7 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			},
 		}
 
-		if installConfig.Config.NetworkType != "" {
-			agentClusterInstall.Spec.Networking.NetworkType = installConfig.Config.NetworkType
-		} else {
-			agentClusterInstall.Spec.Networking.NetworkType = a.getDefaultNetworkType(installConfig.Config)
-			logrus.Infof("NetworkType is not specified in install config. Defaulting to %s.", agentClusterInstall.Spec.Networking.NetworkType)
-		}
+		setNetworkType(agentClusterInstall, installConfig.Config, "NetworkType is not specified in InstallConfig.")
 
 		// TODO: Handle the case where both IPv4 and IPv6 VIPs are specified
 		apiVIP, ingressVIP := getVIPs(&installConfig.Config.Platform)
@@ -170,11 +165,7 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 		return false, err
 	}
 
-	if agentClusterInstall.Spec.Networking.NetworkType == "" {
-		defaultInstallConfig := &types.InstallConfig{}
-		agentClusterInstall.Spec.Networking.NetworkType = a.getDefaultNetworkType(defaultInstallConfig)
-		logrus.Infof("NetworkType is not specified in AgentClusterInstall. Defaulting to %s.", agentClusterInstall.Spec.Networking.NetworkType)
-	}
+	setNetworkType(agentClusterInstall, &types.InstallConfig{}, "NetworkType is not specified in AgentClusterInstall.")
 
 	a.Config = agentClusterInstall
 
@@ -197,11 +188,24 @@ func (a *AgentClusterInstall) finish() error {
 	return nil
 }
 
-func (a *AgentClusterInstall) getDefaultNetworkType(installConfig *types.InstallConfig) string {
-	// Returns default network type for a given install config.
-	// The default NetworkType is set to OVNKubernetes if unspecified.
+// Sets the default network type to OVNKubernetes if it is unspecified in the
+// AgentClusterInstall or InstallConfig
+func setNetworkType(aci *hiveext.AgentClusterInstall, installConfig *types.InstallConfig,
+	warningMessage string) {
+
+	if aci.Spec.Networking.NetworkType != "" {
+		return
+	}
+
+	if installConfig != nil && installConfig.Networking != nil &&
+		installConfig.Networking.NetworkType != "" {
+		aci.Spec.Networking.NetworkType = installConfig.NetworkType
+		return
+	}
+
 	defaults.SetInstallConfigDefaults(installConfig)
-	return installConfig.NetworkType
+	logrus.Infof("%s Defaulting NetworkType to %s.", warningMessage, installConfig.NetworkType)
+	aci.Spec.Networking.NetworkType = installConfig.NetworkType
 }
 
 func isIPv4(ipAddress string) bool {

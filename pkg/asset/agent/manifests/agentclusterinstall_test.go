@@ -21,6 +21,41 @@ import (
 
 func TestAgentClusterInstall_Generate(t *testing.T) {
 
+	goodACI := &hiveext.AgentClusterInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      getAgentClusterInstallName(getValidOptionalInstallConfig()),
+			Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+		},
+		Spec: hiveext.AgentClusterInstallSpec{
+			ImageSetRef: &hivev1.ClusterImageSetReference{
+				Name: getClusterImageSetReferenceName(),
+			},
+			ClusterDeploymentRef: corev1.LocalObjectReference{
+				Name: getClusterDeploymentName(getValidOptionalInstallConfig()),
+			},
+			Networking: hiveext.Networking{
+				ClusterNetwork: []hiveext.ClusterNetworkEntry{
+					{
+						CIDR:       "192.168.111.0/24",
+						HostPrefix: 23,
+					},
+				},
+				ServiceNetwork: []string{"172.30.0.0/16"},
+				NetworkType:    "OVNKubernetes",
+			},
+			SSHPublicKey: strings.Trim(TestSSHKey, "|\n\t"),
+			ProvisionRequirements: hiveext.ProvisionRequirements{
+				ControlPlaneAgents: 3,
+				WorkerAgents:       5,
+			},
+			APIVIP:     "192.168.122.10",
+			IngressVIP: "192.168.122.11",
+		},
+	}
+
+	installConfigWithoutNetworkType := getValidOptionalInstallConfig()
+	installConfigWithoutNetworkType.Config.NetworkType = ""
+
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -39,37 +74,14 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			dependencies: []asset.Asset{
 				getValidOptionalInstallConfig(),
 			},
-			expectedConfig: &hiveext.AgentClusterInstall{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      getAgentClusterInstallName(getValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
-				},
-				Spec: hiveext.AgentClusterInstallSpec{
-					ImageSetRef: &hivev1.ClusterImageSetReference{
-						Name: getClusterImageSetReferenceName(),
-					},
-					ClusterDeploymentRef: corev1.LocalObjectReference{
-						Name: getClusterDeploymentName(getValidOptionalInstallConfig()),
-					},
-					Networking: hiveext.Networking{
-						ClusterNetwork: []hiveext.ClusterNetworkEntry{
-							{
-								CIDR:       "192.168.111.0/24",
-								HostPrefix: 23,
-							},
-						},
-						ServiceNetwork: []string{"172.30.0.0/16"},
-						NetworkType:    "OVNKubernetes",
-					},
-					SSHPublicKey: strings.Trim(TestSSHKey, "|\n\t"),
-					ProvisionRequirements: hiveext.ProvisionRequirements{
-						ControlPlaneAgents: 3,
-						WorkerAgents:       5,
-					},
-					APIVIP:     "192.168.122.10",
-					IngressVIP: "192.168.122.11",
-				},
+			expectedConfig: goodACI,
+		},
+		{
+			name: "valid configuration with unspecified network type should result with ACI having default network type",
+			dependencies: []asset.Asset{
+				installConfigWithoutNetworkType,
 			},
+			expectedConfig: goodACI,
 		},
 	}
 	for _, tc := range cases {
@@ -183,7 +195,6 @@ spec:
       hostPrefix: 23
     serviceNetwork:
     - 172.30.0.0/16
-    networkType: "OVNKubernetes"
   provisionRequirements:
     controlPlaneAgents: 3
     workerAgents: 2
