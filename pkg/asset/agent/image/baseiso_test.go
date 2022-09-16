@@ -12,7 +12,7 @@ import (
 
 func TestInfraBaseIso_Generate(t *testing.T) {
 
-	GetIsoPluggable = func() (string, error) {
+	GetIsoPluggable = func(archName string) (string, error) {
 		return "some-openshift-release.iso", nil
 	}
 

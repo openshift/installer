@@ -96,8 +96,9 @@ func (a *OptionalInstallConfig) validateSupportedArchs(installConfig *types.Inst
 
 	switch string(installConfig.ControlPlane.Architecture) {
 	case types.ArchitectureAMD64:
+	case types.ArchitectureARM64:
 	default:
-		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Architecture, []string{types.ArchitectureAMD64}))
+		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Architecture, []string{types.ArchitectureAMD64, types.ArchitectureARM64}))
 	}
 
 	for i, compute := range installConfig.Compute {
@@ -105,8 +106,9 @@ func (a *OptionalInstallConfig) validateSupportedArchs(installConfig *types.Inst
 
 		switch string(compute.Architecture) {
 		case types.ArchitectureAMD64:
+		case types.ArchitectureARM64:
 		default:
-			allErrs = append(allErrs, field.NotSupported(fieldPath, compute.Architecture, []string{types.ArchitectureAMD64}))
+			allErrs = append(allErrs, field.NotSupported(fieldPath, compute.Architecture, []string{types.ArchitectureAMD64, types.ArchitectureARM64}))
 		}
 	}
 

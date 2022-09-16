@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/types"
 )
 
 var (
@@ -70,6 +72,12 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 				},
 			},
 		}
+
+		// Use installConfig.Config.ControlPlane.Architecture to determine cpuarchitecture for infraEnv.Spec.CpuArchiteture.
+		// installConfig.Config.ControlPlance.Architecture uses go/Debian cpuarchitecture values (amd64, arm64) so we must convert to rpmArch because infraEnv.Spec.CpuArchitecture expects x86_64 or aarch64.
+		if installConfig.Config.ControlPlane.Architecture != "" {
+			infraEnv.Spec.CpuArchitecture = arch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
+		}
 		if installConfig.Config.Proxy != nil {
 			infraEnv.Spec.Proxy = getProxy(installConfig)
 		}
@@ -116,7 +124,10 @@ func (i *InfraEnv) Load(f asset.FileFetcher) (bool, error) {
 	if err := yaml.UnmarshalStrict(file.Data, config); err != nil {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", infraEnvFilename)
 	}
-
+	// If defined, convert to RpmArch amd64 -> x86_64 or arm64 -> aarch64
+	if config.Spec.CpuArchitecture != "" {
+		config.Spec.CpuArchitecture = arch.RpmArch(config.Spec.CpuArchitecture)
+	}
 	i.File, i.Config = file, config
 	if err = i.finish(); err != nil {
 		return false, err
@@ -131,5 +142,11 @@ func (i *InfraEnv) finish() error {
 		return errors.New("missing configuration or manifest file")
 	}
 
+	// Throw an error if CpuArchitecture isn't x86_64, aarch64, or ""
+	switch i.Config.Spec.CpuArchitecture {
+	case arch.RpmArch(types.ArchitectureAMD64), arch.RpmArch(types.ArchitectureARM64), "":
+	default:
+		return errors.Errorf("Config.Spec.CpuArchitecture %s is not supported ", i.Config.Spec.CpuArchitecture)
+	}
 	return nil
 }

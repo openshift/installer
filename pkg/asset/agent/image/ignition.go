@@ -12,6 +12,7 @@ import (
 
 	"github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -29,6 +30,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/version"
 )
@@ -126,8 +128,12 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	logrus.Infof("The rendezvous host IP (node0 IP) is %s", nodeZeroIP)
 
 	a.RendezvousIP = nodeZeroIP
+	// Default to x86_64
+	archName := arch.RpmArch(types.ArchitectureAMD64)
+	if infraEnv.Spec.CpuArchitecture != "" {
+		archName = infraEnv.Spec.CpuArchitecture
+	}
 
-	// TODO: don't hard-code target arch
 	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, archName)
 	if err != nil {
 		return err
