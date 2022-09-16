@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -165,6 +167,14 @@ func TestValidatePlatform(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "too many userTags",
+			platform: &aws.Platform{
+				Region:   "us-east-1",
+				UserTags: generateTooManyUserTags(),
+			},
+			expected: fmt.Sprintf(`^\Qtest-path.userTags: Too many: %d: must have at most %d items`, userTagLimit+1, userTagLimit),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -252,4 +262,12 @@ func TestValidateTag(t *testing.T) {
 			}
 		})
 	}
+}
+
+func generateTooManyUserTags() map[string]string {
+	tags := map[string]string{}
+	for i := 0; i <= userTagLimit; i++ {
+		tags[strconv.Itoa(i)] = strconv.Itoa(i)
+	}
+	return tags
 }
