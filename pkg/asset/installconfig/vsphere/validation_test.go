@@ -231,7 +231,7 @@ func TestValidate(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	validPermissionsAuthManagerClient, err := buildAuthManagerClient(ctx, ctrl, finder, "test_username", nil)
+	validPermissionsAuthManagerClient, err := buildAuthManagerClient(ctx, ctrl, finder, "test_username", nil, false)
 	if err != nil {
 		t.Error(err)
 		return
