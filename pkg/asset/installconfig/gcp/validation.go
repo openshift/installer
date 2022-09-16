@@ -2,12 +2,12 @@ package gcp
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -46,6 +46,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateRegion(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
+	allErrs = append(allErrs, validateCredentialMode(client, ic)...)
 
 	return allErrs.ToAggregate()
 }
@@ -242,8 +243,8 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 	return field.ErrorList{field.Invalid(fldPath, subnetName, fmt.Sprintf("subnet CIDR range start %s is outside of the specified machine networks", ip))}
 }
 
-//ValidateEnabledServices gets all the enabled services for a project and validate if any of the required services are not enabled.
-//also warns the user if optional services are not enabled.
+// ValidateEnabledServices gets all the enabled services for a project and validate if any of the required services are not enabled.
+// also warns the user if optional services are not enabled.
 func ValidateEnabledServices(ctx context.Context, client API, project string) error {
 	requiredServices := sets.NewString("compute.googleapis.com",
 		"cloudresourcemanager.googleapis.com",
@@ -305,4 +306,18 @@ func validateRegion(client API, ic *types.InstallConfig, fieldPath *field.Path) 
 		return append(allErrs, field.Invalid(fieldPath.Child("region"), ic.GCP.Region, "invalid region"))
 	}
 	return nil
+}
+
+// validateCredentialMode checks whether the credential mode is
+// compatible with the authentication mode.
+func validateCredentialMode(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+	creds := client.GetCredentials()
+
+	if creds.JSON == nil && ic.CredentialsMode != types.ManualCredentialsMode {
+		errMsg := "environmental authentication is only supported with Manual credentials mode"
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("credentialsMode"), errMsg))
+	}
+
+	return allErrs
 }

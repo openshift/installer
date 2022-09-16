@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	googleoauth "golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
@@ -28,6 +29,7 @@ type API interface {
 	GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error)
 	GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error)
 	GetEnabledServices(ctx context.Context, project string) ([]string, error)
+	GetCredentials() *googleoauth.Credentials
 }
 
 // Client makes calls to the GCP API.
@@ -316,4 +318,9 @@ func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.Serv
 		return nil, errors.Wrap(err, "failed to create service usage service")
 	}
 	return svc, nil
+}
+
+// GetCredentials returns the credentials used to authenticate the GCP session.
+func (c *Client) GetCredentials() *googleoauth.Credentials {
+	return c.ssn.Credentials
 }

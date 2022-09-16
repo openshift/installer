@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	google "golang.org/x/oauth2/google"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
 )
@@ -34,6 +35,20 @@ func NewMockAPI(ctrl *gomock.Controller) *MockAPI {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
+}
+
+// GetCredentials mocks base method.
+func (m *MockAPI) GetCredentials() *google.Credentials {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCredentials")
+	ret0, _ := ret[0].(*google.Credentials)
+	return ret0
+}
+
+// GetCredentials indicates an expected call of GetCredentials.
+func (mr *MockAPIMockRecorder) GetCredentials() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentials", reflect.TypeOf((*MockAPI)(nil).GetCredentials))
 }
 
 // GetEnabledServices mocks base method.
