@@ -10,10 +10,6 @@ type DiskType string
 // +kubebuilder:validation:Enum=HostGroup;Datacenter;ComputeCluster
 type FailureDomainType string
 
-// DeploymentSuitable defines if a type of machine is suitable for a given DeploymentZone
-// +kubebuilder:validation:Enum=Allowed;NotAllowed
-type DeploymentSuitable string
-
 const (
 	// DiskTypeThin uses Thin disk provisioning type for vsphere in the cluster.
 	DiskTypeThin DiskType = "thin"
@@ -23,23 +19,6 @@ const (
 
 	// DiskTypeEagerZeroedThick uses EagerZeroedThick disk provisioning type for vsphere in the cluster.
 	DiskTypeEagerZeroedThick DiskType = "eagerZeroedThick"
-
-	// HostGroupFailureDomain as a type allows the use of a group of ESXi hosts
-	// to be represented as a failure domain zone. When using this
-	// case it is expected that region would be a cluster.
-	// HostGroups within vCenter must be preconfigured and
-	// assigned in the topology.
-	HostGroupFailureDomain FailureDomainType = "HostGroup"
-
-	// ComputeClusterFailureDomain failure domain can either be a zone or region.
-	// The vCenter cluster is required to preconfigured and
-	// assigned in the topology.
-	ComputeClusterFailureDomain FailureDomainType = "ComputeCluster"
-
-	// DatacenterFailureDomain failure domain can be only a region. The vcenter
-	// datacenter is required to be preconfigred and assigned
-	// in the topology. If used the zone would be of type ComputeCluster.
-	DatacenterFailureDomain FailureDomainType = "Datacenter"
 )
 
 // Platform stores any global configuration used for vsphere platforms
