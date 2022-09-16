@@ -76,7 +76,7 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 		return nil, fmt.Errorf("invalid value passed to provider")
 	}
 
-	dhcpNetRegex := "^DHCPSERVER[0-9a-z]{32}_Private$"
+	dhcpNetRegex := fmt.Sprintf("^DHCPSERVER.*%s.*_Private$", clusterID)
 
 	//Setting only the mandatory parameters
 	config := &machinev1.PowerVSMachineProviderConfig{
