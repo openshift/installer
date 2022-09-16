@@ -3,6 +3,7 @@ package powervs
 import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 const (
@@ -28,10 +29,6 @@ func (o *ClusterUninstaller) listDHCPNetworks() (cloudResources, error) {
 
 	result := []cloudResource{}
 	for _, dhcpServer = range dhcpServers {
-		// Not helpful yet
-		// 2022/03/24 15:30:51 Found: DHCPServer: 40687c22-782a-475c-af46-be765aecdf4a
-		// 2022/03/24 15:30:54 Network.Name: DHCPSERVER2dc32880758344f08c8ff6933e87d27a_Private
-
 		if dhcpServer.Network == nil {
 			o.Logger.Debugf("listDHCPNetworks: DHCP has empty Network: %s\n", *dhcpServer.ID)
 			continue
@@ -41,7 +38,7 @@ func (o *ClusterUninstaller) listDHCPNetworks() (cloudResources, error) {
 			continue
 		}
 
-		if _, ok := o.DHCPNetworks[*dhcpServer.Network.Name]; ok {
+		if strings.Contains(*dhcpServer.Network.Name, o.InfraID) {
 			o.Logger.Debugf("listDHCPNetworks: FOUND: %s (%s)\n", *dhcpServer.Network.Name, *dhcpServer.ID)
 			foundOne = true
 			result = append(result, cloudResource{
@@ -117,7 +114,7 @@ func (o *ClusterUninstaller) destroyDHCPNetworks() error {
 			if _, ok := found[item.key]; !ok {
 				// This item has finished deletion.
 				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted DHCPNetworks %q", item.name)
+				o.Logger.Infof("Deleted DHCP network %q", item.name)
 				continue
 			}
 			err := o.destroyDHCPNetwork(item)
