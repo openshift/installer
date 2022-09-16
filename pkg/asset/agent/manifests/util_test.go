@@ -27,6 +27,7 @@ var (
 // GetValidOptionalInstallConfig returns a valid optional install config
 func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
+	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24")
 
 	return &agent.OptionalInstallConfig{
 		InstallConfig: installconfig.InstallConfig{
@@ -54,6 +55,11 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 					},
 				},
 				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{
+							CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
+						},
+					},
 					ClusterNetwork: []types.ClusterNetworkEntry{
 						{
 							CIDR:       ipnet.IPNet{IPNet: *newCidr},
@@ -64,6 +70,73 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 						*ipnet.MustParseCIDR("172.30.0.0/16"),
 					},
 					NetworkType: "OVNKubernetes",
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						APIVIPs:     []string{"192.168.122.10"},
+						IngressVIPs: []string{"192.168.122.11"},
+					},
+				},
+			},
+		},
+		Supplied: true,
+	}
+}
+
+// GetValidOptionalInstallConfigDualStack returns a valid optional install config for dual stack
+func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
+	_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
+	_, newCidrIPv6, _ := net.ParseCIDR("2001:db8:1111:2222::/64")
+	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24")
+	_, machineNetCidrIPv6, _ := net.ParseCIDR("2001:db8:5dd8:c956::/64")
+
+	return &agent.OptionalInstallConfig{
+		InstallConfig: installconfig.InstallConfig{
+			Config: &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ocp-edge-cluster-0",
+					Namespace: "cluster-0",
+				},
+				BaseDomain: "testing.com",
+				PullSecret: TestSecret,
+				SSHKey:     TestSSHKey,
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64Ptr(3),
+					Platform: types.MachinePoolPlatform{},
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker-machine-pool-1",
+						Replicas: pointer.Int64Ptr(2),
+					},
+					{
+						Name:     "worker-machine-pool-2",
+						Replicas: pointer.Int64Ptr(3),
+					},
+				},
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{
+							CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
+						},
+						{
+							CIDR: ipnet.IPNet{IPNet: *machineNetCidrIPv6},
+						},
+					},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       ipnet.IPNet{IPNet: *newCidr},
+							HostPrefix: 23,
+						},
+						{
+							CIDR:       ipnet.IPNet{IPNet: *newCidrIPv6},
+							HostPrefix: 64,
+						},
+					},
+					ServiceNetwork: []ipnet.IPNet{
+						*ipnet.MustParseCIDR("172.30.0.0/16"), *ipnet.MustParseCIDR("fd02::/112"),
+					},
 				},
 				Platform: types.Platform{
 					BareMetal: &baremetal.Platform{
