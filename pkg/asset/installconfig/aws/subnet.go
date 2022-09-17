@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -89,11 +90,14 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 		return vpc, nil, nil, errors.Wrap(err, "describing route tables")
 	}
 
+	publicOnlySubnets := os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY") != ""
+
 	for _, id := range ids {
 		meta, ok := metas[id]
 		if !ok {
 			return vpc, nil, nil, errors.Errorf("failed to find %s", id)
 		}
+
 		isPublic, err := isSubnetPublic(routeTables, id)
 		if err != nil {
 			return vpc, nil, nil, err
@@ -101,6 +105,15 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 		if isPublic {
 			public[id] = meta
 		} else {
+			private[id] = meta
+		}
+
+		// Let public subnets work as if they were private. This allows us to
+		// have clusters with public-only subnets without having to introduce a
+		// lot of changes in the installer. Such clusters can be used in a
+		// NAT-less GW scenario, therefore decreasing costs in cases where node
+		// security is not a concern (e.g, ephemeral clusters in CI)
+		if publicOnlySubnets && isPublic {
 			private[id] = meta
 		}
 	}
