@@ -89,7 +89,6 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&tls.KubeAPIServerLocalhostSignerCertKey{},
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
-		&tls.AdminKubeConfigClientCertKey{},
 		&agentconfig.AgentConfig{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
@@ -274,7 +273,6 @@ func addTLSData(config *igntypes.Config, dependencies asset.Parents) {
 		&tls.KubeAPIServerLocalhostSignerCertKey{},
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
-		&tls.AdminKubeConfigClientCertKey{},
 	}
 	dependencies.Get(certKeys...)
 
