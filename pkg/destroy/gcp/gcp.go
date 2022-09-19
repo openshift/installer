@@ -127,8 +127,12 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		return nil, errors.Wrap(err, "failed to create resourcemanager service")
 	}
 
-	err = wait.PollImmediateInfinite(
-		time.Second*10,
+	err = wait.ExponentialBackoff(
+		wait.Backoff{
+			Duration: time.Second * 10,
+			Factor:   0.05,
+			Cap:      time.Minute * 5,
+		},
 		o.destroyCluster,
 	)
 	if err != nil {
