@@ -41,6 +41,12 @@ func (o *PcloudPvminstancesNetworksDeleteReader) ReadResponse(response runtime.C
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudPvminstancesNetworksDeleteNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 410:
 		result := NewPcloudPvminstancesNetworksDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -141,6 +147,38 @@ func (o *PcloudPvminstancesNetworksDeleteUnauthorized) GetPayload() *models.Erro
 }
 
 func (o *PcloudPvminstancesNetworksDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesNetworksDeleteNotFound creates a PcloudPvminstancesNetworksDeleteNotFound with default headers values
+func NewPcloudPvminstancesNetworksDeleteNotFound() *PcloudPvminstancesNetworksDeleteNotFound {
+	return &PcloudPvminstancesNetworksDeleteNotFound{}
+}
+
+/* PcloudPvminstancesNetworksDeleteNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudPvminstancesNetworksDeleteNotFound struct {
+	Payload *models.Error
+}
+
+func (o *PcloudPvminstancesNetworksDeleteNotFound) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksDeleteNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudPvminstancesNetworksDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesNetworksDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

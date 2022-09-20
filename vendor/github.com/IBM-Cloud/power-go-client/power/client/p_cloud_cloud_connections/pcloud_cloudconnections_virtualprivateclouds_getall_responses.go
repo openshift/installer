@@ -41,8 +41,20 @@ func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallReader) ReadResponse(re
 			return nil, err
 		}
 		return nil, result
+	case 408:
+		result := NewPcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewPcloudCloudconnectionsVirtualprivatecloudsGetallInternalServerError()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 504:
+		result := NewPcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -148,6 +160,38 @@ func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallUnauthorized) readRespo
 	return nil
 }
 
+// NewPcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout creates a PcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout with default headers values
+func NewPcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout() *PcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout {
+	return &PcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout{}
+}
+
+/* PcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout describes a response with status code 408, with default header values.
+
+Request Timeout
+*/
+type PcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections-virtual-private-clouds][%d] pcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout  %+v", 408, o.Payload)
+}
+func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallRequestTimeout) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudCloudconnectionsVirtualprivatecloudsGetallInternalServerError creates a PcloudCloudconnectionsVirtualprivatecloudsGetallInternalServerError with default headers values
 func NewPcloudCloudconnectionsVirtualprivatecloudsGetallInternalServerError() *PcloudCloudconnectionsVirtualprivatecloudsGetallInternalServerError {
 	return &PcloudCloudconnectionsVirtualprivatecloudsGetallInternalServerError{}
@@ -169,6 +213,38 @@ func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallInternalServerError) Ge
 }
 
 func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout creates a PcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout with default headers values
+func NewPcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout() *PcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout {
+	return &PcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout{}
+}
+
+/* PcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout describes a response with status code 504, with default header values.
+
+Gateway Timeout
+*/
+type PcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections-virtual-private-clouds][%d] pcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout  %+v", 504, o.Payload)
+}
+func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsVirtualprivatecloudsGetallGatewayTimeout) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

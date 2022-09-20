@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -18,6 +19,12 @@ import (
 //
 // swagger:model VolumeReference
 type VolumeReference struct {
+
+	// Auxiliary volume name at storage host level
+	AuxVolumeName string `json:"auxVolumeName,omitempty"`
+
+	// true if volume is auxiliary otherwise false
+	Auxiliary *bool `json:"auxiliary,omitempty"`
 
 	// Indicates if the volume is the server's boot volume
 	BootVolume *bool `json:"bootVolume,omitempty"`
@@ -53,6 +60,9 @@ type VolumeReference struct {
 	// Format: date-time
 	LastUpdateDate *strfmt.DateTime `json:"lastUpdateDate"`
 
+	// Master volume name at storage host level
+	MasterVolumeName string `json:"masterVolumeName,omitempty"`
+
 	// mirroring state for replication enabled volume
 	MirroringState string `json:"mirroringState,omitempty"`
 
@@ -60,11 +70,21 @@ type VolumeReference struct {
 	// Required: true
 	Name *string `json:"name"`
 
+	// indicates whether master/aux volume is playing the primary role
+	// Enum: [master aux]
+	PrimaryRole string `json:"primaryRole,omitempty"`
+
 	// List of PCloud PVM Instance attached to the volume
 	PvmInstanceIDs []string `json:"pvmInstanceIDs"`
 
+	// True if volume is replication enabled otherwise false
+	ReplicationEnabled bool `json:"replicationEnabled,omitempty"`
+
 	// shows the replication status of a volume
 	ReplicationStatus string `json:"replicationStatus,omitempty"`
+
+	// type of replication(metro, global)s
+	ReplicationType string `json:"replicationType,omitempty"`
 
 	// Indicates if the volume is shareable between VMs
 	// Required: true
@@ -118,6 +138,10 @@ func (m *VolumeReference) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateName(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validatePrimaryRole(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -203,6 +227,48 @@ func (m *VolumeReference) validateLastUpdateDate(formats strfmt.Registry) error 
 func (m *VolumeReference) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var volumeReferenceTypePrimaryRolePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["master","aux"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		volumeReferenceTypePrimaryRolePropEnum = append(volumeReferenceTypePrimaryRolePropEnum, v)
+	}
+}
+
+const (
+
+	// VolumeReferencePrimaryRoleMaster captures enum value "master"
+	VolumeReferencePrimaryRoleMaster string = "master"
+
+	// VolumeReferencePrimaryRoleAux captures enum value "aux"
+	VolumeReferencePrimaryRoleAux string = "aux"
+)
+
+// prop value enum
+func (m *VolumeReference) validatePrimaryRoleEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, volumeReferenceTypePrimaryRolePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *VolumeReference) validatePrimaryRole(formats strfmt.Registry) error {
+	if swag.IsZero(m.PrimaryRole) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validatePrimaryRoleEnum("primaryRole", "body", m.PrimaryRole); err != nil {
 		return err
 	}
 

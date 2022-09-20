@@ -6,18 +6,16 @@ import (
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 )
 
-/*
-Helper methods that will be used by the client classes
-*/
+// Helper methods that will be used by the client classes
 
-// IBMPIHelperClient ...
+// IBMPIHelperClient
 type IBMPIClient struct {
 	session         *ibmpisession.IBMPISession
 	cloudInstanceID string
 	ctx             context.Context
 }
 
-// NewIBMPIClient ...
+// NewIBMPIClient
 func NewIBMPIClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPIClient {
 	return &IBMPIClient{
 		session:         sess,

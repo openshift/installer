@@ -30,6 +30,8 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
+	PcloudCloudinstancesVolumesFlashCopyMappingsGet(params *PcloudCloudinstancesVolumesFlashCopyMappingsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesFlashCopyMappingsGetOK, error)
+
 	PcloudCloudinstancesVolumesActionPost(params *PcloudCloudinstancesVolumesActionPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesActionPostAccepted, error)
 
 	PcloudCloudinstancesVolumesDelete(params *PcloudCloudinstancesVolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesDeleteOK, error)
@@ -41,6 +43,8 @@ type ClientService interface {
 	PcloudCloudinstancesVolumesPost(params *PcloudCloudinstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesPostAccepted, error)
 
 	PcloudCloudinstancesVolumesPut(params *PcloudCloudinstancesVolumesPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesPutOK, error)
+
+	PcloudCloudinstancesVolumesRemoteCopyRelationshipGet(params *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesRemoteCopyRelationshipGetOK, error)
 
 	PcloudPvminstancesVolumesDelete(params *PcloudPvminstancesVolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesDeleteAccepted, error)
 
@@ -79,6 +83,45 @@ type ClientService interface {
 	PcloudVolumesClonePost(params *PcloudVolumesClonePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumesClonePostOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
+}
+
+/*
+  PcloudCloudinstancesVolumesFlashCopyMappingsGet gets a list of flashcopy mappings of a given volume
+*/
+func (a *Client) PcloudCloudinstancesVolumesFlashCopyMappingsGet(params *PcloudCloudinstancesVolumesFlashCopyMappingsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesFlashCopyMappingsGetOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPcloudCloudinstancesVolumesFlashCopyMappingsGetParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "pcloud.cloudinstances.volumes.FlashCopyMappings.get",
+		Method:             "GET",
+		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/flash-copy-mappings",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PcloudCloudinstancesVolumesFlashCopyMappingsGetReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PcloudCloudinstancesVolumesFlashCopyMappingsGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.volumes.FlashCopyMappings.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
@@ -312,6 +355,45 @@ func (a *Client) PcloudCloudinstancesVolumesPut(params *PcloudCloudinstancesVolu
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.volumes.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  PcloudCloudinstancesVolumesRemoteCopyRelationshipGet gets remote copy relationship of a volume
+*/
+func (a *Client) PcloudCloudinstancesVolumesRemoteCopyRelationshipGet(params *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesVolumesRemoteCopyRelationshipGetOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPcloudCloudinstancesVolumesRemoteCopyRelationshipGetParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "pcloud.cloudinstances.volumes.remoteCopyRelationship.get",
+		Method:             "GET",
+		PathPattern:        "/pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/remote-copy",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PcloudCloudinstancesVolumesRemoteCopyRelationshipGetReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PcloudCloudinstancesVolumesRemoteCopyRelationshipGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.cloudinstances.volumes.remoteCopyRelationship.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

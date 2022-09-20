@@ -11,7 +11,7 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.1
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
-	github.com/IBM-Cloud/power-go-client v1.1.5
+	github.com/IBM-Cloud/power-go-client v1.2.0
 	github.com/IBM/go-sdk-core/v4 v4.9.0
 	github.com/IBM/go-sdk-core/v5 v5.9.5
 	github.com/IBM/networking-go-sdk v0.14.0

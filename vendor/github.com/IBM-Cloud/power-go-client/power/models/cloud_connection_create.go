@@ -41,6 +41,9 @@ type CloudConnectionCreate struct {
 	// list of subnets to attach to cloud connection
 	Subnets []string `json:"subnets"`
 
+	// enable transit gateway for this cloud connection (default=false)
+	TransitEnabled bool `json:"transitEnabled,omitempty"`
+
 	// vpc
 	Vpc *CloudConnectionEndpointVPC `json:"vpc,omitempty"`
 }

@@ -10,19 +10,19 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPITaskClient ...
+// IBMPITaskClient
 type IBMPITaskClient struct {
 	IBMPIClient
 }
 
-// NewIBMPITaskClient ...
+// NewIBMPITaskClient
 func NewIBMPITaskClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPITaskClient {
 	return &IBMPITaskClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
 	}
 }
 
-// Get ...
+// Get a Task
 func (f *IBMPITaskClient) Get(id string) (*models.Task, error) {
 	params := p_cloud_tasks.NewPcloudTasksGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -34,7 +34,7 @@ func (f *IBMPITaskClient) Get(id string) (*models.Task, error) {
 	return resp.Payload, nil
 }
 
-// Delete ...
+// Delete a Task
 func (f *IBMPITaskClient) Delete(id string) error {
 	params := p_cloud_tasks.NewPcloudTasksDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).

@@ -26,7 +26,7 @@ type PVMInstanceUpdate struct {
 	// Amount of memory allocated (in GB)
 	Memory float64 `json:"memory,omitempty"`
 
-	// Indicates if the server is allowed to migrate between hosts
+	// (deprecated - replaced by pinPolicy) Indicates if the server is allowed to migrate between hosts
 	Migratable *bool `json:"migratable,omitempty"`
 
 	// pin policy
