@@ -143,21 +143,24 @@ func (o *ClusterUninstaller) deleteFolder() error {
 	}
 
 	// If there are no children in the folder, go ahead and remove it
-	if len(folderMoList[0].ChildEntity) == 0 {
-		folderLogger := o.Logger.WithField("Folder", folderMoList[0].Name)
 
-		folder := object.NewFolder(o.Client, folderMoList[0].Reference())
-		task, err := folder.Destroy(ctx)
-		if err == nil {
-			err = task.Wait(ctx)
+	for _, f := range folderMoList {
+		if len(f.ChildEntity) == 0 {
+			folderLogger := o.Logger.WithField("Folder", f.Name)
+
+			folder := object.NewFolder(o.Client, f.Reference())
+			task, err := folder.Destroy(ctx)
+			if err == nil {
+				err = task.Wait(ctx)
+			}
+			if err != nil {
+				folderLogger.Debug(err)
+				return err
+			}
+			folderLogger.Info("Destroyed")
+		} else {
+			return errors.Errorf("Expected Folder %s to be empty", f.Name)
 		}
-		if err != nil {
-			folderLogger.Debug(err)
-			return err
-		}
-		folderLogger.Info("Destroyed")
-	} else {
-		return errors.Errorf("Expected Folder %s to be empty", folderMoList[0].Name)
 	}
 
 	return nil
