@@ -22,12 +22,6 @@ provider "azurerm" {
   environment                 = var.azure_environment
 }
 
-resource "random_string" "storage_suffix" {
-  length  = 5
-  upper   = false
-  special = false
-}
-
 resource "azurerm_resource_group" "main" {
   count = var.azure_resource_group_name == "" ? 1 : 0
 
@@ -49,7 +43,7 @@ data "azurerm_resource_group" "network" {
 }
 
 resource "azurerm_storage_account" "cluster" {
-  name                     = "cluster${random_string.storage_suffix.result}"
+  name                     = "cluster${var.random_storage_account_suffix}"
   resource_group_name      = data.azurerm_resource_group.main.name
   location                 = var.azure_region
   account_tier             = "Standard"
@@ -85,7 +79,7 @@ resource "azurerm_storage_container" "vhd" {
 }
 
 resource "azurerm_storage_blob" "rhcos_image" {
-  name                   = "rhcos${random_string.storage_suffix.result}.vhd"
+  name                   = "rhcos${var.random_storage_account_suffix}.vhd"
   storage_account_name   = azurerm_storage_account.cluster.name
   storage_container_name = azurerm_storage_container.vhd.name
   type                   = "Page"

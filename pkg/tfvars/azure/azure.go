@@ -2,6 +2,8 @@ package azure
 
 import (
 	"encoding/json"
+	"math/rand"
+	"time"
 
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
@@ -48,6 +50,7 @@ type config struct {
 	BootstrapIgnitionURLPlaceholder string            `json:"azure_bootstrap_ignition_url_placeholder"`
 	HyperVGeneration                string            `json:"azure_hypervgeneration_version"`
 	VMNetworkingType                bool              `json:"azure_control_plane_vm_networking_type"`
+	RandomStringPrefix              string            `json:"random_storage_account_suffix"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -120,6 +123,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		BootstrapIgnitionURLPlaceholder: sources.BootstrapIgnitionURLPlaceholder,
 		HyperVGeneration:                sources.HyperVGeneration,
 		VMNetworkingType:                masterConfig.AcceleratedNetworking,
+		RandomStringPrefix:              randomStringPrefixFunction(),
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
@@ -142,4 +146,14 @@ func environment(cloudName azure.CloudEnvironment) (string, error) {
 	default:
 		return "", errors.Errorf("unsupported cloud name %q", cloudName)
 	}
+}
+
+func randomStringPrefixFunction() string {
+	length := 5
+	rand.Seed(time.Now().UnixNano())
+	suffix := make([]rune, length)
+	for i := 0; i < length; i++ {
+		suffix[i] = 97 + rand.Int31n(26)
+	}
+	return string(suffix)
 }
