@@ -23,7 +23,7 @@ var PlatformStages = []terraform.Stage{
 	stages.NewStage(
 		typesazure.Name,
 		"cluster",
-		[]providers.Provider{providers.AzureRM},
+		[]providers.Provider{providers.AzureRM, providers.Time},
 	),
 }
 
