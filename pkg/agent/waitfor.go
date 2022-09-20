@@ -22,7 +22,7 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 
 	start := time.Now()
 	previous := time.Now()
-	timeout := 30 * time.Minute
+	timeout := 45 * time.Minute
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
 
