@@ -1,10 +1,16 @@
 locals {
-  resource_group_id = var.ibmcloud_resource_group_name == "" ? ibm_resource_group.group.0.id : data.ibm_resource_group.group.0.id
+  network_resource_group_id = var.ibmcloud_network_resource_group_name == "" ? local.resource_group_id : data.ibm_resource_group.network_group.0.id
+  resource_group_id         = var.ibmcloud_resource_group_name == "" ? ibm_resource_group.group.0.id : data.ibm_resource_group.group.0.id
 }
 
 ############################################
-# Resource group
+# Resource groups
 ############################################
+
+data "ibm_resource_group" "network_group" {
+  count = var.ibmcloud_network_resource_group_name == "" ? 0 : 1
+  name  = var.ibmcloud_network_resource_group_name
+}
 
 resource "ibm_resource_group" "group" {
   count = var.ibmcloud_resource_group_name == "" ? 1 : 0
@@ -100,12 +106,13 @@ module "dhost" {
 module "vpc" {
   source = "./vpc"
 
-  cluster_id        = var.cluster_id
-  public_endpoints  = local.public_endpoints
-  resource_group_id = local.resource_group_id
-  tags              = local.tags
-  zones_master      = distinct(var.ibmcloud_master_availability_zones)
-  zones_worker      = distinct(var.ibmcloud_worker_availability_zones)
+  cluster_id                = var.cluster_id
+  network_resource_group_id = local.network_resource_group_id
+  public_endpoints          = local.public_endpoints
+  resource_group_id         = local.resource_group_id
+  tags                      = local.tags
+  zones_master              = distinct(var.ibmcloud_master_availability_zones)
+  zones_worker              = distinct(var.ibmcloud_worker_availability_zones)
 
   preexisting_vpc       = var.ibmcloud_preexisting_vpc
   cluster_vpc           = var.ibmcloud_vpc

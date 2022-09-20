@@ -6,6 +6,10 @@ variable "cluster_id" {
   type = string
 }
 
+variable "network_resource_group_id" {
+  type = string
+}
+
 variable "public_endpoints" {
   type = bool
 }
