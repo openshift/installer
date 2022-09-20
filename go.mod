@@ -149,3 +149,7 @@ replace (
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 	google.golang.org/grpc => google.golang.org/grpc v1.29.1
 )
+
+replace github.com/hashicorp/terraform-plugin-test => github.com/jhixson74/terraform-plugin-test v1.3.0-openshift
+
+replace github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
