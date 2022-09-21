@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25"
 	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -163,9 +162,16 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	finder := NewFinder(vim25Client)
 	validationCtx := &validationContext{
 		User:        ic.VSphere.Username,
-		AuthManager: object.NewAuthorizationManager(vim25Client),
+		AuthManager: newAuthManager(vim25Client),
 		Finder:      finder,
 		Client:      vim25Client,
+	}
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
+	err = pruneToAvailablePermissions(ctx, validationCtx.AuthManager)
+	if err != nil {
+		return errors.New(field.InternalError(field.NewPath("platform", "vsphere"), errors.Wrapf(err, "unable to determine available vCenter privileges.")).Error())
 	}
 
 	return validateProvisioning(validationCtx, ic)
