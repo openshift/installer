@@ -787,8 +787,8 @@ golang.org/x/sys/windows
 # golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
 ## explicit; go 1.11
 golang.org/x/term
-# golang.org/x/text v0.3.6
-## explicit; go 1.11
+# golang.org/x/text v0.3.7 => golang.org/x/text v0.3.7
+## explicit; go 1.17
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -1109,3 +1109,4 @@ sigs.k8s.io/yaml
 # k8s.io/client-go => k8s.io/client-go v0.0.0-20190620085101-78d2af792bab
 # github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
+# golang.org/x/text => golang.org/x/text v0.3.7
