@@ -64,7 +64,7 @@ resource "aws_s3_bucket_acl" ignition {
   acl    = "private"
 }
 
-resource "aws_s3_bucket_object" "ignition" {
+resource "aws_s3_object" "ignition" {
   bucket = aws_s3_bucket.ignition.id
   key    = "bootstrap.ign"
   source = var.ignition_bootstrap_file
@@ -188,7 +188,7 @@ resource "aws_instance" "bootstrap" {
   )
 
   depends_on = [
-    aws_s3_bucket_object.ignition,
+    aws_s3_object.ignition,
     # https://bugzilla.redhat.com/show_bug.cgi?id=1859153
     aws_iam_instance_profile.bootstrap,
   ]
