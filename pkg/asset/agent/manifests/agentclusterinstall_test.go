@@ -284,6 +284,7 @@ spec:
       hostPrefix: 23
     serviceNetwork:
     - fd02::/112
+    - 172.30.0.0/16
     networkType: "OpenShiftSDN"
   provisionRequirements:
     controlPlaneAgents: 3

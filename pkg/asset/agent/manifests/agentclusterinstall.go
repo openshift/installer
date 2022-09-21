@@ -208,20 +208,9 @@ func setNetworkType(aci *hiveext.AgentClusterInstall, installConfig *types.Insta
 	aci.Spec.Networking.NetworkType = installConfig.NetworkType
 }
 
-func isIPv4(ipAddress net.IP) bool {
-	ip := ipAddress.To4()
-	if ip == nil {
-		return false
-	}
-	return true
-}
-
 func isIPv6(ipAddress net.IP) bool {
 	ip := ipAddress.To16()
-	if ip == nil {
-		return false
-	}
-	return true
+	return ip != nil
 }
 
 func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList {
@@ -233,40 +222,32 @@ func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList 
 
 	if a.Config.Spec.Networking.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
 		hasIPv6 := false
-		hasIPv4 := false
 		for _, cn := range a.Config.Spec.Networking.ClusterNetwork {
 			ip, _, errCIDR := net.ParseCIDR(cn.CIDR)
 			if errCIDR != nil {
 				allErrs = append(allErrs, field.Required(clusterNetworkPath, "error parsing the clusterNetwork CIDR"))
 			}
-			if isIPv4(ip) {
-				hasIPv4 = true
-			}
 			if isIPv6(ip) {
 				hasIPv6 = true
 			}
 		}
-		if hasIPv6 && !hasIPv4 {
+		if hasIPv6 {
 			allErrs = append(allErrs, field.Required(fieldPath,
 				fmt.Sprintf("clusterNetwork CIDR is IPv6 and is not compatible with networkType %s",
 					operv1.NetworkTypeOpenShiftSDN)))
 		}
 
 		hasIPv6 = false
-		hasIPv4 = false
 		for _, cidr := range a.Config.Spec.Networking.ServiceNetwork {
 			ip, _, errCIDR := net.ParseCIDR(cidr)
 			if errCIDR != nil {
 				allErrs = append(allErrs, field.Required(serviceNetworkPath, "error parsing the clusterNetwork CIDR"))
 			}
-			if isIPv4(ip) {
-				hasIPv4 = true
-			}
 			if isIPv6(ip) {
 				hasIPv6 = true
 			}
 		}
-		if hasIPv6 && !hasIPv4 {
+		if hasIPv6 {
 			allErrs = append(allErrs, field.Required(fieldPath,
 				fmt.Sprintf("serviceNetwork CIDR is IPv6 and is not compatible with networkType %s",
 					operv1.NetworkTypeOpenShiftSDN)))
