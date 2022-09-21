@@ -431,6 +431,23 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.MemoryMiB = 16384
 		mpool.Set(ic.Platform.VSphere.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.VSphere)
+
+		// The machinepool has no zones defined, there are FailureDomains
+		// This is a vSphere zonal installation. Generate machinepool zone
+		// list.
+
+		fdCount := int64(len(ic.Platform.VSphere.FailureDomains))
+		var idx int64
+		if len(mpool.Zones) == 0 && len(ic.VSphere.FailureDomains) != 0 {
+			for i := int64(0); i < *(ic.ControlPlane.Replicas); i++ {
+				idx = i
+				if idx >= fdCount {
+					idx = i % fdCount
+				}
+				mpool.Zones = append(mpool.Zones, ic.VSphere.FailureDomains[idx].Name)
+			}
+		}
+
 		pool.Platform.VSphere = &mpool
 		templateName := clusterID.InfraID + "-rhcos"
 
