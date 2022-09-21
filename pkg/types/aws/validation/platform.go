@@ -21,6 +21,10 @@ var kubernetesNamespaceRegex = regexp.MustCompile(`^([^/]*\.)?kubernetes.io/`)
 // openshiftNamespaceRegex is used to check that a tag key is not in the openshift.io namespace.
 var openshiftNamespaceRegex = regexp.MustCompile(`^([^/]*\.)?openshift.io/`)
 
+// userTagLimit is defined in openshift/api
+// https://github.com/openshift/api/blob/1265e99256880f8679d1b74561c0bc7932067c43/config/v1/types_infrastructure.go#L370-L376
+const userTagLimit = 25
+
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -53,8 +57,8 @@ func validateUserTags(tags map[string]string, propagatingTags bool, fldPath *fie
 		logrus.Warnf("Due to a limit of 10 tags on S3 Bucket Objects, only the first eight lexicographically sorted tags will be applied to the bootstrap ignition object, which is a temporary resource only used during installation")
 	}
 
-	if len(tags) > 40 {
-		allErrs = append(allErrs, field.Invalid(fldPath, len(tags), "number of user tags cannot be more than 40"))
+	if len(tags) > userTagLimit {
+		allErrs = append(allErrs, field.TooMany(fldPath, len(tags), userTagLimit))
 	}
 	for key, value := range tags {
 		if strings.EqualFold(key, "Name") {
@@ -74,13 +78,13 @@ func validateUserTags(tags map[string]string, propagatingTags bool, fldPath *fie
 }
 
 // validateTag checks the following things to ensure that the tag is acceptable as an additional tag.
-// * The key and value contain only valid characters.
-// * The key is not empty and at most 128 characters.
-// * The value is not empty and at most 256 characters. Note that, while many AWS services accept empty tag values,
-//   the additional tags may be applied to resources in services that do not accept empty tag values. Consequently,
-//   OpenShift cannot accept empty tag values.
-// * The key is not in the kubernetes.io namespace.
-// * The key is not in the openshift.io namespace.
+//   - The key and value contain only valid characters.
+//   - The key is not empty and at most 128 characters.
+//   - The value is not empty and at most 256 characters. Note that, while many AWS services accept empty tag values,
+//     the additional tags may be applied to resources in services that do not accept empty tag values. Consequently,
+//     OpenShift cannot accept empty tag values.
+//   - The key is not in the kubernetes.io namespace.
+//   - The key is not in the openshift.io namespace.
 func validateTag(key, value string) error {
 	if !tagRegex.MatchString(key) {
 		return fmt.Errorf("key contains invalid characters")
