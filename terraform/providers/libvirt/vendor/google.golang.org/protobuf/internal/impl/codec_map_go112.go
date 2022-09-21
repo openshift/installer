@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build !amd64 gccgo appengine purego
+// +build go1.12
 
-package curve25519
+package impl
 
-func scalarMult(out, in, base *[32]byte) {
-	scalarMultGeneric(out, in, base)
-}
+import "reflect"
+
+func mapRange(v reflect.Value) *reflect.MapIter { return v.MapRange() }
