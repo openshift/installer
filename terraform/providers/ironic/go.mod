@@ -107,4 +107,6 @@ require (
 replace (
 	github.com/metal3-io/baremetal-operator/apis => github.com/metal3-io/baremetal-operator/apis v0.0.0-20220310151803-2b47127ed7ae
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0-20220310151803-2b47127ed7ae
+	// https://bugzilla.redhat.com/show_bug.cgi?id=2064702
+	golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 )
