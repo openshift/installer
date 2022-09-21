@@ -7,11 +7,11 @@ import (
 	"github.com/gophercloud/gophercloud"
 	netext "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -56,10 +56,10 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		total = *pool.Replicas
 	}
 	machines := make([]machineapi.Machine, 0, total)
-	providerConfigs := map[string]*openstackprovider.OpenstackProviderSpec{}
+	providerConfigs := map[string]*machinev1alpha1.OpenstackProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
 		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
-		var provider *openstackprovider.OpenstackProviderSpec
+		var provider *machinev1alpha1.OpenstackProviderSpec
 
 		if _, ok := providerConfigs[zone]; !ok {
 			provider, err = generateProvider(
@@ -108,18 +108,18 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool, rootVolumeAZ string) (*openstackprovider.OpenstackProviderSpec, error) {
-	var networks []openstackprovider.NetworkParam
+func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool, rootVolumeAZ string) (*machinev1alpha1.OpenstackProviderSpec, error) {
+	var networks []machinev1alpha1.NetworkParam
 	if platform.MachinesSubnet != "" {
-		networks = []openstackprovider.NetworkParam{{
-			Subnets: []openstackprovider.SubnetParam{{
+		networks = []machinev1alpha1.NetworkParam{{
+			Subnets: []machinev1alpha1.SubnetParam{{
 				UUID: platform.MachinesSubnet,
 			}}},
 		}
 	} else {
-		networks = []openstackprovider.NetworkParam{{
-			Subnets: []openstackprovider.SubnetParam{{
-				Filter: openstackprovider.SubnetFilter{
+		networks = []machinev1alpha1.NetworkParam{{
+			Subnets: []machinev1alpha1.SubnetParam{{
+				Filter: machinev1alpha1.SubnetFilter{
 					Name: fmt.Sprintf("%s-nodes", clusterID),
 					Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
 				}},
@@ -127,19 +127,19 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		}
 	}
 	for _, networkID := range mpool.AdditionalNetworkIDs {
-		networks = append(networks, openstackprovider.NetworkParam{
+		networks = append(networks, machinev1alpha1.NetworkParam{
 			UUID:                  networkID,
 			NoAllowedAddressPairs: true,
 		})
 	}
 
-	securityGroups := []openstackprovider.SecurityGroupParam{
+	securityGroups := []machinev1alpha1.SecurityGroupParam{
 		{
 			Name: fmt.Sprintf("%s-%s", clusterID, role),
 		},
 	}
 	for _, sg := range mpool.AdditionalSecurityGroupIDs {
-		securityGroups = append(securityGroups, openstackprovider.SecurityGroupParam{
+		securityGroups = append(securityGroups, machinev1alpha1.SecurityGroupParam{
 			UUID: sg,
 		})
 	}
@@ -148,9 +148,9 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 	if az != "" {
 		serverGroupName += "-" + az
 	}
-	spec := openstackprovider.OpenstackProviderSpec{
+	spec := machinev1alpha1.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: openstackprovider.SchemeGroupVersion.String(),
+			APIVersion: machinev1alpha1.GroupVersion.String(),
 			Kind:       "OpenstackProviderSpec",
 		},
 		Flavor:           mpool.FlavorName,
@@ -172,9 +172,8 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		},
 	}
 	if mpool.RootVolume != nil {
-		spec.RootVolume = &openstackprovider.RootVolume{
+		spec.RootVolume = &machinev1alpha1.RootVolume{
 			Size:       mpool.RootVolume.Size,
-			SourceType: "image",
 			SourceUUID: osImage,
 			VolumeType: mpool.RootVolume.Type,
 			Zone:       rootVolumeAZ,

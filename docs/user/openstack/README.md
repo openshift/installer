@@ -473,7 +473,7 @@ rm -rf ostest/
 
 ### Adding a MachineSet
 
-Groups of Compute nodes are managed using the [MachineSet][machine-set-code] resource. It is possible to create additional MachineSets post-install, for example to assign workloads to specific machines.
+Groups of Compute nodes are managed using the MachineSet resource. It is possible to create additional MachineSets post-install, for example to assign workloads to specific machines.
 
 When running on OpenStack, the MachineSet has platform-specific fields under `spec.template.spec.providerSpec.value`. For more information about the values that you can set in the `providerSpec`, see [the API definition](provider-spec-definition).
 
@@ -532,7 +532,7 @@ spec:
           availabilityZone: <optional_openstack_availability_zone>
 ```
 
-[provider-spec-definition]: https://github.com/openshift/cluster-api-provider-openstack/blob/155384b859c5b2fb5b7f11c9111d3f8e4f3066bd/pkg/apis/openstackproviderconfig/v1alpha1/types.go#L31
+[provider-spec-definition]: https://github.com/openshift/api/blob/e2c96618934fe4c8f97c53aebc891eebede4945b/machine/v1alpha1/types_openstack.go#L30
 
 #### Defining a MachineSet That Uses Multiple Networks
 
@@ -566,7 +566,6 @@ property of the MachineSet.
 
 **NOTE:** Note when deploying with `Kuryr` there is an Octavia API loadbalancer VM that will not fulfill the Availability Zones restrictions due to Octavia lack of support for it. In addition, if Octavia only has the amphora provider instead of also the OVN-Octavia provider, all the OpenShift services will be backed up by Octavia Load Balancer VMs which will not fulfill the Availability Zone restrictions either.
 
-[machine-set-code]: https://github.com/openshift/cluster-api-provider-openstack/blob/master/pkg/apis/openstackproviderconfig/v1alpha1/types.go
 [server-group-docs]: https://docs.openstack.org/api-ref/compute/?expanded=create-server-group-detail#create-server-group
 
 ### Using a Custom External Load Balancer
