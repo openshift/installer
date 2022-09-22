@@ -1297,8 +1297,8 @@ func deleteEC2Subnet(ctx context.Context, client *ec2.EC2, id string, logger log
 }
 
 func deleteEC2SubnetsByVPC(ctx context.Context, client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
-	// FIXME: port to DescribeSubnetsPages once we bump our vendored AWS package past v1.19.30
-	results, err := client.DescribeSubnetsWithContext(
+	var lastError error
+	err := client.DescribeSubnetsPagesWithContext(
 		ctx,
 		&ec2.DescribeSubnetsInput{
 			Filters: []*ec2.Filter{
@@ -1308,24 +1308,25 @@ func deleteEC2SubnetsByVPC(ctx context.Context, client *ec2.EC2, vpc string, fai
 				},
 			},
 		},
+		func(results *ec2.DescribeSubnetsOutput, lastPage bool) bool {
+			for _, subnet := range results.Subnets {
+				err := deleteEC2Subnet(ctx, client, *subnet.SubnetId, logger.WithField("subnet", *subnet.SubnetId))
+				if err != nil {
+					err = errors.Wrapf(err, "deleting EC2 subnet %s", *subnet.SubnetId)
+					if lastError != nil {
+						logger.Debug(lastError)
+					}
+					lastError = err
+					if failFast {
+						return false
+					}
+				}
+			}
+			return !lastPage
+		},
 	)
 	if err != nil {
 		return err
-	}
-
-	var lastError error
-	for _, subnet := range results.Subnets {
-		err := deleteEC2Subnet(ctx, client, *subnet.SubnetId, logger.WithField("subnet", *subnet.SubnetId))
-		if err != nil {
-			err = errors.Wrapf(err, "deleting EC2 subnet %s", *subnet.SubnetId)
-			if failFast {
-				return err
-			}
-			if lastError != nil {
-				logger.Debug(lastError)
-			}
-			lastError = err
-		}
 	}
 
 	return lastError
