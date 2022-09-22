@@ -64,6 +64,7 @@ variable "azure_control_plane_ultra_ssd_enabled" {
 
 variable "azure_base_domain_resource_group_name" {
   type        = string
+  default     = ""
   description = "The resource group that contains the dns zone used as base domain for the cluster."
 }
 

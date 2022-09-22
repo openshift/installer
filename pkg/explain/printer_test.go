@@ -159,7 +159,7 @@ func Test_PrintFields(t *testing.T) {
       ARMEndpoint is the endpoint for the Azure API when installing on Azure Stack.
 
     baseDomainResourceGroupName <string>
-      BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found.
+      BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found. This field is optional when creating a private cluster, otherwise required.
 
     cloudName <string>
       Valid Values: "","AzurePublicCloud","AzureUSGovernmentCloud","AzureChinaCloud","AzureGermanCloud","AzureStackCloud"

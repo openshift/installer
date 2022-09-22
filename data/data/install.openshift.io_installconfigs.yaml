@@ -1728,6 +1728,8 @@ spec:
                   baseDomainResourceGroupName:
                     description: BaseDomainResourceGroupName specifies the resource
                       group where the Azure DNS zone for the base domain is found.
+                      This field is optional when creating a private cluster, otherwise
+                      required.
                     type: string
                   cloudName:
                     description: cloudName is the name of the Azure cloud environment
