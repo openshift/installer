@@ -1,6 +1,7 @@
 package gcp
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"testing"
@@ -361,14 +362,11 @@ func TestGCPEnabledServicesList(t *testing.T) {
 	cases := []struct {
 		name     string
 		services []string
-		err      string
+		err      bool
 	}{{
 		name:     "No services present",
 		services: nil,
-		err: "following required services are not enabled in this project storage-component.googleapis.com," +
-			" servicemanagement.googleapis.com, storage-api.googleapis.com, compute.googleapis.com," +
-			" cloudapis.googleapis.com, dns.googleapis.com, iam.googleapis.com, iamcredentials.googleapis.com," +
-			" serviceusage.googleapis.com, cloudresourcemanager.googleapis.com",
+		err:      true,
 	}, {
 		name: "All pre-existing",
 		services: []string{"compute.googleapis.com",
@@ -378,7 +376,12 @@ func TestGCPEnabledServicesList(t *testing.T) {
 	}, {
 		name:     "Some services present",
 		services: []string{"compute.googleapis.com"},
-		err:      "enable all services before creating the cluster",
+		err:      true,
+	}, {
+		name: "Required Services present",
+		services: []string{"cloudresourcemanager.googleapis.com", "compute.googleapis.com",
+			"dns.googleapis.com", "iam.googleapis.com", "iamcredentials.googleapis.com"},
+		err: false,
 	}}
 
 	for _, test := range cases {
@@ -388,8 +391,8 @@ func TestGCPEnabledServicesList(t *testing.T) {
 			gcpClient := mock.NewMockAPI(mockCtrl)
 
 			gcpClient.EXPECT().GetEnabledServices(gomock.Any(), gomock.Any()).Return(test.services, nil).AnyTimes()
-			err := ValidateEnabledServices(nil, gcpClient, "")
-			if test.err == "" {
+			err := ValidateEnabledServices(context.TODO(), gcpClient, "")
+			if !test.err {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
