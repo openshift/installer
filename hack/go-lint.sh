@@ -2,8 +2,8 @@
 # Example:  ./hack/go-lint.sh installer/... pkg/... tests/smoke
 
 if [ "$IS_CONTAINER" != "" ]; then
-  go install golang.org/x/lint/golint@latest
-  ${GOPATH}/bin/golint -set_exit_status "${@}"
+  GOFLAGS="" go install golang.org/x/lint/golint@latest
+  "${GOPATH}"/bin/golint -set_exit_status "${@}"
 else
   podman run --rm \
     --env IS_CONTAINER=TRUE \
