@@ -1,7 +1,6 @@
 package powervs
 
 import (
-	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/pkg/errors"
 	"strings"
 )
@@ -12,9 +11,6 @@ const (
 
 // listPowerInstances lists instances in the Power server.
 func (o *ClusterUninstaller) listPowerInstances() (cloudResources, error) {
-	// https://github.com/IBM-Cloud/power-go-client/blob/v1.0.88/power/models/p_vm_instance_network.go#L16-L44
-	var network *models.PVMInstanceNetwork
-
 	o.Logger.Debugf("Listing virtual Power service instances")
 
 	instances, err := o.instanceClient.GetAll()
@@ -38,12 +34,6 @@ func (o *ClusterUninstaller) listPowerInstances() (cloudResources, error) {
 				typeName: powerInstanceTypeName,
 				id:       *instance.PvmInstanceID,
 			})
-
-			for _, network = range instance.Networks {
-				if strings.HasPrefix(network.NetworkName, "DHCPSERVER") {
-					o.DHCPNetworks[network.NetworkName] = struct{}{}
-				}
-			}
 		}
 	}
 	if !foundOne {

@@ -153,8 +153,6 @@ type ClusterUninstaller struct {
 
 	errorTracker
 	pendingItemTracker
-
-	DHCPNetworks map[string]struct{}
 }
 
 // New returns an IBMCloud destroyer from ClusterMetadata.
@@ -207,7 +205,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Zone:               metadata.ClusterPlatformMetadata.PowerVS.Zone,
 		pendingItemTracker: newPendingItemTracker(),
 		resourceGroupID:    metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup,
-		DHCPNetworks:       make(map[string]struct{}),
 	}, nil
 }
 
