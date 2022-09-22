@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	gohttp "net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/pkg/errors"
 
@@ -185,19 +187,31 @@ func (c *BxClient) ValidateAccountPermissions() error {
 }
 
 //ValidateDhcpService checks for existing Dhcp service for the provided PowerVS cloud instance
-func (c *BxClient) ValidateDhcpService(ctx context.Context, svcInsID string) error {
+func (c *BxClient) ValidateDhcpService(ctx context.Context, svcInsID string, machineNetworks []types.MachineNetworkEntry) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
-	//create Power VS DHCP Client
-	dhcpClient := instance.NewIBMPIDhcpClient(ctx, c.PISession, svcInsID)
-	//Get all DHCP Services
-	dhcpServices, err := dhcpClient.GetAll()
+	// Create Power VS Network Client
+	networkClient := instance.NewIBMPINetworkClient(ctx, c.PISession, svcInsID)
+	// Get all network references
+	networkReferences, err := networkClient.GetAll()
 	if err != nil {
-		return errors.Wrap(err, "failed to get DHCP service details")
+		return errors.Wrap(err, "failed to get network references")
 	}
-	if len(dhcpServices) > 0 {
-		return fmt.Errorf("DHCP service already exists for provided cloud instance")
+	// Check each machineNetwork, typically one
+	for _, machineNetwork := range machineNetworks {
+		_, n1, _ := net.ParseCIDR(machineNetwork.CIDR.String())
+		// Use our networkReferences to get networks
+		for _, networkRef := range networkReferences.Networks {
+			network, err := networkClient.Get(*networkRef.NetworkID)
+			if err != nil {
+				return errors.Wrap(err, "failed to get network")
+			}
+			_, n2, _ := net.ParseCIDR(*network.Cidr)
+			if n2.Contains(n1.IP) || n1.Contains(n2.IP) {
+				return fmt.Errorf("cidr conflicts with existing network")
+			}
+		}
 	}
 	return nil
 }
