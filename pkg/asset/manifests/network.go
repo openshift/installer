@@ -11,13 +11,15 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
+	"github.com/openshift/installer/pkg/types/powervs"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
-	noCrdFilename = filepath.Join(manifestDir, "cluster-network-01-crd.yml")
-	noCfgFilename = filepath.Join(manifestDir, "cluster-network-02-config.yml")
+	noCrdFilename   = filepath.Join(manifestDir, "cluster-network-01-crd.yml")
+	noCfgFilename   = filepath.Join(manifestDir, "cluster-network-02-config.yml")
+	ovnKubeFilename = filepath.Join(manifestDir, "cluster-network-03-config.yml")
 )
 
 // We need to manually create our CRDs first, so we can create the
@@ -115,6 +117,21 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 			Filename: noCfgFilename,
 			Data:     configData,
 		},
+	}
+
+	switch installConfig.Config.Platform.Name() {
+	case powervs.Name:
+		if netConfig.NetworkType == "OVNKubernetes" {
+			ovnConfig, err := OvnKubeConfig(clusterNet, serviceNet, true)
+			if err != nil {
+				return errors.Wrapf(err, "cannot marshal Power VS OVNKube Config")
+			}
+			no.FileList = append(no.FileList, &asset.File{
+				Filename: ovnKubeFilename,
+				Data:     ovnConfig,
+			})
+		}
+
 	}
 
 	return nil
