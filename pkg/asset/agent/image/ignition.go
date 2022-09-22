@@ -121,7 +121,16 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	}
 	logrus.Infof("The rendezvous host IP (node0 IP) is %s", nodeZeroIP)
 
-	// TODO: don't hard-code target arch
+	// TODO: don't hard-code target arch, but for now make a best effort to assert that the
+	// user is not trying to install a non-x86_64 cluster.
+	if strings.Contains(agentManifests.ClusterImageSet.Spec.ReleaseImage, "aarch64") {
+		return errors.Errorf("release image pull-spec %q contains aarch64, which is not supported", agentManifests.ClusterImageSet.Spec.ReleaseImage)
+	}
+
+	if strings.Contains(agentManifests.ClusterImageSet.Spec.ReleaseImage, "arm64") {
+		return errors.Errorf("release image pull-spec %q contains arm64, which is not supported", agentManifests.ClusterImageSet.Spec.ReleaseImage)
+	}
+
 	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, archName)
 	if err != nil {
 		return err
