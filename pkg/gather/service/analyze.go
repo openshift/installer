@@ -72,14 +72,20 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 	}
 
 	analysisChecks := []struct {
-		name  string
-		check func(analysis) bool
+		name     string
+		check    func(analysis) bool
+		optional bool
 	}{
-		{name: "release-image", check: checkReleaseImageDownload},
+		{name: "release-image", check: checkReleaseImageDownload, optional: false},
+		{name: "bootkube", check: checkAPIURLs, optional: false},
 	}
 	for _, check := range analysisChecks {
 		a := serviceAnalyses[check.name]
 		if a.starts == 0 {
+			if check.optional {
+				logrus.Infof("The bootstrap machine did not execute the %s.service systemd unit", check.name)
+				break
+			}
 			logrus.Errorf("The bootstrap machine did not execute the %s.service systemd unit", check.name)
 			break
 		}
@@ -98,6 +104,23 @@ func checkReleaseImageDownload(a analysis) bool {
 	logrus.Error("The bootstrap machine failed to download the release image")
 	a.logLastError()
 	return false
+}
+
+// bootstrap-verify-api-servel-urls.sh is currently running as part of the bootkube service.
+// And the verification of the API and API-Int URLs are the only stage where a failure is
+// currently reported. So, here we are able to conclude that a failure corresponds to a
+// failure to resolve either the API URL or API-Int URL or both. If that changes and if
+// any other stage in the bootkube service starts reporting a failure, we need to revisit
+// this. At that point verification of the URLs could be moved to its own service.
+func checkAPIURLs(a analysis) bool {
+	if a.successful {
+		return true
+	}
+	// Note: Even when there is a stage failure, we are not returning false here. That is
+	// intentional because we donot want to report this as an error in the "analyze" output.
+	logrus.Warn("The bootstrap machine is unable to resolve API and/or API-Int Server URLs")
+	a.logLastError()
+	return true
 }
 
 type analysis struct {
