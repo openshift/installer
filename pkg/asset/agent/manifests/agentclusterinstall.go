@@ -209,8 +209,11 @@ func setNetworkType(aci *hiveext.AgentClusterInstall, installConfig *types.Insta
 }
 
 func isIPv6(ipAddress net.IP) bool {
-	ip := ipAddress.To16()
-	return ip != nil
+	// Using To16() on IPv4 addresses does not return nil so it cannot be used to determine if
+	// IP addresses are IPv6. Instead we are checking if the address is IPv6 by using To4().
+	// Same as https://github.com/openshift/installer/blob/6eca978b89fc0be17f70fc8a28fa20aab1316843/pkg/types/validation/installconfig.go#L193
+	ip := ipAddress.To4()
+	return ip == nil
 }
 
 func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList {
@@ -223,11 +226,12 @@ func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList 
 	if a.Config.Spec.Networking.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
 		hasIPv6 := false
 		for _, cn := range a.Config.Spec.Networking.ClusterNetwork {
-			ip, _, errCIDR := net.ParseCIDR(cn.CIDR)
+			ipNet, errCIDR := ipnet.ParseCIDR(cn.CIDR)
 			if errCIDR != nil {
 				allErrs = append(allErrs, field.Required(clusterNetworkPath, "error parsing the clusterNetwork CIDR"))
+				continue
 			}
-			if isIPv6(ip) {
+			if isIPv6(ipNet.IP) {
 				hasIPv6 = true
 			}
 		}
@@ -239,11 +243,12 @@ func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList 
 
 		hasIPv6 = false
 		for _, cidr := range a.Config.Spec.Networking.ServiceNetwork {
-			ip, _, errCIDR := net.ParseCIDR(cidr)
+			ipNet, errCIDR := ipnet.ParseCIDR(cidr)
 			if errCIDR != nil {
 				allErrs = append(allErrs, field.Required(serviceNetworkPath, "error parsing the clusterNetwork CIDR"))
+				continue
 			}
-			if isIPv6(ip) {
+			if isIPv6(ipNet.IP) {
 				hasIPv6 = true
 			}
 		}

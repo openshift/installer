@@ -195,6 +195,7 @@ spec:
       hostPrefix: 23
     serviceNetwork:
     - 172.30.0.0/16
+    networkType: OVNKubernetes
   provisionRequirements:
     controlPlaneAgents: 3
     workerAgents: 2
@@ -234,6 +235,128 @@ spec:
 					SSHPublicKey: "ssh-rsa AAAAmyKey",
 				},
 			},
+			expectedError: "",
+		},
+		{
+			name: "valid-config-file-network-type-openshiftsdn",
+			data: `
+metadata:
+  name: test-agent-cluster-install
+  namespace: cluster0
+spec:
+  apiVIP: 192.168.111.5
+  ingressVIP: 192.168.111.4
+  clusterDeploymentRef:
+    name: ostest
+  imageSetRef:
+    name: openshift-v4.10.0
+  networking:
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    serviceNetwork:
+    - 172.30.0.0/16
+    networkType: OpenShiftSDN
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 2
+  sshPublicKey: |
+    ssh-rsa AAAAmyKey`,
+			expectedFound: true,
+			expectedConfig: &hiveext.AgentClusterInstall{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-agent-cluster-install",
+					Namespace: "cluster0",
+				},
+				Spec: hiveext.AgentClusterInstallSpec{
+					APIVIP:     "192.168.111.5",
+					IngressVIP: "192.168.111.4",
+					ClusterDeploymentRef: corev1.LocalObjectReference{
+						Name: "ostest",
+					},
+					ImageSetRef: &hivev1.ClusterImageSetReference{
+						Name: "openshift-v4.10.0",
+					},
+					Networking: hiveext.Networking{
+						ClusterNetwork: []hiveext.ClusterNetworkEntry{
+							{
+								CIDR:       "10.128.0.0/14",
+								HostPrefix: 23,
+							},
+						},
+						ServiceNetwork: []string{
+							"172.30.0.0/16",
+						},
+						NetworkType: "OpenShiftSDN",
+					},
+					ProvisionRequirements: hiveext.ProvisionRequirements{
+						ControlPlaneAgents: 3,
+						WorkerAgents:       2,
+					},
+					SSHPublicKey: "ssh-rsa AAAAmyKey",
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "valid-config-file-no-network-type-specified-and-defaults-to-OVNKubernetes",
+			data: `
+metadata:
+  name: test-agent-cluster-install
+  namespace: cluster0
+spec:
+  apiVIP: 192.168.111.5
+  ingressVIP: 192.168.111.4
+  clusterDeploymentRef:
+    name: ostest
+  imageSetRef:
+    name: openshift-v4.10.0
+  networking:
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    serviceNetwork:
+    - 172.30.0.0/16
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 2
+  sshPublicKey: |
+    ssh-rsa AAAAmyKey`,
+			expectedFound: true,
+			expectedConfig: &hiveext.AgentClusterInstall{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-agent-cluster-install",
+					Namespace: "cluster0",
+				},
+				Spec: hiveext.AgentClusterInstallSpec{
+					APIVIP:     "192.168.111.5",
+					IngressVIP: "192.168.111.4",
+					ClusterDeploymentRef: corev1.LocalObjectReference{
+						Name: "ostest",
+					},
+					ImageSetRef: &hivev1.ClusterImageSetReference{
+						Name: "openshift-v4.10.0",
+					},
+					Networking: hiveext.Networking{
+						ClusterNetwork: []hiveext.ClusterNetworkEntry{
+							{
+								CIDR:       "10.128.0.0/14",
+								HostPrefix: 23,
+							},
+						},
+						ServiceNetwork: []string{
+							"172.30.0.0/16",
+						},
+						NetworkType: "OVNKubernetes",
+					},
+					ProvisionRequirements: hiveext.ProvisionRequirements{
+						ControlPlaneAgents: 3,
+						WorkerAgents:       2,
+					},
+					SSHPublicKey: "ssh-rsa AAAAmyKey",
+				},
+			},
+			expectedError: "",
 		},
 		{
 			name:          "not-yaml",
@@ -315,7 +438,10 @@ spec:
 
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.Equal(t, nil, err)
 			}
+
 			if tc.expectedFound {
 				assert.Equal(t, tc.expectedConfig, asset.Config, "unexpected Config in AgentClusterInstall")
 			}
