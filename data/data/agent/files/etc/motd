@@ -7,4 +7,7 @@ sudo journalctl -u agent.service
 
 To view the agent log, run:
 sudo journalctl TAG=agent
+
+To gather essential troubleshooting data for bug reports and support, you can run:
+agent-gather
 **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  ** **  **  **  **  **  **  **
