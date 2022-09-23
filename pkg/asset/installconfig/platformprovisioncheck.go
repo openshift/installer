@@ -110,9 +110,10 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 	case vsphere.Name:
-		err = vsconfig.ValidateForProvisioning(ic.Config)
 		if len(ic.Config.VSphere.VCenters) > 0 {
 			err = vsconfig.ValidateMultiZoneForProvisioning(ic.Config)
+		} else {
+			err = vsconfig.ValidateForProvisioning(ic.Config)
 		}
 		if err != nil {
 			return err
