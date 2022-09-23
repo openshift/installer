@@ -1,10 +1,10 @@
 package powervs
 
 import (
-	"strings"
-
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/pkg/errors"
+	"strings"
+	"time"
 )
 
 const jobTypeName = "job"
@@ -131,6 +131,8 @@ func (o *ClusterUninstaller) destroyJobs() error {
 		if len(items) == 0 {
 			break
 		}
+
+		time.Sleep(15 * time.Second)
 	}
 
 	if items = o.getPendingItems(jobTypeName); len(items) > 0 {

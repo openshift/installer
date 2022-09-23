@@ -1,12 +1,12 @@
 package powervs
 
 import (
-	"net/http"
-	"strings"
-
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	gohttp "net/http"
+	"strings"
+	"time"
 )
 
 const loadBalancerTypeName = "load balancer"
@@ -66,13 +66,16 @@ func (o *ClusterUninstaller) deleteLoadBalancer(item cloudResource) error {
 	getOptions = o.vpcSvc.NewGetLoadBalancerOptions(item.id)
 	lb, response, err = o.vpcSvc.GetLoadBalancer(getOptions)
 
-	if err != nil && response != nil && response.StatusCode == http.StatusNotFound {
+	if err == nil && response.StatusCode == gohttp.StatusNoContent {
+		return nil
+	}
+	if err != nil && response != nil && response.StatusCode == gohttp.StatusNotFound {
 		// The resource is gone.
 		o.deletePendingItems(item.typeName, []cloudResource{item})
 		o.Logger.Infof("Deleted load balancer %q", item.name)
 		return nil
 	}
-	if err != nil && response != nil && response.StatusCode == http.StatusInternalServerError {
+	if err != nil && response != nil && response.StatusCode == gohttp.StatusInternalServerError {
 		o.Logger.Infof("deleteLoadBalancer: internal server error")
 		return nil
 	}
@@ -147,6 +150,8 @@ func (o *ClusterUninstaller) destroyLoadBalancers() error {
 		if len(items) == 0 {
 			break
 		}
+
+		time.Sleep(15 * time.Second)
 	}
 
 	if items = o.getPendingItems(loadBalancerTypeName); len(items) > 0 {

@@ -63,9 +63,15 @@ func (o *ClusterUninstaller) deleteVPC(item cloudResource) error {
 	getOptions = o.vpcSvc.NewGetVPCOptions(item.id)
 	_, getResponse, err = o.vpcSvc.GetVPC(getOptions)
 
+	o.Logger.Debugf("deleteVPC: getResponse = %v", getResponse)
+	o.Logger.Debugf("deleteVPC: err = %v", err)
+
 	// Sadly, there is no way to get the status of this VPC to check on the results of the
 	// delete call.
 
+	if err == nil && getResponse.StatusCode == gohttp.StatusNoContent {
+		return nil
+	}
 	if err != nil && getResponse != nil && getResponse.StatusCode == gohttp.StatusNotFound {
 		// The resource is gone
 		o.deletePendingItems(item.typeName, []cloudResource{item})

@@ -283,11 +283,14 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "DHCPs", execute: o.destroyDHCPNetworks},
 	}, {
+		{name: "Images", execute: o.destroyImages},
+		{name: "Security Groups", execute: o.destroySecurityGroups},
+	}, {
+		{name: "VPC Cloud Connections", execute: o.destroyVPCInCloudConnections},
+	}, {
 		{name: "Cloud Connections", execute: o.destroyCloudConnections},
 	}, {
-		{name: "Images", execute: o.destroyImages},
 		{name: "VPCs", execute: o.destroyVPCs},
-		{name: "Security Groups", execute: o.destroySecurityGroups},
 	}, {
 		{name: "Cloud Object Storage Instances", execute: o.destroyCOSInstances},
 		{name: "DNS Records", execute: o.destroyDNSRecords},
