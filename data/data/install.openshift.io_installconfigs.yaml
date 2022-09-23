@@ -2649,6 +2649,96 @@ spec:
                       IP in your OpenStack cluster to associate with the OpenShift
                       API load balancer.
                     type: string
+                  apiLoadBalancer:
+                    description: apiLoadBalancer defines how traffic destined to the
+                      OpenShift API is routed to the API servers. When omitted, this
+                      means no opinion and the platform is left to choose a reasonable
+                      default. This default is subject to change over time. The current
+                      default configuration uses VRRP.
+                    properties:
+                      bgp:
+                        description: bgpConfiguration describes the configuration
+                          of a BGP load balancer for the API server. It is only used
+                          if apiLoadBalancer is set to `BGP`.
+                        properties:
+                          apiVIPs:
+                            description: apiVIPs is a list of IP addresses which will
+                              be used to reach the API server from within the cluster.
+                              The list must contain at least one address. It may contain
+                              both IPv4 and IPv6 addresses.
+                            format: ip
+                            items:
+                              type: string
+                            minItems: 1
+                            type: array
+                          speakers:
+                            description: speakers is a list of BGP speaker configurations.
+                              We require a speaker configuration for every failure
+                              domain hosting a control plane node. The list must contain
+                              at least one item.
+                            items:
+                              description: OpenStackAPIBGPSpeaker describes the BGP
+                                autonomous system that will contain the API VIP for
+                                a specific failure domain.
+                              properties:
+                                asn:
+                                  description: asn specifies the Autonomous System
+                                    number to be used by the BGP speaker.
+                                  type: string
+                                failureDomain:
+                                  description: failureDomain is the name of a failure
+                                    domain which this BGP configuration applies to.
+                                    A failure domain with that name must be defined
+                                    in the OpenStack platform spec.
+                                  type: string
+                                peers:
+                                  description: peers is a list of all BGP peers of
+                                    the speaker for the VIPs of this failure domain.
+                                    The list must contain at least one item.
+                                  items:
+                                    properties:
+                                      asn:
+                                        description: asn is the Autonomous System
+                                          number of the peer.
+                                        type: string
+                                      ip:
+                                        description: ip is the IP address of the peer.
+                                          It may be either IPv4 or IPv6.
+                                        format: ip
+                                        type: string
+                                      password:
+                                        description: password for BGP authentication
+                                          against the peer
+                                        type: string
+                                    required:
+                                    - ip
+                                    type: object
+                                  minItems: 1
+                                  type: array
+                              required:
+                              - asn
+                              - failureDomain
+                              type: object
+                            minItems: 1
+                            type: array
+                            x-kubernetes-list-map-keys:
+                            - failureDomain
+                            x-kubernetes-list-type: map
+                        type: object
+                      type:
+                        description: apiLoadBalancerType defines the type of loadbalancer
+                          which will be configured for the API server. Permitted values
+                          are `VRRP` and `BGP`. When omitted, this means no opinion
+                          and the platform is left to choose a reasonable default.
+                          This default is subject to change over time. The current
+                          default value is `VRRP`.
+                        enum:
+                        - VRRP
+                        - BGP
+                        type: string
+                    required:
+                    - type
+                    type: object
                   apiVIP:
                     description: 'DeprecatedAPIVIP is the static IP on the nodes subnet
                       that the api port for openshift will be assigned Default: will
@@ -2777,8 +2867,13 @@ spec:
                       your OpenStack cluster.
                     type: string
                   failureDomains:
-                    description: FailureDomains configures failure domain information
-                      for the OpenStack platform
+                    description: failureDomains is a list of failure domains available
+                      to Machines. Each failure domain has a name that can be referenced
+                      in Machines; Machines referencing a failure domain will be set
+                      the corresponding failure domain values. If no failure domain
+                      is defined, Machines can't reference any. If a Machine doesn't
+                      reference a failure domain, it is spun in the cluster subnet,
+                      using the OpenStack default availability zones.
                     items:
                       description: OpenStackFailureDomain specifies a failure domain
                         for an OpenStack server. Specifically, it specifies a set
@@ -2813,6 +2908,9 @@ spec:
                       - name
                       type: object
                     type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
                   ingressFloatingIP:
                     description: IngressFloatingIP is the ID of an available floating
                       IP in your OpenStack cluster that will be associated with the

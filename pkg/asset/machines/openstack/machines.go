@@ -63,7 +63,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			failureDomainName := mpool.FailureDomainNames[idx%int64(len(mpool.FailureDomainNames))]
 			for _, fd := range platform.FailureDomains {
 				if fd.Name == failureDomainName {
-					failureDomain = *fd
+					failureDomain = fd
 					break
 				}
 			}

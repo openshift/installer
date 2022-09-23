@@ -115,7 +115,26 @@ type Platform struct {
 	// +optional
 	MachinesSubnet string `json:"machinesSubnet,omitempty"`
 
-	// FailureDomains configures failure domain information for the OpenStack platform
+	// failureDomains is a list of failure domains available to Machines.
+	// Each failure domain has a name that can be referenced in Machines;
+	// Machines referencing a failure domain will be set the corresponding
+	// failure domain values.
+	// If no failure domain is defined, Machines can't reference any. If a
+	// Machine doesn't reference a failure domain, it is spun in the
+	// cluster subnet, using the OpenStack default availability zones.
+	//
+	// +listType=map
+	// +listMapKey=name
 	// +optional
-	FailureDomains []*FailureDomain `json:"failureDomains,omitempty"`
+	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
+
+	// apiLoadBalancer defines how traffic destined to the OpenShift API is
+	// routed to the API servers.
+	// When omitted, this means no opinion and the platform is left to
+	// choose a reasonable default. This default is subject to change over
+	// time.
+	// The current default configuration uses VRRP.
+	//
+	// +optional
+	APILoadBalancer APILoadBalancer `json:"apiLoadBalancer"`
 }

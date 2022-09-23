@@ -143,7 +143,7 @@ func TFVars(
 	)
 }
 
-func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mastermpool, workermpool, defaultmpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy, failureDomains []*types_openstack.FailureDomain) ([]byte, error) {
+func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mastermpool, workermpool, defaultmpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy, failureDomains []types_openstack.FailureDomain) ([]byte, error) {
 	zones := []string{}
 	seen := map[string]bool{}
 	for _, config := range masterConfigs {
