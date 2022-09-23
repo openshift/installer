@@ -124,6 +124,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
+	logrus.Infof("The rendezvous host IP (node0 IP) is %s", nodeZeroIP)
 
 	// TODO: don't hard-code target arch
 	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, "x86_64")
