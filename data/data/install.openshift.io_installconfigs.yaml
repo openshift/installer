@@ -3284,7 +3284,7 @@ spec:
                             the IP address of the vCenter server.
                           maxLength: 255
                           type: string
-                        user:
+                        username:
                           description: Username is the username that will be used
                             to connect to vCenter
                           type: string
@@ -3292,7 +3292,7 @@ spec:
                       - datacenters
                       - password
                       - server
-                      - user
+                      - username
                       type: object
                     maxItems: 1
                     minItems: 1
