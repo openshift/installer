@@ -59,22 +59,6 @@ type agentTemplateData struct {
 	InfraEnvID          string
 }
 
-var (
-	agentEnabledServices = []string{
-		"agent.service",
-		"assisted-service-db.service",
-		"assisted-service-pod.service",
-		"assisted-service.service",
-		"create-cluster-and-infraenv.service",
-		"node-zero.service",
-		"multipathd.service",
-		"pre-network-manager-config.service",
-		"selinux.service",
-		"set-hostname.service",
-		"start-cluster-installation.service",
-	}
-)
-
 // Name returns the human-friendly name of the asset.
 func (a *Ignition) Name() string {
 	return "Agent Installer Ignition"
@@ -196,6 +180,24 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	err = addStaticNetworkConfig(&config, agentManifests.StaticNetworkConfigs)
 	if err != nil {
 		return err
+	}
+
+	agentEnabledServices := []string{
+		"agent.service",
+		"assisted-service-db.service",
+		"assisted-service-pod.service",
+		"assisted-service.service",
+		"create-cluster-and-infraenv.service",
+		"node-zero.service",
+		"multipathd.service",
+		"selinux.service",
+		"set-hostname.service",
+		"start-cluster-installation.service",
+	}
+
+	// Enable pre-network-manager-config.service only when there are network configs defined
+	if len(agentManifests.StaticNetworkConfigs) != 0 {
+		agentEnabledServices = append(agentEnabledServices, "pre-network-manager-config.service")
 	}
 
 	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, agentEnabledServices)
