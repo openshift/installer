@@ -258,10 +258,12 @@ func validateExistingVPC(client API, ic *types.InstallConfig, path *field.Path) 
 
 func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Path, vpcID string) field.ErrorList {
 	allErrs := field.ErrorList{}
+	var regionalZones []string
 
 	if len(ic.IBMCloud.ControlPlaneSubnets) == 0 {
 		allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), ic.IBMCloud.ControlPlaneSubnets, fmt.Sprintf("controlPlaneSubnets cannot be empty when providing a vpcName: %s", ic.IBMCloud.VPCName)))
 	} else {
+		controlPlaneSubnetZones := make(map[string]int)
 		for _, controlPlaneSubnet := range ic.IBMCloud.ControlPlaneSubnets {
 			subnet, err := client.GetSubnetByName(context.TODO(), controlPlaneSubnet, ic.IBMCloud.Region)
 			if err != nil {
@@ -277,6 +279,30 @@ func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Pa
 				if *subnet.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
 					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), controlPlaneSubnet, fmt.Sprintf("controlPlaneSubnets contains subnet: %s, not found in expected resourceGroupName: %s", controlPlaneSubnet, ic.IBMCloud.ResourceGroupName)))
 				}
+				controlPlaneSubnetZones[*subnet.Zone.Name]++
+			}
+		}
+
+		var controlPlaneActualZones []string
+		// Verify the supplied ControlPlane Subnets cover the provided ControlPlane Zones, or default Regional Zones if not provided
+		if zones := getMachinePoolZones(*ic.ControlPlane); zones != nil {
+			controlPlaneActualZones = zones
+		} else {
+			regionalZones, err := client.GetVPCZonesForRegion(context.TODO(), ic.IBMCloud.Region)
+			if err != nil {
+				allErrs = append(allErrs, field.InternalError(path.Child("controlPlaneSubnets"), err))
+			}
+			controlPlaneActualZones = regionalZones
+		}
+
+		// If lenght of found zones doesn't match actual or if an actual zone was not found from provided subnets, that is an invalid configuration
+		if len(controlPlaneSubnetZones) != len(controlPlaneActualZones) {
+			allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), ic.IBMCloud.ControlPlaneSubnets, fmt.Sprintf("number of zones (%d) covered by controlPlaneSubnets does not match number of provided or default zones (%d) for control plane in %s", len(controlPlaneSubnetZones), len(controlPlaneActualZones), ic.IBMCloud.Region)))
+		} else {
+			for _, actualZone := range controlPlaneActualZones {
+				if _, okay := controlPlaneSubnetZones[actualZone]; !okay {
+					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), ic.IBMCloud.ControlPlaneSubnets, fmt.Sprintf("%s zone does not have a provided control plane subnet", actualZone)))
+				}
 			}
 		}
 	}
@@ -284,6 +310,7 @@ func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Pa
 	if len(ic.IBMCloud.ComputeSubnets) == 0 {
 		allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), ic.IBMCloud.ComputeSubnets, fmt.Sprintf("computeSubnets cannot be empty when providing a vpcName: %s", ic.IBMCloud.VPCName)))
 	} else {
+		computeSubnetZones := make(map[string]int)
 		for _, computeSubnet := range ic.IBMCloud.ComputeSubnets {
 			subnet, err := client.GetSubnetByName(context.TODO(), computeSubnet, ic.IBMCloud.Region)
 			if err != nil {
@@ -298,6 +325,34 @@ func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Pa
 				}
 				if *subnet.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
 					allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), computeSubnet, fmt.Sprintf("computeSubnets contains subnet: %s, not found in expected resourceGroupName: %s", computeSubnet, ic.IBMCloud.ResourceGroupName)))
+				}
+				computeSubnetZones[*subnet.Zone.Name]++
+			}
+		}
+		// Verify the supplied Compute(s) Subnets cover the provided Compute Zones, or default Region Zones if not specified, for each Compute block
+		for index, compute := range ic.Compute {
+			var computeActualZones []string
+			if zones := getMachinePoolZones(compute); zones != nil {
+				computeActualZones = zones
+			} else {
+				if regionalZones == nil {
+					var err error
+					regionalZones, err = client.GetVPCZonesForRegion(context.TODO(), ic.IBMCloud.Region)
+					if err != nil {
+						allErrs = append(allErrs, field.InternalError(path.Child("computeSubnets"), err))
+					}
+				}
+				computeActualZones = regionalZones
+			}
+
+			// If length of found zones doesn't match actual or if an actual zone was not found from provided subnets, that is an invalid configuration
+			if len(computeSubnetZones) != len(computeActualZones) {
+				allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), ic.IBMCloud.ComputeSubnets, fmt.Sprintf("number of zones (%d) covered by computeSubnets does not match number of provided or default zones (%d) for compute[%d] in %s", len(computeSubnetZones), len(computeActualZones), index, ic.IBMCloud.Region)))
+			} else {
+				for _, actualZone := range computeActualZones {
+					if _, okay := computeSubnetZones[actualZone]; !okay {
+						allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), ic.IBMCloud.ComputeSubnets, fmt.Sprintf("%s zone does not have a provided compute subnet", actualZone)))
+					}
 				}
 			}
 		}
@@ -356,4 +411,12 @@ func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig, metadata 
 	}
 
 	return nil
+}
+
+// getMachinePoolZones will return the zones if they have been specified or return nil if the MachinePoolPlatform or values are not specified
+func getMachinePoolZones(mp types.MachinePool) []string {
+	if mp.Platform.IBMCloud == nil || mp.Platform.IBMCloud.Zones == nil {
+		return nil
+	}
+	return mp.Platform.IBMCloud.Zones
 }
