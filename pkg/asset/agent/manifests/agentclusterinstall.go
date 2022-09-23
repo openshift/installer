@@ -7,15 +7,20 @@ import (
 	"path/filepath"
 	"strings"
 
+	operv1 "github.com/openshift/api/operator/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/defaults"
 	"github.com/openshift/installer/pkg/validate"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 )
 
@@ -106,6 +111,8 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			},
 		}
 
+		setNetworkType(agentClusterInstall, installConfig.Config, "NetworkType is not specified in InstallConfig.")
+
 		// TODO: Handle the case where both IPv4 and IPv6 VIPs are specified
 		apiVIP, ingressVIP := getVIPs(&installConfig.Config.Platform)
 
@@ -157,6 +164,9 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 		err = errors.Wrapf(err, "failed to unmarshal %s", agentClusterInstallFilename)
 		return false, err
 	}
+
+	setNetworkType(agentClusterInstall, &types.InstallConfig{}, "NetworkType is not specified in AgentClusterInstall.")
+
 	a.Config = agentClusterInstall
 
 	if err = a.finish(); err != nil {
@@ -171,5 +181,83 @@ func (a *AgentClusterInstall) finish() error {
 		return errors.New("missing configuration or manifest file")
 	}
 
+	if err := a.validateIPAddressAndNetworkType().ToAggregate(); err != nil {
+		return errors.Wrapf(err, "invalid NetworkType configured")
+	}
+
 	return nil
+}
+
+// Sets the default network type to OVNKubernetes if it is unspecified in the
+// AgentClusterInstall or InstallConfig
+func setNetworkType(aci *hiveext.AgentClusterInstall, installConfig *types.InstallConfig,
+	warningMessage string) {
+
+	if aci.Spec.Networking.NetworkType != "" {
+		return
+	}
+
+	if installConfig != nil && installConfig.Networking != nil &&
+		installConfig.Networking.NetworkType != "" {
+		aci.Spec.Networking.NetworkType = installConfig.NetworkType
+		return
+	}
+
+	defaults.SetInstallConfigDefaults(installConfig)
+	logrus.Infof("%s Defaulting NetworkType to %s.", warningMessage, installConfig.NetworkType)
+	aci.Spec.Networking.NetworkType = installConfig.NetworkType
+}
+
+func isIPv6(ipAddress net.IP) bool {
+	// Using To16() on IPv4 addresses does not return nil so it cannot be used to determine if
+	// IP addresses are IPv6. Instead we are checking if the address is IPv6 by using To4().
+	// Same as https://github.com/openshift/installer/blob/6eca978b89fc0be17f70fc8a28fa20aab1316843/pkg/types/validation/installconfig.go#L193
+	ip := ipAddress.To4()
+	return ip == nil
+}
+
+func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	fieldPath := field.NewPath("spec", "networking", "networkType")
+	clusterNetworkPath := field.NewPath("spec", "networking", "clusterNetwork")
+	serviceNetworkPath := field.NewPath("spec", "networking", "serviceNetwork")
+
+	if a.Config.Spec.Networking.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+		hasIPv6 := false
+		for _, cn := range a.Config.Spec.Networking.ClusterNetwork {
+			ipNet, errCIDR := ipnet.ParseCIDR(cn.CIDR)
+			if errCIDR != nil {
+				allErrs = append(allErrs, field.Required(clusterNetworkPath, "error parsing the clusterNetwork CIDR"))
+				continue
+			}
+			if isIPv6(ipNet.IP) {
+				hasIPv6 = true
+			}
+		}
+		if hasIPv6 {
+			allErrs = append(allErrs, field.Required(fieldPath,
+				fmt.Sprintf("clusterNetwork CIDR is IPv6 and is not compatible with networkType %s",
+					operv1.NetworkTypeOpenShiftSDN)))
+		}
+
+		hasIPv6 = false
+		for _, cidr := range a.Config.Spec.Networking.ServiceNetwork {
+			ipNet, errCIDR := ipnet.ParseCIDR(cidr)
+			if errCIDR != nil {
+				allErrs = append(allErrs, field.Required(serviceNetworkPath, "error parsing the clusterNetwork CIDR"))
+				continue
+			}
+			if isIPv6(ipNet.IP) {
+				hasIPv6 = true
+			}
+		}
+		if hasIPv6 {
+			allErrs = append(allErrs, field.Required(fieldPath,
+				fmt.Sprintf("serviceNetwork CIDR is IPv6 and is not compatible with networkType %s",
+					operv1.NetworkTypeOpenShiftSDN)))
+		}
+	}
+
+	return allErrs
 }
