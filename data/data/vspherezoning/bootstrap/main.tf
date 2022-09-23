@@ -18,7 +18,7 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
   num_cores_per_socket        = var.vsphere_control_planes[0].numCoresPerSocket
   memory                      = var.vsphere_control_planes[0].memoryMiB
   guest_id                    = var.template[0].guest_id
-  folder                      = var.vsphere_control_planes[0].workspace.folder
+  folder                      = trimprefix(var.vsphere_control_planes[0].workspace.folder, "/${var.vsphere_control_planes[0].workspace.datacenter}/vm")
   enable_disk_uuid            = "true"
   annotation                  = local.description
   wait_for_guest_net_timeout  = "0"

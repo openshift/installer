@@ -163,7 +163,7 @@ type Topology struct {
 	// +kubebuilder:validation:Pattern=`^/.*?/host/.*?/Resources.*`
 	// +optional
 	ResourcePool string `json:"resourcePool,omitempty"`
-	// folder is the name or inventory path of the folder in which the
+	// folder is the inventory path of the folder in which the
 	// virtual machine is created/located.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=2048

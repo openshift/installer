@@ -3230,8 +3230,8 @@ spec:
                               minLength: 1
                               type: string
                             folder:
-                              description: folder is the name or inventory path of
-                                the folder in which the virtual machine is created/located.
+                              description: folder is the inventory path of the folder
+                                in which the virtual machine is created/located.
                               maxLength: 2048
                               minLength: 1
                               type: string

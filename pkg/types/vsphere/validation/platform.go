@@ -89,13 +89,39 @@ func validateMultiZone(p *vsphere.Platform, fldPath *field.Path) field.ErrorList
 				p.FailureDomains[idx].Topology.ResourcePool = p.ResourcePool
 			}
 			if len(failureDomain.Topology.Networks) == 0 && len(p.Network) > 0 {
-				p.FailureDomains[idx].Topology.Networks = []string{p.Network}
+				if len(failureDomain.Topology.Networks) == 0 {
+					p.FailureDomains[idx].Topology.Networks = []string{p.Network}
+				}
 			}
 			if len(failureDomain.Topology.Datastore) == 0 {
 				p.FailureDomains[idx].Topology.Datastore = p.DefaultDatastore
 			}
+
+			if len(failureDomain.Topology.ResourcePool) == 0 {
+				// If the legacy resourcePool is not defined we can't use it for FailureDomain
+				if len(p.ResourcePool) != 0 {
+					if strings.Contains(p.ResourcePool, p.FailureDomains[idx].Topology.Datacenter) {
+						// Only use the legacy resourcePool platform spec parameter if the datacenter exists in the path.
+						if strings.Contains(p.ResourcePool, p.FailureDomains[idx].Topology.ComputeCluster) {
+							p.FailureDomains[idx].Topology.ResourcePool = p.ResourcePool
+						} else {
+							allErrs = append(allErrs, field.Invalid(fldPath.Child("resourcePool"), p.ResourcePool, fmt.Sprintf("resource pool must be in compute cluster %s; please define it in a topology", p.FailureDomains[idx].Topology.ComputeCluster)))
+						}
+					} else {
+						allErrs = append(allErrs, field.Invalid(fldPath.Child("resourcePool"), p.ResourcePool, fmt.Sprintf("resource pool must be in datacenter %s; please define it in a topology", p.FailureDomains[idx].Topology.Datacenter)))
+					}
+				}
+			}
 			if len(failureDomain.Topology.Folder) == 0 {
-				p.FailureDomains[idx].Topology.Folder = p.Folder
+				// If the legacy folder is not defined we can't use it for FailureDomain
+				if len(p.Folder) != 0 {
+					// Only use the legacy folder platform spec parameter if the datacenter exists in the path.
+					if strings.Contains(p.Folder, p.FailureDomains[idx].Topology.Datacenter) {
+						p.FailureDomains[idx].Topology.Folder = p.Folder
+					} else {
+						allErrs = append(allErrs, field.Invalid(fldPath.Child("folder"), p.Folder, fmt.Sprintf("folder must be in datacenter %s; please define it in a topology", p.FailureDomains[idx].Topology.Datacenter)))
+					}
+				}
 			}
 		}
 	}
@@ -182,6 +208,18 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path) field.Erro
 
 		if len(failureDomain.Topology.Networks) == 0 {
 			allErrs = append(allErrs, field.Required(topologyFld.Child("networks"), "must specify a network"))
+		}
+		// Folder in failuredomain is optional
+		if len(failureDomain.Topology.Folder) != 0 {
+			folderPathRegexp := regexp.MustCompile("^\\/(.*?)\\/vm\\/(.*?)$")
+			folderPathParts := folderPathRegexp.FindStringSubmatch(failureDomain.Topology.Folder)
+			if len(folderPathParts) < 3 {
+				return append(allErrs, field.Invalid(topologyFld.Child("folder"), failureDomain.Topology.Folder, "full path of folder must be provided in format /<datacenter>/vm/<folder>"))
+			}
+
+			if !strings.Contains(failureDomain.Topology.Folder, failureDomain.Topology.Datacenter) {
+				return append(allErrs, field.Invalid(topologyFld.Child("folder"), failureDomain.Topology.Folder, "the folder defined does not exist in the correct datacenter"))
+			}
 		}
 
 		if len(failureDomain.Topology.ComputeCluster) == 0 {
