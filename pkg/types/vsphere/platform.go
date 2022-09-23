@@ -208,7 +208,7 @@ type VCenter struct {
 	Port uint `json:"port,omitempty"`
 	// Username is the username that will be used to connect to vCenter
 	// +kubebuilder:validation:Required
-	Username string `json:"user"`
+	Username string `json:"username"`
 	// Password is the password for the user to use to connect to the vCenter.
 	// +kubebuilder:validation:Required
 	Password string `json:"password"`
