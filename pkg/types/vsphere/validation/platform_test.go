@@ -55,7 +55,7 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 					Datastore:      "test-datastore",
 					Networks:       []string{"test-portgroup"},
 					ResourcePool:   "test-resourcepool",
-					Folder:         "test-folder",
+					Folder:         "/test-datacenter/vm/test-folder",
 				},
 			},
 			{
@@ -69,7 +69,7 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 					Datastore:      "test-datastore",
 					Networks:       []string{"test-portgroup"},
 					ResourcePool:   "test-resourcepool",
-					Folder:         "test-folder",
+					Folder:         "/test-datacenter/vm/test-folder",
 				},
 			},
 		},
