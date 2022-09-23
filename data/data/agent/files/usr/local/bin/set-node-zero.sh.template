@@ -27,4 +27,12 @@ BOOTSTRAP_HOST_MAC=${NODE_ZERO_MAC}
 EOF
 
     echo "Created file ${NODE0_PATH}"
+
+    rendezvousHostMessage="This host {{.NodeZeroIP}} is the rendezvous host."
+else
+
+    rendezvousHostMessage="This host is not the rendezvous host. The rendezvous host is at {{.NodeZeroIP}}."
 fi
+mkdir -p /etc/motd.d/
+echo $rendezvousHostMessage > /etc/motd.d/50-rendezvous-host
+echo $rendezvousHostMessage > /etc/issue.d/50-rendezvous-host.issue
