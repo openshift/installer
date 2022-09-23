@@ -37,6 +37,6 @@ platform:
       computeZone: nova-1
     - name: rack-2
       computeZone: nova-2
-      subnet: d7ffd3d8-87e1-481f-a818-ff2f17787d40
+      subnetID: d7ffd3d8-87e1-481f-a818-ff2f17787d40
     apiFloatingIP: ${API_FIP}
 pullSecret: ${PULL_SECRET}
