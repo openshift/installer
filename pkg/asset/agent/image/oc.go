@@ -52,6 +52,7 @@ func NewRelease(executer executer.Executer, config Config) Release {
 
 const (
 	templateGetImage             = "oc adm release info --image-for=%s --insecure=%t %s"
+	templateGetImageWithIcsp     = "oc adm release info --image-for=%s --insecure=%t --icsp-file=%s %s"
 	templateImageExtract         = "oc image extract --path %s:%s --confirm %s"
 	templateImageExtractWithIcsp = "oc image extract --path %s:%s --confirm --icsp-file=%s %s"
 )
@@ -60,7 +61,7 @@ const (
 func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig, architecture string) (string, error) {
 
 	// Get the machine-os-images pullspec from the release and use that to get the CoreOS ISO
-	image, err := r.getImageFromRelease(log, machineOsImageName, releaseImage, pullSecret, len(mirrorConfig) > 0)
+	image, err := r.getImageFromRelease(log, machineOsImageName, releaseImage, pullSecret, mirrorConfig)
 	if err != nil {
 		return "", err
 	}
@@ -88,11 +89,12 @@ func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage string, pullSe
 	return path, err
 }
 
-func (r *release) getImageFromRelease(log logrus.FieldLogger, imageName, releaseImage, pullSecret string, haveMirror bool) (string, error) {
+func (r *release) getImageFromRelease(log logrus.FieldLogger, imageName, releaseImage, pullSecret string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
 	// This requires the 'oc' command so make sure its available
 	_, err := exec.LookPath("oc")
+	var cmd string
 	if err != nil {
-		if haveMirror {
+		if len(mirrorConfig) > 0 {
 			log.Warning("Unable to validate mirror config because \"oc\" command is not available")
 		} else {
 			log.Debug("Skipping ISO extraction; \"oc\" command is not available")
@@ -100,7 +102,17 @@ func (r *release) getImageFromRelease(log logrus.FieldLogger, imageName, release
 		return "", err
 	}
 
-	cmd := fmt.Sprintf(templateGetImage, imageName, true, releaseImage)
+	if len(mirrorConfig) > 0 {
+		log.Debugf("Using mirror configuration")
+		icspFile, err := getIcspFileFromRegistriesConfig(log, mirrorConfig)
+		if err != nil {
+			return "", err
+		}
+		defer removeIcspFile(icspFile)
+		cmd = fmt.Sprintf(templateGetImageWithIcsp, imageName, true, icspFile, releaseImage)
+	} else {
+		cmd = fmt.Sprintf(templateGetImage, imageName, true, releaseImage)
+	}
 
 	log.Debugf("Fetching image from OCP release (%s)", cmd)
 	image, err := execute(log, r.executer, pullSecret, cmd)
