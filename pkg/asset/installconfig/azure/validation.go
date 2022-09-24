@@ -155,6 +155,22 @@ func validateMininumRequirements(fieldPath *field.Path, req resourceRequirements
 	return allErrs
 }
 
+func validateFamily(fieldPath *field.Path, instanceType, family string) field.ErrorList {
+	confidentialVMFamilies := sets.NewString(
+		"standardDCASv5Family",
+		"standardDCADSv5Family",
+		"standardECASv5Family",
+		"standardECADSv5Family",
+	)
+	allErrs := field.ErrorList{}
+	if confidentialVMFamilies.Has(family) {
+		errMsg := fmt.Sprintf("%s is not currently supported but will be in a future release", family)
+		allErrs = append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
+	}
+
+	return allErrs
+}
+
 func validateAcceleratedNetworking(fieldPath *field.Path, vmNetworkingType string, instanceType string, capabilities map[string]string) field.ErrorList {
 	val, ok := capabilities[string(aztypes.AcceleratedNetworkingEnabled)]
 	if ok {
@@ -218,7 +234,7 @@ func validateUltraSSD(client API, fieldPath *field.Path, icZones []string, regio
 	return allErrs
 }
 
-// ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
+// ValidateInstanceType ensures the instance type has sufficient Vcpu, Memory, and a valid family type.
 func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType, diskType string, req resourceRequirements, ultraSSDEnabled bool, vmNetworkingType string, icZones []string, architecture types.Architecture) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -229,6 +245,11 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 
 	allErrs = append(allErrs, validateMininumRequirements(fieldPath.Child("type"), req, instanceType, capabilities)...)
 	allErrs = append(allErrs, validateVMArchitecture(fieldPath.Child("type"), instanceType, architecture, capabilities)...)
+
+	family, _ := client.GetVirtualMachineFamily(context.TODO(), instanceType, region)
+	if family != "" {
+		allErrs = append(allErrs, validateFamily(fieldPath.Child("type"), instanceType, family)...)
+	}
 
 	if diskType == "Premium_LRS" {
 		allErrs = append(allErrs, validatePremiumDisk(fieldPath, diskType, instanceType, capabilities)...)

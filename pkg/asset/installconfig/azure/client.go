@@ -26,6 +26,7 @@ type API interface {
 	ListLocations(ctx context.Context) (*[]azsubs.Location, error)
 	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*azres.Provider, error)
 	GetVirtualMachineSku(ctx context.Context, name, region string) (*azsku.ResourceSku, error)
+	GetVirtualMachineFamily(ctx context.Context, name, region string) (string, error)
 	GetDiskSkus(ctx context.Context, region string) ([]azsku.ResourceSku, error)
 	GetGroup(ctx context.Context, groupName string) (*azres.Group, error)
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
@@ -276,6 +277,22 @@ func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, group
 	return &diskEncryptionSet, nil
 }
 
+// GetVirtualMachineFamily retrieves the VM family of an instance type.
+func (c *Client) GetVirtualMachineFamily(ctx context.Context, name, region string) (string, error) {
+	typeMeta, err := c.GetVirtualMachineSku(ctx, name, region)
+	if err != nil {
+		return "", fmt.Errorf("error connecting to Azure client: %v", err)
+	}
+	if typeMeta == nil {
+		return "", fmt.Errorf("not found in region %s", region)
+	}
+	if typeMeta.Family == nil {
+		return "", fmt.Errorf("error getting resource family")
+	}
+
+	return to.String(typeMeta.Family), nil
+}
+
 // GetVMCapabilities retrieves the capabilities of an instant type in a specific region. Returns these values
 // in a map with the capability name as the key and the corresponding value.
 func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error) {
@@ -286,11 +303,11 @@ func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region str
 	if typeMeta == nil {
 		return nil, fmt.Errorf("not found in region %s", region)
 	}
-
 	capabilities := make(map[string]string)
 	for _, capability := range *typeMeta.Capabilities {
 		capabilities[to.String(capability.Name)] = to.String(capability.Value)
 	}
+
 	return capabilities, nil
 }
 

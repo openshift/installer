@@ -509,6 +509,8 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 
 	azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]string{"1", "2", "3"}, nil).AnyTimes()
 
+	azureClient.EXPECT().GetVirtualMachineFamily(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil).AnyTimes()
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			editedInstallConfig := validInstallConfig()
@@ -985,6 +987,8 @@ func TestAzureUltraSSDCapability(t *testing.T) {
 	}
 	// ResourceProvider
 	azureClient.EXPECT().GetResourcesProvider(gomock.Any(), validResourceGroupNamespace).Return(resourcesProviderAPIResult, nil).AnyTimes()
+
+	azureClient.EXPECT().GetVirtualMachineFamily(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil).AnyTimes()
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
