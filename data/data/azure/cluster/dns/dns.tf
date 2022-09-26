@@ -22,7 +22,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "network" {
   private_dns_zone_name = azurerm_private_dns_zone.private.name
   virtual_network_id    = var.virtual_network_id
 
-  depends_on = [time_sleep.wait_30_seconds]
+  depends_on = [time_sleep.wait_30_seconds, var.virtual_network_id]
 }
 
 resource "azurerm_private_dns_a_record" "apiint_internal" {
