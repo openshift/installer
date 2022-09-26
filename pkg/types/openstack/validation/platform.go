@@ -3,7 +3,6 @@ package validation
 import (
 	"errors"
 	"net"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -15,8 +14,6 @@ import (
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
-
-	allErrs = append(allErrs, validateClusterName(c.ObjectMeta.Name)...)
 
 	for _, ip := range p.ExternalDNS {
 		if err := validate.IP(ip); err != nil {
@@ -51,16 +48,4 @@ func validateVIP(vip string, n *types.Networking) error {
 		}
 	}
 	return nil
-}
-
-func validateClusterName(name string) (allErrs field.ErrorList) {
-	if len(name) > 14 {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), name, "cluster name is too long, please restrict it to 14 characters"))
-	}
-
-	if strings.Contains(name, ".") {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), name, "cluster name can't contain \".\" character"))
-	}
-
-	return
 }
