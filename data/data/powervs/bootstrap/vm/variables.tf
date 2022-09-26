@@ -71,3 +71,14 @@ variable "dhcp_network_id" {
   type        = string
   description = "The ID of the Power VS DHCP network."
 }
+
+variable "proxy_server_ip" {
+  type        = string
+  description = "The IP of the VPC VM serving as a service proxy."
+}
+
+variable "enable_snat" {
+  type        = bool
+  description = "Indicates if the DHCP server will have SNAT enabled."
+  default     = true
+}

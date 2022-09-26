@@ -21,7 +21,7 @@ module "vm" {
   resource_group        = var.powervs_resource_group
   cluster_id            = var.cluster_id
   ssh_key_id            = var.cluster_key_id
-  cos_bucket_location   = var.powervs_cos_bucket_location
+  cos_bucket_location   = var.powervs_vpc_region
   cos_instance_location = var.powervs_cos_instance_location
   cos_storage_class     = var.powervs_cos_storage_class
   ignition              = var.ignition_bootstrap
@@ -33,6 +33,8 @@ module "vm" {
   cloud_instance_id     = var.powervs_cloud_instance_id
   dhcp_network_id       = var.dhcp_network_id
   dhcp_id               = var.dhcp_id
+  proxy_server_ip       = var.proxy_server_ip
+  enable_snat           = var.powervs_enable_snat
 }
 
 module "lb" {

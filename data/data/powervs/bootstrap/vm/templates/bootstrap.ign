@@ -3,7 +3,7 @@
     "version": "3.2.0",
     "config": {
       "replace": {
-        "source": "https://${HOSTNAME}/${BUCKET_NAME}/${OBJECT_NAME}",
+        "source": "${PROTOCOL}://${HOSTNAME}/${BUCKET_NAME}/${OBJECT_NAME}",
         "httpHeaders": [
           {
             "name": "Authorization",

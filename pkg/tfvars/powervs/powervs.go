@@ -38,6 +38,7 @@ type config struct {
 	ProcType             string `json:"powervs_proc_type"`
 	SysType              string `json:"powervs_sys_type"`
 	PublishStrategy      string `json:"powervs_publish_strategy"`
+	EnableSNAT           bool   `json:"powervs_enable_snat"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -57,6 +58,7 @@ type TFVarsSources struct {
 	VPCName              string
 	VPCSubnetName        string
 	PublishStrategy      types.PublishingStrategy
+	EnableSNAT           bool
 }
 
 // TFVars generates Power VS-specific Terraform variables launching the cluster.
@@ -116,6 +118,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ProcType:             strings.ToLower(string(masterConfig.ProcessorType)),
 		SysType:              masterConfig.SystemType,
 		PublishStrategy:      string(sources.PublishStrategy),
+		EnableSNAT:           sources.EnableSNAT,
 	}
 	if masterConfig.Network.Name != nil {
 		cfg.NetworkName = *masterConfig.Network.Name
