@@ -9,7 +9,7 @@ import (
 // AgentConfigVersion is the version supported by this package.
 // If you bump this, you must also update the list of convertable values in
 // pkg/types/conversion/agentconfig.go
-const AgentConfigVersion = "v1alpha1"
+const AgentConfigVersion = "v1beta1"
 
 // Config or aka AgentConfig is the API for specifying additional
 // configuration for the agent-based installer not covered by

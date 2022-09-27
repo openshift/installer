@@ -15,7 +15,7 @@ import (
 func ConvertAgentConfig(config *agent.Config) error {
 	// check that the version is convertible
 	switch config.APIVersion {
-	case agent.AgentConfigVersion:
+	case agent.AgentConfigVersion, "v1alpha1":
 		// works
 	case "":
 		return field.Required(field.NewPath("apiVersion"), "no version was provided")
