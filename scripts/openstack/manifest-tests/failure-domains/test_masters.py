@@ -10,7 +10,7 @@ import yaml
 ASSETS_DIR = ""
 
 
-class TestMachinesServerGroup(unittest.TestCase):
+class TestMachinesFailureDomain(unittest.TestCase):
     def setUp(self):
         """Parse the Machines into a Python data structure."""
         self.machines = []
