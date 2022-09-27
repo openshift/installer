@@ -128,7 +128,7 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay})
 
 		log.Info("Extracting base ISO from release payload")
-		baseIsoFileName, err = ocRelease.GetBaseIso(log, releaseImage, pullSecret, registriesConf.MirrorConfig, archName)
+		baseIsoFileName, err = ocRelease.GetBaseIso(log, releaseImage, pullSecret, archName, registriesConf.MirrorConfig)
 		if err == nil {
 			log.Debugf("Extracted base ISO image %s from release payload", baseIsoFileName)
 			i.File = &asset.File{Filename: baseIsoFileName}

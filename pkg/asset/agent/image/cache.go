@@ -37,7 +37,7 @@ func GetFileFromCache(fileName string, cacheDir string) (string, error) {
 	// If the file has already been cached, return its path
 	_, err := os.Stat(filePath)
 	if err == nil {
-		logrus.Debugf("The file was found in cache: %v. Reusing...", filePath)
+		logrus.Debugf("The file was found in cache: %v", filePath)
 		return filePath, nil
 	}
 	if !os.IsNotExist(err) {
