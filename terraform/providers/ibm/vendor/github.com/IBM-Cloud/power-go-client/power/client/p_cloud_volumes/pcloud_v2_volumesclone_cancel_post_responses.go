@@ -35,6 +35,12 @@ func (o *PcloudV2VolumescloneCancelPostReader) ReadResponse(response runtime.Cli
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudV2VolumescloneCancelPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudV2VolumescloneCancelPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -105,6 +111,38 @@ func (o *PcloudV2VolumescloneCancelPostUnauthorized) GetPayload() *models.Error 
 }
 
 func (o *PcloudV2VolumescloneCancelPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2VolumescloneCancelPostForbidden creates a PcloudV2VolumescloneCancelPostForbidden with default headers values
+func NewPcloudV2VolumescloneCancelPostForbidden() *PcloudV2VolumescloneCancelPostForbidden {
+	return &PcloudV2VolumescloneCancelPostForbidden{}
+}
+
+/* PcloudV2VolumescloneCancelPostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudV2VolumescloneCancelPostForbidden struct {
+	Payload *models.Error
+}
+
+func (o *PcloudV2VolumescloneCancelPostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/cancel][%d] pcloudV2VolumescloneCancelPostForbidden  %+v", 403, o.Payload)
+}
+func (o *PcloudV2VolumescloneCancelPostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV2VolumescloneCancelPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

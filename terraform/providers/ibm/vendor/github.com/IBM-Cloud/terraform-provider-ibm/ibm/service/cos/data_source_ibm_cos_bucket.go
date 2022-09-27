@@ -32,8 +32,9 @@ func DataSourceIBMCosBucket() *schema.Resource {
 				Required: true,
 			},
 			"bucket_type": {
-				Type:          schema.TypeString,
-				ValidateFunc:  validate.ValidateAllowedStringValues(bucketTypes),
+				Type: schema.TypeString,
+				// ValidateFunc:  validate.ValidateAllowedStringValues(bucketTypes),
+				ValidateFunc:  validate.InvokeDataSourceValidator("ibm_cos_bucket", "bucket_type"),
 				Optional:      true,
 				RequiredWith:  []string{"bucket_region"},
 				ConflictsWith: []string{"satellite_location_id"},
@@ -45,8 +46,9 @@ func DataSourceIBMCosBucket() *schema.Resource {
 				ConflictsWith: []string{"satellite_location_id"},
 			},
 			"resource_instance_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_cos_bucket", "resource_instance_id"),
 			},
 			"satellite_location_id": {
 				Type:          schema.TypeString,
@@ -55,9 +57,10 @@ func DataSourceIBMCosBucket() *schema.Resource {
 				ExactlyOneOf:  []string{"satellite_location_id", "bucket_region"},
 			},
 			"endpoint_type": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ValidateFunc:  validate.ValidateAllowedStringValues([]string{"public", "private", "direct"}),
+				Type:     schema.TypeString,
+				Optional: true,
+				// ValidateFunc:  validate.ValidateAllowedStringValues([]string{"public", "private", "direct"}),
+				ValidateFunc:  validate.InvokeDataSourceValidator("ibm_cos_bucket", "endpoint_type"),
 				Description:   "public or private",
 				ConflictsWith: []string{"satellite_location_id"},
 				Default:       "public",
@@ -366,6 +369,37 @@ func DataSourceIBMCosBucket() *schema.Resource {
 	}
 }
 
+func DataSourceIBMCosBucketValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "resource_instance_id",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:cloud-object-storage"}})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "bucket_type",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			AllowedValues:              "single_site_location,region_location,cross_region_location",
+		})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "endpoint_type",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			AllowedValues:              "public,private,direct",
+		})
+
+	ibmCOSBucketDataSourceValidator := validate.ResourceValidator{ResourceName: "ibm_cos_bucket", Schema: validateSchema}
+	return &ibmCOSBucketDataSourceValidator
+}
 func dataSourceIBMCosBucketRead(d *schema.ResourceData, meta interface{}) error {
 	var s3Conf *aws.Config
 	rsConClient, err := meta.(conns.ClientSession).BluemixSession()

@@ -62,6 +62,8 @@ func ResourceIBMCISRangeApp() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "CIS Intance CRN",
+				ValidateFunc: validate.InvokeValidator(ibmCISRangeApp,
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -169,6 +171,14 @@ func ResourceIBMCISRangeAppValidator() *validate.ResourceValidator {
 	connectivity := "ipv4, ipv6, all"
 	trafficType := "direct, http, https"
 	tls := "off, flexible, full, strict"
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 cisRangeAppProxyProtocol,

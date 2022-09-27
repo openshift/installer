@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -22,6 +23,9 @@ func DataSourceIBMCISFilters() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_filters",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -60,6 +64,24 @@ func DataSourceIBMCISFilters() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMCISFiltersValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISFiltersValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_filters",
+		Schema:       validateSchema}
+	return &iBMCISFiltersValidator
 }
 func dataIBMCISFiltersRead(d *schema.ResourceData, meta interface{}) error {
 

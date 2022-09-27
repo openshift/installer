@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/alertsv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -27,6 +28,9 @@ func DataSourceIBMCISAlert() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_alerts",
+					"cis_id"),
 			},
 			cisAlerts: {
 				Type:        schema.TypeList,
@@ -99,6 +103,24 @@ func DataSourceIBMCISAlert() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMCISAlertsValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISAlertsValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_alerts",
+		Schema:       validateSchema}
+	return &iBMCISAlertsValidator
 }
 func dataIBMCISAlertPolicyRead(d *schema.ResourceData, meta interface{}) error {
 	sess, err := meta.(conns.ClientSession).CisAlertsSession()

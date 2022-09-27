@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -22,6 +23,9 @@ func DataSourceIBMCISWebhooks() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_webhooks",
+					"cis_id"),
 			},
 			cisWebhookList: {
 				Type:        schema.TypeList,
@@ -54,6 +58,24 @@ func DataSourceIBMCISWebhooks() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMCISAlertWebhooksValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISAlertWebhooksValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_webhooks",
+		Schema:       validateSchema}
+	return &iBMCISAlertWebhooksValidator
 }
 func dataIBMCISWebhookRead(d *schema.ResourceData, meta interface{}) error {
 	sess, err := meta.(conns.ClientSession).CisWebhookSession()

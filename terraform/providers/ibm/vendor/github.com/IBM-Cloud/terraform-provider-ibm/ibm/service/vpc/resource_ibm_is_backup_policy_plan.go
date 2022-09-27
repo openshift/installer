@@ -173,11 +173,9 @@ func resourceIBMIsBackupPolicyPlanCreate(context context.Context, d *schema.Reso
 		if backupPolicyPlanDeletionTriggerPrototypeMap["delete_after"] != nil {
 			backupPolicyPlanDeletionTriggerPrototype.DeleteAfter = core.Int64Ptr(int64(backupPolicyPlanDeletionTriggerPrototypeMap["delete_after"].(int)))
 		}
-		log.Println("backupPolicyPlanDeletionTriggerPrototypeMap[delete_over_count] Inside")
-		log.Println(backupPolicyPlanDeletionTriggerPrototypeMap["delete_over_count"])
 		if backupPolicyPlanDeletionTriggerPrototypeMap["delete_over_count"] != nil {
 			deleteOverCountString := backupPolicyPlanDeletionTriggerPrototypeMap["delete_over_count"].(string)
-			if deleteOverCountString != "" {
+			if deleteOverCountString != "" && deleteOverCountString != "null" {
 				deleteOverCount, err := strconv.ParseInt(backupPolicyPlanDeletionTriggerPrototypeMap["delete_over_count"].(string), 10, 64)
 				if err != nil {
 					return diag.FromErr(fmt.Errorf("[ERROR] Error setting delete_over_count: %s", err))
@@ -185,6 +183,8 @@ func resourceIBMIsBackupPolicyPlanCreate(context context.Context, d *schema.Reso
 				deleteOverCountint := int64(deleteOverCount)
 				if deleteOverCountint >= int64(0) {
 					backupPolicyPlanDeletionTriggerPrototype.DeleteOverCount = core.Int64Ptr(deleteOverCountint)
+				} else {
+					return diag.FromErr(fmt.Errorf("[ERROR] Error setting delete_over_count: Retention count and days cannot be both zero"))
 				}
 			}
 		}
@@ -310,6 +310,8 @@ func resourceIBMIsBackupPolicyPlanBackupPolicyPlanDeletionTriggerPrototypeToMap(
 	}
 	if backupPolicyPlanDeletionTriggerPrototype.DeleteOverCount != nil {
 		backupPolicyPlanDeletionTriggerPrototypeMap["delete_over_count"] = strconv.FormatInt(*backupPolicyPlanDeletionTriggerPrototype.DeleteOverCount, 10)
+	} else {
+		backupPolicyPlanDeletionTriggerPrototypeMap["delete_over_count"] = "null"
 	}
 
 	return backupPolicyPlanDeletionTriggerPrototypeMap
@@ -360,7 +362,7 @@ func resourceIBMIsBackupPolicyPlanUpdate(context context.Context, d *schema.Reso
 		}
 		if backupPolicyPlanDeletionTriggerPrototypeMap["delete_over_count"] != nil {
 			deleteOverCountString := backupPolicyPlanDeletionTriggerPrototypeMap["delete_over_count"].(string)
-			if deleteOverCountString != "" {
+			if deleteOverCountString != "" && deleteOverCountString != "null" {
 				deleteOverCount, err := strconv.ParseInt(backupPolicyPlanDeletionTriggerPrototypeMap["delete_over_count"].(string), 10, 64)
 				if err != nil {
 					return diag.FromErr(fmt.Errorf("[ERROR] Error setting delete_over_count: %s", err))

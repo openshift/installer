@@ -10,6 +10,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -23,6 +24,9 @@ func DataSourceIBMCISFirewallRules() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Full url-encoded cloud resource name (CRN) of resource instance.",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_firewall_rules",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:        schema.TypeString,
@@ -66,7 +70,24 @@ func DataSourceIBMCISFirewallRules() *schema.Resource {
 		},
 	}
 }
+func DataSourceIBMCISFirewallRulesValidator() *validate.ResourceValidator {
 
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISFirewallRulesValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_firewall_rules",
+		Schema:       validateSchema}
+	return &iBMCISFirewallRulesValidator
+}
 func dataSourceIBMCISFirewallRulesRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	sess, err := meta.(conns.ClientSession).BluemixSession()
 	if err != nil {

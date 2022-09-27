@@ -67,6 +67,7 @@ const (
 	isLBListenerPolicyAction                  = "action"
 	isLBListenerPolicyTargetID                = "target_id"
 	isLBListenerPolicyTargetURL               = "target_url"
+	isLBListenerPolicyTargetHTTPStatusCode    = "target_http_status_code"
 	isLBListenerPolicyHTTPSRedirectStatusCode = "target_https_redirect_status_code"
 	isLBListenerPolicyHTTPSRedirectURI        = "target_https_redirect_uri"
 	isLBListenerPolicyHTTPSRedirectListener   = "target_https_redirect_listener"
@@ -1664,6 +1665,16 @@ func FlattenWhitelist(whitelist icdv4.Whitelist) []map[string]interface{} {
 	return entries
 }
 
+func ExpandPlatformOptions(platformOptions icdv4.PlatformOptions) []map[string]interface{} {
+	pltOptions := make([]map[string]interface{}, 0, 1)
+	pltOption := make(map[string]interface{})
+	pltOption["key_protect_key_id"] = platformOptions.KeyProtectKey
+	pltOption["disk_encryption_key_crn"] = platformOptions.DiskENcryptionKeyCrn
+	pltOption["backup_encryption_key_crn"] = platformOptions.BackUpEncryptionKeyCrn
+	pltOptions = append(pltOptions, pltOption)
+	return pltOptions
+}
+
 func expandStringMap(inVal interface{}) map[string]string {
 	outVal := make(map[string]string)
 	if inVal == nil {
@@ -2239,10 +2250,10 @@ func ResourceLBListenerPolicyCustomizeDiff(diff *schema.ResourceDiff) error {
 			return fmt.Errorf("Load balancer listener policy: When action is forward please specify target_id")
 		}
 	} else if policyAction == "redirect" {
-		_, httpsStatusCodeSet := diff.GetOk(isLBListenerPolicyHTTPSRedirectStatusCode)
+		_, httpsStatusCodeSet := diff.GetOk(isLBListenerPolicyTargetHTTPStatusCode)
 		_, targetURLSet := diff.GetOk(isLBListenerPolicyTargetURL)
 
-		if !httpsStatusCodeSet && diff.NewValueKnown(isLBListenerPolicyHTTPSRedirectStatusCode) {
+		if !httpsStatusCodeSet && diff.NewValueKnown(isLBListenerPolicyTargetHTTPStatusCode) {
 			return fmt.Errorf("Load balancer listener policy: When action is redirect please specify target_http_status_code")
 		}
 
@@ -2567,9 +2578,17 @@ func DefaultResourceGroup(meta interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
+	if err != nil {
+		return "", err
+	}
+	accountID := userDetails.UserAccount
 	defaultGrp := true
 	resourceGroupList := rg.ListResourceGroupsOptions{
 		Default: &defaultGrp,
+	}
+	if accountID != "" {
+		resourceGroupList.AccountID = &accountID
 	}
 	grpList, resp, err := rMgtClient.ListResourceGroups(&resourceGroupList)
 	if err != nil || grpList == nil || grpList.Resources == nil {

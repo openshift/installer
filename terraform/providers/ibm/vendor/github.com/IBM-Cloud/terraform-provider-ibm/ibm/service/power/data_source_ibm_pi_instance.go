@@ -183,6 +183,10 @@ func DataSourceIBMPIInstance() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"deployment_type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -224,6 +228,7 @@ func dataSourceIBMPIInstancesRead(ctx context.Context, d *schema.ResourceData, m
 	d.Set("storage_pool_affinity", powervmdata.StoragePoolAffinity)
 	d.Set("license_repository_capacity", powervmdata.LicenseRepositoryCapacity)
 	d.Set("networks", flattenPvmInstanceNetworks(powervmdata.Networks))
+	d.Set("deployment_type", powervmdata.DeploymentType)
 	if *powervmdata.PlacementGroup != "none" {
 		d.Set(PIPlacementGroupID, powervmdata.PlacementGroup)
 	}

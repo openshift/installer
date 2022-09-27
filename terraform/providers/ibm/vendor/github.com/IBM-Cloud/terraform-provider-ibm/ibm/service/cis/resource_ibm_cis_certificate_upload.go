@@ -50,6 +50,8 @@ func ResourceIBMCISCertificateUpload() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeValidator(ibmCISCertificateUpload,
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -133,6 +135,14 @@ func ResourceIBMCISCertificateUpload() *schema.Resource {
 func ResourceIBMCISCertificateUploadValidator() *validate.ResourceValidator {
 	bundleMethod := "ubiquitous, optimal, force"
 	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 cisCertificateUploadBundleMethod,

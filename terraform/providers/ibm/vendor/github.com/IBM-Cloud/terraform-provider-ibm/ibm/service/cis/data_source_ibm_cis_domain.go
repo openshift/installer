@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -20,13 +21,21 @@ func DataSourceIBMCISDomain() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			cisID: {
 				Type:        schema.TypeString,
-				Description: "CIS object id",
+				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_domain",
+					"cis_id"),
 			},
 			cisDomain: {
 				Type:        schema.TypeString,
 				Description: "CISzone - Domain",
 				Required:    true,
+			},
+			cisDomainType: {
+				Type:        schema.TypeString,
+				Description: "CISzone - Domain Type",
+				Computed:    true,
 			},
 			cisDomainPaused: {
 				Type:     schema.TypeBool,
@@ -50,10 +59,37 @@ func DataSourceIBMCISDomain() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			cisDomainVerificationKey: {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+			},
+			cisDomainCnameSuffix: {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+			},
 		},
 	}
 }
+func DataSourceIBMCISDomainValidator() *validate.ResourceValidator {
 
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISDomainValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_domain",
+		Schema:       validateSchema}
+	return &iBMCISDomainValidator
+}
 func dataSourceIBMCISDomainRead(d *schema.ResourceData, meta interface{}) error {
 	var zoneFound bool
 	cisClient, err := meta.(conns.ClientSession).CisZonesV1ClientSession()
@@ -84,6 +120,12 @@ func dataSourceIBMCISDomainRead(d *schema.ResourceData, meta interface{}) error 
 			d.Set(cisDomainNameServers, zone.NameServers)
 			d.Set(cisDomainOriginalNameServers, zone.OriginalNameServers)
 			d.Set(cisDomainID, *zone.ID)
+			d.Set(cisDomainType, *zone.Type)
+
+			if cisDomainType == "partial" {
+				d.Set(cisDomainVerificationKey, *zone.VerificationKey)
+				d.Set(cisDomainCnameSuffix, *zone.CnameSuffix)
+			}
 			zoneFound = true
 		}
 	}

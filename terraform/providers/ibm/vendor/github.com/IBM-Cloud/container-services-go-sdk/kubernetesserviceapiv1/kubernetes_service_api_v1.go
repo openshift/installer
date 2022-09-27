@@ -10078,7 +10078,7 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateSatelliteAssignmentWit
 }
 
 // AttachSatelliteHost : Attach a host to an IBM Cloud Satellite location
-// Create a script to run on a Red Hat Enterprise Linux 7 host in your on-premises infrastructure. The script attaches
+// Create a script to run on a Red Hat Enterprise Linux 7 or RHCOS (CoreOS) host in your on-premises infrastructure. The script attaches
 // the host to your IBM Cloud Satellite location. The host must have access to the public network in order for the
 // script to complete.
 func (kubernetesServiceApi *KubernetesServiceApiV1) AttachSatelliteHost(attachSatelliteHostOptions *AttachSatelliteHostOptions) (response []byte, err error) {
@@ -10123,6 +10123,9 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) AttachSatelliteHostWithConte
 	}
 	if attachSatelliteHostOptions.Labels != nil {
 		body["labels"] = attachSatelliteHostOptions.Labels
+	}
+	if attachSatelliteHostOptions.OperatingSystem != nil {
+		body["operatingSystem"] = attachSatelliteHostOptions.OperatingSystem
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -16917,6 +16920,9 @@ type AttachSatelliteHostOptions struct {
 	// Key-value pairs to label the host, such as cpu=4 to describe the host capabilities.
 	Labels map[string]string
 
+	//The operating system of the hosts to attach to the location. Options are RHEL or RHCOS
+	OperatingSystem *string
+
 	// The ID of the resource group that the Satellite location is in. To list the resource group ID of the location, use
 	// the `GET /v2/satellite/getController` API method.
 	XAuthResourceGroup *string
@@ -16939,6 +16945,12 @@ func (options *AttachSatelliteHostOptions) SetController(controller string) *Att
 // SetLabels : Allow user to set Labels
 func (options *AttachSatelliteHostOptions) SetLabels(labels map[string]string) *AttachSatelliteHostOptions {
 	options.Labels = labels
+	return options
+}
+
+// SetOperatingSystem : Allow user to set OperatingSystem
+func (options *AttachSatelliteHostOptions) SetOperatingSystem(operatingSystem string) *AttachSatelliteHostOptions {
+	options.OperatingSystem = core.StringPtr(operatingSystem)
 	return options
 }
 

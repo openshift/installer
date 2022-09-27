@@ -47,6 +47,12 @@ func (o *PcloudSppplacementgroupsMembersPostReader) ReadResponse(response runtim
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudSppplacementgroupsMembersPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudSppplacementgroupsMembersPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -187,6 +193,38 @@ func (o *PcloudSppplacementgroupsMembersPostForbidden) GetPayload() *models.Erro
 }
 
 func (o *PcloudSppplacementgroupsMembersPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudSppplacementgroupsMembersPostNotFound creates a PcloudSppplacementgroupsMembersPostNotFound with default headers values
+func NewPcloudSppplacementgroupsMembersPostNotFound() *PcloudSppplacementgroupsMembersPostNotFound {
+	return &PcloudSppplacementgroupsMembersPostNotFound{}
+}
+
+/* PcloudSppplacementgroupsMembersPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudSppplacementgroupsMembersPostNotFound struct {
+	Payload *models.Error
+}
+
+func (o *PcloudSppplacementgroupsMembersPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/spp-placement-groups/{spp_placement_group_id}/members/{shared_processor_pool_id}][%d] pcloudSppplacementgroupsMembersPostNotFound  %+v", 404, o.Payload)
+}
+func (o *PcloudSppplacementgroupsMembersPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudSppplacementgroupsMembersPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

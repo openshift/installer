@@ -2,14 +2,14 @@ module github.com/openshift/installer/terraform/providers/ibm
 
 go 1.18
 
-require github.com/IBM-Cloud/terraform-provider-ibm v1.44.2
+require github.com/IBM-Cloud/terraform-provider-ibm v1.45.0
 
 require (
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20220523145737-34645883de47 // indirect
-	github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20220622142911-811d18c8c775 // indirect
-	github.com/IBM-Cloud/power-go-client v1.1.10 // indirect
+	github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20220728135852-60ff775f7a8d // indirect
+	github.com/IBM-Cloud/power-go-client v1.1.12 // indirect
 	github.com/IBM/apigateway-go-sdk v0.0.0-20210714141226-a5d5d49caaca // indirect
-	github.com/IBM/appconfiguration-go-admin-sdk v0.2.3 // indirect
+	github.com/IBM/appconfiguration-go-admin-sdk v0.3.0 // indirect
 	github.com/IBM/appid-management-go-sdk v0.0.0-20210908164609-dd0e0eaf732f // indirect
 	github.com/IBM/cloud-databases-go-sdk v0.2.0 // indirect
 	github.com/IBM/cloudant-go-sdk v0.0.43 // indirect
@@ -24,10 +24,9 @@ require (
 	github.com/IBM/ibm-hpcs-tke-sdk v0.0.0-20211109141421-a4b61b05f7d1 // indirect
 	github.com/IBM/ibm-hpcs-uko-sdk v0.0.4 // indirect
 	github.com/IBM/keyprotect-go-client v0.7.0 // indirect
-	github.com/IBM/networking-go-sdk v0.31.0 // indirect
-	github.com/IBM/platform-services-go-sdk v0.26.1 // indirect
+	github.com/IBM/networking-go-sdk v0.33.0 // indirect
+	github.com/IBM/platform-services-go-sdk v0.28.2 // indirect
 	github.com/IBM/push-notifications-go-sdk v0.0.0-20210310100607-5790b96c47f5 // indirect
-	github.com/IBM/scc-go-sdk v1.3.4 // indirect
 	github.com/IBM/scc-go-sdk/v3 v3.1.6 // indirect
 	github.com/IBM/schematics-go-sdk v0.2.1 // indirect
 	github.com/IBM/secrets-manager-go-sdk v0.1.19 // indirect
@@ -127,7 +126,7 @@ require (
 	go.mongodb.org/mongo-driver v1.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
-	golang.org/x/sys v0.0.0-20220330033206-e17cdc41300f // indirect
+	golang.org/x/sys v0.0.0-20220817070843-5a390386f1f2 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/genproto v0.0.0-20200904004341-0bd0a958aa1d // indirect

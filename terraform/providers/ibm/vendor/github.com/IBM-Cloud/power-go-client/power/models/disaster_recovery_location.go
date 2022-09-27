@@ -18,25 +18,18 @@ import (
 // swagger:model DisasterRecoveryLocation
 type DisasterRecoveryLocation struct {
 
-	// The list of failBackSites has mapped to the location
-	FailBackSites FailBackSites `json:"failBackSites,omitempty"`
-
-	// The list of failOverSites has mapped for the location
-	FailOverSites FailOverSites `json:"failOverSites,omitempty"`
-
 	// regionZone of a site
 	Location string `json:"location,omitempty"`
+
+	// The list of replication sites has mapped for the given location
+	ReplicationSites ReplicationSites `json:"replicationSites,omitempty"`
 }
 
 // Validate validates this disaster recovery location
 func (m *DisasterRecoveryLocation) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateFailBackSites(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateFailOverSites(formats); err != nil {
+	if err := m.validateReplicationSites(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -46,33 +39,16 @@ func (m *DisasterRecoveryLocation) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *DisasterRecoveryLocation) validateFailBackSites(formats strfmt.Registry) error {
-	if swag.IsZero(m.FailBackSites) { // not required
+func (m *DisasterRecoveryLocation) validateReplicationSites(formats strfmt.Registry) error {
+	if swag.IsZero(m.ReplicationSites) { // not required
 		return nil
 	}
 
-	if err := m.FailBackSites.Validate(formats); err != nil {
+	if err := m.ReplicationSites.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("failBackSites")
+			return ve.ValidateName("replicationSites")
 		} else if ce, ok := err.(*errors.CompositeError); ok {
-			return ce.ValidateName("failBackSites")
-		}
-		return err
-	}
-
-	return nil
-}
-
-func (m *DisasterRecoveryLocation) validateFailOverSites(formats strfmt.Registry) error {
-	if swag.IsZero(m.FailOverSites) { // not required
-		return nil
-	}
-
-	if err := m.FailOverSites.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("failOverSites")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
-			return ce.ValidateName("failOverSites")
+			return ce.ValidateName("replicationSites")
 		}
 		return err
 	}
@@ -84,11 +60,7 @@ func (m *DisasterRecoveryLocation) validateFailOverSites(formats strfmt.Registry
 func (m *DisasterRecoveryLocation) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.contextValidateFailBackSites(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateFailOverSites(ctx, formats); err != nil {
+	if err := m.contextValidateReplicationSites(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -98,27 +70,13 @@ func (m *DisasterRecoveryLocation) ContextValidate(ctx context.Context, formats 
 	return nil
 }
 
-func (m *DisasterRecoveryLocation) contextValidateFailBackSites(ctx context.Context, formats strfmt.Registry) error {
+func (m *DisasterRecoveryLocation) contextValidateReplicationSites(ctx context.Context, formats strfmt.Registry) error {
 
-	if err := m.FailBackSites.ContextValidate(ctx, formats); err != nil {
+	if err := m.ReplicationSites.ContextValidate(ctx, formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("failBackSites")
+			return ve.ValidateName("replicationSites")
 		} else if ce, ok := err.(*errors.CompositeError); ok {
-			return ce.ValidateName("failBackSites")
-		}
-		return err
-	}
-
-	return nil
-}
-
-func (m *DisasterRecoveryLocation) contextValidateFailOverSites(ctx context.Context, formats strfmt.Registry) error {
-
-	if err := m.FailOverSites.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("failOverSites")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
-			return ce.ValidateName("failOverSites")
+			return ce.ValidateName("replicationSites")
 		}
 		return err
 	}

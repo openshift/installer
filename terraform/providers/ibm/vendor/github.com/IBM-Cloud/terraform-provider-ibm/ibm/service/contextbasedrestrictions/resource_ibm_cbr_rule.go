@@ -8,22 +8,22 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/IBM/platform-services-go-sdk/contextbasedrestrictionsv1"
 )
 
 func ResourceIBMCbrRule() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: ResourceIBMCbrRuleCreate,
-		ReadContext:   ResourceIBMCbrRuleRead,
-		UpdateContext: ResourceIBMCbrRuleUpdate,
-		DeleteContext: ResourceIBMCbrRuleDelete,
+		CreateContext: resourceIBMCbrRuleCreate,
+		ReadContext:   resourceIBMCbrRuleRead,
+		UpdateContext: resourceIBMCbrRuleUpdate,
+		DeleteContext: resourceIBMCbrRuleDelete,
 		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
@@ -111,6 +111,29 @@ func ResourceIBMCbrRule() *schema.Resource {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The attribute operator.",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"operations": &schema.Schema{
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Description: "The operations this rule applies to.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"api_types": &schema.Schema{
+							Type:        schema.TypeList,
+							Required:    true,
+							Description: "The API types this rule applies to.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"api_type_id": &schema.Schema{
+										Type:     schema.TypeString,
+										Required: true,
 									},
 								},
 							},
@@ -218,7 +241,7 @@ func ResourceIBMCbrRuleValidator() *validate.ResourceValidator {
 	return &resourceValidator
 }
 
-func ResourceIBMCbrRuleCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCbrRuleCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
 		return diag.FromErr(err)
@@ -233,7 +256,7 @@ func ResourceIBMCbrRuleCreate(context context.Context, d *schema.ResourceData, m
 		var contexts []contextbasedrestrictionsv1.RuleContext
 		for _, e := range d.Get("contexts").([]interface{}) {
 			value := e.(map[string]interface{})
-			contextsItem, err := ResourceIBMCbrRuleMapToRuleContext(value)
+			contextsItem, err := resourceIBMCbrRuleMapToRuleContext(value)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -245,13 +268,20 @@ func ResourceIBMCbrRuleCreate(context context.Context, d *schema.ResourceData, m
 		var resources []contextbasedrestrictionsv1.Resource
 		for _, e := range d.Get("resources").([]interface{}) {
 			value := e.(map[string]interface{})
-			resourcesItem, err := ResourceIBMCbrRuleMapToResource(value)
+			resourcesItem, err := resourceIBMCbrRuleMapToResource(value)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 			resources = append(resources, *resourcesItem)
 		}
 		createRuleOptions.SetResources(resources)
+	}
+	if _, ok := d.GetOk("operations"); ok {
+		operationsModel, err := resourceIBMCbrRuleMapToNewRuleOperations(d.Get("operations.0").(map[string]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		createRuleOptions.SetOperations(operationsModel)
 	}
 	if _, ok := d.GetOk("enforcement_mode"); ok {
 		createRuleOptions.SetEnforcementMode(d.Get("enforcement_mode").(string))
@@ -271,10 +301,10 @@ func ResourceIBMCbrRuleCreate(context context.Context, d *schema.ResourceData, m
 
 	d.SetId(*rule.ID)
 
-	return ResourceIBMCbrRuleRead(context, d, meta)
+	return resourceIBMCbrRuleRead(context, d, meta)
 }
 
-func ResourceIBMCbrRuleRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCbrRuleRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
 		return diag.FromErr(err)
@@ -306,7 +336,7 @@ func ResourceIBMCbrRuleRead(context context.Context, d *schema.ResourceData, met
 	contexts := []map[string]interface{}{}
 	if rule.Contexts != nil {
 		for _, contextsItem := range rule.Contexts {
-			contextsItemMap, err := ResourceIBMCbrRuleRuleContextToMap(&contextsItem)
+			contextsItemMap, err := resourceIBMCbrRuleRuleContextToMap(&contextsItem)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -319,7 +349,7 @@ func ResourceIBMCbrRuleRead(context context.Context, d *schema.ResourceData, met
 	resources := []map[string]interface{}{}
 	if rule.Resources != nil {
 		for _, resourcesItem := range rule.Resources {
-			resourcesItemMap, err := ResourceIBMCbrRuleResourceToMap(&resourcesItem)
+			resourcesItemMap, err := resourceIBMCbrRuleResourceToMap(&resourcesItem)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -328,6 +358,15 @@ func ResourceIBMCbrRuleRead(context context.Context, d *schema.ResourceData, met
 	}
 	if err = d.Set("resources", resources); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resources: %s", err))
+	}
+	if rule.Operations != nil {
+		operationsMap, err := resourceIBMCbrRuleNewRuleOperationsToMap(rule.Operations)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if err = d.Set("operations", []map[string]interface{}{operationsMap}); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting operations: %s", err))
+		}
 	}
 	if err = d.Set("enforcement_mode", rule.EnforcementMode); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting enforcement_mode: %s", err))
@@ -357,7 +396,7 @@ func ResourceIBMCbrRuleRead(context context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func ResourceIBMCbrRuleUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCbrRuleUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
 		return diag.FromErr(err)
@@ -373,7 +412,7 @@ func ResourceIBMCbrRuleUpdate(context context.Context, d *schema.ResourceData, m
 		var contexts []contextbasedrestrictionsv1.RuleContext
 		for _, e := range d.Get("contexts").([]interface{}) {
 			value := e.(map[string]interface{})
-			contextsItem, err := ResourceIBMCbrRuleMapToRuleContext(value)
+			contextsItem, err := resourceIBMCbrRuleMapToRuleContext(value)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -385,13 +424,20 @@ func ResourceIBMCbrRuleUpdate(context context.Context, d *schema.ResourceData, m
 		var resources []contextbasedrestrictionsv1.Resource
 		for _, e := range d.Get("resources").([]interface{}) {
 			value := e.(map[string]interface{})
-			resourcesItem, err := ResourceIBMCbrRuleMapToResource(value)
+			resourcesItem, err := resourceIBMCbrRuleMapToResource(value)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 			resources = append(resources, *resourcesItem)
 		}
 		replaceRuleOptions.SetResources(resources)
+	}
+	if _, ok := d.GetOk("operations"); ok {
+		operations, err := resourceIBMCbrRuleMapToNewRuleOperations(d.Get("operations.0").(map[string]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		replaceRuleOptions.SetOperations(operations)
 	}
 	if _, ok := d.GetOk("enforcement_mode"); ok {
 		replaceRuleOptions.SetEnforcementMode(d.Get("enforcement_mode").(string))
@@ -410,10 +456,10 @@ func ResourceIBMCbrRuleUpdate(context context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("ReplaceRuleWithContext failed %s\n%s", err, response))
 	}
 
-	return ResourceIBMCbrRuleRead(context, d, meta)
+	return resourceIBMCbrRuleRead(context, d, meta)
 }
 
-func ResourceIBMCbrRuleDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCbrRuleDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
 		return diag.FromErr(err)
@@ -434,11 +480,11 @@ func ResourceIBMCbrRuleDelete(context context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func ResourceIBMCbrRuleMapToRuleContext(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.RuleContext, error) {
+func resourceIBMCbrRuleMapToRuleContext(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.RuleContext, error) {
 	model := &contextbasedrestrictionsv1.RuleContext{}
 	attributes := []contextbasedrestrictionsv1.RuleContextAttribute{}
 	for _, attributesItem := range modelMap["attributes"].([]interface{}) {
-		attributesItemModel, err := ResourceIBMCbrRuleMapToRuleContextAttribute(attributesItem.(map[string]interface{}))
+		attributesItemModel, err := resourceIBMCbrRuleMapToRuleContextAttribute(attributesItem.(map[string]interface{}))
 		if err != nil {
 			return model, err
 		}
@@ -448,18 +494,18 @@ func ResourceIBMCbrRuleMapToRuleContext(modelMap map[string]interface{}) (*conte
 	return model, nil
 }
 
-func ResourceIBMCbrRuleMapToRuleContextAttribute(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.RuleContextAttribute, error) {
+func resourceIBMCbrRuleMapToRuleContextAttribute(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.RuleContextAttribute, error) {
 	model := &contextbasedrestrictionsv1.RuleContextAttribute{}
 	model.Name = core.StringPtr(modelMap["name"].(string))
 	model.Value = core.StringPtr(modelMap["value"].(string))
 	return model, nil
 }
 
-func ResourceIBMCbrRuleMapToResource(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.Resource, error) {
+func resourceIBMCbrRuleMapToResource(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.Resource, error) {
 	model := &contextbasedrestrictionsv1.Resource{}
 	attributes := []contextbasedrestrictionsv1.ResourceAttribute{}
 	for _, attributesItem := range modelMap["attributes"].([]interface{}) {
-		attributesItemModel, err := ResourceIBMCbrRuleMapToResourceAttribute(attributesItem.(map[string]interface{}))
+		attributesItemModel, err := resourceIBMCbrRuleMapToResourceAttribute(attributesItem.(map[string]interface{}))
 		if err != nil {
 			return model, err
 		}
@@ -469,7 +515,7 @@ func ResourceIBMCbrRuleMapToResource(modelMap map[string]interface{}) (*contextb
 	if modelMap["tags"] != nil {
 		tags := []contextbasedrestrictionsv1.ResourceTagAttribute{}
 		for _, tagsItem := range modelMap["tags"].([]interface{}) {
-			tagsItemModel, err := ResourceIBMCbrRuleMapToResourceTagAttribute(tagsItem.(map[string]interface{}))
+			tagsItemModel, err := resourceIBMCbrRuleMapToResourceTagAttribute(tagsItem.(map[string]interface{}))
 			if err != nil {
 				return model, err
 			}
@@ -480,7 +526,7 @@ func ResourceIBMCbrRuleMapToResource(modelMap map[string]interface{}) (*contextb
 	return model, nil
 }
 
-func ResourceIBMCbrRuleMapToResourceAttribute(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.ResourceAttribute, error) {
+func resourceIBMCbrRuleMapToResourceAttribute(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.ResourceAttribute, error) {
 	model := &contextbasedrestrictionsv1.ResourceAttribute{}
 	model.Name = core.StringPtr(modelMap["name"].(string))
 	model.Value = core.StringPtr(modelMap["value"].(string))
@@ -490,7 +536,7 @@ func ResourceIBMCbrRuleMapToResourceAttribute(modelMap map[string]interface{}) (
 	return model, nil
 }
 
-func ResourceIBMCbrRuleMapToResourceTagAttribute(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.ResourceTagAttribute, error) {
+func resourceIBMCbrRuleMapToResourceTagAttribute(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.ResourceTagAttribute, error) {
 	model := &contextbasedrestrictionsv1.ResourceTagAttribute{}
 	model.Name = core.StringPtr(modelMap["name"].(string))
 	model.Value = core.StringPtr(modelMap["value"].(string))
@@ -500,11 +546,31 @@ func ResourceIBMCbrRuleMapToResourceTagAttribute(modelMap map[string]interface{}
 	return model, nil
 }
 
-func ResourceIBMCbrRuleRuleContextToMap(model *contextbasedrestrictionsv1.RuleContext) (map[string]interface{}, error) {
+func resourceIBMCbrRuleMapToNewRuleOperations(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.NewRuleOperations, error) {
+	model := &contextbasedrestrictionsv1.NewRuleOperations{}
+	apiTypes := []contextbasedrestrictionsv1.NewRuleOperationsAPITypesItem{}
+	for _, apiTypesItem := range modelMap["api_types"].([]interface{}) {
+		apiTypesItemModel, err := resourceIBMCbrRuleMapToNewRuleOperationsAPITypesItem(apiTypesItem.(map[string]interface{}))
+		if err != nil {
+			return model, err
+		}
+		apiTypes = append(apiTypes, *apiTypesItemModel)
+	}
+	model.APITypes = apiTypes
+	return model, nil
+}
+
+func resourceIBMCbrRuleMapToNewRuleOperationsAPITypesItem(modelMap map[string]interface{}) (*contextbasedrestrictionsv1.NewRuleOperationsAPITypesItem, error) {
+	model := &contextbasedrestrictionsv1.NewRuleOperationsAPITypesItem{}
+	model.APITypeID = core.StringPtr(modelMap["api_type_id"].(string))
+	return model, nil
+}
+
+func resourceIBMCbrRuleRuleContextToMap(model *contextbasedrestrictionsv1.RuleContext) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	attributes := []map[string]interface{}{}
 	for _, attributesItem := range model.Attributes {
-		attributesItemMap, err := ResourceIBMCbrRuleRuleContextAttributeToMap(&attributesItem)
+		attributesItemMap, err := resourceIBMCbrRuleRuleContextAttributeToMap(&attributesItem)
 		if err != nil {
 			return modelMap, err
 		}
@@ -514,18 +580,18 @@ func ResourceIBMCbrRuleRuleContextToMap(model *contextbasedrestrictionsv1.RuleCo
 	return modelMap, nil
 }
 
-func ResourceIBMCbrRuleRuleContextAttributeToMap(model *contextbasedrestrictionsv1.RuleContextAttribute) (map[string]interface{}, error) {
+func resourceIBMCbrRuleRuleContextAttributeToMap(model *contextbasedrestrictionsv1.RuleContextAttribute) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["name"] = model.Name
 	modelMap["value"] = model.Value
 	return modelMap, nil
 }
 
-func ResourceIBMCbrRuleResourceToMap(model *contextbasedrestrictionsv1.Resource) (map[string]interface{}, error) {
+func resourceIBMCbrRuleResourceToMap(model *contextbasedrestrictionsv1.Resource) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	attributes := []map[string]interface{}{}
 	for _, attributesItem := range model.Attributes {
-		attributesItemMap, err := ResourceIBMCbrRuleResourceAttributeToMap(&attributesItem)
+		attributesItemMap, err := resourceIBMCbrRuleResourceAttributeToMap(&attributesItem)
 		if err != nil {
 			return modelMap, err
 		}
@@ -535,7 +601,7 @@ func ResourceIBMCbrRuleResourceToMap(model *contextbasedrestrictionsv1.Resource)
 	if model.Tags != nil {
 		tags := []map[string]interface{}{}
 		for _, tagsItem := range model.Tags {
-			tagsItemMap, err := ResourceIBMCbrRuleResourceTagAttributeToMap(&tagsItem)
+			tagsItemMap, err := resourceIBMCbrRuleResourceTagAttributeToMap(&tagsItem)
 			if err != nil {
 				return modelMap, err
 			}
@@ -546,7 +612,7 @@ func ResourceIBMCbrRuleResourceToMap(model *contextbasedrestrictionsv1.Resource)
 	return modelMap, nil
 }
 
-func ResourceIBMCbrRuleResourceAttributeToMap(model *contextbasedrestrictionsv1.ResourceAttribute) (map[string]interface{}, error) {
+func resourceIBMCbrRuleResourceAttributeToMap(model *contextbasedrestrictionsv1.ResourceAttribute) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["name"] = model.Name
 	modelMap["value"] = model.Value
@@ -556,12 +622,32 @@ func ResourceIBMCbrRuleResourceAttributeToMap(model *contextbasedrestrictionsv1.
 	return modelMap, nil
 }
 
-func ResourceIBMCbrRuleResourceTagAttributeToMap(model *contextbasedrestrictionsv1.ResourceTagAttribute) (map[string]interface{}, error) {
+func resourceIBMCbrRuleResourceTagAttributeToMap(model *contextbasedrestrictionsv1.ResourceTagAttribute) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["name"] = model.Name
 	modelMap["value"] = model.Value
 	if model.Operator != nil {
 		modelMap["operator"] = model.Operator
 	}
+	return modelMap, nil
+}
+
+func resourceIBMCbrRuleNewRuleOperationsToMap(model *contextbasedrestrictionsv1.NewRuleOperations) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	apiTypes := []map[string]interface{}{}
+	for _, apiTypesItem := range model.APITypes {
+		apiTypesItemMap, err := resourceIBMCbrRuleNewRuleOperationsAPITypesItemToMap(&apiTypesItem)
+		if err != nil {
+			return modelMap, err
+		}
+		apiTypes = append(apiTypes, apiTypesItemMap)
+	}
+	modelMap["api_types"] = apiTypes
+	return modelMap, nil
+}
+
+func resourceIBMCbrRuleNewRuleOperationsAPITypesItemToMap(model *contextbasedrestrictionsv1.NewRuleOperationsAPITypesItem) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["api_type_id"] = model.APITypeID
 	return modelMap, nil
 }

@@ -145,6 +145,11 @@ func ResourceIBMPICloudConnection() *schema.Resource {
 				Computed:    true,
 				Description: "GRE auto-assigned source IP address",
 			},
+			PICloudConnectionConnectionMode: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Type of service the gateway is attached to",
+			},
 		},
 	}
 }
@@ -200,8 +205,9 @@ func resourceIBMPICloudConnectionCreate(ctx context.Context, d *schema.ResourceD
 			vpcIds := flex.ExpandStringList(v.(*schema.Set).List())
 			vpcs := make([]*models.CloudConnectionVPC, len(vpcIds))
 			for i, vpcId := range vpcIds {
+				vpcIdCopy := vpcId[0:]
 				vpcs[i] = &models.CloudConnectionVPC{
-					VpcID: &vpcId,
+					VpcID: &vpcIdCopy,
 				}
 			}
 			vpc.Vpcs = vpcs

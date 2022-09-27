@@ -29,26 +29,8 @@ func (o *InternalV1TransitgatewayGetReader) ReadResponse(response runtime.Client
 			return nil, err
 		}
 		return result, nil
-	case 400:
-		result := NewInternalV1TransitgatewayGetBadRequest()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
 	case 403:
 		result := NewInternalV1TransitgatewayGetForbidden()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-	case 404:
-		result := NewInternalV1TransitgatewayGetNotFound()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
-	case 500:
-		result := NewInternalV1TransitgatewayGetInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -90,38 +72,6 @@ func (o *InternalV1TransitgatewayGetOK) readResponse(response runtime.ClientResp
 	return nil
 }
 
-// NewInternalV1TransitgatewayGetBadRequest creates a InternalV1TransitgatewayGetBadRequest with default headers values
-func NewInternalV1TransitgatewayGetBadRequest() *InternalV1TransitgatewayGetBadRequest {
-	return &InternalV1TransitgatewayGetBadRequest{}
-}
-
-/* InternalV1TransitgatewayGetBadRequest describes a response with status code 400, with default header values.
-
-Bad Request
-*/
-type InternalV1TransitgatewayGetBadRequest struct {
-	Payload *models.Error
-}
-
-func (o *InternalV1TransitgatewayGetBadRequest) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetBadRequest  %+v", 400, o.Payload)
-}
-func (o *InternalV1TransitgatewayGetBadRequest) GetPayload() *models.Error {
-	return o.Payload
-}
-
-func (o *InternalV1TransitgatewayGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Error)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
 // NewInternalV1TransitgatewayGetForbidden creates a InternalV1TransitgatewayGetForbidden with default headers values
 func NewInternalV1TransitgatewayGetForbidden() *InternalV1TransitgatewayGetForbidden {
 	return &InternalV1TransitgatewayGetForbidden{}
@@ -143,70 +93,6 @@ func (o *InternalV1TransitgatewayGetForbidden) GetPayload() *models.Error {
 }
 
 func (o *InternalV1TransitgatewayGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Error)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewInternalV1TransitgatewayGetNotFound creates a InternalV1TransitgatewayGetNotFound with default headers values
-func NewInternalV1TransitgatewayGetNotFound() *InternalV1TransitgatewayGetNotFound {
-	return &InternalV1TransitgatewayGetNotFound{}
-}
-
-/* InternalV1TransitgatewayGetNotFound describes a response with status code 404, with default header values.
-
-Not Found
-*/
-type InternalV1TransitgatewayGetNotFound struct {
-	Payload *models.Error
-}
-
-func (o *InternalV1TransitgatewayGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetNotFound  %+v", 404, o.Payload)
-}
-func (o *InternalV1TransitgatewayGetNotFound) GetPayload() *models.Error {
-	return o.Payload
-}
-
-func (o *InternalV1TransitgatewayGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Error)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewInternalV1TransitgatewayGetInternalServerError creates a InternalV1TransitgatewayGetInternalServerError with default headers values
-func NewInternalV1TransitgatewayGetInternalServerError() *InternalV1TransitgatewayGetInternalServerError {
-	return &InternalV1TransitgatewayGetInternalServerError{}
-}
-
-/* InternalV1TransitgatewayGetInternalServerError describes a response with status code 500, with default header values.
-
-Internal Server Error
-*/
-type InternalV1TransitgatewayGetInternalServerError struct {
-	Payload *models.Error
-}
-
-func (o *InternalV1TransitgatewayGetInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetInternalServerError  %+v", 500, o.Payload)
-}
-func (o *InternalV1TransitgatewayGetInternalServerError) GetPayload() *models.Error {
-	return o.Payload
-}
-
-func (o *InternalV1TransitgatewayGetInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

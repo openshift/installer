@@ -50,6 +50,8 @@ func ResourceIBMCISHealthCheck() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeValidator(ibmCISHealthCheck,
+					"cis_id"),
 			},
 			cisGLBHealthCheckID: {
 				Type:        schema.TypeString,
@@ -171,6 +173,14 @@ func ResourceIBMCISHealthCheckValidator() *validate.ResourceValidator {
 	methods := "GET, HEAD"
 
 	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 cisGLBHealthCheckType,

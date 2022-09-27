@@ -309,9 +309,10 @@ func ResourceIBMHPCS() *schema.Resource {
 }
 
 type HPCSParams struct {
-	Units            int    `json:"units,omitempty"`
-	FailoverUnits    int    `json:"failover_units,omitempty"`
-	ServiceEndpoints string `json:"allowed_network,omitempty"`
+	Units                 int    `json:"units,omitempty"`
+	FailoverUnits         int    `json:"failover_units,omitempty"`
+	RequiresRecoveryUnits bool   `json:"requires_recovery_units,omitempty"`
+	ServiceEndpoints      string `json:"allowed_network,omitempty"`
 }
 
 func ResourceIBMHPCSValidator() *validate.ResourceValidator {
@@ -411,6 +412,7 @@ func resourceIBMHPCSCreate(context context.Context, d *schema.ResourceData, meta
 	if serviceEndpoint, ok := d.GetOk("service_endpoints"); ok {
 		params.ServiceEndpoints = serviceEndpoint.(string)
 	}
+	params.RequiresRecoveryUnits = true
 	// Convert HPCSParams srtuct to map
 	parameters, _ := json.Marshal(params)
 	var raw map[string]interface{}

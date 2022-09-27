@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -23,6 +24,9 @@ func DataSourceIBMCISRangeApps() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "CIS Intance CRN",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_range_apps",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -122,6 +126,24 @@ func DataSourceIBMCISRangeApps() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMCISRangeAppsValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISRangeAppsValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_range_apps",
+		Schema:       validateSchema}
+	return &iBMCISRangeAppsValidator
 }
 
 func dataSourceIBMCISRangeAppsRead(d *schema.ResourceData, meta interface{}) error {

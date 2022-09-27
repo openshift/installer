@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.49.0-be9b22fb-20220504-154308
+ * IBM OpenAPI SDK Code Generator Version: 3.51.0-5b8b699d-20220613-200818
  */
 
 // Package atrackerv2 : Operations and models for the AtrackerV2 service
@@ -113,16 +113,16 @@ func NewAtrackerV2(options *AtrackerV2Options) (service *AtrackerV2, err error) 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
 	var endpoints = map[string]string{
-		"us-south":         "https://us-south.atracker.cloud.ibm.com",         // The server for IBM Cloud Activity Tracker Service in the us-south region.
+		"us-south": "https://us-south.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-south region.
 		"private.us-south": "https://private.us-south.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-south region.
-		"us-east":          "https://us-east.atracker.cloud.ibm.com",          // The server for IBM Cloud Activity Tracker Service in the us-east region.
-		"private.us-east":  "https://private.us-east.atracker.cloud.ibm.com",  // The server for IBM Cloud Activity Tracker Service in the us-east region.
-		"eu-de":            "https://eu-de.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service in the eu-de region.
-		"private.eu-de":    "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service in the eu-de region.
-		"eu-gb":            "https://eu-gb.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
-		"private.eu-gb":    "https://private.eu-gb.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
-		"au-syd":           "https://au-syd.atracker.cloud.ibm.com",           // The server for IBM Cloud Activity Tracker Service in the au-syd region.
-		"private.au-syd":   "https://private.au-syd.atracker.cloud.ibm.com",   // The server for IBM Cloud Activity Tracker Service in the au-syd region.
+		"us-east": "https://us-east.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-east region.
+		"private.us-east": "https://private.us-east.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-east region.
+		"eu-de": "https://eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-de region.
+		"private.eu-de": "https://private.eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-de region.
+		"eu-gb": "https://eu-gb.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
+		"private.eu-gb": "https://private.eu-gb.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
+		"au-syd": "https://au-syd.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the au-syd region.
+		"private.au-syd": "https://private.au-syd.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the au-syd region.
 	}
 
 	if url, ok := endpoints[region]; ok {
@@ -670,10 +670,6 @@ func (atracker *AtrackerV2) ListRoutesWithContext(ctx context.Context, listRoute
 	}
 	builder.AddHeader("Accept", "application/json")
 
-	if listRoutesOptions.Region != nil {
-		builder.AddQuery("region", fmt.Sprint(*listRoutesOptions.Region))
-	}
-
 	request, err := builder.Build()
 	if err != nil {
 		return
@@ -977,6 +973,9 @@ func (atracker *AtrackerV2) PutSettingsWithContext(ctx context.Context, putSetti
 	if putSettingsOptions.PermittedTargetRegions != nil {
 		body["permitted_target_regions"] = putSettingsOptions.PermittedTargetRegions
 	}
+	if putSettingsOptions.MetadataRegionBackup != nil {
+		body["metadata_region_backup"] = putSettingsOptions.MetadataRegionBackup
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -1146,6 +1145,7 @@ func UnmarshalCosEndpoint(m map[string]json.RawMessage, result interface{}) (err
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
+
 // CosEndpointPrototype : Property values for a Cloud Object Storage Endpoint in requests.
 type CosEndpointPrototype struct {
 	// The host name of the Cloud Object Storage endpoint.
@@ -1169,9 +1169,9 @@ type CosEndpointPrototype struct {
 // NewCosEndpointPrototype : Instantiate CosEndpointPrototype (Generic Model Constructor)
 func (*AtrackerV2) NewCosEndpointPrototype(endpoint string, targetCRN string, bucket string) (_model *CosEndpointPrototype, err error) {
 	_model = &CosEndpointPrototype{
-		Endpoint:  core.StringPtr(endpoint),
+		Endpoint: core.StringPtr(endpoint),
 		TargetCRN: core.StringPtr(targetCRN),
-		Bucket:    core.StringPtr(bucket),
+		Bucket: core.StringPtr(bucket),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -1207,7 +1207,7 @@ func UnmarshalCosEndpointPrototype(m map[string]json.RawMessage, result interfac
 // CreateRouteOptions : The CreateRoute options.
 type CreateRouteOptions struct {
 	// The name of the route. The name must be 1000 characters or less and cannot include any special characters other than
-	// `(space) - . _ :`.
+	// `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name" validate:"required"`
 
 	// Routing rules that will be evaluated in their order of the array.
@@ -1220,7 +1220,7 @@ type CreateRouteOptions struct {
 // NewCreateRouteOptions : Instantiate CreateRouteOptions
 func (*AtrackerV2) NewCreateRouteOptions(name string, rules []RulePrototype) *CreateRouteOptions {
 	return &CreateRouteOptions{
-		Name:  core.StringPtr(name),
+		Name: core.StringPtr(name),
 		Rules: rules,
 	}
 }
@@ -1246,14 +1246,14 @@ func (options *CreateRouteOptions) SetHeaders(param map[string]string) *CreateRo
 // CreateTargetOptions : The CreateTarget options.
 type CreateTargetOptions struct {
 	// The name of the target. The name must be 1000 characters or less, and cannot include any special characters other
-	// than `(space) - . _ :`.
+	// than `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name" validate:"required"`
 
 	// The type of the target. It can be cloud_object_storage or logdna. Based on this type you must include cos_endpoint
 	// or logdna_endpoint.
 	TargetType *string `json:"target_type" validate:"required"`
-	
-  // Property values for a Cloud Object Storage Endpoint in requests.
+
+	// Property values for a Cloud Object Storage Endpoint in requests.
 	CosEndpoint *CosEndpointPrototype `json:"cos_endpoint,omitempty"`
 
 	// Property values for a LogDNA Endpoint in requests.
@@ -1272,15 +1272,14 @@ type CreateTargetOptions struct {
 // logdna_endpoint.
 const (
 	CreateTargetOptionsTargetTypeCloudObjectStorageConst = "cloud_object_storage"
-	CreateTargetOptionsTargetTypeLogdnaConst             = "logdna"
+	CreateTargetOptionsTargetTypeLogdnaConst = "logdna"
 )
 
 // NewCreateTargetOptions : Instantiate CreateTargetOptions
-func (*AtrackerV2) NewCreateTargetOptions(name string, targetType string, cosEndpoint *CosEndpointPrototype) *CreateTargetOptions {
+func (*AtrackerV2) NewCreateTargetOptions(name string, targetType string) *CreateTargetOptions {
 	return &CreateTargetOptions{
-		Name:        core.StringPtr(name),
-		TargetType:  core.StringPtr(targetType),
-		CosEndpoint: cosEndpoint,
+		Name: core.StringPtr(name),
+		TargetType: core.StringPtr(targetType),
 	}
 }
 
@@ -1470,8 +1469,6 @@ func (options *GetTargetOptions) SetHeaders(param map[string]string) *GetTargetO
 
 // ListRoutesOptions : The ListRoutes options.
 type ListRoutesOptions struct {
-	// Limit the query to the specified region.
-	Region *string `json:"region,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1480,12 +1477,6 @@ type ListRoutesOptions struct {
 // NewListRoutesOptions : Instantiate ListRoutesOptions
 func (*AtrackerV2) NewListRoutesOptions() *ListRoutesOptions {
 	return &ListRoutesOptions{}
-}
-
-// SetRegion : Allow user to set Region
-func (_options *ListRoutesOptions) SetRegion(region string) *ListRoutesOptions {
-	_options.Region = core.StringPtr(region)
-	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1549,7 +1540,7 @@ type LogdnaEndpointPrototype struct {
 // NewLogdnaEndpointPrototype : Instantiate LogdnaEndpointPrototype (Generic Model Constructor)
 func (*AtrackerV2) NewLogdnaEndpointPrototype(targetCRN string, ingestionKey string) (_model *LogdnaEndpointPrototype, err error) {
 	_model = &LogdnaEndpointPrototype{
-		TargetCRN:    core.StringPtr(targetCRN),
+		TargetCRN: core.StringPtr(targetCRN),
 		IngestionKey: core.StringPtr(ingestionKey),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -1586,13 +1577,13 @@ type Migration struct {
 // Constants associated with the Migration.Status property.
 // The overall status of the migration.
 const (
-	MigrationStatusCanceledConst    = "canceled"
-	MigrationStatusCompletedConst   = "completed"
-	MigrationStatusFailedConst      = "failed"
-	MigrationStatusInProgressConst  = "in_progress"
+	MigrationStatusCanceledConst = "canceled"
+	MigrationStatusCompletedConst = "completed"
+	MigrationStatusFailedConst = "failed"
+	MigrationStatusInProgressConst = "in_progress"
 	MigrationStatusNotRequiredConst = "not_required"
-	MigrationStatusNotStartedConst  = "not_started"
-	MigrationStatusPendingConst     = "pending"
+	MigrationStatusNotStartedConst = "not_started"
+	MigrationStatusPendingConst = "pending"
 )
 
 // UnmarshalMigration unmarshals an instance of Migration from the specified map of raw messages.
@@ -1640,18 +1631,18 @@ type MigrationItem struct {
 // The type of the resource being migrated.
 const (
 	MigrationItemResourceTypePrivateEndpointConst = "private_endpoint"
-	MigrationItemResourceTypeRouteConst           = "route"
-	MigrationItemResourceTypeTargetConst          = "target"
+	MigrationItemResourceTypeRouteConst = "route"
+	MigrationItemResourceTypeTargetConst = "target"
 )
 
 // Constants associated with the MigrationItem.Status property.
 // The status of the migration for this resource.
 const (
-	MigrationItemStatusCompletedConst  = "completed"
-	MigrationItemStatusFailedConst     = "failed"
+	MigrationItemStatusCompletedConst = "completed"
+	MigrationItemStatusFailedConst = "failed"
 	MigrationItemStatusInProgressConst = "in_progress"
 	MigrationItemStatusNotStartedConst = "not_started"
-	MigrationItemStatusPendingConst    = "pending"
+	MigrationItemStatusPendingConst = "pending"
 )
 
 // UnmarshalMigrationItem unmarshals an instance of MigrationItem from the specified map of raw messages.
@@ -1718,6 +1709,9 @@ type PutSettingsOptions struct {
 	// If present then only these regions may be used to define a target.
 	PermittedTargetRegions []string `json:"permitted_target_regions,omitempty"`
 
+	// To store all your meta data in a backup region.
+	MetadataRegionBackup *string `json:"metadata_region_backup,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -1725,7 +1719,7 @@ type PutSettingsOptions struct {
 // NewPutSettingsOptions : Instantiate PutSettingsOptions
 func (*AtrackerV2) NewPutSettingsOptions(metadataRegionPrimary string, privateAPIEndpointOnly bool) *PutSettingsOptions {
 	return &PutSettingsOptions{
-		MetadataRegionPrimary:  core.StringPtr(metadataRegionPrimary),
+		MetadataRegionPrimary: core.StringPtr(metadataRegionPrimary),
 		PrivateAPIEndpointOnly: core.BoolPtr(privateAPIEndpointOnly),
 	}
 }
@@ -1754,6 +1748,12 @@ func (_options *PutSettingsOptions) SetPermittedTargetRegions(permittedTargetReg
 	return _options
 }
 
+// SetMetadataRegionBackup : Allow user to set MetadataRegionBackup
+func (_options *PutSettingsOptions) SetMetadataRegionBackup(metadataRegionBackup string) *PutSettingsOptions {
+	_options.MetadataRegionBackup = core.StringPtr(metadataRegionBackup)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *PutSettingsOptions) SetHeaders(param map[string]string) *PutSettingsOptions {
 	options.Headers = param
@@ -1766,7 +1766,7 @@ type ReplaceRouteOptions struct {
 	ID *string `json:"id" validate:"required,ne="`
 
 	// The name of the route. The name must be 1000 characters or less and cannot include any special characters other than
-	// `(space) - . _ :`.
+	// `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name" validate:"required"`
 
 	// Routing rules that will be evaluated in their order of the array.
@@ -1779,8 +1779,8 @@ type ReplaceRouteOptions struct {
 // NewReplaceRouteOptions : Instantiate ReplaceRouteOptions
 func (*AtrackerV2) NewReplaceRouteOptions(id string, name string, rules []RulePrototype) *ReplaceRouteOptions {
 	return &ReplaceRouteOptions{
-		ID:    core.StringPtr(id),
-		Name:  core.StringPtr(name),
+		ID: core.StringPtr(id),
+		Name: core.StringPtr(name),
 		Rules: rules,
 	}
 }
@@ -1815,7 +1815,7 @@ type ReplaceTargetOptions struct {
 	ID *string `json:"id" validate:"required,ne="`
 
 	// The name of the target. The name must be 1000 characters or less, and cannot include any special characters other
-	// than `(space) - . _ :`.
+	// than `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name,omitempty"`
 
 	// Property values for a Cloud Object Storage Endpoint in requests.
@@ -2028,8 +2028,10 @@ type Settings struct {
 	PermittedTargetRegions []string `json:"permitted_target_regions" validate:"required"`
 
 	// To store all your meta data in a single region.
-
 	MetadataRegionPrimary *string `json:"metadata_region_primary" validate:"required"`
+
+	// To store all your meta data in a backup region.
+	MetadataRegionBackup *string `json:"metadata_region_backup,omitempty"`
 
 	// If you set this true then you cannot access api through public network.
 	PrivateAPIEndpointOnly *bool `json:"private_api_endpoint_only" validate:"required"`
@@ -2050,6 +2052,10 @@ func UnmarshalSettings(m map[string]json.RawMessage, result interface{}) (err er
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metadata_region_primary", &obj.MetadataRegionPrimary)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "metadata_region_backup", &obj.MetadataRegionBackup)
 	if err != nil {
 		return
 	}
@@ -2098,6 +2104,9 @@ type Target struct {
 	// The timestamp of the target last updated time.
 	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
 
+	// An optional message containing information about the target.
+	Message *string `json:"message,omitempty"`
+
 	// The API version of the target.
 	APIVersion *int64 `json:"api_version" validate:"required"`
 }
@@ -2106,7 +2115,7 @@ type Target struct {
 // The type of the target.
 const (
 	TargetTargetTypeCloudObjectStorageConst = "cloud_object_storage"
-	TargetTargetTypeLogdnaConst             = "logdna"
+	TargetTargetTypeLogdnaConst = "logdna"
 )
 
 // UnmarshalTarget unmarshals an instance of Target from the specified map of raw messages.
@@ -2149,6 +2158,10 @@ func UnmarshalTarget(m map[string]json.RawMessage, result interface{}) (err erro
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
 		return
 	}

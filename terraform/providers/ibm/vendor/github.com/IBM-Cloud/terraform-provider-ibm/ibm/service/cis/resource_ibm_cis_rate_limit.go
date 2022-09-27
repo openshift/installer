@@ -37,6 +37,8 @@ func ResourceIBMCISRateLimit() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "CIS Intance CRN",
+				ValidateFunc: validate.InvokeValidator("ibm_cis_rate_limit",
+					"cis_id"),
 			},
 			"domain_id": {
 				Type:             schema.TypeString,
@@ -262,6 +264,14 @@ func ResourceIBMCISRateLimitValidator() *validate.ResourceValidator {
 	methodValues := "GET, POST, PUT, DELETE, PATCH, HEAD, _ALL_"
 	schemeValues := "HTTP, HTTPS, _ALL_"
 
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 cisRLDescription,

@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -25,6 +26,9 @@ func DataSourceIBMCISWAFPackages() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "DNS Zone CRN",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_waf_packages",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -69,7 +73,24 @@ func DataSourceIBMCISWAFPackages() *schema.Resource {
 		},
 	}
 }
+func DataSourceIBMCISWAFPackagesValidator() *validate.ResourceValidator {
 
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISWAFPackagesValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_waf_packages",
+		Schema:       validateSchema}
+	return &iBMCISWAFPackagesValidator
+}
 func dataSourceIBMCISWAFPackagesRead(d *schema.ResourceData, meta interface{}) error {
 	cisClient, err := meta.(conns.ClientSession).CisWAFPackageClientSession()
 	if err != nil {

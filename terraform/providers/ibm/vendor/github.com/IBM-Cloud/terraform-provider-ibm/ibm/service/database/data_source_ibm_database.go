@@ -96,8 +96,28 @@ func DataSourceIBMDatabaseInstance() *schema.Resource {
 			},
 			"platform_options": {
 				Description: "Platform-specific options for this deployment.r",
-				Type:        schema.TypeMap,
+				Type:        schema.TypeSet,
 				Computed:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key_protect_key_id": {
+							Description: "Key protect key id",
+							Type:        schema.TypeString,
+							Computed:    true,
+							Deprecated:  "This field is deprecated and has been replaced by disk_encryption_key_crn",
+						},
+						"disk_encryption_key_crn": {
+							Description: "Disk encryption key crn",
+							Type:        schema.TypeString,
+							Computed:    true,
+						},
+						"backup_encryption_key_crn": {
+							Description: "Backup encryption key crn",
+							Type:        schema.TypeString,
+							Computed:    true,
+						},
+					},
+				},
 			},
 			"tags": {
 				Type:     schema.TypeSet,
@@ -678,12 +698,7 @@ func dataSourceIBMDatabaseInstanceRead(d *schema.ResourceData, meta interface{})
 	d.Set("adminuser", cdb.AdminUser)
 	d.Set("version", cdb.Version)
 	if &cdb.PlatformOptions != nil {
-		platformOptions := map[string]interface{}{
-			"key_protect_key_id":        cdb.PlatformOptions.KeyProtectKey,
-			"disk_encryption_key_crn":   cdb.PlatformOptions.DiskENcryptionKeyCrn,
-			"backup_encryption_key_crn": cdb.PlatformOptions.BackUpEncryptionKeyCrn,
-		}
-		d.Set("platform_options", platformOptions)
+		d.Set("platform_options", flex.ExpandPlatformOptions(cdb.PlatformOptions))
 	}
 
 	groupList, err := icdClient.Groups().GetGroups(icdId)
