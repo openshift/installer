@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/containers/image/pkg/sysregistriesv2"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 )
@@ -198,12 +200,30 @@ func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
 
 func (i *RegistriesConf) finish() error {
 
+	if string(i.File.Data) != defaultRegistriesConf {
+		return i.validateReleaseImageIsSameInRegistriesConf()
+	}
+
 	config, err := extractLocationMirrorDataFromRegistries(i.File.Data)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("failed to parse mirrors in %s", RegistriesConfFilename))
 	}
 
 	i.MirrorConfig = config
+
+	return nil
+}
+
+func (i *RegistriesConf) validateReleaseImageIsSameInRegistriesConf() error {
+
+	releaseImage := &releaseimage.Image{}
+	releaseImage.Generate(asset.Parents{})
+
+	releaseImagePath := strings.Split(releaseImage.PullSpec, ":")[0]
+
+	if !strings.Contains(string(i.File.Data), releaseImagePath) {
+		return errors.New(fmt.Sprintf("%s should have an entry matching the releaseImage %s", RegistriesConfFilename, releaseImagePath))
+	}
 
 	return nil
 }
