@@ -178,14 +178,20 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 		}
 	}
 
-	ci.MachinesSubnet, err = ci.getSubnet(ic.OpenStack.MachinesSubnet)
-	if err != nil {
-		return errors.Wrap(err, "failed to fetch machine subnet info")
+	if subnetID := ic.OpenStack.MachinesSubnet; subnetID != "" {
+		subnet, err := subnets.Get(ci.clients.networkClient, subnetID).Extract()
+		if err != nil {
+			if !isNotFoundError(err) {
+				return errors.Wrap(err, "failed to fetch machine subnet info")
+			}
+		} else {
+			ci.MachinesSubnet = subnet
+		}
 	}
 
 	for _, failureDomain := range ic.OpenStack.FailureDomains {
-		if failureDomain.SubnetID != "" {
-			failureDomainSubnet, err := ci.getSubnet(failureDomain.SubnetID)
+		if subnetID := failureDomain.SubnetID; subnetID != "" {
+			failureDomainSubnet, err := subnets.Get(ci.clients.networkClient, subnetID).Extract()
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch failure domain subnet info")
 			}
@@ -235,21 +241,6 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	}
 
 	return nil
-}
-
-func (ci *CloudInfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
-	if subnetID == "" {
-		return nil, nil
-	}
-	subnet, err := subnets.Get(ci.clients.networkClient, subnetID).Extract()
-	if err != nil {
-		if isNotFoundError(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return subnet, nil
 }
 
 func isNotFoundError(err error) bool {
