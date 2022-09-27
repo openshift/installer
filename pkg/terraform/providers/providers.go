@@ -17,6 +17,8 @@ var (
 	AliCloud = provider("alicloud")
 	// AWS is the provider for creating resources in AWS.
 	AWS = provider("aws")
+	// AzurePrivateDNS is an internal provider for creating private DNS zones in Azure.
+	AzurePrivateDNS = provider("azureprivatedns")
 	// AzureRM is the provider for creating resources in the Azure clouds.
 	AzureRM = provider("azurerm")
 	// AzureStack is the provider for creating resources in Azure Stack.
