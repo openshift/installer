@@ -23,7 +23,6 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 	for _, validate := range [...]platformValidation{
 		validateFailureDomainNamesNotEmpty,
 		validateFailureDomainNamesUnique,
-		validateFailureDomainMachinesSubnetDependency,
 	} {
 		if err := validate(p, c); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomains"), p.FailureDomains, err.Error()))
