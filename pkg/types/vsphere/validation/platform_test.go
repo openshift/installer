@@ -360,6 +360,15 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.failureDomains\.topology\.datacenter: Required value: must specify a datacenter`,
 		},
 		{
+			name: "Multi-zone platform failureDomain topology empty networks",
+			platform: func() *vsphere.Platform {
+				p := validMultiVCenterPlatform()
+				p.FailureDomains[0].Topology.Networks = []string{}
+				return p
+			}(),
+			expectedError: `^test-path\.failureDomains\.topology\.networks: Required value: must specify a network`,
+		},
+		{
 			name: "Multi-zone platform failureDomain defaults applied",
 			platform: func() *vsphere.Platform {
 				p := validMultiVCenterPlatform()
