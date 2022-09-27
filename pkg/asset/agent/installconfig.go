@@ -156,6 +156,10 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 
 	//  platform None always imply SNO cluster
 	if installConfig.Platform.Name() == none.Name {
+		if installConfig.Networking.NetworkType != "OVNKubernetes" {
+			fieldPath = field.NewPath("Networking", "NetworkType")
+			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Networking.NetworkType, "Only OVNKubernetes network type is allowed for Single Node OpenShift (SNO) cluster"))
+		}
 		if *installConfig.ControlPlane.Replicas != 1 {
 			fieldPath = field.NewPath("ControlPlane", "Replicas")
 			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("control plane replicas must be 1 for %s platform. Found %v", none.Name, *installConfig.ControlPlane.Replicas)))

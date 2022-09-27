@@ -81,6 +81,8 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
 compute:
   - architecture: amd64
     hyperthreading: Enabled
@@ -107,6 +109,8 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
 controlPlane:
   architecture: amd64
   hyperthreading: Enabled
@@ -121,12 +125,42 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Installing a Single Node Openshift requires explicitly setting compute replicas to zero",
 		},
 		{
+			name: "invalid networkType for SNO cluster",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OpenShiftSDN
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 1
+platform:
+  none : {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: "invalid install-config configuration: Networking.NetworkType: Invalid value: \"OpenShiftSDN\": Only OVNKubernetes network type is allowed for Single Node OpenShift (SNO) cluster",
+		},
+		{
 			name: "valid configuration for none platform for sno",
 			data: `
 apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
 compute:
   - architecture: amd64
     hyperthreading: Enabled
