@@ -34,6 +34,11 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				Name: getClusterDeploymentName(getValidOptionalInstallConfig()),
 			},
 			Networking: hiveext.Networking{
+				MachineNetwork: []hiveext.MachineNetworkEntry{
+					{
+						CIDR: "10.10.11.0/24",
+					},
+				},
 				ClusterNetwork: []hiveext.ClusterNetworkEntry{
 					{
 						CIDR:       "192.168.111.0/24",
@@ -82,6 +87,55 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				installConfigWithoutNetworkType,
 			},
 			expectedConfig: goodACI,
+		},
+		{
+			name: "valid configuration dual stack",
+			dependencies: []asset.Asset{
+				getValidOptionalInstallConfigDualStack(),
+			},
+			expectedConfig: &hiveext.AgentClusterInstall{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      getAgentClusterInstallName(getValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+				},
+				Spec: hiveext.AgentClusterInstallSpec{
+					ImageSetRef: &hivev1.ClusterImageSetReference{
+						Name: getClusterImageSetReferenceName(),
+					},
+					ClusterDeploymentRef: corev1.LocalObjectReference{
+						Name: getClusterDeploymentName(getValidOptionalInstallConfig()),
+					},
+					Networking: hiveext.Networking{
+						MachineNetwork: []hiveext.MachineNetworkEntry{
+							{
+								CIDR: "10.10.11.0/24",
+							},
+							{
+								CIDR: "2001:db8:5dd8:c956::/64",
+							},
+						},
+						ClusterNetwork: []hiveext.ClusterNetworkEntry{
+							{
+								CIDR:       "192.168.111.0/24",
+								HostPrefix: 23,
+							},
+							{
+								CIDR:       "2001:db8:1111:2222::/64",
+								HostPrefix: 64,
+							},
+						},
+						ServiceNetwork: []string{"172.30.0.0/16", "fd02::/112"},
+						NetworkType:    "OVNKubernetes",
+					},
+					SSHPublicKey: strings.Trim(TestSSHKey, "|\n\t"),
+					ProvisionRequirements: hiveext.ProvisionRequirements{
+						ControlPlaneAgents: 3,
+						WorkerAgents:       5,
+					},
+					APIVIP:     "192.168.122.10",
+					IngressVIP: "192.168.122.11",
+				},
+			},
 		},
 	}
 	for _, tc := range cases {
@@ -190,6 +244,8 @@ spec:
   imageSetRef:
     name: openshift-v4.10.0
   networking:
+    machineNetwork:
+    - cidr: 10.10.11.0/24
     clusterNetwork:
     - cidr: 10.128.0.0/14
       hostPrefix: 23
@@ -217,6 +273,11 @@ spec:
 						Name: "openshift-v4.10.0",
 					},
 					Networking: hiveext.Networking{
+						MachineNetwork: []hiveext.MachineNetworkEntry{
+							{
+								CIDR: "10.10.11.0/24",
+							},
+						},
 						ClusterNetwork: []hiveext.ClusterNetworkEntry{
 							{
 								CIDR:       "10.128.0.0/14",
@@ -312,6 +373,8 @@ spec:
   imageSetRef:
     name: openshift-v4.10.0
   networking:
+    machineNetwork:
+    - cidr: 10.10.11.0/24
     clusterNetwork:
     - cidr: 10.128.0.0/14
       hostPrefix: 23
@@ -338,6 +401,11 @@ spec:
 						Name: "openshift-v4.10.0",
 					},
 					Networking: hiveext.Networking{
+						MachineNetwork: []hiveext.MachineNetworkEntry{
+							{
+								CIDR: "10.10.11.0/24",
+							},
+						},
 						ClusterNetwork: []hiveext.ClusterNetworkEntry{
 							{
 								CIDR:       "10.128.0.0/14",
@@ -346,6 +414,84 @@ spec:
 						},
 						ServiceNetwork: []string{
 							"172.30.0.0/16",
+						},
+						NetworkType: "OVNKubernetes",
+					},
+					ProvisionRequirements: hiveext.ProvisionRequirements{
+						ControlPlaneAgents: 3,
+						WorkerAgents:       2,
+					},
+					SSHPublicKey: "ssh-rsa AAAAmyKey",
+				},
+			},
+		},
+		{
+			name: "valid-config-file-dual-stack",
+			data: `
+metadata:
+  name: test-agent-cluster-install-dual-stack
+  namespace: cluster0
+spec:
+  apiVIP: 192.168.111.5
+  ingressVIP: 192.168.111.4
+  clusterDeploymentRef:
+    name: ostest
+  imageSetRef:
+    name: openshift-v4.10.0
+  networking:
+    machineNetwork:
+    - cidr: 10.10.11.0/24
+    - cidr: 2001:db8:5dd8:c956::/64
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    - cidr: 2001:db8:1111:2222::/64
+      hostPrefix: 64
+    serviceNetwork:
+    - 172.30.0.0/16
+    - fd02::/112
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 2
+  sshPublicKey: |
+    ssh-rsa AAAAmyKey`,
+			expectedFound: true,
+			expectedConfig: &hiveext.AgentClusterInstall{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-agent-cluster-install-dual-stack",
+					Namespace: "cluster0",
+				},
+				Spec: hiveext.AgentClusterInstallSpec{
+					APIVIP:     "192.168.111.5",
+					IngressVIP: "192.168.111.4",
+					ClusterDeploymentRef: corev1.LocalObjectReference{
+						Name: "ostest",
+					},
+					ImageSetRef: &hivev1.ClusterImageSetReference{
+						Name: "openshift-v4.10.0",
+					},
+					Networking: hiveext.Networking{
+						MachineNetwork: []hiveext.MachineNetworkEntry{
+							{
+								CIDR: "10.10.11.0/24",
+							},
+							{
+								CIDR: "2001:db8:5dd8:c956::/64",
+							},
+						},
+						ClusterNetwork: []hiveext.ClusterNetworkEntry{
+							{
+								CIDR:       "10.128.0.0/14",
+								HostPrefix: 23,
+							},
+							{
+								CIDR:       "2001:db8:1111:2222::/64",
+								HostPrefix: 64,
+							},
+						},
+						ServiceNetwork: []string{
+							"172.30.0.0/16",
+							"fd02::/112",
 						},
 						NetworkType: "OVNKubernetes",
 					},

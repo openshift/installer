@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/defaults"
-	"github.com/openshift/installer/pkg/validate"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -62,17 +61,8 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 
 		clusterNetwork := []hiveext.ClusterNetworkEntry{}
 		for _, cn := range installConfig.Config.Networking.ClusterNetwork {
-			_, cidr, err := net.ParseCIDR(cn.CIDR.String())
-			if err != nil {
-				return errors.Wrap(err, "failed to parse ClusterNetwork CIDR")
-			}
-			err = validate.SubnetCIDR(cidr)
-			if err != nil {
-				return errors.Wrap(err, "failed to validate ClusterNetwork CIDR")
-			}
-
 			entry := hiveext.ClusterNetworkEntry{
-				CIDR:       cidr.String(),
+				CIDR:       cn.CIDR.String(),
 				HostPrefix: cn.HostPrefix,
 			}
 			clusterNetwork = append(clusterNetwork, entry)
@@ -80,11 +70,15 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 
 		serviceNetwork := []string{}
 		for _, sn := range installConfig.Config.Networking.ServiceNetwork {
-			cidr, err := ipnet.ParseCIDR(sn.String())
-			if err != nil {
-				return errors.Wrap(err, "failed to parse ServiceNetwork CIDR")
+			serviceNetwork = append(serviceNetwork, sn.String())
+		}
+
+		machineNetwork := []hiveext.MachineNetworkEntry{}
+		for _, mn := range installConfig.Config.Networking.MachineNetwork {
+			entry := hiveext.MachineNetworkEntry{
+				CIDR: mn.CIDR.String(),
 			}
-			serviceNetwork = append(serviceNetwork, cidr.String())
+			machineNetwork = append(machineNetwork, entry)
 		}
 
 		agentClusterInstall := &hiveext.AgentClusterInstall{
@@ -100,6 +94,7 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 					Name: getClusterDeploymentName(installConfig),
 				},
 				Networking: hiveext.Networking{
+					MachineNetwork: machineNetwork,
 					ClusterNetwork: clusterNetwork,
 					ServiceNetwork: serviceNetwork,
 				},
