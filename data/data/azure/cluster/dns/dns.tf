@@ -10,15 +10,6 @@ resource "azurerm_private_dns_zone" "private" {
   depends_on = [azurerm_dns_cname_record.api_external_v4, azurerm_dns_cname_record.api_external_v6]
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "network" {
-  name                  = "${var.cluster_id}-network-link"
-  resource_group_name   = var.resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.private.name
-  virtual_network_id    = var.virtual_network_id
-
-  depends_on = [azurerm_private_dns_zone.private]
-}
-
 resource "azurerm_private_dns_a_record" "apiint_internal" {
   count = var.use_ipv4 ? 1 : 0
 

@@ -69,3 +69,16 @@ module "dns" {
   use_ipv4 = var.use_ipv4
   use_ipv6 = var.use_ipv6
 }
+
+# This resource has been moved from the dns module due to:
+# https://github.com/hashicorp/terraform-provider-azurerm/issues/18350
+# Having a dependency on the DNS module ensures all dns entries are created
+# in the private zone before the link is created.
+resource "azurerm_private_dns_zone_virtual_network_link" "network" {
+  name                  = "${var.cluster_id}-network-link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = module.dns.private_dns_zone_name
+  virtual_network_id    = var.virtual_network_id
+
+  depends_on = [module.dns]
+}
