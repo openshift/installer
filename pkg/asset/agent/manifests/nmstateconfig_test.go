@@ -28,6 +28,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 			name: "agent-config does not contain networkConfig",
 			dependencies: []asset.Asset{
 				getValidDHCPAgentConfigNoHosts(),
+				getValidOptionalInstallConfig(),
 			},
 			expectedConfig: nil,
 		},
@@ -35,6 +36,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 			name: "valid dhcp agent config with some hosts without networkconfig",
 			dependencies: []asset.Asset{
 				getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig(),
+				getValidOptionalInstallConfig(),
 			},
 			expectedConfig: []*aiv1beta1.NMStateConfig{
 				{
@@ -43,9 +45,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig()), "-0"),
-						Namespace: getNMStateConfigNamespace(getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig()),
-						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig()),
+						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
+						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -64,7 +66,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "valid config",
 			dependencies: []asset.Asset{
+
 				getValidAgentConfig(),
+				getValidOptionalInstallConfig(),
 			},
 			expectedConfig: []*aiv1beta1.NMStateConfig{
 				{
@@ -73,9 +77,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidAgentConfig()), "-0"),
-						Namespace: getNMStateConfigNamespace(getValidAgentConfig()),
-						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidAgentConfig()),
+						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
+						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -99,9 +103,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidAgentConfig()), "-1"),
-						Namespace: getNMStateConfigNamespace(getValidAgentConfig()),
-						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidAgentConfig()),
+						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-1"),
+						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -121,9 +125,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidAgentConfig()), "-2"),
-						Namespace: getNMStateConfigNamespace(getValidAgentConfig()),
-						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidAgentConfig()),
+						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-2"),
+						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{

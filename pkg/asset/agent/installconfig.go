@@ -188,3 +188,12 @@ func (a *OptionalInstallConfig) contains(platform string, supportedPlatforms []s
 	}
 	return false
 }
+
+// ClusterName returns the name of the cluster, or a default name if no
+// InstallConfig is supplied.
+func (a *OptionalInstallConfig) ClusterName() string {
+	if a.Config != nil && a.Config.ObjectMeta.Name != "" {
+		return a.Config.ObjectMeta.Name
+	}
+	return "agent-cluster"
+}

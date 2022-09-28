@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	k8syaml "sigs.k8s.io/yaml"
 )
@@ -61,6 +62,7 @@ func (*NMStateConfig) Name() string {
 func (*NMStateConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agentconfig.AgentConfig{},
+		&agent.OptionalInstallConfig{},
 	}
 }
 
@@ -68,7 +70,8 @@ func (*NMStateConfig) Dependencies() []asset.Asset {
 func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 
 	agentConfig := &agentconfig.AgentConfig{}
-	dependencies.Get(agentConfig)
+	installConfig := &agent.OptionalInstallConfig{}
+	dependencies.Get(agentConfig, installConfig)
 
 	staticNetworkConfig := []*models.HostStaticNetworkConfig{}
 	nmStateConfigs := []*aiv1beta1.NMStateConfig{}
@@ -89,9 +92,9 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf(getNMStateConfigName(agentConfig)+"-%d", i),
-						Namespace: getNMStateConfigNamespace(agentConfig),
-						Labels:    getNMStateConfigLabelsFromAgentConfig(agentConfig),
+						Name:      fmt.Sprintf(getNMStateConfigName(installConfig)+"-%d", i),
+						Namespace: getObjectMetaNamespace(installConfig),
+						Labels:    getNMStateConfigLabels(installConfig),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						NetConfig: aiv1beta1.NetConfig{
