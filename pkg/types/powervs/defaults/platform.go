@@ -9,7 +9,7 @@ import (
 var (
 	// DefaultMachineCIDR is the PowerVS default IP address space from
 	// which to assign machine IPs.
-	DefaultMachineCIDR = ipnet.MustParseCIDR("192.168.0.0/16")
+	DefaultMachineCIDR = ipnet.MustParseCIDR("192.168.0.0/24")
 )
 
 // SetPlatformDefaults sets the defaults for the platform.

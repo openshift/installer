@@ -310,7 +310,7 @@ type Networking struct {
 	// be empty or match the first entry in the list.
 	// Default is 10.0.0.0/16 for all platforms other than libvirt and Power VS.
 	// For libvirt, the default is 192.168.126.0/24.
-	// For Power VS, the default is 192.168.0.0/16.
+	// For Power VS, the default is 192.168.0.0/24.
 	//
 	// +optional
 	MachineNetwork []MachineNetworkEntry `json:"machineNetwork,omitempty"`
