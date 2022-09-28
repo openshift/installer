@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -45,6 +46,14 @@ func (m *ContainerImageAvailabilityRequest) validateImages(formats strfmt.Regist
 
 	if err := validate.Required("images", "body", m.Images); err != nil {
 		return err
+	}
+
+	for i := 0; i < len(m.Images); i++ {
+
+		if err := validate.Pattern("images"+"."+strconv.Itoa(i), "body", m.Images[i], `^(([a-zA-Z0-9\-\.]+)(:[0-9]+)?\/)?[a-z0-9\._\-\/@]+[?::a-zA-Z0-9_\-.]+$`); err != nil {
+			return err
+		}
+
 	}
 
 	return nil

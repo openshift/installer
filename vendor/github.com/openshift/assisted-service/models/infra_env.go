@@ -36,6 +36,9 @@ type InfraEnv struct {
 	// Format: date-time
 	CreatedAt *timeext.Time `json:"created_at" gorm:"type:timestamp with time zone"`
 
+	// JSON formatted string array representing the discovery image kernel arguments.
+	DiscoveryKernelArguments *string `json:"discovery_kernel_arguments,omitempty" gorm:"type:text"`
+
 	// download url
 	DownloadURL string `json:"download_url,omitempty"`
 

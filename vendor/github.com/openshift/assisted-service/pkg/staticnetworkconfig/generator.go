@@ -61,7 +61,8 @@ func (s *StaticNetworkConfigGenerator) GenerateStaticNetworkConfigData(ctx conte
 	for i, hostConfig := range staticNetworkConfig {
 		hostFileList, err := s.generateHostStaticNetworkConfigData(ctx, hostConfig, fmt.Sprintf("host%d", i))
 		if err != nil {
-			s.log.WithError(err).Errorf("Failed to create static config for host")
+			err = errors.Wrapf(err, "failed to create static config for host %d", i)
+			s.log.Error(err)
 			return nil, err
 		}
 		filesList = append(filesList, hostFileList...)
@@ -112,11 +113,17 @@ func (s *StaticNetworkConfigGenerator) executeNMStatectl(ctx context.Context, ho
 		s.log.WithError(err).Errorf("Failed to write host config to temp file")
 		return "", err
 	}
+	if err = f.Sync(); err != nil {
+		s.log.WithError(err).Warn("Failed to sync file")
+	}
+	if err = f.Close(); err != nil {
+		s.log.WithError(err).Warn("Failed to close file")
+	}
 	stdout, stderr, retCode := executer.ExecuteWithContext(ctx, "nmstatectl", "gc", f.Name())
 	if retCode != 0 {
-		msg := fmt.Sprintf("<nmstatectl gc> failed, errorCode %d, stderr %s, input yaml <%s>", retCode, stderr, hostYAML)
-		s.log.Errorf("%s", msg)
-		return "", fmt.Errorf("%s", msg)
+		s.log.Errorf("<nmstatectl gc> failed, errorCode %d, stderr %s, input yaml <%s>", retCode, stderr, hostYAML)
+		errMsg := strings.Split(stderr, "Error:")
+		return "", fmt.Errorf("failed to execute 'nmstatectl gc', error: %s", strings.TrimSpace(errMsg[len(errMsg)-1]))
 	}
 	return stdout, nil
 }
@@ -135,6 +142,9 @@ func (s *StaticNetworkConfigGenerator) createNMConnectionFiles(nmstateOutput, ho
 	}
 	filesList := []StaticNetworkConfigData{}
 	connectionsList := hostNMConnections["NetworkManager"].([]interface{})
+	if len(connectionsList) == 0 {
+		return nil, errors.Errorf("nmstate generated an empty NetworkManager config file content")
+	}
 	for _, connection := range connectionsList {
 		connectionElems := connection.([]interface{})
 		fileName := connectionElems[0].(string)
@@ -184,7 +194,9 @@ func (s *StaticNetworkConfigGenerator) ValidateStaticConfigParams(ctx context.Co
 	var err *multierror.Error
 	for i, hostConfig := range staticNetworkConfig {
 		err = multierror.Append(err, s.validateMacInterfaceName(i, hostConfig.MacInterfaceMap))
-		err = multierror.Append(err, s.validateNMStateYaml(ctx, hostConfig.NetworkYaml))
+		if validateErr := s.validateNMStateYaml(ctx, hostConfig.NetworkYaml); validateErr != nil {
+			err = multierror.Append(err, fmt.Errorf("failed to validate network yaml for host %d, %s", i, validateErr))
+		}
 	}
 	return err.ErrorOrNil()
 }
@@ -214,10 +226,49 @@ func (s *StaticNetworkConfigGenerator) validateNMStateYaml(ctx context.Context, 
 	return err
 }
 
+func compareMapInterfaces(intf1, intf2 *models.MacInterfaceMapItems0) bool {
+	if intf1.LogicalNicName != intf2.LogicalNicName {
+		return intf1.LogicalNicName < intf2.LogicalNicName
+	}
+	return intf1.MacAddress < intf2.MacAddress
+}
+
+func compareMacInterfaceMaps(map1, map2 models.MacInterfaceMap) bool {
+	if len(map1) != len(map2) {
+		return len(map1) < len(map2)
+	}
+	for i := range map1 {
+		less := compareMapInterfaces(map1[i], map2[i])
+		greater := compareMapInterfaces(map2[i], map1[i])
+		if less || greater {
+			return less
+		}
+	}
+	return false
+}
+
+func sortStaticNetworkConfig(staticNetworkConfig []*models.HostStaticNetworkConfig) {
+	for i := range staticNetworkConfig {
+		item := staticNetworkConfig[i]
+		sort.SliceStable(item.MacInterfaceMap, func(i, j int) bool {
+			return compareMapInterfaces(item.MacInterfaceMap[i], item.MacInterfaceMap[j])
+		})
+	}
+	sort.SliceStable(staticNetworkConfig, func(i, j int) bool {
+		hostConfig1 := staticNetworkConfig[i]
+		hostConfig2 := staticNetworkConfig[j]
+		if hostConfig1.NetworkYaml != hostConfig2.NetworkYaml {
+			return hostConfig1.NetworkYaml < hostConfig2.NetworkYaml
+		}
+		return compareMacInterfaceMaps(hostConfig1.MacInterfaceMap, hostConfig2.MacInterfaceMap)
+	})
+}
+
 func (s *StaticNetworkConfigGenerator) FormatStaticNetworkConfigForDB(staticNetworkConfig []*models.HostStaticNetworkConfig) (string, error) {
 	if len(staticNetworkConfig) == 0 {
 		return "", nil
 	}
+	sortStaticNetworkConfig(staticNetworkConfig)
 	b, err := json.Marshal(&staticNetworkConfig)
 	if err != nil {
 		return "", errors.Wrap(err, "Failed to JSON Marshal static network config")

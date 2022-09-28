@@ -21,6 +21,12 @@ type ClusterPoolSpec struct {
 	// +required
 	Size int32 `json:"size"`
 
+	// RunningCount is the number of clusters we should keep running. The remainder will be kept hibernated until claimed.
+	// By default no clusters will be kept running (all will be hibernated).
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	RunningCount int32 `json:"runningCount,omitempty"`
+
 	// MaxSize is the maximum number of clusters that will be provisioned including clusters that have been claimed
 	// and ones waiting to be used.
 	// By default there is no limit.
@@ -61,8 +67,19 @@ type ClusterPoolSpec struct {
 	// clusters in the clusterpool to hibernating power state after it has been running for the given duration. The time
 	// that a cluster has been running is the time since the cluster was installed or the time since the cluster last came
 	// out of hibernation.
+	// This is a Duration value; see https://pkg.go.dev/time#ParseDuration for accepted formats.
+	// Note: due to discrepancies in validation vs parsing, we use a Pattern instead of `Format=duration`. See
+	// https://bugzilla.redhat.com/show_bug.cgi?id=2050332
+	// https://github.com/kubernetes/apimachinery/issues/131
+	// https://github.com/kubernetes/apiextensions-apiserver/issues/56
 	// +optional
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
 	HibernateAfter *metav1.Duration `json:"hibernateAfter,omitempty"`
+
+	// InstallAttemptsLimit is the maximum number of times Hive will attempt to install the cluster.
+	// +optional
+	InstallAttemptsLimit *int32 `json:"installAttemptsLimit,omitempty"`
 
 	// SkipMachinePools allows creating clusterpools where the machinepools are not managed by hive after cluster creation
 	// +optional
@@ -71,18 +88,52 @@ type ClusterPoolSpec struct {
 	// ClaimLifetime defines the lifetimes for claims for the cluster pool.
 	// +optional
 	ClaimLifetime *ClusterPoolClaimLifetime `json:"claimLifetime,omitempty"`
+
+	// HibernationConfig configures the hibernation/resume behavior of ClusterDeployments owned by the ClusterPool.
+	// +optional
+	HibernationConfig *HibernationConfig `json:"hibernationConfig"`
+}
+
+type HibernationConfig struct {
+	// ResumeTimeout is the maximum amount of time we will wait for an unclaimed ClusterDeployment to resume from
+	// hibernation (e.g. at the behest of runningCount, or in preparation for being claimed). If this time is
+	// exceeded, the ClusterDeployment will be considered Broken and we will replace it. The default (unspecified
+	// or zero) means no timeout -- we will allow the ClusterDeployment to continue trying to resume "forever".
+	// This is a Duration value; see https://pkg.go.dev/time#ParseDuration for accepted formats.
+	// Note: due to discrepancies in validation vs parsing, we use a Pattern instead of `Format=duration`. See
+	// https://bugzilla.redhat.com/show_bug.cgi?id=2050332
+	// https://github.com/kubernetes/apimachinery/issues/131
+	// https://github.com/kubernetes/apiextensions-apiserver/issues/56
+	// +optional
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+	ResumeTimeout metav1.Duration `json:"resumeTimeout"`
 }
 
 // ClusterPoolClaimLifetime defines the lifetimes for claims for the cluster pool.
 type ClusterPoolClaimLifetime struct {
 	// Default is the default lifetime of the claim when no lifetime is set on the claim itself.
+	// This is a Duration value; see https://pkg.go.dev/time#ParseDuration for accepted formats.
+	// Note: due to discrepancies in validation vs parsing, we use a Pattern instead of `Format=duration`. See
+	// https://bugzilla.redhat.com/show_bug.cgi?id=2050332
+	// https://github.com/kubernetes/apimachinery/issues/131
+	// https://github.com/kubernetes/apiextensions-apiserver/issues/56
 	// +optional
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
 	Default *metav1.Duration `json:"default,omitempty"`
 
 	// Maximum is the maximum lifetime of the claim after it is assigned a cluster. If the claim still exists
 	// when the lifetime has elapsed, the claim will be deleted by Hive.
 	// The lifetime of a claim is the mimimum of the lifetimes set by the cluster pool and the claim itself.
+	// This is a Duration value; see https://pkg.go.dev/time#ParseDuration for accepted formats.
+	// Note: due to discrepancies in validation vs parsing, we use a Pattern instead of `Format=duration`. See
+	// https://bugzilla.redhat.com/show_bug.cgi?id=2050332
+	// https://github.com/kubernetes/apimachinery/issues/131
+	// https://github.com/kubernetes/apiextensions-apiserver/issues/56
 	// +optional
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
 	Maximum *metav1.Duration `json:"maximum,omitempty"`
 }
 
@@ -91,7 +142,11 @@ type ClusterPoolStatus struct {
 	// Size is the number of unclaimed clusters that have been created for the pool.
 	Size int32 `json:"size"`
 
-	// Ready is the number of unclaimed clusters that have been installed and are ready to be claimed.
+	// Standby is the number of unclaimed clusters that are installed, but not running.
+	// +optional
+	Standby int32 `json:"standby"`
+
+	// Ready is the number of unclaimed clusters that are installed and are running and ready to be claimed.
 	Ready int32 `json:"ready"`
 
 	// Conditions includes more detailed status for the cluster pool
@@ -129,6 +184,9 @@ const (
 	// ClusterPoolCapacityAvailableCondition is set to provide information on whether the cluster pool has capacity
 	// available to create more clusters for the pool.
 	ClusterPoolCapacityAvailableCondition ClusterPoolConditionType = "CapacityAvailable"
+	// ClusterPoolAllClustersCurrentCondition indicates whether all unassigned (installing or ready)
+	// ClusterDeployments in the pool match the current configuration of the ClusterPool.
+	ClusterPoolAllClustersCurrentCondition ClusterPoolConditionType = "AllClustersCurrent"
 )
 
 // +genclient
@@ -139,8 +197,9 @@ const (
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.size,statuspath=.status.size
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready"
 // +kubebuilder:printcolumn:name="Size",type="string",JSONPath=".spec.size"
+// +kubebuilder:printcolumn:name="Standby",type="string",JSONPath=".status.standby"
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready"
 // +kubebuilder:printcolumn:name="BaseDomain",type="string",JSONPath=".spec.baseDomain"
 // +kubebuilder:printcolumn:name="ImageSet",type="string",JSONPath=".spec.imageSetRef.name"
 // +kubebuilder:resource:path=clusterpools,shortName=cp

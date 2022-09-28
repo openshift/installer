@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/openshift/hive/apis/hive/v1/aws"
+	"github.com/openshift/hive/apis/hive/v1/azure"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -43,6 +44,8 @@ type ClusterDeprovisionPlatform struct {
 	VSphere *VSphereClusterDeprovision `json:"vsphere,omitempty"`
 	// Ovirt contains oVirt-specific deprovision settings
 	Ovirt *OvirtClusterDeprovision `json:"ovirt,omitempty"`
+	// IBMCloud contains IBM Cloud specific deprovision settings
+	IBMCloud *IBMClusterDeprovision `json:"ibmcloud,omitempty"`
 }
 
 // AWSClusterDeprovision contains AWS-specific configuration for a ClusterDeprovision
@@ -64,6 +67,11 @@ type AWSClusterDeprovision struct {
 type AzureClusterDeprovision struct {
 	// CredentialsSecretRef is the Azure account credentials to use for deprovisioning the cluster
 	CredentialsSecretRef *corev1.LocalObjectReference `json:"credentialsSecretRef,omitempty"`
+	// cloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK
+	// with the appropriate Azure API endpoints.
+	// If empty, the value is equal to "AzurePublicCloud".
+	// +optional
+	CloudName *azure.CloudEnvironment `json:"cloudName,omitempty"`
 }
 
 // GCPClusterDeprovision contains GCP-specific configuration for a ClusterDeprovision
@@ -108,6 +116,20 @@ type OvirtClusterDeprovision struct {
 	// CertificatesSecretRef refers to a secret that contains the oVirt CA certificates
 	// necessary for communicating with the oVirt.
 	CertificatesSecretRef corev1.LocalObjectReference `json:"certificatesSecretRef"`
+}
+
+// IBMClusterDeprovision contains IBM Cloud specific configuration for a ClusterDeprovision
+type IBMClusterDeprovision struct {
+	// CredentialsSecretRef is the IBM Cloud credentials to use for deprovisioning the cluster
+	CredentialsSecretRef corev1.LocalObjectReference `json:"credentialsSecretRef"`
+	// AccountID is the IBM Cloud Account ID
+	AccountID string `json:"accountID"`
+	// CISInstanceCRN is the IBM Cloud Internet Services Instance CRN
+	CISInstanceCRN string `json:"cisInstanceCRN"`
+	// Region specifies the IBM Cloud region
+	Region string `json:"region"`
+	// BaseDomain is the DNS base domain
+	BaseDomain string `json:"baseDomain"`
 }
 
 // +genclient

@@ -50,6 +50,9 @@ type Interface struct {
 	// speed mbps
 	SpeedMbps int64 `json:"speed_mbps,omitempty"`
 
+	// type
+	Type string `json:"type,omitempty"`
+
 	// vendor
 	Vendor string `json:"vendor,omitempty"`
 }

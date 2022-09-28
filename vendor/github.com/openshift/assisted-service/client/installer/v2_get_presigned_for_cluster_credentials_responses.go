@@ -86,19 +86,19 @@ func NewV2GetPresignedForClusterCredentialsOK() *V2GetPresignedForClusterCredent
 Success.
 */
 type V2GetPresignedForClusterCredentialsOK struct {
-	Payload *models.Presigned
+	Payload *models.PresignedURL
 }
 
 func (o *V2GetPresignedForClusterCredentialsOK) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/credentials-presigned][%d] v2GetPresignedForClusterCredentialsOK  %+v", 200, o.Payload)
 }
-func (o *V2GetPresignedForClusterCredentialsOK) GetPayload() *models.Presigned {
+func (o *V2GetPresignedForClusterCredentialsOK) GetPayload() *models.PresignedURL {
 	return o.Payload
 }
 
 func (o *V2GetPresignedForClusterCredentialsOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.Presigned)
+	o.Payload = new(models.PresignedURL)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

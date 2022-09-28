@@ -28,7 +28,7 @@ func NewEditor(dataDir string) Editor {
 	return &rhcosEditor{workDir: dataDir}
 }
 
-// Creates the template minimal iso by removing the rootfs and adding the url
+// CreateMinimalISOTemplate Creates the template minimal iso by removing the rootfs and adding the url
 func (e *rhcosEditor) CreateMinimalISOTemplate(fullISOPath, rootFSURL, minimalISOPath string) error {
 	extractDir, err := os.MkdirTemp(e.workDir, "isoutil")
 	if err != nil {

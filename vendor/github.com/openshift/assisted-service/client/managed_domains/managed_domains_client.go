@@ -18,9 +18,6 @@ import (
 // API is the interface of the managed domains client
 type API interface {
 	/*
-	   ListManagedDomains List of managed DNS domains.*/
-	ListManagedDomains(ctx context.Context, params *ListManagedDomainsParams) (*ListManagedDomainsOK, error)
-	/*
 	   V2ListManagedDomains List of managed DNS domains.*/
 	V2ListManagedDomains(ctx context.Context, params *V2ListManagedDomainsParams) (*V2ListManagedDomainsOK, error)
 }
@@ -41,31 +38,6 @@ type Client struct {
 	transport runtime.ClientTransport
 	formats   strfmt.Registry
 	authInfo  runtime.ClientAuthInfoWriter
-}
-
-/*
-ListManagedDomains List of managed DNS domains.
-*/
-func (a *Client) ListManagedDomains(ctx context.Context, params *ListManagedDomainsParams) (*ListManagedDomainsOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "ListManagedDomains",
-		Method:             "GET",
-		PathPattern:        "/v1/domains",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &ListManagedDomainsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*ListManagedDomainsOK), nil
-
 }
 
 /*
