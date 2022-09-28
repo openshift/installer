@@ -385,15 +385,15 @@ type LoadBalancerStrategy struct {
 	// +optional
 	ProviderParameters *ProviderLoadBalancerParameters `json:"providerParameters,omitempty"`
 
-	// dnsManagementPolicy indicates if the lifecyle of the wildcard DNS record
+	// dnsManagementPolicy indicates if the lifecycle of the wildcard DNS record
 	// associated with the load balancer service will be managed by
 	// the ingress operator. It defaults to Managed.
 	// Valid values are: Managed and Unmanaged.
 	//
 	// +kubebuilder:default:="Managed"
-	// +kubebuilder:validation:Optional
-	// +optional
-	DNSManagementPolicy LoadBalancerDNSManagementPolicy `json:"dnsManagementPolicy"`
+	// +kubebuilder:validation:Required
+	// +default="Managed"
+	DNSManagementPolicy LoadBalancerDNSManagementPolicy `json:"dnsManagementPolicy,omitempty"`
 }
 
 // LoadBalancerDNSManagementPolicy is a policy for configuring how
@@ -1526,7 +1526,8 @@ type IngressControllerTuningOptions struct {
 	// which is currently 5s and subject to change without notice.
 	//
 	// This field expects an unsigned duration string of decimal numbers, each with optional
-	// fraction and a unit suffix, e.g. "100s", "1m30s". Valid time units are "s" and "m".
+	// fraction and a unit suffix, e.g. "300ms", "1.5h" or "2h45m".
+	// Valid time units are "ns", "us" (or "µs" U+00B5 or "μs" U+03BC), "ms", "s", "m", "h".
 	//
 	// Note: Setting a value significantly larger than the default of 5s can cause latency
 	// in observing updates to routes and their endpoints. HAProxy's configuration will
@@ -1534,7 +1535,7 @@ type IngressControllerTuningOptions struct {
 	// subsequent reload.
 	//
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Pattern=^(0|([0-9]+(\.[0-9]+)?(s|m))+)$
+	// +kubebuilder:validation:Pattern=^(0|([0-9]+(\.[0-9]+)?(ns|us|µs|μs|ms|s|m|h))+)$
 	// +kubebuilder:validation:Type:=string
 	// +optional
 	ReloadInterval metav1.Duration `json:"reloadInterval,omitempty"`
