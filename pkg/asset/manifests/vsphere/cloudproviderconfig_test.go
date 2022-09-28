@@ -34,9 +34,6 @@ port = "443"
 
 datacenters = "test-datacenter,test-datacenter2"
 
-[Workspace]
-folder = "/test-datacenter/vm/clusterID"
-
 [Labels]
 region = "openshift-region"
 zone = "openshift-zone"

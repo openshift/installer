@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/go-yaml/yaml"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	cloudconfig "k8s.io/cloud-provider-vsphere/pkg/common/config"
@@ -112,13 +114,10 @@ func MultiZoneIniCloudProviderConfig(folderPath string, p *vspheretypes.Platform
 	}
 	fmt.Fprintln(buf, "")
 
-	fmt.Fprintln(buf, "[Workspace]")
-	printIfNotEmpty(buf, "server", p.VCenter)
-	printIfNotEmpty(buf, "datacenter", p.Datacenter)
-	printIfNotEmpty(buf, "default-datastore", p.DefaultDatastore)
-	printIfNotEmpty(buf, "folder", folderPath)
-	printIfNotEmpty(buf, "resourcepool-path", p.ResourcePool)
-	fmt.Fprintln(buf, "")
+	regionTagCategory, zoneTagCategory, err := getTagCategoriesForVcenter(p)
+	if err != nil {
+		return "", errors.Wrap(err, "error adding zones to the cloud-config")
+	}
 
 	fmt.Fprintln(buf, "[Labels]")
 	printIfNotEmpty(buf, "region", regionTagCategory)
