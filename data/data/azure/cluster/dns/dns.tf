@@ -10,19 +10,13 @@ resource "azurerm_private_dns_zone" "private" {
   depends_on = [azurerm_dns_cname_record.api_external_v4, azurerm_dns_cname_record.api_external_v6]
 }
 
-# Sleep injected due to https://github.com/hashicorp/terraform-provider-azurerm/issues/18350
-resource "time_sleep" "wait_30_seconds" {
-  depends_on      = [azurerm_private_dns_zone.private]
-  create_duration = "30s"
-}
-
 resource "azurerm_private_dns_zone_virtual_network_link" "network" {
   name                  = "${var.cluster_id}-network-link"
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.private.name
   virtual_network_id    = var.virtual_network_id
 
-  depends_on = [time_sleep.wait_30_seconds]
+  depends_on = [azurerm_private_dns_zone.private]
 }
 
 resource "azurerm_private_dns_a_record" "apiint_internal" {
