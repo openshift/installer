@@ -57,8 +57,10 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 
 // PersistToFile writes the iso image in the assets folder
 func (a *AgentImage) PersistToFile(directory string) error {
+	// If the imageReader is not set then it means that either one of the AgentImage
+	// dependencies or the asset itself failed for some reason
 	if a.imageReader == nil {
-		return errors.New("image reader not available")
+		return errors.New("cannot generate ISO image due to configuration errors")
 	}
 
 	defer a.imageReader.Close()
