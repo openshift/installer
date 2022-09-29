@@ -244,6 +244,41 @@ hosts:
 			expectedFound: false,
 			expectedError: "invalid Agent Config configuration: Hosts[0].Host: Forbidden: host role has incorrect value. Role must either be 'master' or 'worker'",
 		},
+		{
+			name: "different-ifaces-same-host-cannot-have-same-mac",
+			data: `
+apiVersion: v1alpha1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80
+hosts:
+  - interfaces:
+      - name: enp3s1
+        macAddress: 28:d2:44:d2:b2:1a
+      - name: enp3s2
+        macAddress: 28:d2:44:d2:b2:1a`,
+
+			expectedFound: false,
+			expectedError: "invalid Agent Config configuration: Hosts[0].Interfaces[1].macAddress: Invalid value: \"duplicate MAC address found\": 28:d2:44:d2:b2:1a",
+		},
+		{
+			name: "different-hosts-cannot-have-same-mac",
+			data: `
+apiVersion: v1alpha1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80
+hosts:
+  - interfaces:
+      - name: enp3s1
+        macAddress: 28:d2:44:d2:b2:1a
+  - interfaces:
+      - name: enp3s1
+        macAddress: 28:d2:44:d2:b2:1a`,
+
+			expectedFound: false,
+			expectedError: "invalid Agent Config configuration: Hosts[1].Interfaces[0].macAddress: Invalid value: \"duplicate MAC address found\": 28:d2:44:d2:b2:1a",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

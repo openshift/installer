@@ -152,11 +152,12 @@ func (a *AgentConfig) finish() error {
 func (a *AgentConfig) validateAgent() field.ErrorList {
 	var allErrs field.ErrorList
 
+	macs := make(map[string]bool)
 	for i, host := range a.Config.Hosts {
 
 		hostPath := field.NewPath("Hosts").Index(i)
 
-		if err := a.validateHostInterfaces(hostPath, host); err != nil {
+		if err := a.validateHostInterfaces(hostPath, host, macs); err != nil {
 			allErrs = append(allErrs, err...)
 		}
 
@@ -172,7 +173,7 @@ func (a *AgentConfig) validateAgent() field.ErrorList {
 	return allErrs
 }
 
-func (a *AgentConfig) validateHostInterfaces(hostPath *field.Path, host agent.Host) field.ErrorList {
+func (a *AgentConfig) validateHostInterfaces(hostPath *field.Path, host agent.Host, macs map[string]bool) field.ErrorList {
 	var allErrs field.ErrorList
 
 	interfacePath := hostPath.Child("Interfaces")
@@ -181,10 +182,18 @@ func (a *AgentConfig) validateHostInterfaces(hostPath *field.Path, host agent.Ho
 	}
 
 	for j := range host.Interfaces {
-		if host.Interfaces[j].MacAddress == "" {
-			macAddressPath := interfacePath.Index(j).Child("macAddress")
+		mac := host.Interfaces[j].MacAddress
+		macAddressPath := interfacePath.Index(j).Child("macAddress")
+
+		if mac == "" {
 			allErrs = append(allErrs, field.Required(macAddressPath, "each interface must have a MAC address defined"))
+			continue
 		}
+
+		if _, ok := macs[mac]; ok {
+			allErrs = append(allErrs, field.Invalid(macAddressPath, "duplicate MAC address found", mac))
+		}
+		macs[mac] = true
 	}
 
 	return allErrs
