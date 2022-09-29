@@ -112,5 +112,10 @@ func (a *KubeadminPassword) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 
 	a.PasswordHash = hashFile.Data
+	// Assisted-service expects to always see a password file, so generate an
+	// empty one
+	a.File = &asset.File{
+		Filename: kubeadminPasswordPath,
+	}
 	return true, nil
 }
