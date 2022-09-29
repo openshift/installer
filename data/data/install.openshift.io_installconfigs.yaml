@@ -2286,10 +2286,39 @@ spec:
                       NetworkProjectID specifies which project the network and subnets
                       exist in when they are not in the main ProjectID.
                     type: string
+                  privateDNSZone:
+                    description: PrivateDNSZone Technology Preview. PrivateDNSZone
+                      contains the zone ID and project where the Private DNS zone
+                      will be created.
+                    properties:
+                      id:
+                        description: ID Technology Preview. ID or name of the zone.
+                        type: string
+                      project:
+                        description: ProjectID Technology Preview When the ProjectID
+                          is provided, the zone will be created in this project. When
+                          the ProjectID is empty, the DNS zone with this ID will be
+                          created and managed in the Service Project (GCP.ProjectID).
+                        type: string
+                    type: object
                   projectID:
                     description: ProjectID is the the project that will be used for
                       the cluster.
                     type: string
+                  publicDNSZone:
+                    description: PublicDNSZone Technology Preview. PublicDNSZone contains
+                      the zone ID and project where the Public DNS zone will be created.
+                    properties:
+                      id:
+                        description: ID Technology Preview. ID or name of the zone.
+                        type: string
+                      project:
+                        description: ProjectID Technology Preview When the ProjectID
+                          is provided, the zone will be created in this project. When
+                          the ProjectID is empty, the DNS zone with this ID will be
+                          created and managed in the Service Project (GCP.ProjectID).
+                        type: string
+                    type: object
                   region:
                     description: Region specifies the GCP region where the cluster
                       will be created.
