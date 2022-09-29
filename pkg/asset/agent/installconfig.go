@@ -156,7 +156,12 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 
 	var workers int
 	for _, worker := range installConfig.Compute {
-		workers = workers + int(*worker.Replicas)
+		if worker.Replicas == nil {
+			fieldPath = field.NewPath("Compute", "Replicas")
+			allErrs = append(allErrs, field.Required(fieldPath, "Installing a Single Node Openshift requires explicitly setting Compute.Replicas to 0"))
+		} else {
+			workers = workers + int(*worker.Replicas)
+		}
 	}
 
 	//  platform None always imply SNO cluster
@@ -171,7 +176,7 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("ControlPlane.Replicas must be 1 for %s platform. Found %v", none.Name, *installConfig.ControlPlane.Replicas)))
 		} else if len(installConfig.Compute) == 0 {
 			fieldPath = field.NewPath("Compute", "Replicas")
-			allErrs = append(allErrs, field.Required(fieldPath, "Installing a Single Node Openshift requires explicitly setting compute replicas to zero"))
+			allErrs = append(allErrs, field.Required(fieldPath, "Installing a Single Node Openshift requires explicitly setting Compute.Replicas to 0"))
 		}
 
 		if workers != 0 {
