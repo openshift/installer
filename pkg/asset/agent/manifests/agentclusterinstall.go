@@ -108,6 +108,7 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 					ControlPlaneAgents: int(*installConfig.Config.ControlPlane.Replicas),
 					WorkerAgents:       numberOfWorkers,
 				},
+				PlatformType: hiveext.PlatformType(installConfig.Config.Platform.Name()),
 			},
 		}
 
@@ -191,6 +192,10 @@ func (a *AgentClusterInstall) finish() error {
 		return errors.Wrapf(err, "invalid NetworkType configured")
 	}
 
+	if err := a.validateSupportedPlatforms().ToAggregate(); err != nil {
+		return errors.Wrapf(err, "invalid PlatformType configured")
+	}
+
 	return nil
 }
 
@@ -223,7 +228,7 @@ func isIPv6(ipAddress net.IP) bool {
 }
 
 func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList {
-	allErrs := field.ErrorList{}
+	var allErrs field.ErrorList
 
 	fieldPath := field.NewPath("spec", "networking", "networkType")
 	clusterNetworkPath := field.NewPath("spec", "networking", "clusterNetwork")
@@ -265,5 +270,16 @@ func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList 
 		}
 	}
 
+	return allErrs
+}
+
+func (a *AgentClusterInstall) validateSupportedPlatforms() field.ErrorList {
+	var allErrs field.ErrorList
+
+	fieldPath := field.NewPath("spec", "platformType")
+
+	if a.Config.Spec.PlatformType != "" && !agent.IsSupportedPlatform(fmt.Sprintf("%s", a.Config.Spec.PlatformType)) {
+		allErrs = append(allErrs, field.NotSupported(fieldPath, a.Config.Spec.PlatformType, agent.SupportedPlatforms))
+	}
 	return allErrs
 }

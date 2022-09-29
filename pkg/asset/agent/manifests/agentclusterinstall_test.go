@@ -9,6 +9,7 @@ import (
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/types/baremetal"
 
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/mock"
@@ -111,8 +112,9 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 						ControlPlaneAgents: 3,
 						WorkerAgents:       5,
 					},
-					APIVIP:     "192.168.122.10",
-					IngressVIP: "192.168.122.11",
+					APIVIP:       "192.168.122.10",
+					IngressVIP:   "192.168.122.11",
+					PlatformType: hiveext.PlatformType(baremetal.Name),
 				},
 			},
 		},
@@ -218,6 +220,7 @@ metadata:
 spec:
   apiVIP: 192.168.111.5
   ingressVIP: 192.168.111.4
+  platformType: baremetal
   clusterDeploymentRef:
     name: ostest
   imageSetRef:
@@ -243,8 +246,9 @@ spec:
 					Namespace: "cluster0",
 				},
 				Spec: hiveext.AgentClusterInstallSpec{
-					APIVIP:     "192.168.111.5",
-					IngressVIP: "192.168.111.4",
+					APIVIP:       "192.168.111.5",
+					IngressVIP:   "192.168.111.4",
+					PlatformType: hiveext.PlatformType(baremetal.Name),
 					ClusterDeploymentRef: corev1.LocalObjectReference{
 						Name: "ostest",
 					},
@@ -540,6 +544,37 @@ spec:
   sshPublicKey: |
     ssh-rsa AAAAmyKey`,
 			expectedError: "invalid NetworkType configured: [spec.networking.networkType: Required value: clusterNetwork CIDR is IPv6 and is not compatible with networkType OpenShiftSDN, spec.networking.networkType: Required value: serviceNetwork CIDR is IPv6 and is not compatible with networkType OpenShiftSDN]",
+		},
+		{
+			name: "invalid-config-file",
+			data: `
+metadata:
+  name: test-agent-cluster-install
+  namespace: cluster0
+spec:
+  apiVIP: 192.168.111.5
+  ingressVIP: 192.168.111.4
+  platformType: aws
+  clusterDeploymentRef:
+    name: ostest
+  imageSetRef:
+    name: openshift-v4.10.0
+  networking:
+    machineNetwork:
+    - cidr: 10.10.11.0/24
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    serviceNetwork:
+    - 172.30.0.0/16
+    networkType: OVNKubernetes
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 2
+  sshPublicKey: |
+    ssh-rsa AAAAmyKey`,
+			expectedFound: false,
+			expectedError: "invalid PlatformType configured: spec.platformType: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\"",
 		},
 	}
 	for _, tc := range cases {
