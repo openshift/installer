@@ -42,6 +42,31 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ssh" {
   description       = local.description
 }
 
+# TODO(pprinett) Try and remove this rule; BGP advertising might be egress-only
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_bgp" {
+  count             = length(var.machine_v4_cidrs)
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 179
+  port_range_max    = 179
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
+  security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_bfd" {
+  count             = length(var.machine_v4_cidrs)
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 3784
+  port_range_max    = 3785
+  remote_ip_prefix  = element(var.machine_v4_cidrs, count.index)
+  security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
+}
+
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_tcp" {
   count             = length(var.machine_v4_cidrs)
   direction         = "ingress"

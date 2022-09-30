@@ -197,6 +197,9 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Spec.PlatformSpec.Type = configv1.NonePlatformType
 	case openstack.Name:
 		config.Spec.PlatformSpec.Type = configv1.OpenStackPlatformType
+		config.Spec.PlatformSpec.OpenStack = &configv1.OpenStackPlatformSpec{
+			APILoadBalancer: installConfig.Config.OpenStack.APILoadBalancer,
+		}
 		config.Status.PlatformStatus.OpenStack = &configv1.OpenStackPlatformStatus{
 			APIServerInternalIP:  installConfig.Config.OpenStack.APIVIPs[0],
 			IngressIP:            installConfig.Config.OpenStack.IngressVIPs[0],
