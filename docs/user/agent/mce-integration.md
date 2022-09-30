@@ -3,6 +3,106 @@
 This document describes how to install the multicluster engine for Kubernetes operator (mce) and how to deploy the cluster zero (hub) using the agent-based installer for Openshift.
 The procedure is partially automated, and it will require some manual steps after the initial cluster deployment.
 
+## Installing while disconnected from the greater internet
+
+### Environment Pre-requisites
+
+[Create a local image registry in your environment.](https://docs.openshift.com/container-platform/4.11/installing/disconnected_install/index.html) Make note of the DNS name and port of your local registry.
+
+Download the [oc mirror](https://github.com/openshift/oc-mirror) tool.
+
+#### Agent Installer pre-requisites
+
+For the complete pre-requisites description, please check section 1.2.1 in [[1]](#1).
+
+Create a folder (`<asset dir>`) and place a valid `install-config.yaml` and `agent-config.yaml`.
+
+### Mirror the Openshift release and the MCE operator
+
+Using the oc mirror tool mirror the desired Openshift release (4.11+). Here is an example ImageSetConfiguration for OCP 4.11:
+
+__ocp-mce-imageset.yaml__
+```
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+archiveSize: 4
+storageConfig:
+  imageURL: <your-local-registry-dns-name>:<your-local-registry-port>/mirror/oc-mirror-metadata
+  skipTLS: true
+mirror:
+  platform:
+    architectures:
+      - "amd64"
+    channels:
+      - name: stable-4.11
+        type: ocp
+  additionalImages:
+    - name: registry.redhat.io/ubi8/ubi:latest
+  operators:
+    - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.11
+      packages:
+        - name: multicluster-engine
+        - name: local-storage-operator
+```
+
+With this file you will be able to use this command to mirror the OCP release and the MCE and LSO operators:
+
+```oc mirror --dest-skip-tls --config ocp-mce-imageset.yaml docker://<your-local-registry-dns-name>:<your-local-registry-port>```
+
+**Q: Why do I need the LSO operator?** A: The MCE operator is a large package and comes packaged with the infrastructure-operator as well. The infrastructure-operator needs a local storage volume to function.
+
+### Update the mirror configurations in install-config.yaml
+
+In your __install-config.yaml__ you will need to update the registry and the certificate. The two configurations to update are `imageContentSources` and `additionalTrustBundle`.
+The following file snippet shows how to update the `imageContentSources` this for OCP and the MCE+LSO operators.
+
+```
+imageContentSources:
+  - source: "quay.io/openshift-release-dev/ocp-release"
+    mirrors:
+      - "<your-local-registry-dns-name>:<your-local-registry-port>/openshift/release-images"
+  - source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+    mirrors:
+      - "<your-local-registry-dns-name>:<your-local-registry-port>/openshift/release"
+  - source: "registry.redhat.io/ubi8"
+    mirrors:
+      - "<your-local-registry-dns-name>:<your-local-registry-port>/ubi8"
+  - source: "registry.redhat.io/multicluster-engine"
+    mirrors:
+      - "<your-local-registry-dns-name>:<your-local-registry-port>/multicluster-engine"
+  - source: "registry.redhat.io/rhel8"
+    mirrors:
+      - "<your-local-registry-dns-name>:<your-local-registry-port>/rhel8"
+  - source: "registry.redhat.io/redhat"
+    mirrors:
+      - "<your-local-registry-dns-name>:<your-local-registry-port>/redhat"
+```
+
+**Note:** This procedure with `oc mirror` can be used to mirror any of the operators in the Red Hat Operator Indexes. After running `oc mirror` there will be a folder called `oc-mirror-workspace` with several outputs. There will be a file called __imageContentSourcePolicy.yaml__ in the most recent results folder that will identify all the mirrors you need for OCP and your selected operators.
+
+You will also need to make sure your certificate is present in the `additionalTrustBundle` field.
+This should look like something like this in your __install-config.yaml__:
+
+```
+additionalTrustBundle: |
+  -----BEGIN CERTIFICATE-----
+  .
+  .
+  .
+  .
+  .
+  .
+  -----END CERTIFICATE-----
+```
+
+Now you can generate the cluster manifests with the command:
+
+`openshift-install agent create cluster-manifests`
+
+This will update the cluster manifests to include a `mirror` folder with your mirror configuration.
+
+**From here you should be able to follow the steps for installing while connected online.**
+
 ## Installing while connected online
 
 ### Pre-requisites
@@ -129,9 +229,9 @@ $ openshift-install agent wait-for install-complete --dir <asset dir>
 ```
 
 ### Hub setup
- 
+
  As soon as the installation is completed it'd be possible then to finalize the setup to have a fully functioning hub cluster.
- The manifests shown in this section are meant to be applied manually. The order is relevant, and where needed the required 
+ The manifests shown in this section are meant to be applied manually. The order is relevant, and where needed the required
  waiting condition will also be illustrated.
 
 #### Local volumes
@@ -260,7 +360,7 @@ If everything goes fine, you should be able to successfully observe the new mana
 ```
 $ oc get managedcluster
 NAME            HUB ACCEPTED   MANAGED CLUSTER URLS             JOINED   AVAILABLE  AGE
-local-cluster   true           https://<you cluster url>:6443   True     True       77m 
+local-cluster   true           https://<your cluster url>:6443   True     True       77m
 ```
 
 # References
