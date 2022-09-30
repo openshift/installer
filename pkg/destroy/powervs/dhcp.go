@@ -30,16 +30,16 @@ func (o *ClusterUninstaller) listDHCPNetworks() (cloudResources, error) {
 	result := []cloudResource{}
 	for _, dhcpServer = range dhcpServers {
 		if dhcpServer.Network == nil {
-			o.Logger.Debugf("listDHCPNetworks: DHCP has empty Network: %s\n", *dhcpServer.ID)
+			o.Logger.Debugf("listDHCPNetworks: DHCP has empty Network: %s", *dhcpServer.ID)
 			continue
 		}
 		if dhcpServer.Network.Name == nil {
-			o.Logger.Debugf("listDHCPNetworks: DHCP has empty Network.Name: %s\n", *dhcpServer.ID)
+			o.Logger.Debugf("listDHCPNetworks: DHCP has empty Network.Name: %s", *dhcpServer.ID)
 			continue
 		}
 
 		if strings.Contains(*dhcpServer.Network.Name, o.InfraID) {
-			o.Logger.Debugf("listDHCPNetworks: FOUND: %s (%s)\n", *dhcpServer.Network.Name, *dhcpServer.ID)
+			o.Logger.Debugf("listDHCPNetworks: FOUND: %s (%s)", *dhcpServer.Network.Name, *dhcpServer.ID)
 			foundOne = true
 			result = append(result, cloudResource{
 				key:      *dhcpServer.ID,
