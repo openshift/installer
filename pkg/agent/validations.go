@@ -125,13 +125,13 @@ func checkHostsValidations(cluster *models.Cluster, log *logrus.Logger) bool {
 			return true
 		}
 
-		log.Info("Checking for validation failures ----------------------------------------------")
+		log.Debug("Checking for validation failures ----------------------------------------------")
 		for _, v := range previousValidations {
 			log.WithFields(logrus.Fields{
 				"category": v.category,
 				"label":    v.label,
 				"message":  v.message,
-			}).Error(v.header)
+			}).Debug(v.header)
 		}
 	}
 
