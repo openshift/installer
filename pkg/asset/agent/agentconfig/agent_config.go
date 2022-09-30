@@ -150,81 +150,75 @@ func (a *AgentConfig) finish() error {
 }
 
 func (a *AgentConfig) validateAgent() field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if err := a.validateNodesHaveAtLeastOneMacAddressDefined(); err != nil {
-		allErrs = append(allErrs, err...)
-	}
-
-	if err := a.validateRootDeviceHints(); err != nil {
-		allErrs = append(allErrs, err...)
-	}
-
-	if err := a.validateRoles(); err != nil {
-		allErrs = append(allErrs, err...)
-	}
-
-	return allErrs
-}
-
-func (a *AgentConfig) validateNodesHaveAtLeastOneMacAddressDefined() field.ErrorList {
 	var allErrs field.ErrorList
 
-	if len(a.Config.Hosts) == 0 {
-		return allErrs
-	}
-
-	rootPath := field.NewPath("Hosts")
-
-	for i := range a.Config.Hosts {
-		node := a.Config.Hosts[i]
-		interfacePath := rootPath.Index(i).Child("Interfaces")
-		if len(node.Interfaces) == 0 {
-			allErrs = append(allErrs, field.Required(interfacePath, "at least one interface must be defined for each node"))
-		}
-
-		for j := range node.Interfaces {
-			if node.Interfaces[j].MacAddress == "" {
-				macAddressPath := interfacePath.Index(j).Child("macAddress")
-				allErrs = append(allErrs, field.Required(macAddressPath, "each interface must have a MAC address defined"))
-			}
-		}
-	}
-	return allErrs
-}
-
-func (a *AgentConfig) validateRootDeviceHints() field.ErrorList {
-	var allErrs field.ErrorList
-	rootPath := field.NewPath("Hosts")
-
+	macs := make(map[string]bool)
 	for i, host := range a.Config.Hosts {
-		hostPath := rootPath.Index(i)
-		if host.RootDeviceHints.WWNWithExtension != "" {
-			allErrs = append(allErrs, field.Forbidden(
-				hostPath.Child("RootDeviceHints", "WWNWithExtension"),
-				"WWN extensions are not supported in root device hints"))
+
+		hostPath := field.NewPath("Hosts").Index(i)
+
+		if err := a.validateHostInterfaces(hostPath, host, macs); err != nil {
+			allErrs = append(allErrs, err...)
 		}
-		if host.RootDeviceHints.WWNVendorExtension != "" {
-			allErrs = append(allErrs, field.Forbidden(
-				hostPath.Child("RootDeviceHints", "WWNVendorExtension"),
-				"WWN vendor extensions are not supported in root device hints"))
+
+		if err := a.validateHostRootDeviceHints(hostPath, host); err != nil {
+			allErrs = append(allErrs, err...)
+		}
+
+		if err := a.validateRoles(hostPath, host); err != nil {
+			allErrs = append(allErrs, err...)
 		}
 	}
 
 	return allErrs
 }
 
-func (a *AgentConfig) validateRoles() field.ErrorList {
+func (a *AgentConfig) validateHostInterfaces(hostPath *field.Path, host agent.Host, macs map[string]bool) field.ErrorList {
 	var allErrs field.ErrorList
-	rootPath := field.NewPath("Hosts")
 
-	for i, host := range a.Config.Hosts {
-		hostPath := rootPath.Index(i)
-		if len(host.Role) > 0 && host.Role != "master" && host.Role != "worker" {
-			allErrs = append(allErrs, field.Forbidden(
-				hostPath.Child("Host"),
-				"host role has incorrect value. Role must either be 'master' or 'worker'"))
+	interfacePath := hostPath.Child("Interfaces")
+	if len(host.Interfaces) == 0 {
+		allErrs = append(allErrs, field.Required(interfacePath, "at least one interface must be defined for each node"))
+	}
+
+	for j := range host.Interfaces {
+		mac := host.Interfaces[j].MacAddress
+		macAddressPath := interfacePath.Index(j).Child("macAddress")
+
+		if mac == "" {
+			allErrs = append(allErrs, field.Required(macAddressPath, "each interface must have a MAC address defined"))
+			continue
 		}
+
+		if _, ok := macs[mac]; ok {
+			allErrs = append(allErrs, field.Invalid(macAddressPath, "duplicate MAC address found", mac))
+		}
+		macs[mac] = true
+	}
+
+	return allErrs
+}
+
+func (a *AgentConfig) validateHostRootDeviceHints(hostPath *field.Path, host agent.Host) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if host.RootDeviceHints.WWNWithExtension != "" {
+		allErrs = append(allErrs, field.Forbidden(
+			hostPath.Child("RootDeviceHints", "WWNWithExtension"), "WWN extensions are not supported in root device hints"))
+	}
+
+	if host.RootDeviceHints.WWNVendorExtension != "" {
+		allErrs = append(allErrs, field.Forbidden(hostPath.Child("RootDeviceHints", "WWNVendorExtension"), "WWN vendor extensions are not supported in root device hints"))
+	}
+
+	return allErrs
+}
+
+func (a *AgentConfig) validateRoles(hostPath *field.Path, host agent.Host) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if len(host.Role) > 0 && host.Role != "master" && host.Role != "worker" {
+		allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), "host role has incorrect value. Role must either be 'master' or 'worker'"))
 	}
 
 	return allErrs
