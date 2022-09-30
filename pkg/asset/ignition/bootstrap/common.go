@@ -78,6 +78,8 @@ type bootstrapTemplateData struct {
 	PlatformData          platformTemplateData
 	BootstrapInPlace      *types.BootstrapInPlace
 	UseIPv6ForNodeIP      bool
+	IsFCOS                bool
+	IsSCOS                bool
 	IsOKD                 bool
 	BootstrapNodeIP       string
 }
@@ -299,6 +301,8 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		ClusterProfile:        clusterProfile,
 		BootstrapInPlace:      bootstrapInPlaceConfig,
 		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
+		IsFCOS:                installConfig.Config.IsFCOS(),
+		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
 		BootstrapNodeIP:       bootstrapNodeIP,
 	}
