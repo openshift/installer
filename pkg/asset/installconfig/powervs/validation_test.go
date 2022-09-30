@@ -22,7 +22,7 @@ type editFunctions []func(ic *types.InstallConfig)
 
 var (
 	validRegion                  = "lon"
-	validCIDR                    = "192.168.0.0/16"
+	validCIDR                    = "192.168.0.0/24"
 	validCISInstanceCRN          = "crn:v1:bluemix:public:internet-svcs:global:a/valid-account-id:valid-instance-id::"
 	validClusterName             = "valid-cluster-name"
 	validDNSZoneID               = "valid-zone-id"
