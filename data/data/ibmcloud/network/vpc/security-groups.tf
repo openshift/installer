@@ -178,7 +178,7 @@ resource "ibm_is_security_group" "kubernetes_api_lb" {
 resource "ibm_is_security_group_rule" "kubernetes_api_lb_inbound" {
   group     = ibm_is_security_group.kubernetes_api_lb.id
   direction = "inbound"
-  remote    = var.public_endpoints ? "0.0.0.0/0" : ibm_is_security_group.cluster_wide.id
+  remote    = "0.0.0.0/0"
   tcp {
     port_min = 6443
     port_max = 6443
