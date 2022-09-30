@@ -119,6 +119,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 		},
 		Spec: machinev1.ControlPlaneMachineSetSpec{
 			Replicas: &replicas,
+			State:    machinev1.ControlPlaneMachineSetStateActive,
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"machine.openshift.io/cluster-api-machine-role": role,

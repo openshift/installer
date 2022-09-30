@@ -88,9 +88,9 @@ spec:
                 description: 'logLevel describes the desired logging verbosity for
                   CoreDNS. Any one of the following values may be specified: * Normal
                   logs errors from upstream resolvers. * Debug logs errors, NXDOMAIN
-                  responses, and NODATA responses. * Trace logs errors and all responses.  Setting
-                  logLevel: Trace will produce extremely verbose logs. Valid values
-                  are: "Normal", "Debug", "Trace". Defaults to "Normal".'
+                  responses, and NODATA responses. * Trace logs errors and all responses.
+                  Setting logLevel: Trace will produce extremely verbose logs. Valid
+                  values are: "Normal", "Debug", "Trace". Defaults to "Normal".'
                 enum:
                 - Normal
                 - Debug
@@ -120,7 +120,7 @@ spec:
                       type: string
                     description: "nodeSelector is the node selector applied to DNS
                       pods. \n If empty, the default is used, which is currently the
-                      following: \n   kubernetes.io/os: linux \n This default is subject
+                      following: \n kubernetes.io/os: linux \n This default is subject
                       to change. \n If set, the specified selector is used and replaces
                       the default."
                     type: object
@@ -442,9 +442,9 @@ spec:
                         - address
                       description: "Upstream can either be of type SystemResolvConf,
                         or of type Network. \n * For an Upstream of type SystemResolvConf,
-                        no further fields are necessary:   The upstream will be configured
+                        no further fields are necessary: The upstream will be configured
                         to use /etc/resolv.conf. * For an Upstream of type Network,
-                        a NetworkResolver field needs to be defined   with an IP address
+                        a NetworkResolver field needs to be defined with an IP address
                         or IP:port if the upstream listens on a port other than 53."
                       properties:
                         address:
@@ -468,7 +468,7 @@ spec:
                             an IP/IP:port resolver or the local /etc/resolv.conf.
                             Type accepts 2 possible values: SystemResolvConf or Network.
                             \n * When SystemResolvConf is used, the Upstream structure
-                            does not require any further fields to be defined:   /etc/resolv.conf
+                            does not require any further fields to be defined: /etc/resolv.conf
                             will be used * When Network is used, the Upstream structure
                             must contain at least an Address"
                           enum:
@@ -504,9 +504,8 @@ spec:
               conditions:
                 description: "conditions provide information about the state of the
                   DNS on the cluster. \n These are the supported DNS conditions: \n
-                  \  * Available   - True if the following conditions are met:     *
-                  DNS controller daemonset is available.   - False if any of those
-                  conditions are unsatisfied."
+                  * Available - True if the following conditions are met: * DNS controller
+                  daemonset is available. - False if any of those conditions are unsatisfied."
                 items:
                   description: OperatorCondition is just the standard condition fields.
                   properties:

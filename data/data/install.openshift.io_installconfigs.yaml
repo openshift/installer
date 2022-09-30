@@ -73,6 +73,7 @@ spec:
                   - Console
                   - Insights
                   - Storage
+                  - CSISnapshot
                   type: string
                 type: array
               baselineCapabilitySet:
