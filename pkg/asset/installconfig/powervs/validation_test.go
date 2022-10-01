@@ -5,8 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/IBM/go-sdk-core/v5/core"
-	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/golang/mock/gomock"
 	"github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/asset/installconfig/powervs/mock"
@@ -42,15 +40,17 @@ var (
 	validUserID = "valid-user@example.com"
 	validZone   = "lon04"
 
-	existingDNSRecordsResponse = []dnsrecordsv1.DnsrecordDetails{
+	existingDNSRecordsResponse = []powervs.DNSRecordResponse{
 		{
-			ID: core.StringPtr("valid-dns-record-1"),
+			Name: "valid-dns-record-name-1",
+			Type: "valid-dns-record-type",
 		},
 		{
-			ID: core.StringPtr("valid-dns-record-2"),
+			Name: "valid-dns-record-name-2",
+			Type: "valid-dns-record-type",
 		},
 	}
-	noDNSRecordsResponse = []dnsrecordsv1.DnsrecordDetails{}
+	noDNSRecordsResponse = []powervs.DNSRecordResponse{}
 	invalidArchitecture  = func(ic *types.InstallConfig) { ic.ControlPlane.Architecture = "ppc64" }
 )
 
@@ -167,30 +167,30 @@ func TestValidatePreExistingPublicDNS(t *testing.T) {
 	metadata.EXPECT().CISInstanceCRN(gomock.Any()).Return(validCISInstanceCRN, nil).AnyTimes()
 
 	// Mocks: no pre-existing DNS records
-	powervsClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return(validDNSZoneID, nil)
+	powervsClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain, types.ExternalPublishingStrategy).Return(validDNSZoneID, nil)
 	for _, dnsRecordName := range dnsRecordNames {
-		powervsClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName).Return(noDNSRecordsResponse, nil)
+		powervsClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName, types.ExternalPublishingStrategy).Return(noDNSRecordsResponse, nil)
 	}
 
 	// Mocks: pre-existing DNS records
-	powervsClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return(validDNSZoneID, nil)
+	powervsClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain, types.ExternalPublishingStrategy).Return(validDNSZoneID, nil)
 	for _, dnsRecordName := range dnsRecordNames {
-		powervsClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName).Return(existingDNSRecordsResponse, nil)
+		powervsClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName, types.ExternalPublishingStrategy).Return(existingDNSRecordsResponse, nil)
 	}
 
 	// Mocks: cannot get zone ID
-	powervsClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return("", fmt.Errorf(""))
+	powervsClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain, types.ExternalPublishingStrategy).Return("", fmt.Errorf(""))
 
 	// Mocks: cannot get DNS records
-	powervsClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain).Return(validDNSZoneID, nil)
+	powervsClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), validBaseDomain, types.ExternalPublishingStrategy).Return(validDNSZoneID, nil)
 	for _, dnsRecordName := range dnsRecordNames {
-		powervsClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName).Return(nil, fmt.Errorf(""))
+		powervsClient.EXPECT().GetDNSRecordsByName(gomock.Any(), validCISInstanceCRN, validDNSZoneID, dnsRecordName, types.ExternalPublishingStrategy).Return(nil, fmt.Errorf(""))
 	}
 
 	// Run tests
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			aggregatedErrors := powervs.ValidatePreExistingPublicDNS(powervsClient, validInstallConfig(), metadata)
+			aggregatedErrors := powervs.ValidatePreExistingDNS(powervsClient, validInstallConfig(), metadata)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {

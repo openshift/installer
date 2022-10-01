@@ -1,11 +1,17 @@
+############
+# Public DNS
+############
+
 data "ibm_cis_domain" "base_domain" {
-  cis_id = var.cis_id
+  count  = var.publish_strategy == "Internal" ? 0 : 1
+  cis_id = var.service_id
   domain = var.base_domain
 }
 
 resource "ibm_cis_dns_record" "kubernetes_api" {
-  cis_id    = var.cis_id
-  domain_id = data.ibm_cis_domain.base_domain.id
+  count     = var.publish_strategy == "Internal" ? 0 : 1
+  cis_id    = var.service_id
+  domain_id = data.ibm_cis_domain.base_domain[count.index].id
   type      = "CNAME"
   name      = "api.${var.cluster_domain}"
   content   = var.load_balancer_hostname
@@ -13,16 +19,50 @@ resource "ibm_cis_dns_record" "kubernetes_api" {
 }
 
 resource "ibm_cis_dns_record" "kubernetes_api_internal" {
-  cis_id    = var.cis_id
-  domain_id = data.ibm_cis_domain.base_domain.id
+  count     = var.publish_strategy == "Internal" ? 0 : 1
+  cis_id    = var.service_id
+  domain_id = data.ibm_cis_domain.base_domain[count.index].id
   type      = "CNAME"
   name      = "api-int.${var.cluster_domain}"
   content   = var.load_balancer_int_hostname
   ttl       = 60
 }
 
-locals {
-  proxy_count = var.publish_strategy == "Internal" ? 1 : 0
+#############
+# Private DNS
+#############
+
+data "ibm_dns_zones" "dns_zones" {
+  count       = var.publish_strategy == "Internal" ? 1 : 0
+  instance_id = var.service_id
+}
+
+resource "ibm_dns_permitted_network" "permit_vpc_network_for_dns" {
+  count       = var.publish_strategy == "Internal" ? 1 : 0
+  instance_id = var.service_id
+  zone_id     = local.dns_zone.zone_id
+  vpc_crn     = var.vpc_crn
+  type        = "vpc"
+}
+
+resource "ibm_dns_resource_record" "kubernetes_api" {
+  count       = var.publish_strategy == "Internal" ? 1 : 0
+  instance_id = var.service_id
+  zone_id     = local.dns_zone.zone_id
+  type        = "CNAME"
+  name        = "api.${var.cluster_domain}"
+  rdata       = var.load_balancer_int_hostname
+  ttl         = 60
+}
+
+resource "ibm_dns_resource_record" "kubernetes_api_internal" {
+  count       = var.publish_strategy == "Internal" ? 1 : 0
+  instance_id = var.service_id
+  zone_id     = local.dns_zone.zone_id
+  type        = "CNAME"
+  name        = "api-int.${var.cluster_domain}"
+  rdata       = var.load_balancer_int_hostname
+  ttl         = 60
 }
 
 resource "ibm_is_ssh_key" "dns_ssh_key" {
@@ -76,7 +116,10 @@ data "ibm_is_image" "dns_vm_image" {
   name  = var.dns_vm_image_name
 }
 
+
 locals {
+  dns_zone         = var.publish_strategy == "Internal" ? data.ibm_dns_zones.dns_zones[0].dns_zones[index(data.ibm_dns_zones.dns_zones[0].dns_zones.*.name, var.base_domain)] : null
+  proxy_count      = var.publish_strategy == "Internal" ? 1 : 0
   user_data_string = <<EOF
 #cloud-config
 packages:
@@ -100,10 +143,6 @@ runcmd:
 EOF
 }
 
-#
-# The following is because ci/prow/tf-fmt is recommending that
-# style of formatting which seems like a bug to me.
-#
 resource "ibm_is_instance" "dns_vm_vsi" {
   count = local.proxy_count
   name = "${var.cluster_id}-dns-vsi"

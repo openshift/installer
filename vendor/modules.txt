@@ -163,6 +163,7 @@ github.com/IBM/networking-go-sdk/common
 github.com/IBM/networking-go-sdk/dnsrecordsv1
 github.com/IBM/networking-go-sdk/dnssvcsv1
 github.com/IBM/networking-go-sdk/dnszonesv1
+github.com/IBM/networking-go-sdk/resourcerecordsv1
 github.com/IBM/networking-go-sdk/zonesv1
 # github.com/IBM/platform-services-go-sdk v0.18.16
 ## explicit; go 1.12

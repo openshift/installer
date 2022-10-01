@@ -35,36 +35,77 @@ func validateMachinePool(fldPath *field.Path, machinePool *types.MachinePool) fi
 	return allErrs
 }
 
-// ValidatePreExistingPublicDNS ensure no pre-existing DNS record exists in the CIS
-// DNS zone for cluster's Kubernetes API.
-func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig, metadata MetadataAPI) error {
+// ValidatePreExistingDNS ensures no pre-existing DNS record exists in the CIS
+// DNS zone or IBM DNS zone for cluster's Kubernetes API.
+func ValidatePreExistingDNS(client API, ic *types.InstallConfig, metadata MetadataAPI) error {
 	allErrs := field.ErrorList{}
 
+	fldPath := field.NewPath("baseDomain")
+	if ic.Publish == types.ExternalPublishingStrategy {
+		allErrs = append(allErrs, validatePreExistingPublicDNS(fldPath, client, ic, metadata)...)
+	} else {
+		allErrs = append(allErrs, validatePreExistingPrivateDNS(fldPath, client, ic, metadata)...)
+	}
+
+	return allErrs.ToAggregate()
+}
+
+func validatePreExistingPublicDNS(fldPath *field.Path, client API, ic *types.InstallConfig, metadata MetadataAPI) field.ErrorList {
+	allErrs := field.ErrorList{}
 	// Get CIS CRN
 	crn, err := metadata.CISInstanceCRN(context.TODO())
 	if err != nil {
-		return err
+		return append(allErrs, field.InternalError(fldPath, err))
 	}
 
 	// Get CIS zone ID by name
-	zoneID, err := client.GetDNSZoneIDByName(context.TODO(), ic.BaseDomain)
+	zoneID, err := client.GetDNSZoneIDByName(context.TODO(), ic.BaseDomain, types.ExternalPublishingStrategy)
 	if err != nil {
-		return append(allErrs, field.InternalError(field.NewPath("baseDomain"), err)).ToAggregate()
+		return append(allErrs, field.InternalError(fldPath, err))
 	}
 
 	// Search for existing records
 	recordNames := [...]string{fmt.Sprintf("api.%s", ic.ClusterDomain()), fmt.Sprintf("api-int.%s", ic.ClusterDomain())}
 	for _, recordName := range recordNames {
-		records, err := client.GetDNSRecordsByName(context.TODO(), crn, zoneID, recordName)
+		records, err := client.GetDNSRecordsByName(context.TODO(), crn, zoneID, recordName, types.ExternalPublishingStrategy)
 		if err != nil {
-			allErrs = append(allErrs, field.InternalError(field.NewPath("baseDomain"), err))
+			allErrs = append(allErrs, field.InternalError(fldPath, err))
 		}
 
 		// DNS record exists
 		if len(records) != 0 {
-			allErrs = append(allErrs, field.Duplicate(field.NewPath("baseDomain"), fmt.Sprintf("record %s already exists in CIS zone (%s) and might be in use by another cluster, please remove it to continue", recordName, zoneID)))
+			allErrs = append(allErrs, field.Duplicate(fldPath, fmt.Sprintf("record %s already exists in CIS zone (%s) and might be in use by another cluster, please remove it to continue", recordName, zoneID)))
 		}
 	}
+	return allErrs
+}
 
-	return allErrs.ToAggregate()
+func validatePreExistingPrivateDNS(fldPath *field.Path, client API, ic *types.InstallConfig, metadata MetadataAPI) field.ErrorList {
+	allErrs := field.ErrorList{}
+	// Get DNS CRN
+	crn, err := metadata.DNSInstanceCRN(context.TODO())
+	if err != nil {
+		return append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	// Get CIS zone ID by name
+	zoneID, err := client.GetDNSZoneIDByName(context.TODO(), ic.BaseDomain, types.InternalPublishingStrategy)
+	if err != nil {
+		return append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	// Search for existing records
+	recordNames := [...]string{fmt.Sprintf("api-int.%s", ic.ClusterDomain())}
+	for _, recordName := range recordNames {
+		records, err := client.GetDNSRecordsByName(context.TODO(), crn, zoneID, recordName, types.InternalPublishingStrategy)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(fldPath, err))
+		}
+
+		// DNS record exists
+		if len(records) != 0 {
+			allErrs = append(allErrs, field.Duplicate(fldPath, fmt.Sprintf("record %s already exists in DNS zone (%s) and might be in use by another cluster, please remove it to continue", recordName, zoneID)))
+		}
+	}
+	return allErrs
 }

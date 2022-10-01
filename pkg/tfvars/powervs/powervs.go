@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/IBM-Cloud/bluemix-go/crn"
 	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/powervs"
@@ -23,6 +24,7 @@ type config struct {
 	VPCZone              string `json:"powervs_vpc_zone"`
 	PowerVSResourceGroup string `json:"powervs_resource_group"`
 	CISInstanceCRN       string `json:"powervs_cis_crn"`
+	DNSInstanceGUID      string `json:"powervs_dns_guid"`
 	ImageBucketName      string `json:"powervs_image_bucket_name"`
 	ImageBucketFileName  string `json:"powervs_image_bucket_file_name"`
 	NetworkName          string `json:"powervs_network_name"`
@@ -51,6 +53,7 @@ type TFVarsSources struct {
 	PowerVSResourceGroup string
 	CloudConnectionName  string
 	CISInstanceCRN       string
+	DNSInstanceCRN       string
 	VPCName              string
 	VPCSubnetName        string
 	PublishStrategy      types.PublishingStrategy
@@ -68,7 +71,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	// All supported Regions are MZRs and have Zones named "region-[1-3]"
 	vpcZone := fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1)
 
-	var serviceInstanceID, processor string
+	var serviceInstanceID, processor, dnsGUID string
 	if masterConfig.ServiceInstance.ID != nil {
 		serviceInstanceID = *masterConfig.ServiceInstance.ID
 	} else {
@@ -81,6 +84,15 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		processor = fmt.Sprintf("%d", masterConfig.Processors.IntVal)
 	}
 
+	// Parse GUID from DNS CRN
+	if sources.DNSInstanceCRN != "" {
+		dnsCRN, err := crn.Parse(sources.DNSInstanceCRN)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse DNSInstanceCRN")
+		}
+		dnsGUID = dnsCRN.ServiceInstance
+	}
+
 	cfg := &config{
 		ServiceInstanceID:    serviceInstanceID,
 		APIKey:               sources.APIKey,
@@ -91,6 +103,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VPCZone:              vpcZone,
 		PowerVSResourceGroup: sources.PowerVSResourceGroup,
 		CISInstanceCRN:       sources.CISInstanceCRN,
+		DNSInstanceGUID:      dnsGUID,
 		ImageBucketName:      sources.ImageBucketName,
 		ImageBucketFileName:  sources.ImageBucketFileName,
 		VPCName:              sources.VPCName,

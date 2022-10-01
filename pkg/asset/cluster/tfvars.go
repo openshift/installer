@@ -780,10 +780,22 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 
-		// Get CISInstanceCRN from InstallConfig metadata
-		crn, err := installConfig.PowerVS.CISInstanceCRN(ctx)
-		if err != nil {
-			return err
+		var cisCRN, dnsCRN string
+		switch installConfig.Config.Publish {
+		case types.InternalPublishingStrategy:
+			// Get DNSInstanceCRN from InstallConfig metadata
+			dnsCRN, err = installConfig.PowerVS.DNSInstanceCRN(ctx)
+			if err != nil {
+				return err
+			}
+		case types.ExternalPublishingStrategy:
+			// Get CISInstanceCRN from InstallConfig metadata
+			cisCRN, err = installConfig.PowerVS.CISInstanceCRN(ctx)
+			if err != nil {
+				return err
+			}
+		default:
+			return errors.New("unknown publishing strategy")
 		}
 
 		masterConfigs := make([]*machinev1.PowerVSMachineProviderConfig, len(masters))
@@ -811,7 +823,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				VPCName:              installConfig.Config.PowerVS.VPCName,
 				VPCSubnetName:        vpcSubnet,
 				CloudConnectionName:  installConfig.Config.PowerVS.CloudConnectionName,
-				CISInstanceCRN:       crn,
+				CISInstanceCRN:       cisCRN,
+				DNSInstanceCRN:       dnsCRN,
 				PublishStrategy:      installConfig.Config.Publish,
 			},
 		)

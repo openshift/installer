@@ -12,8 +12,8 @@ resource "ibm_pi_dhcp" "new_dhcp_service" {
   count                  = var.pvs_network_name == "" ? 1 : 0
   pi_cloud_instance_id   = var.cloud_instance_id
   pi_cloud_connection_id = data.ibm_pi_cloud_connection.cloud_connection.id
-  pi_dns_server          = "1.1.1.1"
   pi_cidr                = var.machine_cidr
+  pi_dns_server          = var.dns_server
   # the pi_dhcp_name param will be prefixed by the DHCP ID when created, so keep it short here:
   pi_dhcp_name = var.cluster_id
 }

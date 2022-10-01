@@ -78,3 +78,18 @@ func (mr *MockMetadataAPIMockRecorder) CISInstanceCRN(ctx interface{}) *gomock.C
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CISInstanceCRN", reflect.TypeOf((*MockMetadataAPI)(nil).CISInstanceCRN), ctx)
 }
+
+// DNSInstanceCRN mocks base method.
+func (m *MockMetadataAPI) DNSInstanceCRN(ctx context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DNSInstanceCRN", ctx)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DNSInstanceCRN indicates an expected call of DNSInstanceCRN.
+func (mr *MockMetadataAPIMockRecorder) DNSInstanceCRN(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DNSInstanceCRN", reflect.TypeOf((*MockMetadataAPI)(nil).DNSInstanceCRN), ctx)
+}

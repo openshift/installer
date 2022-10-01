@@ -134,7 +134,7 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		err = powervsconfig.ValidatePreExistingPublicDNS(client, ic.Config, ic.PowerVS)
+		err = powervsconfig.ValidatePreExistingDNS(client, ic.Config, ic.PowerVS)
 	case libvirt.Name, none.Name:
 		// no special provisioning requirements to check
 	case nutanix.Name:

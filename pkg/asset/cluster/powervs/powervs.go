@@ -12,11 +12,13 @@ import (
 // Metadata converts an install configuration to PowerVS metadata.
 func Metadata(config *types.InstallConfig, meta *icpowervs.Metadata) *powervs.Metadata {
 	cisCRN, _ := meta.CISInstanceCRN(context.TODO())
+	dnsCRN, _ := meta.DNSInstanceCRN(context.TODO())
 
 	return &powervs.Metadata{
 		BaseDomain:           config.BaseDomain,
 		PowerVSResourceGroup: config.Platform.PowerVS.PowerVSResourceGroup,
 		CISInstanceCRN:       cisCRN,
+		DNSInstanceCRN:       dnsCRN,
 		Region:               config.Platform.PowerVS.Region,
 		VPCRegion:            config.Platform.PowerVS.VPCRegion,
 		Zone:                 config.Platform.PowerVS.Zone,

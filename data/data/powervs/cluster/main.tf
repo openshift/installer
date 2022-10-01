@@ -39,6 +39,7 @@ module "pi_network" {
   machine_cidr      = var.machine_v4_cidrs[0]
   cloud_conn_name   = var.powervs_ccon_name
   vpc_crn           = module.vpc.vpc_crn
+  dns_server        = module.dns.dns_server
 }
 
 resource "ibm_pi_key" "cluster_key" {
@@ -62,7 +63,7 @@ module "master" {
   powervs_region      = var.powervs_region
   powervs_zone        = var.powervs_zone
   vpc_region          = var.powervs_vpc_region
-  vpc_zone            = var.powervs_vpc_zone
+  vpc_zone            = module.vpc.vpc_zone
   memory              = var.powervs_master_memory
   processors          = var.powervs_master_processors
   ignition            = var.ignition_master
@@ -110,21 +111,26 @@ module "loadbalancer" {
   vpc_subnet_id  = module.vpc.vpc_subnet_id
 }
 
+locals {
+  dns_service_id = var.powervs_publish_strategy == "Internal" ? var.powervs_dns_guid : var.powervs_cis_crn
+}
+
 module "dns" {
   providers = {
     ibm = ibm.vpc
   }
   source = "./dns"
 
-  cis_id                     = var.powervs_cis_crn
+  service_id                 = local.dns_service_id
   base_domain                = var.base_domain
   cluster_domain             = var.cluster_domain
   load_balancer_hostname     = module.loadbalancer.lb_hostname
   load_balancer_int_hostname = module.loadbalancer.lb_int_hostname
   cluster_id                 = var.cluster_id
+  vpc_crn                    = module.vpc.vpc_crn
   vpc_id                     = module.vpc.vpc_id
   vpc_subnet_id              = module.vpc.vpc_subnet_id
-  vpc_zone                   = var.powervs_vpc_zone
+  vpc_zone                   = module.vpc.vpc_zone
   ssh_key                    = var.powervs_ssh_key
   publish_strategy           = var.powervs_publish_strategy
   # dns_vm_image_name        = @FUTURE

@@ -43,10 +43,6 @@ variable "powervs_publish_strategy" {
   type        = string
   description = "The cluster publishing strategy, either Internal or External"
   default     = "External"
-  validation {
-    condition     = var.powervs_publish_strategy == "External" || var.powervs_publish_strategy == "Internal"
-    error_message = "The powervs_publish_strategy value must be \"External\" or \"Internal\"."
-  }
 }
 
 ################################################################
@@ -184,6 +180,11 @@ variable "powervs_expose_bootstrap" {
 variable "powervs_cis_crn" {
   type        = string
   description = "The CRN of CIS instance to use."
+}
+
+variable "powervs_dns_guid" {
+  type        = string
+  description = "The GUID of the IBM DNS Service instance to use when creating a private cluster."
 }
 
 ################################################################
