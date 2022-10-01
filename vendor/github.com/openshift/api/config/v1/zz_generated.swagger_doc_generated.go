@@ -364,7 +364,7 @@ var map_AuthenticationSpec = map[string]string{
 	"oauthMetadata":              "oauthMetadata contains the discovery endpoint data for OAuth 2.0 Authorization Server Metadata for an external OAuth server. This discovery document can be viewed from its served location: oc get --raw '/.well-known/oauth-authorization-server' For further details, see the IETF Draft: https://tools.ietf.org/html/draft-ietf-oauth-discovery-04#section-2 If oauthMetadata.name is non-empty, this value has precedence over any metadata reference stored in status. The key \"oauthMetadata\" is used to locate the data. If specified and the config map or expected key is not found, no metadata is served. If the specified metadata is not valid, no metadata is served. The namespace for this config map is openshift-config.",
 	"webhookTokenAuthenticators": "webhookTokenAuthenticators is DEPRECATED, setting it has no effect.",
 	"webhookTokenAuthenticator":  "webhookTokenAuthenticator configures a remote token reviewer. These remote authentication webhooks can be used to verify bearer tokens via the tokenreviews.authentication.k8s.io REST API. This is required to honor bearer tokens that are provisioned by an external authentication service.",
-	"serviceAccountIssuer":       "serviceAccountIssuer is the identifier of the bound service account token issuer. The default is https://kubernetes.default.svc WARNING: Updating this field will result in the invalidation of all bound tokens with the previous issuer value. Unless the holder of a bound token has explicit support for a change in issuer, they will not request a new bound token until pod restart or until their existing token exceeds 80% of its duration.",
+	"serviceAccountIssuer":       "serviceAccountIssuer is the identifier of the bound service account token issuer. The default is https://kubernetes.default.svc WARNING: Updating this field will not result in immediate invalidation of all bound tokens with the previous issuer value. Instead, the tokens issued by previous service account issuer will continue to be trusted for a time period chosen by the platform (currently set to 24h). This time period is subject to change over time. This allows internal components to transition to use new service account issuer without service distruption.",
 }
 
 func (AuthenticationSpec) SwaggerDoc() map[string]string {
@@ -1251,8 +1251,48 @@ func (NutanixPrismEndpoint) SwaggerDoc() map[string]string {
 	return map_NutanixPrismEndpoint
 }
 
+var map_OpenStackAPIBGPConfiguration = map[string]string{
+	"speakers": "speakers is a list of BGP speaker configurations. We require a speaker configuration for every failure domain hosting a control plane node. The list must contain at least one item.",
+}
+
+func (OpenStackAPIBGPConfiguration) SwaggerDoc() map[string]string {
+	return map_OpenStackAPIBGPConfiguration
+}
+
+var map_OpenStackAPIBGPPeer = map[string]string{
+	"asn":      "asn is the Autonomous System number of the peer.",
+	"ip":       "ip is the IP address of the peer, as reachable from the Control plane machine. It may be either IPv4 or IPv6",
+	"password": "password for BGP authentication against the peer",
+}
+
+func (OpenStackAPIBGPPeer) SwaggerDoc() map[string]string {
+	return map_OpenStackAPIBGPPeer
+}
+
+var map_OpenStackAPIBGPSpeaker = map[string]string{
+	"":              "OpenStackAPIBGPSpeaker describes the BGP autonomous system that will contain the API VIP for a specific failure domain.",
+	"failureDomain": "failureDomain is the name of a failure domain which this BGP configuration applies to. A failure domain with that name must be defined in the OpenStack platform spec. If there are no failure domains defined, use \"default\".",
+	"asn":           "asn specifies the Autonomous System number to be used by the BGP speaker of the Control plane node. Control plane nodes in a failure domain where this field is not set are each assigned a distinct number: master-0 4273211230, master-1 4273211231, and master-2 4273211232. If multiple Control plane nodes are assigned the same failure domain, this field cannot be set.",
+	"peers":         "peers is a list of all BGP peers of the speaker for the VIPs of this failure domain. The list must contain at least one item.",
+}
+
+func (OpenStackAPIBGPSpeaker) SwaggerDoc() map[string]string {
+	return map_OpenStackAPIBGPSpeaker
+}
+
+var map_OpenStackAPILoadBalancer = map[string]string{
+	"":     "OpenStackAPILoadBalancer defines how inbound traffic is routed to the API servers.",
+	"type": "apiLoadBalancerType defines the type of loadbalancer which will be configured for the API server. Permitted values are `VRRP` and `BGP`. When omitted, this means no opinion and the platform is left to choose a reasonable default. This default is subject to change over time. The current default value is `VRRP`.",
+	"bgp":  "bgpConfiguration describes the configuration of a BGP load balancer for the API server. It is only used if apiLoadBalancer is set to `BGP`.",
+}
+
+func (OpenStackAPILoadBalancer) SwaggerDoc() map[string]string {
+	return map_OpenStackAPILoadBalancer
+}
+
 var map_OpenStackPlatformSpec = map[string]string{
-	"": "OpenStackPlatformSpec holds the desired state of the OpenStack infrastructure provider. This only includes fields that can be modified in the cluster.",
+	"":                "OpenStackPlatformSpec holds the desired state of the OpenStack infrastructure provider. This only includes fields that can be modified in the cluster.",
+	"apiLoadBalancer": "apiLoadBalancer defines how traffic destined to the OpenShift API is routed to the API servers. When omitted, this means no opinion and the platform is left to choose a reasonable default. This default is subject to change over time. The current default configuration uses VRRP.",
 }
 
 func (OpenStackPlatformSpec) SwaggerDoc() map[string]string {
