@@ -94,4 +94,7 @@ resource "aws_nat_gateway" "nat_gw" {
     },
     var.tags,
   )
+
+  # https://issues.redhat.com/browse/OCPBUGS-891
+  depends_on = [aws_eip.nat_eip, aws_subnet.public_subnet]
 }
