@@ -512,6 +512,14 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool := defaultVSphereMachinePoolPlatform()
 			mpool.Set(ic.Platform.VSphere.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.VSphere)
+			// The machinepool has no zones defined, there are FailureDomains
+			// This is a vSphere zonal installation. Generate machinepool zone
+			// list.
+			if len(mpool.Zones) == 0 && len(ic.VSphere.FailureDomains) != 0 {
+				for _, fd := range ic.VSphere.FailureDomains {
+					mpool.Zones = append(mpool.Zones, fd.Name)
+				}
+			}
 			pool.Platform.VSphere = &mpool
 			templateName := clusterID.InfraID + "-rhcos"
 
