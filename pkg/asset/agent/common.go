@@ -9,7 +9,7 @@ import (
 // SupportedPlatforms lists the supported platforms for agent installer
 var SupportedPlatforms = []string{baremetal.Name, vsphere.Name, none.Name}
 
-// IsSupportedPlatform returns true if provided platform is baremeral, vsphere or none.
+// IsSupportedPlatform returns true if provided platform is supported.
 // Otherwise, returns false
 func IsSupportedPlatform(platform string) bool {
 	for _, p := range SupportedPlatforms {
