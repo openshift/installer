@@ -184,6 +184,10 @@ type InstallConfig struct {
 	// Capabilities configures the installation of optional core cluster components.
 	// +optional
 	Capabilities *Capabilities `json:"capabilities,omitempty"`
+
+	// FeatureSet enables features that are not part of the default feature set.
+	// +optional
+	FeatureSet configv1.FeatureSet `json:"featureSet,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.

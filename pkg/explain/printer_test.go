@@ -52,6 +52,9 @@ func Test_PrintFields(t *testing.T) {
  There are three possible values for this field, but the valid values are dependent upon the platform being used. "Mint": create new credentials with a subset of the overall permissions for each CredentialsRequest "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest "Manual": CredentialsRequests must be handled manually by the user 
  For each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set. AWS: "Mint", "Passthrough", "Manual" Azure: "Passthrough", "Manual" AzureStack: "Manual" GCP: "Mint", "Passthrough", "Manual" IBMCloud: "Manual" AlibabaCloud: "Manual" PowerVS: "Manual" Nutanix: "Manual"
 
+    featureSet <string>
+      FeatureSet enables features that are not part of the default feature set.
+
     fips <boolean>
       Default: false
       FIPS configures https://www.nist.gov/itl/fips-general-information

@@ -144,6 +144,8 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		}
 	}
 
+	allErrs = append(allErrs, validateFeatureSet(c)...)
+
 	return allErrs
 }
 
@@ -975,4 +977,31 @@ func validateAdditionalCABundlePolicy(c *types.InstallConfig) error {
 	default:
 		return fmt.Errorf("supported values \"Proxyonly\", \"Always\"")
 	}
+}
+
+// validateFeatureSet returns an error if a gated feature is used without opting into the feature set.
+func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if _, ok := configv1.FeatureSets[c.FeatureSet]; !ok {
+		sortedFeatureSets := func() []string {
+			v := []string{}
+			for n := range configv1.FeatureSets {
+				v = append(v, string(n))
+			}
+			sort.Strings(v)
+			return v
+		}()
+		allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), c.FeatureSet, sortedFeatureSets))
+	}
+
+	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
+		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
+
+		if c.GCP != nil && len(c.GCP.NetworkProjectID) > 0 {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("gcp", "networkProjectID"), errMsg))
+		}
+	}
+
+	return allErrs
 }
