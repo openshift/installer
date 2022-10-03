@@ -75,7 +75,7 @@ func TestRegistriesConf_Generate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "mirror/registries.conf should have an entry matching the releaseImage registry.ci.openshift.org/origin/release",
+			expectedError: "Generated mirror/registries.conf should have an entry matching the releaseImage registry.ci.openshift.org/origin/release",
 		},
 		{
 			name: "valid-image-content-sources",
@@ -192,7 +192,7 @@ mirror-by-digest-only = false
 [[registry.mirror]]
 location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"`,
 			expectedFound: false,
-			expectedError: "mirror/registries.conf should have an entry matching the releaseImage registry.ci.openshift.org/origin/release",
+			expectedError: "Loaded mirror/registries.conf should have an entry matching the releaseImage registry.ci.openshift.org/origin/release",
 		},
 		{
 			name:       "file-not-found",
