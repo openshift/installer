@@ -1,3 +1,6 @@
+//go:build go1.18
+// +build go1.18
+
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
@@ -16,6 +19,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	azlog "github.com/Azure/azure-sdk-for-go/sdk/azcore/log"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/internal/log"
 )
@@ -187,7 +191,7 @@ func (s *sharedKeyCredPolicy) Do(req *policy.Request) (*http.Response, error) {
 	response, err := req.Next()
 	if err != nil && response != nil && response.StatusCode == http.StatusForbidden {
 		// Service failed to authenticate request, log it
-		log.Write(log.EventResponse, "===== HTTP Forbidden status, String-to-NewSASQueryParameters:\n"+stringToSign+"\n===============================\n")
+		log.Write(azlog.EventResponse, "===== HTTP Forbidden status, String-to-NewSASQueryParameters:\n"+stringToSign+"\n===============================\n")
 	}
 	return response, err
 }
