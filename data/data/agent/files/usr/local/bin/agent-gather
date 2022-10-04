@@ -24,6 +24,15 @@ function gather_agent_data() {
 	( >&2 echo " Done")
 }
 
+function gather_config_status() {
+	( >&2 echo -n "Gathering configuration status" )
+	mkdir -p "${ARTIFACTS_DIR}/var/run"
+        if [ -d /var/run/agent-installer ]; then
+            cp -a /var/run/agent-installer "${ARTIFACTS_DIR}/var/run/"
+        fi
+	( >&2 echo " Done")
+}
+
 function gather_network_data() {
 	( >&2 echo -n "Gathering network data" )
 	ip -d -j -p addr show > "${ARTIFACTS_DIR}/ipaddr"
@@ -82,6 +91,7 @@ ARTIFACTS_DIR="$(mktemp -d)/agent-gather"
 mkdir -p "$ARTIFACTS_DIR"
 gather_journal
 gather_agent_data
+gather_config_status
 gather_network_data
 gather_storage_data
 
