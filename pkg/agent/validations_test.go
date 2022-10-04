@@ -1,10 +1,12 @@
 package agent
 
 import (
+	"io/ioutil"
 	"regexp"
 	"testing"
 
 	"github.com/openshift/assisted-service/models"
+	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -41,7 +43,7 @@ func TestCheckHostsValidation(t *testing.T) {
 			expectedResult: false,
 			expectedLogs: []string{
 				`Checking for validation failures ----------------------------------------------`,
-				`level=error msg="Validation failure found for master\-0.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
+				`level=debug msg="Validation failure found for master\-0.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
 			},
 		},
 		{
@@ -59,8 +61,8 @@ func TestCheckHostsValidation(t *testing.T) {
 			expectedResult: false,
 			expectedLogs: []string{
 				`Checking for validation failures ----------------------------------------------`,
-				`level=error msg="Validation failure found for master\-0.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
-				`level=error msg="Validation failure found for master\-1.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
+				`level=debug msg="Validation failure found for master\-0.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
+				`level=debug msg="Validation failure found for master\-1.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
 			},
 		},
 		{
@@ -85,7 +87,14 @@ func TestCheckHostsValidation(t *testing.T) {
 				Hosts: tt.hosts,
 			}
 
-			logger, hook := test.NewNullLogger()
+			var logger = &logrus.Logger{
+				Out:       ioutil.Discard,
+				Formatter: new(logrus.TextFormatter),
+				Hooks:     make(logrus.LevelHooks),
+				Level:     logrus.DebugLevel,
+			}
+			hook := test.NewLocal(logger)
+
 			assert.Equal(t, tt.expectedResult, checkHostsValidations(cluster, logger))
 
 			assert.Equal(t, len(tt.expectedLogs), len(hook.Entries))
