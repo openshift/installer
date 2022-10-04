@@ -735,10 +735,12 @@ func getClusterOperatorNames(ctx context.Context, cc *configclient.Clientset) ([
 }
 
 func getCOProgressingStatus(ctx context.Context, cc *configclient.Clientset, name string) (*configv1.ClusterOperatorStatusCondition, error) {
-	coListWatcher := cache.NewListWatchFromClient(cc.ConfigV1().RESTClient(),
+	var coListWatcher cache.ListerWatcher
+	coListWatcher = cache.NewListWatchFromClient(cc.ConfigV1().RESTClient(),
 		"clusteroperators",
 		"",
 		fields.OneTermEqualSelector("metadata.name", name))
+	coListWatcher = replayingListWatcher(coListWatcher)
 
 	var pStatus *configv1.ClusterOperatorStatusCondition
 
@@ -772,6 +774,91 @@ func getCOProgressingStatus(ctx context.Context, cc *configclient.Clientset, nam
 		},
 	)
 	return pStatus, err
+}
+
+func wrapWithReplay(w watch.Interface) watch.Interface {
+	fw := &replayingWatch{
+		incoming: w,
+		result:   make(chan watch.Event),
+		closed:   make(chan struct{}),
+	}
+	go fw.watchIncoming()
+	go fw.resendLast()
+	return fw
+}
+
+type replayingWatch struct {
+	incoming watch.Interface
+	result   chan watch.Event
+	closed   chan struct{}
+
+	lastLock sync.Mutex
+	last     watch.Event
+}
+
+func (r *replayingWatch) ResultChan() <-chan watch.Event {
+	return r.result
+}
+
+func (r *replayingWatch) Stop() {
+	r.incoming.Stop()
+}
+
+func (r *replayingWatch) watchIncoming() {
+	defer close(r.result)
+	defer close(r.closed)
+	for event := range r.incoming.ResultChan() {
+		func() {
+			r.lastLock.Lock()
+			defer r.lastLock.Unlock()
+
+			r.result <- event
+			r.last = copyWatchEvent(event)
+		}()
+	}
+}
+func copyWatchEvent(event watch.Event) watch.Event {
+	return watch.Event{
+		Type:   event.Type,
+		Object: event.Object.DeepCopyObject(),
+	}
+}
+
+func (r *replayingWatch) resendLast() {
+	var emptyEvent watch.Event
+	err := wait.PollUntilContextCancel(context.TODO(), time.Second, false, func(ctx context.Context) (bool, error) {
+		select {
+		case <-r.closed:
+			return true, nil
+		default:
+		}
+		func() {
+			r.lastLock.Lock()
+			defer r.lastLock.Unlock()
+
+			if r.last != emptyEvent {
+				r.result <- copyWatchEvent(r.last)
+			}
+		}()
+		return false, nil
+	})
+	if err != nil {
+		logrus.Debugf("Watcher polling error: %v", err)
+	}
+}
+
+func replayingListWatcher(in cache.ListerWatcher) cache.ListerWatcher {
+	return &cache.ListWatch{
+		ListFunc: in.List,
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			w, err := in.Watch(options)
+			if err != nil {
+				return w, err
+			}
+			return wrapWithReplay(w), nil
+		},
+		DisableChunking: true,
+	}
 }
 
 // coStabilityChecker returns a closure which references a shared error variable. err
