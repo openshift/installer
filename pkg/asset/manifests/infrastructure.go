@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
+	vsphereinfra "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -212,6 +213,8 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 				IngressIPs:           installConfig.Config.VSphere.IngressVIPs,
 			}
 		}
+		config.Spec.PlatformSpec.VSphere = vsphereinfra.GetInfraPlatformSpec(installConfig)
+
 		if _, exists := cloudproviderconfig.ConfigMap.Data["vsphere.conf"]; exists {
 			cloudProviderConfigMapKey = "vsphere.conf"
 		}
