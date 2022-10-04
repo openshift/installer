@@ -154,29 +154,37 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 	var allErrs field.ErrorList
 	var fieldPath *field.Path
 
+	var workers int
+	for _, worker := range installConfig.Compute {
+		workers = workers + int(*worker.Replicas)
+	}
+
 	//  platform None always imply SNO cluster
 	if installConfig.Platform.Name() == none.Name {
 		if installConfig.Networking.NetworkType != "OVNKubernetes" {
 			fieldPath = field.NewPath("Networking", "NetworkType")
 			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Networking.NetworkType, "Only OVNKubernetes network type is allowed for Single Node OpenShift (SNO) cluster"))
 		}
+
 		if *installConfig.ControlPlane.Replicas != 1 {
 			fieldPath = field.NewPath("ControlPlane", "Replicas")
-			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("control plane replicas must be 1 for %s platform. Found %v", none.Name, *installConfig.ControlPlane.Replicas)))
+			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("ControlPlane.Replicas must be 1 for %s platform. Found %v", none.Name, *installConfig.ControlPlane.Replicas)))
 		} else if len(installConfig.Compute) == 0 {
 			fieldPath = field.NewPath("Compute", "Replicas")
 			allErrs = append(allErrs, field.Required(fieldPath, "Installing a Single Node Openshift requires explicitly setting compute replicas to zero"))
 		}
 
-		var workers int
-		for _, worker := range installConfig.Compute {
-			workers = workers + int(*worker.Replicas)
-		}
 		if workers != 0 {
 			fieldPath = field.NewPath("Compute", "Replicas")
-			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("total number of worker replicas must be 0 for %s platform. Found %v", none.Name, workers)))
+			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("Total number of Compute.Replicas must be 0 for %s platform. Found %v", none.Name, workers)))
 		}
 	}
+
+	if installConfig.ControlPlane != nil && *installConfig.ControlPlane.Replicas == 1 && workers == 0 && installConfig.Platform.Name() != none.Name {
+		fieldPath = field.NewPath("Platform")
+		allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.Name(), fmt.Sprintf("Platform should be set to %s if the ControlPlane.Replicas is %d and total number of Compute.Replicas is %d", none.Name, *installConfig.ControlPlane.Replicas, workers)))
+	}
+
 	return allErrs
 }
 

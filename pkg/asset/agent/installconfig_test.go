@@ -100,7 +100,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [ControlPlane.Replicas: Required value: control plane replicas must be 1 for none platform. Found 3, Compute.Replicas: Required value: total number of worker replicas must be 0 for none platform. Found 2]",
+			expectedError: "invalid install-config configuration: [ControlPlane.Replicas: Required value: ControlPlane.Replicas must be 1 for none platform. Found 3, Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 for none platform. Found 2]",
 		},
 		{
 			name: "no compute.replicas set for SNO",
@@ -151,6 +151,35 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
 			expectedError: "invalid install-config configuration: Networking.NetworkType: Invalid value: \"OpenShiftSDN\": Only OVNKubernetes network type is allowed for Single Node OpenShift (SNO) cluster",
+		},
+		{
+			name: "invalid platform for SNO cluster",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OpenShiftSDN
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 1
+platform:
+  aws:
+    region: us-east-1
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", Platform: Invalid value: \"aws\": Platform should be set to none if the ControlPlane.Replicas is 1 and total number of Compute.Replicas is 0]",
 		},
 		{
 			name: "valid configuration for none platform for sno",
