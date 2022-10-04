@@ -224,9 +224,8 @@ func (i *RegistriesConf) validateReleaseImageIsSameInRegistriesConf(source strin
 	if !strings.Contains(string(i.File.Data), releaseImagePath) {
 		if source == "Generated" {
 			return errors.New(fmt.Sprintf("The ImageContentSource configuration in install-config.yaml should have an entry matching the releaseImage %s", releaseImagePath))
-		} else {
-			return errors.New(fmt.Sprintf("%s should have an entry matching the releaseImage %s", RegistriesConfFilename, releaseImagePath))
 		}
+		return errors.New(fmt.Sprintf("%s should have an entry matching the releaseImage %s", RegistriesConfFilename, releaseImagePath))
 	}
 
 	return nil
