@@ -61,6 +61,10 @@ func (a *SingleNodeBootstrapInPlace) Load(f asset.FileFetcher) (found bool, err 
 // verifyBootstrapInPlace validate the number of control plane replica is one and that installation disk is set
 func verifyBootstrapInPlace(installConfig *types.InstallConfig) error {
 	errorList := field.ErrorList{}
+	if installConfig.Platform.None == nil {
+		errorList = append(errorList, field.Required(field.NewPath("platform", "none"),
+			"must use none platform for single node bootstrap in place installation, other platforms are not supported"))
+	}
 	if installConfig.ControlPlane.Replicas == nil {
 		errorList = append(errorList, field.Invalid(field.NewPath("controlPlane", "replicas"), installConfig.ControlPlane.Replicas,
 			"bootstrap in place requires ControlPlane.Replicas configuration"))
