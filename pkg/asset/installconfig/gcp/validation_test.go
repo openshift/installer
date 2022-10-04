@@ -2,12 +2,12 @@ package gcp
 
 import (
 	"fmt"
+	googleoauth "golang.org/x/oauth2/google"
 	"net"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	googleoauth "golang.org/x/oauth2/google"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -433,6 +433,68 @@ func TestGCPEnabledServicesList(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateCredentialMode(t *testing.T) {
+	cases := []struct {
+		name       string
+		creds      types.CredentialsMode
+		emptyCreds bool
+		err        string
+	}{{
+		name:       "missing json with manual creds",
+		creds:      types.ManualCredentialsMode,
+		emptyCreds: true,
+	}, {
+		name:       "missing json without manual creds",
+		creds:      types.PassthroughCredentialsMode,
+		emptyCreds: true,
+		err:        "credentialsMode: Forbidden: environmental authentication is only supported with Manual credentials mode",
+	}, {
+		name:       "supplied json with manual creds",
+		creds:      types.ManualCredentialsMode,
+		emptyCreds: false,
+	}, {
+		name:       "supplied json without manual creds",
+		creds:      types.PassthroughCredentialsMode,
+		emptyCreds: false,
+	}}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	// Client where the creds are empty
+	gcpClientEmptyCreds := mock.NewMockAPI(mockCtrl)
+	gcpClientEmptyCreds.EXPECT().GetCredentials().Return(&googleoauth.Credentials{}).AnyTimes()
+
+	// Client that contains creds
+	gcpClientWithCreds := mock.NewMockAPI(mockCtrl)
+	gcpClientWithCreds.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: []byte("fake creds")}).AnyTimes()
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+
+			ic := types.InstallConfig{
+				ObjectMeta:      metav1.ObjectMeta{Name: "cluster-name"},
+				BaseDomain:      "base-domain",
+				Platform:        types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+				CredentialsMode: test.creds,
+			}
+
+			var err error
+			if test.emptyCreds {
+				err = ValidateCredentialMode(gcpClientEmptyCreds, &ic)
+			} else {
+				err = ValidateCredentialMode(gcpClientWithCreds, &ic)
+			}
+
+			if test.err == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, test.err, err)
 			}
 		})
 	}
