@@ -156,14 +156,16 @@ const (
 	CatalogTypeDisabled CatalogTypesState = "Disabled"
 )
 
-// DeveloperConsoleCatalogTypesState defines the state of the sub-catalog types.
-// +kubebuilder:validation:XValidation:rule="has(self.state) && self.state == 'Enabled' && has(self.disabled)",message="disabled is forbidden when state is Enabled."
-// +kubebuilder:validation:XValidation:rule="has(self.state) && self.state == 'Disabled' && has(self.enabled)",message="enabled is forbidden when state is Disabled."
+// DeveloperConsoleCatalogTypes defines the state of the sub-catalog types.
+// +kubebuilder:validation:XValidation:rule="self.state == 'Enabled' ? true : !has(self.enabled)",message="enabled is forbidden when state is not Enabled"
+// +kubebuilder:validation:XValidation:rule="self.state == 'Disabled' ? true : !has(self.disabled)",message="disabled is forbidden when state is not Disabled"
 // +union
-type DeveloperConsoleCatalogTypesState struct {
+type DeveloperConsoleCatalogTypes struct {
 	// state defines if a list of catalog types should be enabled or disabled.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Enabled";"Disabled";
+	// +kubebuilder:default:="Enabled"
+	// +default="Enabled"
 	// +kubebuilder:validation:Required
 	State CatalogTypesState `json:"state,omitempty"`
 	// enabled is a list of developer catalog types (sub-catalogs IDs) that will be shown to users.
@@ -194,7 +196,7 @@ type DeveloperConsoleCatalogCustomization struct {
 	// types allows enabling or disabling of sub-catalog types that user can see in the Developer catalog.
 	// When omitted, all the sub-catalog types will be shown.
 	// +optional
-	Types DeveloperConsoleCatalogTypesState `json:"types"`
+	Types DeveloperConsoleCatalogTypes `json:"types,omitempty"`
 }
 
 // DeveloperConsoleCatalogCategoryMeta are the key identifiers of a developer catalog category.

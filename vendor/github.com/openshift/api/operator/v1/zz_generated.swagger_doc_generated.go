@@ -300,15 +300,15 @@ func (DeveloperConsoleCatalogCustomization) SwaggerDoc() map[string]string {
 	return map_DeveloperConsoleCatalogCustomization
 }
 
-var map_DeveloperConsoleCatalogTypesState = map[string]string{
-	"":         "DeveloperConsoleCatalogTypesState defines the state of the sub-catalog types.",
+var map_DeveloperConsoleCatalogTypes = map[string]string{
+	"":         "DeveloperConsoleCatalogTypes defines the state of the sub-catalog types.",
 	"state":    "state defines if a list of catalog types should be enabled or disabled.",
 	"enabled":  "enabled is a list of developer catalog types (sub-catalogs IDs) that will be shown to users. Types (sub-catalogs) are added via console plugins, the available types (sub-catalog IDs) are available in the console on the cluster configuration page, or when editing the YAML in the console. Example: \"Devfile\", \"HelmChart\", \"BuilderImage\" If the list is non-empty, a new type will not be shown to the user until it is added to list. If the list is empty the complete developer catalog will be shown.",
 	"disabled": "disabled is a list of developer catalog types (sub-catalogs IDs) that are not shown to users. Types (sub-catalogs) are added via console plugins, the available types (sub-catalog IDs) are available in the console on the cluster configuration page, or when editing the YAML in the console. Example: \"Devfile\", \"HelmChart\", \"BuilderImage\" If the list is empty or all the available sub-catalog types are added, then the complete developer catalog should be hidden.",
 }
 
-func (DeveloperConsoleCatalogTypesState) SwaggerDoc() map[string]string {
-	return map_DeveloperConsoleCatalogTypesState
+func (DeveloperConsoleCatalogTypes) SwaggerDoc() map[string]string {
+	return map_DeveloperConsoleCatalogTypes
 }
 
 var map_Perspective = map[string]string{
@@ -468,8 +468,8 @@ func (DNS) SwaggerDoc() map[string]string {
 
 var map_DNSCache = map[string]string{
 	"":            "DNSCache defines the fields for configuring DNS caching.",
-	"positiveTTL": "positiveTTL is optional and specifies the amount of time that a positive response should be cached.\n\nIf configured, it must be a value of 1s (1 second) or greater up to a theoretical maximum of several years. If not configured, the value will be 0 (zero) and OpenShift will use a default value of 900 seconds unless noted otherwise in the respective Corefile for your version of OpenShift. The default value of 900 seconds is subject to change. This field expects an unsigned duration string of decimal numbers, each with optional fraction and a unit suffix, e.g. \"100s\", \"1m30s\". Valid time units are \"s\", \"m\", and \"h\".",
-	"negativeTTL": "negativeTTL is optional and specifies the amount of time that a negative response should be cached.\n\nIf configured, it must be a value of 1s (1 second) or greater up to a theoretical maximum of several years. If not configured, the value will be 0 (zero) and OpenShift will use a default value of 30 seconds unless noted otherwise in the respective Corefile for your version of OpenShift. The default value of 30 seconds is subject to change. This field expects an unsigned duration string of decimal numbers, each with optional fraction and a unit suffix, e.g. \"100s\", \"1m30s\". Valid time units are \"s\", \"m\", and \"h\".",
+	"positiveTTL": "positiveTTL is optional and specifies the amount of time that a positive response should be cached.\n\nIf configured, it must be a value of 1s (1 second) or greater up to a theoretical maximum of several years. This field expects an unsigned duration string of decimal numbers, each with optional fraction and a unit suffix, e.g. \"100s\", \"1m30s\", \"12h30m10s\". Values that are fractions of a second are rounded down to the nearest second. If the configured value is less than 1s, the default value will be used. If not configured, the value will be 0s and OpenShift will use a default value of 900 seconds unless noted otherwise in the respective Corefile for your version of OpenShift. The default value of 900 seconds is subject to change.",
+	"negativeTTL": "negativeTTL is optional and specifies the amount of time that a negative response should be cached.\n\nIf configured, it must be a value of 1s (1 second) or greater up to a theoretical maximum of several years. This field expects an unsigned duration string of decimal numbers, each with optional fraction and a unit suffix, e.g. \"100s\", \"1m30s\", \"12h30m10s\". Values that are fractions of a second are rounded down to the nearest second. If the configured value is less than 1s, the default value will be used. If not configured, the value will be 0s and OpenShift will use a default value of 30 seconds unless noted otherwise in the respective Corefile for your version of OpenShift. The default value of 30 seconds is subject to change.",
 }
 
 func (DNSCache) SwaggerDoc() map[string]string {
@@ -857,6 +857,7 @@ func (IngressControllerTuningOptions) SwaggerDoc() map[string]string {
 var map_LoadBalancerStrategy = map[string]string{
 	"":                    "LoadBalancerStrategy holds parameters for a load balancer.",
 	"scope":               "scope indicates the scope at which the load balancer is exposed. Possible values are \"External\" and \"Internal\".",
+	"allowedSourceRanges": "allowedSourceRanges specifies an allowlist of IP address ranges to which access to the load balancer should be restricted.  Each range must be specified using CIDR notation (e.g. \"10.0.0.0/8\" or \"fd00::/8\"). If no range is specified, \"0.0.0.0/0\" for IPv4 and \"::/0\" for IPv6 are used by default, which allows all source addresses.\n\nTo facilitate migration from earlier versions of OpenShift that did not have the allowedSourceRanges field, you may set the service.beta.kubernetes.io/load-balancer-source-ranges annotation on the \"router-<ingresscontroller name>\" service in the \"openshift-ingress\" namespace, and this annotation will take effect if allowedSourceRanges is empty on OpenShift 4.12.",
 	"providerParameters":  "providerParameters holds desired load balancer information specific to the underlying infrastructure provider.\n\nIf empty, defaults will be applied. See specific providerParameters fields for details about their defaults.",
 	"dnsManagementPolicy": "dnsManagementPolicy indicates if the lifecycle of the wildcard DNS record associated with the load balancer service will be managed by the ingress operator. It defaults to Managed. Valid values are: Managed and Unmanaged.",
 }
