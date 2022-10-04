@@ -5,12 +5,17 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+	"github.com/jongio/azidext/go/azidext"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -64,6 +69,26 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 		return nil, errors.Wrapf(err, "failed to get Azure environment for the %q cloud", cloudName)
 	}
 
+	var cloudConfig cloud.Configuration
+	switch cloudName {
+	case azure.StackCloud:
+		cloudConfig = cloud.Configuration{
+			ActiveDirectoryAuthorityHost: cloudEnv.ActiveDirectoryEndpoint,
+			Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
+				cloud.ResourceManager: {
+					Audience: cloudEnv.TokenAudience,
+					Endpoint: cloudEnv.ResourceManagerEndpoint,
+				},
+			},
+		}
+	case azure.USGovernmentCloud:
+		cloudConfig = cloud.AzureGovernment
+	case azure.ChinaCloud:
+		cloudConfig = cloud.AzureChina
+	default:
+		cloudConfig = cloud.AzurePublic
+	}
+
 	if credentials == nil {
 		credentials, err = credentialsFromFileOrUser(&cloudEnv)
 		if err != nil {
@@ -71,9 +96,9 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 		}
 	}
 	if credentials.ClientCertificatePath != "" {
-		return newSessionFromCertificates(cloudEnv, credentials)
+		return newSessionFromCertificates(cloudEnv, credentials, cloudConfig)
 	}
-	return newSessionFromCredentials(cloudEnv, credentials)
+	return newSessionFromCredentials(cloudEnv, credentials, cloudConfig)
 }
 
 // credentialsFromFileOrUser returns credentials found
@@ -227,24 +252,27 @@ func saveCredentials(credentials Credentials, filePath string) error {
 	return ioutil.WriteFile(filePath, jsonCreds, 0600)
 }
 
-func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Credentials) (*Session, error) {
-	c := &auth.ClientCredentialsConfig{
-		TenantID:     credentials.TenantID,
-		ClientID:     credentials.ClientID,
-		ClientSecret: credentials.ClientSecret,
-		AADEndpoint:  cloudEnv.ActiveDirectoryEndpoint,
-	}
-	c.Resource = cloudEnv.TokenAudience
-	authorizer, err := c.Authorizer()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get client credentials authorizer")
+func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Credentials, cloudConfig cloud.Configuration) (*Session, error) {
+	options := azidentity.ClientSecretCredentialOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: cloudConfig,
+		},
 	}
 
-	c.Resource = cloudEnv.GraphEndpoint
-	graphAuthorizer, err := c.Authorizer()
+	cred, err := azidentity.NewClientSecretCredential(credentials.TenantID, credentials.ClientID, credentials.ClientSecret, &options)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get GraphEndpoint authorizer")
+		return nil, errors.Wrap(err, "failed to get client credentials from secret")
 	}
+
+	// Use an adapter so azidentity in the Azure SDK can be used as
+	// Authorizer when calling the Azure Management Packages, which we
+	// currently use. Once the Azure SDK clients (found in /sdk) move to
+	// stable, we can update our clients and they will be able to use the
+	// creds directly without the authorizer. The schedule is here:
+	// https://azure.github.io/azure-sdk/releases/latest/index.html#go
+	authorizer := azidext.NewTokenCredentialAdapter(cred, []string{endpointToScope(cloudEnv.TokenAudience)})
+	graphAuthorizer := azidext.NewTokenCredentialAdapter(cred, []string{endpointToScope(cloudEnv.GraphEndpoint)})
+
 	return &Session{
 		GraphAuthorizer: graphAuthorizer,
 		Authorizer:      authorizer,
@@ -253,29 +281,53 @@ func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Crede
 	}, nil
 }
 
-func newSessionFromCertificates(cloudEnv azureenv.Environment, credentials *Credentials) (*Session, error) {
-	c := &auth.ClientCertificateConfig{
-		TenantID:            credentials.TenantID,
-		ClientID:            credentials.ClientID,
-		CertificatePath:     credentials.ClientCertificatePath,
-		CertificatePassword: credentials.ClientCertificatePassword,
-		AADEndpoint:         cloudEnv.ActiveDirectoryEndpoint,
-	}
-	c.Resource = cloudEnv.TokenAudience
-	authorizer, err := c.Authorizer()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get client credentials authorizer")
+func newSessionFromCertificates(cloudEnv azureenv.Environment, credentials *Credentials, cloudConfig cloud.Configuration) (*Session, error) {
+	options := azidentity.ClientCertificateCredentialOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: cloudConfig,
+		},
 	}
 
-	c.Resource = cloudEnv.GraphEndpoint
-	graphAuthorizer, err := c.Authorizer()
+	data, err := os.ReadFile(credentials.ClientCertificatePath)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get GraphEndpoint authorizer")
+		return nil, errors.Wrap(err, "failed to read client certificate file")
 	}
+
+	// NewClientCertificateCredential requires at least one *x509.Certificate,
+	// and a crypto.PrivateKey. ParseCertificates returns these given
+	// certificate data in PEM or PKCS12 format. It handles common scenarios
+	// but has limitations, for example it doesn't load PEM encrypted private
+	// keys.
+	certs, key, err := azidentity.ParseCertificates(data, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse client certificate")
+	}
+
+	cred, err := azidentity.NewClientCertificateCredential(credentials.TenantID, credentials.ClientID, certs, key, &options)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get client credentials from certificate")
+	}
+
+	// Use an adapter so azidentity in the Azure SDK can be used as
+	// Authorizer when calling the Azure Management Packages, which we
+	// currently use. Once the Azure SDK clients (found in /sdk) move to
+	// stable, we can update our clients and they will be able to use the
+	// creds directly without the authorizer. The schedule is here:
+	// https://azure.github.io/azure-sdk/releases/latest/index.html#go
+	authorizer := azidext.NewTokenCredentialAdapter(cred, []string{endpointToScope(cloudEnv.TokenAudience)})
+	graphAuthorizer := azidext.NewTokenCredentialAdapter(cred, []string{endpointToScope(cloudEnv.GraphEndpoint)})
+
 	return &Session{
 		GraphAuthorizer: graphAuthorizer,
 		Authorizer:      authorizer,
 		Credentials:     *credentials,
 		Environment:     cloudEnv,
 	}, nil
+}
+
+func endpointToScope(endpoint string) string {
+	if !strings.HasPrefix(endpoint, "/.default") {
+		endpoint += "/.default"
+	}
+	return endpoint
 }
