@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
+	"github.com/openshift/installer/pkg/asset/password"
 )
 
 func newAgentCmd() *cobra.Command {
@@ -64,6 +65,7 @@ var (
 		assets: []asset.WritableAsset{
 			&image.AgentImage{},
 			&kubeconfig.AgentAdminClient{},
+			&password.KubeadminPassword{},
 		},
 	}
 
