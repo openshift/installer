@@ -184,7 +184,6 @@ func (c *Cluster) applyStage(platform string, stage terraform.Stage, terraformDi
 func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform.Stage, terraformDir string, opts ...tfexec.ApplyOption) (*asset.File, error) {
 	timer.StartTimer(stage.Name())
 	defer timer.StopTimer(stage.Name())
-
 	applyErr := terraform.Apply(tmpDir, platform, stage, terraformDir, opts...)
 
 	// Write the state file to the install directory even if the apply failed.
@@ -206,6 +205,7 @@ func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not get outputs from stage %q", stage.Name())
 	}
+	logrus.StandardLogger().SetOutput(os.Stdout)
 
 	outputsFile := &asset.File{
 		Filename: stage.OutputsFilename(),

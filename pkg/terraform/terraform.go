@@ -29,10 +29,21 @@ func newTFExec(datadir string, terraformDir string) (*tfexec.Terraform, error) {
 	lpError := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Error}).Print}
 	defer lpDebug.Close()
 	defer lpError.Close()
-
 	tf.SetStdout(lpDebug)
 	tf.SetStderr(lpError)
-	tf.SetLogger(newPrintfer())
+	os.Setenv("TF_LOG_PATH", os.ExpandEnv("${ARTIFACT_DIR}/terraform.txt"))
+
+	printfer := newPrintfer()
+	if path := os.Getenv("TF_LOG_PATH"); path != "" {
+		if f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755); err == nil {
+			printfer.logger.SetOutput(f)
+			logrus.Debugf("Logging to file on TF_LOG_PATH")
+		} else {
+			logrus.Warnf("Invalid location set in TF_LOG_PATH: %s", err.Error())
+			logrus.Warnf("Terraform log files will be appended to .openshift_install.log file")
+		}
+	}
+	tf.SetLogger(printfer)
 
 	// Set the Terraform data dir to be the same as the terraformDir so that
 	// files we unpack are contained and, more importantly, we can ensure the
