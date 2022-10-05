@@ -67,6 +67,9 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 				},
 			},
 		}
+		if installConfig.Config.Proxy != nil {
+			infraEnv.Spec.Proxy = getProxy(installConfig)
+		}
 		i.Config = infraEnv
 
 		infraEnvData, err := yaml.Marshal(infraEnv)

@@ -150,6 +150,17 @@ func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
 	}
 }
 
+// getProxyValidOptionalInstallConfig returns a valid optional install config for proxied installation
+func getProxyValidOptionalInstallConfig() *agent.OptionalInstallConfig {
+	validIC := getValidOptionalInstallConfig()
+	validIC.InstallConfig.Config.Proxy = &types.Proxy{
+		HTTPProxy:  "http://10.10.10.11:80",
+		HTTPSProxy: "http://my-lab-proxy.org:443",
+		NoProxy:    "internal.com",
+	}
+	return validIC
+}
+
 func getValidAgentConfig() *agentconfig.AgentConfig {
 	return &agentconfig.AgentConfig{
 		Config: &agenttypes.Config{

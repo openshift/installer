@@ -58,6 +58,32 @@ func TestInfraEnv_Generate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "proxy valid configuration",
+			dependencies: []asset.Asset{
+				getProxyValidOptionalInstallConfig(),
+			},
+			expectedConfig: &aiv1beta1.InfraEnv{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+				},
+				Spec: aiv1beta1.InfraEnvSpec{
+					Proxy:            getProxy(getProxyValidOptionalInstallConfig()),
+					SSHAuthorizedKey: strings.Trim(TestSSHKey, "|\n\t"),
+					PullSecretRef: &corev1.LocalObjectReference{
+						Name: getPullSecretName(getProxyValidOptionalInstallConfig()),
+					},
+					NMStateConfigLabelSelector: metav1.LabelSelector{
+						MatchLabels: getNMStateConfigLabels(getProxyValidOptionalInstallConfig()),
+					},
+					ClusterRef: &aiv1beta1.ClusterReference{
+						Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
+						Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+					},
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
