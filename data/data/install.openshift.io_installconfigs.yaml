@@ -723,7 +723,8 @@ spec:
                               type: integer
                           type: object
                         zones:
-                          description: Zones defines available zones
+                          description: Zones defines available zones Zones is available
+                            in TechPreview.
                           items:
                             type: string
                           type: array
@@ -1366,7 +1367,8 @@ spec:
                             type: integer
                         type: object
                       zones:
-                        description: Zones defines available zones
+                        description: Zones defines available zones Zones is available
+                          in TechPreview.
                         items:
                           type: string
                         type: array
@@ -3145,7 +3147,8 @@ spec:
                             type: integer
                         type: object
                       zones:
-                        description: Zones defines available zones
+                        description: Zones defines available zones Zones is available
+                          in TechPreview.
                         items:
                           type: string
                         type: array
@@ -3162,10 +3165,10 @@ spec:
                     - eagerZeroedThick
                     type: string
                   failureDomains:
-                    description: failureDomains holds the VSpherePlatformFailureDomainSpec
+                    description: FailureDomains holds the VSpherePlatformFailureDomainSpec
                       which contains the definition of region, zone and the vCenter
                       topology. If this is omitted failure domains (regions and zones)
-                      will not be used.
+                      will not be used. FailureDomains is available in TechPreview.
                     items:
                       description: FailureDomain holds the region and zone failure
                         domain and the vCenter topology of that failure domain.
@@ -3289,9 +3292,9 @@ spec:
                     description: VCenter is the domain name or IP address of the vCenter.
                     type: string
                   vcenters:
-                    description: vcenters holds the connection details for services
+                    description: VCenters holds the connection details for services
                       to communicate with vCenter. Currently only a single vCenter
-                      is supported.
+                      is supported. VCenters is available in TechPreview.
                     items:
                       description: VCenter stores the vCenter connection fields https://github.com/kubernetes/cloud-provider-vsphere/blob/master/pkg/common/config/types_yaml.go
                       properties:
