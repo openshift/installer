@@ -87,10 +87,10 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "failed to create install config: invalid \"install-config.yaml\" file: [platform.baremetal.apiVIPs: Invalid value: []string{\"DNS lookup failure: lookup api.test-cluster.test-domain on 10.0.80.11:53: no such host\"}: ip <nil> is invalid, platform.baremetal.apiVIPs: Invalid value: \"DNS lookup failure: lookup api.test-cluster.test-domain on 10.0.80.11:53: no such host\": \"DNS lookup failure: lookup api.test-cluster.test-domain on 10.0.80.11:53: no such host\" is not a valid IP, platform.baremetal.apiVIPs: Invalid value: \"DNS lookup failure: lookup api.test-cluster.test-domain on 10.0.80.11:53: no such host\": IP expected to be in one of the machine networks: 192.168.122.0/23]",
+			expectedError: "platform.baremetal.apiVIPs: Invalid value",
 		},
 		{
-			name: "Required values not set and invalid apiVips set for vsphere platform",
+			name: "Required values not set for vsphere platform",
 			data: `
 apiVersion: v1
 metadata:
@@ -103,7 +103,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "failed to create install config: invalid \"install-config.yaml\" file: [platform.vsphere.apiVIPs: Invalid value: \"192.168.122.10\": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.vCenter: Required value: must specify the name of the vCenter, platform.vsphere.username: Required value: must specify the username, platform.vsphere.password: Required value: must specify the password, platform.vsphere.datacenter: Required value: must specify the datacenter, platform.vsphere.defaultDatastore: Required value: must specify the default datastore]",
+			expectedError: "platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.vCenter: Required value: must specify the name of the vCenter, platform.vsphere.username: Required value: must specify the username, platform.vsphere.password: Required value: must specify the password, platform.vsphere.datacenter: Required value: must specify the datacenter, platform.vsphere.defaultDatastore: Required value: must specify the default datastore]",
 		},
 		{
 			name: "invalid configuration for none platform for sno",
@@ -533,7 +533,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			found, err := asset.Load(fileFetcher)
 			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
 			if tc.expectedError != "" {
-				assert.Equal(t, tc.expectedError, err.Error())
+				assert.Contains(t, err.Error(), tc.expectedError)
 			} else {
 				assert.NoError(t, err)
 			}
