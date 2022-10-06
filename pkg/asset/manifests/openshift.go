@@ -62,6 +62,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&installconfig.ClusterID{},
 		&password.KubeadminPassword{},
 		&openshiftinstall.Config{},
+		&FeatureGate{},
 
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
@@ -78,7 +79,8 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	kubeadminPassword := &password.KubeadminPassword{}
 	openshiftInstall := &openshiftinstall.Config{}
-	dependencies.Get(installConfig, kubeadminPassword, clusterID, openshiftInstall)
+	featureGate := &FeatureGate{}
+	dependencies.Get(installConfig, kubeadminPassword, clusterID, openshiftInstall, featureGate)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -307,6 +309,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	}
 
 	o.FileList = append(o.FileList, openshiftInstall.Files()...)
+	o.FileList = append(o.FileList, featureGate.Files()...)
 
 	asset.SortFiles(o.FileList)
 

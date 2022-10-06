@@ -25,6 +25,7 @@ type MachinePool struct {
 	OSDisk `json:"osDisk"`
 
 	// Zones defines available zones
+	// Zones is available in TechPreview.
 	//
 	// +omitempty
 	Zones []string `json:"zones,omitempty"`
