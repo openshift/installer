@@ -114,11 +114,11 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 }
 
 // IsBootstrapComplete Determine if the cluster has completed the bootstrap process.
-func (czero *Cluster) IsBootstrapComplete() (bool, error) {
+func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 	if czero.installHistory.ClusterBootstrapComplete {
 		logrus.Info("Bootstrap is complete")
-		return true, nil
+		return true, false, nil
 	}
 
 	clusterKubeAPILive, clusterKubeAPIErr := czero.API.Kube.IsKubeAPILive()
@@ -138,7 +138,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 		if configmap {
 			logrus.Info("Bootstrap configMap status is complete")
 			czero.installHistory.ClusterBootstrapComplete = true
-			return true, nil
+			return true, false, nil
 		}
 		if err != nil {
 			logrus.Debug(err)
@@ -162,7 +162,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 		if czero.clusterID == nil {
 			clusterID, err := czero.API.Rest.getClusterID()
 			if err != nil {
-				return false, errors.Wrap(err, "Unable to retrieve clusterID from Agent Rest API")
+				return false, false, errors.Wrap(err, "Unable to retrieve clusterID from Agent Rest API")
 			}
 			czero.clusterID = clusterID
 		}
@@ -170,7 +170,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 		if czero.clusterInfraEnvID == nil {
 			clusterInfraEnvID, err := czero.API.Rest.getClusterInfraEnvID()
 			if err != nil {
-				return false, errors.Wrap(err, "Unable to retrieve clusterInfraEnvID from Agent Rest API")
+				return false, false, errors.Wrap(err, "Unable to retrieve clusterInfraEnvID from Agent Rest API")
 			}
 			czero.clusterInfraEnvID = clusterInfraEnvID
 		}
@@ -178,18 +178,20 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 		logrus.Trace("Getting cluster metadata from Agent Rest API")
 		clusterMetadata, err := czero.GetClusterRestAPIMetadata()
 		if err != nil {
-			return false, errors.Wrap(err, "Unable to retrieve cluster metadata from Agent Rest API")
+			return false, false, errors.Wrap(err, "Unable to retrieve cluster metadata from Agent Rest API")
 		}
 
 		if clusterMetadata == nil {
-			return false, errors.New("cluster metadata returned nil from Agent Rest API")
-		}
-
-		if !checkHostsValidations(clusterMetadata, logrus.StandardLogger()) {
-			return false, errors.New("cluster host validations failed")
+			return false, false, errors.New("cluster metadata returned nil from Agent Rest API")
 		}
 
 		czero.PrintInstallStatus(clusterMetadata)
+
+		// If the status changes back to Ready from Installing it indicates an error
+		if *clusterMetadata.Status == models.ClusterStatusReady &&
+			czero.installHistory.RestAPIPreviousClusterStatus == models.ClusterStatusPreparingForInstallation {
+			return false, true, errors.New("failed to prepare cluster installation")
+		}
 		czero.installHistory.RestAPIPreviousClusterStatus = *clusterMetadata.Status
 
 		// Update Install History object when we see these states
@@ -197,19 +199,22 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 
 		installing, _ := czero.IsInstalling(*clusterMetadata.Status)
 		if !installing {
-			logrus.Warn("Cluster has stopped installing... working to recover installation")
 			errored, _ := czero.HasErrored(*clusterMetadata.Status)
 			if errored {
-				return false, errors.New("cluster installation has stopped due to errors")
+				return false, false, errors.New("cluster has stopped installing... working to recover installation")
 			} else if *clusterMetadata.Status == models.ClusterStatusCancelled {
-				return false, errors.New("cluster installation was cancelled")
+				return false, true, errors.New("cluster installation was cancelled")
 			}
+		}
+
+		if !checkHostsValidations(clusterMetadata, logrus.StandardLogger()) {
+			return false, false, nil
 		}
 
 		// Print most recent event associated with the clusterInfraEnvID
 		eventList, err := czero.API.Rest.GetInfraEnvEvents(czero.clusterInfraEnvID)
 		if err != nil {
-			return false, errors.Wrap(err, "Unable to retrieve events about the cluster from the Agent Rest API")
+			return false, false, errors.Wrap(err, "Unable to retrieve events about the cluster from the Agent Rest API")
 		}
 		if len(eventList) == 0 {
 			logrus.Trace("No cluster events detected from the Agent Rest API")
@@ -236,18 +241,18 @@ func (czero *Cluster) IsBootstrapComplete() (bool, error) {
 			logrus.Debug("Node zero Agent Rest API never initialized. Cluster API never initialized")
 			logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
 			time.Sleep(30 * time.Second)
-			return false, nil
+			return false, false, nil
 		}
 
 		if czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
 			logrus.Debug("Cluster API never initialized")
 			logrus.Debugf("Cluster install status from Agent Rest API last seen was: %s", czero.installHistory.RestAPIPreviousClusterStatus)
-			return false, errors.New("cluster bootstrap did not complete")
+			return false, false, errors.New("cluster bootstrap did not complete")
 		}
 	}
 
 	logrus.Trace("cluster bootstrap is not complete")
-	return false, nil
+	return false, false, nil
 }
 
 // IsInstallComplete Determine if the cluster has completed installation.

@@ -26,11 +26,21 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
 
+	var lastErr error
 	wait.Until(func() {
-		bootstrap, err := cluster.IsBootstrapComplete()
+		bootstrap, exitOnErr, err := cluster.IsBootstrapComplete()
 		if bootstrap && err == nil {
 			logrus.Info("cluster bootstrap is complete")
 			cancel()
+		}
+
+		if err != nil {
+			if exitOnErr == true {
+				lastErr = err
+				cancel()
+			} else {
+				logrus.Info(err)
+			}
 		}
 
 		current := time.Now()
@@ -44,11 +54,13 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 	}, 2*time.Second, waitContext.Done())
 
 	waitErr := waitContext.Err()
-	if waitErr != nil && waitErr != context.Canceled {
-		if err != nil {
-			return cluster, errors.Wrap(err, "bootstrap process returned error")
+	if waitErr != nil {
+		if waitErr == context.Canceled && lastErr != nil {
+			return cluster, errors.Wrap(lastErr, "bootstrap process returned error")
 		}
-		return cluster, errors.Wrap(waitErr, "bootstrap process timed out")
+		if waitErr == context.DeadlineExceeded {
+			return cluster, errors.Wrap(waitErr, "bootstrap process timed out")
+		}
 	}
 
 	return cluster, nil
