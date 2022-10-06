@@ -94,6 +94,11 @@ func TFVars(
 		workermpool = installConfig.Config.Compute[0].Platform.OpenStack
 	}
 
+	controlPlaneLoadBalancerType := installConfig.Config.Platform.OpenStack.ControlPlaneLoadBalancer.ControlPlaneLoadBalancerType
+	if controlPlaneLoadBalancerType == "" {
+		controlPlaneLoadBalancerType = "VRRP"
+	}
+
 	var zones []string
 	{
 		seen := make(map[string]struct{})
@@ -210,6 +215,7 @@ func TFVars(
 		MachinesNetwork                   string                            `json:"openstack_machines_network_id,omitempty"`
 		MasterAvailabilityZones           []string                          `json:"openstack_master_availability_zones,omitempty"`
 		MasterRootVolumeAvailabilityZones []string                          `json:"openstack_master_root_volume_availability_zones,omitempty"`
+		ControlPlaneLoadBalancerType      string                            `json:"openstack_control_plane_load_balancer_type,omitempty"`
 	}{
 		BaseImageName:                     imageName,
 		ExternalNetwork:                   installConfig.Config.Platform.OpenStack.ExternalNetwork,
@@ -235,6 +241,7 @@ func TFVars(
 		MachinesNetwork:                   machinesNetwork,
 		MasterAvailabilityZones:           zones,
 		MasterRootVolumeAvailabilityZones: masterRootVolumeAvailabilityZones,
+		ControlPlaneLoadBalancerType:      controlPlaneLoadBalancerType,
 	}, "", "  ")
 }
 
