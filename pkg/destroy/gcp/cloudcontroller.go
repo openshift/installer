@@ -2,7 +2,6 @@ package gcp
 
 import (
 	"fmt"
-
 	compute "google.golang.org/api/compute/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
@@ -73,12 +72,14 @@ func (o *ClusterUninstaller) listCloudControllerTargetPools(instances []cloudRes
 // https://github.com/openshift/kubernetes/blob/1e5983903742f64bca36a464582178c940353e9a/pkg/cloudprovider/providers/gce/gce_loadbalancer_external.go#L289
 func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(loadBalancerName string) error {
 	loadBalancerNameFilter := fmt.Sprintf("name eq \"%s\"", loadBalancerName)
+	o.Logger.Infof("LoadBalancerName: %s", loadBalancerName)
 
 	// Discover associated addresses: loadBalancerName
 	found, err := o.listAddressesWithFilter("items(name),nextPageToken", loadBalancerNameFilter, nil)
 	if err != nil {
 		return err
 	}
+	o.Logger.Infof("addresses: %q", found)
 	o.insertPendingItems("address", found)
 
 	// Discover associated firewall rules: loadBalancerName
@@ -86,6 +87,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(loadBa
 	if err != nil {
 		return err
 	}
+	o.Logger.Infof("firewall rules: %q", found)
 	o.insertPendingItems("firewall", found)
 
 	// Discover associated firewall rules: loadBalancerName-hc
@@ -94,6 +96,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(loadBa
 	if err != nil {
 		return err
 	}
+	o.Logger.Infof("%s: %q", filter, found)
 	o.insertPendingItems("firewall", found)
 
 	// Discover associated firewall rules: k8s-fw-loadBalancerName
@@ -102,6 +105,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(loadBa
 	if err != nil {
 		return err
 	}
+	o.Logger.Infof("%s: %q", filter, found)
 	o.insertPendingItems("firewall", found)
 
 	// Discover associated firewall rules: k8s-loadBalancerName-http-hc
@@ -110,6 +114,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(loadBa
 	if err != nil {
 		return err
 	}
+	o.Logger.Infof("%s: %q", filter, found)
 	o.insertPendingItems("firewall", found)
 
 	// Discover associated forwarding rules: loadBalancerName
@@ -117,6 +122,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(loadBa
 	if err != nil {
 		return err
 	}
+	o.Logger.Infof("forwarding rules: %q", found)
 	o.insertPendingItems("forwardingrule", found)
 
 	// Discover associated health checks: loadBalancerName
@@ -131,6 +137,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(loadBa
 	if err != nil {
 		return err
 	}
+	o.Logger.Infof("httphealthcheck: %q", found)
 	o.insertPendingItems("httphealthcheck", found)
 
 	return nil
@@ -161,7 +168,7 @@ func (o *ClusterUninstaller) discoverCloudControllerResources() error {
 			return err
 		}
 		for _, backend := range backends {
-			o.Logger.Debugf("Discovering cloud controller resources for %s", backend.name)
+			o.Logger.Infof("Discovering cloud controller resources for %s", backend.name)
 			err := o.discoverCloudControllerLoadBalancerResources(backend.name)
 			if err != nil {
 				errs = append(errs, err)
@@ -183,7 +190,7 @@ func (o *ClusterUninstaller) discoverCloudControllerResources() error {
 		return err
 	}
 	for _, pool := range pools {
-		o.Logger.Debugf("Discovering cloud controller resources for %s", pool.name)
+		o.Logger.Infof("Discovering cloud controller resources for %s", pool.name)
 		err := o.discoverCloudControllerLoadBalancerResources(pool.name)
 		if err != nil {
 			errs = append(errs, err)
@@ -193,12 +200,15 @@ func (o *ClusterUninstaller) discoverCloudControllerResources() error {
 
 	// cloudControllerUID related items
 	if len(o.cloudControllerUID) > 0 {
+		o.Logger.Infof("Cloud Controller UID found: %s", o.cloudControllerUID)
+
 		// Discover Cloud Controller health checks: k8s-cloudControllerUID-node
 		filter := fmt.Sprintf("name eq \"k8s-%s-node\"", o.cloudControllerUID)
 		found, err := o.listHealthChecksWithFilter("items(name),nextPageToken", filter, nil)
 		if err != nil {
 			return err
 		}
+		o.Logger.Infof("%s: %q", filter, found)
 		o.insertPendingItems("healthcheck", found)
 
 		// Discover Cloud Controller http health checks: k8s-cloudControllerUID-node
@@ -206,6 +216,7 @@ func (o *ClusterUninstaller) discoverCloudControllerResources() error {
 		if err != nil {
 			return err
 		}
+		o.Logger.Infof("httphealthchecks: %q", found)
 		o.insertPendingItems("httphealthcheck", found)
 
 		// Discover Cloud Controller firewall rules: k8s-cloudControllerUID-node-hc, k8s-cloudControllerUID-node-http-hc
@@ -214,6 +225,7 @@ func (o *ClusterUninstaller) discoverCloudControllerResources() error {
 		if err != nil {
 			return err
 		}
+		o.Logger.Infof("%s: %q", filter, found)
 		o.insertPendingItems("firewall", found)
 
 		filter = fmt.Sprintf("name eq \"k8s-%s-node-http-hc\"", o.cloudControllerUID)
@@ -221,7 +233,10 @@ func (o *ClusterUninstaller) discoverCloudControllerResources() error {
 		if err != nil {
 			return err
 		}
+		o.Logger.Infof("%s: %q", filter, found)
 		o.insertPendingItems("firewall", found)
+	} else {
+		o.Logger.Infof("No Cloud Controller UID specified")
 	}
 
 	return aggregateError(errs, 0)
