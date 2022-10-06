@@ -103,6 +103,32 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: "invalid install-config configuration: [ControlPlane.Replicas: Required value: ControlPlane.Replicas must be 1 for none platform. Found 3, Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 for none platform. Found 2]",
 		},
 		{
+			name: "compute.replicas missing for SNO",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 1
+platform:
+  none : {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Installing a Single Node Openshift requires explicitly setting Compute.Replicas to 0",
+		},
+		{
 			name: "no compute.replicas set for SNO",
 			data: `
 apiVersion: v1
@@ -122,7 +148,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Installing a Single Node Openshift requires explicitly setting compute replicas to zero",
+			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Installing a Single Node Openshift requires explicitly setting Compute.Replicas to 0",
 		},
 		{
 			name: "invalid networkType for SNO cluster",
