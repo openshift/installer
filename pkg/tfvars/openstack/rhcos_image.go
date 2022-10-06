@@ -2,6 +2,7 @@ package openstack
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -11,14 +12,35 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/openstack/clientconfig"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 // uploadBaseImage creates a new image in Glance and uploads the RHCOS image there
-func uploadBaseImage(cloud string, localFilePath string, imageName string, clusterID string, imageProperties map[string]string) error {
+func uploadBaseImage(cloud string, baseImage, imageName string, infraID string, imageProperties map[string]string) error {
+	var localFilePath string
+
+	url, err := url.Parse(baseImage)
+	if err != nil {
+		return err
+	}
+
+	// We support 'http(s)' and 'file' schemes. If the scheme is http(s), then we will upload a file from that
+	// location. Otherwise will take local file path from the URL.
+	switch url.Scheme {
+	case "http", "https":
+		localFilePath, err = cache.DownloadImageFile(baseImage)
+		if err != nil {
+			return err
+		}
+	case "file":
+		localFilePath = filepath.FromSlash(url.Path)
+	default:
+		return fmt.Errorf("unsupported URL scheme: %q", url.Scheme)
+	}
+
 	logrus.Debugln("Creating a Glance image for RHCOS...")
 
 	f, err := os.Open(localFilePath)
@@ -43,7 +65,7 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 		Name:            imageName,
 		ContainerFormat: "bare",
 		DiskFormat:      diskFormat,
-		Tags:            []string{fmt.Sprintf("openshiftClusterID=%s", clusterID)},
+		Tags:            []string{fmt.Sprintf("openshiftClusterID=%s", infraID)},
 		Properties:      imageProperties,
 		// TODO(mfedosin): add Description when gophercloud supports it.
 	}
@@ -98,7 +120,7 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 				break
 			} else if getRes.Status == images.ImageStatusQueued || getRes.Status == images.ImageStatusDeleted {
 				// Import failed
-				return errors.New("RHCOS image import failed")
+				return fmt.Errorf("RHCOS image import failed")
 			}
 			time.Sleep(timeSleepSeconds * time.Second)
 		}
