@@ -21,45 +21,17 @@ import (
 
 func TestAgentClusterInstall_Generate(t *testing.T) {
 
-	goodACI := &hiveext.AgentClusterInstall{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getAgentClusterInstallName(getValidOptionalInstallConfig()),
-			Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
-		},
-		Spec: hiveext.AgentClusterInstallSpec{
-			ImageSetRef: &hivev1.ClusterImageSetReference{
-				Name: getClusterImageSetReferenceName(),
-			},
-			ClusterDeploymentRef: corev1.LocalObjectReference{
-				Name: getClusterDeploymentName(getValidOptionalInstallConfig()),
-			},
-			Networking: hiveext.Networking{
-				MachineNetwork: []hiveext.MachineNetworkEntry{
-					{
-						CIDR: "10.10.11.0/24",
-					},
-				},
-				ClusterNetwork: []hiveext.ClusterNetworkEntry{
-					{
-						CIDR:       "192.168.111.0/24",
-						HostPrefix: 23,
-					},
-				},
-				ServiceNetwork: []string{"172.30.0.0/16"},
-				NetworkType:    "OVNKubernetes",
-			},
-			SSHPublicKey: strings.Trim(TestSSHKey, "|\n\t"),
-			ProvisionRequirements: hiveext.ProvisionRequirements{
-				ControlPlaneAgents: 3,
-				WorkerAgents:       5,
-			},
-			APIVIP:     "192.168.122.10",
-			IngressVIP: "192.168.122.11",
-		},
-	}
-
 	installConfigWithoutNetworkType := getValidOptionalInstallConfig()
 	installConfigWithoutNetworkType.Config.NetworkType = ""
+
+	installConfigWithFIPS := getValidOptionalInstallConfig()
+	installConfigWithFIPS.Config.FIPS = true
+
+	goodACI := getGoodACI()
+	goodFIPSACI := getGoodACI()
+	goodFIPSACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{ "fips": true }`,
+	})
 
 	cases := []struct {
 		name           string
@@ -87,6 +59,13 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				installConfigWithoutNetworkType,
 			},
 			expectedConfig: goodACI,
+		},
+		{
+			name: "valid configuration with FIPS annotation",
+			dependencies: []asset.Asset{
+				installConfigWithFIPS,
+			},
+			expectedConfig: goodFIPSACI,
 		},
 		{
 			name: "valid configuration dual stack",

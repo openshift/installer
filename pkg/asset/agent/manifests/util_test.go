@@ -2,8 +2,11 @@ package manifests
 
 import (
 	"net"
+	"strings"
 
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/api/v1beta1"
+	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -11,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	agenttypes "github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/yaml"
@@ -322,6 +326,46 @@ func getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig() *agentconfig.Age
 			},
 		},
 	}
+}
+
+func getGoodACI() *hiveext.AgentClusterInstall {
+	goodACI := &hiveext.AgentClusterInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      getAgentClusterInstallName(getValidOptionalInstallConfig()),
+			Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+		},
+		Spec: hiveext.AgentClusterInstallSpec{
+			ImageSetRef: &hivev1.ClusterImageSetReference{
+				Name: getClusterImageSetReferenceName(),
+			},
+			ClusterDeploymentRef: corev1.LocalObjectReference{
+				Name: getClusterDeploymentName(getValidOptionalInstallConfig()),
+			},
+			Networking: hiveext.Networking{
+				MachineNetwork: []hiveext.MachineNetworkEntry{
+					{
+						CIDR: "10.10.11.0/24",
+					},
+				},
+				ClusterNetwork: []hiveext.ClusterNetworkEntry{
+					{
+						CIDR:       "192.168.111.0/24",
+						HostPrefix: 23,
+					},
+				},
+				ServiceNetwork: []string{"172.30.0.0/16"},
+				NetworkType:    "OVNKubernetes",
+			},
+			SSHPublicKey: strings.Trim(TestSSHKey, "|\n\t"),
+			ProvisionRequirements: hiveext.ProvisionRequirements{
+				ControlPlaneAgents: 3,
+				WorkerAgents:       5,
+			},
+			APIVIP:     "192.168.122.10",
+			IngressVIP: "192.168.122.11",
+		},
+	}
+	return goodACI
 }
 
 func unmarshalJSON(b []byte) []byte {
