@@ -36,13 +36,13 @@ func (*ClusterDeployment) Name() string {
 // the asset.
 func (*ClusterDeployment) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&agent.OptionalInstallConfig{},
+		&agent.InstallConfigAgentDecorator{},
 	}
 }
 
 // Generate generates the ClusterDeployment manifest.
 func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
-	installConfig := &agent.OptionalInstallConfig{}
+	installConfig := &agent.InstallConfigAgentDecorator{}
 	dependencies.Get(installConfig)
 
 	if installConfig.Config != nil {

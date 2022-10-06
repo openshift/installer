@@ -23,15 +23,15 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 
 	goodACI := &hiveext.AgentClusterInstall{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getAgentClusterInstallName(getValidOptionalInstallConfig()),
-			Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+			Name:      getAgentClusterInstallName(getValidInstallConfigAgentDecorator()),
+			Namespace: getObjectMetaNamespace(getValidInstallConfigAgentDecorator()),
 		},
 		Spec: hiveext.AgentClusterInstallSpec{
 			ImageSetRef: &hivev1.ClusterImageSetReference{
 				Name: getClusterImageSetReferenceName(),
 			},
 			ClusterDeploymentRef: corev1.LocalObjectReference{
-				Name: getClusterDeploymentName(getValidOptionalInstallConfig()),
+				Name: getClusterDeploymentName(getValidInstallConfigAgentDecorator()),
 			},
 			Networking: hiveext.Networking{
 				MachineNetwork: []hiveext.MachineNetworkEntry{
@@ -58,7 +58,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		},
 	}
 
-	installConfigWithoutNetworkType := getValidOptionalInstallConfig()
+	installConfigWithoutNetworkType := getValidInstallConfigAgentDecorator()
 	installConfigWithoutNetworkType.Config.NetworkType = ""
 
 	cases := []struct {
@@ -70,14 +70,14 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "missing install config",
 			dependencies: []asset.Asset{
-				&agent.OptionalInstallConfig{},
+				&agent.InstallConfigAgentDecorator{},
 			},
 			expectedError: "missing configuration or manifest file",
 		},
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
-				getValidOptionalInstallConfig(),
+				getValidInstallConfigAgentDecorator(),
 			},
 			expectedConfig: goodACI,
 		},
@@ -91,19 +91,19 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration dual stack",
 			dependencies: []asset.Asset{
-				getValidOptionalInstallConfigDualStack(),
+				getValidInstallConfigAgentDecoratorDualStack(),
 			},
 			expectedConfig: &hiveext.AgentClusterInstall{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      getAgentClusterInstallName(getValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Name:      getAgentClusterInstallName(getValidInstallConfigAgentDecorator()),
+					Namespace: getObjectMetaNamespace(getValidInstallConfigAgentDecorator()),
 				},
 				Spec: hiveext.AgentClusterInstallSpec{
 					ImageSetRef: &hivev1.ClusterImageSetReference{
 						Name: getClusterImageSetReferenceName(),
 					},
 					ClusterDeploymentRef: corev1.LocalObjectReference{
-						Name: getClusterDeploymentName(getValidOptionalInstallConfig()),
+						Name: getClusterDeploymentName(getValidInstallConfigAgentDecorator()),
 					},
 					Networking: hiveext.Networking{
 						MachineNetwork: []hiveext.MachineNetworkEntry{
@@ -168,7 +168,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 
 // func TestAgentClusterInstall_Generate(t *testing.T) {
 
-// 	installConfig := &agent.OptionalInstallConfig{
+// 	installConfig := &agent.InstallConfigAgentDecorator{
 // 		Config: &types.InstallConfig{
 // 			ObjectMeta: v1.ObjectMeta{
 // 				Name:      "cluster0-name",

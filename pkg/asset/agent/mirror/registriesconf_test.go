@@ -27,15 +27,14 @@ func TestRegistriesConf_Generate(t *testing.T) {
 		{
 			name: "missing-config",
 			dependencies: []asset.Asset{
-				&agent.OptionalInstallConfig{},
+				&agent.InstallConfigAgentDecorator{},
 			},
 			expectedConfig: defaultRegistriesConf,
 		},
 		{
 			name: "default",
 			dependencies: []asset.Asset{
-				&agent.OptionalInstallConfig{
-					Supplied: true,
+				&agent.InstallConfigAgentDecorator{
 					InstallConfig: installconfig.InstallConfig{
 						Config: &types.InstallConfig{
 							ObjectMeta: v1.ObjectMeta{
@@ -50,8 +49,7 @@ func TestRegistriesConf_Generate(t *testing.T) {
 		{
 			name: "image-content-sources",
 			dependencies: []asset.Asset{
-				&agent.OptionalInstallConfig{
-					Supplied: true,
+				&agent.InstallConfigAgentDecorator{
 					InstallConfig: installconfig.InstallConfig{
 						Config: &types.InstallConfig{
 							ObjectMeta: v1.ObjectMeta{

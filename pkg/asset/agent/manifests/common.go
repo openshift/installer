@@ -6,34 +6,34 @@ import (
 	"github.com/openshift/installer/pkg/version"
 )
 
-func getAgentClusterInstallName(ic *agent.OptionalInstallConfig) string {
+func getAgentClusterInstallName(ic *agent.InstallConfigAgentDecorator) string {
 	return ic.ClusterName()
 }
 
-func getClusterDeploymentName(ic *agent.OptionalInstallConfig) string {
+func getClusterDeploymentName(ic *agent.InstallConfigAgentDecorator) string {
 	return ic.ClusterName()
 }
 
-func getInfraEnvName(ic *agent.OptionalInstallConfig) string {
+func getInfraEnvName(ic *agent.InstallConfigAgentDecorator) string {
 	return ic.ClusterName()
 }
 
-func getPullSecretName(ic *agent.OptionalInstallConfig) string {
+func getPullSecretName(ic *agent.InstallConfigAgentDecorator) string {
 	return ic.ClusterName() + "-pull-secret"
 }
 
-func getObjectMetaNamespace(ic *agent.OptionalInstallConfig) string {
+func getObjectMetaNamespace(ic *agent.InstallConfigAgentDecorator) string {
 	if ic.Config != nil {
 		return ic.Config.Namespace
 	}
 	return ""
 }
 
-func getNMStateConfigName(ic *agent.OptionalInstallConfig) string {
+func getNMStateConfigName(ic *agent.InstallConfigAgentDecorator) string {
 	return ic.ClusterName()
 }
 
-func getNMStateConfigLabels(ic *agent.OptionalInstallConfig) map[string]string {
+func getNMStateConfigLabels(ic *agent.InstallConfigAgentDecorator) map[string]string {
 	return map[string]string{
 		"infraenvs.agent-install.openshift.io": getInfraEnvName(ic),
 	}

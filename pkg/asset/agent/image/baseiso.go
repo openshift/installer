@@ -98,7 +98,7 @@ func getIsoFromReleasePayload() (string, error) {
 func (i *BaseIso) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&manifests.AgentManifests{},
-		&agent.OptionalInstallConfig{},
+		&agent.InstallConfigAgentDecorator{},
 		&mirror.RegistriesConf{},
 	}
 }
@@ -108,7 +108,7 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 
 	log := logrus.New()
 	// TODO - if image registry location is defined in InstallConfig,
-	// ic := &agent.OptionalInstallConfig{}
+	// ic := &agent.InstallConfigAgentDecorator{}
 	// p.Get(ic)
 
 	// use the GetIso function to get the BaseIso from the release payload

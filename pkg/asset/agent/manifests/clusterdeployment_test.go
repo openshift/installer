@@ -28,14 +28,14 @@ func TestClusterDeployment_Generate(t *testing.T) {
 		{
 			name: "missing config",
 			dependencies: []asset.Asset{
-				&agent.OptionalInstallConfig{},
+				&agent.InstallConfigAgentDecorator{},
 			},
 			expectedError: "missing configuration or manifest file",
 		},
 		{
 			name: "valid configurations",
 			dependencies: []asset.Asset{
-				getValidOptionalInstallConfig(),
+				getValidInstallConfigAgentDecorator(),
 			},
 			expectedConfig: &hivev1.ClusterDeployment{
 				TypeMeta: metav1.TypeMeta{
@@ -43,20 +43,20 @@ func TestClusterDeployment_Generate(t *testing.T) {
 					APIVersion: "v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Name:      getClusterDeploymentName(getValidInstallConfigAgentDecorator()),
+					Namespace: getObjectMetaNamespace(getValidInstallConfigAgentDecorator()),
 				},
 				Spec: hivev1.ClusterDeploymentSpec{
-					ClusterName: getClusterDeploymentName(getValidOptionalInstallConfig()),
+					ClusterName: getClusterDeploymentName(getValidInstallConfigAgentDecorator()),
 					BaseDomain:  "testing.com",
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getValidOptionalInstallConfig()),
+						Name: getPullSecretName(getValidInstallConfigAgentDecorator()),
 					},
 					ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
 						Group:   "extensions.hive.openshift.io",
 						Version: "v1beta1",
 						Kind:    "AgentClusterInstall",
-						Name:    getAgentClusterInstallName(getValidOptionalInstallConfig()),
+						Name:    getAgentClusterInstallName(getValidInstallConfigAgentDecorator()),
 					},
 				},
 			},

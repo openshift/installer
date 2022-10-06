@@ -30,7 +30,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 		{
 			name: "missing install config",
 			dependencies: []asset.Asset{
-				&agent.OptionalInstallConfig{},
+				&agent.InstallConfigAgentDecorator{},
 				&releaseimage.Image{},
 			},
 			expectedError: "missing configuration or manifest file",
@@ -38,7 +38,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 		{
 			name: "invalid ClusterImageSet configuration",
 			dependencies: []asset.Asset{
-				getValidOptionalInstallConfig(),
+				getValidInstallConfigAgentDecorator(),
 				&releaseimage.Image{},
 			},
 			expectedError: "invalid ClusterImageSet configuration: Spec.ReleaseImage: Forbidden: value must be equal to " + currentRelease,
@@ -46,7 +46,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
-				getValidOptionalInstallConfig(),
+				getValidInstallConfigAgentDecorator(),
 				&releaseimage.Image{
 					PullSpec: currentRelease,
 				},
@@ -54,7 +54,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 			expectedConfig: &hivev1.ClusterImageSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "openshift-was not built correctly",
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getValidInstallConfigAgentDecorator()),
 				},
 				Spec: hivev1.ClusterImageSetSpec{
 					ReleaseImage: currentRelease,

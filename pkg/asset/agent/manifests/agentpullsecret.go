@@ -37,14 +37,14 @@ func (*AgentPullSecret) Name() string {
 // the asset.
 func (*AgentPullSecret) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&agent.OptionalInstallConfig{},
+		&agent.InstallConfigAgentDecorator{},
 	}
 }
 
 // Generate generates the AgentPullSecret manifest.
 func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
 
-	installConfig := &agent.OptionalInstallConfig{}
+	installConfig := &agent.InstallConfigAgentDecorator{}
 	dependencies.Get(installConfig)
 
 	if installConfig.Config != nil {

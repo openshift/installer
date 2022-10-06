@@ -62,7 +62,7 @@ func (*NMStateConfig) Name() string {
 func (*NMStateConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agentconfig.AgentConfig{},
-		&agent.OptionalInstallConfig{},
+		&agent.InstallConfigAgentDecorator{},
 	}
 }
 
@@ -70,7 +70,7 @@ func (*NMStateConfig) Dependencies() []asset.Asset {
 func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 
 	agentConfig := &agentconfig.AgentConfig{}
-	installConfig := &agent.OptionalInstallConfig{}
+	installConfig := &agent.InstallConfigAgentDecorator{}
 	dependencies.Get(agentConfig, installConfig)
 
 	staticNetworkConfig := []*models.HostStaticNetworkConfig{}

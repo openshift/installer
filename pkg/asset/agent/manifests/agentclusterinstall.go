@@ -44,13 +44,13 @@ func (*AgentClusterInstall) Name() string {
 // the asset.
 func (*AgentClusterInstall) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&agent.OptionalInstallConfig{},
+		&agent.InstallConfigAgentDecorator{},
 	}
 }
 
 // Generate generates the AgentClusterInstall manifest.
 func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
-	installConfig := &agent.OptionalInstallConfig{}
+	installConfig := &agent.InstallConfigAgentDecorator{}
 	dependencies.Get(installConfig)
 
 	if installConfig.Config != nil {

@@ -38,7 +38,7 @@ func (*ClusterImageSet) Name() string {
 func (*ClusterImageSet) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&releaseimage.Image{},
-		&agent.OptionalInstallConfig{},
+		&agent.InstallConfigAgentDecorator{},
 	}
 }
 
@@ -46,7 +46,7 @@ func (*ClusterImageSet) Dependencies() []asset.Asset {
 func (a *ClusterImageSet) Generate(dependencies asset.Parents) error {
 
 	releaseImage := &releaseimage.Image{}
-	installConfig := &agent.OptionalInstallConfig{}
+	installConfig := &agent.InstallConfigAgentDecorator{}
 	dependencies.Get(releaseImage, installConfig)
 
 	currentVersion, err := version.Version()

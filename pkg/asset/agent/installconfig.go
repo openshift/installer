@@ -23,16 +23,15 @@ const (
 // supportedPlatforms lists the supported platforms for agent installer
 var supportedPlatforms = []string{baremetal.Name, vsphere.Name, none.Name}
 
-// OptionalInstallConfig is an InstallConfig where the default is empty, rather
+// InstallConfigAgentDecorator is an InstallConfig where the default is empty, rather
 // than generated from running the survey.
-type OptionalInstallConfig struct {
+type InstallConfigAgentDecorator struct {
 	installconfig.InstallConfig
-	Supplied bool
 }
 
 // Dependencies returns all of the dependencies directly needed by an
 // InstallConfig asset.
-func (a *OptionalInstallConfig) Dependencies() []asset.Asset {
+func (a *InstallConfigAgentDecorator) Dependencies() []asset.Asset {
 	// Return no dependencies for the Agent install config, because it is
 	// optional. We don't need to run the survey if it doesn't exist, since the
 	// user may have supplied cluster-manifests that fully define the cluster.
@@ -40,13 +39,13 @@ func (a *OptionalInstallConfig) Dependencies() []asset.Asset {
 }
 
 // Generate generates the install-config.yaml file.
-func (a *OptionalInstallConfig) Generate(parents asset.Parents) error {
+func (a *InstallConfigAgentDecorator) Generate(parents asset.Parents) error {
 	// Just generate an empty install config, since we have no dependencies.
 	return nil
 }
 
 // Load returns the installconfig from disk.
-func (a *OptionalInstallConfig) Load(f asset.FileFetcher) (bool, error) {
+func (a *InstallConfigAgentDecorator) Load(f asset.FileFetcher) (bool, error) {
 
 	var found bool
 
@@ -64,15 +63,12 @@ func (a *OptionalInstallConfig) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	found, err = a.InstallConfig.Load(f)
-	if found && err == nil {
-		a.Supplied = true
-	}
 	return found, err
 }
 
 // loadEarly loads the install config from the disk
 // to be able to validate early for agent installer
-func (a *OptionalInstallConfig) loadEarly(f asset.FileFetcher) (*types.InstallConfig, error) {
+func (a *InstallConfigAgentDecorator) loadEarly(f asset.FileFetcher) (*types.InstallConfig, error) {
 
 	file, err := f.FetchByName(installConfigFilename)
 	config := &types.InstallConfig{}
@@ -93,7 +89,7 @@ func (a *OptionalInstallConfig) loadEarly(f asset.FileFetcher) (*types.InstallCo
 	return config, nil
 }
 
-func (a *OptionalInstallConfig) validateInstallConfig(installConfig *types.InstallConfig) field.ErrorList {
+func (a *InstallConfigAgentDecorator) validateInstallConfig(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 
 	if err := a.validateSupportedPlatforms(installConfig); err != nil {
@@ -111,7 +107,7 @@ func (a *OptionalInstallConfig) validateInstallConfig(installConfig *types.Insta
 	return allErrs
 }
 
-func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.InstallConfig) field.ErrorList {
+func (a *InstallConfigAgentDecorator) validateSupportedPlatforms(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 
 	fieldPath := field.NewPath("Platform")
@@ -122,7 +118,7 @@ func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.
 	return allErrs
 }
 
-func (a *OptionalInstallConfig) validateVIPsAreSet(installConfig *types.InstallConfig) field.ErrorList {
+func (a *InstallConfigAgentDecorator) validateVIPsAreSet(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 	var fieldPath *field.Path
 
@@ -150,7 +146,7 @@ func (a *OptionalInstallConfig) validateVIPsAreSet(installConfig *types.InstallC
 	return allErrs
 }
 
-func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.InstallConfig) field.ErrorList {
+func (a *InstallConfigAgentDecorator) validateSNOConfiguration(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 	var fieldPath *field.Path
 
@@ -188,7 +184,7 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 	return allErrs
 }
 
-func (a *OptionalInstallConfig) contains(platform string, supportedPlatforms []string) bool {
+func (a *InstallConfigAgentDecorator) contains(platform string, supportedPlatforms []string) bool {
 	for _, p := range supportedPlatforms {
 		if p == platform {
 			return true
@@ -199,7 +195,7 @@ func (a *OptionalInstallConfig) contains(platform string, supportedPlatforms []s
 
 // ClusterName returns the name of the cluster, or a default name if no
 // InstallConfig is supplied.
-func (a *OptionalInstallConfig) ClusterName() string {
+func (a *InstallConfigAgentDecorator) ClusterName() string {
 	if a.Config != nil && a.Config.ObjectMeta.Name != "" {
 		return a.Config.ObjectMeta.Name
 	}

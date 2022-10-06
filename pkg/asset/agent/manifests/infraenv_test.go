@@ -29,31 +29,31 @@ func TestInfraEnv_Generate(t *testing.T) {
 		{
 			name: "missing-config",
 			dependencies: []asset.Asset{
-				&agent.OptionalInstallConfig{},
+				&agent.InstallConfigAgentDecorator{},
 			},
 			expectedError: "missing configuration or manifest file",
 		},
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
-				getValidOptionalInstallConfig(),
+				getValidInstallConfigAgentDecorator(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      getInfraEnvName(getValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Name:      getInfraEnvName(getValidInstallConfigAgentDecorator()),
+					Namespace: getObjectMetaNamespace(getValidInstallConfigAgentDecorator()),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
 					ClusterRef: &aiv1beta1.ClusterReference{
-						Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Name:      getClusterDeploymentName(getValidInstallConfigAgentDecorator()),
+						Namespace: getObjectMetaNamespace(getValidInstallConfigAgentDecorator()),
 					},
 					SSHAuthorizedKey: strings.Trim(TestSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getValidOptionalInstallConfig()),
+						Name: getPullSecretName(getValidInstallConfigAgentDecorator()),
 					},
 					NMStateConfigLabelSelector: metav1.LabelSelector{
-						MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						MatchLabels: getNMStateConfigLabels(getValidInstallConfigAgentDecorator()),
 					},
 				},
 			},

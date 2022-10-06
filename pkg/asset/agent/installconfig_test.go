@@ -263,7 +263,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					tc.fetchError,
 				).MaxTimes(2)
 
-			asset := &OptionalInstallConfig{}
+			asset := &InstallConfigAgentDecorator{}
 			found, err := asset.Load(fileFetcher)
 			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
 			if tc.expectedError != "" {

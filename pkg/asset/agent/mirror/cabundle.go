@@ -32,19 +32,19 @@ func (*CaBundle) Name() string {
 // the asset.
 func (*CaBundle) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&agent.OptionalInstallConfig{},
+		&agent.InstallConfigAgentDecorator{},
 	}
 }
 
 // Generate generates the Mirror Registries certificate file from install-config.
 func (i *CaBundle) Generate(dependencies asset.Parents) error {
-	installConfig := &agent.OptionalInstallConfig{}
+	installConfig := &agent.InstallConfigAgentDecorator{}
 	dependencies.Get(installConfig)
-	if !installConfig.Supplied {
+	if installConfig.InstallConfig.Config == nil {
 		return nil
 	}
 
-	if installConfig.Config.AdditionalTrustBundle == "" {
+	if installConfig.InstallConfig.Config.AdditionalTrustBundle == "" {
 		i.File = &asset.File{
 			Filename: CaBundleFilename,
 			Data:     []byte{},
@@ -52,7 +52,7 @@ func (i *CaBundle) Generate(dependencies asset.Parents) error {
 		return nil
 	}
 
-	return i.parseCertificates(installConfig.Config.AdditionalTrustBundle)
+	return i.parseCertificates(installConfig.InstallConfig.Config.AdditionalTrustBundle)
 }
 
 func (i *CaBundle) parseCertificates(certs string) error {

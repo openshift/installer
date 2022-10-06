@@ -37,14 +37,14 @@ func (*InfraEnv) Name() string {
 // the asset.
 func (*InfraEnv) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&agent.OptionalInstallConfig{},
+		&agent.InstallConfigAgentDecorator{},
 	}
 }
 
 // Generate generates the InfraEnv manifest.
 func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 
-	installConfig := &agent.OptionalInstallConfig{}
+	installConfig := &agent.InstallConfigAgentDecorator{}
 	dependencies.Get(installConfig)
 
 	if installConfig.Config != nil {

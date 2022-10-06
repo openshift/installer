@@ -17,7 +17,7 @@ func TestInfraBaseIso_Generate(t *testing.T) {
 
 	parents := asset.Parents{}
 	manifests := &manifests.AgentManifests{}
-	installConfig := &agent.OptionalInstallConfig{}
+	installConfig := &agent.InstallConfigAgentDecorator{}
 	parents.Add(manifests, installConfig)
 
 	asset := &BaseIso{}

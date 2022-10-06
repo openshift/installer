@@ -24,12 +24,12 @@ var (
 	TestSecret = `'{"auths":{"cloud.openshift.com":{"auth":"b3BlUTA=","email":"test@redhat.com"}}}`
 )
 
-// GetValidOptionalInstallConfig returns a valid optional install config
-func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
+// GetValidInstallConfigAgentDecorator returns a valid optional install config
+func getValidInstallConfigAgentDecorator() *agent.InstallConfigAgentDecorator {
 	_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
 	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24")
 
-	return &agent.OptionalInstallConfig{
+	return &agent.InstallConfigAgentDecorator{
 		InstallConfig: installconfig.InstallConfig{
 			Config: &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{
@@ -79,18 +79,17 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 				},
 			},
 		},
-		Supplied: true,
 	}
 }
 
-// GetValidOptionalInstallConfigDualStack returns a valid optional install config for dual stack
-func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
+// GetValidInstallConfigAgentDecoratorDualStack returns a valid optional install config for dual stack
+func getValidInstallConfigAgentDecoratorDualStack() *agent.InstallConfigAgentDecorator {
 	_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
 	_, newCidrIPv6, _ := net.ParseCIDR("2001:db8:1111:2222::/64")
 	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24")
 	_, machineNetCidrIPv6, _ := net.ParseCIDR("2001:db8:5dd8:c956::/64")
 
-	return &agent.OptionalInstallConfig{
+	return &agent.InstallConfigAgentDecorator{
 		InstallConfig: installconfig.InstallConfig{
 			Config: &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{
@@ -146,7 +145,6 @@ func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
 				},
 			},
 		},
-		Supplied: true,
 	}
 }
 

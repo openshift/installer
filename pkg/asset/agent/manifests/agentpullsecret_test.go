@@ -26,14 +26,14 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 		{
 			name: "missing install config",
 			dependencies: []asset.Asset{
-				&agent.OptionalInstallConfig{},
+				&agent.InstallConfigAgentDecorator{},
 			},
 			expectedError: "missing configuration or manifest file",
 		},
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
-				getValidOptionalInstallConfig(),
+				getValidInstallConfigAgentDecorator(),
 			},
 			expectedConfig: &corev1.Secret{
 				TypeMeta: v1.TypeMeta{
@@ -41,8 +41,8 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 					APIVersion: "v1",
 				},
 				ObjectMeta: v1.ObjectMeta{
-					Name:      getPullSecretName(getValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Name:      getPullSecretName(getValidInstallConfigAgentDecorator()),
+					Namespace: getObjectMetaNamespace(getValidInstallConfigAgentDecorator()),
 				},
 				StringData: map[string]string{
 					".dockerconfigjson": TestSecret,

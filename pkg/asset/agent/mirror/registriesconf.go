@@ -122,15 +122,15 @@ func (*RegistriesConf) Name() string {
 // the asset.
 func (*RegistriesConf) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&agent.OptionalInstallConfig{},
+		&agent.InstallConfigAgentDecorator{},
 	}
 }
 
 // Generate generates the registries.conf file from install-config.
 func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
-	installConfig := &agent.OptionalInstallConfig{}
+	installConfig := &agent.InstallConfigAgentDecorator{}
 	dependencies.Get(installConfig)
-	if !installConfig.Supplied || len(installConfig.Config.ImageContentSources) == 0 {
+	if installConfig.InstallConfig.Config == nil || len(installConfig.InstallConfig.Config.ImageContentSources) == 0 {
 		i.File = &asset.File{
 			Filename: RegistriesConfFilename,
 			Data:     []byte(defaultRegistriesConf),
@@ -141,7 +141,7 @@ func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 	registries := sysregistriesv2.V2RegistriesConf{
 		Registries: []sysregistriesv2.Registry{},
 	}
-	for _, group := range bootstrap.MergedMirrorSets(installConfig.Config.ImageContentSources) {
+	for _, group := range bootstrap.MergedMirrorSets(installConfig.InstallConfig.Config.ImageContentSources) {
 		if len(group.Mirrors) == 0 {
 			continue
 		}
