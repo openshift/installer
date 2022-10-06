@@ -51,7 +51,10 @@ var Regions = map[string]Region{
 	"syd": {
 		Description: "Sydney, Australia",
 		VPCRegion:   "au-syd",
-		Zones:       []string{"syd04"},
+		Zones: []string{
+			"syd04",
+			"syd05",
+		},
 	},
 	"sao": {
 		Description: "São Paulo, Brazil",
