@@ -580,7 +580,7 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired bo
 				}
 			}
 
-			if err := validateIPinMachineCIDR(vip, n); err != nil {
+			if err := ValidateIPinMachineCIDR(vip, n); err != nil {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, err.Error()))
 			}
 
@@ -623,7 +623,7 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired bo
 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
 			}
 
-			if err := validateIPinMachineCIDR(vip, n); err != nil {
+			if err := ValidateIPinMachineCIDR(vip, n); err != nil {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
 			}
 
@@ -659,7 +659,8 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired bo
 	return allErrs
 }
 
-func validateIPinMachineCIDR(vip string, n *types.Networking) error {
+// ValidateIPinMachineCIDR confirms if the specified VIP is in the
+func ValidateIPinMachineCIDR(vip string, n *types.Networking) error {
 	var networks []string
 
 	for _, network := range n.MachineNetwork {
