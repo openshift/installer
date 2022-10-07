@@ -1049,6 +1049,7 @@ const (
 	ValidateJSONParam
 	ValidateBindedPackageName
 	ValidateOverlappingAddress
+	ValidateCloudData
 )
 
 // MarshalText implements the encoding.TextMarshaler interface.
@@ -1060,7 +1061,7 @@ func (f FunctionIdentifier) MarshalText() ([]byte, error) {
 
 // Use stringer tool to generate this later.
 func (i FunctionIdentifier) String() string {
-	return [...]string{"IntBetween", "IntAtLeast", "IntAtMost", "ValidateAllowedStringValue", "StringLenBetween", "ValidateIPorCIDR", "ValidateCIDRAddress", "ValidateAllowedIntValue", "ValidateRegexpLen", "ValidateRegexp", "ValidateNoZeroValues", "ValidateJSONString", "ValidateJSONParam", "ValidateBindedPackageName", "ValidateOverlappingAddress"}[i]
+	return [...]string{"IntBetween", "IntAtLeast", "IntAtMost", "ValidateAllowedStringValue", "StringLenBetween", "ValidateIPorCIDR", "ValidateCIDRAddress", "ValidateAllowedIntValue", "ValidateRegexpLen", "ValidateRegexp", "ValidateNoZeroValues", "ValidateJSONString", "ValidateJSONParam", "ValidateBindedPackageName", "ValidateOverlappingAddress", "ValidateCloudData"}[i]
 }
 
 // ValueType -- Copied from Terraform for now. You can refer to Terraform ValueType directly.
@@ -1132,10 +1133,12 @@ type ValidateSchema struct {
 	// Is this nullable
 	Nullable bool
 
-	Optional bool
-	Required bool
-	Default  interface{}
-	ForceNew bool
+	Optional       bool
+	Required       bool
+	Default        interface{}
+	ForceNew       bool
+	CloudDataType  string
+	CloudDataRange []string
 }
 
 type ResourceValidator struct {
@@ -1255,6 +1258,8 @@ func invokeValidatorInternal(schema ValidateSchema) schema.SchemaValidateFunc {
 		return validateBindedPackageName()
 	case ValidateOverlappingAddress:
 		return validateOverlappingAddress()
+	case ValidateCloudData:
+		return nil
 
 	default:
 		return nil

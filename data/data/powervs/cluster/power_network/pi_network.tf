@@ -14,6 +14,7 @@ resource "ibm_pi_dhcp" "new_dhcp_service" {
   pi_cloud_connection_id = data.ibm_pi_cloud_connection.cloud_connection.id
   pi_cidr                = var.machine_cidr
   pi_dns_server          = var.dns_server
+  pi_dhcp_snat_enabled   = var.enable_snat
   # the pi_dhcp_name param will be prefixed by the DHCP ID when created, so keep it short here:
   pi_dhcp_name = var.cluster_id
 }

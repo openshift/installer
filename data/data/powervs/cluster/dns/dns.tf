@@ -65,6 +65,16 @@ resource "ibm_dns_resource_record" "kubernetes_api_internal" {
   ttl         = 60
 }
 
+resource "ibm_dns_resource_record" "proxy_vsi_record" {
+  count       = var.publish_strategy == "Internal" ? 1 : 0
+  instance_id = var.service_id
+  zone_id     = local.dns_zone.zone_id
+  type        = "A"
+  name        = "proxy.${var.cluster_domain}"
+  rdata       = ibm_is_instance.dns_vm_vsi[0].primary_network_interface[0].primary_ipv4_address
+  ttl         = 60
+}
+
 resource "ibm_is_ssh_key" "dns_ssh_key" {
   count      = local.proxy_count
   name       = "${var.cluster_id}-dns-ssh-key"
@@ -111,6 +121,32 @@ resource "ibm_is_security_group_rule" "dns_vm_sg_dns_all" {
   }
 }
 
+# allow all incoming network traffic on port 80
+resource "ibm_is_security_group_rule" "dns_vm_sg_http_all" {
+  count     = local.proxy_count
+  group     = ibm_is_security_group.dns_vm_sg[0].id
+  direction = "inbound"
+  remote    = "0.0.0.0/0"
+
+  tcp {
+    port_min = 80
+    port_max = 80
+  }
+}
+
+# allow all incoming network traffic on port 3128 for squid proxy
+resource "ibm_is_security_group_rule" "dns_vm_sg_squid_all" {
+  count     = local.proxy_count
+  group     = ibm_is_security_group.dns_vm_sg[0].id
+  direction = "inbound"
+  remote    = "0.0.0.0/0"
+
+  tcp {
+    port_min = 3128
+    port_max = 3128
+  }
+}
+
 data "ibm_is_image" "dns_vm_image" {
   count = local.proxy_count
   name  = var.dns_vm_image_name
@@ -118,44 +154,23 @@ data "ibm_is_image" "dns_vm_image" {
 
 
 locals {
-  dns_zone         = var.publish_strategy == "Internal" ? data.ibm_dns_zones.dns_zones[0].dns_zones[index(data.ibm_dns_zones.dns_zones[0].dns_zones.*.name, var.base_domain)] : null
-  proxy_count      = var.publish_strategy == "Internal" ? 1 : 0
-  user_data_string = <<EOF
-#cloud-config
-packages:
-  - bind
-  - bind-utils
-write_files:
-- path: /tmp/named-conf-edit.sed
-  permissions: '0640'
-  content: |
-    /^\s*listen-on port 53 /s/127\.0\.0\.1/127\.0\.0\.1; MYIP/
-    /^\s*allow-query /s/localhost/any/
-    /^\s*dnssec-validation /s/ yes/ no/
-    /^\s*type hint;/s/ hint/ forward/
-    /^\s*file\s"named.ca";/d
-    /^\s*type forward/a \\tforward only;\n\tforwarders { 161.26.0.7; 161.26.0.8; };
-runcmd:
-  - export MYIP=`hostname -I`; sed -i.bak "s/MYIP/$MYIP/" /tmp/named-conf-edit.sed
-  - sed -i.orig -f /tmp/named-conf-edit.sed /etc/named.conf
-  - systemctl enable named.service
-  - systemctl start named.service
-EOF
+  dns_zone    = var.publish_strategy == "Internal" ? data.ibm_dns_zones.dns_zones[0].dns_zones[index(data.ibm_dns_zones.dns_zones[0].dns_zones.*.name, var.base_domain)] : null
+  proxy_count = var.publish_strategy == "Internal" ? 1 : 0
 }
 
 resource "ibm_is_instance" "dns_vm_vsi" {
-  count = local.proxy_count
-  name = "${var.cluster_id}-dns-vsi"
-  vpc = var.vpc_id
-  zone = var.vpc_zone
-  keys = [ibm_is_ssh_key.dns_ssh_key[0].id]
-  image = data.ibm_is_image.dns_vm_image[0].id
+  count   = local.proxy_count
+  name    = "${var.cluster_id}-dns-vsi"
+  vpc     = var.vpc_id
+  zone    = var.vpc_zone
+  keys    = [ibm_is_ssh_key.dns_ssh_key[0].id]
+  image   = data.ibm_is_image.dns_vm_image[0].id
   profile = "cx2-2x4"
 
   primary_network_interface {
-    subnet = var.vpc_subnet_id
+    subnet          = var.vpc_subnet_id
     security_groups = [ibm_is_security_group.dns_vm_sg[0].id]
   }
 
-  user_data = local.user_data_string
+  user_data = templatefile("${path.module}/templates/cloud-init.yaml.tpl", { is_proxy : ! var.enable_snat, vpc_region : var.vpc_region })
 }

@@ -22,14 +22,14 @@ type DisasterRecoveryLocations struct {
 
 	// The list of Disaster Recovery Locations
 	// Required: true
-	DisasterRecoryLocations []*DisasterRecoveryLocation `json:"disasterRecoryLocations"`
+	DisasterRecoveryLocations []*DisasterRecoveryLocation `json:"disasterRecoveryLocations"`
 }
 
 // Validate validates this disaster recovery locations
 func (m *DisasterRecoveryLocations) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateDisasterRecoryLocations(formats); err != nil {
+	if err := m.validateDisasterRecoveryLocations(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -39,23 +39,23 @@ func (m *DisasterRecoveryLocations) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *DisasterRecoveryLocations) validateDisasterRecoryLocations(formats strfmt.Registry) error {
+func (m *DisasterRecoveryLocations) validateDisasterRecoveryLocations(formats strfmt.Registry) error {
 
-	if err := validate.Required("disasterRecoryLocations", "body", m.DisasterRecoryLocations); err != nil {
+	if err := validate.Required("disasterRecoveryLocations", "body", m.DisasterRecoveryLocations); err != nil {
 		return err
 	}
 
-	for i := 0; i < len(m.DisasterRecoryLocations); i++ {
-		if swag.IsZero(m.DisasterRecoryLocations[i]) { // not required
+	for i := 0; i < len(m.DisasterRecoveryLocations); i++ {
+		if swag.IsZero(m.DisasterRecoveryLocations[i]) { // not required
 			continue
 		}
 
-		if m.DisasterRecoryLocations[i] != nil {
-			if err := m.DisasterRecoryLocations[i].Validate(formats); err != nil {
+		if m.DisasterRecoveryLocations[i] != nil {
+			if err := m.DisasterRecoveryLocations[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("disasterRecoryLocations" + "." + strconv.Itoa(i))
+					return ve.ValidateName("disasterRecoveryLocations" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("disasterRecoryLocations" + "." + strconv.Itoa(i))
+					return ce.ValidateName("disasterRecoveryLocations" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -70,7 +70,7 @@ func (m *DisasterRecoveryLocations) validateDisasterRecoryLocations(formats strf
 func (m *DisasterRecoveryLocations) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.contextValidateDisasterRecoryLocations(ctx, formats); err != nil {
+	if err := m.contextValidateDisasterRecoveryLocations(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -80,16 +80,16 @@ func (m *DisasterRecoveryLocations) ContextValidate(ctx context.Context, formats
 	return nil
 }
 
-func (m *DisasterRecoveryLocations) contextValidateDisasterRecoryLocations(ctx context.Context, formats strfmt.Registry) error {
+func (m *DisasterRecoveryLocations) contextValidateDisasterRecoveryLocations(ctx context.Context, formats strfmt.Registry) error {
 
-	for i := 0; i < len(m.DisasterRecoryLocations); i++ {
+	for i := 0; i < len(m.DisasterRecoveryLocations); i++ {
 
-		if m.DisasterRecoryLocations[i] != nil {
-			if err := m.DisasterRecoryLocations[i].ContextValidate(ctx, formats); err != nil {
+		if m.DisasterRecoveryLocations[i] != nil {
+			if err := m.DisasterRecoveryLocations[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("disasterRecoryLocations" + "." + strconv.Itoa(i))
+					return ve.ValidateName("disasterRecoveryLocations" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("disasterRecoryLocations" + "." + strconv.Itoa(i))
+					return ce.ValidateName("disasterRecoveryLocations" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

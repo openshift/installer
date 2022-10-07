@@ -34,6 +34,8 @@ func ResourceIBMCISCustomPage() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeValidator(ibmCISCustomPage,
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -100,7 +102,14 @@ func ResourceIBMCISCustomPageValidator() *validate.ResourceValidator {
 	customPageIDs := "basic_challenge, waf_challenge, waf_block, ratelimit_block," +
 		"country_challenge, ip_block, under_attack, 500_errors, 1000_errors, always_online"
 	validateSchema := make([]validate.ValidateSchema, 0)
-
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 cisCustomPageIdentifier,

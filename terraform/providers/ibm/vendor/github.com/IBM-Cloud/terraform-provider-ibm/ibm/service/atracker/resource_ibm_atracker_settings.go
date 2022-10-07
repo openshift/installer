@@ -49,13 +49,12 @@ func ResourceIBMAtrackerSettings() *schema.Resource {
 				Description: "If present then only these regions may be used to define a target.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			// Future Planned support
-			// "metadata_region_backup": &schema.Schema{
-			// 	Type:         schema.TypeString,
-			// 	Optional:     true,
-			// 	ValidateFunc: validate.InvokeValidator("ibm_atracker_settings", "metadata_region_backup"),
-			// 	Description:  "Provide a back up region to store meta data.",
-			// },
+			"metadata_region_backup": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_atracker_settings", "metadata_region_backup"),
+				Description:  "Provide a back up region to store meta data.",
+			},
 			"api_version": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -77,16 +76,15 @@ func ResourceIBMAtrackerSettingsValidator() *validate.ResourceValidator {
 			MinValueLength:             3,
 			MaxValueLength:             256,
 		},
-		// Future Planned support
-		// validate.ValidateSchema{
-		// 	Identifier:                 "metadata_region_backup",
-		// 	ValidateFunctionIdentifier: validate.ValidateRegexpLen,
-		// 	Type:                       validate.TypeString,
-		// 	Optional:                   true,
-		// 	Regexp:                     `^[a-zA-Z0-9 -_]`,
-		// 	MinValueLength:             3,
-		// 	MaxValueLength:             256,
-		// },
+		validate.ValidateSchema{
+			Identifier:                 "metadata_region_backup",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^[a-zA-Z0-9 -_]*`,
+			MinValueLength:             0,
+			MaxValueLength:             256,
+		},
 	)
 
 	resourceValidator := validate.ResourceValidator{ResourceName: "ibm_atracker_settings", Schema: validateSchema}
@@ -109,10 +107,9 @@ func resourceIBMAtrackerSettingsCreate(context context.Context, d *schema.Resour
 	if _, ok := d.GetOk("permitted_target_regions"); ok {
 		putSettingsOptions.SetPermittedTargetRegions(resourceInterfaceToStringArray(d.Get("permitted_target_regions").([]interface{})))
 	}
-	// Future planned support
-	// if _, ok := d.GetOk("metadata_region_backup"); ok {
-	// 	putSettingsOptions.SetMetadataRegionBackup(d.Get("metadata_region_backup").(string))
-	// }
+	if _, ok := d.GetOk("metadata_region_backup"); ok {
+		putSettingsOptions.SetMetadataRegionBackup(d.Get("metadata_region_backup").(string))
+	}
 
 	settings, response, err := atrackerClient.PutSettingsWithContext(context, putSettingsOptions)
 	if err != nil {
@@ -158,10 +155,9 @@ func resourceIBMAtrackerSettingsRead(context context.Context, d *schema.Resource
 			return diag.FromErr(fmt.Errorf("Error setting permitted_target_regions: %s", err))
 		}
 	}
-	// Future planned support
-	// if err = d.Set("metadata_region_backup", settings.MetadataRegionBackup); err != nil {
-	// 	return diag.FromErr(fmt.Errorf("Error setting metadata_region_backup: %s", err))
-	// }
+	if err = d.Set("metadata_region_backup", settings.MetadataRegionBackup); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting metadata_region_backup: %s", err))
+	}
 	if err = d.Set("api_version", flex.IntValue(settings.APIVersion)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting api_version: %s", err))
 	}
@@ -181,7 +177,7 @@ func resourceIBMAtrackerSettingsUpdate(context context.Context, d *schema.Resour
 	newMetaDataRegionPrimary := d.Get("metadata_region_primary").(string)
 	putSettingsOptions.SetMetadataRegionPrimary(newMetaDataRegionPrimary)
 	putSettingsOptions.SetPrivateAPIEndpointOnly(d.Get("private_api_endpoint_only").(bool))
-	hasChange = hasChange || d.HasChange("metadata_region_primary") || d.HasChange("private_api_endpoint_only") || d.HasChange("metadata_region_primary") || d.HasChange("permitted_target_regions") || d.HasChange("default_targets")
+	hasChange = hasChange || d.HasChange("metadata_region_primary") || d.HasChange("private_api_endpoint_only") || d.HasChange("metadata_region_primary") || d.HasChange("permitted_target_regions") || d.HasChange("default_targets") || d.HasChange("metadata_region_backup")
 
 	if d.HasChange("metadata_region_primary") {
 		d.SetId(newMetaDataRegionPrimary)
@@ -190,11 +186,10 @@ func resourceIBMAtrackerSettingsUpdate(context context.Context, d *schema.Resour
 
 	putSettingsOptions.PermittedTargetRegions = resourceInterfaceToStringArray(d.Get("permitted_target_regions").([]interface{}))
 
-	// Future planned support
-	// if d.HasChange("metadata_region_backup") {
-	// 	putSettingsOptions.SetMetadataRegionBackup(d.Get("metadata_region_backup").(string))
-	// 	hasChange = true
-	// }
+	if d.HasChange("metadata_region_backup") {
+		putSettingsOptions.SetMetadataRegionBackup(d.Get("metadata_region_backup").(string))
+		hasChange = true
+	}
 
 	if hasChange {
 		setting, response, err := atrackerClient.PutSettingsWithContext(context, putSettingsOptions)

@@ -109,10 +109,15 @@ func dataSourceIBMPIDhcpRead(ctx context.Context, d *schema.ResourceData, meta i
 	// set attributes
 	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, *dhcpServer.ID))
 	d.Set(Attr_DhcpID, *dhcpServer.ID)
-	d.Set(Attr_DhcpNetworkDeprecated, *dhcpServer.Network.ID)
-	d.Set(Attr_DhcpNetworkID, *dhcpServer.Network.ID)
-	d.Set(Attr_DhcpNetworkName, *dhcpServer.Network.Name)
 	d.Set(Attr_DhcpStatus, *dhcpServer.Status)
+
+	if dhcpServer.Network != nil {
+		dhcpNetwork := dhcpServer.Network
+		d.Set(Attr_DhcpNetworkDeprecated, *dhcpNetwork.ID)
+		d.Set(Attr_DhcpNetworkID, *dhcpNetwork.ID)
+		d.Set(Attr_DhcpNetworkName, *dhcpNetwork.Name)
+	}
+
 	if dhcpServer.Leases != nil {
 		leaseList := make([]map[string]string, len(dhcpServer.Leases))
 		for i, lease := range dhcpServer.Leases {

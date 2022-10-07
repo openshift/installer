@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -20,6 +21,9 @@ func DataSourceIBMCISRateLimit() *schema.Resource {
 			"cis_id": {
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_rate_limit",
+					"cis_id"),
 			},
 			"domain_id": {
 				Type:     schema.TypeString,
@@ -183,7 +187,24 @@ func DataSourceIBMCISRateLimit() *schema.Resource {
 		},
 	}
 }
+func DataSourceIBMCISRateLimitValidator() *validate.ResourceValidator {
 
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISRateLimitValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_rate_limit",
+		Schema:       validateSchema}
+	return &iBMCISRateLimitValidator
+}
 func dataSourceIBMCISRateLimitRead(d *schema.ResourceData, meta interface{}) error {
 	cisClient, err := meta.(conns.ClientSession).CisRLClientSession()
 	if err != nil {

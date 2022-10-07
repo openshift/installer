@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -30,6 +31,9 @@ func DataSourceIBMCISHealthChecks() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "DNS Zone CRN",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_healthchecks",
+					"cis_id"),
 			},
 
 			cisGLBHealthCheck: {
@@ -144,6 +148,24 @@ func DataSourceIBMCISHealthChecks() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMCISHealthChecksValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISHealthCheckValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_healthchecks",
+		Schema:       validateSchema}
+	return &iBMCISHealthCheckValidator
 }
 
 func dataSourceIBMCISGLBHealthCheckRead(d *schema.ResourceData, meta interface{}) error {

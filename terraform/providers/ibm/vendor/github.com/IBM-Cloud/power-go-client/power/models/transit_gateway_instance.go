@@ -21,47 +21,32 @@ type TransitGatewayInstance struct {
 
 	// IBM Resource Group ID associated with the PowerVS Service Instance
 	// Example: 2bf1887bf5c947b1966de2bd88220489
-	// Required: true
-	ResourceGroupID *string `json:"resourceGroupId"`
+	ResourceGroupID string `json:"resourceGroupId,omitempty"`
 
 	// The route distinguisher for a network
 	// Example: 47902:3255120092
-	// Required: true
-	RouteDistinguisher *string `json:"routeDistinguisher"`
+	RouteDistinguisher string `json:"routeDistinguisher,omitempty"`
 
 	// The route target for a network
 	// Example: 47902:3255120092
-	// Required: true
-	RouteTarget *string `json:"routeTarget"`
+	RouteTarget string `json:"routeTarget,omitempty"`
 
 	// The PowerVS Service Instance CRN
 	// Example: crn:v1:bluemix:public:power-iaas:dal12:a/2bc3df23c0d14ebe921397bd8aa2573a:3a5798f1-4d2b-4e0a-9311-9b0fd6b94698::
-	// Required: true
-	ServiceCrn *string `json:"serviceCrn"`
+	ServiceCrn string `json:"serviceCrn,omitempty"`
+
+	// The PowerVS Service Instance ID
+	// Example: 3a5798f1-4d2b-4e0a-9311-9b0fd6b94698
+	ServiceID string `json:"serviceId,omitempty"`
 
 	// transit connection error
-	TransitConnectionError *TransitConnectionError `json:"transitConnectionError,omitempty"`
+	// Required: true
+	TransitConnectionError *TransitConnectionError `json:"transitConnectionError"`
 }
 
 // Validate validates this transit gateway instance
 func (m *TransitGatewayInstance) Validate(formats strfmt.Registry) error {
 	var res []error
-
-	if err := m.validateResourceGroupID(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateRouteDistinguisher(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateRouteTarget(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateServiceCrn(formats); err != nil {
-		res = append(res, err)
-	}
 
 	if err := m.validateTransitConnectionError(formats); err != nil {
 		res = append(res, err)
@@ -73,45 +58,10 @@ func (m *TransitGatewayInstance) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *TransitGatewayInstance) validateResourceGroupID(formats strfmt.Registry) error {
-
-	if err := validate.Required("resourceGroupId", "body", m.ResourceGroupID); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *TransitGatewayInstance) validateRouteDistinguisher(formats strfmt.Registry) error {
-
-	if err := validate.Required("routeDistinguisher", "body", m.RouteDistinguisher); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *TransitGatewayInstance) validateRouteTarget(formats strfmt.Registry) error {
-
-	if err := validate.Required("routeTarget", "body", m.RouteTarget); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *TransitGatewayInstance) validateServiceCrn(formats strfmt.Registry) error {
-
-	if err := validate.Required("serviceCrn", "body", m.ServiceCrn); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *TransitGatewayInstance) validateTransitConnectionError(formats strfmt.Registry) error {
-	if swag.IsZero(m.TransitConnectionError) { // not required
-		return nil
+
+	if err := validate.Required("transitConnectionError", "body", m.TransitConnectionError); err != nil {
+		return err
 	}
 
 	if m.TransitConnectionError != nil {

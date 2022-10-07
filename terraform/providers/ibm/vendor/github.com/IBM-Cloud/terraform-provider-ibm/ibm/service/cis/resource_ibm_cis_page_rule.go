@@ -55,6 +55,8 @@ func ResourceIBMCISPageRule() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeValidator(ibmCISPageRule,
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -176,6 +178,14 @@ func ResourceIBMCISPageRuleValidator() *validate.ResourceValidator {
 		"true_client_ip_header, sort_query_string_for_cache, respect_strong_etag,minify"
 	status := "active, disabled"
 	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 cisPageRuleActionsID,

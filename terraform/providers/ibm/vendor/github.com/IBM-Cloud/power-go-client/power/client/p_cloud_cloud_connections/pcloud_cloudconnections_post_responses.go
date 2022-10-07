@@ -53,6 +53,12 @@ func (o *PcloudCloudconnectionsPostReader) ReadResponse(response runtime.ClientR
 			return nil, err
 		}
 		return nil, result
+	case 408:
+		result := NewPcloudCloudconnectionsPostRequestTimeout()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudCloudconnectionsPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -67,6 +73,12 @@ func (o *PcloudCloudconnectionsPostReader) ReadResponse(response runtime.ClientR
 		return nil, result
 	case 500:
 		result := NewPcloudCloudconnectionsPostInternalServerError()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 504:
+		result := NewPcloudCloudconnectionsPostGatewayTimeout()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -236,6 +248,38 @@ func (o *PcloudCloudconnectionsPostUnauthorized) readResponse(response runtime.C
 	return nil
 }
 
+// NewPcloudCloudconnectionsPostRequestTimeout creates a PcloudCloudconnectionsPostRequestTimeout with default headers values
+func NewPcloudCloudconnectionsPostRequestTimeout() *PcloudCloudconnectionsPostRequestTimeout {
+	return &PcloudCloudconnectionsPostRequestTimeout{}
+}
+
+/* PcloudCloudconnectionsPostRequestTimeout describes a response with status code 408, with default header values.
+
+Request Timeout
+*/
+type PcloudCloudconnectionsPostRequestTimeout struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudconnectionsPostRequestTimeout) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections][%d] pcloudCloudconnectionsPostRequestTimeout  %+v", 408, o.Payload)
+}
+func (o *PcloudCloudconnectionsPostRequestTimeout) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsPostRequestTimeout) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudCloudconnectionsPostConflict creates a PcloudCloudconnectionsPostConflict with default headers values
 func NewPcloudCloudconnectionsPostConflict() *PcloudCloudconnectionsPostConflict {
 	return &PcloudCloudconnectionsPostConflict{}
@@ -321,6 +365,38 @@ func (o *PcloudCloudconnectionsPostInternalServerError) GetPayload() *models.Err
 }
 
 func (o *PcloudCloudconnectionsPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsPostGatewayTimeout creates a PcloudCloudconnectionsPostGatewayTimeout with default headers values
+func NewPcloudCloudconnectionsPostGatewayTimeout() *PcloudCloudconnectionsPostGatewayTimeout {
+	return &PcloudCloudconnectionsPostGatewayTimeout{}
+}
+
+/* PcloudCloudconnectionsPostGatewayTimeout describes a response with status code 504, with default header values.
+
+Gateway Timeout
+*/
+type PcloudCloudconnectionsPostGatewayTimeout struct {
+	Payload *models.Error
+}
+
+func (o *PcloudCloudconnectionsPostGatewayTimeout) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections][%d] pcloudCloudconnectionsPostGatewayTimeout  %+v", 504, o.Payload)
+}
+func (o *PcloudCloudconnectionsPostGatewayTimeout) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsPostGatewayTimeout) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

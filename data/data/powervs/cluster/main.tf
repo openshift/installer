@@ -131,7 +131,9 @@ module "dns" {
   vpc_id                     = module.vpc.vpc_id
   vpc_subnet_id              = module.vpc.vpc_subnet_id
   vpc_zone                   = module.vpc.vpc_zone
+  vpc_region                 = var.powervs_vpc_region
   ssh_key                    = var.powervs_ssh_key
   publish_strategy           = var.powervs_publish_strategy
+  enable_snat                = var.powervs_enable_snat
   # dns_vm_image_name        = @FUTURE
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -34,6 +35,9 @@ func DataSourceIBMCISEdgeFunctionsActions() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "CIS Intance CRN",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_edge_functions_actions",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -102,6 +106,24 @@ func DataSourceIBMCISEdgeFunctionsActions() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMCISEdgeFunctionsActionsValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISEdgeFunctionsActionsValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_edge_functions_actions",
+		Schema:       validateSchema}
+	return &iBMCISEdgeFunctionsActionsValidator
 }
 
 func dataSourceIBMCISEdgeFunctionsActionsRead(d *schema.ResourceData, meta interface{}) error {

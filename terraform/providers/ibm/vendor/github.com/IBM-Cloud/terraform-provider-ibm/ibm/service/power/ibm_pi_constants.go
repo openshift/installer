@@ -30,6 +30,7 @@ const (
 	Arg_DhcpCloudConnectionID = "pi_cloud_connection_id"
 	Arg_DhcpDnsServer         = "pi_dns_server"
 	Arg_DhcpName              = "pi_dhcp_name"
+	Arg_DhcpSnatEnabled       = "pi_dhcp_snat_enabled"
 
 	Attr_DhcpServers           = "servers"
 	Attr_DhcpID                = "dhcp_id"
@@ -47,6 +48,7 @@ const (
 	activeTimeOut  = 2 * time.Minute
 	// power service instance capabilities
 	CUSTOM_VIRTUAL_CORES          = "custom-virtualcores"
+	PIInstanceDeploymentType      = "pi_deployment_type"
 	PIInstanceNetwork             = "pi_network"
 	PIInstanceStoragePool         = "pi_storage_pool"
 	PISAPInstanceProfileID        = "pi_sap_profile_id"

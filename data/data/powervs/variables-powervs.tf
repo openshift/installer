@@ -54,12 +54,6 @@ variable "powervs_cos_instance_location" {
   default     = "global"
 }
 
-variable "powervs_cos_bucket_location" {
-  type        = string
-  description = "The location to create your COS bucket"
-  default     = "us-east"
-}
-
 variable "powervs_cos_storage_class" {
   type        = string
   description = "The plan used for your COS instance"
@@ -99,6 +93,11 @@ variable "powervs_vpc_subnet_name" {
   default     = ""
 }
 
+variable "powervs_enable_snat" {
+  type        = bool
+  description = "Boolean indicating if SNAT should be enabled or disabled."
+  default     = true
+}
 
 ################################################################
 # Configure instances

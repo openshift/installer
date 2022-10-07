@@ -14,13 +14,13 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// FailBackSites list of failBack Sites
+// ReplicationSites list of Replication Sites
 //
-// swagger:model FailBackSites
-type FailBackSites []*Site
+// swagger:model ReplicationSites
+type ReplicationSites []*Site
 
-// Validate validates this fail back sites
-func (m FailBackSites) Validate(formats strfmt.Registry) error {
+// Validate validates this replication sites
+func (m ReplicationSites) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	for i := 0; i < len(m); i++ {
@@ -47,8 +47,8 @@ func (m FailBackSites) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validate this fail back sites based on the context it is used
-func (m FailBackSites) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validate this replication sites based on the context it is used
+func (m ReplicationSites) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
 	for i := 0; i < len(m); i++ {

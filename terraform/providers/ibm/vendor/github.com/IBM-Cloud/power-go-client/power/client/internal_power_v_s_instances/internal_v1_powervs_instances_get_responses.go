@@ -56,20 +56,22 @@ func NewInternalV1PowervsInstancesGetOK() *InternalV1PowervsInstancesGetOK {
 OK
 */
 type InternalV1PowervsInstancesGetOK struct {
-	Payload models.PowerVSInstances
+	Payload *models.PowerVSInstances
 }
 
 func (o *InternalV1PowervsInstancesGetOK) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetOK  %+v", 200, o.Payload)
 }
-func (o *InternalV1PowervsInstancesGetOK) GetPayload() models.PowerVSInstances {
+func (o *InternalV1PowervsInstancesGetOK) GetPayload() *models.PowerVSInstances {
 	return o.Payload
 }
 
 func (o *InternalV1PowervsInstancesGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
+	o.Payload = new(models.PowerVSInstances)
+
 	// response payload
-	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
 

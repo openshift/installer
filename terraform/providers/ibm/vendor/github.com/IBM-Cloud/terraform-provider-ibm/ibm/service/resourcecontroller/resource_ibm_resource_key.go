@@ -16,6 +16,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
 )
 
@@ -55,6 +56,8 @@ func ResourceIBMResourceKey() *schema.Resource {
 				ForceNew:      true,
 				Description:   "The id of the resource instance for which to create resource key",
 				ConflictsWith: []string{"resource_alias_id"},
+				ValidateFunc: validate.InvokeValidator("ibm_resource_key",
+					"resource_instance_id"),
 			},
 
 			"resource_alias_id": {
@@ -190,6 +193,21 @@ func ResourceIBMResourceKey() *schema.Resource {
 	}
 }
 
+func ResourceIBMResourceKeyValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "resource_instance_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:%s"},
+			Optional:                   true})
+
+	ibmResourceKeyResourceValidator := validate.ResourceValidator{ResourceName: "ibm_resource_key", Schema: validateSchema}
+	return &ibmResourceKeyResourceValidator
+}
+
 func resourceIBMResourceKeyCreate(d *schema.ResourceData, meta interface{}) error {
 	rsContClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
 	if err != nil {
@@ -298,6 +316,9 @@ func resourceIBMResourceKeyRead(d *schema.ResourceData, meta interface{}) error 
 	}
 	d.Set("name", *resourceKey.Name)
 	d.Set("status", *resourceKey.State)
+	if resourceKey.Credentials != nil && resourceKey.Credentials.Redacted != nil {
+		log.Printf("Credentials are redacted with code: %s.The User doesn't have the correct access to view the credentials. Refer to the API documentation for additional details.", *resourceKey.Credentials.Redacted)
+	}
 	if resourceKey.Credentials != nil && resourceKey.Credentials.IamRoleCRN != nil {
 		roleCrn := *resourceKey.Credentials.IamRoleCRN
 		iamPolicyManagementClient, err := meta.(conns.ClientSession).IAMPolicyManagementV1API()

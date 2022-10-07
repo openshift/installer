@@ -20,11 +20,13 @@ import (
 type PowerVSInstance struct {
 
 	// capabilities
-	Capabilities InstanceCapabilities `json:"capabilities,omitempty"`
+	// Required: true
+	Capabilities InstanceCapabilities `json:"capabilities"`
 
 	// The timestamp in which the PowerVS service instance was created
 	// Example: 2022-04-04T16:20:15.581636275Z
-	CreationDate string `json:"creationDate,omitempty"`
+	// Required: true
+	CreationDate *string `json:"creationDate"`
 
 	// The PowerVS Service Instance CRN
 	// Example: crn:v1:bluemix:public:power-iaas:dal12:a/2bc3df23c0d14ebe921397bd8aa2573a:3a5798f1-4d2b-4e0a-9311-9b0fd6b94698::
@@ -33,7 +35,13 @@ type PowerVSInstance struct {
 
 	// The PowerVS IBM Cloud URL path for UI (Tentative, still need verification that this is possible)
 	// Example: https://cloud.ibm.com/services/power-iaas/crn%3Av1%3Abluemix%3Apublic%3Apower-iaas%3Adal12%3Aa%2F2bc3df23c0d14ebe921397bd8aa2573a%3A5de8348d-bc6a-466e-854f-661d1e86b230%3A%3A
-	Href string `json:"href,omitempty"`
+	// Required: true
+	Href *string `json:"href"`
+
+	// The PowerVS Service Instance ID
+	// Example: 3a5798f1-4d2b-4e0a-9311-9b0fd6b94698
+	// Required: true
+	ID *string `json:"id"`
 
 	// Location of the PowerVS Instance
 	// Example: dal12
@@ -47,11 +55,13 @@ type PowerVSInstance struct {
 
 	// The name of the service instance (This field will be empty for old accounts as PowerVS did not previously saved the names)
 	// Example: Test Name
-	Name string `json:"name,omitempty"`
+	// Required: true
+	Name *string `json:"name"`
 
 	// Defines if the user has administrator privileges
 	// Example: true
-	PrivilegedUser bool `json:"privilegedUser,omitempty"`
+	// Required: true
+	PrivilegedUser *bool `json:"privilegedUser"`
 
 	// IBM Resource Group ID associated with the PowerVS Service Instance (This field will be empty for old accounts as PowerVS did not previously saved the Resource Group ID)
 	// Example: 2bf1887bf5c947b1966de2bd88220489
@@ -59,7 +69,8 @@ type PowerVSInstance struct {
 
 	// The status of the service instance (PowerVS behavior, if Service Instance exists then then status is active)
 	// Example: Active
-	Status string `json:"status,omitempty"`
+	// Required: true
+	Status *string `json:"status"`
 }
 
 // Validate validates this power v s instance
@@ -70,7 +81,19 @@ func (m *PowerVSInstance) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateCreationDate(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateCrn(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateHref(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateID(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -82,6 +105,18 @@ func (m *PowerVSInstance) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateName(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validatePrivilegedUser(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateStatus(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
@@ -89,8 +124,9 @@ func (m *PowerVSInstance) Validate(formats strfmt.Registry) error {
 }
 
 func (m *PowerVSInstance) validateCapabilities(formats strfmt.Registry) error {
-	if swag.IsZero(m.Capabilities) { // not required
-		return nil
+
+	if err := validate.Required("capabilities", "body", m.Capabilities); err != nil {
+		return err
 	}
 
 	if m.Capabilities != nil {
@@ -107,9 +143,36 @@ func (m *PowerVSInstance) validateCapabilities(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *PowerVSInstance) validateCreationDate(formats strfmt.Registry) error {
+
+	if err := validate.Required("creationDate", "body", m.CreationDate); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *PowerVSInstance) validateCrn(formats strfmt.Registry) error {
 
 	if err := validate.Required("crn", "body", m.Crn); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PowerVSInstance) validateHref(formats strfmt.Registry) error {
+
+	if err := validate.Required("href", "body", m.Href); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PowerVSInstance) validateID(formats strfmt.Registry) error {
+
+	if err := validate.Required("id", "body", m.ID); err != nil {
 		return err
 	}
 
@@ -128,6 +191,33 @@ func (m *PowerVSInstance) validateLocation(formats strfmt.Registry) error {
 func (m *PowerVSInstance) validateLocationURL(formats strfmt.Registry) error {
 
 	if err := validate.Required("locationUrl", "body", m.LocationURL); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PowerVSInstance) validateName(formats strfmt.Registry) error {
+
+	if err := validate.Required("name", "body", m.Name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PowerVSInstance) validatePrivilegedUser(formats strfmt.Registry) error {
+
+	if err := validate.Required("privilegedUser", "body", m.PrivilegedUser); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PowerVSInstance) validateStatus(formats strfmt.Registry) error {
+
+	if err := validate.Required("status", "body", m.Status); err != nil {
 		return err
 	}
 

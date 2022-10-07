@@ -143,6 +143,9 @@ func resourceIBMISSecurityGroupTargetRead(d *schema.ResourceData, meta interface
 	securityGroupID := parts[0]
 	securityGroupTargetID := parts[1]
 
+	d.Set("security_group", securityGroupID)
+	d.Set(isSecurityGroupTargetID, securityGroupTargetID)
+
 	getSecurityGroupTargetOptions := &vpcv1.GetSecurityGroupTargetOptions{
 		SecurityGroupID: &securityGroupID,
 		ID:              &securityGroupTargetID,

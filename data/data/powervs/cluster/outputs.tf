@@ -38,6 +38,10 @@ output "dhcp_network_id" {
   value = module.pi_network.dhcp_network_id
 }
 
+output "proxy_server_ip" {
+  value = module.dns.dns_server
+}
+
 output "vpc_id" {
   value = module.vpc.vpc_id
 }

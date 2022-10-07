@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -22,6 +23,9 @@ func DataSourceIBMCISGlbs() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_global_load_balancers",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -153,6 +157,24 @@ func DataSourceIBMCISGlbs() *schema.Resource {
 		Read:     dataSourceCISGlbsRead,
 		Importer: &schema.ResourceImporter{},
 	}
+}
+func DataSourceIBMCISGlbsValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISGLBsValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_global_load_balancers",
+		Schema:       validateSchema}
+	return &iBMCISGLBsValidator
 }
 
 func dataSourceCISGlbsRead(d *schema.ResourceData, meta interface{}) error {

@@ -33,12 +33,12 @@ github.com/IBM-Cloud/bluemix-go/rest
 github.com/IBM-Cloud/bluemix-go/session
 github.com/IBM-Cloud/bluemix-go/trace
 github.com/IBM-Cloud/bluemix-go/utils
-# github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20220622142911-811d18c8c775
+# github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20220728135852-60ff775f7a8d
 ## explicit; go 1.16
 github.com/IBM-Cloud/container-services-go-sdk/common
 github.com/IBM-Cloud/container-services-go-sdk/kubernetesserviceapiv1
 github.com/IBM-Cloud/container-services-go-sdk/satellitelinkv1
-# github.com/IBM-Cloud/power-go-client v1.1.10
+# github.com/IBM-Cloud/power-go-client v1.1.12
 ## explicit; go 1.17
 github.com/IBM-Cloud/power-go-client/clients/instance
 github.com/IBM-Cloud/power-go-client/errors
@@ -84,7 +84,7 @@ github.com/IBM-Cloud/power-go-client/power/client/service_instances
 github.com/IBM-Cloud/power-go-client/power/client/storage_types
 github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
 github.com/IBM-Cloud/power-go-client/power/models
-# github.com/IBM-Cloud/terraform-provider-ibm v1.44.2
+# github.com/IBM-Cloud/terraform-provider-ibm v1.45.0
 ## explicit; go 1.16
 github.com/IBM-Cloud/terraform-provider-ibm
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns
@@ -136,7 +136,7 @@ github.com/IBM-Cloud/terraform-provider-ibm/version
 ## explicit; go 1.13
 github.com/IBM/apigateway-go-sdk/apigatewaycontrollerapiv1
 github.com/IBM/apigateway-go-sdk/common
-# github.com/IBM/appconfiguration-go-admin-sdk v0.2.3
+# github.com/IBM/appconfiguration-go-admin-sdk v0.3.0
 ## explicit; go 1.16
 github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1
 github.com/IBM/appconfiguration-go-admin-sdk/common
@@ -235,7 +235,7 @@ github.com/IBM/ibm-hpcs-uko-sdk/ukov4
 ## explicit; go 1.12
 github.com/IBM/keyprotect-go-client
 github.com/IBM/keyprotect-go-client/iam
-# github.com/IBM/networking-go-sdk v0.31.0
+# github.com/IBM/networking-go-sdk v0.33.0
 ## explicit; go 1.14
 github.com/IBM/networking-go-sdk/alertsv1
 github.com/IBM/networking-go-sdk/authenticatedoriginpullapiv1
@@ -271,7 +271,7 @@ github.com/IBM/networking-go-sdk/zonelockdownv1
 github.com/IBM/networking-go-sdk/zoneratelimitsv1
 github.com/IBM/networking-go-sdk/zonessettingsv1
 github.com/IBM/networking-go-sdk/zonesv1
-# github.com/IBM/platform-services-go-sdk v0.26.1
+# github.com/IBM/platform-services-go-sdk v0.28.2
 ## explicit; go 1.16
 github.com/IBM/platform-services-go-sdk/atrackerv1
 github.com/IBM/platform-services-go-sdk/atrackerv2
@@ -290,10 +290,6 @@ github.com/IBM/platform-services-go-sdk/resourcemanagerv2
 ## explicit; go 1.15
 github.com/IBM/push-notifications-go-sdk/common
 github.com/IBM/push-notifications-go-sdk/pushservicev1
-# github.com/IBM/scc-go-sdk v1.3.4
-## explicit; go 1.14
-github.com/IBM/scc-go-sdk/common
-github.com/IBM/scc-go-sdk/findingsv1
 # github.com/IBM/scc-go-sdk/v3 v3.1.6
 ## explicit; go 1.14
 github.com/IBM/scc-go-sdk/v3/adminserviceapiv1
@@ -777,7 +773,7 @@ golang.org/x/net/internal/timeseries
 golang.org/x/net/proxy
 golang.org/x/net/trace
 golang.org/x/net/websocket
-# golang.org/x/sys v0.0.0-20220330033206-e17cdc41300f
+# golang.org/x/sys v0.0.0-20220817070843-5a390386f1f2
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader

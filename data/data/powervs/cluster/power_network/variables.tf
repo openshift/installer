@@ -40,3 +40,9 @@ variable "dns_server" {
   description = "The desired DNS server for the DHCP instance to server."
   default     = "1.1.1.1"
 }
+
+variable "enable_snat" {
+  type        = bool
+  description = "Boolean indicating if SNAT should be enabled."
+  default     = true
+}

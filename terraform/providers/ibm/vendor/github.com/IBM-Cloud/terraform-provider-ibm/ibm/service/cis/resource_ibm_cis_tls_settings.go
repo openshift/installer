@@ -28,6 +28,8 @@ func ResourceIBMCISTLSSettings() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeValidator("ibm_cis_tls_settings",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -68,6 +70,14 @@ func ResourceIBMCISTLSSettings() *schema.Resource {
 func ResourceIBMCISTLSSettingsValidator() *validate.ResourceValidator {
 	validateSchema := make([]validate.ValidateSchema, 0)
 
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 cisTLSSettingsTLS13,

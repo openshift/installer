@@ -93,11 +93,8 @@ func ResourceIBMISVPC() *schema.Resource {
 
 			isVPCDefaultNetworkACL: {
 				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     nil,
 				Computed:    true,
-				Deprecated:  "This field is deprecated",
-				Description: "Default network ACL",
+				Description: "Default network ACL ID",
 			},
 
 			isVPCDefaultRoutingTable: {

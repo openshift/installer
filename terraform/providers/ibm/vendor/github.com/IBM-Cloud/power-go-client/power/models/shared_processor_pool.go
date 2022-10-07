@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -45,6 +46,9 @@ type SharedProcessorPool struct {
 	// Required: true
 	ReservedCores *int64 `json:"reservedCores"`
 
+	// list of Shared Processor Pool Placement Groups
+	SharedProcessorPoolPlacementGroups []*SharedProcessorPoolPlacementGroup `json:"sharedProcessorPoolPlacementGroups"`
+
 	// The status of the Shared Processor Pool
 	Status string `json:"status,omitempty"`
 
@@ -73,6 +77,10 @@ func (m *SharedProcessorPool) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateReservedCores(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSharedProcessorPoolPlacementGroups(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -127,8 +135,63 @@ func (m *SharedProcessorPool) validateReservedCores(formats strfmt.Registry) err
 	return nil
 }
 
-// ContextValidate validates this shared processor pool based on context it is used
+func (m *SharedProcessorPool) validateSharedProcessorPoolPlacementGroups(formats strfmt.Registry) error {
+	if swag.IsZero(m.SharedProcessorPoolPlacementGroups) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.SharedProcessorPoolPlacementGroups); i++ {
+		if swag.IsZero(m.SharedProcessorPoolPlacementGroups[i]) { // not required
+			continue
+		}
+
+		if m.SharedProcessorPoolPlacementGroups[i] != nil {
+			if err := m.SharedProcessorPoolPlacementGroups[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("sharedProcessorPoolPlacementGroups" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("sharedProcessorPoolPlacementGroups" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ContextValidate validate this shared processor pool based on the context it is used
 func (m *SharedProcessorPool) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateSharedProcessorPoolPlacementGroups(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *SharedProcessorPool) contextValidateSharedProcessorPoolPlacementGroups(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.SharedProcessorPoolPlacementGroups); i++ {
+
+		if m.SharedProcessorPoolPlacementGroups[i] != nil {
+			if err := m.SharedProcessorPoolPlacementGroups[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("sharedProcessorPoolPlacementGroups" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("sharedProcessorPoolPlacementGroups" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
 	return nil
 }
 
