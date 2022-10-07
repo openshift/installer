@@ -36,6 +36,7 @@ type config struct {
 	VolumeType                      string            `json:"azure_master_root_volume_type"`
 	VolumeSize                      int32             `json:"azure_master_root_volume_size"`
 	ImageURL                        string            `json:"azure_image_url,omitempty"`
+	ImageRelease                    string            `json:"azure_image_release,omitempty"`
 	Region                          string            `json:"azure_region,omitempty"`
 	BaseDomainResourceGroupName     string            `json:"azure_base_domain_resource_group_name,omitempty"`
 	ResourceGroupName               string            `json:"azure_resource_group_name"`
@@ -51,6 +52,7 @@ type config struct {
 	HyperVGeneration                string            `json:"azure_hypervgeneration_version"`
 	VMNetworkingType                bool              `json:"azure_control_plane_vm_networking_type"`
 	RandomStringPrefix              string            `json:"random_storage_account_suffix"`
+	VMArchitecture                  string            `json:"azure_vm_architecture"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -63,12 +65,14 @@ type TFVarsSources struct {
 	MasterConfigs                   []*machineapi.AzureMachineProviderSpec
 	WorkerConfigs                   []*machineapi.AzureMachineProviderSpec
 	ImageURL                        string
+	ImageRelease                    string
 	PreexistingNetwork              bool
 	Publish                         types.PublishingStrategy
 	OutboundType                    azure.OutboundType
 	BootstrapIgnStub                string
 	BootstrapIgnitionURLPlaceholder string
 	HyperVGeneration                string
+	VMArchitecture                  types.Architecture
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
@@ -97,6 +101,11 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		masterDiskEncryptionSetID = masterConfig.OSDisk.ManagedDisk.DiskEncryptionSet.ID
 	}
 
+	vmarch := "x64"
+	if sources.VMArchitecture == types.ArchitectureARM64 {
+		vmarch = "Arm64"
+	}
+
 	cfg := &config{
 		Auth:                            sources.Auth,
 		Environment:                     environment,
@@ -110,6 +119,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VolumeType:                      masterConfig.OSDisk.ManagedDisk.StorageAccountType,
 		VolumeSize:                      masterConfig.OSDisk.DiskSizeGB,
 		ImageURL:                        sources.ImageURL,
+		ImageRelease:                    sources.ImageRelease,
 		Private:                         sources.Publish == types.InternalPublishingStrategy,
 		OutboundUDR:                     sources.OutboundType == azure.UserDefinedRoutingOutboundType,
 		ResourceGroupName:               sources.ResourceGroupName,
@@ -124,6 +134,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		HyperVGeneration:                sources.HyperVGeneration,
 		VMNetworkingType:                masterConfig.AcceleratedNetworking,
 		RandomStringPrefix:              randomStringPrefixFunction(),
+		VMArchitecture:                  vmarch,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

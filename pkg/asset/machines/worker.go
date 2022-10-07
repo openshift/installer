@@ -215,6 +215,7 @@ func (w *Worker) Dependencies() []asset.Asset {
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
+		new(rhcos.Release),
 		&machine.Worker{},
 	}
 }
@@ -225,8 +226,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
+	rhcosRelease := new(rhcos.Release)
 	wign := &machine.Worker{}
-	dependencies.Get(clusterID, installConfig, rhcosImage, wign)
+	dependencies.Get(clusterID, installConfig, rhcosImage, rhcosRelease, wign)
 
 	workerUserDataSecretName := "worker-user-data"
 
@@ -410,7 +412,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				return err
 			}
 
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName, capabilities)
+			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName, capabilities, rhcosRelease.GetAzureReleaseVersion())
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

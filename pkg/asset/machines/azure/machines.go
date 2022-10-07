@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"strings"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
@@ -22,7 +23,7 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, rhcosVersion string) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
 		return nil, fmt.Errorf("non-Azure configuration: %q", configPlatform)
 	}
@@ -49,7 +50,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		if len(azs) > 0 {
 			azIndex = int(idx) % len(azs)
 		}
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities)
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities, rhcosVersion)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -81,7 +82,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string) (*machineapi.AzureMachineProviderSpec, error) {
+func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, rhcosVersion string) (*machineapi.AzureMachineProviderSpec, error) {
 	var az *string
 	if len(mpool.Zones) > 0 && azIdx != nil {
 		az = &mpool.Zones[*azIdx]
@@ -110,10 +111,13 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		image.SKU = mpool.OSImage.SKU
 		image.Version = mpool.OSImage.Version
 	} else {
-		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
+		// image gallery names cannot have dashes
+		galleryName := strings.Replace(clusterID, "-", "_", -1)
+		id := clusterID
 		if hyperVGen == "V2" {
-			imageID += "-gen2"
+			id += "-gen2"
 		}
+		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/%s", rg, galleryName, id, rhcosVersion)
 		image.ResourceID = imageID
 	}
 
