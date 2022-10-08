@@ -88,6 +88,10 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	extraManifests := &manifests.ExtraManifests{}
 	dependencies.Get(agentManifests, agentConfigAsset, extraManifests)
 
+	pwd := &password.KubeadminPassword{}
+	dependencies.Get(pwd)
+	pwdHash := string(pwd.PasswordHash)
+
 	infraEnv := agentManifests.InfraEnv
 
 	config := igntypes.Config{
@@ -101,6 +105,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 					SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{
 						igntypes.SSHAuthorizedKey(infraEnv.Spec.SSHAuthorizedKey),
 					},
+					PasswordHash: &pwdHash,
 				},
 			},
 		},
