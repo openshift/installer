@@ -9,6 +9,7 @@ import (
 
 	operv1 "github.com/openshift/api/operator/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
@@ -21,6 +22,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
+)
+
+const (
+	installConfigOverrides = aiv1beta1.Group + "/install-config-overrides"
 )
 
 var (
@@ -104,6 +109,12 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 					WorkerAgents:       numberOfWorkers,
 				},
 			},
+		}
+
+		if installConfig.Config.FIPS {
+			agentClusterInstall.SetAnnotations(map[string]string{
+				installConfigOverrides: `{ "fips": true }`,
+			})
 		}
 
 		setNetworkType(agentClusterInstall, installConfig.Config, "NetworkType is not specified in InstallConfig.")
