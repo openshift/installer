@@ -13,6 +13,34 @@ const (
 	publicGatewayTypeName = "publicGateway"
 )
 
+// listAttachedSubnets lists subnets attached to the specified publicGateway.
+func (o *ClusterUninstaller) listAttachedSubnets(publicGatewayID string) (cloudResources, error) {
+	o.Logger.Debugf("Finding subnets attached to public gateway %s", publicGatewayID)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
+	options := o.vpcSvc.NewListSubnetsOptions()
+	resources, _, err := o.vpcSvc.ListSubnetsWithContext(ctx, options)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list subnets")
+	}
+
+	result := []cloudResource{}
+	for _, subnet := range resources.Subnets {
+		if subnet.PublicGateway != nil && *subnet.PublicGateway.ID == publicGatewayID {
+			result = append(result, cloudResource{
+				key:      *subnet.ID,
+				name:     *subnet.Name,
+				status:   *subnet.Status,
+				typeName: subnetTypeName,
+				id:       *subnet.ID,
+			})
+		}
+	}
+
+	return cloudResources{}.insert(result...), nil
+}
+
 // listPublicGateways lists publicGateways in the vpc.
 func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 	var (
@@ -113,19 +141,11 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 }
 
 func (o *ClusterUninstaller) deletePublicGateway(item cloudResource) error {
-	var (
-		ctx context.Context
-		// https://raw.githubusercontent.com/IBM/vpc-go-sdk/master/vpcv1/vpc_v1.go
-		getPublicGatewayOptions    *vpcv1.GetPublicGatewayOptions
-		err                        error
-		deletePublicGatewayOptions *vpcv1.DeletePublicGatewayOptions
-	)
+	ctx, _ := o.contextWithTimeout()
 
-	ctx, _ = o.contextWithTimeout()
+	getPublicGatewayOptions := o.vpcSvc.NewGetPublicGatewayOptions(item.id)
 
-	getPublicGatewayOptions = o.vpcSvc.NewGetPublicGatewayOptions(item.id)
-
-	_, _, err = o.vpcSvc.GetPublicGatewayWithContext(ctx, getPublicGatewayOptions)
+	_, _, err := o.vpcSvc.GetPublicGatewayWithContext(ctx, getPublicGatewayOptions)
 	if err != nil {
 		o.Logger.Debugf("deletePublicGateway: publicGateway %q no longer exists", item.name)
 		o.deletePendingItems(item.typeName, []cloudResource{item})
@@ -142,7 +162,21 @@ func (o *ClusterUninstaller) deletePublicGateway(item cloudResource) error {
 	default:
 	}
 
-	deletePublicGatewayOptions = o.vpcSvc.NewDeletePublicGatewayOptions(item.id)
+	// Detach gateway from any subnets using it
+	subnets, err := o.listAttachedSubnets(item.id)
+	if err != nil {
+		return errors.Wrapf(err, "failed to list subnets with gateway %s attached", item.name)
+	}
+	for _, subnet := range subnets {
+		unsetSubnetPublicGatewayOptions := o.vpcSvc.NewUnsetSubnetPublicGatewayOptions(subnet.id)
+
+		_, err = o.vpcSvc.UnsetSubnetPublicGatewayWithContext(ctx, unsetSubnetPublicGatewayOptions)
+		if err != nil {
+			return errors.Wrapf(err, "failed to detach publicGateway %s from subnet %s", item.name, subnet.id)
+		}
+	}
+
+	deletePublicGatewayOptions := o.vpcSvc.NewDeletePublicGatewayOptions(item.id)
 
 	_, err = o.vpcSvc.DeletePublicGatewayWithContext(ctx, deletePublicGatewayOptions)
 	if err != nil {
