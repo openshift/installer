@@ -6,9 +6,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/none"
-	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
