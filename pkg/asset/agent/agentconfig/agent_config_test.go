@@ -259,7 +259,7 @@ hosts:
         macAddress: 28:d2:44:d2:b2:1a`,
 
 			expectedFound: false,
-			expectedError: "invalid Agent Config configuration: Hosts[0].Interfaces[1].macAddress: Invalid value: \"duplicate MAC address found\": 28:d2:44:d2:b2:1a",
+			expectedError: "invalid Agent Config configuration: Hosts[0].Interfaces[1].macAddress: Invalid value: \"28:d2:44:d2:b2:1a\": duplicate MAC address found",
 		},
 		{
 			name: "different-hosts-cannot-have-same-mac",
@@ -277,7 +277,22 @@ hosts:
         macAddress: 28:d2:44:d2:b2:1a`,
 
 			expectedFound: false,
-			expectedError: "invalid Agent Config configuration: Hosts[1].Interfaces[0].macAddress: Invalid value: \"duplicate MAC address found\": 28:d2:44:d2:b2:1a",
+			expectedError: "invalid Agent Config configuration: Hosts[1].Interfaces[0].macAddress: Invalid value: \"28:d2:44:d2:b2:1a\": duplicate MAC address found",
+		},
+		{
+			name: "invalid-mac",
+			data: `
+apiVersion: v1alpha1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80
+hosts:
+  - interfaces:
+      - name: enp3s1
+        macAddress: "000000"`,
+
+			expectedFound: false,
+			expectedError: "invalid Agent Config configuration: Hosts[0].Interfaces[0].macAddress: Invalid value: \"000000\": address 000000: invalid MAC address",
 		},
 	}
 	for _, tc := range cases {
