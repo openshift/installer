@@ -2,7 +2,9 @@ package powervs
 
 import (
 	"context"
+	"github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/pkg/errors"
 	"sync"
 )
 
@@ -144,4 +146,94 @@ func (m *Metadata) DNSInstanceCRN(ctx context.Context) (string, error) {
 // SetDNSInstanceCRN sets IBM DNS Service instance CRN to a string value.
 func (m *Metadata) SetDNSInstanceCRN(crn string) {
 	m.dnsInstanceCRN = crn
+}
+
+// GetExistingVPCGateway checks if the VPC is a Permitted Network for the DNS Zone
+func (m *Metadata) GetExistingVPCGateway(ctx context.Context, vpcName string, vpcSubnet string) (string, bool, error) {
+	if vpcName == "" {
+		return "", false, nil
+	}
+
+	vpc, err := m.client.GetVPCByName(ctx, vpcName)
+	if err != nil {
+		return "", false, errors.Wrap(err, "failed to get VPC")
+	}
+
+	vpcCRN, err := crn.Parse(*vpc.CRN)
+	if err != nil {
+		return "", false, errors.Wrap(err, "failed to parse VPC CRN")
+	}
+
+	subnet, err := m.client.GetSubnetByName(ctx, vpcSubnet, vpcCRN.Region)
+	if err != nil {
+		return "", false, errors.Wrap(err, "failed to get subnet")
+	}
+	// Check if subnet has an attached public gateway. If it does, we're done.
+	if subnet.PublicGateway != nil {
+		return *subnet.PublicGateway.Name, true, nil
+	}
+
+	// Check if a gateway exists in the VPN that isn't attached
+	gw, err := m.client.GetPublicGatewayByVPC(ctx, vpcName)
+	if err != nil {
+		return "", false, errors.Wrap(err, "failed to get find gw")
+	}
+	// Found an unattached gateway
+	if gw != nil {
+		return *gw.Name, false, nil
+	}
+	return "", false, nil
+}
+
+// IsVPCPermittedNetwork checks if the VPC is a Permitted Network for the DNS Zone
+func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string, baseDomain string) (bool, error) {
+	// An empty pre-existing VPC Name signifies a new VPC will be created (not pre-existing), so it won't be permitted
+	if vpcName == "" {
+		return false, nil
+	}
+
+	// Collect DNSInstance details if not already collected
+	if m.dnsInstanceCRN == "" {
+		_, err := m.DNSInstanceCRN(ctx)
+		if err != nil {
+			return false, errors.Wrap(err, "cannot collect DNS permitted networks without DNS Instance")
+		}
+	}
+
+	if m.client == nil {
+		client, err := NewClient()
+		if err != nil {
+			return false, err
+		}
+
+		m.client = client
+	}
+
+	// Get CIS zone ID by name
+	zoneID, err := m.client.GetDNSZoneIDByName(context.TODO(), baseDomain, types.InternalPublishingStrategy)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to get DNS zone ID")
+	}
+
+	dnsCRN, err := crn.Parse(m.dnsInstanceCRN)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to parse DNSInstanceCRN")
+	}
+
+	networks, err := m.client.GetDNSInstancePermittedNetworks(ctx, dnsCRN.ServiceInstance, zoneID)
+	if err != nil {
+		return false, err
+	}
+	if len(networks) < 1 {
+		return false, nil
+	}
+
+	vpc, err := m.client.GetVPCByName(ctx, vpcName)
+	for _, network := range networks {
+		if network == *vpc.CRN {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
