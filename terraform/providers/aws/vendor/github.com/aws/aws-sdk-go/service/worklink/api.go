@@ -29,17 +29,21 @@ const opAssociateDomain = "AssociateDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateDomainRequest method.
+//	req, resp := client.AssociateDomainRequest(params)
 //
-//    // Example sending a request using the AssociateDomainRequest method.
-//    req, resp := client.AssociateDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/AssociateDomain
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) AssociateDomainRequest(input *AssociateDomainInput) (req *request.Request, output *AssociateDomainOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, AssociateDomain, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opAssociateDomain,
 		HTTPMethod: "POST",
@@ -68,25 +72,28 @@ func (c *WorkLink) AssociateDomainRequest(input *AssociateDomainInput) (req *req
 // API operation AssociateDomain for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * ResourceAlreadyExistsException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceAlreadyExistsException
+//     The resource already exists.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/AssociateDomain
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) AssociateDomain(input *AssociateDomainInput) (*AssociateDomainOutput, error) {
 	req, out := c.AssociateDomainRequest(input)
 	return out, req.Send()
@@ -101,6 +108,8 @@ func (c *WorkLink) AssociateDomain(input *AssociateDomainInput) (*AssociateDomai
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) AssociateDomainWithContext(ctx aws.Context, input *AssociateDomainInput, opts ...request.Option) (*AssociateDomainOutput, error) {
 	req, out := c.AssociateDomainRequest(input)
 	req.SetContext(ctx)
@@ -124,17 +133,21 @@ const opAssociateWebsiteAuthorizationProvider = "AssociateWebsiteAuthorizationPr
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateWebsiteAuthorizationProviderRequest method.
+//	req, resp := client.AssociateWebsiteAuthorizationProviderRequest(params)
 //
-//    // Example sending a request using the AssociateWebsiteAuthorizationProviderRequest method.
-//    req, resp := client.AssociateWebsiteAuthorizationProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/AssociateWebsiteAuthorizationProvider
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) AssociateWebsiteAuthorizationProviderRequest(input *AssociateWebsiteAuthorizationProviderInput) (req *request.Request, output *AssociateWebsiteAuthorizationProviderOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, AssociateWebsiteAuthorizationProvider, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opAssociateWebsiteAuthorizationProvider,
 		HTTPMethod: "POST",
@@ -163,25 +176,28 @@ func (c *WorkLink) AssociateWebsiteAuthorizationProviderRequest(input *Associate
 // API operation AssociateWebsiteAuthorizationProvider for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * ResourceAlreadyExistsException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceAlreadyExistsException
+//     The resource already exists.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/AssociateWebsiteAuthorizationProvider
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) AssociateWebsiteAuthorizationProvider(input *AssociateWebsiteAuthorizationProviderInput) (*AssociateWebsiteAuthorizationProviderOutput, error) {
 	req, out := c.AssociateWebsiteAuthorizationProviderRequest(input)
 	return out, req.Send()
@@ -196,6 +212,8 @@ func (c *WorkLink) AssociateWebsiteAuthorizationProvider(input *AssociateWebsite
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) AssociateWebsiteAuthorizationProviderWithContext(ctx aws.Context, input *AssociateWebsiteAuthorizationProviderInput, opts ...request.Option) (*AssociateWebsiteAuthorizationProviderOutput, error) {
 	req, out := c.AssociateWebsiteAuthorizationProviderRequest(input)
 	req.SetContext(ctx)
@@ -219,17 +237,21 @@ const opAssociateWebsiteCertificateAuthority = "AssociateWebsiteCertificateAutho
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateWebsiteCertificateAuthorityRequest method.
+//	req, resp := client.AssociateWebsiteCertificateAuthorityRequest(params)
 //
-//    // Example sending a request using the AssociateWebsiteCertificateAuthorityRequest method.
-//    req, resp := client.AssociateWebsiteCertificateAuthorityRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/AssociateWebsiteCertificateAuthority
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) AssociateWebsiteCertificateAuthorityRequest(input *AssociateWebsiteCertificateAuthorityInput) (req *request.Request, output *AssociateWebsiteCertificateAuthorityOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, AssociateWebsiteCertificateAuthority, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opAssociateWebsiteCertificateAuthority,
 		HTTPMethod: "POST",
@@ -258,25 +280,28 @@ func (c *WorkLink) AssociateWebsiteCertificateAuthorityRequest(input *AssociateW
 // API operation AssociateWebsiteCertificateAuthority for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * ResourceAlreadyExistsException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceAlreadyExistsException
+//     The resource already exists.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/AssociateWebsiteCertificateAuthority
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) AssociateWebsiteCertificateAuthority(input *AssociateWebsiteCertificateAuthorityInput) (*AssociateWebsiteCertificateAuthorityOutput, error) {
 	req, out := c.AssociateWebsiteCertificateAuthorityRequest(input)
 	return out, req.Send()
@@ -291,6 +316,8 @@ func (c *WorkLink) AssociateWebsiteCertificateAuthority(input *AssociateWebsiteC
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) AssociateWebsiteCertificateAuthorityWithContext(ctx aws.Context, input *AssociateWebsiteCertificateAuthorityInput, opts ...request.Option) (*AssociateWebsiteCertificateAuthorityOutput, error) {
 	req, out := c.AssociateWebsiteCertificateAuthorityRequest(input)
 	req.SetContext(ctx)
@@ -314,17 +341,21 @@ const opCreateFleet = "CreateFleet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateFleetRequest method.
+//	req, resp := client.CreateFleetRequest(params)
 //
-//    // Example sending a request using the CreateFleetRequest method.
-//    req, resp := client.CreateFleetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/CreateFleet
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) CreateFleetRequest(input *CreateFleetInput) (req *request.Request, output *CreateFleetOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, CreateFleet, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opCreateFleet,
 		HTTPMethod: "POST",
@@ -354,25 +385,28 @@ func (c *WorkLink) CreateFleetRequest(input *CreateFleetInput) (req *request.Req
 // API operation CreateFleet for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * ResourceAlreadyExistsException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceAlreadyExistsException
+//     The resource already exists.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/CreateFleet
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) CreateFleet(input *CreateFleetInput) (*CreateFleetOutput, error) {
 	req, out := c.CreateFleetRequest(input)
 	return out, req.Send()
@@ -387,6 +421,8 @@ func (c *WorkLink) CreateFleet(input *CreateFleetInput) (*CreateFleetOutput, err
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) CreateFleetWithContext(ctx aws.Context, input *CreateFleetInput, opts ...request.Option) (*CreateFleetOutput, error) {
 	req, out := c.CreateFleetRequest(input)
 	req.SetContext(ctx)
@@ -410,17 +446,21 @@ const opDeleteFleet = "DeleteFleet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteFleetRequest method.
+//	req, resp := client.DeleteFleetRequest(params)
 //
-//    // Example sending a request using the DeleteFleetRequest method.
-//    req, resp := client.DeleteFleetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DeleteFleet
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DeleteFleetRequest(input *DeleteFleetInput) (req *request.Request, output *DeleteFleetOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DeleteFleet, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDeleteFleet,
 		HTTPMethod: "POST",
@@ -449,22 +489,25 @@ func (c *WorkLink) DeleteFleetRequest(input *DeleteFleetInput) (req *request.Req
 // API operation DeleteFleet for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DeleteFleet
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DeleteFleet(input *DeleteFleetInput) (*DeleteFleetOutput, error) {
 	req, out := c.DeleteFleetRequest(input)
 	return out, req.Send()
@@ -479,6 +522,8 @@ func (c *WorkLink) DeleteFleet(input *DeleteFleetInput) (*DeleteFleetOutput, err
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DeleteFleetWithContext(ctx aws.Context, input *DeleteFleetInput, opts ...request.Option) (*DeleteFleetOutput, error) {
 	req, out := c.DeleteFleetRequest(input)
 	req.SetContext(ctx)
@@ -502,17 +547,21 @@ const opDescribeAuditStreamConfiguration = "DescribeAuditStreamConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAuditStreamConfigurationRequest method.
+//	req, resp := client.DescribeAuditStreamConfigurationRequest(params)
 //
-//    // Example sending a request using the DescribeAuditStreamConfigurationRequest method.
-//    req, resp := client.DescribeAuditStreamConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeAuditStreamConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeAuditStreamConfigurationRequest(input *DescribeAuditStreamConfigurationInput) (req *request.Request, output *DescribeAuditStreamConfigurationOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DescribeAuditStreamConfiguration, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDescribeAuditStreamConfiguration,
 		HTTPMethod: "POST",
@@ -541,22 +590,25 @@ func (c *WorkLink) DescribeAuditStreamConfigurationRequest(input *DescribeAuditS
 // API operation DescribeAuditStreamConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeAuditStreamConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeAuditStreamConfiguration(input *DescribeAuditStreamConfigurationInput) (*DescribeAuditStreamConfigurationOutput, error) {
 	req, out := c.DescribeAuditStreamConfigurationRequest(input)
 	return out, req.Send()
@@ -571,6 +623,8 @@ func (c *WorkLink) DescribeAuditStreamConfiguration(input *DescribeAuditStreamCo
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeAuditStreamConfigurationWithContext(ctx aws.Context, input *DescribeAuditStreamConfigurationInput, opts ...request.Option) (*DescribeAuditStreamConfigurationOutput, error) {
 	req, out := c.DescribeAuditStreamConfigurationRequest(input)
 	req.SetContext(ctx)
@@ -594,17 +648,21 @@ const opDescribeCompanyNetworkConfiguration = "DescribeCompanyNetworkConfigurati
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeCompanyNetworkConfigurationRequest method.
+//	req, resp := client.DescribeCompanyNetworkConfigurationRequest(params)
 //
-//    // Example sending a request using the DescribeCompanyNetworkConfigurationRequest method.
-//    req, resp := client.DescribeCompanyNetworkConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeCompanyNetworkConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeCompanyNetworkConfigurationRequest(input *DescribeCompanyNetworkConfigurationInput) (req *request.Request, output *DescribeCompanyNetworkConfigurationOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DescribeCompanyNetworkConfiguration, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDescribeCompanyNetworkConfiguration,
 		HTTPMethod: "POST",
@@ -633,22 +691,25 @@ func (c *WorkLink) DescribeCompanyNetworkConfigurationRequest(input *DescribeCom
 // API operation DescribeCompanyNetworkConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeCompanyNetworkConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeCompanyNetworkConfiguration(input *DescribeCompanyNetworkConfigurationInput) (*DescribeCompanyNetworkConfigurationOutput, error) {
 	req, out := c.DescribeCompanyNetworkConfigurationRequest(input)
 	return out, req.Send()
@@ -663,6 +724,8 @@ func (c *WorkLink) DescribeCompanyNetworkConfiguration(input *DescribeCompanyNet
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeCompanyNetworkConfigurationWithContext(ctx aws.Context, input *DescribeCompanyNetworkConfigurationInput, opts ...request.Option) (*DescribeCompanyNetworkConfigurationOutput, error) {
 	req, out := c.DescribeCompanyNetworkConfigurationRequest(input)
 	req.SetContext(ctx)
@@ -686,17 +749,21 @@ const opDescribeDevice = "DescribeDevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDeviceRequest method.
+//	req, resp := client.DescribeDeviceRequest(params)
 //
-//    // Example sending a request using the DescribeDeviceRequest method.
-//    req, resp := client.DescribeDeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeDevice
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeDeviceRequest(input *DescribeDeviceInput) (req *request.Request, output *DescribeDeviceOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DescribeDevice, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDescribeDevice,
 		HTTPMethod: "POST",
@@ -724,22 +791,25 @@ func (c *WorkLink) DescribeDeviceRequest(input *DescribeDeviceInput) (req *reque
 // API operation DescribeDevice for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeDevice
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeDevice(input *DescribeDeviceInput) (*DescribeDeviceOutput, error) {
 	req, out := c.DescribeDeviceRequest(input)
 	return out, req.Send()
@@ -754,6 +824,8 @@ func (c *WorkLink) DescribeDevice(input *DescribeDeviceInput) (*DescribeDeviceOu
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeDeviceWithContext(ctx aws.Context, input *DescribeDeviceInput, opts ...request.Option) (*DescribeDeviceOutput, error) {
 	req, out := c.DescribeDeviceRequest(input)
 	req.SetContext(ctx)
@@ -777,17 +849,21 @@ const opDescribeDevicePolicyConfiguration = "DescribeDevicePolicyConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDevicePolicyConfigurationRequest method.
+//	req, resp := client.DescribeDevicePolicyConfigurationRequest(params)
 //
-//    // Example sending a request using the DescribeDevicePolicyConfigurationRequest method.
-//    req, resp := client.DescribeDevicePolicyConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeDevicePolicyConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeDevicePolicyConfigurationRequest(input *DescribeDevicePolicyConfigurationInput) (req *request.Request, output *DescribeDevicePolicyConfigurationOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DescribeDevicePolicyConfiguration, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDescribeDevicePolicyConfiguration,
 		HTTPMethod: "POST",
@@ -815,22 +891,25 @@ func (c *WorkLink) DescribeDevicePolicyConfigurationRequest(input *DescribeDevic
 // API operation DescribeDevicePolicyConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeDevicePolicyConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeDevicePolicyConfiguration(input *DescribeDevicePolicyConfigurationInput) (*DescribeDevicePolicyConfigurationOutput, error) {
 	req, out := c.DescribeDevicePolicyConfigurationRequest(input)
 	return out, req.Send()
@@ -845,6 +924,8 @@ func (c *WorkLink) DescribeDevicePolicyConfiguration(input *DescribeDevicePolicy
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeDevicePolicyConfigurationWithContext(ctx aws.Context, input *DescribeDevicePolicyConfigurationInput, opts ...request.Option) (*DescribeDevicePolicyConfigurationOutput, error) {
 	req, out := c.DescribeDevicePolicyConfigurationRequest(input)
 	req.SetContext(ctx)
@@ -868,17 +949,21 @@ const opDescribeDomain = "DescribeDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDomainRequest method.
+//	req, resp := client.DescribeDomainRequest(params)
 //
-//    // Example sending a request using the DescribeDomainRequest method.
-//    req, resp := client.DescribeDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeDomain
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeDomainRequest(input *DescribeDomainInput) (req *request.Request, output *DescribeDomainOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DescribeDomain, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDescribeDomain,
 		HTTPMethod: "POST",
@@ -906,22 +991,25 @@ func (c *WorkLink) DescribeDomainRequest(input *DescribeDomainInput) (req *reque
 // API operation DescribeDomain for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeDomain
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeDomain(input *DescribeDomainInput) (*DescribeDomainOutput, error) {
 	req, out := c.DescribeDomainRequest(input)
 	return out, req.Send()
@@ -936,6 +1024,8 @@ func (c *WorkLink) DescribeDomain(input *DescribeDomainInput) (*DescribeDomainOu
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeDomainWithContext(ctx aws.Context, input *DescribeDomainInput, opts ...request.Option) (*DescribeDomainOutput, error) {
 	req, out := c.DescribeDomainRequest(input)
 	req.SetContext(ctx)
@@ -959,17 +1049,21 @@ const opDescribeFleetMetadata = "DescribeFleetMetadata"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeFleetMetadataRequest method.
+//	req, resp := client.DescribeFleetMetadataRequest(params)
 //
-//    // Example sending a request using the DescribeFleetMetadataRequest method.
-//    req, resp := client.DescribeFleetMetadataRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeFleetMetadata
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeFleetMetadataRequest(input *DescribeFleetMetadataInput) (req *request.Request, output *DescribeFleetMetadataOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DescribeFleetMetadata, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDescribeFleetMetadata,
 		HTTPMethod: "POST",
@@ -998,22 +1092,25 @@ func (c *WorkLink) DescribeFleetMetadataRequest(input *DescribeFleetMetadataInpu
 // API operation DescribeFleetMetadata for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeFleetMetadata
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeFleetMetadata(input *DescribeFleetMetadataInput) (*DescribeFleetMetadataOutput, error) {
 	req, out := c.DescribeFleetMetadataRequest(input)
 	return out, req.Send()
@@ -1028,6 +1125,8 @@ func (c *WorkLink) DescribeFleetMetadata(input *DescribeFleetMetadataInput) (*De
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeFleetMetadataWithContext(ctx aws.Context, input *DescribeFleetMetadataInput, opts ...request.Option) (*DescribeFleetMetadataOutput, error) {
 	req, out := c.DescribeFleetMetadataRequest(input)
 	req.SetContext(ctx)
@@ -1051,17 +1150,21 @@ const opDescribeIdentityProviderConfiguration = "DescribeIdentityProviderConfigu
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeIdentityProviderConfigurationRequest method.
+//	req, resp := client.DescribeIdentityProviderConfigurationRequest(params)
 //
-//    // Example sending a request using the DescribeIdentityProviderConfigurationRequest method.
-//    req, resp := client.DescribeIdentityProviderConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeIdentityProviderConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeIdentityProviderConfigurationRequest(input *DescribeIdentityProviderConfigurationInput) (req *request.Request, output *DescribeIdentityProviderConfigurationOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DescribeIdentityProviderConfiguration, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDescribeIdentityProviderConfiguration,
 		HTTPMethod: "POST",
@@ -1089,22 +1192,25 @@ func (c *WorkLink) DescribeIdentityProviderConfigurationRequest(input *DescribeI
 // API operation DescribeIdentityProviderConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeIdentityProviderConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeIdentityProviderConfiguration(input *DescribeIdentityProviderConfigurationInput) (*DescribeIdentityProviderConfigurationOutput, error) {
 	req, out := c.DescribeIdentityProviderConfigurationRequest(input)
 	return out, req.Send()
@@ -1119,6 +1225,8 @@ func (c *WorkLink) DescribeIdentityProviderConfiguration(input *DescribeIdentity
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeIdentityProviderConfigurationWithContext(ctx aws.Context, input *DescribeIdentityProviderConfigurationInput, opts ...request.Option) (*DescribeIdentityProviderConfigurationOutput, error) {
 	req, out := c.DescribeIdentityProviderConfigurationRequest(input)
 	req.SetContext(ctx)
@@ -1142,17 +1250,21 @@ const opDescribeWebsiteCertificateAuthority = "DescribeWebsiteCertificateAuthori
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeWebsiteCertificateAuthorityRequest method.
+//	req, resp := client.DescribeWebsiteCertificateAuthorityRequest(params)
 //
-//    // Example sending a request using the DescribeWebsiteCertificateAuthorityRequest method.
-//    req, resp := client.DescribeWebsiteCertificateAuthorityRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeWebsiteCertificateAuthority
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeWebsiteCertificateAuthorityRequest(input *DescribeWebsiteCertificateAuthorityInput) (req *request.Request, output *DescribeWebsiteCertificateAuthorityOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DescribeWebsiteCertificateAuthority, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDescribeWebsiteCertificateAuthority,
 		HTTPMethod: "POST",
@@ -1180,22 +1292,25 @@ func (c *WorkLink) DescribeWebsiteCertificateAuthorityRequest(input *DescribeWeb
 // API operation DescribeWebsiteCertificateAuthority for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DescribeWebsiteCertificateAuthority
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeWebsiteCertificateAuthority(input *DescribeWebsiteCertificateAuthorityInput) (*DescribeWebsiteCertificateAuthorityOutput, error) {
 	req, out := c.DescribeWebsiteCertificateAuthorityRequest(input)
 	return out, req.Send()
@@ -1210,6 +1325,8 @@ func (c *WorkLink) DescribeWebsiteCertificateAuthority(input *DescribeWebsiteCer
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DescribeWebsiteCertificateAuthorityWithContext(ctx aws.Context, input *DescribeWebsiteCertificateAuthorityInput, opts ...request.Option) (*DescribeWebsiteCertificateAuthorityOutput, error) {
 	req, out := c.DescribeWebsiteCertificateAuthorityRequest(input)
 	req.SetContext(ctx)
@@ -1233,17 +1350,21 @@ const opDisassociateDomain = "DisassociateDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateDomainRequest method.
+//	req, resp := client.DisassociateDomainRequest(params)
 //
-//    // Example sending a request using the DisassociateDomainRequest method.
-//    req, resp := client.DisassociateDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DisassociateDomain
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DisassociateDomainRequest(input *DisassociateDomainInput) (req *request.Request, output *DisassociateDomainOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DisassociateDomain, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDisassociateDomain,
 		HTTPMethod: "POST",
@@ -1273,22 +1394,25 @@ func (c *WorkLink) DisassociateDomainRequest(input *DisassociateDomainInput) (re
 // API operation DisassociateDomain for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DisassociateDomain
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DisassociateDomain(input *DisassociateDomainInput) (*DisassociateDomainOutput, error) {
 	req, out := c.DisassociateDomainRequest(input)
 	return out, req.Send()
@@ -1303,6 +1427,8 @@ func (c *WorkLink) DisassociateDomain(input *DisassociateDomainInput) (*Disassoc
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DisassociateDomainWithContext(ctx aws.Context, input *DisassociateDomainInput, opts ...request.Option) (*DisassociateDomainOutput, error) {
 	req, out := c.DisassociateDomainRequest(input)
 	req.SetContext(ctx)
@@ -1326,17 +1452,21 @@ const opDisassociateWebsiteAuthorizationProvider = "DisassociateWebsiteAuthoriza
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateWebsiteAuthorizationProviderRequest method.
+//	req, resp := client.DisassociateWebsiteAuthorizationProviderRequest(params)
 //
-//    // Example sending a request using the DisassociateWebsiteAuthorizationProviderRequest method.
-//    req, resp := client.DisassociateWebsiteAuthorizationProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DisassociateWebsiteAuthorizationProvider
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DisassociateWebsiteAuthorizationProviderRequest(input *DisassociateWebsiteAuthorizationProviderInput) (req *request.Request, output *DisassociateWebsiteAuthorizationProviderOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DisassociateWebsiteAuthorizationProvider, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDisassociateWebsiteAuthorizationProvider,
 		HTTPMethod: "POST",
@@ -1367,25 +1497,28 @@ func (c *WorkLink) DisassociateWebsiteAuthorizationProviderRequest(input *Disass
 // API operation DisassociateWebsiteAuthorizationProvider for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * ResourceAlreadyExistsException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceAlreadyExistsException
+//     The resource already exists.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DisassociateWebsiteAuthorizationProvider
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DisassociateWebsiteAuthorizationProvider(input *DisassociateWebsiteAuthorizationProviderInput) (*DisassociateWebsiteAuthorizationProviderOutput, error) {
 	req, out := c.DisassociateWebsiteAuthorizationProviderRequest(input)
 	return out, req.Send()
@@ -1400,6 +1533,8 @@ func (c *WorkLink) DisassociateWebsiteAuthorizationProvider(input *DisassociateW
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DisassociateWebsiteAuthorizationProviderWithContext(ctx aws.Context, input *DisassociateWebsiteAuthorizationProviderInput, opts ...request.Option) (*DisassociateWebsiteAuthorizationProviderOutput, error) {
 	req, out := c.DisassociateWebsiteAuthorizationProviderRequest(input)
 	req.SetContext(ctx)
@@ -1423,17 +1558,21 @@ const opDisassociateWebsiteCertificateAuthority = "DisassociateWebsiteCertificat
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateWebsiteCertificateAuthorityRequest method.
+//	req, resp := client.DisassociateWebsiteCertificateAuthorityRequest(params)
 //
-//    // Example sending a request using the DisassociateWebsiteCertificateAuthorityRequest method.
-//    req, resp := client.DisassociateWebsiteCertificateAuthorityRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DisassociateWebsiteCertificateAuthority
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DisassociateWebsiteCertificateAuthorityRequest(input *DisassociateWebsiteCertificateAuthorityInput) (req *request.Request, output *DisassociateWebsiteCertificateAuthorityOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, DisassociateWebsiteCertificateAuthority, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opDisassociateWebsiteCertificateAuthority,
 		HTTPMethod: "POST",
@@ -1462,22 +1601,25 @@ func (c *WorkLink) DisassociateWebsiteCertificateAuthorityRequest(input *Disasso
 // API operation DisassociateWebsiteCertificateAuthority for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/DisassociateWebsiteCertificateAuthority
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DisassociateWebsiteCertificateAuthority(input *DisassociateWebsiteCertificateAuthorityInput) (*DisassociateWebsiteCertificateAuthorityOutput, error) {
 	req, out := c.DisassociateWebsiteCertificateAuthorityRequest(input)
 	return out, req.Send()
@@ -1492,6 +1634,8 @@ func (c *WorkLink) DisassociateWebsiteCertificateAuthority(input *DisassociateWe
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) DisassociateWebsiteCertificateAuthorityWithContext(ctx aws.Context, input *DisassociateWebsiteCertificateAuthorityInput, opts ...request.Option) (*DisassociateWebsiteCertificateAuthorityOutput, error) {
 	req, out := c.DisassociateWebsiteCertificateAuthorityRequest(input)
 	req.SetContext(ctx)
@@ -1515,17 +1659,21 @@ const opListDevices = "ListDevices"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDevicesRequest method.
+//	req, resp := client.ListDevicesRequest(params)
 //
-//    // Example sending a request using the ListDevicesRequest method.
-//    req, resp := client.ListDevicesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListDevices
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListDevicesRequest(input *ListDevicesInput) (req *request.Request, output *ListDevicesOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, ListDevices, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opListDevices,
 		HTTPMethod: "POST",
@@ -1559,22 +1707,25 @@ func (c *WorkLink) ListDevicesRequest(input *ListDevicesInput) (req *request.Req
 // API operation ListDevices for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListDevices
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListDevices(input *ListDevicesInput) (*ListDevicesOutput, error) {
 	req, out := c.ListDevicesRequest(input)
 	return out, req.Send()
@@ -1589,6 +1740,8 @@ func (c *WorkLink) ListDevices(input *ListDevicesInput) (*ListDevicesOutput, err
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListDevicesWithContext(ctx aws.Context, input *ListDevicesInput, opts ...request.Option) (*ListDevicesOutput, error) {
 	req, out := c.ListDevicesRequest(input)
 	req.SetContext(ctx)
@@ -1604,15 +1757,16 @@ func (c *WorkLink) ListDevicesWithContext(ctx aws.Context, input *ListDevicesInp
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDevices operation.
-//    pageNum := 0
-//    err := client.ListDevicesPages(params,
-//        func(page *worklink.ListDevicesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
+//	// Example iterating over at most 3 pages of a ListDevices operation.
+//	pageNum := 0
+//	err := client.ListDevicesPages(params,
+//	    func(page *worklink.ListDevicesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 //
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListDevicesPages(input *ListDevicesInput, fn func(*ListDevicesOutput, bool) bool) error {
 	return c.ListDevicesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1624,6 +1778,8 @@ func (c *WorkLink) ListDevicesPages(input *ListDevicesInput, fn func(*ListDevice
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListDevicesPagesWithContext(ctx aws.Context, input *ListDevicesInput, fn func(*ListDevicesOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
 		NewRequest: func() (*request.Request, error) {
@@ -1664,17 +1820,21 @@ const opListDomains = "ListDomains"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDomainsRequest method.
+//	req, resp := client.ListDomainsRequest(params)
 //
-//    // Example sending a request using the ListDomainsRequest method.
-//    req, resp := client.ListDomainsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListDomains
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListDomainsRequest(input *ListDomainsInput) (req *request.Request, output *ListDomainsOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, ListDomains, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opListDomains,
 		HTTPMethod: "POST",
@@ -1708,22 +1868,25 @@ func (c *WorkLink) ListDomainsRequest(input *ListDomainsInput) (req *request.Req
 // API operation ListDomains for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListDomains
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListDomains(input *ListDomainsInput) (*ListDomainsOutput, error) {
 	req, out := c.ListDomainsRequest(input)
 	return out, req.Send()
@@ -1738,6 +1901,8 @@ func (c *WorkLink) ListDomains(input *ListDomainsInput) (*ListDomainsOutput, err
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListDomainsWithContext(ctx aws.Context, input *ListDomainsInput, opts ...request.Option) (*ListDomainsOutput, error) {
 	req, out := c.ListDomainsRequest(input)
 	req.SetContext(ctx)
@@ -1753,15 +1918,16 @@ func (c *WorkLink) ListDomainsWithContext(ctx aws.Context, input *ListDomainsInp
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDomains operation.
-//    pageNum := 0
-//    err := client.ListDomainsPages(params,
-//        func(page *worklink.ListDomainsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
+//	// Example iterating over at most 3 pages of a ListDomains operation.
+//	pageNum := 0
+//	err := client.ListDomainsPages(params,
+//	    func(page *worklink.ListDomainsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 //
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListDomainsPages(input *ListDomainsInput, fn func(*ListDomainsOutput, bool) bool) error {
 	return c.ListDomainsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1773,6 +1939,8 @@ func (c *WorkLink) ListDomainsPages(input *ListDomainsInput, fn func(*ListDomain
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListDomainsPagesWithContext(ctx aws.Context, input *ListDomainsInput, fn func(*ListDomainsOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
 		NewRequest: func() (*request.Request, error) {
@@ -1813,17 +1981,21 @@ const opListFleets = "ListFleets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListFleetsRequest method.
+//	req, resp := client.ListFleetsRequest(params)
 //
-//    // Example sending a request using the ListFleetsRequest method.
-//    req, resp := client.ListFleetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListFleets
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListFleetsRequest(input *ListFleetsInput) (req *request.Request, output *ListFleetsOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, ListFleets, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opListFleets,
 		HTTPMethod: "POST",
@@ -1857,19 +2029,22 @@ func (c *WorkLink) ListFleetsRequest(input *ListFleetsInput) (req *request.Reque
 // API operation ListFleets for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - InvalidRequestException
+//     The request is not valid.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListFleets
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListFleets(input *ListFleetsInput) (*ListFleetsOutput, error) {
 	req, out := c.ListFleetsRequest(input)
 	return out, req.Send()
@@ -1884,6 +2059,8 @@ func (c *WorkLink) ListFleets(input *ListFleetsInput) (*ListFleetsOutput, error)
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListFleetsWithContext(ctx aws.Context, input *ListFleetsInput, opts ...request.Option) (*ListFleetsOutput, error) {
 	req, out := c.ListFleetsRequest(input)
 	req.SetContext(ctx)
@@ -1899,15 +2076,16 @@ func (c *WorkLink) ListFleetsWithContext(ctx aws.Context, input *ListFleetsInput
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListFleets operation.
-//    pageNum := 0
-//    err := client.ListFleetsPages(params,
-//        func(page *worklink.ListFleetsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
+//	// Example iterating over at most 3 pages of a ListFleets operation.
+//	pageNum := 0
+//	err := client.ListFleetsPages(params,
+//	    func(page *worklink.ListFleetsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 //
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListFleetsPages(input *ListFleetsInput, fn func(*ListFleetsOutput, bool) bool) error {
 	return c.ListFleetsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1919,6 +2097,8 @@ func (c *WorkLink) ListFleetsPages(input *ListFleetsInput, fn func(*ListFleetsOu
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListFleetsPagesWithContext(ctx aws.Context, input *ListFleetsInput, fn func(*ListFleetsOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
 		NewRequest: func() (*request.Request, error) {
@@ -1959,17 +2139,21 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListTagsForResource
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, ListTagsForResource, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opListTagsForResource,
 		HTTPMethod: "GET",
@@ -1997,10 +2181,12 @@ func (c *WorkLink) ListTagsForResourceRequest(input *ListTagsForResourceInput) (
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InvalidRequestException
+//     The request is not valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListTagsForResource
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
 	req, out := c.ListTagsForResourceRequest(input)
 	return out, req.Send()
@@ -2015,6 +2201,8 @@ func (c *WorkLink) ListTagsForResource(input *ListTagsForResourceInput) (*ListTa
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListTagsForResourceWithContext(ctx aws.Context, input *ListTagsForResourceInput, opts ...request.Option) (*ListTagsForResourceOutput, error) {
 	req, out := c.ListTagsForResourceRequest(input)
 	req.SetContext(ctx)
@@ -2038,17 +2226,21 @@ const opListWebsiteAuthorizationProviders = "ListWebsiteAuthorizationProviders"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListWebsiteAuthorizationProvidersRequest method.
+//	req, resp := client.ListWebsiteAuthorizationProvidersRequest(params)
 //
-//    // Example sending a request using the ListWebsiteAuthorizationProvidersRequest method.
-//    req, resp := client.ListWebsiteAuthorizationProvidersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListWebsiteAuthorizationProviders
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListWebsiteAuthorizationProvidersRequest(input *ListWebsiteAuthorizationProvidersInput) (req *request.Request, output *ListWebsiteAuthorizationProvidersOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, ListWebsiteAuthorizationProviders, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opListWebsiteAuthorizationProviders,
 		HTTPMethod: "POST",
@@ -2083,22 +2275,25 @@ func (c *WorkLink) ListWebsiteAuthorizationProvidersRequest(input *ListWebsiteAu
 // API operation ListWebsiteAuthorizationProviders for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListWebsiteAuthorizationProviders
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListWebsiteAuthorizationProviders(input *ListWebsiteAuthorizationProvidersInput) (*ListWebsiteAuthorizationProvidersOutput, error) {
 	req, out := c.ListWebsiteAuthorizationProvidersRequest(input)
 	return out, req.Send()
@@ -2113,6 +2308,8 @@ func (c *WorkLink) ListWebsiteAuthorizationProviders(input *ListWebsiteAuthoriza
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListWebsiteAuthorizationProvidersWithContext(ctx aws.Context, input *ListWebsiteAuthorizationProvidersInput, opts ...request.Option) (*ListWebsiteAuthorizationProvidersOutput, error) {
 	req, out := c.ListWebsiteAuthorizationProvidersRequest(input)
 	req.SetContext(ctx)
@@ -2128,15 +2325,16 @@ func (c *WorkLink) ListWebsiteAuthorizationProvidersWithContext(ctx aws.Context,
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListWebsiteAuthorizationProviders operation.
-//    pageNum := 0
-//    err := client.ListWebsiteAuthorizationProvidersPages(params,
-//        func(page *worklink.ListWebsiteAuthorizationProvidersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
+//	// Example iterating over at most 3 pages of a ListWebsiteAuthorizationProviders operation.
+//	pageNum := 0
+//	err := client.ListWebsiteAuthorizationProvidersPages(params,
+//	    func(page *worklink.ListWebsiteAuthorizationProvidersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 //
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListWebsiteAuthorizationProvidersPages(input *ListWebsiteAuthorizationProvidersInput, fn func(*ListWebsiteAuthorizationProvidersOutput, bool) bool) error {
 	return c.ListWebsiteAuthorizationProvidersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2148,6 +2346,8 @@ func (c *WorkLink) ListWebsiteAuthorizationProvidersPages(input *ListWebsiteAuth
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListWebsiteAuthorizationProvidersPagesWithContext(ctx aws.Context, input *ListWebsiteAuthorizationProvidersInput, fn func(*ListWebsiteAuthorizationProvidersOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
 		NewRequest: func() (*request.Request, error) {
@@ -2188,17 +2388,21 @@ const opListWebsiteCertificateAuthorities = "ListWebsiteCertificateAuthorities"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListWebsiteCertificateAuthoritiesRequest method.
+//	req, resp := client.ListWebsiteCertificateAuthoritiesRequest(params)
 //
-//    // Example sending a request using the ListWebsiteCertificateAuthoritiesRequest method.
-//    req, resp := client.ListWebsiteCertificateAuthoritiesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListWebsiteCertificateAuthorities
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListWebsiteCertificateAuthoritiesRequest(input *ListWebsiteCertificateAuthoritiesInput) (req *request.Request, output *ListWebsiteCertificateAuthoritiesOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, ListWebsiteCertificateAuthorities, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opListWebsiteCertificateAuthorities,
 		HTTPMethod: "POST",
@@ -2233,19 +2437,22 @@ func (c *WorkLink) ListWebsiteCertificateAuthoritiesRequest(input *ListWebsiteCe
 // API operation ListWebsiteCertificateAuthorities for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - InvalidRequestException
+//     The request is not valid.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/ListWebsiteCertificateAuthorities
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListWebsiteCertificateAuthorities(input *ListWebsiteCertificateAuthoritiesInput) (*ListWebsiteCertificateAuthoritiesOutput, error) {
 	req, out := c.ListWebsiteCertificateAuthoritiesRequest(input)
 	return out, req.Send()
@@ -2260,6 +2467,8 @@ func (c *WorkLink) ListWebsiteCertificateAuthorities(input *ListWebsiteCertifica
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListWebsiteCertificateAuthoritiesWithContext(ctx aws.Context, input *ListWebsiteCertificateAuthoritiesInput, opts ...request.Option) (*ListWebsiteCertificateAuthoritiesOutput, error) {
 	req, out := c.ListWebsiteCertificateAuthoritiesRequest(input)
 	req.SetContext(ctx)
@@ -2275,15 +2484,16 @@ func (c *WorkLink) ListWebsiteCertificateAuthoritiesWithContext(ctx aws.Context,
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListWebsiteCertificateAuthorities operation.
-//    pageNum := 0
-//    err := client.ListWebsiteCertificateAuthoritiesPages(params,
-//        func(page *worklink.ListWebsiteCertificateAuthoritiesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
+//	// Example iterating over at most 3 pages of a ListWebsiteCertificateAuthorities operation.
+//	pageNum := 0
+//	err := client.ListWebsiteCertificateAuthoritiesPages(params,
+//	    func(page *worklink.ListWebsiteCertificateAuthoritiesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 //
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListWebsiteCertificateAuthoritiesPages(input *ListWebsiteCertificateAuthoritiesInput, fn func(*ListWebsiteCertificateAuthoritiesOutput, bool) bool) error {
 	return c.ListWebsiteCertificateAuthoritiesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2295,6 +2505,8 @@ func (c *WorkLink) ListWebsiteCertificateAuthoritiesPages(input *ListWebsiteCert
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) ListWebsiteCertificateAuthoritiesPagesWithContext(ctx aws.Context, input *ListWebsiteCertificateAuthoritiesInput, fn func(*ListWebsiteCertificateAuthoritiesOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
 		NewRequest: func() (*request.Request, error) {
@@ -2335,17 +2547,21 @@ const opRestoreDomainAccess = "RestoreDomainAccess"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RestoreDomainAccessRequest method.
+//	req, resp := client.RestoreDomainAccessRequest(params)
 //
-//    // Example sending a request using the RestoreDomainAccessRequest method.
-//    req, resp := client.RestoreDomainAccessRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/RestoreDomainAccess
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) RestoreDomainAccessRequest(input *RestoreDomainAccessInput) (req *request.Request, output *RestoreDomainAccessOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, RestoreDomainAccess, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opRestoreDomainAccess,
 		HTTPMethod: "POST",
@@ -2374,22 +2590,25 @@ func (c *WorkLink) RestoreDomainAccessRequest(input *RestoreDomainAccessInput) (
 // API operation RestoreDomainAccess for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/RestoreDomainAccess
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) RestoreDomainAccess(input *RestoreDomainAccessInput) (*RestoreDomainAccessOutput, error) {
 	req, out := c.RestoreDomainAccessRequest(input)
 	return out, req.Send()
@@ -2404,6 +2623,8 @@ func (c *WorkLink) RestoreDomainAccess(input *RestoreDomainAccessInput) (*Restor
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) RestoreDomainAccessWithContext(ctx aws.Context, input *RestoreDomainAccessInput, opts ...request.Option) (*RestoreDomainAccessOutput, error) {
 	req, out := c.RestoreDomainAccessRequest(input)
 	req.SetContext(ctx)
@@ -2427,17 +2648,21 @@ const opRevokeDomainAccess = "RevokeDomainAccess"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RevokeDomainAccessRequest method.
+//	req, resp := client.RevokeDomainAccessRequest(params)
 //
-//    // Example sending a request using the RevokeDomainAccessRequest method.
-//    req, resp := client.RevokeDomainAccessRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/RevokeDomainAccess
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) RevokeDomainAccessRequest(input *RevokeDomainAccessInput) (req *request.Request, output *RevokeDomainAccessOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, RevokeDomainAccess, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opRevokeDomainAccess,
 		HTTPMethod: "POST",
@@ -2466,22 +2691,25 @@ func (c *WorkLink) RevokeDomainAccessRequest(input *RevokeDomainAccessInput) (re
 // API operation RevokeDomainAccess for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/RevokeDomainAccess
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) RevokeDomainAccess(input *RevokeDomainAccessInput) (*RevokeDomainAccessOutput, error) {
 	req, out := c.RevokeDomainAccessRequest(input)
 	return out, req.Send()
@@ -2496,6 +2724,8 @@ func (c *WorkLink) RevokeDomainAccess(input *RevokeDomainAccessInput) (*RevokeDo
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) RevokeDomainAccessWithContext(ctx aws.Context, input *RevokeDomainAccessInput, opts ...request.Option) (*RevokeDomainAccessOutput, error) {
 	req, out := c.RevokeDomainAccessRequest(input)
 	req.SetContext(ctx)
@@ -2519,17 +2749,21 @@ const opSignOutUser = "SignOutUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SignOutUserRequest method.
+//	req, resp := client.SignOutUserRequest(params)
 //
-//    // Example sending a request using the SignOutUserRequest method.
-//    req, resp := client.SignOutUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/SignOutUser
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) SignOutUserRequest(input *SignOutUserInput) (req *request.Request, output *SignOutUserOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, SignOutUser, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opSignOutUser,
 		HTTPMethod: "POST",
@@ -2559,22 +2793,25 @@ func (c *WorkLink) SignOutUserRequest(input *SignOutUserInput) (req *request.Req
 // API operation SignOutUser for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/SignOutUser
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) SignOutUser(input *SignOutUserInput) (*SignOutUserOutput, error) {
 	req, out := c.SignOutUserRequest(input)
 	return out, req.Send()
@@ -2589,6 +2826,8 @@ func (c *WorkLink) SignOutUser(input *SignOutUserInput) (*SignOutUserOutput, err
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) SignOutUserWithContext(ctx aws.Context, input *SignOutUserInput, opts ...request.Option) (*SignOutUserOutput, error) {
 	req, out := c.SignOutUserRequest(input)
 	req.SetContext(ctx)
@@ -2612,17 +2851,21 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/TagResource
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, TagResource, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opTagResource,
 		HTTPMethod: "POST",
@@ -2653,10 +2896,12 @@ func (c *WorkLink) TagResourceRequest(input *TagResourceInput) (req *request.Req
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InvalidRequestException
+//     The request is not valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/TagResource
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
 	req, out := c.TagResourceRequest(input)
 	return out, req.Send()
@@ -2671,6 +2916,8 @@ func (c *WorkLink) TagResource(input *TagResourceInput) (*TagResourceOutput, err
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) TagResourceWithContext(ctx aws.Context, input *TagResourceInput, opts ...request.Option) (*TagResourceOutput, error) {
 	req, out := c.TagResourceRequest(input)
 	req.SetContext(ctx)
@@ -2694,17 +2941,21 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UntagResource
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, UntagResource, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opUntagResource,
 		HTTPMethod: "DELETE",
@@ -2733,10 +2984,12 @@ func (c *WorkLink) UntagResourceRequest(input *UntagResourceInput) (req *request
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InvalidRequestException
+//     The request is not valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UntagResource
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
 	req, out := c.UntagResourceRequest(input)
 	return out, req.Send()
@@ -2751,6 +3004,8 @@ func (c *WorkLink) UntagResource(input *UntagResourceInput) (*UntagResourceOutpu
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UntagResourceWithContext(ctx aws.Context, input *UntagResourceInput, opts ...request.Option) (*UntagResourceOutput, error) {
 	req, out := c.UntagResourceRequest(input)
 	req.SetContext(ctx)
@@ -2774,17 +3029,21 @@ const opUpdateAuditStreamConfiguration = "UpdateAuditStreamConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateAuditStreamConfigurationRequest method.
+//	req, resp := client.UpdateAuditStreamConfigurationRequest(params)
 //
-//    // Example sending a request using the UpdateAuditStreamConfigurationRequest method.
-//    req, resp := client.UpdateAuditStreamConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateAuditStreamConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateAuditStreamConfigurationRequest(input *UpdateAuditStreamConfigurationInput) (req *request.Request, output *UpdateAuditStreamConfigurationOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, UpdateAuditStreamConfiguration, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opUpdateAuditStreamConfiguration,
 		HTTPMethod: "POST",
@@ -2813,22 +3072,25 @@ func (c *WorkLink) UpdateAuditStreamConfigurationRequest(input *UpdateAuditStrea
 // API operation UpdateAuditStreamConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateAuditStreamConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateAuditStreamConfiguration(input *UpdateAuditStreamConfigurationInput) (*UpdateAuditStreamConfigurationOutput, error) {
 	req, out := c.UpdateAuditStreamConfigurationRequest(input)
 	return out, req.Send()
@@ -2843,6 +3105,8 @@ func (c *WorkLink) UpdateAuditStreamConfiguration(input *UpdateAuditStreamConfig
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateAuditStreamConfigurationWithContext(ctx aws.Context, input *UpdateAuditStreamConfigurationInput, opts ...request.Option) (*UpdateAuditStreamConfigurationOutput, error) {
 	req, out := c.UpdateAuditStreamConfigurationRequest(input)
 	req.SetContext(ctx)
@@ -2866,17 +3130,21 @@ const opUpdateCompanyNetworkConfiguration = "UpdateCompanyNetworkConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateCompanyNetworkConfigurationRequest method.
+//	req, resp := client.UpdateCompanyNetworkConfigurationRequest(params)
 //
-//    // Example sending a request using the UpdateCompanyNetworkConfigurationRequest method.
-//    req, resp := client.UpdateCompanyNetworkConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateCompanyNetworkConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateCompanyNetworkConfigurationRequest(input *UpdateCompanyNetworkConfigurationInput) (req *request.Request, output *UpdateCompanyNetworkConfigurationOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, UpdateCompanyNetworkConfiguration, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opUpdateCompanyNetworkConfiguration,
 		HTTPMethod: "POST",
@@ -2905,22 +3173,25 @@ func (c *WorkLink) UpdateCompanyNetworkConfigurationRequest(input *UpdateCompany
 // API operation UpdateCompanyNetworkConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateCompanyNetworkConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateCompanyNetworkConfiguration(input *UpdateCompanyNetworkConfigurationInput) (*UpdateCompanyNetworkConfigurationOutput, error) {
 	req, out := c.UpdateCompanyNetworkConfigurationRequest(input)
 	return out, req.Send()
@@ -2935,6 +3206,8 @@ func (c *WorkLink) UpdateCompanyNetworkConfiguration(input *UpdateCompanyNetwork
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateCompanyNetworkConfigurationWithContext(ctx aws.Context, input *UpdateCompanyNetworkConfigurationInput, opts ...request.Option) (*UpdateCompanyNetworkConfigurationOutput, error) {
 	req, out := c.UpdateCompanyNetworkConfigurationRequest(input)
 	req.SetContext(ctx)
@@ -2958,17 +3231,21 @@ const opUpdateDevicePolicyConfiguration = "UpdateDevicePolicyConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateDevicePolicyConfigurationRequest method.
+//	req, resp := client.UpdateDevicePolicyConfigurationRequest(params)
 //
-//    // Example sending a request using the UpdateDevicePolicyConfigurationRequest method.
-//    req, resp := client.UpdateDevicePolicyConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateDevicePolicyConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateDevicePolicyConfigurationRequest(input *UpdateDevicePolicyConfigurationInput) (req *request.Request, output *UpdateDevicePolicyConfigurationOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, UpdateDevicePolicyConfiguration, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opUpdateDevicePolicyConfiguration,
 		HTTPMethod: "POST",
@@ -2997,22 +3274,25 @@ func (c *WorkLink) UpdateDevicePolicyConfigurationRequest(input *UpdateDevicePol
 // API operation UpdateDevicePolicyConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateDevicePolicyConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateDevicePolicyConfiguration(input *UpdateDevicePolicyConfigurationInput) (*UpdateDevicePolicyConfigurationOutput, error) {
 	req, out := c.UpdateDevicePolicyConfigurationRequest(input)
 	return out, req.Send()
@@ -3027,6 +3307,8 @@ func (c *WorkLink) UpdateDevicePolicyConfiguration(input *UpdateDevicePolicyConf
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateDevicePolicyConfigurationWithContext(ctx aws.Context, input *UpdateDevicePolicyConfigurationInput, opts ...request.Option) (*UpdateDevicePolicyConfigurationOutput, error) {
 	req, out := c.UpdateDevicePolicyConfigurationRequest(input)
 	req.SetContext(ctx)
@@ -3050,17 +3332,21 @@ const opUpdateDomainMetadata = "UpdateDomainMetadata"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateDomainMetadataRequest method.
+//	req, resp := client.UpdateDomainMetadataRequest(params)
 //
-//    // Example sending a request using the UpdateDomainMetadataRequest method.
-//    req, resp := client.UpdateDomainMetadataRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateDomainMetadata
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateDomainMetadataRequest(input *UpdateDomainMetadataInput) (req *request.Request, output *UpdateDomainMetadataOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, UpdateDomainMetadata, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opUpdateDomainMetadata,
 		HTTPMethod: "POST",
@@ -3089,22 +3375,25 @@ func (c *WorkLink) UpdateDomainMetadataRequest(input *UpdateDomainMetadataInput)
 // API operation UpdateDomainMetadata for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateDomainMetadata
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateDomainMetadata(input *UpdateDomainMetadataInput) (*UpdateDomainMetadataOutput, error) {
 	req, out := c.UpdateDomainMetadataRequest(input)
 	return out, req.Send()
@@ -3119,6 +3408,8 @@ func (c *WorkLink) UpdateDomainMetadata(input *UpdateDomainMetadataInput) (*Upda
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateDomainMetadataWithContext(ctx aws.Context, input *UpdateDomainMetadataInput, opts ...request.Option) (*UpdateDomainMetadataOutput, error) {
 	req, out := c.UpdateDomainMetadataRequest(input)
 	req.SetContext(ctx)
@@ -3142,17 +3433,21 @@ const opUpdateFleetMetadata = "UpdateFleetMetadata"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateFleetMetadataRequest method.
+//	req, resp := client.UpdateFleetMetadataRequest(params)
 //
-//    // Example sending a request using the UpdateFleetMetadataRequest method.
-//    req, resp := client.UpdateFleetMetadataRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateFleetMetadata
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateFleetMetadataRequest(input *UpdateFleetMetadataInput) (req *request.Request, output *UpdateFleetMetadataOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, UpdateFleetMetadata, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opUpdateFleetMetadata,
 		HTTPMethod: "POST",
@@ -3181,22 +3476,25 @@ func (c *WorkLink) UpdateFleetMetadataRequest(input *UpdateFleetMetadataInput) (
 // API operation UpdateFleetMetadata for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateFleetMetadata
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateFleetMetadata(input *UpdateFleetMetadataInput) (*UpdateFleetMetadataOutput, error) {
 	req, out := c.UpdateFleetMetadataRequest(input)
 	return out, req.Send()
@@ -3211,6 +3509,8 @@ func (c *WorkLink) UpdateFleetMetadata(input *UpdateFleetMetadataInput) (*Update
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateFleetMetadataWithContext(ctx aws.Context, input *UpdateFleetMetadataInput, opts ...request.Option) (*UpdateFleetMetadataOutput, error) {
 	req, out := c.UpdateFleetMetadataRequest(input)
 	req.SetContext(ctx)
@@ -3234,17 +3534,21 @@ const opUpdateIdentityProviderConfiguration = "UpdateIdentityProviderConfigurati
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateIdentityProviderConfigurationRequest method.
+//	req, resp := client.UpdateIdentityProviderConfigurationRequest(params)
 //
-//    // Example sending a request using the UpdateIdentityProviderConfigurationRequest method.
-//    req, resp := client.UpdateIdentityProviderConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateIdentityProviderConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateIdentityProviderConfigurationRequest(input *UpdateIdentityProviderConfigurationInput) (req *request.Request, output *UpdateIdentityProviderConfigurationOutput) {
+	if c.Client.Config.Logger != nil {
+		c.Client.Config.Logger.Log("This operation, UpdateIdentityProviderConfiguration, has been deprecated")
+	}
 	op := &request.Operation{
 		Name:       opUpdateIdentityProviderConfiguration,
 		HTTPMethod: "POST",
@@ -3273,22 +3577,25 @@ func (c *WorkLink) UpdateIdentityProviderConfigurationRequest(input *UpdateIdent
 // API operation UpdateIdentityProviderConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * UnauthorizedException
-//   You are not authorized to perform this action.
 //
-//   * InternalServerErrorException
-//   The service is temporarily unavailable.
+//   - UnauthorizedException
+//     You are not authorized to perform this action.
 //
-//   * InvalidRequestException
-//   The request is not valid.
+//   - InternalServerErrorException
+//     The service is temporarily unavailable.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InvalidRequestException
+//     The request is not valid.
 //
-//   * TooManyRequestsException
-//   The number of requests exceeds the limit.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
+//
+//   - TooManyRequestsException
+//     The number of requests exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/worklink-2018-09-25/UpdateIdentityProviderConfiguration
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateIdentityProviderConfiguration(input *UpdateIdentityProviderConfigurationInput) (*UpdateIdentityProviderConfigurationOutput, error) {
 	req, out := c.UpdateIdentityProviderConfigurationRequest(input)
 	return out, req.Send()
@@ -3303,6 +3610,8 @@ func (c *WorkLink) UpdateIdentityProviderConfiguration(input *UpdateIdentityProv
 // the context is nil a panic will occur. In the future the SDK may create
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
+//
+// Deprecated: Amazon WorkLink is no longer supported. This will be removed in a future version of the SDK.
 func (c *WorkLink) UpdateIdentityProviderConfigurationWithContext(ctx aws.Context, input *UpdateIdentityProviderConfigurationInput, opts ...request.Option) (*UpdateIdentityProviderConfigurationOutput, error) {
 	req, out := c.UpdateIdentityProviderConfigurationRequest(input)
 	req.SetContext(ctx)

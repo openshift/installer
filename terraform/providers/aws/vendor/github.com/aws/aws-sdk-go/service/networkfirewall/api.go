@@ -4,6 +4,7 @@ package networkfirewall
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
@@ -28,14 +29,13 @@ const opAssociateFirewallPolicy = "AssociateFirewallPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateFirewallPolicyRequest method.
+//	req, resp := client.AssociateFirewallPolicyRequest(params)
 //
-//    // Example sending a request using the AssociateFirewallPolicyRequest method.
-//    req, resp := client.AssociateFirewallPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/AssociateFirewallPolicy
 func (c *NetworkFirewall) AssociateFirewallPolicyRequest(input *AssociateFirewallPolicyInput) (req *request.Request, output *AssociateFirewallPolicyOutput) {
@@ -71,33 +71,34 @@ func (c *NetworkFirewall) AssociateFirewallPolicyRequest(input *AssociateFirewal
 // API operation AssociateFirewallPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InvalidTokenException
-//   The token you provided is stale or isn't valid for the operation.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * InvalidOperationException
-//   The operation failed because it's not valid. For example, you might have
-//   tried to delete a rule group or firewall policy that's in use.
+//   - InvalidTokenException
+//     The token you provided is stale or isn't valid for the operation.
+//
+//   - InvalidOperationException
+//     The operation failed because it's not valid. For example, you might have
+//     tried to delete a rule group or firewall policy that's in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/AssociateFirewallPolicy
 func (c *NetworkFirewall) AssociateFirewallPolicy(input *AssociateFirewallPolicyInput) (*AssociateFirewallPolicyOutput, error) {
@@ -137,14 +138,13 @@ const opAssociateSubnets = "AssociateSubnets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateSubnetsRequest method.
+//	req, resp := client.AssociateSubnetsRequest(params)
 //
-//    // Example sending a request using the AssociateSubnetsRequest method.
-//    req, resp := client.AssociateSubnetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/AssociateSubnets
 func (c *NetworkFirewall) AssociateSubnetsRequest(input *AssociateSubnetsInput) (req *request.Request, output *AssociateSubnetsOutput) {
@@ -168,9 +168,9 @@ func (c *NetworkFirewall) AssociateSubnetsRequest(input *AssociateSubnetsInput) 
 // Associates the specified subnets in the Amazon VPC to the firewall. You can
 // specify one subnet for each of the Availability Zones that the VPC spans.
 //
-// This request creates an AWS Network Firewall firewall endpoint in each of
-// the subnets. To enable the firewall's protections, you must also modify the
-// VPC's route tables for each subnet's Availability Zone, to redirect the traffic
+// This request creates an Network Firewall firewall endpoint in each of the
+// subnets. To enable the firewall's protections, you must also modify the VPC's
+// route tables for each subnet's Availability Zone, to redirect the traffic
 // that's coming into and going out of the zone through the firewall endpoint.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -181,37 +181,38 @@ func (c *NetworkFirewall) AssociateSubnetsRequest(input *AssociateSubnetsInput) 
 // API operation AssociateSubnets for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InvalidTokenException
-//   The token you provided is stale or isn't valid for the operation.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * InvalidOperationException
-//   The operation failed because it's not valid. For example, you might have
-//   tried to delete a rule group or firewall policy that's in use.
+//   - InvalidTokenException
+//     The token you provided is stale or isn't valid for the operation.
 //
-//   * InsufficientCapacityException
-//   AWS doesn't currently have enough available capacity to fulfill your request.
-//   Try your request later.
+//   - InvalidOperationException
+//     The operation failed because it's not valid. For example, you might have
+//     tried to delete a rule group or firewall policy that's in use.
+//
+//   - InsufficientCapacityException
+//     Amazon Web Services doesn't currently have enough available capacity to fulfill
+//     your request. Try your request later.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/AssociateSubnets
 func (c *NetworkFirewall) AssociateSubnets(input *AssociateSubnetsInput) (*AssociateSubnetsOutput, error) {
@@ -251,14 +252,13 @@ const opCreateFirewall = "CreateFirewall"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateFirewallRequest method.
+//	req, resp := client.CreateFirewallRequest(params)
 //
-//    // Example sending a request using the CreateFirewallRequest method.
-//    req, resp := client.CreateFirewallRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/CreateFirewall
 func (c *NetworkFirewall) CreateFirewallRequest(input *CreateFirewallInput) (req *request.Request, output *CreateFirewallOutput) {
@@ -279,13 +279,13 @@ func (c *NetworkFirewall) CreateFirewallRequest(input *CreateFirewallInput) (req
 
 // CreateFirewall API operation for AWS Network Firewall.
 //
-// Creates an AWS Network Firewall Firewall and accompanying FirewallStatus
-// for a VPC.
+// Creates an Network Firewall Firewall and accompanying FirewallStatus for
+// a VPC.
 //
-// The firewall defines the configuration settings for an AWS Network Firewall
-// firewall. The settings that you can define at creation include the firewall
-// policy, the subnets in your VPC to use for the firewall endpoints, and any
-// tags that are attached to the firewall AWS resource.
+// The firewall defines the configuration settings for an Network Firewall firewall.
+// The settings that you can define at creation include the firewall policy,
+// the subnets in your VPC to use for the firewall endpoints, and any tags that
+// are attached to the firewall Amazon Web Services resource.
 //
 // After you create a firewall, you can provide additional settings, like the
 // logging configuration.
@@ -294,8 +294,8 @@ func (c *NetworkFirewall) CreateFirewallRequest(input *CreateFirewallInput) (req
 // to the settings themselves, for example UpdateLoggingConfiguration, AssociateSubnets,
 // and UpdateFirewallDeleteProtection.
 //
-// To manage a firewall's tags, use the standard AWS resource tagging operations,
-// ListTagsForResource, TagResource, and UntagResource.
+// To manage a firewall's tags, use the standard Amazon Web Services resource
+// tagging operations, ListTagsForResource, TagResource, and UntagResource.
 //
 // To retrieve information about firewalls, use ListFirewalls and DescribeFirewall.
 //
@@ -307,34 +307,35 @@ func (c *NetworkFirewall) CreateFirewallRequest(input *CreateFirewallInput) (req
 // API operation CreateFirewall for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * LimitExceededException
-//   Unable to perform the operation because doing so would violate a limit setting.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - LimitExceededException
+//     Unable to perform the operation because doing so would violate a limit setting.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * InsufficientCapacityException
-//   AWS doesn't currently have enough available capacity to fulfill your request.
-//   Try your request later.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * InvalidOperationException
-//   The operation failed because it's not valid. For example, you might have
-//   tried to delete a rule group or firewall policy that's in use.
+//   - InsufficientCapacityException
+//     Amazon Web Services doesn't currently have enough available capacity to fulfill
+//     your request. Try your request later.
+//
+//   - InvalidOperationException
+//     The operation failed because it's not valid. For example, you might have
+//     tried to delete a rule group or firewall policy that's in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/CreateFirewall
 func (c *NetworkFirewall) CreateFirewall(input *CreateFirewallInput) (*CreateFirewallOutput, error) {
@@ -374,14 +375,13 @@ const opCreateFirewallPolicy = "CreateFirewallPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateFirewallPolicyRequest method.
+//	req, resp := client.CreateFirewallPolicyRequest(params)
 //
-//    // Example sending a request using the CreateFirewallPolicyRequest method.
-//    req, resp := client.CreateFirewallPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/CreateFirewallPolicy
 func (c *NetworkFirewall) CreateFirewallPolicyRequest(input *CreateFirewallPolicyInput) (req *request.Request, output *CreateFirewallPolicyOutput) {
@@ -404,9 +404,9 @@ func (c *NetworkFirewall) CreateFirewallPolicyRequest(input *CreateFirewallPolic
 //
 // Creates the firewall policy for the firewall according to the specifications.
 //
-// An AWS Network Firewall firewall policy defines the behavior of a firewall,
-// in a collection of stateless and stateful rule groups and other settings.
-// You can use one firewall policy for multiple firewalls.
+// An Network Firewall firewall policy defines the behavior of a firewall, in
+// a collection of stateless and stateful rule groups and other settings. You
+// can use one firewall policy for multiple firewalls.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -416,30 +416,31 @@ func (c *NetworkFirewall) CreateFirewallPolicyRequest(input *CreateFirewallPolic
 // API operation CreateFirewallPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * LimitExceededException
-//   Unable to perform the operation because doing so would violate a limit setting.
 //
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
+//   - LimitExceededException
+//     Unable to perform the operation because doing so would violate a limit setting.
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * InsufficientCapacityException
-//   AWS doesn't currently have enough available capacity to fulfill your request.
-//   Try your request later.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
+//
+//   - InsufficientCapacityException
+//     Amazon Web Services doesn't currently have enough available capacity to fulfill
+//     your request. Try your request later.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/CreateFirewallPolicy
 func (c *NetworkFirewall) CreateFirewallPolicy(input *CreateFirewallPolicyInput) (*CreateFirewallPolicyOutput, error) {
@@ -479,14 +480,13 @@ const opCreateRuleGroup = "CreateRuleGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateRuleGroupRequest method.
+//	req, resp := client.CreateRuleGroupRequest(params)
 //
-//    // Example sending a request using the CreateRuleGroupRequest method.
-//    req, resp := client.CreateRuleGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/CreateRuleGroup
 func (c *NetworkFirewall) CreateRuleGroupRequest(input *CreateRuleGroupInput) (req *request.Request, output *CreateRuleGroupOutput) {
@@ -521,30 +521,31 @@ func (c *NetworkFirewall) CreateRuleGroupRequest(input *CreateRuleGroupInput) (r
 // API operation CreateRuleGroup for usage and error information.
 //
 // Returned Error Types:
-//   * LimitExceededException
-//   Unable to perform the operation because doing so would violate a limit setting.
 //
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
+//   - LimitExceededException
+//     Unable to perform the operation because doing so would violate a limit setting.
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * InsufficientCapacityException
-//   AWS doesn't currently have enough available capacity to fulfill your request.
-//   Try your request later.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
+//
+//   - InsufficientCapacityException
+//     Amazon Web Services doesn't currently have enough available capacity to fulfill
+//     your request. Try your request later.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/CreateRuleGroup
 func (c *NetworkFirewall) CreateRuleGroup(input *CreateRuleGroupInput) (*CreateRuleGroupOutput, error) {
@@ -584,14 +585,13 @@ const opDeleteFirewall = "DeleteFirewall"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteFirewallRequest method.
+//	req, resp := client.DeleteFirewallRequest(params)
 //
-//    // Example sending a request using the DeleteFirewallRequest method.
-//    req, resp := client.DeleteFirewallRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DeleteFirewall
 func (c *NetworkFirewall) DeleteFirewallRequest(input *DeleteFirewallInput) (req *request.Request, output *DeleteFirewallOutput) {
@@ -633,33 +633,34 @@ func (c *NetworkFirewall) DeleteFirewallRequest(input *DeleteFirewallInput) (req
 // API operation DeleteFirewall for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * UnsupportedOperationException
-//   The operation you requested isn't supported by Network Firewall.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * InvalidOperationException
-//   The operation failed because it's not valid. For example, you might have
-//   tried to delete a rule group or firewall policy that's in use.
+//   - UnsupportedOperationException
+//     The operation you requested isn't supported by Network Firewall.
+//
+//   - InvalidOperationException
+//     The operation failed because it's not valid. For example, you might have
+//     tried to delete a rule group or firewall policy that's in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DeleteFirewall
 func (c *NetworkFirewall) DeleteFirewall(input *DeleteFirewallInput) (*DeleteFirewallOutput, error) {
@@ -699,14 +700,13 @@ const opDeleteFirewallPolicy = "DeleteFirewallPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteFirewallPolicyRequest method.
+//	req, resp := client.DeleteFirewallPolicyRequest(params)
 //
-//    // Example sending a request using the DeleteFirewallPolicyRequest method.
-//    req, resp := client.DeleteFirewallPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DeleteFirewallPolicy
 func (c *NetworkFirewall) DeleteFirewallPolicyRequest(input *DeleteFirewallPolicyInput) (req *request.Request, output *DeleteFirewallPolicyOutput) {
@@ -737,33 +737,34 @@ func (c *NetworkFirewall) DeleteFirewallPolicyRequest(input *DeleteFirewallPolic
 // API operation DeleteFirewallPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * UnsupportedOperationException
-//   The operation you requested isn't supported by Network Firewall.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * InvalidOperationException
-//   The operation failed because it's not valid. For example, you might have
-//   tried to delete a rule group or firewall policy that's in use.
+//   - UnsupportedOperationException
+//     The operation you requested isn't supported by Network Firewall.
+//
+//   - InvalidOperationException
+//     The operation failed because it's not valid. For example, you might have
+//     tried to delete a rule group or firewall policy that's in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DeleteFirewallPolicy
 func (c *NetworkFirewall) DeleteFirewallPolicy(input *DeleteFirewallPolicyInput) (*DeleteFirewallPolicyOutput, error) {
@@ -803,14 +804,13 @@ const opDeleteResourcePolicy = "DeleteResourcePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteResourcePolicyRequest method.
+//	req, resp := client.DeleteResourcePolicyRequest(params)
 //
-//    // Example sending a request using the DeleteResourcePolicyRequest method.
-//    req, resp := client.DeleteResourcePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DeleteResourcePolicy
 func (c *NetworkFirewall) DeleteResourcePolicyRequest(input *DeleteResourcePolicyInput) (req *request.Request, output *DeleteResourcePolicyOutput) {
@@ -842,29 +842,30 @@ func (c *NetworkFirewall) DeleteResourcePolicyRequest(input *DeleteResourcePolic
 // API operation DeleteResourcePolicy for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InvalidResourcePolicyException
-//   The policy statement failed validation.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
+//
+//   - InvalidResourcePolicyException
+//     The policy statement failed validation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DeleteResourcePolicy
 func (c *NetworkFirewall) DeleteResourcePolicy(input *DeleteResourcePolicyInput) (*DeleteResourcePolicyOutput, error) {
@@ -904,14 +905,13 @@ const opDeleteRuleGroup = "DeleteRuleGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteRuleGroupRequest method.
+//	req, resp := client.DeleteRuleGroupRequest(params)
 //
-//    // Example sending a request using the DeleteRuleGroupRequest method.
-//    req, resp := client.DeleteRuleGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DeleteRuleGroup
 func (c *NetworkFirewall) DeleteRuleGroupRequest(input *DeleteRuleGroupInput) (req *request.Request, output *DeleteRuleGroupOutput) {
@@ -942,33 +942,34 @@ func (c *NetworkFirewall) DeleteRuleGroupRequest(input *DeleteRuleGroupInput) (r
 // API operation DeleteRuleGroup for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * UnsupportedOperationException
-//   The operation you requested isn't supported by Network Firewall.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * InvalidOperationException
-//   The operation failed because it's not valid. For example, you might have
-//   tried to delete a rule group or firewall policy that's in use.
+//   - UnsupportedOperationException
+//     The operation you requested isn't supported by Network Firewall.
+//
+//   - InvalidOperationException
+//     The operation failed because it's not valid. For example, you might have
+//     tried to delete a rule group or firewall policy that's in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DeleteRuleGroup
 func (c *NetworkFirewall) DeleteRuleGroup(input *DeleteRuleGroupInput) (*DeleteRuleGroupOutput, error) {
@@ -1008,14 +1009,13 @@ const opDescribeFirewall = "DescribeFirewall"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeFirewallRequest method.
+//	req, resp := client.DescribeFirewallRequest(params)
 //
-//    // Example sending a request using the DescribeFirewallRequest method.
-//    req, resp := client.DescribeFirewallRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeFirewall
 func (c *NetworkFirewall) DescribeFirewallRequest(input *DescribeFirewallInput) (req *request.Request, output *DescribeFirewallOutput) {
@@ -1046,26 +1046,27 @@ func (c *NetworkFirewall) DescribeFirewallRequest(input *DescribeFirewallInput) 
 // API operation DescribeFirewall for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
+//
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeFirewall
 func (c *NetworkFirewall) DescribeFirewall(input *DescribeFirewallInput) (*DescribeFirewallOutput, error) {
@@ -1105,14 +1106,13 @@ const opDescribeFirewallPolicy = "DescribeFirewallPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeFirewallPolicyRequest method.
+//	req, resp := client.DescribeFirewallPolicyRequest(params)
 //
-//    // Example sending a request using the DescribeFirewallPolicyRequest method.
-//    req, resp := client.DescribeFirewallPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeFirewallPolicy
 func (c *NetworkFirewall) DescribeFirewallPolicyRequest(input *DescribeFirewallPolicyInput) (req *request.Request, output *DescribeFirewallPolicyOutput) {
@@ -1143,26 +1143,27 @@ func (c *NetworkFirewall) DescribeFirewallPolicyRequest(input *DescribeFirewallP
 // API operation DescribeFirewallPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
+//
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeFirewallPolicy
 func (c *NetworkFirewall) DescribeFirewallPolicy(input *DescribeFirewallPolicyInput) (*DescribeFirewallPolicyOutput, error) {
@@ -1202,14 +1203,13 @@ const opDescribeLoggingConfiguration = "DescribeLoggingConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeLoggingConfigurationRequest method.
+//	req, resp := client.DescribeLoggingConfigurationRequest(params)
 //
-//    // Example sending a request using the DescribeLoggingConfigurationRequest method.
-//    req, resp := client.DescribeLoggingConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeLoggingConfiguration
 func (c *NetworkFirewall) DescribeLoggingConfigurationRequest(input *DescribeLoggingConfigurationInput) (req *request.Request, output *DescribeLoggingConfigurationOutput) {
@@ -1240,26 +1240,27 @@ func (c *NetworkFirewall) DescribeLoggingConfigurationRequest(input *DescribeLog
 // API operation DescribeLoggingConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
+//
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeLoggingConfiguration
 func (c *NetworkFirewall) DescribeLoggingConfiguration(input *DescribeLoggingConfigurationInput) (*DescribeLoggingConfigurationOutput, error) {
@@ -1299,14 +1300,13 @@ const opDescribeResourcePolicy = "DescribeResourcePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeResourcePolicyRequest method.
+//	req, resp := client.DescribeResourcePolicyRequest(params)
 //
-//    // Example sending a request using the DescribeResourcePolicyRequest method.
-//    req, resp := client.DescribeResourcePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeResourcePolicy
 func (c *NetworkFirewall) DescribeResourcePolicyRequest(input *DescribeResourcePolicyInput) (req *request.Request, output *DescribeResourcePolicyOutput) {
@@ -1337,26 +1337,27 @@ func (c *NetworkFirewall) DescribeResourcePolicyRequest(input *DescribeResourceP
 // API operation DescribeResourcePolicy for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
+//
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeResourcePolicy
 func (c *NetworkFirewall) DescribeResourcePolicy(input *DescribeResourcePolicyInput) (*DescribeResourcePolicyOutput, error) {
@@ -1396,14 +1397,13 @@ const opDescribeRuleGroup = "DescribeRuleGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeRuleGroupRequest method.
+//	req, resp := client.DescribeRuleGroupRequest(params)
 //
-//    // Example sending a request using the DescribeRuleGroupRequest method.
-//    req, resp := client.DescribeRuleGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeRuleGroup
 func (c *NetworkFirewall) DescribeRuleGroupRequest(input *DescribeRuleGroupInput) (req *request.Request, output *DescribeRuleGroupOutput) {
@@ -1434,26 +1434,27 @@ func (c *NetworkFirewall) DescribeRuleGroupRequest(input *DescribeRuleGroupInput
 // API operation DescribeRuleGroup for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
+//
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeRuleGroup
 func (c *NetworkFirewall) DescribeRuleGroup(input *DescribeRuleGroupInput) (*DescribeRuleGroupOutput, error) {
@@ -1493,14 +1494,13 @@ const opDescribeRuleGroupMetadata = "DescribeRuleGroupMetadata"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeRuleGroupMetadataRequest method.
+//	req, resp := client.DescribeRuleGroupMetadataRequest(params)
 //
-//    // Example sending a request using the DescribeRuleGroupMetadataRequest method.
-//    req, resp := client.DescribeRuleGroupMetadataRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeRuleGroupMetadata
 func (c *NetworkFirewall) DescribeRuleGroupMetadataRequest(input *DescribeRuleGroupMetadataInput) (req *request.Request, output *DescribeRuleGroupMetadataOutput) {
@@ -1534,26 +1534,27 @@ func (c *NetworkFirewall) DescribeRuleGroupMetadataRequest(input *DescribeRuleGr
 // API operation DescribeRuleGroupMetadata for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
+//
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DescribeRuleGroupMetadata
 func (c *NetworkFirewall) DescribeRuleGroupMetadata(input *DescribeRuleGroupMetadataInput) (*DescribeRuleGroupMetadataOutput, error) {
@@ -1593,14 +1594,13 @@ const opDisassociateSubnets = "DisassociateSubnets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateSubnetsRequest method.
+//	req, resp := client.DisassociateSubnetsRequest(params)
 //
-//    // Example sending a request using the DisassociateSubnetsRequest method.
-//    req, resp := client.DisassociateSubnetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DisassociateSubnets
 func (c *NetworkFirewall) DisassociateSubnetsRequest(input *DisassociateSubnetsInput) (req *request.Request, output *DisassociateSubnetsOutput) {
@@ -1633,33 +1633,34 @@ func (c *NetworkFirewall) DisassociateSubnetsRequest(input *DisassociateSubnetsI
 // API operation DisassociateSubnets for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InvalidTokenException
-//   The token you provided is stale or isn't valid for the operation.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * InvalidOperationException
-//   The operation failed because it's not valid. For example, you might have
-//   tried to delete a rule group or firewall policy that's in use.
+//   - InvalidTokenException
+//     The token you provided is stale or isn't valid for the operation.
+//
+//   - InvalidOperationException
+//     The operation failed because it's not valid. For example, you might have
+//     tried to delete a rule group or firewall policy that's in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/DisassociateSubnets
 func (c *NetworkFirewall) DisassociateSubnets(input *DisassociateSubnetsInput) (*DisassociateSubnetsOutput, error) {
@@ -1699,14 +1700,13 @@ const opListFirewallPolicies = "ListFirewallPolicies"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListFirewallPoliciesRequest method.
+//	req, resp := client.ListFirewallPoliciesRequest(params)
 //
-//    // Example sending a request using the ListFirewallPoliciesRequest method.
-//    req, resp := client.ListFirewallPoliciesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/ListFirewallPolicies
 func (c *NetworkFirewall) ListFirewallPoliciesRequest(input *ListFirewallPoliciesInput) (req *request.Request, output *ListFirewallPoliciesOutput) {
@@ -1745,23 +1745,24 @@ func (c *NetworkFirewall) ListFirewallPoliciesRequest(input *ListFirewallPolicie
 // API operation ListFirewallPolicies for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
+//
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/ListFirewallPolicies
 func (c *NetworkFirewall) ListFirewallPolicies(input *ListFirewallPoliciesInput) (*ListFirewallPoliciesOutput, error) {
@@ -1793,15 +1794,14 @@ func (c *NetworkFirewall) ListFirewallPoliciesWithContext(ctx aws.Context, input
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListFirewallPolicies operation.
-//    pageNum := 0
-//    err := client.ListFirewallPoliciesPages(params,
-//        func(page *networkfirewall.ListFirewallPoliciesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListFirewallPolicies operation.
+//	pageNum := 0
+//	err := client.ListFirewallPoliciesPages(params,
+//	    func(page *networkfirewall.ListFirewallPoliciesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *NetworkFirewall) ListFirewallPoliciesPages(input *ListFirewallPoliciesInput, fn func(*ListFirewallPoliciesOutput, bool) bool) error {
 	return c.ListFirewallPoliciesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1853,14 +1853,13 @@ const opListFirewalls = "ListFirewalls"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListFirewallsRequest method.
+//	req, resp := client.ListFirewallsRequest(params)
 //
-//    // Example sending a request using the ListFirewallsRequest method.
-//    req, resp := client.ListFirewallsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/ListFirewalls
 func (c *NetworkFirewall) ListFirewallsRequest(input *ListFirewallsInput) (req *request.Request, output *ListFirewallsOutput) {
@@ -1902,23 +1901,24 @@ func (c *NetworkFirewall) ListFirewallsRequest(input *ListFirewallsInput) (req *
 // API operation ListFirewalls for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
+//
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/ListFirewalls
 func (c *NetworkFirewall) ListFirewalls(input *ListFirewallsInput) (*ListFirewallsOutput, error) {
@@ -1950,15 +1950,14 @@ func (c *NetworkFirewall) ListFirewallsWithContext(ctx aws.Context, input *ListF
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListFirewalls operation.
-//    pageNum := 0
-//    err := client.ListFirewallsPages(params,
-//        func(page *networkfirewall.ListFirewallsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListFirewalls operation.
+//	pageNum := 0
+//	err := client.ListFirewallsPages(params,
+//	    func(page *networkfirewall.ListFirewallsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *NetworkFirewall) ListFirewallsPages(input *ListFirewallsInput, fn func(*ListFirewallsOutput, bool) bool) error {
 	return c.ListFirewallsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2010,14 +2009,13 @@ const opListRuleGroups = "ListRuleGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListRuleGroupsRequest method.
+//	req, resp := client.ListRuleGroupsRequest(params)
 //
-//    // Example sending a request using the ListRuleGroupsRequest method.
-//    req, resp := client.ListRuleGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/ListRuleGroups
 func (c *NetworkFirewall) ListRuleGroupsRequest(input *ListRuleGroupsInput) (req *request.Request, output *ListRuleGroupsOutput) {
@@ -2056,23 +2054,24 @@ func (c *NetworkFirewall) ListRuleGroupsRequest(input *ListRuleGroupsInput) (req
 // API operation ListRuleGroups for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
+//
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/ListRuleGroups
 func (c *NetworkFirewall) ListRuleGroups(input *ListRuleGroupsInput) (*ListRuleGroupsOutput, error) {
@@ -2104,15 +2103,14 @@ func (c *NetworkFirewall) ListRuleGroupsWithContext(ctx aws.Context, input *List
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListRuleGroups operation.
-//    pageNum := 0
-//    err := client.ListRuleGroupsPages(params,
-//        func(page *networkfirewall.ListRuleGroupsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListRuleGroups operation.
+//	pageNum := 0
+//	err := client.ListRuleGroupsPages(params,
+//	    func(page *networkfirewall.ListRuleGroupsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *NetworkFirewall) ListRuleGroupsPages(input *ListRuleGroupsInput, fn func(*ListRuleGroupsOutput, bool) bool) error {
 	return c.ListRuleGroupsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2164,14 +2162,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/ListTagsForResource
 func (c *NetworkFirewall) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -2202,10 +2199,10 @@ func (c *NetworkFirewall) ListTagsForResourceRequest(input *ListTagsForResourceI
 // pairs that you can use to categorize and manage your resources, for purposes
 // like billing. For example, you might set the tag key to "customer" and the
 // value to the customer name or ID. You can specify one or more tags to add
-// to each AWS resource, up to 50 tags for a resource.
+// to each Amazon Web Services resource, up to 50 tags for a resource.
 //
-// You can tag the AWS resources that you manage through AWS Network Firewall:
-// firewalls, firewall policies, and rule groups.
+// You can tag the Amazon Web Services resources that you manage through Network
+// Firewall: firewalls, firewall policies, and rule groups.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2215,26 +2212,27 @@ func (c *NetworkFirewall) ListTagsForResourceRequest(input *ListTagsForResourceI
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
+//
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/ListTagsForResource
 func (c *NetworkFirewall) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -2266,15 +2264,14 @@ func (c *NetworkFirewall) ListTagsForResourceWithContext(ctx aws.Context, input 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTagsForResource operation.
-//    pageNum := 0
-//    err := client.ListTagsForResourcePages(params,
-//        func(page *networkfirewall.ListTagsForResourceOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTagsForResource operation.
+//	pageNum := 0
+//	err := client.ListTagsForResourcePages(params,
+//	    func(page *networkfirewall.ListTagsForResourceOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *NetworkFirewall) ListTagsForResourcePages(input *ListTagsForResourceInput, fn func(*ListTagsForResourceOutput, bool) bool) error {
 	return c.ListTagsForResourcePagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2326,14 +2323,13 @@ const opPutResourcePolicy = "PutResourcePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutResourcePolicyRequest method.
+//	req, resp := client.PutResourcePolicyRequest(params)
 //
-//    // Example sending a request using the PutResourcePolicyRequest method.
-//    req, resp := client.PutResourcePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/PutResourcePolicy
 func (c *NetworkFirewall) PutResourcePolicyRequest(input *PutResourcePolicyInput) (req *request.Request, output *PutResourcePolicyOutput) {
@@ -2355,11 +2351,10 @@ func (c *NetworkFirewall) PutResourcePolicyRequest(input *PutResourcePolicyInput
 
 // PutResourcePolicy API operation for AWS Network Firewall.
 //
-// Creates or updates an AWS Identity and Access Management policy for your
-// rule group or firewall policy. Use this to share rule groups and firewall
-// policies between accounts. This operation works in conjunction with the AWS
-// Resource Access Manager (RAM) service to manage resource sharing for Network
-// Firewall.
+// Creates or updates an IAM policy for your rule group or firewall policy.
+// Use this to share rule groups and firewall policies between accounts. This
+// operation works in conjunction with the Amazon Web Services Resource Access
+// Manager (RAM) service to manage resource sharing for Network Firewall.
 //
 // Use this operation to create or update a resource policy for your rule group
 // or firewall policy. In the policy, you specify the accounts that you want
@@ -2370,13 +2365,15 @@ func (c *NetworkFirewall) PutResourcePolicyRequest(input *PutResourcePolicyInput
 // Resource Access Manager (RAM) operations to access and accept the shared
 // rule group or firewall policy.
 //
-//    * GetResourceShareInvitations (https://docs.aws.amazon.com/ram/latest/APIReference/API_GetResourceShareInvitations.html)
-//    - Returns the Amazon Resource Names (ARNs) of the resource share invitations.
+//   - GetResourceShareInvitations (https://docs.aws.amazon.com/ram/latest/APIReference/API_GetResourceShareInvitations.html)
 //
-//    * AcceptResourceShareInvitation (https://docs.aws.amazon.com/ram/latest/APIReference/API_AcceptResourceShareInvitation.html)
-//    - Accepts the share invitation for a specified resource share.
+//   - Returns the Amazon Resource Names (ARNs) of the resource share invitations.
 //
-// For additional information about resource sharing using RAM, see AWS Resource
+//   - AcceptResourceShareInvitation (https://docs.aws.amazon.com/ram/latest/APIReference/API_AcceptResourceShareInvitation.html)
+//
+//   - Accepts the share invitation for a specified resource share.
+//
+// For additional information about resource sharing using RAM, see Resource
 // Access Manager User Guide (https://docs.aws.amazon.com/ram/latest/userguide/what-is.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -2387,29 +2384,30 @@ func (c *NetworkFirewall) PutResourcePolicyRequest(input *PutResourcePolicyInput
 // API operation PutResourcePolicy for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InvalidResourcePolicyException
-//   The policy statement failed validation.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
+//
+//   - InvalidResourcePolicyException
+//     The policy statement failed validation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/PutResourcePolicy
 func (c *NetworkFirewall) PutResourcePolicy(input *PutResourcePolicyInput) (*PutResourcePolicyOutput, error) {
@@ -2449,14 +2447,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/TagResource
 func (c *NetworkFirewall) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -2482,10 +2479,10 @@ func (c *NetworkFirewall) TagResourceRequest(input *TagResourceInput) (req *requ
 // that you can use to categorize and manage your resources, for purposes like
 // billing. For example, you might set the tag key to "customer" and the value
 // to the customer name or ID. You can specify one or more tags to add to each
-// AWS resource, up to 50 tags for a resource.
+// Amazon Web Services resource, up to 50 tags for a resource.
 //
-// You can tag the AWS resources that you manage through AWS Network Firewall:
-// firewalls, firewall policies, and rule groups.
+// You can tag the Amazon Web Services resources that you manage through Network
+// Firewall: firewalls, firewall policies, and rule groups.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2495,26 +2492,27 @@ func (c *NetworkFirewall) TagResourceRequest(input *TagResourceInput) (req *requ
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
+//
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/TagResource
 func (c *NetworkFirewall) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -2554,14 +2552,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UntagResource
 func (c *NetworkFirewall) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -2587,10 +2584,10 @@ func (c *NetworkFirewall) UntagResourceRequest(input *UntagResourceInput) (req *
 // are key:value pairs that you can use to categorize and manage your resources,
 // for purposes like billing. For example, you might set the tag key to "customer"
 // and the value to the customer name or ID. You can specify one or more tags
-// to add to each AWS resource, up to 50 tags for a resource.
+// to add to each Amazon Web Services resource, up to 50 tags for a resource.
 //
-// You can manage tags for the AWS resources that you manage through AWS Network
-// Firewall: firewalls, firewall policies, and rule groups.
+// You can manage tags for the Amazon Web Services resources that you manage
+// through Network Firewall: firewalls, firewall policies, and rule groups.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2600,26 +2597,27 @@ func (c *NetworkFirewall) UntagResourceRequest(input *UntagResourceInput) (req *
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
+//
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UntagResource
 func (c *NetworkFirewall) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -2659,14 +2657,13 @@ const opUpdateFirewallDeleteProtection = "UpdateFirewallDeleteProtection"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateFirewallDeleteProtectionRequest method.
+//	req, resp := client.UpdateFirewallDeleteProtectionRequest(params)
 //
-//    // Example sending a request using the UpdateFirewallDeleteProtectionRequest method.
-//    req, resp := client.UpdateFirewallDeleteProtectionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateFirewallDeleteProtection
 func (c *NetworkFirewall) UpdateFirewallDeleteProtectionRequest(input *UpdateFirewallDeleteProtectionInput) (req *request.Request, output *UpdateFirewallDeleteProtectionOutput) {
@@ -2700,32 +2697,33 @@ func (c *NetworkFirewall) UpdateFirewallDeleteProtectionRequest(input *UpdateFir
 // API operation UpdateFirewallDeleteProtection for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InvalidTokenException
-//   The token you provided is stale or isn't valid for the operation.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * ResourceOwnerCheckException
-//   Unable to change the resource because your account doesn't own it.
+//   - InvalidTokenException
+//     The token you provided is stale or isn't valid for the operation.
+//
+//   - ResourceOwnerCheckException
+//     Unable to change the resource because your account doesn't own it.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateFirewallDeleteProtection
 func (c *NetworkFirewall) UpdateFirewallDeleteProtection(input *UpdateFirewallDeleteProtectionInput) (*UpdateFirewallDeleteProtectionOutput, error) {
@@ -2765,14 +2763,13 @@ const opUpdateFirewallDescription = "UpdateFirewallDescription"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateFirewallDescriptionRequest method.
+//	req, resp := client.UpdateFirewallDescriptionRequest(params)
 //
-//    // Example sending a request using the UpdateFirewallDescriptionRequest method.
-//    req, resp := client.UpdateFirewallDescriptionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateFirewallDescription
 func (c *NetworkFirewall) UpdateFirewallDescriptionRequest(input *UpdateFirewallDescriptionInput) (req *request.Request, output *UpdateFirewallDescriptionOutput) {
@@ -2804,29 +2801,30 @@ func (c *NetworkFirewall) UpdateFirewallDescriptionRequest(input *UpdateFirewall
 // API operation UpdateFirewallDescription for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InvalidTokenException
-//   The token you provided is stale or isn't valid for the operation.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
+//
+//   - InvalidTokenException
+//     The token you provided is stale or isn't valid for the operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateFirewallDescription
 func (c *NetworkFirewall) UpdateFirewallDescription(input *UpdateFirewallDescriptionInput) (*UpdateFirewallDescriptionOutput, error) {
@@ -2850,6 +2848,109 @@ func (c *NetworkFirewall) UpdateFirewallDescriptionWithContext(ctx aws.Context, 
 	return out, req.Send()
 }
 
+const opUpdateFirewallEncryptionConfiguration = "UpdateFirewallEncryptionConfiguration"
+
+// UpdateFirewallEncryptionConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateFirewallEncryptionConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateFirewallEncryptionConfiguration for more information on using the UpdateFirewallEncryptionConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateFirewallEncryptionConfigurationRequest method.
+//	req, resp := client.UpdateFirewallEncryptionConfigurationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateFirewallEncryptionConfiguration
+func (c *NetworkFirewall) UpdateFirewallEncryptionConfigurationRequest(input *UpdateFirewallEncryptionConfigurationInput) (req *request.Request, output *UpdateFirewallEncryptionConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opUpdateFirewallEncryptionConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateFirewallEncryptionConfigurationInput{}
+	}
+
+	output = &UpdateFirewallEncryptionConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateFirewallEncryptionConfiguration API operation for AWS Network Firewall.
+//
+// A complex type that contains settings for encryption of your firewall resources.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Network Firewall's
+// API operation UpdateFirewallEncryptionConfiguration for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
+//
+//   - You specified an unsupported parameter name or value.
+//
+//   - You tried to update a property with a value that isn't among the available
+//     types.
+//
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
+//
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
+//
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
+//
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
+//
+//   - InvalidTokenException
+//     The token you provided is stale or isn't valid for the operation.
+//
+//   - ResourceOwnerCheckException
+//     Unable to change the resource because your account doesn't own it.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateFirewallEncryptionConfiguration
+func (c *NetworkFirewall) UpdateFirewallEncryptionConfiguration(input *UpdateFirewallEncryptionConfigurationInput) (*UpdateFirewallEncryptionConfigurationOutput, error) {
+	req, out := c.UpdateFirewallEncryptionConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// UpdateFirewallEncryptionConfigurationWithContext is the same as UpdateFirewallEncryptionConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateFirewallEncryptionConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *NetworkFirewall) UpdateFirewallEncryptionConfigurationWithContext(ctx aws.Context, input *UpdateFirewallEncryptionConfigurationInput, opts ...request.Option) (*UpdateFirewallEncryptionConfigurationOutput, error) {
+	req, out := c.UpdateFirewallEncryptionConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateFirewallPolicy = "UpdateFirewallPolicy"
 
 // UpdateFirewallPolicyRequest generates a "aws/request.Request" representing the
@@ -2866,14 +2967,13 @@ const opUpdateFirewallPolicy = "UpdateFirewallPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateFirewallPolicyRequest method.
+//	req, resp := client.UpdateFirewallPolicyRequest(params)
 //
-//    // Example sending a request using the UpdateFirewallPolicyRequest method.
-//    req, resp := client.UpdateFirewallPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateFirewallPolicy
 func (c *NetworkFirewall) UpdateFirewallPolicyRequest(input *UpdateFirewallPolicyInput) (req *request.Request, output *UpdateFirewallPolicyOutput) {
@@ -2904,29 +3004,30 @@ func (c *NetworkFirewall) UpdateFirewallPolicyRequest(input *UpdateFirewallPolic
 // API operation UpdateFirewallPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * InvalidTokenException
-//   The token you provided is stale or isn't valid for the operation.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
+//
+//   - InvalidTokenException
+//     The token you provided is stale or isn't valid for the operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateFirewallPolicy
 func (c *NetworkFirewall) UpdateFirewallPolicy(input *UpdateFirewallPolicyInput) (*UpdateFirewallPolicyOutput, error) {
@@ -2966,14 +3067,13 @@ const opUpdateFirewallPolicyChangeProtection = "UpdateFirewallPolicyChangeProtec
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateFirewallPolicyChangeProtectionRequest method.
+//	req, resp := client.UpdateFirewallPolicyChangeProtectionRequest(params)
 //
-//    // Example sending a request using the UpdateFirewallPolicyChangeProtectionRequest method.
-//    req, resp := client.UpdateFirewallPolicyChangeProtectionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateFirewallPolicyChangeProtection
 func (c *NetworkFirewall) UpdateFirewallPolicyChangeProtectionRequest(input *UpdateFirewallPolicyChangeProtectionInput) (req *request.Request, output *UpdateFirewallPolicyChangeProtectionOutput) {
@@ -3007,32 +3107,33 @@ func (c *NetworkFirewall) UpdateFirewallPolicyChangeProtectionRequest(input *Upd
 // API operation UpdateFirewallPolicyChangeProtection for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InvalidTokenException
-//   The token you provided is stale or isn't valid for the operation.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * ResourceOwnerCheckException
-//   Unable to change the resource because your account doesn't own it.
+//   - InvalidTokenException
+//     The token you provided is stale or isn't valid for the operation.
+//
+//   - ResourceOwnerCheckException
+//     Unable to change the resource because your account doesn't own it.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateFirewallPolicyChangeProtection
 func (c *NetworkFirewall) UpdateFirewallPolicyChangeProtection(input *UpdateFirewallPolicyChangeProtectionInput) (*UpdateFirewallPolicyChangeProtectionOutput, error) {
@@ -3072,14 +3173,13 @@ const opUpdateLoggingConfiguration = "UpdateLoggingConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateLoggingConfigurationRequest method.
+//	req, resp := client.UpdateLoggingConfigurationRequest(params)
 //
-//    // Example sending a request using the UpdateLoggingConfigurationRequest method.
-//    req, resp := client.UpdateLoggingConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateLoggingConfiguration
 func (c *NetworkFirewall) UpdateLoggingConfigurationRequest(input *UpdateLoggingConfigurationInput) (req *request.Request, output *UpdateLoggingConfigurationOutput) {
@@ -3110,14 +3210,14 @@ func (c *NetworkFirewall) UpdateLoggingConfigurationRequest(input *UpdateLogging
 //
 // You can perform only one of the following actions in any call to UpdateLoggingConfiguration:
 //
-//    * Create a new log destination object by adding a single LogDestinationConfig
-//    array element to LogDestinationConfigs.
+//   - Create a new log destination object by adding a single LogDestinationConfig
+//     array element to LogDestinationConfigs.
 //
-//    * Delete a log destination object by removing a single LogDestinationConfig
-//    array element from LogDestinationConfigs.
+//   - Delete a log destination object by removing a single LogDestinationConfig
+//     array element from LogDestinationConfigs.
 //
-//    * Change the LogDestination setting in a single LogDestinationConfig array
-//    element.
+//   - Change the LogDestination setting in a single LogDestinationConfig array
+//     element.
 //
 // You can't change the LogDestinationType or LogType in a LogDestinationConfig.
 // To change these settings, delete the existing LogDestinationConfig object
@@ -3131,32 +3231,33 @@ func (c *NetworkFirewall) UpdateLoggingConfigurationRequest(input *UpdateLogging
 // API operation UpdateLoggingConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InvalidTokenException
-//   The token you provided is stale or isn't valid for the operation.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * LogDestinationPermissionException
-//   Unable to send logs to a configured logging destination.
+//   - InvalidTokenException
+//     The token you provided is stale or isn't valid for the operation.
+//
+//   - LogDestinationPermissionException
+//     Unable to send logs to a configured logging destination.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateLoggingConfiguration
 func (c *NetworkFirewall) UpdateLoggingConfiguration(input *UpdateLoggingConfigurationInput) (*UpdateLoggingConfigurationOutput, error) {
@@ -3196,14 +3297,13 @@ const opUpdateRuleGroup = "UpdateRuleGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateRuleGroupRequest method.
+//	req, resp := client.UpdateRuleGroupRequest(params)
 //
-//    // Example sending a request using the UpdateRuleGroupRequest method.
-//    req, resp := client.UpdateRuleGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateRuleGroup
 func (c *NetworkFirewall) UpdateRuleGroupRequest(input *UpdateRuleGroupInput) (req *request.Request, output *UpdateRuleGroupOutput) {
@@ -3240,29 +3340,30 @@ func (c *NetworkFirewall) UpdateRuleGroupRequest(input *UpdateRuleGroupInput) (r
 // API operation UpdateRuleGroup for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
 //
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * InvalidTokenException
-//   The token you provided is stale or isn't valid for the operation.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
+//
+//   - InvalidTokenException
+//     The token you provided is stale or isn't valid for the operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateRuleGroup
 func (c *NetworkFirewall) UpdateRuleGroup(input *UpdateRuleGroupInput) (*UpdateRuleGroupOutput, error) {
@@ -3302,14 +3403,13 @@ const opUpdateSubnetChangeProtection = "UpdateSubnetChangeProtection"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSubnetChangeProtectionRequest method.
+//	req, resp := client.UpdateSubnetChangeProtectionRequest(params)
 //
-//    // Example sending a request using the UpdateSubnetChangeProtectionRequest method.
-//    req, resp := client.UpdateSubnetChangeProtectionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateSubnetChangeProtection
 func (c *NetworkFirewall) UpdateSubnetChangeProtectionRequest(input *UpdateSubnetChangeProtectionInput) (req *request.Request, output *UpdateSubnetChangeProtectionOutput) {
@@ -3338,32 +3438,33 @@ func (c *NetworkFirewall) UpdateSubnetChangeProtectionRequest(input *UpdateSubne
 // API operation UpdateSubnetChangeProtection for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   The operation failed because of a problem with your request. Examples include:
 //
-//      * You specified an unsupported parameter name or value.
+//   - InvalidRequestException
+//     The operation failed because of a problem with your request. Examples include:
 //
-//      * You tried to update a property with a value that isn't among the available
-//      types.
+//   - You specified an unsupported parameter name or value.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource that isn't valid in the context of the request.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//   * InternalServerError
-//   Your request is valid, but Network Firewall couldn’t perform the operation
-//   because of a system problem. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 //
-//   * ResourceNotFoundException
-//   Unable to locate a resource using the parameters that you provided.
+//   - InternalServerError
+//     Your request is valid, but Network Firewall couldn’t perform the operation
+//     because of a system problem. Retry your request.
 //
-//   * ThrottlingException
-//   Unable to process the request due to throttling limitations.
+//   - ResourceNotFoundException
+//     Unable to locate a resource using the parameters that you provided.
 //
-//   * InvalidTokenException
-//   The token you provided is stale or isn't valid for the operation.
+//   - ThrottlingException
+//     Unable to process the request due to throttling limitations.
 //
-//   * ResourceOwnerCheckException
-//   Unable to change the resource because your account doesn't own it.
+//   - InvalidTokenException
+//     The token you provided is stale or isn't valid for the operation.
+//
+//   - ResourceOwnerCheckException
+//     Unable to change the resource because your account doesn't own it.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/network-firewall-2020-11-12/UpdateSubnetChangeProtection
 func (c *NetworkFirewall) UpdateSubnetChangeProtection(input *UpdateSubnetChangeProtectionInput) (*UpdateSubnetChangeProtectionOutput, error) {
@@ -3865,7 +3966,7 @@ func (s *AssociateSubnetsOutput) SetUpdateToken(v string) *AssociateSubnetsOutpu
 }
 
 // The configuration and status for a single subnet that you've specified for
-// use by the AWS Network Firewall firewall. This is part of the FirewallStatus.
+// use by the Network Firewall firewall. This is part of the FirewallStatus.
 type Attachment struct {
 	_ struct{} `type:"structure"`
 
@@ -3923,6 +4024,93 @@ func (s *Attachment) SetSubnetId(v string) *Attachment {
 	return s
 }
 
+// Summarizes the CIDR blocks used by the IP set references in a firewall. Network
+// Firewall calculates the number of CIDRs by taking an aggregated count of
+// all CIDRs used by the IP sets you are referencing.
+type CIDRSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The number of CIDR blocks available for use by the IP set references in a
+	// firewall.
+	AvailableCIDRCount *int64 `type:"integer"`
+
+	// The list of the IP set references used by a firewall.
+	IPSetReferences map[string]*IPSetMetadata `type:"map"`
+
+	// The number of CIDR blocks used by the IP set references in a firewall.
+	UtilizedCIDRCount *int64 `type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CIDRSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CIDRSummary) GoString() string {
+	return s.String()
+}
+
+// SetAvailableCIDRCount sets the AvailableCIDRCount field's value.
+func (s *CIDRSummary) SetAvailableCIDRCount(v int64) *CIDRSummary {
+	s.AvailableCIDRCount = &v
+	return s
+}
+
+// SetIPSetReferences sets the IPSetReferences field's value.
+func (s *CIDRSummary) SetIPSetReferences(v map[string]*IPSetMetadata) *CIDRSummary {
+	s.IPSetReferences = v
+	return s
+}
+
+// SetUtilizedCIDRCount sets the UtilizedCIDRCount field's value.
+func (s *CIDRSummary) SetUtilizedCIDRCount(v int64) *CIDRSummary {
+	s.UtilizedCIDRCount = &v
+	return s
+}
+
+// The capacity usage summary of the resources used by the ReferenceSets in
+// a firewall.
+type CapacityUsageSummary struct {
+	_ struct{} `type:"structure"`
+
+	// Describes the capacity usage of the CIDR blocks used by the IP set references
+	// in a firewall.
+	CIDRs *CIDRSummary `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CapacityUsageSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CapacityUsageSummary) GoString() string {
+	return s.String()
+}
+
+// SetCIDRs sets the CIDRs field's value.
+func (s *CapacityUsageSummary) SetCIDRs(v *CIDRSummary) *CapacityUsageSummary {
+	s.CIDRs = v
+	return s
+}
+
 type CreateFirewallInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3934,6 +4122,9 @@ type CreateFirewallInput struct {
 
 	// A description of the firewall.
 	Description *string `type:"string"`
+
+	// A complex type that contains settings for encryption of your firewall resources.
+	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
 
 	// The descriptive name of the firewall. You can't change the name of a firewall
 	// after you create it.
@@ -4023,6 +4214,11 @@ func (s *CreateFirewallInput) Validate() error {
 	if s.VpcId != nil && len(*s.VpcId) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("VpcId", 1))
 	}
+	if s.EncryptionConfiguration != nil {
+		if err := s.EncryptionConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("EncryptionConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.SubnetMappings != nil {
 		for i, v := range s.SubnetMappings {
 			if v == nil {
@@ -4059,6 +4255,12 @@ func (s *CreateFirewallInput) SetDeleteProtection(v bool) *CreateFirewallInput {
 // SetDescription sets the Description field's value.
 func (s *CreateFirewallInput) SetDescription(v string) *CreateFirewallInput {
 	s.Description = &v
+	return s
+}
+
+// SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
+func (s *CreateFirewallInput) SetEncryptionConfiguration(v *EncryptionConfiguration) *CreateFirewallInput {
+	s.EncryptionConfiguration = v
 	return s
 }
 
@@ -4166,6 +4368,10 @@ type CreateFirewallPolicyInput struct {
 	// If set to FALSE, Network Firewall makes the requested changes to your resources.
 	DryRun *bool `type:"boolean"`
 
+	// A complex type that contains settings for encryption of your firewall policy
+	// resources.
+	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
+
 	// The rule groups and policy actions to use in the firewall policy.
 	//
 	// FirewallPolicy is a required field
@@ -4214,6 +4420,11 @@ func (s *CreateFirewallPolicyInput) Validate() error {
 	if s.Tags != nil && len(s.Tags) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Tags", 1))
 	}
+	if s.EncryptionConfiguration != nil {
+		if err := s.EncryptionConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("EncryptionConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.FirewallPolicy != nil {
 		if err := s.FirewallPolicy.Validate(); err != nil {
 			invalidParams.AddNested("FirewallPolicy", err.(request.ErrInvalidParams))
@@ -4245,6 +4456,12 @@ func (s *CreateFirewallPolicyInput) SetDescription(v string) *CreateFirewallPoli
 // SetDryRun sets the DryRun field's value.
 func (s *CreateFirewallPolicyInput) SetDryRun(v bool) *CreateFirewallPolicyInput {
 	s.DryRun = &v
+	return s
+}
+
+// SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
+func (s *CreateFirewallPolicyInput) SetEncryptionConfiguration(v *EncryptionConfiguration) *CreateFirewallPolicyInput {
+	s.EncryptionConfiguration = v
 	return s
 }
 
@@ -4384,6 +4601,9 @@ type CreateRuleGroupInput struct {
 	// If set to FALSE, Network Firewall makes the requested changes to your resources.
 	DryRun *bool `type:"boolean"`
 
+	// A complex type that contains settings for encryption of your rule group resources.
+	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
+
 	// An object that defines the rule group rules.
 	//
 	// You must provide either this rule group setting or a Rules setting, but not
@@ -4408,6 +4628,11 @@ type CreateRuleGroupInput struct {
 	// returns a RuleGroup object that Network Firewall has populated from your
 	// string.
 	Rules *string `type:"string"`
+
+	// A complex type that contains metadata about the rule group that your own
+	// rule group is copied from. You can use the metadata to keep track of updates
+	// made to the originating rule group.
+	SourceMetadata *SourceMetadata `type:"structure"`
 
 	// The key:value pairs to associate with the resource.
 	Tags []*Tag `min:"1" type:"list"`
@@ -4456,9 +4681,19 @@ func (s *CreateRuleGroupInput) Validate() error {
 	if s.Type == nil {
 		invalidParams.Add(request.NewErrParamRequired("Type"))
 	}
+	if s.EncryptionConfiguration != nil {
+		if err := s.EncryptionConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("EncryptionConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.RuleGroup != nil {
 		if err := s.RuleGroup.Validate(); err != nil {
 			invalidParams.AddNested("RuleGroup", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.SourceMetadata != nil {
+		if err := s.SourceMetadata.Validate(); err != nil {
+			invalidParams.AddNested("SourceMetadata", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.Tags != nil {
@@ -4496,6 +4731,12 @@ func (s *CreateRuleGroupInput) SetDryRun(v bool) *CreateRuleGroupInput {
 	return s
 }
 
+// SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
+func (s *CreateRuleGroupInput) SetEncryptionConfiguration(v *EncryptionConfiguration) *CreateRuleGroupInput {
+	s.EncryptionConfiguration = v
+	return s
+}
+
 // SetRuleGroup sets the RuleGroup field's value.
 func (s *CreateRuleGroupInput) SetRuleGroup(v *RuleGroup) *CreateRuleGroupInput {
 	s.RuleGroup = v
@@ -4511,6 +4752,12 @@ func (s *CreateRuleGroupInput) SetRuleGroupName(v string) *CreateRuleGroupInput 
 // SetRules sets the Rules field's value.
 func (s *CreateRuleGroupInput) SetRules(v string) *CreateRuleGroupInput {
 	s.Rules = &v
+	return s
+}
+
+// SetSourceMetadata sets the SourceMetadata field's value.
+func (s *CreateRuleGroupInput) SetSourceMetadata(v *SourceMetadata) *CreateRuleGroupInput {
+	s.SourceMetadata = v
 	return s
 }
 
@@ -4589,16 +4836,16 @@ func (s *CreateRuleGroupOutput) SetUpdateToken(v string) *CreateRuleGroupOutput 
 //
 // You can use custom actions in the following places:
 //
-//    * In a rule group's StatelessRulesAndCustomActions specification. The
-//    custom actions are available for use by name inside the StatelessRulesAndCustomActions
-//    where you define them. You can use them for your stateless rule actions
-//    to specify what to do with a packet that matches the rule's match attributes.
+//   - In a rule group's StatelessRulesAndCustomActions specification. The
+//     custom actions are available for use by name inside the StatelessRulesAndCustomActions
+//     where you define them. You can use them for your stateless rule actions
+//     to specify what to do with a packet that matches the rule's match attributes.
 //
-//    * In a FirewallPolicy specification, in StatelessCustomActions. The custom
-//    actions are available for use inside the policy where you define them.
-//    You can use them for the policy's default stateless actions settings to
-//    specify what to do with packets that don't match any of the policy's stateless
-//    rules.
+//   - In a FirewallPolicy specification, in StatelessCustomActions. The custom
+//     actions are available for use inside the policy where you define them.
+//     You can use them for the policy's default stateless actions settings to
+//     specify what to do with packets that don't match any of the policy's stateless
+//     rules.
 type CustomAction struct {
 	_ struct{} `type:"structure"`
 
@@ -4732,10 +4979,10 @@ func (s *DeleteFirewallInput) SetFirewallName(v string) *DeleteFirewallInput {
 type DeleteFirewallOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The firewall defines the configuration settings for an AWS Network Firewall
-	// firewall. These settings include the firewall policy, the subnets in your
-	// VPC to use for the firewall endpoints, and any tags that are attached to
-	// the firewall AWS resource.
+	// The firewall defines the configuration settings for an Network Firewall firewall.
+	// These settings include the firewall policy, the subnets in your VPC to use
+	// for the firewall endpoints, and any tags that are attached to the firewall
+	// Amazon Web Services resource.
 	//
 	// The status of the firewall, for example whether it's ready to filter network
 	// traffic, is provided in the corresponding FirewallStatus. You can retrieve
@@ -5372,7 +5619,7 @@ type DescribeLoggingConfigurationOutput struct {
 	// The Amazon Resource Name (ARN) of the firewall.
 	FirewallArn *string `min:"1" type:"string"`
 
-	// Defines how AWS Network Firewall performs logging for a Firewall.
+	// Defines how Network Firewall performs logging for a Firewall.
 	LoggingConfiguration *LoggingConfiguration `type:"structure"`
 }
 
@@ -5459,7 +5706,7 @@ func (s *DescribeResourcePolicyInput) SetResourceArn(v string) *DescribeResource
 type DescribeResourcePolicyOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The AWS Identity and Access Management policy for the resource.
+	// The IAM policy for the resource.
 	Policy *string `min:"1" type:"string"`
 }
 
@@ -5651,6 +5898,9 @@ type DescribeRuleGroupMetadataOutput struct {
 	// Returns the metadata objects for the specified rule group.
 	Description *string `type:"string"`
 
+	// The last time that the rule group was changed.
+	LastModifiedTime *time.Time `type:"timestamp"`
+
 	// The descriptive name of the rule group. You can't change the name of a rule
 	// group after you create it.
 	//
@@ -5709,6 +5959,12 @@ func (s *DescribeRuleGroupMetadataOutput) SetDescription(v string) *DescribeRule
 	return s
 }
 
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *DescribeRuleGroupMetadataOutput) SetLastModifiedTime(v time.Time) *DescribeRuleGroupMetadataOutput {
+	s.LastModifiedTime = &v
+	return s
+}
+
 // SetRuleGroupArn sets the RuleGroupArn field's value.
 func (s *DescribeRuleGroupMetadataOutput) SetRuleGroupArn(v string) *DescribeRuleGroupMetadataOutput {
 	s.RuleGroupArn = &v
@@ -5740,7 +5996,7 @@ type DescribeRuleGroupOutput struct {
 	// define the rule group. You can retrieve all objects for a rule group by calling
 	// DescribeRuleGroup.
 	//
-	// AWS Network Firewall uses a rule group to inspect and control network traffic.
+	// Network Firewall uses a rule group to inspect and control network traffic.
 	// You define stateless rule groups to inspect individual packets and you define
 	// stateful rule groups to inspect packets in the context of their traffic flow.
 	//
@@ -5812,7 +6068,7 @@ func (s *DescribeRuleGroupOutput) SetUpdateToken(v string) *DescribeRuleGroupOut
 // used in the PublishMetrics CustomAction. A CloudWatch custom metric dimension
 // is a name/value pair that's part of the identity of a metric.
 //
-// AWS Network Firewall sets the dimension name to CustomAction and you provide
+// Network Firewall sets the dimension name to CustomAction and you provide
 // the dimension value.
 //
 // For more information about CloudWatch custom metric dimensions, see Publishing
@@ -6039,10 +6295,82 @@ func (s *DisassociateSubnetsOutput) SetUpdateToken(v string) *DisassociateSubnet
 	return s
 }
 
-// The firewall defines the configuration settings for an AWS Network Firewall
-// firewall. These settings include the firewall policy, the subnets in your
-// VPC to use for the firewall endpoints, and any tags that are attached to
-// the firewall AWS resource.
+// A complex type that contains optional Amazon Web Services Key Management
+// Service (KMS) encryption settings for your Network Firewall resources. Your
+// data is encrypted by default with an Amazon Web Services owned key that Amazon
+// Web Services owns and manages for you. You can use either the Amazon Web
+// Services owned key, or provide your own customer managed key. To learn more
+// about KMS encryption of your Network Firewall resources, see Encryption at
+// rest with Amazon Web Services Key Managment Service (https://docs.aws.amazon.com/kms/latest/developerguide/kms-encryption-at-rest.html)
+// in the Network Firewall Developer Guide.
+type EncryptionConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the Amazon Web Services Key Management Service (KMS) customer managed
+	// key. You can use any of the key identifiers that KMS supports, unless you're
+	// using a key that's managed by another account. If you're using a key managed
+	// by another account, then specify the key ARN. For more information, see Key
+	// ID (https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id)
+	// in the Amazon Web Services KMS Developer Guide.
+	KeyId *string `min:"1" type:"string"`
+
+	// The type of Amazon Web Services KMS key to use for encryption of your Network
+	// Firewall resources.
+	//
+	// Type is a required field
+	Type *string `type:"string" required:"true" enum:"EncryptionType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EncryptionConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EncryptionConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EncryptionConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EncryptionConfiguration"}
+	if s.KeyId != nil && len(*s.KeyId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("KeyId", 1))
+	}
+	if s.Type == nil {
+		invalidParams.Add(request.NewErrParamRequired("Type"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetKeyId sets the KeyId field's value.
+func (s *EncryptionConfiguration) SetKeyId(v string) *EncryptionConfiguration {
+	s.KeyId = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *EncryptionConfiguration) SetType(v string) *EncryptionConfiguration {
+	s.Type = &v
+	return s
+}
+
+// The firewall defines the configuration settings for an Network Firewall firewall.
+// These settings include the firewall policy, the subnets in your VPC to use
+// for the firewall endpoints, and any tags that are attached to the firewall
+// Amazon Web Services resource.
 //
 // The status of the firewall, for example whether it's ready to filter network
 // traffic, is provided in the corresponding FirewallStatus. You can retrieve
@@ -6058,6 +6386,10 @@ type Firewall struct {
 
 	// A description of the firewall.
 	Description *string `type:"string"`
+
+	// A complex type that contains the Amazon Web Services KMS encryption configuration
+	// settings for your firewall.
+	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the firewall.
 	FirewallArn *string `min:"1" type:"string"`
@@ -6133,6 +6465,12 @@ func (s *Firewall) SetDeleteProtection(v bool) *Firewall {
 // SetDescription sets the Description field's value.
 func (s *Firewall) SetDescription(v string) *Firewall {
 	s.Description = &v
+	return s
+}
+
+// SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
+func (s *Firewall) SetEncryptionConfiguration(v *EncryptionConfiguration) *Firewall {
+	s.EncryptionConfiguration = v
 	return s
 }
 
@@ -6257,8 +6595,8 @@ type FirewallPolicy struct {
 	//
 	//    * aws:alert_established
 	//
-	// For more information, see Strict evaluation order (https://docs.aws.amazon.com/network-firewall/latest/developerguide/suricata-strict-rule-evaluation-order.html)
-	// in the AWS Network Firewall Developer Guide.
+	// For more information, see Strict evaluation order (https://docs.aws.amazon.com/network-firewall/latest/developerguide/suricata-rule-evaluation-order.html#suricata-strict-rule-evaluation-order.html)
+	// in the Network Firewall Developer Guide.
 	StatefulDefaultActions []*string `type:"list"`
 
 	// Additional options governing how Network Firewall handles stateful rules.
@@ -6480,6 +6818,10 @@ type FirewallPolicyResponse struct {
 	// A description of the firewall policy.
 	Description *string `type:"string"`
 
+	// A complex type that contains the Amazon Web Services KMS encryption configuration
+	// settings for your firewall policy.
+	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
+
 	// The Amazon Resource Name (ARN) of the firewall policy.
 	//
 	// If this response is for a create request that had DryRun set to TRUE, then
@@ -6503,6 +6845,9 @@ type FirewallPolicyResponse struct {
 	// policy by calling DescribeFirewallPolicy and providing the firewall policy's
 	// name or ARN.
 	FirewallPolicyStatus *string `type:"string" enum:"ResourceStatus"`
+
+	// The last time that the firewall policy was changed.
+	LastModifiedTime *time.Time `type:"timestamp"`
 
 	// The number of firewalls that are associated with this firewall policy.
 	NumberOfAssociations *int64 `type:"integer"`
@@ -6547,6 +6892,12 @@ func (s *FirewallPolicyResponse) SetDescription(v string) *FirewallPolicyRespons
 	return s
 }
 
+// SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
+func (s *FirewallPolicyResponse) SetEncryptionConfiguration(v *EncryptionConfiguration) *FirewallPolicyResponse {
+	s.EncryptionConfiguration = v
+	return s
+}
+
 // SetFirewallPolicyArn sets the FirewallPolicyArn field's value.
 func (s *FirewallPolicyResponse) SetFirewallPolicyArn(v string) *FirewallPolicyResponse {
 	s.FirewallPolicyArn = &v
@@ -6571,6 +6922,12 @@ func (s *FirewallPolicyResponse) SetFirewallPolicyStatus(v string) *FirewallPoli
 	return s
 }
 
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *FirewallPolicyResponse) SetLastModifiedTime(v time.Time) *FirewallPolicyResponse {
+	s.LastModifiedTime = &v
+	return s
+}
+
 // SetNumberOfAssociations sets the NumberOfAssociations field's value.
 func (s *FirewallPolicyResponse) SetNumberOfAssociations(v int64) *FirewallPolicyResponse {
 	s.NumberOfAssociations = &v
@@ -6588,6 +6945,11 @@ func (s *FirewallPolicyResponse) SetTags(v []*Tag) *FirewallPolicyResponse {
 // name and ARN.
 type FirewallStatus struct {
 	_ struct{} `type:"structure"`
+
+	// Describes the capacity usage of the resources contained in a firewall's reference
+	// sets. Network Firewall calclulates the capacity usage by taking an aggregated
+	// count of all of the resources used by all of the reference sets in a firewall.
+	CapacityUsageSummary *CapacityUsageSummary `type:"structure"`
 
 	// The configuration sync state for the firewall. This summarizes the sync states
 	// reported in the Config settings for all of the Availability Zones where you
@@ -6639,6 +7001,12 @@ func (s FirewallStatus) GoString() string {
 	return s.String()
 }
 
+// SetCapacityUsageSummary sets the CapacityUsageSummary field's value.
+func (s *FirewallStatus) SetCapacityUsageSummary(v *CapacityUsageSummary) *FirewallStatus {
+	s.CapacityUsageSummary = v
+	return s
+}
+
 // SetConfigurationSyncStateSummary sets the ConfigurationSyncStateSummary field's value.
 func (s *FirewallStatus) SetConfigurationSyncStateSummary(v string) *FirewallStatus {
 	s.ConfigurationSyncStateSummary = &v
@@ -6657,9 +7025,9 @@ func (s *FirewallStatus) SetSyncStates(v map[string]*SyncState) *FirewallStatus 
 	return s
 }
 
-// The basic rule criteria for AWS Network Firewall to use to inspect packet
-// headers in stateful traffic flow inspection. Traffic flows that match the
-// criteria are a match for the corresponding StatefulRule.
+// The basic rule criteria for Network Firewall to use to inspect packet headers
+// in stateful traffic flow inspection. Traffic flows that match the criteria
+// are a match for the corresponding StatefulRule.
 type Header struct {
 	_ struct{} `type:"structure"`
 
@@ -6700,7 +7068,7 @@ type Header struct {
 	Direction *string `type:"string" required:"true" enum:"StatefulRuleDirection"`
 
 	// The protocol to inspect for. To specify all, you can use IP, because all
-	// traffic on AWS and on the internet is IP.
+	// traffic on Amazon Web Services and on the internet is IP.
 	//
 	// Protocol is a required field
 	Protocol *string `type:"string" required:"true" enum:"StatefulRuleProtocol"`
@@ -6876,8 +7244,100 @@ func (s *IPSet) SetDefinition(v []*string) *IPSet {
 	return s
 }
 
-// AWS doesn't currently have enough available capacity to fulfill your request.
-// Try your request later.
+// General information about the IP set.
+type IPSetMetadata struct {
+	_ struct{} `type:"structure"`
+
+	// Describes the total number of CIDR blocks currently in use by the IP set
+	// references in a firewall. To determine how many CIDR blocks are available
+	// for you to use in a firewall, you can call AvailableCIDRCount.
+	ResolvedCIDRCount *int64 `type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s IPSetMetadata) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s IPSetMetadata) GoString() string {
+	return s.String()
+}
+
+// SetResolvedCIDRCount sets the ResolvedCIDRCount field's value.
+func (s *IPSetMetadata) SetResolvedCIDRCount(v int64) *IPSetMetadata {
+	s.ResolvedCIDRCount = &v
+	return s
+}
+
+// Configures one or more IP set references for a Suricata-compatible rule group.
+// This is used in CreateRuleGroup or UpdateRuleGroup. An IP set reference is
+// a rule variable that references a resource that you create and manage in
+// another Amazon Web Services service, such as an Amazon VPC prefix list. Network
+// Firewall IP set references enable you to dynamically update the contents
+// of your rules. When you create, update, or delete the IP set you are referencing
+// in your rule, Network Firewall automatically updates the rule's content with
+// the changes. For more information about IP set references in Network Firewall,
+// see Using IP set references (https://docs.aws.amazon.com/network-firewall/latest/developerguide/rule-groups-ip-set-references)
+// in the Network Firewall Developer Guide.
+//
+// Network Firewall currently supports only Amazon VPC prefix lists (https://docs.aws.amazon.com/vpc/latest/userguide/managed-prefix-lists.html)
+// as IP set references.
+type IPSetReference struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the resource that you are referencing in
+	// your rule group.
+	ReferenceArn *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s IPSetReference) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s IPSetReference) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *IPSetReference) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "IPSetReference"}
+	if s.ReferenceArn != nil && len(*s.ReferenceArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ReferenceArn", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetReferenceArn sets the ReferenceArn field's value.
+func (s *IPSetReference) SetReferenceArn(v string) *IPSetReference {
+	s.ReferenceArn = &v
+	return s
+}
+
+// Amazon Web Services doesn't currently have enough available capacity to fulfill
+// your request. Try your request later.
 type InsufficientCapacityException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -7073,13 +7533,13 @@ func (s *InvalidOperationException) RequestID() string {
 
 // The operation failed because of a problem with your request. Examples include:
 //
-//    * You specified an unsupported parameter name or value.
+//   - You specified an unsupported parameter name or value.
 //
-//    * You tried to update a property with a value that isn't among the available
-//    types.
+//   - You tried to update a property with a value that isn't among the available
+//     types.
 //
-//    * Your request references an ARN that is malformed, or corresponds to
-//    a resource that isn't valid in the context of the request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource that isn't valid in the context of the request.
 type InvalidRequestException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -7567,6 +8027,9 @@ func (s *ListFirewallsOutput) SetNextToken(v string) *ListFirewallsOutput {
 type ListRuleGroupsInput struct {
 	_ struct{} `type:"structure"`
 
+	// Indicates the general category of the Amazon Web Services managed rule group.
+	ManagedType *string `type:"string" enum:"ResourceManagedType"`
+
 	// The maximum number of objects that you want Network Firewall to return for
 	// this request. If more objects are available, in the response, Network Firewall
 	// provides a NextToken value that you can use in a subsequent call to get the
@@ -7584,6 +8047,11 @@ type ListRuleGroupsInput struct {
 	// NULL returns all of the rule groups in your account. A setting of MANAGED
 	// returns all available managed rule groups.
 	Scope *string `type:"string" enum:"ResourceManagedStatus"`
+
+	// Indicates whether the rule group is stateless or stateful. If the rule group
+	// is stateless, it contains stateless rules. If it is stateful, it contains
+	// stateful rules.
+	Type *string `type:"string" enum:"RuleGroupType"`
 }
 
 // String returns the string representation.
@@ -7620,6 +8088,12 @@ func (s *ListRuleGroupsInput) Validate() error {
 	return nil
 }
 
+// SetManagedType sets the ManagedType field's value.
+func (s *ListRuleGroupsInput) SetManagedType(v string) *ListRuleGroupsInput {
+	s.ManagedType = &v
+	return s
+}
+
 // SetMaxResults sets the MaxResults field's value.
 func (s *ListRuleGroupsInput) SetMaxResults(v int64) *ListRuleGroupsInput {
 	s.MaxResults = &v
@@ -7635,6 +8109,12 @@ func (s *ListRuleGroupsInput) SetNextToken(v string) *ListRuleGroupsInput {
 // SetScope sets the Scope field's value.
 func (s *ListRuleGroupsInput) SetScope(v string) *ListRuleGroupsInput {
 	s.Scope = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *ListRuleGroupsInput) SetType(v string) *ListRuleGroupsInput {
+	s.Type = &v
 	return s
 }
 
@@ -7805,10 +8285,10 @@ func (s *ListTagsForResourceOutput) SetTags(v []*Tag) *ListTagsForResourceOutput
 	return s
 }
 
-// Defines where AWS Network Firewall sends logs for the firewall for one log
-// type. This is used in LoggingConfiguration. You can send each type of log
-// to an Amazon S3 bucket, a CloudWatch log group, or a Kinesis Data Firehose
-// delivery stream.
+// Defines where Network Firewall sends logs for the firewall for one log type.
+// This is used in LoggingConfiguration. You can send each type of log to an
+// Amazon S3 bucket, a CloudWatch log group, or a Kinesis Data Firehose delivery
+// stream.
 //
 // Network Firewall generates logs for stateful rule groups. You can save alert
 // and flow log types. The stateful rules engine records flow logs for all network
@@ -7975,7 +8455,7 @@ func (s *LogDestinationPermissionException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// Defines how AWS Network Firewall performs logging for a Firewall.
+// Defines how Network Firewall performs logging for a Firewall.
 type LoggingConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -8392,9 +8872,9 @@ func (s *PublishMetricAction) SetDimensions(v []*Dimension) *PublishMetricAction
 type PutResourcePolicyInput struct {
 	_ struct{} `type:"structure"`
 
-	// The AWS Identity and Access Management policy statement that lists the accounts
-	// that you want to share your rule group or firewall policy with and the operations
-	// that you want the accounts to be able to perform.
+	// The IAM policy statement that lists the accounts that you want to share your
+	// rule group or firewall policy with and the operations that you want the accounts
+	// to be able to perform.
 	//
 	// For a rule group resource, you can specify the following operations in the
 	// Actions section of the statement:
@@ -8502,6 +8982,58 @@ func (s PutResourcePolicyOutput) String() string {
 // value will be replaced with "sensitive".
 func (s PutResourcePolicyOutput) GoString() string {
 	return s.String()
+}
+
+// Contains a set of IP set references.
+type ReferenceSets struct {
+	_ struct{} `type:"structure"`
+
+	// The list of IP set references.
+	IPSetReferences map[string]*IPSetReference `type:"map"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ReferenceSets) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ReferenceSets) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ReferenceSets) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ReferenceSets"}
+	if s.IPSetReferences != nil {
+		for i, v := range s.IPSetReferences {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "IPSetReferences", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetIPSetReferences sets the IPSetReferences field's value.
+func (s *ReferenceSets) SetIPSetReferences(v map[string]*IPSetReference) *ReferenceSets {
+	s.IPSetReferences = v
+	return s
 }
 
 // Unable to locate a resource using the parameters that you provided.
@@ -8632,10 +9164,9 @@ func (s *ResourceOwnerCheckException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// The inspection criteria and action for a single stateless rule. AWS Network
-// Firewall inspects each packet for the specified matching criteria. When a
-// packet matches the criteria, Network Firewall performs the rule's actions
-// on the packet.
+// The inspection criteria and action for a single stateless rule. Network Firewall
+// inspects each packet for the specified matching criteria. When a packet matches
+// the criteria, Network Firewall performs the rule's actions on the packet.
 type RuleDefinition struct {
 	_ struct{} `type:"structure"`
 
@@ -8734,7 +9265,7 @@ func (s *RuleDefinition) SetMatchAttributes(v *MatchAttributes) *RuleDefinition 
 // define the rule group. You can retrieve all objects for a rule group by calling
 // DescribeRuleGroup.
 //
-// AWS Network Firewall uses a rule group to inspect and control network traffic.
+// Network Firewall uses a rule group to inspect and control network traffic.
 // You define stateless rule groups to inspect individual packets and you define
 // stateful rule groups to inspect packets in the context of their traffic flow.
 //
@@ -8744,6 +9275,9 @@ func (s *RuleDefinition) SetMatchAttributes(v *MatchAttributes) *RuleDefinition 
 // more than one firewall.
 type RuleGroup struct {
 	_ struct{} `type:"structure"`
+
+	// The list of a rule group's reference sets.
+	ReferenceSets *ReferenceSets `type:"structure"`
 
 	// Settings that are available for use in the rules in the rule group. You can
 	// only use these for stateful rule groups.
@@ -8784,6 +9318,11 @@ func (s *RuleGroup) Validate() error {
 	if s.RulesSource == nil {
 		invalidParams.Add(request.NewErrParamRequired("RulesSource"))
 	}
+	if s.ReferenceSets != nil {
+		if err := s.ReferenceSets.Validate(); err != nil {
+			invalidParams.AddNested("ReferenceSets", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.RuleVariables != nil {
 		if err := s.RuleVariables.Validate(); err != nil {
 			invalidParams.AddNested("RuleVariables", err.(request.ErrInvalidParams))
@@ -8799,6 +9338,12 @@ func (s *RuleGroup) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetReferenceSets sets the ReferenceSets field's value.
+func (s *RuleGroup) SetReferenceSets(v *ReferenceSets) *RuleGroup {
+	s.ReferenceSets = v
+	return s
 }
 
 // SetRuleVariables sets the RuleVariables field's value.
@@ -8884,6 +9429,13 @@ type RuleGroupResponse struct {
 	// A description of the rule group.
 	Description *string `type:"string"`
 
+	// A complex type that contains the Amazon Web Services KMS encryption configuration
+	// settings for your rule group.
+	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
+
+	// The last time that the rule group was changed.
+	LastModifiedTime *time.Time `type:"timestamp"`
+
 	// The number of firewall policies that use this rule group.
 	NumberOfAssociations *int64 `type:"integer"`
 
@@ -8908,6 +9460,19 @@ type RuleGroupResponse struct {
 
 	// Detailed information about the current status of a rule group.
 	RuleGroupStatus *string `type:"string" enum:"ResourceStatus"`
+
+	// The Amazon resource name (ARN) of the Amazon Simple Notification Service
+	// SNS topic that's used to record changes to the managed rule group. You can
+	// subscribe to the SNS topic to receive notifications when the managed rule
+	// group is modified, such as for new versions and for version expiration. For
+	// more information, see the Amazon Simple Notification Service Developer Guide.
+	// (https://docs.aws.amazon.com/sns/latest/dg/welcome.html).
+	SnsTopic *string `min:"1" type:"string"`
+
+	// A complex type that contains metadata about the rule group that your own
+	// rule group is copied from. You can use the metadata to track the version
+	// updates made to the originating rule group.
+	SourceMetadata *SourceMetadata `type:"structure"`
 
 	// The key:value pairs to associate with the resource.
 	Tags []*Tag `min:"1" type:"list"`
@@ -8954,6 +9519,18 @@ func (s *RuleGroupResponse) SetDescription(v string) *RuleGroupResponse {
 	return s
 }
 
+// SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
+func (s *RuleGroupResponse) SetEncryptionConfiguration(v *EncryptionConfiguration) *RuleGroupResponse {
+	s.EncryptionConfiguration = v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *RuleGroupResponse) SetLastModifiedTime(v time.Time) *RuleGroupResponse {
+	s.LastModifiedTime = &v
+	return s
+}
+
 // SetNumberOfAssociations sets the NumberOfAssociations field's value.
 func (s *RuleGroupResponse) SetNumberOfAssociations(v int64) *RuleGroupResponse {
 	s.NumberOfAssociations = &v
@@ -8981,6 +9558,18 @@ func (s *RuleGroupResponse) SetRuleGroupName(v string) *RuleGroupResponse {
 // SetRuleGroupStatus sets the RuleGroupStatus field's value.
 func (s *RuleGroupResponse) SetRuleGroupStatus(v string) *RuleGroupResponse {
 	s.RuleGroupStatus = &v
+	return s
+}
+
+// SetSnsTopic sets the SnsTopic field's value.
+func (s *RuleGroupResponse) SetSnsTopic(v string) *RuleGroupResponse {
+	s.SnsTopic = &v
+	return s
+}
+
+// SetSourceMetadata sets the SourceMetadata field's value.
+func (s *RuleGroupResponse) SetSourceMetadata(v *SourceMetadata) *RuleGroupResponse {
+	s.SourceMetadata = v
 	return s
 }
 
@@ -9136,7 +9725,7 @@ type RulesSource struct {
 	// An array of individual stateful rules inspection criteria to be used together
 	// in a stateful rule group. Use this option to specify simple Suricata rules
 	// with protocol, source and destination, ports, direction, and rule options.
-	// For information about the Suricata Rules format, see Rules Format (https://suricata.readthedocs.io/en/suricata-5.0.0/rules/intro.html#).
+	// For information about the Suricata Rules format, see Rules Format (https://suricata.readthedocs.io/rules/intro.html#).
 	StatefulRules []*StatefulRule `type:"list"`
 
 	// Stateless inspection criteria to be used in a stateless rule group.
@@ -9225,7 +9814,7 @@ func (s *RulesSource) SetStatelessRulesAndCustomActions(v *StatelessRulesAndCust
 // IP addresses outside of the deployment VPC, you set the HOME_NET rule variable
 // to include the CIDR range of the deployment VPC plus the other CIDR ranges.
 // For more information, see RuleVariables in this guide and Stateful domain
-// list rule groups in AWS Network Firewall (https://docs.aws.amazon.com/network-firewall/latest/developerguide/stateful-rule-groups-domain-names.html)
+// list rule groups in Network Firewall (https://docs.aws.amazon.com/network-firewall/latest/developerguide/stateful-rule-groups-domain-names.html)
 // in the Network Firewall Developer Guide.
 type RulesSourceList struct {
 	_ struct{} `type:"structure"`
@@ -9239,7 +9828,7 @@ type RulesSourceList struct {
 	// for HTTP. You can specify either or both.
 	//
 	// TargetTypes is a required field
-	TargetTypes []*string `type:"list" required:"true"`
+	TargetTypes []*string `type:"list" required:"true" enum:"TargetType"`
 
 	// The domains that you want to inspect for in your traffic flows. Valid domain
 	// specifications are the following:
@@ -9310,6 +9899,69 @@ func (s *RulesSourceList) SetTargets(v []*string) *RulesSourceList {
 	return s
 }
 
+// High-level information about the managed rule group that your own rule group
+// is copied from. You can use the the metadata to track version updates made
+// to the originating rule group. You can retrieve all objects for a rule group
+// by calling DescribeRuleGroup (https://docs.aws.amazon.com/network-firewall/latest/APIReference/API_DescribeRuleGroup.html).
+type SourceMetadata struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the rule group that your own rule group
+	// is copied from.
+	SourceArn *string `min:"1" type:"string"`
+
+	// The update token of the Amazon Web Services managed rule group that your
+	// own rule group is copied from. To determine the update token for the managed
+	// rule group, call DescribeRuleGroup (https://docs.aws.amazon.com/network-firewall/latest/APIReference/API_DescribeRuleGroup.html#networkfirewall-DescribeRuleGroup-response-UpdateToken).
+	SourceUpdateToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SourceMetadata) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SourceMetadata) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SourceMetadata) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SourceMetadata"}
+	if s.SourceArn != nil && len(*s.SourceArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SourceArn", 1))
+	}
+	if s.SourceUpdateToken != nil && len(*s.SourceUpdateToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SourceUpdateToken", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetSourceArn sets the SourceArn field's value.
+func (s *SourceMetadata) SetSourceArn(v string) *SourceMetadata {
+	s.SourceArn = &v
+	return s
+}
+
+// SetSourceUpdateToken sets the SourceUpdateToken field's value.
+func (s *SourceMetadata) SetSourceUpdateToken(v string) *SourceMetadata {
+	s.SourceUpdateToken = &v
+	return s
+}
+
 // Configuration settings for the handling of the stateful rule groups in a
 // firewall policy.
 type StatefulEngineOptions struct {
@@ -9320,8 +9972,25 @@ type StatefulEngineOptions struct {
 	// to the rule engine as Suricata compatible strings, and Suricata evaluates
 	// them based on certain settings. For more information, see Evaluation order
 	// for stateful rules (https://docs.aws.amazon.com/network-firewall/latest/developerguide/suricata-rule-evaluation-order.html)
-	// in the AWS Network Firewall Developer Guide.
+	// in the Network Firewall Developer Guide.
 	RuleOrder *string `type:"string" enum:"RuleOrder"`
+
+	// Configures how Network Firewall processes traffic when a network connection
+	// breaks midstream. Network connections can break due to disruptions in external
+	// networks or within the firewall itself.
+	//
+	//    * DROP - Network Firewall fails closed and drops all subsequent traffic
+	//    going to the firewall. This is the default behavior.
+	//
+	//    * CONTINUE - Network Firewall continues to apply rules to the subsequent
+	//    traffic without context from traffic before the break. This impacts the
+	//    behavior of rules that depend on this context. For example, if you have
+	//    a stateful rule to drop http traffic, Network Firewall won't match the
+	//    traffic for this rule because the service won't have the context from
+	//    session initialization defining the application layer protocol as HTTP.
+	//    However, this behavior is rule dependent—a TCP-layer rule using a flow:stateless
+	//    rule would still match, as would the aws:drop_strict default action.
+	StreamExceptionPolicy *string `type:"string" enum:"StreamExceptionPolicy"`
 }
 
 // String returns the string representation.
@@ -9348,10 +10017,16 @@ func (s *StatefulEngineOptions) SetRuleOrder(v string) *StatefulEngineOptions {
 	return s
 }
 
+// SetStreamExceptionPolicy sets the StreamExceptionPolicy field's value.
+func (s *StatefulEngineOptions) SetStreamExceptionPolicy(v string) *StatefulEngineOptions {
+	s.StreamExceptionPolicy = &v
+	return s
+}
+
 // A single Suricata rules specification, for use in a stateful rule group.
 // Use this option to specify a simple Suricata rule with protocol, source and
 // destination, ports, direction, and rule options. For information about the
-// Suricata Rules format, see Rules Format (https://suricata.readthedocs.io/en/suricata-5.0.0/rules/intro.html#).
+// Suricata Rules format, see Rules Format (https://suricata.readthedocs.io/rules/intro.html#).
 type StatefulRule struct {
 	_ struct{} `type:"structure"`
 
@@ -9586,7 +10261,7 @@ type StatefulRuleOptions struct {
 	// to the rule engine as Suricata compatible strings, and Suricata evaluates
 	// them based on certain settings. For more information, see Evaluation order
 	// for stateful rules (https://docs.aws.amazon.com/network-firewall/latest/developerguide/suricata-rule-evaluation-order.html)
-	// in the AWS Network Firewall Developer Guide.
+	// in the Network Firewall Developer Guide.
 	RuleOrder *string `type:"string" enum:"RuleOrder"`
 }
 
@@ -9850,9 +10525,9 @@ func (s *StatelessRulesAndCustomActions) SetStatelessRules(v []*StatelessRule) *
 }
 
 // The ID for a subnet that you want to associate with the firewall. This is
-// used with CreateFirewall and AssociateSubnets. AWS Network Firewall creates
-// an instance of the associated firewall in each subnet that you specify, to
-// filter traffic in the subnet's Availability Zone.
+// used with CreateFirewall and AssociateSubnets. Network Firewall creates an
+// instance of the associated firewall in each subnet that you specify, to filter
+// traffic in the subnet's Availability Zone.
 type SubnetMapping struct {
 	_ struct{} `type:"structure"`
 
@@ -9902,13 +10577,13 @@ func (s *SubnetMapping) SetSubnetId(v string) *SubnetMapping {
 // The status of the firewall endpoint and firewall policy configuration for
 // a single VPC subnet.
 //
-// For each VPC subnet that you associate with a firewall, AWS Network Firewall
+// For each VPC subnet that you associate with a firewall, Network Firewall
 // does the following:
 //
-//    * Instantiates a firewall endpoint in the subnet, ready to take traffic.
+//   - Instantiates a firewall endpoint in the subnet, ready to take traffic.
 //
-//    * Configures the endpoint with the current firewall policy settings, to
-//    provide the filtering behavior for the endpoint.
+//   - Configures the endpoint with the current firewall policy settings, to
+//     provide the filtering behavior for the endpoint.
 //
 // When you update a firewall, for example to add a subnet association or change
 // a rule group in the firewall policy, the affected sync states reflect out-of-sync
@@ -9978,11 +10653,11 @@ type TCPFlagField struct {
 	//    in the packet.
 	//
 	// Flags is a required field
-	Flags []*string `type:"list" required:"true"`
+	Flags []*string `type:"list" required:"true" enum:"TCPFlag"`
 
 	// The set of flags to consider in the inspection. To inspect all flags in the
 	// valid values list, leave this with no setting.
-	Masks []*string `type:"list"`
+	Masks []*string `type:"list" enum:"TCPFlag"`
 }
 
 // String returns the string representation.
@@ -10028,11 +10703,11 @@ func (s *TCPFlagField) SetMasks(v []*string) *TCPFlagField {
 	return s
 }
 
-// A key:value pair associated with an AWS resource. The key:value pair can
-// be anything you define. Typically, the tag key represents a category (such
-// as "environment") and the tag value represents a specific value within that
-// category (such as "test," "development," or "production"). You can add up
-// to 50 tags to each AWS resource.
+// A key:value pair associated with an Amazon Web Services resource. The key:value
+// pair can be anything you define. Typically, the tag key represents a category
+// (such as "environment") and the tag value represents a specific value within
+// that category (such as "test," "development," or "production"). You can add
+// up to 50 tags to each Amazon Web Services resource.
 type Tag struct {
 	_ struct{} `type:"structure"`
 
@@ -10755,6 +11430,188 @@ func (s *UpdateFirewallDescriptionOutput) SetUpdateToken(v string) *UpdateFirewa
 	return s
 }
 
+type UpdateFirewallEncryptionConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// A complex type that contains optional Amazon Web Services Key Management
+	// Service (KMS) encryption settings for your Network Firewall resources. Your
+	// data is encrypted by default with an Amazon Web Services owned key that Amazon
+	// Web Services owns and manages for you. You can use either the Amazon Web
+	// Services owned key, or provide your own customer managed key. To learn more
+	// about KMS encryption of your Network Firewall resources, see Encryption at
+	// rest with Amazon Web Services Key Managment Service (https://docs.aws.amazon.com/kms/latest/developerguide/kms-encryption-at-rest.html)
+	// in the Network Firewall Developer Guide.
+	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the firewall.
+	FirewallArn *string `min:"1" type:"string"`
+
+	// The descriptive name of the firewall. You can't change the name of a firewall
+	// after you create it.
+	FirewallName *string `min:"1" type:"string"`
+
+	// An optional token that you can use for optimistic locking. Network Firewall
+	// returns a token to your requests that access the firewall. The token marks
+	// the state of the firewall resource at the time of the request.
+	//
+	// To make an unconditional change to the firewall, omit the token in your update
+	// request. Without the token, Network Firewall performs your updates regardless
+	// of whether the firewall has changed since you last retrieved it.
+	//
+	// To make a conditional change to the firewall, provide the token in your update
+	// request. Network Firewall uses the token to ensure that the firewall hasn't
+	// changed since you last retrieved it. If it has changed, the operation fails
+	// with an InvalidTokenException. If this happens, retrieve the firewall again
+	// to get a current copy of it with a new token. Reapply your changes as needed,
+	// then try the operation again using the new token.
+	UpdateToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFirewallEncryptionConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFirewallEncryptionConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateFirewallEncryptionConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateFirewallEncryptionConfigurationInput"}
+	if s.FirewallArn != nil && len(*s.FirewallArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FirewallArn", 1))
+	}
+	if s.FirewallName != nil && len(*s.FirewallName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FirewallName", 1))
+	}
+	if s.UpdateToken != nil && len(*s.UpdateToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("UpdateToken", 1))
+	}
+	if s.EncryptionConfiguration != nil {
+		if err := s.EncryptionConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("EncryptionConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
+func (s *UpdateFirewallEncryptionConfigurationInput) SetEncryptionConfiguration(v *EncryptionConfiguration) *UpdateFirewallEncryptionConfigurationInput {
+	s.EncryptionConfiguration = v
+	return s
+}
+
+// SetFirewallArn sets the FirewallArn field's value.
+func (s *UpdateFirewallEncryptionConfigurationInput) SetFirewallArn(v string) *UpdateFirewallEncryptionConfigurationInput {
+	s.FirewallArn = &v
+	return s
+}
+
+// SetFirewallName sets the FirewallName field's value.
+func (s *UpdateFirewallEncryptionConfigurationInput) SetFirewallName(v string) *UpdateFirewallEncryptionConfigurationInput {
+	s.FirewallName = &v
+	return s
+}
+
+// SetUpdateToken sets the UpdateToken field's value.
+func (s *UpdateFirewallEncryptionConfigurationInput) SetUpdateToken(v string) *UpdateFirewallEncryptionConfigurationInput {
+	s.UpdateToken = &v
+	return s
+}
+
+type UpdateFirewallEncryptionConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A complex type that contains optional Amazon Web Services Key Management
+	// Service (KMS) encryption settings for your Network Firewall resources. Your
+	// data is encrypted by default with an Amazon Web Services owned key that Amazon
+	// Web Services owns and manages for you. You can use either the Amazon Web
+	// Services owned key, or provide your own customer managed key. To learn more
+	// about KMS encryption of your Network Firewall resources, see Encryption at
+	// rest with Amazon Web Services Key Managment Service (https://docs.aws.amazon.com/kms/latest/developerguide/kms-encryption-at-rest.html)
+	// in the Network Firewall Developer Guide.
+	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the firewall.
+	FirewallArn *string `min:"1" type:"string"`
+
+	// The descriptive name of the firewall. You can't change the name of a firewall
+	// after you create it.
+	FirewallName *string `min:"1" type:"string"`
+
+	// An optional token that you can use for optimistic locking. Network Firewall
+	// returns a token to your requests that access the firewall. The token marks
+	// the state of the firewall resource at the time of the request.
+	//
+	// To make an unconditional change to the firewall, omit the token in your update
+	// request. Without the token, Network Firewall performs your updates regardless
+	// of whether the firewall has changed since you last retrieved it.
+	//
+	// To make a conditional change to the firewall, provide the token in your update
+	// request. Network Firewall uses the token to ensure that the firewall hasn't
+	// changed since you last retrieved it. If it has changed, the operation fails
+	// with an InvalidTokenException. If this happens, retrieve the firewall again
+	// to get a current copy of it with a new token. Reapply your changes as needed,
+	// then try the operation again using the new token.
+	UpdateToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFirewallEncryptionConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFirewallEncryptionConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
+func (s *UpdateFirewallEncryptionConfigurationOutput) SetEncryptionConfiguration(v *EncryptionConfiguration) *UpdateFirewallEncryptionConfigurationOutput {
+	s.EncryptionConfiguration = v
+	return s
+}
+
+// SetFirewallArn sets the FirewallArn field's value.
+func (s *UpdateFirewallEncryptionConfigurationOutput) SetFirewallArn(v string) *UpdateFirewallEncryptionConfigurationOutput {
+	s.FirewallArn = &v
+	return s
+}
+
+// SetFirewallName sets the FirewallName field's value.
+func (s *UpdateFirewallEncryptionConfigurationOutput) SetFirewallName(v string) *UpdateFirewallEncryptionConfigurationOutput {
+	s.FirewallName = &v
+	return s
+}
+
+// SetUpdateToken sets the UpdateToken field's value.
+func (s *UpdateFirewallEncryptionConfigurationOutput) SetUpdateToken(v string) *UpdateFirewallEncryptionConfigurationOutput {
+	s.UpdateToken = &v
+	return s
+}
+
 type UpdateFirewallPolicyChangeProtectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10952,6 +11809,10 @@ type UpdateFirewallPolicyInput struct {
 	// If set to FALSE, Network Firewall makes the requested changes to your resources.
 	DryRun *bool `type:"boolean"`
 
+	// A complex type that contains settings for encryption of your firewall policy
+	// resources.
+	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
+
 	// The updated firewall policy to use for the firewall.
 	//
 	// FirewallPolicy is a required field
@@ -11019,6 +11880,11 @@ func (s *UpdateFirewallPolicyInput) Validate() error {
 	if s.UpdateToken != nil && len(*s.UpdateToken) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("UpdateToken", 1))
 	}
+	if s.EncryptionConfiguration != nil {
+		if err := s.EncryptionConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("EncryptionConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.FirewallPolicy != nil {
 		if err := s.FirewallPolicy.Validate(); err != nil {
 			invalidParams.AddNested("FirewallPolicy", err.(request.ErrInvalidParams))
@@ -11040,6 +11906,12 @@ func (s *UpdateFirewallPolicyInput) SetDescription(v string) *UpdateFirewallPoli
 // SetDryRun sets the DryRun field's value.
 func (s *UpdateFirewallPolicyInput) SetDryRun(v bool) *UpdateFirewallPolicyInput {
 	s.DryRun = &v
+	return s
+}
+
+// SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
+func (s *UpdateFirewallPolicyInput) SetEncryptionConfiguration(v *EncryptionConfiguration) *UpdateFirewallPolicyInput {
+	s.EncryptionConfiguration = v
 	return s
 }
 
@@ -11208,7 +12080,7 @@ type UpdateLoggingConfigurationOutput struct {
 	// after you create it.
 	FirewallName *string `min:"1" type:"string"`
 
-	// Defines how AWS Network Firewall performs logging for a Firewall.
+	// Defines how Network Firewall performs logging for a Firewall.
 	LoggingConfiguration *LoggingConfiguration `type:"structure"`
 }
 
@@ -11267,6 +12139,9 @@ type UpdateRuleGroupInput struct {
 	// If set to FALSE, Network Firewall makes the requested changes to your resources.
 	DryRun *bool `type:"boolean"`
 
+	// A complex type that contains settings for encryption of your rule group resources.
+	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
+
 	// An object that defines the rule group rules.
 	//
 	// You must provide either this rule group setting or a Rules setting, but not
@@ -11296,6 +12171,11 @@ type UpdateRuleGroupInput struct {
 	// returns a RuleGroup object that Network Firewall has populated from your
 	// string.
 	Rules *string `type:"string"`
+
+	// A complex type that contains metadata about the rule group that your own
+	// rule group is copied from. You can use the metadata to keep track of updates
+	// made to the originating rule group.
+	SourceMetadata *SourceMetadata `type:"structure"`
 
 	// Indicates whether the rule group is stateless or stateful. If the rule group
 	// is stateless, it contains stateless rules. If it is stateful, it contains
@@ -11352,9 +12232,19 @@ func (s *UpdateRuleGroupInput) Validate() error {
 	if s.UpdateToken != nil && len(*s.UpdateToken) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("UpdateToken", 1))
 	}
+	if s.EncryptionConfiguration != nil {
+		if err := s.EncryptionConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("EncryptionConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.RuleGroup != nil {
 		if err := s.RuleGroup.Validate(); err != nil {
 			invalidParams.AddNested("RuleGroup", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.SourceMetadata != nil {
+		if err := s.SourceMetadata.Validate(); err != nil {
+			invalidParams.AddNested("SourceMetadata", err.(request.ErrInvalidParams))
 		}
 	}
 
@@ -11373,6 +12263,12 @@ func (s *UpdateRuleGroupInput) SetDescription(v string) *UpdateRuleGroupInput {
 // SetDryRun sets the DryRun field's value.
 func (s *UpdateRuleGroupInput) SetDryRun(v bool) *UpdateRuleGroupInput {
 	s.DryRun = &v
+	return s
+}
+
+// SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
+func (s *UpdateRuleGroupInput) SetEncryptionConfiguration(v *EncryptionConfiguration) *UpdateRuleGroupInput {
+	s.EncryptionConfiguration = v
 	return s
 }
 
@@ -11397,6 +12293,12 @@ func (s *UpdateRuleGroupInput) SetRuleGroupName(v string) *UpdateRuleGroupInput 
 // SetRules sets the Rules field's value.
 func (s *UpdateRuleGroupInput) SetRules(v string) *UpdateRuleGroupInput {
 	s.Rules = &v
+	return s
+}
+
+// SetSourceMetadata sets the SourceMetadata field's value.
+func (s *UpdateRuleGroupInput) SetSourceMetadata(v *SourceMetadata) *UpdateRuleGroupInput {
+	s.SourceMetadata = v
 	return s
 }
 
@@ -11675,6 +12577,9 @@ const (
 
 	// ConfigurationSyncStateInSync is a ConfigurationSyncState enum value
 	ConfigurationSyncStateInSync = "IN_SYNC"
+
+	// ConfigurationSyncStateCapacityConstrained is a ConfigurationSyncState enum value
+	ConfigurationSyncStateCapacityConstrained = "CAPACITY_CONSTRAINED"
 )
 
 // ConfigurationSyncState_Values returns all elements of the ConfigurationSyncState enum
@@ -11682,6 +12587,23 @@ func ConfigurationSyncState_Values() []string {
 	return []string{
 		ConfigurationSyncStatePending,
 		ConfigurationSyncStateInSync,
+		ConfigurationSyncStateCapacityConstrained,
+	}
+}
+
+const (
+	// EncryptionTypeCustomerKms is a EncryptionType enum value
+	EncryptionTypeCustomerKms = "CUSTOMER_KMS"
+
+	// EncryptionTypeAwsOwnedKmsKey is a EncryptionType enum value
+	EncryptionTypeAwsOwnedKmsKey = "AWS_OWNED_KMS_KEY"
+)
+
+// EncryptionType_Values returns all elements of the EncryptionType enum
+func EncryptionType_Values() []string {
+	return []string{
+		EncryptionTypeCustomerKms,
+		EncryptionTypeAwsOwnedKmsKey,
 	}
 }
 
@@ -11775,6 +12697,9 @@ const (
 
 	// PerObjectSyncStatusInSync is a PerObjectSyncStatus enum value
 	PerObjectSyncStatusInSync = "IN_SYNC"
+
+	// PerObjectSyncStatusCapacityConstrained is a PerObjectSyncStatus enum value
+	PerObjectSyncStatusCapacityConstrained = "CAPACITY_CONSTRAINED"
 )
 
 // PerObjectSyncStatus_Values returns all elements of the PerObjectSyncStatus enum
@@ -11782,6 +12707,7 @@ func PerObjectSyncStatus_Values() []string {
 	return []string{
 		PerObjectSyncStatusPending,
 		PerObjectSyncStatusInSync,
+		PerObjectSyncStatusCapacityConstrained,
 	}
 }
 
@@ -11798,6 +12724,22 @@ func ResourceManagedStatus_Values() []string {
 	return []string{
 		ResourceManagedStatusManaged,
 		ResourceManagedStatusAccount,
+	}
+}
+
+const (
+	// ResourceManagedTypeAwsManagedThreatSignatures is a ResourceManagedType enum value
+	ResourceManagedTypeAwsManagedThreatSignatures = "AWS_MANAGED_THREAT_SIGNATURES"
+
+	// ResourceManagedTypeAwsManagedDomainLists is a ResourceManagedType enum value
+	ResourceManagedTypeAwsManagedDomainLists = "AWS_MANAGED_DOMAIN_LISTS"
+)
+
+// ResourceManagedType_Values returns all elements of the ResourceManagedType enum
+func ResourceManagedType_Values() []string {
+	return []string{
+		ResourceManagedTypeAwsManagedThreatSignatures,
+		ResourceManagedTypeAwsManagedDomainLists,
 	}
 }
 
@@ -11966,6 +12908,22 @@ func StatefulRuleProtocol_Values() []string {
 		StatefulRuleProtocolTftp,
 		StatefulRuleProtocolNtp,
 		StatefulRuleProtocolDhcp,
+	}
+}
+
+const (
+	// StreamExceptionPolicyDrop is a StreamExceptionPolicy enum value
+	StreamExceptionPolicyDrop = "DROP"
+
+	// StreamExceptionPolicyContinue is a StreamExceptionPolicy enum value
+	StreamExceptionPolicyContinue = "CONTINUE"
+)
+
+// StreamExceptionPolicy_Values returns all elements of the StreamExceptionPolicy enum
+func StreamExceptionPolicy_Values() []string {
+	return []string{
+		StreamExceptionPolicyDrop,
+		StreamExceptionPolicyContinue,
 	}
 }
 

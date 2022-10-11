@@ -29,14 +29,13 @@ const opActivateAnomalyDetector = "ActivateAnomalyDetector"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ActivateAnomalyDetectorRequest method.
+//	req, resp := client.ActivateAnomalyDetectorRequest(params)
 //
-//    // Example sending a request using the ActivateAnomalyDetectorRequest method.
-//    req, resp := client.ActivateAnomalyDetectorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ActivateAnomalyDetector
 func (c *LookoutMetrics) ActivateAnomalyDetectorRequest(input *ActivateAnomalyDetectorInput) (req *request.Request, output *ActivateAnomalyDetectorOutput) {
@@ -68,27 +67,28 @@ func (c *LookoutMetrics) ActivateAnomalyDetectorRequest(input *ActivateAnomalyDe
 // API operation ActivateAnomalyDetector for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
 //
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
-//   * ConflictException
-//   There was a conflict processing the request. Try your request again.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
+//
+//   - ConflictException
+//     There was a conflict processing the request. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ActivateAnomalyDetector
 func (c *LookoutMetrics) ActivateAnomalyDetector(input *ActivateAnomalyDetectorInput) (*ActivateAnomalyDetectorOutput, error) {
@@ -128,14 +128,13 @@ const opBackTestAnomalyDetector = "BackTestAnomalyDetector"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BackTestAnomalyDetectorRequest method.
+//	req, resp := client.BackTestAnomalyDetectorRequest(params)
 //
-//    // Example sending a request using the BackTestAnomalyDetectorRequest method.
-//    req, resp := client.BackTestAnomalyDetectorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/BackTestAnomalyDetector
 func (c *LookoutMetrics) BackTestAnomalyDetectorRequest(input *BackTestAnomalyDetectorInput) (req *request.Request, output *BackTestAnomalyDetectorOutput) {
@@ -167,24 +166,25 @@ func (c *LookoutMetrics) BackTestAnomalyDetectorRequest(input *BackTestAnomalyDe
 // API operation BackTestAnomalyDetector for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
 //
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/BackTestAnomalyDetector
 func (c *LookoutMetrics) BackTestAnomalyDetector(input *BackTestAnomalyDetectorInput) (*BackTestAnomalyDetectorOutput, error) {
@@ -224,14 +224,13 @@ const opCreateAlert = "CreateAlert"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateAlertRequest method.
+//	req, resp := client.CreateAlertRequest(params)
 //
-//    // Example sending a request using the CreateAlertRequest method.
-//    req, resp := client.CreateAlertRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/CreateAlert
 func (c *LookoutMetrics) CreateAlertRequest(input *CreateAlertInput) (req *request.Request, output *CreateAlertOutput) {
@@ -262,31 +261,32 @@ func (c *LookoutMetrics) CreateAlertRequest(input *CreateAlertInput) (req *reque
 // API operation CreateAlert for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict processing the request. Try your request again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ConflictException
+//     There was a conflict processing the request. Try your request again.
 //
-//   * ServiceQuotaExceededException
-//   The request exceeded the service's quotas. Check the service quotas and try
-//   again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ServiceQuotaExceededException
+//     The request exceeded the service's quotas. Check the service quotas and try
+//     again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/CreateAlert
 func (c *LookoutMetrics) CreateAlert(input *CreateAlertInput) (*CreateAlertOutput, error) {
@@ -326,14 +326,13 @@ const opCreateAnomalyDetector = "CreateAnomalyDetector"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateAnomalyDetectorRequest method.
+//	req, resp := client.CreateAnomalyDetectorRequest(params)
 //
-//    // Example sending a request using the CreateAnomalyDetectorRequest method.
-//    req, resp := client.CreateAnomalyDetectorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/CreateAnomalyDetector
 func (c *LookoutMetrics) CreateAnomalyDetectorRequest(input *CreateAnomalyDetectorInput) (req *request.Request, output *CreateAnomalyDetectorOutput) {
@@ -364,30 +363,31 @@ func (c *LookoutMetrics) CreateAnomalyDetectorRequest(input *CreateAnomalyDetect
 // API operation CreateAnomalyDetector for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict processing the request. Try your request again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ConflictException
+//     There was a conflict processing the request. Try your request again.
 //
-//   * ServiceQuotaExceededException
-//   The request exceeded the service's quotas. Check the service quotas and try
-//   again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * ConflictException
-//   There was a conflict processing the request. Try your request again.
+//   - ServiceQuotaExceededException
+//     The request exceeded the service's quotas. Check the service quotas and try
+//     again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ConflictException
+//     There was a conflict processing the request. Try your request again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/CreateAnomalyDetector
 func (c *LookoutMetrics) CreateAnomalyDetector(input *CreateAnomalyDetectorInput) (*CreateAnomalyDetectorOutput, error) {
@@ -427,14 +427,13 @@ const opCreateMetricSet = "CreateMetricSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateMetricSetRequest method.
+//	req, resp := client.CreateMetricSetRequest(params)
 //
-//    // Example sending a request using the CreateMetricSetRequest method.
-//    req, resp := client.CreateMetricSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/CreateMetricSet
 func (c *LookoutMetrics) CreateMetricSetRequest(input *CreateMetricSetInput) (req *request.Request, output *CreateMetricSetOutput) {
@@ -465,31 +464,32 @@ func (c *LookoutMetrics) CreateMetricSetRequest(input *CreateMetricSetInput) (re
 // API operation CreateMetricSet for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict processing the request. Try your request again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ConflictException
+//     There was a conflict processing the request. Try your request again.
 //
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * ServiceQuotaExceededException
-//   The request exceeded the service's quotas. Check the service quotas and try
-//   again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ServiceQuotaExceededException
+//     The request exceeded the service's quotas. Check the service quotas and try
+//     again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/CreateMetricSet
 func (c *LookoutMetrics) CreateMetricSet(input *CreateMetricSetInput) (*CreateMetricSetOutput, error) {
@@ -529,14 +529,13 @@ const opDeactivateAnomalyDetector = "DeactivateAnomalyDetector"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeactivateAnomalyDetectorRequest method.
+//	req, resp := client.DeactivateAnomalyDetectorRequest(params)
 //
-//    // Example sending a request using the DeactivateAnomalyDetectorRequest method.
-//    req, resp := client.DeactivateAnomalyDetectorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DeactivateAnomalyDetector
 func (c *LookoutMetrics) DeactivateAnomalyDetectorRequest(input *DeactivateAnomalyDetectorInput) (req *request.Request, output *DeactivateAnomalyDetectorOutput) {
@@ -568,27 +567,28 @@ func (c *LookoutMetrics) DeactivateAnomalyDetectorRequest(input *DeactivateAnoma
 // API operation DeactivateAnomalyDetector for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
 //
-//   * ConflictException
-//   There was a conflict processing the request. Try your request again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
+//   - ConflictException
+//     There was a conflict processing the request. Try your request again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DeactivateAnomalyDetector
 func (c *LookoutMetrics) DeactivateAnomalyDetector(input *DeactivateAnomalyDetectorInput) (*DeactivateAnomalyDetectorOutput, error) {
@@ -628,14 +628,13 @@ const opDeleteAlert = "DeleteAlert"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAlertRequest method.
+//	req, resp := client.DeleteAlertRequest(params)
 //
-//    // Example sending a request using the DeleteAlertRequest method.
-//    req, resp := client.DeleteAlertRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DeleteAlert
 func (c *LookoutMetrics) DeleteAlertRequest(input *DeleteAlertInput) (req *request.Request, output *DeleteAlertOutput) {
@@ -667,24 +666,25 @@ func (c *LookoutMetrics) DeleteAlertRequest(input *DeleteAlertInput) (req *reque
 // API operation DeleteAlert for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DeleteAlert
 func (c *LookoutMetrics) DeleteAlert(input *DeleteAlertInput) (*DeleteAlertOutput, error) {
@@ -724,14 +724,13 @@ const opDeleteAnomalyDetector = "DeleteAnomalyDetector"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAnomalyDetectorRequest method.
+//	req, resp := client.DeleteAnomalyDetectorRequest(params)
 //
-//    // Example sending a request using the DeleteAnomalyDetectorRequest method.
-//    req, resp := client.DeleteAnomalyDetectorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DeleteAnomalyDetector
 func (c *LookoutMetrics) DeleteAnomalyDetectorRequest(input *DeleteAnomalyDetectorInput) (req *request.Request, output *DeleteAnomalyDetectorOutput) {
@@ -764,27 +763,28 @@ func (c *LookoutMetrics) DeleteAnomalyDetectorRequest(input *DeleteAnomalyDetect
 // API operation DeleteAnomalyDetector for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * ConflictException
-//   There was a conflict processing the request. Try your request again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - ConflictException
+//     There was a conflict processing the request. Try your request again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DeleteAnomalyDetector
 func (c *LookoutMetrics) DeleteAnomalyDetector(input *DeleteAnomalyDetectorInput) (*DeleteAnomalyDetectorOutput, error) {
@@ -824,14 +824,13 @@ const opDescribeAlert = "DescribeAlert"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAlertRequest method.
+//	req, resp := client.DescribeAlertRequest(params)
 //
-//    // Example sending a request using the DescribeAlertRequest method.
-//    req, resp := client.DescribeAlertRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DescribeAlert
 func (c *LookoutMetrics) DescribeAlertRequest(input *DescribeAlertInput) (req *request.Request, output *DescribeAlertOutput) {
@@ -866,24 +865,25 @@ func (c *LookoutMetrics) DescribeAlertRequest(input *DescribeAlertInput) (req *r
 // API operation DescribeAlert for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DescribeAlert
 func (c *LookoutMetrics) DescribeAlert(input *DescribeAlertInput) (*DescribeAlertOutput, error) {
@@ -923,14 +923,13 @@ const opDescribeAnomalyDetectionExecutions = "DescribeAnomalyDetectionExecutions
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAnomalyDetectionExecutionsRequest method.
+//	req, resp := client.DescribeAnomalyDetectionExecutionsRequest(params)
 //
-//    // Example sending a request using the DescribeAnomalyDetectionExecutionsRequest method.
-//    req, resp := client.DescribeAnomalyDetectionExecutionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DescribeAnomalyDetectionExecutions
 func (c *LookoutMetrics) DescribeAnomalyDetectionExecutionsRequest(input *DescribeAnomalyDetectionExecutionsInput) (req *request.Request, output *DescribeAnomalyDetectionExecutionsOutput) {
@@ -967,24 +966,25 @@ func (c *LookoutMetrics) DescribeAnomalyDetectionExecutionsRequest(input *Descri
 // API operation DescribeAnomalyDetectionExecutions for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DescribeAnomalyDetectionExecutions
 func (c *LookoutMetrics) DescribeAnomalyDetectionExecutions(input *DescribeAnomalyDetectionExecutionsInput) (*DescribeAnomalyDetectionExecutionsOutput, error) {
@@ -1016,15 +1016,14 @@ func (c *LookoutMetrics) DescribeAnomalyDetectionExecutionsWithContext(ctx aws.C
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeAnomalyDetectionExecutions operation.
-//    pageNum := 0
-//    err := client.DescribeAnomalyDetectionExecutionsPages(params,
-//        func(page *lookoutmetrics.DescribeAnomalyDetectionExecutionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeAnomalyDetectionExecutions operation.
+//	pageNum := 0
+//	err := client.DescribeAnomalyDetectionExecutionsPages(params,
+//	    func(page *lookoutmetrics.DescribeAnomalyDetectionExecutionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutMetrics) DescribeAnomalyDetectionExecutionsPages(input *DescribeAnomalyDetectionExecutionsInput, fn func(*DescribeAnomalyDetectionExecutionsOutput, bool) bool) error {
 	return c.DescribeAnomalyDetectionExecutionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1076,14 +1075,13 @@ const opDescribeAnomalyDetector = "DescribeAnomalyDetector"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAnomalyDetectorRequest method.
+//	req, resp := client.DescribeAnomalyDetectorRequest(params)
 //
-//    // Example sending a request using the DescribeAnomalyDetectorRequest method.
-//    req, resp := client.DescribeAnomalyDetectorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DescribeAnomalyDetector
 func (c *LookoutMetrics) DescribeAnomalyDetectorRequest(input *DescribeAnomalyDetectorInput) (req *request.Request, output *DescribeAnomalyDetectorOutput) {
@@ -1118,24 +1116,25 @@ func (c *LookoutMetrics) DescribeAnomalyDetectorRequest(input *DescribeAnomalyDe
 // API operation DescribeAnomalyDetector for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DescribeAnomalyDetector
 func (c *LookoutMetrics) DescribeAnomalyDetector(input *DescribeAnomalyDetectorInput) (*DescribeAnomalyDetectorOutput, error) {
@@ -1175,14 +1174,13 @@ const opDescribeMetricSet = "DescribeMetricSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeMetricSetRequest method.
+//	req, resp := client.DescribeMetricSetRequest(params)
 //
-//    // Example sending a request using the DescribeMetricSetRequest method.
-//    req, resp := client.DescribeMetricSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DescribeMetricSet
 func (c *LookoutMetrics) DescribeMetricSetRequest(input *DescribeMetricSetInput) (req *request.Request, output *DescribeMetricSetOutput) {
@@ -1217,24 +1215,25 @@ func (c *LookoutMetrics) DescribeMetricSetRequest(input *DescribeMetricSetInput)
 // API operation DescribeMetricSet for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DescribeMetricSet
 func (c *LookoutMetrics) DescribeMetricSet(input *DescribeMetricSetInput) (*DescribeMetricSetOutput, error) {
@@ -1258,6 +1257,101 @@ func (c *LookoutMetrics) DescribeMetricSetWithContext(ctx aws.Context, input *De
 	return out, req.Send()
 }
 
+const opDetectMetricSetConfig = "DetectMetricSetConfig"
+
+// DetectMetricSetConfigRequest generates a "aws/request.Request" representing the
+// client's request for the DetectMetricSetConfig operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DetectMetricSetConfig for more information on using the DetectMetricSetConfig
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DetectMetricSetConfigRequest method.
+//	req, resp := client.DetectMetricSetConfigRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DetectMetricSetConfig
+func (c *LookoutMetrics) DetectMetricSetConfigRequest(input *DetectMetricSetConfigInput) (req *request.Request, output *DetectMetricSetConfigOutput) {
+	op := &request.Operation{
+		Name:       opDetectMetricSetConfig,
+		HTTPMethod: "POST",
+		HTTPPath:   "/DetectMetricSetConfig",
+	}
+
+	if input == nil {
+		input = &DetectMetricSetConfigInput{}
+	}
+
+	output = &DetectMetricSetConfigOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DetectMetricSetConfig API operation for Amazon Lookout for Metrics.
+//
+// Detects an Amazon S3 dataset's file format, interval, and offset.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Metrics's
+// API operation DetectMetricSetConfig for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
+//
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
+//
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/DetectMetricSetConfig
+func (c *LookoutMetrics) DetectMetricSetConfig(input *DetectMetricSetConfigInput) (*DetectMetricSetConfigOutput, error) {
+	req, out := c.DetectMetricSetConfigRequest(input)
+	return out, req.Send()
+}
+
+// DetectMetricSetConfigWithContext is the same as DetectMetricSetConfig with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DetectMetricSetConfig for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutMetrics) DetectMetricSetConfigWithContext(ctx aws.Context, input *DetectMetricSetConfigInput, opts ...request.Option) (*DetectMetricSetConfigOutput, error) {
+	req, out := c.DetectMetricSetConfigRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetAnomalyGroup = "GetAnomalyGroup"
 
 // GetAnomalyGroupRequest generates a "aws/request.Request" representing the
@@ -1274,14 +1368,13 @@ const opGetAnomalyGroup = "GetAnomalyGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetAnomalyGroupRequest method.
+//	req, resp := client.GetAnomalyGroupRequest(params)
 //
-//    // Example sending a request using the GetAnomalyGroupRequest method.
-//    req, resp := client.GetAnomalyGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/GetAnomalyGroup
 func (c *LookoutMetrics) GetAnomalyGroupRequest(input *GetAnomalyGroupInput) (req *request.Request, output *GetAnomalyGroupOutput) {
@@ -1312,24 +1405,25 @@ func (c *LookoutMetrics) GetAnomalyGroupRequest(input *GetAnomalyGroupInput) (re
 // API operation GetAnomalyGroup for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/GetAnomalyGroup
 func (c *LookoutMetrics) GetAnomalyGroup(input *GetAnomalyGroupInput) (*GetAnomalyGroupOutput, error) {
@@ -1353,6 +1447,101 @@ func (c *LookoutMetrics) GetAnomalyGroupWithContext(ctx aws.Context, input *GetA
 	return out, req.Send()
 }
 
+const opGetDataQualityMetrics = "GetDataQualityMetrics"
+
+// GetDataQualityMetricsRequest generates a "aws/request.Request" representing the
+// client's request for the GetDataQualityMetrics operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetDataQualityMetrics for more information on using the GetDataQualityMetrics
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetDataQualityMetricsRequest method.
+//	req, resp := client.GetDataQualityMetricsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/GetDataQualityMetrics
+func (c *LookoutMetrics) GetDataQualityMetricsRequest(input *GetDataQualityMetricsInput) (req *request.Request, output *GetDataQualityMetricsOutput) {
+	op := &request.Operation{
+		Name:       opGetDataQualityMetrics,
+		HTTPMethod: "POST",
+		HTTPPath:   "/GetDataQualityMetrics",
+	}
+
+	if input == nil {
+		input = &GetDataQualityMetricsInput{}
+	}
+
+	output = &GetDataQualityMetricsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetDataQualityMetrics API operation for Amazon Lookout for Metrics.
+//
+// Returns details about the requested data quality metrics.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Metrics's
+// API operation GetDataQualityMetrics for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
+//
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
+//
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/GetDataQualityMetrics
+func (c *LookoutMetrics) GetDataQualityMetrics(input *GetDataQualityMetricsInput) (*GetDataQualityMetricsOutput, error) {
+	req, out := c.GetDataQualityMetricsRequest(input)
+	return out, req.Send()
+}
+
+// GetDataQualityMetricsWithContext is the same as GetDataQualityMetrics with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetDataQualityMetrics for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutMetrics) GetDataQualityMetricsWithContext(ctx aws.Context, input *GetDataQualityMetricsInput, opts ...request.Option) (*GetDataQualityMetricsOutput, error) {
+	req, out := c.GetDataQualityMetricsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetFeedback = "GetFeedback"
 
 // GetFeedbackRequest generates a "aws/request.Request" representing the
@@ -1369,14 +1558,13 @@ const opGetFeedback = "GetFeedback"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetFeedbackRequest method.
+//	req, resp := client.GetFeedbackRequest(params)
 //
-//    // Example sending a request using the GetFeedbackRequest method.
-//    req, resp := client.GetFeedbackRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/GetFeedback
 func (c *LookoutMetrics) GetFeedbackRequest(input *GetFeedbackInput) (req *request.Request, output *GetFeedbackOutput) {
@@ -1413,24 +1601,25 @@ func (c *LookoutMetrics) GetFeedbackRequest(input *GetFeedbackInput) (req *reque
 // API operation GetFeedback for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/GetFeedback
 func (c *LookoutMetrics) GetFeedback(input *GetFeedbackInput) (*GetFeedbackOutput, error) {
@@ -1462,15 +1651,14 @@ func (c *LookoutMetrics) GetFeedbackWithContext(ctx aws.Context, input *GetFeedb
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a GetFeedback operation.
-//    pageNum := 0
-//    err := client.GetFeedbackPages(params,
-//        func(page *lookoutmetrics.GetFeedbackOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a GetFeedback operation.
+//	pageNum := 0
+//	err := client.GetFeedbackPages(params,
+//	    func(page *lookoutmetrics.GetFeedbackOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutMetrics) GetFeedbackPages(input *GetFeedbackInput, fn func(*GetFeedbackOutput, bool) bool) error {
 	return c.GetFeedbackPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1522,14 +1710,13 @@ const opGetSampleData = "GetSampleData"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetSampleDataRequest method.
+//	req, resp := client.GetSampleDataRequest(params)
 //
-//    // Example sending a request using the GetSampleDataRequest method.
-//    req, resp := client.GetSampleDataRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/GetSampleData
 func (c *LookoutMetrics) GetSampleDataRequest(input *GetSampleDataInput) (req *request.Request, output *GetSampleDataOutput) {
@@ -1560,24 +1747,25 @@ func (c *LookoutMetrics) GetSampleDataRequest(input *GetSampleDataInput) (req *r
 // API operation GetSampleData for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
 //
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/GetSampleData
 func (c *LookoutMetrics) GetSampleData(input *GetSampleDataInput) (*GetSampleDataOutput, error) {
@@ -1617,14 +1805,13 @@ const opListAlerts = "ListAlerts"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAlertsRequest method.
+//	req, resp := client.ListAlertsRequest(params)
 //
-//    // Example sending a request using the ListAlertsRequest method.
-//    req, resp := client.ListAlertsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAlerts
 func (c *LookoutMetrics) ListAlertsRequest(input *ListAlertsInput) (req *request.Request, output *ListAlertsOutput) {
@@ -1665,24 +1852,25 @@ func (c *LookoutMetrics) ListAlertsRequest(input *ListAlertsInput) (req *request
 // API operation ListAlerts for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAlerts
 func (c *LookoutMetrics) ListAlerts(input *ListAlertsInput) (*ListAlertsOutput, error) {
@@ -1714,15 +1902,14 @@ func (c *LookoutMetrics) ListAlertsWithContext(ctx aws.Context, input *ListAlert
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAlerts operation.
-//    pageNum := 0
-//    err := client.ListAlertsPages(params,
-//        func(page *lookoutmetrics.ListAlertsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAlerts operation.
+//	pageNum := 0
+//	err := client.ListAlertsPages(params,
+//	    func(page *lookoutmetrics.ListAlertsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutMetrics) ListAlertsPages(input *ListAlertsInput, fn func(*ListAlertsOutput, bool) bool) error {
 	return c.ListAlertsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1774,14 +1961,13 @@ const opListAnomalyDetectors = "ListAnomalyDetectors"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAnomalyDetectorsRequest method.
+//	req, resp := client.ListAnomalyDetectorsRequest(params)
 //
-//    // Example sending a request using the ListAnomalyDetectorsRequest method.
-//    req, resp := client.ListAnomalyDetectorsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAnomalyDetectors
 func (c *LookoutMetrics) ListAnomalyDetectorsRequest(input *ListAnomalyDetectorsInput) (req *request.Request, output *ListAnomalyDetectorsOutput) {
@@ -1822,24 +2008,25 @@ func (c *LookoutMetrics) ListAnomalyDetectorsRequest(input *ListAnomalyDetectors
 // API operation ListAnomalyDetectors for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAnomalyDetectors
 func (c *LookoutMetrics) ListAnomalyDetectors(input *ListAnomalyDetectorsInput) (*ListAnomalyDetectorsOutput, error) {
@@ -1871,15 +2058,14 @@ func (c *LookoutMetrics) ListAnomalyDetectorsWithContext(ctx aws.Context, input 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAnomalyDetectors operation.
-//    pageNum := 0
-//    err := client.ListAnomalyDetectorsPages(params,
-//        func(page *lookoutmetrics.ListAnomalyDetectorsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAnomalyDetectors operation.
+//	pageNum := 0
+//	err := client.ListAnomalyDetectorsPages(params,
+//	    func(page *lookoutmetrics.ListAnomalyDetectorsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutMetrics) ListAnomalyDetectorsPages(input *ListAnomalyDetectorsInput, fn func(*ListAnomalyDetectorsOutput, bool) bool) error {
 	return c.ListAnomalyDetectorsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1931,14 +2117,13 @@ const opListAnomalyGroupRelatedMetrics = "ListAnomalyGroupRelatedMetrics"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAnomalyGroupRelatedMetricsRequest method.
+//	req, resp := client.ListAnomalyGroupRelatedMetricsRequest(params)
 //
-//    // Example sending a request using the ListAnomalyGroupRelatedMetricsRequest method.
-//    req, resp := client.ListAnomalyGroupRelatedMetricsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAnomalyGroupRelatedMetrics
 func (c *LookoutMetrics) ListAnomalyGroupRelatedMetricsRequest(input *ListAnomalyGroupRelatedMetricsInput) (req *request.Request, output *ListAnomalyGroupRelatedMetricsOutput) {
@@ -1976,24 +2161,25 @@ func (c *LookoutMetrics) ListAnomalyGroupRelatedMetricsRequest(input *ListAnomal
 // API operation ListAnomalyGroupRelatedMetrics for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAnomalyGroupRelatedMetrics
 func (c *LookoutMetrics) ListAnomalyGroupRelatedMetrics(input *ListAnomalyGroupRelatedMetricsInput) (*ListAnomalyGroupRelatedMetricsOutput, error) {
@@ -2025,15 +2211,14 @@ func (c *LookoutMetrics) ListAnomalyGroupRelatedMetricsWithContext(ctx aws.Conte
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAnomalyGroupRelatedMetrics operation.
-//    pageNum := 0
-//    err := client.ListAnomalyGroupRelatedMetricsPages(params,
-//        func(page *lookoutmetrics.ListAnomalyGroupRelatedMetricsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAnomalyGroupRelatedMetrics operation.
+//	pageNum := 0
+//	err := client.ListAnomalyGroupRelatedMetricsPages(params,
+//	    func(page *lookoutmetrics.ListAnomalyGroupRelatedMetricsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutMetrics) ListAnomalyGroupRelatedMetricsPages(input *ListAnomalyGroupRelatedMetricsInput, fn func(*ListAnomalyGroupRelatedMetricsOutput, bool) bool) error {
 	return c.ListAnomalyGroupRelatedMetricsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2085,14 +2270,13 @@ const opListAnomalyGroupSummaries = "ListAnomalyGroupSummaries"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAnomalyGroupSummariesRequest method.
+//	req, resp := client.ListAnomalyGroupSummariesRequest(params)
 //
-//    // Example sending a request using the ListAnomalyGroupSummariesRequest method.
-//    req, resp := client.ListAnomalyGroupSummariesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAnomalyGroupSummaries
 func (c *LookoutMetrics) ListAnomalyGroupSummariesRequest(input *ListAnomalyGroupSummariesInput) (req *request.Request, output *ListAnomalyGroupSummariesOutput) {
@@ -2129,24 +2313,25 @@ func (c *LookoutMetrics) ListAnomalyGroupSummariesRequest(input *ListAnomalyGrou
 // API operation ListAnomalyGroupSummaries for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAnomalyGroupSummaries
 func (c *LookoutMetrics) ListAnomalyGroupSummaries(input *ListAnomalyGroupSummariesInput) (*ListAnomalyGroupSummariesOutput, error) {
@@ -2178,15 +2363,14 @@ func (c *LookoutMetrics) ListAnomalyGroupSummariesWithContext(ctx aws.Context, i
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAnomalyGroupSummaries operation.
-//    pageNum := 0
-//    err := client.ListAnomalyGroupSummariesPages(params,
-//        func(page *lookoutmetrics.ListAnomalyGroupSummariesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAnomalyGroupSummaries operation.
+//	pageNum := 0
+//	err := client.ListAnomalyGroupSummariesPages(params,
+//	    func(page *lookoutmetrics.ListAnomalyGroupSummariesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutMetrics) ListAnomalyGroupSummariesPages(input *ListAnomalyGroupSummariesInput, fn func(*ListAnomalyGroupSummariesOutput, bool) bool) error {
 	return c.ListAnomalyGroupSummariesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2238,14 +2422,13 @@ const opListAnomalyGroupTimeSeries = "ListAnomalyGroupTimeSeries"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAnomalyGroupTimeSeriesRequest method.
+//	req, resp := client.ListAnomalyGroupTimeSeriesRequest(params)
 //
-//    // Example sending a request using the ListAnomalyGroupTimeSeriesRequest method.
-//    req, resp := client.ListAnomalyGroupTimeSeriesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAnomalyGroupTimeSeries
 func (c *LookoutMetrics) ListAnomalyGroupTimeSeriesRequest(input *ListAnomalyGroupTimeSeriesInput) (req *request.Request, output *ListAnomalyGroupTimeSeriesOutput) {
@@ -2282,24 +2465,25 @@ func (c *LookoutMetrics) ListAnomalyGroupTimeSeriesRequest(input *ListAnomalyGro
 // API operation ListAnomalyGroupTimeSeries for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListAnomalyGroupTimeSeries
 func (c *LookoutMetrics) ListAnomalyGroupTimeSeries(input *ListAnomalyGroupTimeSeriesInput) (*ListAnomalyGroupTimeSeriesOutput, error) {
@@ -2331,15 +2515,14 @@ func (c *LookoutMetrics) ListAnomalyGroupTimeSeriesWithContext(ctx aws.Context, 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAnomalyGroupTimeSeries operation.
-//    pageNum := 0
-//    err := client.ListAnomalyGroupTimeSeriesPages(params,
-//        func(page *lookoutmetrics.ListAnomalyGroupTimeSeriesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAnomalyGroupTimeSeries operation.
+//	pageNum := 0
+//	err := client.ListAnomalyGroupTimeSeriesPages(params,
+//	    func(page *lookoutmetrics.ListAnomalyGroupTimeSeriesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutMetrics) ListAnomalyGroupTimeSeriesPages(input *ListAnomalyGroupTimeSeriesInput, fn func(*ListAnomalyGroupTimeSeriesOutput, bool) bool) error {
 	return c.ListAnomalyGroupTimeSeriesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2391,14 +2574,13 @@ const opListMetricSets = "ListMetricSets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListMetricSetsRequest method.
+//	req, resp := client.ListMetricSetsRequest(params)
 //
-//    // Example sending a request using the ListMetricSetsRequest method.
-//    req, resp := client.ListMetricSetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListMetricSets
 func (c *LookoutMetrics) ListMetricSetsRequest(input *ListMetricSetsInput) (req *request.Request, output *ListMetricSetsOutput) {
@@ -2439,24 +2621,25 @@ func (c *LookoutMetrics) ListMetricSetsRequest(input *ListMetricSetsInput) (req 
 // API operation ListMetricSets for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListMetricSets
 func (c *LookoutMetrics) ListMetricSets(input *ListMetricSetsInput) (*ListMetricSetsOutput, error) {
@@ -2488,15 +2671,14 @@ func (c *LookoutMetrics) ListMetricSetsWithContext(ctx aws.Context, input *ListM
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListMetricSets operation.
-//    pageNum := 0
-//    err := client.ListMetricSetsPages(params,
-//        func(page *lookoutmetrics.ListMetricSetsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListMetricSets operation.
+//	pageNum := 0
+//	err := client.ListMetricSetsPages(params,
+//	    func(page *lookoutmetrics.ListMetricSetsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutMetrics) ListMetricSetsPages(input *ListMetricSetsInput, fn func(*ListMetricSetsOutput, bool) bool) error {
 	return c.ListMetricSetsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2548,14 +2730,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListTagsForResource
 func (c *LookoutMetrics) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -2587,17 +2768,18 @@ func (c *LookoutMetrics) ListTagsForResourceRequest(input *ListTagsForResourceIn
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
+//
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/ListTagsForResource
 func (c *LookoutMetrics) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -2637,14 +2819,13 @@ const opPutFeedback = "PutFeedback"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutFeedbackRequest method.
+//	req, resp := client.PutFeedbackRequest(params)
 //
-//    // Example sending a request using the PutFeedbackRequest method.
-//    req, resp := client.PutFeedbackRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/PutFeedback
 func (c *LookoutMetrics) PutFeedbackRequest(input *PutFeedbackInput) (req *request.Request, output *PutFeedbackOutput) {
@@ -2676,24 +2857,25 @@ func (c *LookoutMetrics) PutFeedbackRequest(input *PutFeedbackInput) (req *reque
 // API operation PutFeedback for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/PutFeedback
 func (c *LookoutMetrics) PutFeedback(input *PutFeedbackInput) (*PutFeedbackOutput, error) {
@@ -2733,14 +2915,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/TagResource
 func (c *LookoutMetrics) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -2773,17 +2954,18 @@ func (c *LookoutMetrics) TagResourceRequest(input *TagResourceInput) (req *reque
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
+//
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/TagResource
 func (c *LookoutMetrics) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -2823,14 +3005,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/UntagResource
 func (c *LookoutMetrics) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -2863,17 +3044,18 @@ func (c *LookoutMetrics) UntagResourceRequest(input *UntagResourceInput) (req *r
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
+//
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/UntagResource
 func (c *LookoutMetrics) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -2897,6 +3079,101 @@ func (c *LookoutMetrics) UntagResourceWithContext(ctx aws.Context, input *UntagR
 	return out, req.Send()
 }
 
+const opUpdateAlert = "UpdateAlert"
+
+// UpdateAlertRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateAlert operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateAlert for more information on using the UpdateAlert
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateAlertRequest method.
+//	req, resp := client.UpdateAlertRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/UpdateAlert
+func (c *LookoutMetrics) UpdateAlertRequest(input *UpdateAlertInput) (req *request.Request, output *UpdateAlertOutput) {
+	op := &request.Operation{
+		Name:       opUpdateAlert,
+		HTTPMethod: "POST",
+		HTTPPath:   "/UpdateAlert",
+	}
+
+	if input == nil {
+		input = &UpdateAlertInput{}
+	}
+
+	output = &UpdateAlertOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateAlert API operation for Amazon Lookout for Metrics.
+//
+// Make changes to an existing alert.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Metrics's
+// API operation UpdateAlert for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
+//
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
+//
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
+//
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/UpdateAlert
+func (c *LookoutMetrics) UpdateAlert(input *UpdateAlertInput) (*UpdateAlertOutput, error) {
+	req, out := c.UpdateAlertRequest(input)
+	return out, req.Send()
+}
+
+// UpdateAlertWithContext is the same as UpdateAlert with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateAlert for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutMetrics) UpdateAlertWithContext(ctx aws.Context, input *UpdateAlertInput, opts ...request.Option) (*UpdateAlertOutput, error) {
+	req, out := c.UpdateAlertRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateAnomalyDetector = "UpdateAnomalyDetector"
 
 // UpdateAnomalyDetectorRequest generates a "aws/request.Request" representing the
@@ -2913,14 +3190,13 @@ const opUpdateAnomalyDetector = "UpdateAnomalyDetector"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateAnomalyDetectorRequest method.
+//	req, resp := client.UpdateAnomalyDetectorRequest(params)
 //
-//    // Example sending a request using the UpdateAnomalyDetectorRequest method.
-//    req, resp := client.UpdateAnomalyDetectorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/UpdateAnomalyDetector
 func (c *LookoutMetrics) UpdateAnomalyDetectorRequest(input *UpdateAnomalyDetectorInput) (req *request.Request, output *UpdateAnomalyDetectorOutput) {
@@ -2952,24 +3228,25 @@ func (c *LookoutMetrics) UpdateAnomalyDetectorRequest(input *UpdateAnomalyDetect
 // API operation UpdateAnomalyDetector for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
+//
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/UpdateAnomalyDetector
 func (c *LookoutMetrics) UpdateAnomalyDetector(input *UpdateAnomalyDetectorInput) (*UpdateAnomalyDetectorOutput, error) {
@@ -3009,14 +3286,13 @@ const opUpdateMetricSet = "UpdateMetricSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateMetricSetRequest method.
+//	req, resp := client.UpdateMetricSetRequest(params)
 //
-//    // Example sending a request using the UpdateMetricSetRequest method.
-//    req, resp := client.UpdateMetricSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/UpdateMetricSet
 func (c *LookoutMetrics) UpdateMetricSetRequest(input *UpdateMetricSetInput) (req *request.Request, output *UpdateMetricSetOutput) {
@@ -3047,28 +3323,29 @@ func (c *LookoutMetrics) UpdateMetricSetRequest(input *UpdateMetricSetInput) (re
 // API operation UpdateMetricSet for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The specified resource cannot be found. Check the ARN of the resource and
-//   try again.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by the AWS service.
-//   Check your input values and try again.
+//   - ResourceNotFoundException
+//     The specified resource cannot be found. Check the ARN of the resource and
+//     try again.
 //
-//   * InternalServerException
-//   The request processing has failed because of an unknown error, exception,
-//   or failure.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by the AWS service.
+//     Check your input values and try again.
 //
-//   * AccessDeniedException
-//   You do not have sufficient permissions to perform this action.
+//   - InternalServerException
+//     The request processing has failed because of an unknown error, exception,
+//     or failure.
 //
-//   * TooManyRequestsException
-//   The request was denied due to too many requests being submitted at the same
-//   time.
+//   - AccessDeniedException
+//     You do not have sufficient permissions to perform this action.
 //
-//   * ServiceQuotaExceededException
-//   The request exceeded the service's quotas. Check the service quotas and try
-//   again.
+//   - TooManyRequestsException
+//     The request was denied due to too many requests being submitted at the same
+//     time.
+//
+//   - ServiceQuotaExceededException
+//     The request exceeded the service's quotas. Check the service quotas and try
+//     again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutmetrics-2017-07-25/UpdateMetricSet
 func (c *LookoutMetrics) UpdateMetricSet(input *UpdateMetricSetInput) (*UpdateMetricSetOutput, error) {
@@ -3298,6 +3575,9 @@ type Alert struct {
 	// A description of the alert.
 	AlertDescription *string `type:"string"`
 
+	// The configuration of the alert filters, containing MetricList and DimensionFilter.
+	AlertFilters *AlertFilters `type:"structure"`
+
 	// The name of the alert.
 	AlertName *string `min:"1" type:"string"`
 
@@ -3356,6 +3636,12 @@ func (s *Alert) SetAlertDescription(v string) *Alert {
 	return s
 }
 
+// SetAlertFilters sets the AlertFilters field's value.
+func (s *Alert) SetAlertFilters(v *AlertFilters) *Alert {
+	s.AlertFilters = v
+	return s
+}
+
 // SetAlertName sets the AlertName field's value.
 func (s *Alert) SetAlertName(v string) *Alert {
 	s.AlertName = &v
@@ -3395,6 +3681,73 @@ func (s *Alert) SetCreationTime(v time.Time) *Alert {
 // SetLastModificationTime sets the LastModificationTime field's value.
 func (s *Alert) SetLastModificationTime(v time.Time) *Alert {
 	s.LastModificationTime = &v
+	return s
+}
+
+// The configuration of the alert filters.
+type AlertFilters struct {
+	_ struct{} `type:"structure"`
+
+	// The list of DimensionFilter objects that are used for dimension-based filtering.
+	DimensionFilterList []*DimensionFilter `min:"1" type:"list"`
+
+	// The list of measures that you want to get alerts for.
+	MetricList []*string `min:"1" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AlertFilters) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AlertFilters) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AlertFilters) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AlertFilters"}
+	if s.DimensionFilterList != nil && len(s.DimensionFilterList) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DimensionFilterList", 1))
+	}
+	if s.MetricList != nil && len(s.MetricList) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("MetricList", 1))
+	}
+	if s.DimensionFilterList != nil {
+		for i, v := range s.DimensionFilterList {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "DimensionFilterList", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDimensionFilterList sets the DimensionFilterList field's value.
+func (s *AlertFilters) SetDimensionFilterList(v []*DimensionFilter) *AlertFilters {
+	s.DimensionFilterList = v
+	return s
+}
+
+// SetMetricList sets the MetricList field's value.
+func (s *AlertFilters) SetMetricList(v []*string) *AlertFilters {
+	s.MetricList = v
 	return s
 }
 
@@ -3563,6 +3916,49 @@ func (s AnomalyDetectorConfigSummary) GoString() string {
 // SetAnomalyDetectorFrequency sets the AnomalyDetectorFrequency field's value.
 func (s *AnomalyDetectorConfigSummary) SetAnomalyDetectorFrequency(v string) *AnomalyDetectorConfigSummary {
 	s.AnomalyDetectorFrequency = &v
+	return s
+}
+
+// Aggregated details about the data quality metrics collected for the AnomalyDetectorArn
+// provided in the GetDataQualityMetrics object.
+type AnomalyDetectorDataQualityMetric struct {
+	_ struct{} `type:"structure"`
+
+	// An array of DataQualityMetricList objects. Each object in the array contains
+	// information about a data quality metric.
+	MetricSetDataQualityMetricList []*MetricSetDataQualityMetric `type:"list"`
+
+	// The start time for the data quality metrics collection.
+	StartTimestamp *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AnomalyDetectorDataQualityMetric) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AnomalyDetectorDataQualityMetric) GoString() string {
+	return s.String()
+}
+
+// SetMetricSetDataQualityMetricList sets the MetricSetDataQualityMetricList field's value.
+func (s *AnomalyDetectorDataQualityMetric) SetMetricSetDataQualityMetricList(v []*MetricSetDataQualityMetric) *AnomalyDetectorDataQualityMetric {
+	s.MetricSetDataQualityMetricList = v
+	return s
+}
+
+// SetStartTimestamp sets the StartTimestamp field's value.
+func (s *AnomalyDetectorDataQualityMetric) SetStartTimestamp(v time.Time) *AnomalyDetectorDataQualityMetric {
+	s.StartTimestamp = &v
 	return s
 }
 
@@ -4020,6 +4416,301 @@ func (s *AppFlowConfig) SetRoleArn(v string) *AppFlowConfig {
 	return s
 }
 
+// Details about an Amazon Athena datasource.
+type AthenaSourceConfig struct {
+	_ struct{} `type:"structure"`
+
+	// Settings for backtest mode.
+	BackTestConfiguration *BackTestConfiguration `type:"structure"`
+
+	// The database's data catalog.
+	DataCatalog *string `min:"1" type:"string"`
+
+	// The database's name.
+	DatabaseName *string `min:"1" type:"string"`
+
+	// An IAM role that gives Amazon Lookout for Metrics permission to access the
+	// data.
+	RoleArn *string `type:"string"`
+
+	// The database's results path.
+	S3ResultsPath *string `type:"string"`
+
+	// The database's table name.
+	TableName *string `min:"1" type:"string"`
+
+	// The database's work group name.
+	WorkGroupName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AthenaSourceConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AthenaSourceConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AthenaSourceConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AthenaSourceConfig"}
+	if s.DataCatalog != nil && len(*s.DataCatalog) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DataCatalog", 1))
+	}
+	if s.DatabaseName != nil && len(*s.DatabaseName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatabaseName", 1))
+	}
+	if s.TableName != nil && len(*s.TableName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TableName", 1))
+	}
+	if s.WorkGroupName != nil && len(*s.WorkGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("WorkGroupName", 1))
+	}
+	if s.BackTestConfiguration != nil {
+		if err := s.BackTestConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("BackTestConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBackTestConfiguration sets the BackTestConfiguration field's value.
+func (s *AthenaSourceConfig) SetBackTestConfiguration(v *BackTestConfiguration) *AthenaSourceConfig {
+	s.BackTestConfiguration = v
+	return s
+}
+
+// SetDataCatalog sets the DataCatalog field's value.
+func (s *AthenaSourceConfig) SetDataCatalog(v string) *AthenaSourceConfig {
+	s.DataCatalog = &v
+	return s
+}
+
+// SetDatabaseName sets the DatabaseName field's value.
+func (s *AthenaSourceConfig) SetDatabaseName(v string) *AthenaSourceConfig {
+	s.DatabaseName = &v
+	return s
+}
+
+// SetRoleArn sets the RoleArn field's value.
+func (s *AthenaSourceConfig) SetRoleArn(v string) *AthenaSourceConfig {
+	s.RoleArn = &v
+	return s
+}
+
+// SetS3ResultsPath sets the S3ResultsPath field's value.
+func (s *AthenaSourceConfig) SetS3ResultsPath(v string) *AthenaSourceConfig {
+	s.S3ResultsPath = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *AthenaSourceConfig) SetTableName(v string) *AthenaSourceConfig {
+	s.TableName = &v
+	return s
+}
+
+// SetWorkGroupName sets the WorkGroupName field's value.
+func (s *AthenaSourceConfig) SetWorkGroupName(v string) *AthenaSourceConfig {
+	s.WorkGroupName = &v
+	return s
+}
+
+// An attribute value.
+type AttributeValue struct {
+	_ struct{} `type:"structure"`
+
+	// A binary value.
+	B *string `type:"string"`
+
+	// A list of binary values.
+	BS []*string `type:"list"`
+
+	// A number.
+	N *string `type:"string"`
+
+	// A list of numbers.
+	NS []*string `type:"list"`
+
+	// A string.
+	S *string `type:"string"`
+
+	// A list of strings.
+	SS []*string `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AttributeValue) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AttributeValue) GoString() string {
+	return s.String()
+}
+
+// SetB sets the B field's value.
+func (s *AttributeValue) SetB(v string) *AttributeValue {
+	s.B = &v
+	return s
+}
+
+// SetBS sets the BS field's value.
+func (s *AttributeValue) SetBS(v []*string) *AttributeValue {
+	s.BS = v
+	return s
+}
+
+// SetN sets the N field's value.
+func (s *AttributeValue) SetN(v string) *AttributeValue {
+	s.N = &v
+	return s
+}
+
+// SetNS sets the NS field's value.
+func (s *AttributeValue) SetNS(v []*string) *AttributeValue {
+	s.NS = v
+	return s
+}
+
+// SetS sets the S field's value.
+func (s *AttributeValue) SetS(v string) *AttributeValue {
+	s.S = &v
+	return s
+}
+
+// SetSS sets the SS field's value.
+func (s *AttributeValue) SetSS(v []*string) *AttributeValue {
+	s.SS = v
+	return s
+}
+
+// An auto detection metric source.
+type AutoDetectionMetricSource struct {
+	_ struct{} `type:"structure"`
+
+	// The source's source config.
+	S3SourceConfig *AutoDetectionS3SourceConfig `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AutoDetectionMetricSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AutoDetectionMetricSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AutoDetectionMetricSource) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AutoDetectionMetricSource"}
+	if s.S3SourceConfig != nil {
+		if err := s.S3SourceConfig.Validate(); err != nil {
+			invalidParams.AddNested("S3SourceConfig", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetS3SourceConfig sets the S3SourceConfig field's value.
+func (s *AutoDetectionMetricSource) SetS3SourceConfig(v *AutoDetectionS3SourceConfig) *AutoDetectionMetricSource {
+	s.S3SourceConfig = v
+	return s
+}
+
+// An auto detection source config.
+type AutoDetectionS3SourceConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The config's historical data path list.
+	HistoricalDataPathList []*string `min:"1" type:"list"`
+
+	// The config's templated path list.
+	TemplatedPathList []*string `min:"1" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AutoDetectionS3SourceConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AutoDetectionS3SourceConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AutoDetectionS3SourceConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AutoDetectionS3SourceConfig"}
+	if s.HistoricalDataPathList != nil && len(s.HistoricalDataPathList) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("HistoricalDataPathList", 1))
+	}
+	if s.TemplatedPathList != nil && len(s.TemplatedPathList) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TemplatedPathList", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetHistoricalDataPathList sets the HistoricalDataPathList field's value.
+func (s *AutoDetectionS3SourceConfig) SetHistoricalDataPathList(v []*string) *AutoDetectionS3SourceConfig {
+	s.HistoricalDataPathList = v
+	return s
+}
+
+// SetTemplatedPathList sets the TemplatedPathList field's value.
+func (s *AutoDetectionS3SourceConfig) SetTemplatedPathList(v []*string) *AutoDetectionS3SourceConfig {
+	s.TemplatedPathList = v
+	return s
+}
+
 type BackTestAnomalyDetectorInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4088,9 +4779,59 @@ func (s BackTestAnomalyDetectorOutput) GoString() string {
 	return s.String()
 }
 
+// Settings for backtest mode.
+type BackTestConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Run a backtest instead of monitoring new data.
+	//
+	// RunBackTestMode is a required field
+	RunBackTestMode *bool `type:"boolean" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BackTestConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BackTestConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BackTestConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BackTestConfiguration"}
+	if s.RunBackTestMode == nil {
+		invalidParams.Add(request.NewErrParamRequired("RunBackTestMode"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRunBackTestMode sets the RunBackTestMode field's value.
+func (s *BackTestConfiguration) SetRunBackTestMode(v bool) *BackTestConfiguration {
+	s.RunBackTestMode = &v
+	return s
+}
+
 // Details about an Amazon CloudWatch datasource.
 type CloudWatchConfig struct {
 	_ struct{} `type:"structure"`
+
+	// Settings for backtest mode.
+	BackTestConfiguration *BackTestConfiguration `type:"structure"`
 
 	// An IAM role that gives Amazon Lookout for Metrics permission to access data
 	// in Amazon CloudWatch.
@@ -4113,6 +4854,27 @@ func (s CloudWatchConfig) String() string {
 // value will be replaced with "sensitive".
 func (s CloudWatchConfig) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CloudWatchConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CloudWatchConfig"}
+	if s.BackTestConfiguration != nil {
+		if err := s.BackTestConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("BackTestConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBackTestConfiguration sets the BackTestConfiguration field's value.
+func (s *CloudWatchConfig) SetBackTestConfiguration(v *BackTestConfiguration) *CloudWatchConfig {
+	s.BackTestConfiguration = v
+	return s
 }
 
 // SetRoleArn sets the RoleArn field's value.
@@ -4234,15 +4996,16 @@ type CreateAlertInput struct {
 	// A description of the alert.
 	AlertDescription *string `type:"string"`
 
+	// The configuration of the alert filters, containing MetricList and DimensionFilterList.
+	AlertFilters *AlertFilters `type:"structure"`
+
 	// The name of the alert.
 	//
 	// AlertName is a required field
 	AlertName *string `min:"1" type:"string" required:"true"`
 
 	// An integer from 0 to 100 specifying the alert sensitivity threshold.
-	//
-	// AlertSensitivityThreshold is a required field
-	AlertSensitivityThreshold *int64 `type:"integer" required:"true"`
+	AlertSensitivityThreshold *int64 `type:"integer"`
 
 	// The ARN of the detector to which the alert is attached.
 	//
@@ -4284,9 +5047,6 @@ func (s *CreateAlertInput) Validate() error {
 	if s.AlertName != nil && len(*s.AlertName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("AlertName", 1))
 	}
-	if s.AlertSensitivityThreshold == nil {
-		invalidParams.Add(request.NewErrParamRequired("AlertSensitivityThreshold"))
-	}
 	if s.AnomalyDetectorArn == nil {
 		invalidParams.Add(request.NewErrParamRequired("AnomalyDetectorArn"))
 	}
@@ -4296,6 +5056,11 @@ func (s *CreateAlertInput) Validate() error {
 	if s.Action != nil {
 		if err := s.Action.Validate(); err != nil {
 			invalidParams.AddNested("Action", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.AlertFilters != nil {
+		if err := s.AlertFilters.Validate(); err != nil {
+			invalidParams.AddNested("AlertFilters", err.(request.ErrInvalidParams))
 		}
 	}
 
@@ -4314,6 +5079,12 @@ func (s *CreateAlertInput) SetAction(v *Action) *CreateAlertInput {
 // SetAlertDescription sets the AlertDescription field's value.
 func (s *CreateAlertInput) SetAlertDescription(v string) *CreateAlertInput {
 	s.AlertDescription = &v
+	return s
+}
+
+// SetAlertFilters sets the AlertFilters field's value.
+func (s *CreateAlertInput) SetAlertFilters(v *AlertFilters) *CreateAlertInput {
+	s.AlertFilters = v
 	return s
 }
 
@@ -4511,6 +5282,9 @@ type CreateMetricSetInput struct {
 	// AnomalyDetectorArn is a required field
 	AnomalyDetectorArn *string `type:"string" required:"true"`
 
+	// A list of filters that specify which data is kept for anomaly detection.
+	DimensionFilterList []*MetricSetDimensionFilter `type:"list"`
+
 	// A list of the fields you want to treat as dimensions.
 	DimensionList []*string `min:"1" type:"list"`
 
@@ -4536,7 +5310,7 @@ type CreateMetricSetInput struct {
 	MetricSource *MetricSource `type:"structure" required:"true"`
 
 	// After an interval ends, the amount of seconds that the detector waits before
-	// importing data. Offset is only supported for S3 and Redshift datasources.
+	// importing data. Offset is only supported for S3, Redshift, Athena and datasources.
 	Offset *int64 `type:"integer"`
 
 	// A list of tags (https://docs.aws.amazon.com/lookoutmetrics/latest/dev/detectors-tags.html)
@@ -4599,6 +5373,16 @@ func (s *CreateMetricSetInput) Validate() error {
 	if s.Tags != nil && len(s.Tags) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Tags", 1))
 	}
+	if s.DimensionFilterList != nil {
+		for i, v := range s.DimensionFilterList {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "DimensionFilterList", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
 	if s.MetricList != nil {
 		for i, v := range s.MetricList {
 			if v == nil {
@@ -4629,6 +5413,12 @@ func (s *CreateMetricSetInput) Validate() error {
 // SetAnomalyDetectorArn sets the AnomalyDetectorArn field's value.
 func (s *CreateMetricSetInput) SetAnomalyDetectorArn(v string) *CreateMetricSetInput {
 	s.AnomalyDetectorArn = &v
+	return s
+}
+
+// SetDimensionFilterList sets the DimensionFilterList field's value.
+func (s *CreateMetricSetInput) SetDimensionFilterList(v []*MetricSetDimensionFilter) *CreateMetricSetInput {
+	s.DimensionFilterList = v
 	return s
 }
 
@@ -4797,6 +5587,67 @@ func (s *CsvFormatDescriptor) SetHeaderList(v []*string) *CsvFormatDescriptor {
 // SetQuoteSymbol sets the QuoteSymbol field's value.
 func (s *CsvFormatDescriptor) SetQuoteSymbol(v string) *CsvFormatDescriptor {
 	s.QuoteSymbol = &v
+	return s
+}
+
+// An array that describes a data quality metric. Each DataQualityMetric object
+// contains the data quality metric name, its value, a description of the metric,
+// and the affected column.
+type DataQualityMetric struct {
+	_ struct{} `type:"structure"`
+
+	// A description of the data quality metric.
+	MetricDescription *string `min:"1" type:"string"`
+
+	// The name of the data quality metric.
+	MetricType *string `type:"string" enum:"DataQualityMetricType"`
+
+	// The value of the data quality metric.
+	MetricValue *float64 `type:"double"`
+
+	// The column that is being monitored.
+	RelatedColumnName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityMetric) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityMetric) GoString() string {
+	return s.String()
+}
+
+// SetMetricDescription sets the MetricDescription field's value.
+func (s *DataQualityMetric) SetMetricDescription(v string) *DataQualityMetric {
+	s.MetricDescription = &v
+	return s
+}
+
+// SetMetricType sets the MetricType field's value.
+func (s *DataQualityMetric) SetMetricType(v string) *DataQualityMetric {
+	s.MetricType = &v
+	return s
+}
+
+// SetMetricValue sets the MetricValue field's value.
+func (s *DataQualityMetric) SetMetricValue(v float64) *DataQualityMetric {
+	s.MetricValue = &v
+	return s
+}
+
+// SetRelatedColumnName sets the RelatedColumnName field's value.
+func (s *DataQualityMetric) SetRelatedColumnName(v string) *DataQualityMetric {
+	s.RelatedColumnName = &v
 	return s
 }
 
@@ -5414,6 +6265,9 @@ type DescribeMetricSetOutput struct {
 	// The time at which the dataset was created.
 	CreationTime *time.Time `type:"timestamp"`
 
+	// The dimensions and their values that were used to filter the dataset.
+	DimensionFilterList []*MetricSetDimensionFilter `type:"list"`
+
 	// A list of the dimensions chosen for analysis.
 	DimensionList []*string `min:"1" type:"list"`
 
@@ -5438,7 +6292,8 @@ type DescribeMetricSetOutput struct {
 	// Contains information about the dataset's source data.
 	MetricSource *MetricSource `type:"structure"`
 
-	// The offset in seconds. Only supported for S3 and Redshift datasources.
+	// After an interval ends, the amount of seconds that the detector waits before
+	// importing data. Offset is only supported for S3, Redshift, Athena and datasources.
 	Offset *int64 `type:"integer"`
 
 	// Contains information about the column used for tracking time in your source
@@ -5476,6 +6331,12 @@ func (s *DescribeMetricSetOutput) SetAnomalyDetectorArn(v string) *DescribeMetri
 // SetCreationTime sets the CreationTime field's value.
 func (s *DescribeMetricSetOutput) SetCreationTime(v time.Time) *DescribeMetricSetOutput {
 	s.CreationTime = &v
+	return s
+}
+
+// SetDimensionFilterList sets the DimensionFilterList field's value.
+func (s *DescribeMetricSetOutput) SetDimensionFilterList(v []*MetricSetDimensionFilter) *DescribeMetricSetOutput {
+	s.DimensionFilterList = v
 	return s
 }
 
@@ -5545,6 +6406,425 @@ func (s *DescribeMetricSetOutput) SetTimezone(v string) *DescribeMetricSetOutput
 	return s
 }
 
+type DetectMetricSetConfigInput struct {
+	_ struct{} `type:"structure"`
+
+	// An anomaly detector ARN.
+	//
+	// AnomalyDetectorArn is a required field
+	AnomalyDetectorArn *string `type:"string" required:"true"`
+
+	// A data source.
+	//
+	// AutoDetectionMetricSource is a required field
+	AutoDetectionMetricSource *AutoDetectionMetricSource `type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectMetricSetConfigInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectMetricSetConfigInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DetectMetricSetConfigInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DetectMetricSetConfigInput"}
+	if s.AnomalyDetectorArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("AnomalyDetectorArn"))
+	}
+	if s.AutoDetectionMetricSource == nil {
+		invalidParams.Add(request.NewErrParamRequired("AutoDetectionMetricSource"))
+	}
+	if s.AutoDetectionMetricSource != nil {
+		if err := s.AutoDetectionMetricSource.Validate(); err != nil {
+			invalidParams.AddNested("AutoDetectionMetricSource", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAnomalyDetectorArn sets the AnomalyDetectorArn field's value.
+func (s *DetectMetricSetConfigInput) SetAnomalyDetectorArn(v string) *DetectMetricSetConfigInput {
+	s.AnomalyDetectorArn = &v
+	return s
+}
+
+// SetAutoDetectionMetricSource sets the AutoDetectionMetricSource field's value.
+func (s *DetectMetricSetConfigInput) SetAutoDetectionMetricSource(v *AutoDetectionMetricSource) *DetectMetricSetConfigInput {
+	s.AutoDetectionMetricSource = v
+	return s
+}
+
+type DetectMetricSetConfigOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The inferred dataset configuration for the datasource.
+	DetectedMetricSetConfig *DetectedMetricSetConfig `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectMetricSetConfigOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectMetricSetConfigOutput) GoString() string {
+	return s.String()
+}
+
+// SetDetectedMetricSetConfig sets the DetectedMetricSetConfig field's value.
+func (s *DetectMetricSetConfigOutput) SetDetectedMetricSetConfig(v *DetectedMetricSetConfig) *DetectMetricSetConfigOutput {
+	s.DetectedMetricSetConfig = v
+	return s
+}
+
+// Properties of an inferred CSV format.
+type DetectedCsvFormatDescriptor struct {
+	_ struct{} `type:"structure"`
+
+	// The format's charset.
+	Charset *DetectedField `type:"structure"`
+
+	// Whether the format includes a header.
+	ContainsHeader *DetectedField `type:"structure"`
+
+	// The format's delimiter.
+	Delimiter *DetectedField `type:"structure"`
+
+	// The format's file compression.
+	FileCompression *DetectedField `type:"structure"`
+
+	// The format's header list.
+	HeaderList *DetectedField `type:"structure"`
+
+	// The format's quote symbol.
+	QuoteSymbol *DetectedField `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedCsvFormatDescriptor) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedCsvFormatDescriptor) GoString() string {
+	return s.String()
+}
+
+// SetCharset sets the Charset field's value.
+func (s *DetectedCsvFormatDescriptor) SetCharset(v *DetectedField) *DetectedCsvFormatDescriptor {
+	s.Charset = v
+	return s
+}
+
+// SetContainsHeader sets the ContainsHeader field's value.
+func (s *DetectedCsvFormatDescriptor) SetContainsHeader(v *DetectedField) *DetectedCsvFormatDescriptor {
+	s.ContainsHeader = v
+	return s
+}
+
+// SetDelimiter sets the Delimiter field's value.
+func (s *DetectedCsvFormatDescriptor) SetDelimiter(v *DetectedField) *DetectedCsvFormatDescriptor {
+	s.Delimiter = v
+	return s
+}
+
+// SetFileCompression sets the FileCompression field's value.
+func (s *DetectedCsvFormatDescriptor) SetFileCompression(v *DetectedField) *DetectedCsvFormatDescriptor {
+	s.FileCompression = v
+	return s
+}
+
+// SetHeaderList sets the HeaderList field's value.
+func (s *DetectedCsvFormatDescriptor) SetHeaderList(v *DetectedField) *DetectedCsvFormatDescriptor {
+	s.HeaderList = v
+	return s
+}
+
+// SetQuoteSymbol sets the QuoteSymbol field's value.
+func (s *DetectedCsvFormatDescriptor) SetQuoteSymbol(v *DetectedField) *DetectedCsvFormatDescriptor {
+	s.QuoteSymbol = v
+	return s
+}
+
+// An inferred field.
+type DetectedField struct {
+	_ struct{} `type:"structure"`
+
+	// The field's confidence.
+	Confidence *string `type:"string" enum:"Confidence"`
+
+	// The field's message.
+	Message *string `type:"string"`
+
+	// The field's value.
+	Value *AttributeValue `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedField) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedField) GoString() string {
+	return s.String()
+}
+
+// SetConfidence sets the Confidence field's value.
+func (s *DetectedField) SetConfidence(v string) *DetectedField {
+	s.Confidence = &v
+	return s
+}
+
+// SetMessage sets the Message field's value.
+func (s *DetectedField) SetMessage(v string) *DetectedField {
+	s.Message = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *DetectedField) SetValue(v *AttributeValue) *DetectedField {
+	s.Value = v
+	return s
+}
+
+// Properties of an inferred data format.
+type DetectedFileFormatDescriptor struct {
+	_ struct{} `type:"structure"`
+
+	// Details about a CSV format.
+	CsvFormatDescriptor *DetectedCsvFormatDescriptor `type:"structure"`
+
+	// Details about a JSON format.
+	JsonFormatDescriptor *DetectedJsonFormatDescriptor `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedFileFormatDescriptor) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedFileFormatDescriptor) GoString() string {
+	return s.String()
+}
+
+// SetCsvFormatDescriptor sets the CsvFormatDescriptor field's value.
+func (s *DetectedFileFormatDescriptor) SetCsvFormatDescriptor(v *DetectedCsvFormatDescriptor) *DetectedFileFormatDescriptor {
+	s.CsvFormatDescriptor = v
+	return s
+}
+
+// SetJsonFormatDescriptor sets the JsonFormatDescriptor field's value.
+func (s *DetectedFileFormatDescriptor) SetJsonFormatDescriptor(v *DetectedJsonFormatDescriptor) *DetectedFileFormatDescriptor {
+	s.JsonFormatDescriptor = v
+	return s
+}
+
+// A detected JSON format descriptor.
+type DetectedJsonFormatDescriptor struct {
+	_ struct{} `type:"structure"`
+
+	// The format's character set.
+	Charset *DetectedField `type:"structure"`
+
+	// The format's file compression.
+	FileCompression *DetectedField `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedJsonFormatDescriptor) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedJsonFormatDescriptor) GoString() string {
+	return s.String()
+}
+
+// SetCharset sets the Charset field's value.
+func (s *DetectedJsonFormatDescriptor) SetCharset(v *DetectedField) *DetectedJsonFormatDescriptor {
+	s.Charset = v
+	return s
+}
+
+// SetFileCompression sets the FileCompression field's value.
+func (s *DetectedJsonFormatDescriptor) SetFileCompression(v *DetectedField) *DetectedJsonFormatDescriptor {
+	s.FileCompression = v
+	return s
+}
+
+// An inferred dataset configuration.
+type DetectedMetricSetConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The dataset's interval.
+	MetricSetFrequency *DetectedField `type:"structure"`
+
+	// The dataset's data source.
+	MetricSource *DetectedMetricSource `type:"structure"`
+
+	// The dataset's offset.
+	Offset *DetectedField `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedMetricSetConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedMetricSetConfig) GoString() string {
+	return s.String()
+}
+
+// SetMetricSetFrequency sets the MetricSetFrequency field's value.
+func (s *DetectedMetricSetConfig) SetMetricSetFrequency(v *DetectedField) *DetectedMetricSetConfig {
+	s.MetricSetFrequency = v
+	return s
+}
+
+// SetMetricSource sets the MetricSource field's value.
+func (s *DetectedMetricSetConfig) SetMetricSource(v *DetectedMetricSource) *DetectedMetricSetConfig {
+	s.MetricSource = v
+	return s
+}
+
+// SetOffset sets the Offset field's value.
+func (s *DetectedMetricSetConfig) SetOffset(v *DetectedField) *DetectedMetricSetConfig {
+	s.Offset = v
+	return s
+}
+
+// An inferred data source.
+type DetectedMetricSource struct {
+	_ struct{} `type:"structure"`
+
+	// The data source's source configuration.
+	S3SourceConfig *DetectedS3SourceConfig `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedMetricSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedMetricSource) GoString() string {
+	return s.String()
+}
+
+// SetS3SourceConfig sets the S3SourceConfig field's value.
+func (s *DetectedMetricSource) SetS3SourceConfig(v *DetectedS3SourceConfig) *DetectedMetricSource {
+	s.S3SourceConfig = v
+	return s
+}
+
+// An inferred source configuration.
+type DetectedS3SourceConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The source's file format descriptor.
+	FileFormatDescriptor *DetectedFileFormatDescriptor `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedS3SourceConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectedS3SourceConfig) GoString() string {
+	return s.String()
+}
+
+// SetFileFormatDescriptor sets the FileFormatDescriptor field's value.
+func (s *DetectedS3SourceConfig) SetFileFormatDescriptor(v *DetectedFileFormatDescriptor) *DetectedS3SourceConfig {
+	s.FileFormatDescriptor = v
+	return s
+}
+
 // Details about a dimension that contributed to an anomaly.
 type DimensionContribution struct {
 	_ struct{} `type:"structure"`
@@ -5583,6 +6863,64 @@ func (s *DimensionContribution) SetDimensionName(v string) *DimensionContributio
 // SetDimensionValueContributionList sets the DimensionValueContributionList field's value.
 func (s *DimensionContribution) SetDimensionValueContributionList(v []*DimensionValueContribution) *DimensionContribution {
 	s.DimensionValueContributionList = v
+	return s
+}
+
+// The dimension filter, containing DimensionName and DimensionValueList.
+type DimensionFilter struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the dimension to filter on.
+	DimensionName *string `min:"1" type:"string"`
+
+	// The list of values for the dimension specified in DimensionName that you
+	// want to filter on.
+	DimensionValueList []*string `min:"1" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DimensionFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DimensionFilter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DimensionFilter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DimensionFilter"}
+	if s.DimensionName != nil && len(*s.DimensionName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DimensionName", 1))
+	}
+	if s.DimensionValueList != nil && len(s.DimensionValueList) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DimensionValueList", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDimensionName sets the DimensionName field's value.
+func (s *DimensionFilter) SetDimensionName(v string) *DimensionFilter {
+	s.DimensionName = &v
+	return s
+}
+
+// SetDimensionValueList sets the DimensionValueList field's value.
+func (s *DimensionFilter) SetDimensionValueList(v []*string) *DimensionFilter {
+	s.DimensionValueList = v
 	return s
 }
 
@@ -5763,6 +7101,49 @@ func (s *FileFormatDescriptor) SetJsonFormatDescriptor(v *JsonFormatDescriptor) 
 	return s
 }
 
+// Describes a filter for choosing a subset of dimension values. Each filter
+// consists of the dimension that you want to include and the condition statement.
+// The condition statement is specified in the FilterOperation object.
+type Filter struct {
+	_ struct{} `type:"structure"`
+
+	// The value that you want to include in the filter.
+	DimensionValue *string `type:"string"`
+
+	// The condition to apply.
+	FilterOperation *string `type:"string" enum:"FilterOperation"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Filter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Filter) GoString() string {
+	return s.String()
+}
+
+// SetDimensionValue sets the DimensionValue field's value.
+func (s *Filter) SetDimensionValue(v string) *Filter {
+	s.DimensionValue = &v
+	return s
+}
+
+// SetFilterOperation sets the FilterOperation field's value.
+func (s *Filter) SetFilterOperation(v string) *Filter {
+	s.FilterOperation = &v
+	return s
+}
+
 type GetAnomalyGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5851,6 +7232,92 @@ func (s GetAnomalyGroupOutput) GoString() string {
 // SetAnomalyGroup sets the AnomalyGroup field's value.
 func (s *GetAnomalyGroupOutput) SetAnomalyGroup(v *AnomalyGroup) *GetAnomalyGroupOutput {
 	s.AnomalyGroup = v
+	return s
+}
+
+type GetDataQualityMetricsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the anomaly detector that you want to investigate.
+	//
+	// AnomalyDetectorArn is a required field
+	AnomalyDetectorArn *string `type:"string" required:"true"`
+
+	// The Amazon Resource Name (ARN) of a specific data quality metric set.
+	MetricSetArn *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityMetricsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityMetricsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetDataQualityMetricsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetDataQualityMetricsInput"}
+	if s.AnomalyDetectorArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("AnomalyDetectorArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAnomalyDetectorArn sets the AnomalyDetectorArn field's value.
+func (s *GetDataQualityMetricsInput) SetAnomalyDetectorArn(v string) *GetDataQualityMetricsInput {
+	s.AnomalyDetectorArn = &v
+	return s
+}
+
+// SetMetricSetArn sets the MetricSetArn field's value.
+func (s *GetDataQualityMetricsInput) SetMetricSetArn(v string) *GetDataQualityMetricsInput {
+	s.MetricSetArn = &v
+	return s
+}
+
+type GetDataQualityMetricsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of the data quality metrics for the AnomalyDetectorArn that you requested.
+	AnomalyDetectorDataQualityMetricList []*AnomalyDetectorDataQualityMetric `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityMetricsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityMetricsOutput) GoString() string {
+	return s.String()
+}
+
+// SetAnomalyDetectorDataQualityMetricList sets the AnomalyDetectorDataQualityMetricList field's value.
+func (s *GetDataQualityMetricsOutput) SetAnomalyDetectorDataQualityMetricList(v []*AnomalyDetectorDataQualityMetric) *GetDataQualityMetricsOutput {
+	s.AnomalyDetectorDataQualityMetricList = v
 	return s
 }
 
@@ -7299,6 +8766,108 @@ func (s *MetricLevelImpact) SetNumTimeSeries(v int64) *MetricLevelImpact {
 	return s
 }
 
+// An array of DataQualityMetric objects that describes one or more data quality
+// metrics.
+type MetricSetDataQualityMetric struct {
+	_ struct{} `type:"structure"`
+
+	// The array of data quality metrics contained in the data quality metric set.
+	DataQualityMetricList []*DataQualityMetric `type:"list"`
+
+	// The Amazon Resource Name (ARN) of the data quality metric array.
+	MetricSetArn *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricSetDataQualityMetric) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricSetDataQualityMetric) GoString() string {
+	return s.String()
+}
+
+// SetDataQualityMetricList sets the DataQualityMetricList field's value.
+func (s *MetricSetDataQualityMetric) SetDataQualityMetricList(v []*DataQualityMetric) *MetricSetDataQualityMetric {
+	s.DataQualityMetricList = v
+	return s
+}
+
+// SetMetricSetArn sets the MetricSetArn field's value.
+func (s *MetricSetDataQualityMetric) SetMetricSetArn(v string) *MetricSetDataQualityMetric {
+	s.MetricSetArn = &v
+	return s
+}
+
+// Describes a list of filters for choosing a subset of dimension values. Each
+// filter consists of the dimension and one of its values that you want to include.
+// When multiple dimensions or values are specified, the dimensions are joined
+// with an AND operation and the values are joined with an OR operation.
+type MetricSetDimensionFilter struct {
+	_ struct{} `type:"structure"`
+
+	// The list of filters that you are applying.
+	FilterList []*Filter `min:"1" type:"list"`
+
+	// The dimension that you want to filter on.
+	Name *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricSetDimensionFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricSetDimensionFilter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MetricSetDimensionFilter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MetricSetDimensionFilter"}
+	if s.FilterList != nil && len(s.FilterList) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FilterList", 1))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilterList sets the FilterList field's value.
+func (s *MetricSetDimensionFilter) SetFilterList(v []*Filter) *MetricSetDimensionFilter {
+	s.FilterList = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *MetricSetDimensionFilter) SetName(v string) *MetricSetDimensionFilter {
+	s.Name = &v
+	return s
+}
+
 // Contains information about a dataset.
 type MetricSetSummary struct {
 	_ struct{} `type:"structure"`
@@ -7385,21 +8954,23 @@ func (s *MetricSetSummary) SetTags(v map[string]*string) *MetricSetSummary {
 	return s
 }
 
-// Contains information about source data used to generate a metric.
+// Contains information about source data used to generate metrics.
 type MetricSource struct {
 	_ struct{} `type:"structure"`
 
-	// An object containing information about the AppFlow configuration.
+	// Details about an AppFlow datasource.
 	AppFlowConfig *AppFlowConfig `type:"structure"`
 
-	// An object containing information about the Amazon CloudWatch monitoring configuration.
+	// Details about an Amazon Athena datasource.
+	AthenaSourceConfig *AthenaSourceConfig `type:"structure"`
+
+	// Details about an Amazon CloudWatch monitoring datasource.
 	CloudWatchConfig *CloudWatchConfig `type:"structure"`
 
-	// An object containing information about the Amazon Relational Database Service
-	// (RDS) configuration.
+	// Details about an Amazon Relational Database Service (RDS) datasource.
 	RDSSourceConfig *RDSSourceConfig `type:"structure"`
 
-	// An object containing information about the Amazon Redshift database configuration.
+	// Details about an Amazon Redshift database datasource.
 	RedshiftSourceConfig *RedshiftSourceConfig `type:"structure"`
 
 	// Contains information about the configuration of the S3 bucket that contains
@@ -7428,6 +8999,16 @@ func (s MetricSource) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *MetricSource) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "MetricSource"}
+	if s.AthenaSourceConfig != nil {
+		if err := s.AthenaSourceConfig.Validate(); err != nil {
+			invalidParams.AddNested("AthenaSourceConfig", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.CloudWatchConfig != nil {
+		if err := s.CloudWatchConfig.Validate(); err != nil {
+			invalidParams.AddNested("CloudWatchConfig", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.RDSSourceConfig != nil {
 		if err := s.RDSSourceConfig.Validate(); err != nil {
 			invalidParams.AddNested("RDSSourceConfig", err.(request.ErrInvalidParams))
@@ -7453,6 +9034,12 @@ func (s *MetricSource) Validate() error {
 // SetAppFlowConfig sets the AppFlowConfig field's value.
 func (s *MetricSource) SetAppFlowConfig(v *AppFlowConfig) *MetricSource {
 	s.AppFlowConfig = v
+	return s
+}
+
+// SetAthenaSourceConfig sets the AthenaSourceConfig field's value.
+func (s *MetricSource) SetAthenaSourceConfig(v *AthenaSourceConfig) *MetricSource {
+	s.AthenaSourceConfig = v
 	return s
 }
 
@@ -7976,6 +9563,19 @@ type SNSConfiguration struct {
 	// RoleArn is a required field
 	RoleArn *string `type:"string" required:"true"`
 
+	// The format of the SNS topic.
+	//
+	//    * JSON – Send JSON alerts with an anomaly ID and a link to the anomaly
+	//    detail page. This is the default.
+	//
+	//    * LONG_TEXT – Send human-readable alerts with information about the
+	//    impacted timeseries and a link to the anomaly detail page. We recommend
+	//    this for email.
+	//
+	//    * SHORT_TEXT – Send human-readable alerts with a link to the anomaly
+	//    detail page. We recommend this for SMS.
+	SnsFormat *string `type:"string" enum:"SnsFormat"`
+
 	// The ARN of the target SNS topic.
 	//
 	// SnsTopicArn is a required field
@@ -8019,6 +9619,12 @@ func (s *SNSConfiguration) Validate() error {
 // SetRoleArn sets the RoleArn field's value.
 func (s *SNSConfiguration) SetRoleArn(v string) *SNSConfiguration {
 	s.RoleArn = &v
+	return s
+}
+
+// SetSnsFormat sets the SnsFormat field's value.
+func (s *SNSConfiguration) SetSnsFormat(v string) *SNSConfiguration {
+	s.SnsFormat = &v
 	return s
 }
 
@@ -8585,6 +10191,129 @@ func (s UntagResourceOutput) GoString() string {
 	return s.String()
 }
 
+type UpdateAlertInput struct {
+	_ struct{} `type:"structure"`
+
+	// Action that will be triggered when there is an alert.
+	Action *Action `type:"structure"`
+
+	// The ARN of the alert to update.
+	//
+	// AlertArn is a required field
+	AlertArn *string `type:"string" required:"true"`
+
+	// A description of the alert.
+	AlertDescription *string `type:"string"`
+
+	// The configuration of the alert filters, containing MetricList and DimensionFilterList.
+	AlertFilters *AlertFilters `type:"structure"`
+
+	// An integer from 0 to 100 specifying the alert sensitivity threshold.
+	AlertSensitivityThreshold *int64 `type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateAlertInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateAlertInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateAlertInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateAlertInput"}
+	if s.AlertArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("AlertArn"))
+	}
+	if s.Action != nil {
+		if err := s.Action.Validate(); err != nil {
+			invalidParams.AddNested("Action", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.AlertFilters != nil {
+		if err := s.AlertFilters.Validate(); err != nil {
+			invalidParams.AddNested("AlertFilters", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAction sets the Action field's value.
+func (s *UpdateAlertInput) SetAction(v *Action) *UpdateAlertInput {
+	s.Action = v
+	return s
+}
+
+// SetAlertArn sets the AlertArn field's value.
+func (s *UpdateAlertInput) SetAlertArn(v string) *UpdateAlertInput {
+	s.AlertArn = &v
+	return s
+}
+
+// SetAlertDescription sets the AlertDescription field's value.
+func (s *UpdateAlertInput) SetAlertDescription(v string) *UpdateAlertInput {
+	s.AlertDescription = &v
+	return s
+}
+
+// SetAlertFilters sets the AlertFilters field's value.
+func (s *UpdateAlertInput) SetAlertFilters(v *AlertFilters) *UpdateAlertInput {
+	s.AlertFilters = v
+	return s
+}
+
+// SetAlertSensitivityThreshold sets the AlertSensitivityThreshold field's value.
+func (s *UpdateAlertInput) SetAlertSensitivityThreshold(v int64) *UpdateAlertInput {
+	s.AlertSensitivityThreshold = &v
+	return s
+}
+
+type UpdateAlertOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the updated alert.
+	AlertArn *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateAlertOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateAlertOutput) GoString() string {
+	return s.String()
+}
+
+// SetAlertArn sets the AlertArn field's value.
+func (s *UpdateAlertOutput) SetAlertArn(v string) *UpdateAlertOutput {
+	s.AlertArn = &v
+	return s
+}
+
 type UpdateAnomalyDetectorInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8699,6 +10428,13 @@ func (s *UpdateAnomalyDetectorOutput) SetAnomalyDetectorArn(v string) *UpdateAno
 type UpdateMetricSetInput struct {
 	_ struct{} `type:"structure"`
 
+	// Describes a list of filters for choosing specific dimensions and specific
+	// values. Each filter consists of the dimension and one of its values that
+	// you want to include. When multiple dimensions or values are specified, the
+	// dimensions are joined with an AND operation and the values are joined with
+	// an OR operation.
+	DimensionFilterList []*MetricSetDimensionFilter `type:"list"`
+
 	// The dimension list.
 	DimensionList []*string `min:"1" type:"list"`
 
@@ -8716,11 +10452,11 @@ type UpdateMetricSetInput struct {
 	// The dataset's interval.
 	MetricSetFrequency *string `type:"string" enum:"Frequency"`
 
-	// Contains information about source data used to generate a metric.
+	// Contains information about source data used to generate metrics.
 	MetricSource *MetricSource `type:"structure"`
 
 	// After an interval ends, the amount of seconds that the detector waits before
-	// importing data. Offset is only supported for S3 and Redshift datasources.
+	// importing data. Offset is only supported for S3, Redshift, Athena and datasources.
 	Offset *int64 `type:"integer"`
 
 	// The timestamp column.
@@ -8760,6 +10496,16 @@ func (s *UpdateMetricSetInput) Validate() error {
 	if s.MetricSetDescription != nil && len(*s.MetricSetDescription) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("MetricSetDescription", 1))
 	}
+	if s.DimensionFilterList != nil {
+		for i, v := range s.DimensionFilterList {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "DimensionFilterList", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
 	if s.MetricList != nil {
 		for i, v := range s.MetricList {
 			if v == nil {
@@ -8785,6 +10531,12 @@ func (s *UpdateMetricSetInput) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetDimensionFilterList sets the DimensionFilterList field's value.
+func (s *UpdateMetricSetInput) SetDimensionFilterList(v []*MetricSetDimensionFilter) *UpdateMetricSetInput {
+	s.DimensionFilterList = v
+	return s
 }
 
 // SetDimensionList sets the DimensionList field's value.
@@ -9213,6 +10965,86 @@ func CSVFileCompression_Values() []string {
 }
 
 const (
+	// ConfidenceHigh is a Confidence enum value
+	ConfidenceHigh = "HIGH"
+
+	// ConfidenceLow is a Confidence enum value
+	ConfidenceLow = "LOW"
+
+	// ConfidenceNone is a Confidence enum value
+	ConfidenceNone = "NONE"
+)
+
+// Confidence_Values returns all elements of the Confidence enum
+func Confidence_Values() []string {
+	return []string{
+		ConfidenceHigh,
+		ConfidenceLow,
+		ConfidenceNone,
+	}
+}
+
+const (
+	// DataQualityMetricTypeColumnCompleteness is a DataQualityMetricType enum value
+	DataQualityMetricTypeColumnCompleteness = "COLUMN_COMPLETENESS"
+
+	// DataQualityMetricTypeDimensionUniqueness is a DataQualityMetricType enum value
+	DataQualityMetricTypeDimensionUniqueness = "DIMENSION_UNIQUENESS"
+
+	// DataQualityMetricTypeTimeSeriesCount is a DataQualityMetricType enum value
+	DataQualityMetricTypeTimeSeriesCount = "TIME_SERIES_COUNT"
+
+	// DataQualityMetricTypeRowsProcessed is a DataQualityMetricType enum value
+	DataQualityMetricTypeRowsProcessed = "ROWS_PROCESSED"
+
+	// DataQualityMetricTypeRowsPartialCompliance is a DataQualityMetricType enum value
+	DataQualityMetricTypeRowsPartialCompliance = "ROWS_PARTIAL_COMPLIANCE"
+
+	// DataQualityMetricTypeInvalidRowsCompliance is a DataQualityMetricType enum value
+	DataQualityMetricTypeInvalidRowsCompliance = "INVALID_ROWS_COMPLIANCE"
+
+	// DataQualityMetricTypeBacktestTrainingDataStartTimeStamp is a DataQualityMetricType enum value
+	DataQualityMetricTypeBacktestTrainingDataStartTimeStamp = "BACKTEST_TRAINING_DATA_START_TIME_STAMP"
+
+	// DataQualityMetricTypeBacktestTrainingDataEndTimeStamp is a DataQualityMetricType enum value
+	DataQualityMetricTypeBacktestTrainingDataEndTimeStamp = "BACKTEST_TRAINING_DATA_END_TIME_STAMP"
+
+	// DataQualityMetricTypeBacktestInferenceDataStartTimeStamp is a DataQualityMetricType enum value
+	DataQualityMetricTypeBacktestInferenceDataStartTimeStamp = "BACKTEST_INFERENCE_DATA_START_TIME_STAMP"
+
+	// DataQualityMetricTypeBacktestInferenceDataEndTimeStamp is a DataQualityMetricType enum value
+	DataQualityMetricTypeBacktestInferenceDataEndTimeStamp = "BACKTEST_INFERENCE_DATA_END_TIME_STAMP"
+)
+
+// DataQualityMetricType_Values returns all elements of the DataQualityMetricType enum
+func DataQualityMetricType_Values() []string {
+	return []string{
+		DataQualityMetricTypeColumnCompleteness,
+		DataQualityMetricTypeDimensionUniqueness,
+		DataQualityMetricTypeTimeSeriesCount,
+		DataQualityMetricTypeRowsProcessed,
+		DataQualityMetricTypeRowsPartialCompliance,
+		DataQualityMetricTypeInvalidRowsCompliance,
+		DataQualityMetricTypeBacktestTrainingDataStartTimeStamp,
+		DataQualityMetricTypeBacktestTrainingDataEndTimeStamp,
+		DataQualityMetricTypeBacktestInferenceDataStartTimeStamp,
+		DataQualityMetricTypeBacktestInferenceDataEndTimeStamp,
+	}
+}
+
+const (
+	// FilterOperationEquals is a FilterOperation enum value
+	FilterOperationEquals = "EQUALS"
+)
+
+// FilterOperation_Values returns all elements of the FilterOperation enum
+func FilterOperation_Values() []string {
+	return []string{
+		FilterOperationEquals,
+	}
+}
+
+const (
 	// FrequencyP1d is a Frequency enum value
 	FrequencyP1d = "P1D"
 
@@ -9265,6 +11097,26 @@ func RelationshipType_Values() []string {
 	return []string{
 		RelationshipTypeCauseOfInputAnomalyGroup,
 		RelationshipTypeEffectOfInputAnomalyGroup,
+	}
+}
+
+const (
+	// SnsFormatLongText is a SnsFormat enum value
+	SnsFormatLongText = "LONG_TEXT"
+
+	// SnsFormatShortText is a SnsFormat enum value
+	SnsFormatShortText = "SHORT_TEXT"
+
+	// SnsFormatJson is a SnsFormat enum value
+	SnsFormatJson = "JSON"
+)
+
+// SnsFormat_Values returns all elements of the SnsFormat enum
+func SnsFormat_Values() []string {
+	return []string{
+		SnsFormatLongText,
+		SnsFormatShortText,
+		SnsFormatJson,
 	}
 }
 

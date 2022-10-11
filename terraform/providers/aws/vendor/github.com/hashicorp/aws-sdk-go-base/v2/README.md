@@ -62,3 +62,8 @@ However, if changes are made to `aws-sdk-go-base`, both modules should be releas
     * For `awsv1shim`, use the form `v2/awsv1shim/vX.Y.Z`
 1. Close the associated GitHub milestone
 1. Create the releases on GitHub
+
+## AWS SDK Upgrade Policy
+
+`aws-sdk-go-base` will only upgrade AWS SDKs as needed to bring in bug fixes or required enhancements.
+This leaves software making use of this module free to manage their own SDK versions.

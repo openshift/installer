@@ -29,14 +29,13 @@ const opBatchGetNamedQuery = "BatchGetNamedQuery"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchGetNamedQueryRequest method.
+//	req, resp := client.BatchGetNamedQueryRequest(params)
 //
-//    // Example sending a request using the BatchGetNamedQueryRequest method.
-//    req, resp := client.BatchGetNamedQueryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/BatchGetNamedQuery
 func (c *Athena) BatchGetNamedQueryRequest(input *BatchGetNamedQueryInput) (req *request.Request, output *BatchGetNamedQueryOutput) {
@@ -75,13 +74,14 @@ func (c *Athena) BatchGetNamedQueryRequest(input *BatchGetNamedQueryInput) (req 
 // API operation BatchGetNamedQuery for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/BatchGetNamedQuery
 func (c *Athena) BatchGetNamedQuery(input *BatchGetNamedQueryInput) (*BatchGetNamedQueryOutput, error) {
@@ -105,6 +105,94 @@ func (c *Athena) BatchGetNamedQueryWithContext(ctx aws.Context, input *BatchGetN
 	return out, req.Send()
 }
 
+const opBatchGetPreparedStatement = "BatchGetPreparedStatement"
+
+// BatchGetPreparedStatementRequest generates a "aws/request.Request" representing the
+// client's request for the BatchGetPreparedStatement operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See BatchGetPreparedStatement for more information on using the BatchGetPreparedStatement
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the BatchGetPreparedStatementRequest method.
+//	req, resp := client.BatchGetPreparedStatementRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/BatchGetPreparedStatement
+func (c *Athena) BatchGetPreparedStatementRequest(input *BatchGetPreparedStatementInput) (req *request.Request, output *BatchGetPreparedStatementOutput) {
+	op := &request.Operation{
+		Name:       opBatchGetPreparedStatement,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &BatchGetPreparedStatementInput{}
+	}
+
+	output = &BatchGetPreparedStatementOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// BatchGetPreparedStatement API operation for Amazon Athena.
+//
+// Returns the details of a single prepared statement or a list of up to 256
+// prepared statements for the array of prepared statement names that you provide.
+// Requires you to have access to the workgroup to which the prepared statements
+// belong. If a prepared statement cannot be retrieved for the name specified,
+// the statement is listed in UnprocessedPreparedStatementNames.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Athena's
+// API operation BatchGetPreparedStatement for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/BatchGetPreparedStatement
+func (c *Athena) BatchGetPreparedStatement(input *BatchGetPreparedStatementInput) (*BatchGetPreparedStatementOutput, error) {
+	req, out := c.BatchGetPreparedStatementRequest(input)
+	return out, req.Send()
+}
+
+// BatchGetPreparedStatementWithContext is the same as BatchGetPreparedStatement with the addition of
+// the ability to pass a context and additional request options.
+//
+// See BatchGetPreparedStatement for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Athena) BatchGetPreparedStatementWithContext(ctx aws.Context, input *BatchGetPreparedStatementInput, opts ...request.Option) (*BatchGetPreparedStatementOutput, error) {
+	req, out := c.BatchGetPreparedStatementRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opBatchGetQueryExecution = "BatchGetQueryExecution"
 
 // BatchGetQueryExecutionRequest generates a "aws/request.Request" representing the
@@ -121,14 +209,13 @@ const opBatchGetQueryExecution = "BatchGetQueryExecution"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchGetQueryExecutionRequest method.
+//	req, resp := client.BatchGetQueryExecutionRequest(params)
 //
-//    // Example sending a request using the BatchGetQueryExecutionRequest method.
-//    req, resp := client.BatchGetQueryExecutionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/BatchGetQueryExecution
 func (c *Athena) BatchGetQueryExecutionRequest(input *BatchGetQueryExecutionInput) (req *request.Request, output *BatchGetQueryExecutionOutput) {
@@ -164,13 +251,14 @@ func (c *Athena) BatchGetQueryExecutionRequest(input *BatchGetQueryExecutionInpu
 // API operation BatchGetQueryExecution for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/BatchGetQueryExecution
 func (c *Athena) BatchGetQueryExecution(input *BatchGetQueryExecutionInput) (*BatchGetQueryExecutionOutput, error) {
@@ -210,14 +298,13 @@ const opCreateDataCatalog = "CreateDataCatalog"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDataCatalogRequest method.
+//	req, resp := client.CreateDataCatalogRequest(params)
 //
-//    // Example sending a request using the CreateDataCatalogRequest method.
-//    req, resp := client.CreateDataCatalogRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/CreateDataCatalog
 func (c *Athena) CreateDataCatalogRequest(input *CreateDataCatalogInput) (req *request.Request, output *CreateDataCatalogOutput) {
@@ -251,13 +338,14 @@ func (c *Athena) CreateDataCatalogRequest(input *CreateDataCatalogInput) (req *r
 // API operation CreateDataCatalog for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/CreateDataCatalog
 func (c *Athena) CreateDataCatalog(input *CreateDataCatalogInput) (*CreateDataCatalogOutput, error) {
@@ -297,14 +385,13 @@ const opCreateNamedQuery = "CreateNamedQuery"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateNamedQueryRequest method.
+//	req, resp := client.CreateNamedQueryRequest(params)
 //
-//    // Example sending a request using the CreateNamedQueryRequest method.
-//    req, resp := client.CreateNamedQueryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/CreateNamedQuery
 func (c *Athena) CreateNamedQueryRequest(input *CreateNamedQueryInput) (req *request.Request, output *CreateNamedQueryOutput) {
@@ -340,13 +427,14 @@ func (c *Athena) CreateNamedQueryRequest(input *CreateNamedQueryInput) (req *req
 // API operation CreateNamedQuery for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/CreateNamedQuery
 func (c *Athena) CreateNamedQuery(input *CreateNamedQueryInput) (*CreateNamedQueryOutput, error) {
@@ -386,14 +474,13 @@ const opCreatePreparedStatement = "CreatePreparedStatement"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreatePreparedStatementRequest method.
+//	req, resp := client.CreatePreparedStatementRequest(params)
 //
-//    // Example sending a request using the CreatePreparedStatementRequest method.
-//    req, resp := client.CreatePreparedStatementRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/CreatePreparedStatement
 func (c *Athena) CreatePreparedStatementRequest(input *CreatePreparedStatementInput) (req *request.Request, output *CreatePreparedStatementOutput) {
@@ -425,13 +512,14 @@ func (c *Athena) CreatePreparedStatementRequest(input *CreatePreparedStatementIn
 // API operation CreatePreparedStatement for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/CreatePreparedStatement
 func (c *Athena) CreatePreparedStatement(input *CreatePreparedStatementInput) (*CreatePreparedStatementOutput, error) {
@@ -471,14 +559,13 @@ const opCreateWorkGroup = "CreateWorkGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateWorkGroupRequest method.
+//	req, resp := client.CreateWorkGroupRequest(params)
 //
-//    // Example sending a request using the CreateWorkGroupRequest method.
-//    req, resp := client.CreateWorkGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/CreateWorkGroup
 func (c *Athena) CreateWorkGroupRequest(input *CreateWorkGroupInput) (req *request.Request, output *CreateWorkGroupOutput) {
@@ -510,13 +597,14 @@ func (c *Athena) CreateWorkGroupRequest(input *CreateWorkGroupInput) (req *reque
 // API operation CreateWorkGroup for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/CreateWorkGroup
 func (c *Athena) CreateWorkGroup(input *CreateWorkGroupInput) (*CreateWorkGroupOutput, error) {
@@ -556,14 +644,13 @@ const opDeleteDataCatalog = "DeleteDataCatalog"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDataCatalogRequest method.
+//	req, resp := client.DeleteDataCatalogRequest(params)
 //
-//    // Example sending a request using the DeleteDataCatalogRequest method.
-//    req, resp := client.DeleteDataCatalogRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/DeleteDataCatalog
 func (c *Athena) DeleteDataCatalogRequest(input *DeleteDataCatalogInput) (req *request.Request, output *DeleteDataCatalogOutput) {
@@ -595,13 +682,14 @@ func (c *Athena) DeleteDataCatalogRequest(input *DeleteDataCatalogInput) (req *r
 // API operation DeleteDataCatalog for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/DeleteDataCatalog
 func (c *Athena) DeleteDataCatalog(input *DeleteDataCatalogInput) (*DeleteDataCatalogOutput, error) {
@@ -641,14 +729,13 @@ const opDeleteNamedQuery = "DeleteNamedQuery"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteNamedQueryRequest method.
+//	req, resp := client.DeleteNamedQueryRequest(params)
 //
-//    // Example sending a request using the DeleteNamedQueryRequest method.
-//    req, resp := client.DeleteNamedQueryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/DeleteNamedQuery
 func (c *Athena) DeleteNamedQueryRequest(input *DeleteNamedQueryInput) (req *request.Request, output *DeleteNamedQueryOutput) {
@@ -685,13 +772,14 @@ func (c *Athena) DeleteNamedQueryRequest(input *DeleteNamedQueryInput) (req *req
 // API operation DeleteNamedQuery for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/DeleteNamedQuery
 func (c *Athena) DeleteNamedQuery(input *DeleteNamedQueryInput) (*DeleteNamedQueryOutput, error) {
@@ -731,14 +819,13 @@ const opDeletePreparedStatement = "DeletePreparedStatement"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeletePreparedStatementRequest method.
+//	req, resp := client.DeletePreparedStatementRequest(params)
 //
-//    // Example sending a request using the DeletePreparedStatementRequest method.
-//    req, resp := client.DeletePreparedStatementRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/DeletePreparedStatement
 func (c *Athena) DeletePreparedStatementRequest(input *DeletePreparedStatementInput) (req *request.Request, output *DeletePreparedStatementOutput) {
@@ -771,16 +858,17 @@ func (c *Athena) DeletePreparedStatementRequest(input *DeletePreparedStatementIn
 // API operation DeletePreparedStatement for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
 //
-//   * ResourceNotFoundException
-//   A resource, such as a workgroup, was not found.
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+//   - ResourceNotFoundException
+//     A resource, such as a workgroup, was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/DeletePreparedStatement
 func (c *Athena) DeletePreparedStatement(input *DeletePreparedStatementInput) (*DeletePreparedStatementOutput, error) {
@@ -820,14 +908,13 @@ const opDeleteWorkGroup = "DeleteWorkGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteWorkGroupRequest method.
+//	req, resp := client.DeleteWorkGroupRequest(params)
 //
-//    // Example sending a request using the DeleteWorkGroupRequest method.
-//    req, resp := client.DeleteWorkGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/DeleteWorkGroup
 func (c *Athena) DeleteWorkGroupRequest(input *DeleteWorkGroupInput) (req *request.Request, output *DeleteWorkGroupOutput) {
@@ -860,13 +947,14 @@ func (c *Athena) DeleteWorkGroupRequest(input *DeleteWorkGroupInput) (req *reque
 // API operation DeleteWorkGroup for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/DeleteWorkGroup
 func (c *Athena) DeleteWorkGroup(input *DeleteWorkGroupInput) (*DeleteWorkGroupOutput, error) {
@@ -906,14 +994,13 @@ const opGetDataCatalog = "GetDataCatalog"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDataCatalogRequest method.
+//	req, resp := client.GetDataCatalogRequest(params)
 //
-//    // Example sending a request using the GetDataCatalogRequest method.
-//    req, resp := client.GetDataCatalogRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetDataCatalog
 func (c *Athena) GetDataCatalogRequest(input *GetDataCatalogInput) (req *request.Request, output *GetDataCatalogOutput) {
@@ -944,13 +1031,14 @@ func (c *Athena) GetDataCatalogRequest(input *GetDataCatalogInput) (req *request
 // API operation GetDataCatalog for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetDataCatalog
 func (c *Athena) GetDataCatalog(input *GetDataCatalogInput) (*GetDataCatalogOutput, error) {
@@ -990,14 +1078,13 @@ const opGetDatabase = "GetDatabase"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDatabaseRequest method.
+//	req, resp := client.GetDatabaseRequest(params)
 //
-//    // Example sending a request using the GetDatabaseRequest method.
-//    req, resp := client.GetDatabaseRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetDatabase
 func (c *Athena) GetDatabaseRequest(input *GetDatabaseInput) (req *request.Request, output *GetDatabaseOutput) {
@@ -1028,20 +1115,21 @@ func (c *Athena) GetDatabaseRequest(input *GetDatabaseInput) (req *request.Reque
 // API operation GetDatabase for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
 //
-//   * MetadataException
-//   An exception that Athena received when it called a custom metastore. Occurs
-//   if the error is not caused by user input (InvalidRequestException) or from
-//   the Athena platform (InternalServerException). For example, if a user-created
-//   Lambda function is missing permissions, the Lambda 4XX exception is returned
-//   in a MetadataException.
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+//   - MetadataException
+//     An exception that Athena received when it called a custom metastore. Occurs
+//     if the error is not caused by user input (InvalidRequestException) or from
+//     the Athena platform (InternalServerException). For example, if a user-created
+//     Lambda function is missing permissions, the Lambda 4XX exception is returned
+//     in a MetadataException.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetDatabase
 func (c *Athena) GetDatabase(input *GetDatabaseInput) (*GetDatabaseOutput, error) {
@@ -1081,14 +1169,13 @@ const opGetNamedQuery = "GetNamedQuery"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetNamedQueryRequest method.
+//	req, resp := client.GetNamedQueryRequest(params)
 //
-//    // Example sending a request using the GetNamedQueryRequest method.
-//    req, resp := client.GetNamedQueryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetNamedQuery
 func (c *Athena) GetNamedQueryRequest(input *GetNamedQueryInput) (req *request.Request, output *GetNamedQueryOutput) {
@@ -1120,13 +1207,14 @@ func (c *Athena) GetNamedQueryRequest(input *GetNamedQueryInput) (req *request.R
 // API operation GetNamedQuery for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetNamedQuery
 func (c *Athena) GetNamedQuery(input *GetNamedQueryInput) (*GetNamedQueryOutput, error) {
@@ -1166,14 +1254,13 @@ const opGetPreparedStatement = "GetPreparedStatement"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetPreparedStatementRequest method.
+//	req, resp := client.GetPreparedStatementRequest(params)
 //
-//    // Example sending a request using the GetPreparedStatementRequest method.
-//    req, resp := client.GetPreparedStatementRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetPreparedStatement
 func (c *Athena) GetPreparedStatementRequest(input *GetPreparedStatementInput) (req *request.Request, output *GetPreparedStatementOutput) {
@@ -1205,16 +1292,17 @@ func (c *Athena) GetPreparedStatementRequest(input *GetPreparedStatementInput) (
 // API operation GetPreparedStatement for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
 //
-//   * ResourceNotFoundException
-//   A resource, such as a workgroup, was not found.
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+//   - ResourceNotFoundException
+//     A resource, such as a workgroup, was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetPreparedStatement
 func (c *Athena) GetPreparedStatement(input *GetPreparedStatementInput) (*GetPreparedStatementOutput, error) {
@@ -1254,14 +1342,13 @@ const opGetQueryExecution = "GetQueryExecution"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetQueryExecutionRequest method.
+//	req, resp := client.GetQueryExecutionRequest(params)
 //
-//    // Example sending a request using the GetQueryExecutionRequest method.
-//    req, resp := client.GetQueryExecutionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetQueryExecution
 func (c *Athena) GetQueryExecutionRequest(input *GetQueryExecutionInput) (req *request.Request, output *GetQueryExecutionOutput) {
@@ -1294,13 +1381,14 @@ func (c *Athena) GetQueryExecutionRequest(input *GetQueryExecutionInput) (req *r
 // API operation GetQueryExecution for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetQueryExecution
 func (c *Athena) GetQueryExecution(input *GetQueryExecutionInput) (*GetQueryExecutionOutput, error) {
@@ -1340,14 +1428,13 @@ const opGetQueryResults = "GetQueryResults"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetQueryResultsRequest method.
+//	req, resp := client.GetQueryResultsRequest(params)
 //
-//    // Example sending a request using the GetQueryResultsRequest method.
-//    req, resp := client.GetQueryResultsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetQueryResults
 func (c *Athena) GetQueryResultsRequest(input *GetQueryResultsInput) (req *request.Request, output *GetQueryResultsOutput) {
@@ -1398,13 +1485,14 @@ func (c *Athena) GetQueryResultsRequest(input *GetQueryResultsInput) (req *reque
 // API operation GetQueryResults for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetQueryResults
 func (c *Athena) GetQueryResults(input *GetQueryResultsInput) (*GetQueryResultsOutput, error) {
@@ -1436,15 +1524,14 @@ func (c *Athena) GetQueryResultsWithContext(ctx aws.Context, input *GetQueryResu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a GetQueryResults operation.
-//    pageNum := 0
-//    err := client.GetQueryResultsPages(params,
-//        func(page *athena.GetQueryResultsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a GetQueryResults operation.
+//	pageNum := 0
+//	err := client.GetQueryResultsPages(params,
+//	    func(page *athena.GetQueryResultsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *Athena) GetQueryResultsPages(input *GetQueryResultsInput, fn func(*GetQueryResultsOutput, bool) bool) error {
 	return c.GetQueryResultsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1480,6 +1567,93 @@ func (c *Athena) GetQueryResultsPagesWithContext(ctx aws.Context, input *GetQuer
 	return p.Err()
 }
 
+const opGetQueryRuntimeStatistics = "GetQueryRuntimeStatistics"
+
+// GetQueryRuntimeStatisticsRequest generates a "aws/request.Request" representing the
+// client's request for the GetQueryRuntimeStatistics operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetQueryRuntimeStatistics for more information on using the GetQueryRuntimeStatistics
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetQueryRuntimeStatisticsRequest method.
+//	req, resp := client.GetQueryRuntimeStatisticsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetQueryRuntimeStatistics
+func (c *Athena) GetQueryRuntimeStatisticsRequest(input *GetQueryRuntimeStatisticsInput) (req *request.Request, output *GetQueryRuntimeStatisticsOutput) {
+	op := &request.Operation{
+		Name:       opGetQueryRuntimeStatistics,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetQueryRuntimeStatisticsInput{}
+	}
+
+	output = &GetQueryRuntimeStatisticsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetQueryRuntimeStatistics API operation for Amazon Athena.
+//
+// Returns query execution runtime statistics related to a single execution
+// of a query if you have access to the workgroup in which the query ran. The
+// query execution runtime statistics is returned only when QueryExecutionStatus$State
+// is in a SUCCEEDED or FAILED state.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Athena's
+// API operation GetQueryRuntimeStatistics for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetQueryRuntimeStatistics
+func (c *Athena) GetQueryRuntimeStatistics(input *GetQueryRuntimeStatisticsInput) (*GetQueryRuntimeStatisticsOutput, error) {
+	req, out := c.GetQueryRuntimeStatisticsRequest(input)
+	return out, req.Send()
+}
+
+// GetQueryRuntimeStatisticsWithContext is the same as GetQueryRuntimeStatistics with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetQueryRuntimeStatistics for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Athena) GetQueryRuntimeStatisticsWithContext(ctx aws.Context, input *GetQueryRuntimeStatisticsInput, opts ...request.Option) (*GetQueryRuntimeStatisticsOutput, error) {
+	req, out := c.GetQueryRuntimeStatisticsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetTableMetadata = "GetTableMetadata"
 
 // GetTableMetadataRequest generates a "aws/request.Request" representing the
@@ -1496,14 +1670,13 @@ const opGetTableMetadata = "GetTableMetadata"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetTableMetadataRequest method.
+//	req, resp := client.GetTableMetadataRequest(params)
 //
-//    // Example sending a request using the GetTableMetadataRequest method.
-//    req, resp := client.GetTableMetadataRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetTableMetadata
 func (c *Athena) GetTableMetadataRequest(input *GetTableMetadataInput) (req *request.Request, output *GetTableMetadataOutput) {
@@ -1534,20 +1707,21 @@ func (c *Athena) GetTableMetadataRequest(input *GetTableMetadataInput) (req *req
 // API operation GetTableMetadata for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
 //
-//   * MetadataException
-//   An exception that Athena received when it called a custom metastore. Occurs
-//   if the error is not caused by user input (InvalidRequestException) or from
-//   the Athena platform (InternalServerException). For example, if a user-created
-//   Lambda function is missing permissions, the Lambda 4XX exception is returned
-//   in a MetadataException.
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+//   - MetadataException
+//     An exception that Athena received when it called a custom metastore. Occurs
+//     if the error is not caused by user input (InvalidRequestException) or from
+//     the Athena platform (InternalServerException). For example, if a user-created
+//     Lambda function is missing permissions, the Lambda 4XX exception is returned
+//     in a MetadataException.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetTableMetadata
 func (c *Athena) GetTableMetadata(input *GetTableMetadataInput) (*GetTableMetadataOutput, error) {
@@ -1587,14 +1761,13 @@ const opGetWorkGroup = "GetWorkGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetWorkGroupRequest method.
+//	req, resp := client.GetWorkGroupRequest(params)
 //
-//    // Example sending a request using the GetWorkGroupRequest method.
-//    req, resp := client.GetWorkGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetWorkGroup
 func (c *Athena) GetWorkGroupRequest(input *GetWorkGroupInput) (req *request.Request, output *GetWorkGroupOutput) {
@@ -1625,13 +1798,14 @@ func (c *Athena) GetWorkGroupRequest(input *GetWorkGroupInput) (req *request.Req
 // API operation GetWorkGroup for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetWorkGroup
 func (c *Athena) GetWorkGroup(input *GetWorkGroupInput) (*GetWorkGroupOutput, error) {
@@ -1671,14 +1845,13 @@ const opListDataCatalogs = "ListDataCatalogs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDataCatalogsRequest method.
+//	req, resp := client.ListDataCatalogsRequest(params)
 //
-//    // Example sending a request using the ListDataCatalogsRequest method.
-//    req, resp := client.ListDataCatalogsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListDataCatalogs
 func (c *Athena) ListDataCatalogsRequest(input *ListDataCatalogsInput) (req *request.Request, output *ListDataCatalogsOutput) {
@@ -1715,13 +1888,14 @@ func (c *Athena) ListDataCatalogsRequest(input *ListDataCatalogsInput) (req *req
 // API operation ListDataCatalogs for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListDataCatalogs
 func (c *Athena) ListDataCatalogs(input *ListDataCatalogsInput) (*ListDataCatalogsOutput, error) {
@@ -1753,15 +1927,14 @@ func (c *Athena) ListDataCatalogsWithContext(ctx aws.Context, input *ListDataCat
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDataCatalogs operation.
-//    pageNum := 0
-//    err := client.ListDataCatalogsPages(params,
-//        func(page *athena.ListDataCatalogsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListDataCatalogs operation.
+//	pageNum := 0
+//	err := client.ListDataCatalogsPages(params,
+//	    func(page *athena.ListDataCatalogsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *Athena) ListDataCatalogsPages(input *ListDataCatalogsInput, fn func(*ListDataCatalogsOutput, bool) bool) error {
 	return c.ListDataCatalogsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1813,14 +1986,13 @@ const opListDatabases = "ListDatabases"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDatabasesRequest method.
+//	req, resp := client.ListDatabasesRequest(params)
 //
-//    // Example sending a request using the ListDatabasesRequest method.
-//    req, resp := client.ListDatabasesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListDatabases
 func (c *Athena) ListDatabasesRequest(input *ListDatabasesInput) (req *request.Request, output *ListDatabasesOutput) {
@@ -1857,20 +2029,21 @@ func (c *Athena) ListDatabasesRequest(input *ListDatabasesInput) (req *request.R
 // API operation ListDatabases for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
 //
-//   * MetadataException
-//   An exception that Athena received when it called a custom metastore. Occurs
-//   if the error is not caused by user input (InvalidRequestException) or from
-//   the Athena platform (InternalServerException). For example, if a user-created
-//   Lambda function is missing permissions, the Lambda 4XX exception is returned
-//   in a MetadataException.
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+//   - MetadataException
+//     An exception that Athena received when it called a custom metastore. Occurs
+//     if the error is not caused by user input (InvalidRequestException) or from
+//     the Athena platform (InternalServerException). For example, if a user-created
+//     Lambda function is missing permissions, the Lambda 4XX exception is returned
+//     in a MetadataException.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListDatabases
 func (c *Athena) ListDatabases(input *ListDatabasesInput) (*ListDatabasesOutput, error) {
@@ -1902,15 +2075,14 @@ func (c *Athena) ListDatabasesWithContext(ctx aws.Context, input *ListDatabasesI
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDatabases operation.
-//    pageNum := 0
-//    err := client.ListDatabasesPages(params,
-//        func(page *athena.ListDatabasesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListDatabases operation.
+//	pageNum := 0
+//	err := client.ListDatabasesPages(params,
+//	    func(page *athena.ListDatabasesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *Athena) ListDatabasesPages(input *ListDatabasesInput, fn func(*ListDatabasesOutput, bool) bool) error {
 	return c.ListDatabasesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1962,14 +2134,13 @@ const opListEngineVersions = "ListEngineVersions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListEngineVersionsRequest method.
+//	req, resp := client.ListEngineVersionsRequest(params)
 //
-//    // Example sending a request using the ListEngineVersionsRequest method.
-//    req, resp := client.ListEngineVersionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListEngineVersions
 func (c *Athena) ListEngineVersionsRequest(input *ListEngineVersionsInput) (req *request.Request, output *ListEngineVersionsOutput) {
@@ -1977,6 +2148,12 @@ func (c *Athena) ListEngineVersionsRequest(input *ListEngineVersionsInput) (req 
 		Name:       opListEngineVersions,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -2001,13 +2178,14 @@ func (c *Athena) ListEngineVersionsRequest(input *ListEngineVersionsInput) (req 
 // API operation ListEngineVersions for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListEngineVersions
 func (c *Athena) ListEngineVersions(input *ListEngineVersionsInput) (*ListEngineVersionsOutput, error) {
@@ -2031,6 +2209,57 @@ func (c *Athena) ListEngineVersionsWithContext(ctx aws.Context, input *ListEngin
 	return out, req.Send()
 }
 
+// ListEngineVersionsPages iterates over the pages of a ListEngineVersions operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListEngineVersions method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListEngineVersions operation.
+//	pageNum := 0
+//	err := client.ListEngineVersionsPages(params,
+//	    func(page *athena.ListEngineVersionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *Athena) ListEngineVersionsPages(input *ListEngineVersionsInput, fn func(*ListEngineVersionsOutput, bool) bool) error {
+	return c.ListEngineVersionsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListEngineVersionsPagesWithContext same as ListEngineVersionsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Athena) ListEngineVersionsPagesWithContext(ctx aws.Context, input *ListEngineVersionsInput, fn func(*ListEngineVersionsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListEngineVersionsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListEngineVersionsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListEngineVersionsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListNamedQueries = "ListNamedQueries"
 
 // ListNamedQueriesRequest generates a "aws/request.Request" representing the
@@ -2047,14 +2276,13 @@ const opListNamedQueries = "ListNamedQueries"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListNamedQueriesRequest method.
+//	req, resp := client.ListNamedQueriesRequest(params)
 //
-//    // Example sending a request using the ListNamedQueriesRequest method.
-//    req, resp := client.ListNamedQueriesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListNamedQueries
 func (c *Athena) ListNamedQueriesRequest(input *ListNamedQueriesInput) (req *request.Request, output *ListNamedQueriesOutput) {
@@ -2097,13 +2325,14 @@ func (c *Athena) ListNamedQueriesRequest(input *ListNamedQueriesInput) (req *req
 // API operation ListNamedQueries for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListNamedQueries
 func (c *Athena) ListNamedQueries(input *ListNamedQueriesInput) (*ListNamedQueriesOutput, error) {
@@ -2135,15 +2364,14 @@ func (c *Athena) ListNamedQueriesWithContext(ctx aws.Context, input *ListNamedQu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListNamedQueries operation.
-//    pageNum := 0
-//    err := client.ListNamedQueriesPages(params,
-//        func(page *athena.ListNamedQueriesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListNamedQueries operation.
+//	pageNum := 0
+//	err := client.ListNamedQueriesPages(params,
+//	    func(page *athena.ListNamedQueriesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *Athena) ListNamedQueriesPages(input *ListNamedQueriesInput, fn func(*ListNamedQueriesOutput, bool) bool) error {
 	return c.ListNamedQueriesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2195,14 +2423,13 @@ const opListPreparedStatements = "ListPreparedStatements"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPreparedStatementsRequest method.
+//	req, resp := client.ListPreparedStatementsRequest(params)
 //
-//    // Example sending a request using the ListPreparedStatementsRequest method.
-//    req, resp := client.ListPreparedStatementsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListPreparedStatements
 func (c *Athena) ListPreparedStatementsRequest(input *ListPreparedStatementsInput) (req *request.Request, output *ListPreparedStatementsOutput) {
@@ -2229,7 +2456,7 @@ func (c *Athena) ListPreparedStatementsRequest(input *ListPreparedStatementsInpu
 
 // ListPreparedStatements API operation for Amazon Athena.
 //
-// Lists the prepared statements in the specfied workgroup.
+// Lists the prepared statements in the specified workgroup.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2239,13 +2466,14 @@ func (c *Athena) ListPreparedStatementsRequest(input *ListPreparedStatementsInpu
 // API operation ListPreparedStatements for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListPreparedStatements
 func (c *Athena) ListPreparedStatements(input *ListPreparedStatementsInput) (*ListPreparedStatementsOutput, error) {
@@ -2277,15 +2505,14 @@ func (c *Athena) ListPreparedStatementsWithContext(ctx aws.Context, input *ListP
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListPreparedStatements operation.
-//    pageNum := 0
-//    err := client.ListPreparedStatementsPages(params,
-//        func(page *athena.ListPreparedStatementsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListPreparedStatements operation.
+//	pageNum := 0
+//	err := client.ListPreparedStatementsPages(params,
+//	    func(page *athena.ListPreparedStatementsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *Athena) ListPreparedStatementsPages(input *ListPreparedStatementsInput, fn func(*ListPreparedStatementsOutput, bool) bool) error {
 	return c.ListPreparedStatementsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2337,14 +2564,13 @@ const opListQueryExecutions = "ListQueryExecutions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListQueryExecutionsRequest method.
+//	req, resp := client.ListQueryExecutionsRequest(params)
 //
-//    // Example sending a request using the ListQueryExecutionsRequest method.
-//    req, resp := client.ListQueryExecutionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListQueryExecutions
 func (c *Athena) ListQueryExecutionsRequest(input *ListQueryExecutionsInput) (req *request.Request, output *ListQueryExecutionsOutput) {
@@ -2388,13 +2614,14 @@ func (c *Athena) ListQueryExecutionsRequest(input *ListQueryExecutionsInput) (re
 // API operation ListQueryExecutions for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListQueryExecutions
 func (c *Athena) ListQueryExecutions(input *ListQueryExecutionsInput) (*ListQueryExecutionsOutput, error) {
@@ -2426,15 +2653,14 @@ func (c *Athena) ListQueryExecutionsWithContext(ctx aws.Context, input *ListQuer
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListQueryExecutions operation.
-//    pageNum := 0
-//    err := client.ListQueryExecutionsPages(params,
-//        func(page *athena.ListQueryExecutionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListQueryExecutions operation.
+//	pageNum := 0
+//	err := client.ListQueryExecutionsPages(params,
+//	    func(page *athena.ListQueryExecutionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *Athena) ListQueryExecutionsPages(input *ListQueryExecutionsInput, fn func(*ListQueryExecutionsOutput, bool) bool) error {
 	return c.ListQueryExecutionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2486,14 +2712,13 @@ const opListTableMetadata = "ListTableMetadata"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTableMetadataRequest method.
+//	req, resp := client.ListTableMetadataRequest(params)
 //
-//    // Example sending a request using the ListTableMetadataRequest method.
-//    req, resp := client.ListTableMetadataRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListTableMetadata
 func (c *Athena) ListTableMetadataRequest(input *ListTableMetadataInput) (req *request.Request, output *ListTableMetadataOutput) {
@@ -2530,20 +2755,21 @@ func (c *Athena) ListTableMetadataRequest(input *ListTableMetadataInput) (req *r
 // API operation ListTableMetadata for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
 //
-//   * MetadataException
-//   An exception that Athena received when it called a custom metastore. Occurs
-//   if the error is not caused by user input (InvalidRequestException) or from
-//   the Athena platform (InternalServerException). For example, if a user-created
-//   Lambda function is missing permissions, the Lambda 4XX exception is returned
-//   in a MetadataException.
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+//   - MetadataException
+//     An exception that Athena received when it called a custom metastore. Occurs
+//     if the error is not caused by user input (InvalidRequestException) or from
+//     the Athena platform (InternalServerException). For example, if a user-created
+//     Lambda function is missing permissions, the Lambda 4XX exception is returned
+//     in a MetadataException.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListTableMetadata
 func (c *Athena) ListTableMetadata(input *ListTableMetadataInput) (*ListTableMetadataOutput, error) {
@@ -2575,15 +2801,14 @@ func (c *Athena) ListTableMetadataWithContext(ctx aws.Context, input *ListTableM
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTableMetadata operation.
-//    pageNum := 0
-//    err := client.ListTableMetadataPages(params,
-//        func(page *athena.ListTableMetadataOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTableMetadata operation.
+//	pageNum := 0
+//	err := client.ListTableMetadataPages(params,
+//	    func(page *athena.ListTableMetadataOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *Athena) ListTableMetadataPages(input *ListTableMetadataInput, fn func(*ListTableMetadataOutput, bool) bool) error {
 	return c.ListTableMetadataPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2635,14 +2860,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListTagsForResource
 func (c *Athena) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -2679,16 +2903,17 @@ func (c *Athena) ListTagsForResourceRequest(input *ListTagsForResourceInput) (re
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
 //
-//   * ResourceNotFoundException
-//   A resource, such as a workgroup, was not found.
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+//   - ResourceNotFoundException
+//     A resource, such as a workgroup, was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListTagsForResource
 func (c *Athena) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -2720,15 +2945,14 @@ func (c *Athena) ListTagsForResourceWithContext(ctx aws.Context, input *ListTags
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTagsForResource operation.
-//    pageNum := 0
-//    err := client.ListTagsForResourcePages(params,
-//        func(page *athena.ListTagsForResourceOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTagsForResource operation.
+//	pageNum := 0
+//	err := client.ListTagsForResourcePages(params,
+//	    func(page *athena.ListTagsForResourceOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *Athena) ListTagsForResourcePages(input *ListTagsForResourceInput, fn func(*ListTagsForResourceOutput, bool) bool) error {
 	return c.ListTagsForResourcePagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2780,14 +3004,13 @@ const opListWorkGroups = "ListWorkGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListWorkGroupsRequest method.
+//	req, resp := client.ListWorkGroupsRequest(params)
 //
-//    // Example sending a request using the ListWorkGroupsRequest method.
-//    req, resp := client.ListWorkGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListWorkGroups
 func (c *Athena) ListWorkGroupsRequest(input *ListWorkGroupsInput) (req *request.Request, output *ListWorkGroupsOutput) {
@@ -2824,13 +3047,14 @@ func (c *Athena) ListWorkGroupsRequest(input *ListWorkGroupsInput) (req *request
 // API operation ListWorkGroups for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListWorkGroups
 func (c *Athena) ListWorkGroups(input *ListWorkGroupsInput) (*ListWorkGroupsOutput, error) {
@@ -2862,15 +3086,14 @@ func (c *Athena) ListWorkGroupsWithContext(ctx aws.Context, input *ListWorkGroup
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListWorkGroups operation.
-//    pageNum := 0
-//    err := client.ListWorkGroupsPages(params,
-//        func(page *athena.ListWorkGroupsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListWorkGroups operation.
+//	pageNum := 0
+//	err := client.ListWorkGroupsPages(params,
+//	    func(page *athena.ListWorkGroupsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *Athena) ListWorkGroupsPages(input *ListWorkGroupsInput, fn func(*ListWorkGroupsOutput, bool) bool) error {
 	return c.ListWorkGroupsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2922,14 +3145,13 @@ const opStartQueryExecution = "StartQueryExecution"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartQueryExecutionRequest method.
+//	req, resp := client.StartQueryExecutionRequest(params)
 //
-//    // Example sending a request using the StartQueryExecutionRequest method.
-//    req, resp := client.StartQueryExecutionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/StartQueryExecution
 func (c *Athena) StartQueryExecutionRequest(input *StartQueryExecutionInput) (req *request.Request, output *StartQueryExecutionOutput) {
@@ -2965,16 +3187,17 @@ func (c *Athena) StartQueryExecutionRequest(input *StartQueryExecutionInput) (re
 // API operation StartQueryExecution for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
 //
-//   * TooManyRequestsException
-//   Indicates that the request was throttled.
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+//   - TooManyRequestsException
+//     Indicates that the request was throttled.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/StartQueryExecution
 func (c *Athena) StartQueryExecution(input *StartQueryExecutionInput) (*StartQueryExecutionOutput, error) {
@@ -3014,14 +3237,13 @@ const opStopQueryExecution = "StopQueryExecution"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopQueryExecutionRequest method.
+//	req, resp := client.StopQueryExecutionRequest(params)
 //
-//    // Example sending a request using the StopQueryExecutionRequest method.
-//    req, resp := client.StopQueryExecutionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/StopQueryExecution
 func (c *Athena) StopQueryExecutionRequest(input *StopQueryExecutionInput) (req *request.Request, output *StopQueryExecutionOutput) {
@@ -3058,13 +3280,14 @@ func (c *Athena) StopQueryExecutionRequest(input *StopQueryExecutionInput) (req 
 // API operation StopQueryExecution for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/StopQueryExecution
 func (c *Athena) StopQueryExecution(input *StopQueryExecutionInput) (*StopQueryExecutionOutput, error) {
@@ -3104,14 +3327,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/TagResource
 func (c *Athena) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -3154,16 +3376,17 @@ func (c *Athena) TagResourceRequest(input *TagResourceInput) (req *request.Reque
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
 //
-//   * ResourceNotFoundException
-//   A resource, such as a workgroup, was not found.
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+//   - ResourceNotFoundException
+//     A resource, such as a workgroup, was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/TagResource
 func (c *Athena) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -3203,14 +3426,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UntagResource
 func (c *Athena) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -3242,16 +3464,17 @@ func (c *Athena) UntagResourceRequest(input *UntagResourceInput) (req *request.R
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
 //
-//   * ResourceNotFoundException
-//   A resource, such as a workgroup, was not found.
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+//   - ResourceNotFoundException
+//     A resource, such as a workgroup, was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UntagResource
 func (c *Athena) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -3291,14 +3514,13 @@ const opUpdateDataCatalog = "UpdateDataCatalog"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateDataCatalogRequest method.
+//	req, resp := client.UpdateDataCatalogRequest(params)
 //
-//    // Example sending a request using the UpdateDataCatalogRequest method.
-//    req, resp := client.UpdateDataCatalogRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UpdateDataCatalog
 func (c *Athena) UpdateDataCatalogRequest(input *UpdateDataCatalogInput) (req *request.Request, output *UpdateDataCatalogOutput) {
@@ -3330,13 +3552,14 @@ func (c *Athena) UpdateDataCatalogRequest(input *UpdateDataCatalogInput) (req *r
 // API operation UpdateDataCatalog for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UpdateDataCatalog
 func (c *Athena) UpdateDataCatalog(input *UpdateDataCatalogInput) (*UpdateDataCatalogOutput, error) {
@@ -3376,14 +3599,13 @@ const opUpdateNamedQuery = "UpdateNamedQuery"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateNamedQueryRequest method.
+//	req, resp := client.UpdateNamedQueryRequest(params)
 //
-//    // Example sending a request using the UpdateNamedQueryRequest method.
-//    req, resp := client.UpdateNamedQueryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UpdateNamedQuery
 func (c *Athena) UpdateNamedQueryRequest(input *UpdateNamedQueryInput) (req *request.Request, output *UpdateNamedQueryOutput) {
@@ -3415,13 +3637,14 @@ func (c *Athena) UpdateNamedQueryRequest(input *UpdateNamedQueryInput) (req *req
 // API operation UpdateNamedQuery for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UpdateNamedQuery
 func (c *Athena) UpdateNamedQuery(input *UpdateNamedQueryInput) (*UpdateNamedQueryOutput, error) {
@@ -3461,14 +3684,13 @@ const opUpdatePreparedStatement = "UpdatePreparedStatement"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdatePreparedStatementRequest method.
+//	req, resp := client.UpdatePreparedStatementRequest(params)
 //
-//    // Example sending a request using the UpdatePreparedStatementRequest method.
-//    req, resp := client.UpdatePreparedStatementRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UpdatePreparedStatement
 func (c *Athena) UpdatePreparedStatementRequest(input *UpdatePreparedStatementInput) (req *request.Request, output *UpdatePreparedStatementOutput) {
@@ -3500,16 +3722,17 @@ func (c *Athena) UpdatePreparedStatementRequest(input *UpdatePreparedStatementIn
 // API operation UpdatePreparedStatement for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
 //
-//   * ResourceNotFoundException
-//   A resource, such as a workgroup, was not found.
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
+//
+//   - ResourceNotFoundException
+//     A resource, such as a workgroup, was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UpdatePreparedStatement
 func (c *Athena) UpdatePreparedStatement(input *UpdatePreparedStatementInput) (*UpdatePreparedStatementOutput, error) {
@@ -3549,14 +3772,13 @@ const opUpdateWorkGroup = "UpdateWorkGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateWorkGroupRequest method.
+//	req, resp := client.UpdateWorkGroupRequest(params)
 //
-//    // Example sending a request using the UpdateWorkGroupRequest method.
-//    req, resp := client.UpdateWorkGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UpdateWorkGroup
 func (c *Athena) UpdateWorkGroupRequest(input *UpdateWorkGroupInput) (req *request.Request, output *UpdateWorkGroupOutput) {
@@ -3589,13 +3811,14 @@ func (c *Athena) UpdateWorkGroupRequest(input *UpdateWorkGroupInput) (req *reque
 // API operation UpdateWorkGroup for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   Indicates a platform issue, which may be due to a transient condition or
-//   outage.
 //
-//   * InvalidRequestException
-//   Indicates that something is wrong with the input to the request. For example,
-//   a required parameter may be missing or out of range.
+//   - InternalServerException
+//     Indicates a platform issue, which may be due to a transient condition or
+//     outage.
+//
+//   - InvalidRequestException
+//     Indicates that something is wrong with the input to the request. For example,
+//     a required parameter may be missing or out of range.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UpdateWorkGroup
 func (c *Athena) UpdateWorkGroup(input *UpdateWorkGroupInput) (*UpdateWorkGroupOutput, error) {
@@ -3619,6 +3842,63 @@ func (c *Athena) UpdateWorkGroupWithContext(ctx aws.Context, input *UpdateWorkGr
 	return out, req.Send()
 }
 
+// Indicates that an Amazon S3 canned ACL should be set to control ownership
+// of stored query results. When Athena stores query results in Amazon S3, the
+// canned ACL is set with the x-amz-acl request header. For more information
+// about S3 Object Ownership, see Object Ownership settings (https://docs.aws.amazon.com/AmazonS3/latest/userguide/about-object-ownership.html#object-ownership-overview)
+// in the Amazon S3 User Guide.
+type AclConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon S3 canned ACL that Athena should specify when storing query results.
+	// Currently the only supported canned ACL is BUCKET_OWNER_FULL_CONTROL. If
+	// a query runs in a workgroup and the workgroup overrides client-side settings,
+	// then the Amazon S3 canned ACL specified in the workgroup's settings is used
+	// for all queries that run in the workgroup. For more information about Amazon
+	// S3 canned ACLs, see Canned ACL (https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl)
+	// in the Amazon S3 User Guide.
+	//
+	// S3AclOption is a required field
+	S3AclOption *string `type:"string" required:"true" enum:"S3AclOption"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AclConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AclConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AclConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AclConfiguration"}
+	if s.S3AclOption == nil {
+		invalidParams.Add(request.NewErrParamRequired("S3AclOption"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetS3AclOption sets the S3AclOption field's value.
+func (s *AclConfiguration) SetS3AclOption(v string) *AclConfiguration {
+	s.S3AclOption = &v
+	return s
+}
+
 // Provides information about an Athena query error. The AthenaError feature
 // provides standardized error information to help you understand failed queries
 // and take steps after a query failure occurs. AthenaError includes an ErrorCategory
@@ -3637,10 +3917,16 @@ type AthenaError struct {
 	// 3 - Other
 	ErrorCategory *int64 `min:"1" type:"integer"`
 
+	// Contains a short description of the error that occurred.
+	ErrorMessage *string `type:"string"`
+
 	// An integer value that provides specific information about an Athena query
 	// error. For the meaning of specific values, see the Error Type Reference (https://docs.aws.amazon.com/athena/latest/ug/error-reference.html#error-reference-error-type-reference)
 	// in the Amazon Athena User Guide.
 	ErrorType *int64 `type:"integer"`
+
+	// True if the query might succeed if resubmitted.
+	Retryable *bool `type:"boolean"`
 }
 
 // String returns the string representation.
@@ -3667,12 +3953,25 @@ func (s *AthenaError) SetErrorCategory(v int64) *AthenaError {
 	return s
 }
 
+// SetErrorMessage sets the ErrorMessage field's value.
+func (s *AthenaError) SetErrorMessage(v string) *AthenaError {
+	s.ErrorMessage = &v
+	return s
+}
+
 // SetErrorType sets the ErrorType field's value.
 func (s *AthenaError) SetErrorType(v int64) *AthenaError {
 	s.ErrorType = &v
 	return s
 }
 
+// SetRetryable sets the Retryable field's value.
+func (s *AthenaError) SetRetryable(v bool) *AthenaError {
+	s.Retryable = &v
+	return s
+}
+
+// Contains an array of named query IDs.
 type BatchGetNamedQueryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3762,6 +4061,108 @@ func (s *BatchGetNamedQueryOutput) SetUnprocessedNamedQueryIds(v []*UnprocessedN
 	return s
 }
 
+type BatchGetPreparedStatementInput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of prepared statement names to return.
+	//
+	// PreparedStatementNames is a required field
+	PreparedStatementNames []*string `type:"list" required:"true"`
+
+	// The name of the workgroup to which the prepared statements belong.
+	//
+	// WorkGroup is a required field
+	WorkGroup *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchGetPreparedStatementInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchGetPreparedStatementInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchGetPreparedStatementInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchGetPreparedStatementInput"}
+	if s.PreparedStatementNames == nil {
+		invalidParams.Add(request.NewErrParamRequired("PreparedStatementNames"))
+	}
+	if s.WorkGroup == nil {
+		invalidParams.Add(request.NewErrParamRequired("WorkGroup"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetPreparedStatementNames sets the PreparedStatementNames field's value.
+func (s *BatchGetPreparedStatementInput) SetPreparedStatementNames(v []*string) *BatchGetPreparedStatementInput {
+	s.PreparedStatementNames = v
+	return s
+}
+
+// SetWorkGroup sets the WorkGroup field's value.
+func (s *BatchGetPreparedStatementInput) SetWorkGroup(v string) *BatchGetPreparedStatementInput {
+	s.WorkGroup = &v
+	return s
+}
+
+type BatchGetPreparedStatementOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The list of prepared statements returned.
+	PreparedStatements []*PreparedStatement `type:"list"`
+
+	// A list of one or more prepared statements that were requested but could not
+	// be returned.
+	UnprocessedPreparedStatementNames []*UnprocessedPreparedStatementName `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchGetPreparedStatementOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchGetPreparedStatementOutput) GoString() string {
+	return s.String()
+}
+
+// SetPreparedStatements sets the PreparedStatements field's value.
+func (s *BatchGetPreparedStatementOutput) SetPreparedStatements(v []*PreparedStatement) *BatchGetPreparedStatementOutput {
+	s.PreparedStatements = v
+	return s
+}
+
+// SetUnprocessedPreparedStatementNames sets the UnprocessedPreparedStatementNames field's value.
+func (s *BatchGetPreparedStatementOutput) SetUnprocessedPreparedStatementNames(v []*UnprocessedPreparedStatementName) *BatchGetPreparedStatementOutput {
+	s.UnprocessedPreparedStatementNames = v
+	return s
+}
+
+// Contains an array of query execution IDs.
 type BatchGetQueryExecutionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4301,7 +4702,7 @@ type CreateNamedQueryOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The unique ID of the query.
-	NamedQueryId *string `type:"string"`
+	NamedQueryId *string `min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -4849,7 +5250,7 @@ type DeleteNamedQueryInput struct {
 	_ struct{} `type:"structure"`
 
 	// The unique ID of the query to delete.
-	NamedQueryId *string `type:"string" idempotencyToken:"true"`
+	NamedQueryId *string `min:"1" type:"string" idempotencyToken:"true"`
 }
 
 // String returns the string representation.
@@ -4868,6 +5269,19 @@ func (s DeleteNamedQueryInput) String() string {
 // value will be replaced with "sensitive".
 func (s DeleteNamedQueryInput) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteNamedQueryInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteNamedQueryInput"}
+	if s.NamedQueryId != nil && len(*s.NamedQueryId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NamedQueryId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetNamedQueryId sets the NamedQueryId field's value.
@@ -5062,13 +5476,13 @@ func (s DeleteWorkGroupOutput) GoString() string {
 }
 
 // If query results are encrypted in Amazon S3, indicates the encryption option
-// used (for example, SSE-KMS or CSE-KMS) and key information.
+// used (for example, SSE_KMS or CSE_KMS) and key information.
 type EncryptionConfiguration struct {
 	_ struct{} `type:"structure"`
 
 	// Indicates whether Amazon S3 server-side encryption with Amazon S3-managed
-	// keys (SSE-S3), server-side encryption with KMS-managed keys (SSE-KMS), or
-	// client-side encryption with KMS-managed keys (CSE-KMS) is used.
+	// keys (SSE_S3), server-side encryption with KMS-managed keys (SSE_KMS), or
+	// client-side encryption with KMS-managed keys (CSE_KMS) is used.
 	//
 	// If a query runs in a workgroup and the workgroup overrides client-side settings,
 	// then the workgroup's setting for encryption is used. It specifies whether
@@ -5077,7 +5491,7 @@ type EncryptionConfiguration struct {
 	// EncryptionOption is a required field
 	EncryptionOption *string `type:"string" required:"true" enum:"EncryptionOption"`
 
-	// For SSE-KMS and CSE-KMS, this is the KMS key ARN or ID.
+	// For SSE_KMS and CSE_KMS, this is the KMS key ARN or ID.
 	KmsKey *string `type:"string"`
 }
 
@@ -5370,7 +5784,7 @@ type GetNamedQueryInput struct {
 	// The unique ID of the query. Use ListNamedQueries to get query IDs.
 	//
 	// NamedQueryId is a required field
-	NamedQueryId *string `type:"string" required:"true"`
+	NamedQueryId *string `min:"1" type:"string" required:"true"`
 }
 
 // String returns the string representation.
@@ -5396,6 +5810,9 @@ func (s *GetNamedQueryInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "GetNamedQueryInput"}
 	if s.NamedQueryId == nil {
 		invalidParams.Add(request.NewErrParamRequired("NamedQueryId"))
+	}
+	if s.NamedQueryId != nil && len(*s.NamedQueryId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NamedQueryId", 1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -5541,7 +5958,7 @@ type GetQueryExecutionInput struct {
 	// The unique ID of the query execution.
 	//
 	// QueryExecutionId is a required field
-	QueryExecutionId *string `type:"string" required:"true"`
+	QueryExecutionId *string `min:"1" type:"string" required:"true"`
 }
 
 // String returns the string representation.
@@ -5567,6 +5984,9 @@ func (s *GetQueryExecutionInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "GetQueryExecutionInput"}
 	if s.QueryExecutionId == nil {
 		invalidParams.Add(request.NewErrParamRequired("QueryExecutionId"))
+	}
+	if s.QueryExecutionId != nil && len(*s.QueryExecutionId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("QueryExecutionId", 1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -5627,7 +6047,7 @@ type GetQueryResultsInput struct {
 	// The unique ID of the query execution.
 	//
 	// QueryExecutionId is a required field
-	QueryExecutionId *string `type:"string" required:"true"`
+	QueryExecutionId *string `min:"1" type:"string" required:"true"`
 }
 
 // String returns the string representation.
@@ -5659,6 +6079,9 @@ func (s *GetQueryResultsInput) Validate() error {
 	}
 	if s.QueryExecutionId == nil {
 		invalidParams.Add(request.NewErrParamRequired("QueryExecutionId"))
+	}
+	if s.QueryExecutionId != nil && len(*s.QueryExecutionId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("QueryExecutionId", 1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -5734,6 +6157,86 @@ func (s *GetQueryResultsOutput) SetResultSet(v *ResultSet) *GetQueryResultsOutpu
 // SetUpdateCount sets the UpdateCount field's value.
 func (s *GetQueryResultsOutput) SetUpdateCount(v int64) *GetQueryResultsOutput {
 	s.UpdateCount = &v
+	return s
+}
+
+type GetQueryRuntimeStatisticsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique ID of the query execution.
+	//
+	// QueryExecutionId is a required field
+	QueryExecutionId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetQueryRuntimeStatisticsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetQueryRuntimeStatisticsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetQueryRuntimeStatisticsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetQueryRuntimeStatisticsInput"}
+	if s.QueryExecutionId == nil {
+		invalidParams.Add(request.NewErrParamRequired("QueryExecutionId"))
+	}
+	if s.QueryExecutionId != nil && len(*s.QueryExecutionId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("QueryExecutionId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetQueryExecutionId sets the QueryExecutionId field's value.
+func (s *GetQueryRuntimeStatisticsInput) SetQueryExecutionId(v string) *GetQueryRuntimeStatisticsInput {
+	s.QueryExecutionId = &v
+	return s
+}
+
+type GetQueryRuntimeStatisticsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Runtime statistics about the query execution.
+	QueryRuntimeStatistics *QueryRuntimeStatistics `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetQueryRuntimeStatisticsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetQueryRuntimeStatisticsOutput) GoString() string {
+	return s.String()
+}
+
+// SetQueryRuntimeStatistics sets the QueryRuntimeStatistics field's value.
+func (s *GetQueryRuntimeStatisticsOutput) SetQueryRuntimeStatistics(v *QueryRuntimeStatistics) *GetQueryRuntimeStatisticsOutput {
+	s.QueryRuntimeStatistics = v
 	return s
 }
 
@@ -7170,7 +7673,7 @@ type NamedQuery struct {
 	Name *string `min:"1" type:"string" required:"true"`
 
 	// The unique identifier of the query.
-	NamedQueryId *string `type:"string"`
+	NamedQueryId *string `min:"1" type:"string"`
 
 	// The SQL statements that make up the query.
 	//
@@ -7351,6 +7854,10 @@ type QueryExecution struct {
 	// The engine version that executed the query.
 	EngineVersion *EngineVersion `type:"structure"`
 
+	// A list of values for the parameters in a query. The values are applied sequentially
+	// to the parameters in the query in the order in which the parameters occur.
+	ExecutionParameters []*string `min:"1" type:"list"`
+
 	// The SQL query statements which the query execution ran.
 	Query *string `min:"1" type:"string"`
 
@@ -7358,7 +7865,7 @@ type QueryExecution struct {
 	QueryExecutionContext *QueryExecutionContext `type:"structure"`
 
 	// The unique identifier for each query execution.
-	QueryExecutionId *string `type:"string"`
+	QueryExecutionId *string `min:"1" type:"string"`
 
 	// The location in Amazon S3 where query results were stored and the encryption
 	// option, if any, used for query results. These are known as "client-side settings".
@@ -7407,6 +7914,12 @@ func (s QueryExecution) GoString() string {
 // SetEngineVersion sets the EngineVersion field's value.
 func (s *QueryExecution) SetEngineVersion(v *EngineVersion) *QueryExecution {
 	s.EngineVersion = v
+	return s
+}
+
+// SetExecutionParameters sets the ExecutionParameters field's value.
+func (s *QueryExecution) SetExecutionParameters(v []*string) *QueryExecution {
+	s.ExecutionParameters = v
 	return s
 }
 
@@ -7694,6 +8207,363 @@ func (s *QueryExecutionStatus) SetSubmissionDateTime(v time.Time) *QueryExecutio
 	return s
 }
 
+// The query execution timeline, statistics on input and output rows and bytes,
+// and the different query stages that form the query execution plan.
+type QueryRuntimeStatistics struct {
+	_ struct{} `type:"structure"`
+
+	// Stage statistics such as input and output rows and bytes, execution time,
+	// and stage state. This information also includes substages and the query stage
+	// plan.
+	OutputStage *QueryStage `type:"structure"`
+
+	// Statistics such as input rows and bytes read by the query, rows and bytes
+	// output by the query, and the number of rows written by the query.
+	Rows *QueryRuntimeStatisticsRows `type:"structure"`
+
+	// Timeline statistics such as query queue time, planning time, execution time,
+	// service processing time, and total execution time.
+	Timeline *QueryRuntimeStatisticsTimeline `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueryRuntimeStatistics) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueryRuntimeStatistics) GoString() string {
+	return s.String()
+}
+
+// SetOutputStage sets the OutputStage field's value.
+func (s *QueryRuntimeStatistics) SetOutputStage(v *QueryStage) *QueryRuntimeStatistics {
+	s.OutputStage = v
+	return s
+}
+
+// SetRows sets the Rows field's value.
+func (s *QueryRuntimeStatistics) SetRows(v *QueryRuntimeStatisticsRows) *QueryRuntimeStatistics {
+	s.Rows = v
+	return s
+}
+
+// SetTimeline sets the Timeline field's value.
+func (s *QueryRuntimeStatistics) SetTimeline(v *QueryRuntimeStatisticsTimeline) *QueryRuntimeStatistics {
+	s.Timeline = v
+	return s
+}
+
+// Statistics such as input rows and bytes read by the query, rows and bytes
+// output by the query, and the number of rows written by the query.
+type QueryRuntimeStatisticsRows struct {
+	_ struct{} `type:"structure"`
+
+	// The number of bytes read to execute the query.
+	InputBytes *int64 `type:"long"`
+
+	// The number of rows read to execute the query.
+	InputRows *int64 `type:"long"`
+
+	// The number of bytes returned by the query.
+	OutputBytes *int64 `type:"long"`
+
+	// The number of rows returned by the query.
+	OutputRows *int64 `type:"long"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueryRuntimeStatisticsRows) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueryRuntimeStatisticsRows) GoString() string {
+	return s.String()
+}
+
+// SetInputBytes sets the InputBytes field's value.
+func (s *QueryRuntimeStatisticsRows) SetInputBytes(v int64) *QueryRuntimeStatisticsRows {
+	s.InputBytes = &v
+	return s
+}
+
+// SetInputRows sets the InputRows field's value.
+func (s *QueryRuntimeStatisticsRows) SetInputRows(v int64) *QueryRuntimeStatisticsRows {
+	s.InputRows = &v
+	return s
+}
+
+// SetOutputBytes sets the OutputBytes field's value.
+func (s *QueryRuntimeStatisticsRows) SetOutputBytes(v int64) *QueryRuntimeStatisticsRows {
+	s.OutputBytes = &v
+	return s
+}
+
+// SetOutputRows sets the OutputRows field's value.
+func (s *QueryRuntimeStatisticsRows) SetOutputRows(v int64) *QueryRuntimeStatisticsRows {
+	s.OutputRows = &v
+	return s
+}
+
+// Timeline statistics such as query queue time, planning time, execution time,
+// service processing time, and total execution time.
+type QueryRuntimeStatisticsTimeline struct {
+	_ struct{} `type:"structure"`
+
+	// The number of milliseconds that the query took to execute.
+	EngineExecutionTimeInMillis *int64 `type:"long"`
+
+	// The number of milliseconds that Athena took to plan the query processing
+	// flow. This includes the time spent retrieving table partitions from the data
+	// source. Note that because the query engine performs the query planning, query
+	// planning time is a subset of engine processing time.
+	QueryPlanningTimeInMillis *int64 `type:"long"`
+
+	// The number of milliseconds that the query was in your query queue waiting
+	// for resources. Note that if transient errors occur, Athena might automatically
+	// add the query back to the queue.
+	QueryQueueTimeInMillis *int64 `type:"long"`
+
+	// The number of milliseconds that Athena took to finalize and publish the query
+	// results after the query engine finished running the query.
+	ServiceProcessingTimeInMillis *int64 `type:"long"`
+
+	// The number of milliseconds that Athena took to run the query.
+	TotalExecutionTimeInMillis *int64 `type:"long"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueryRuntimeStatisticsTimeline) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueryRuntimeStatisticsTimeline) GoString() string {
+	return s.String()
+}
+
+// SetEngineExecutionTimeInMillis sets the EngineExecutionTimeInMillis field's value.
+func (s *QueryRuntimeStatisticsTimeline) SetEngineExecutionTimeInMillis(v int64) *QueryRuntimeStatisticsTimeline {
+	s.EngineExecutionTimeInMillis = &v
+	return s
+}
+
+// SetQueryPlanningTimeInMillis sets the QueryPlanningTimeInMillis field's value.
+func (s *QueryRuntimeStatisticsTimeline) SetQueryPlanningTimeInMillis(v int64) *QueryRuntimeStatisticsTimeline {
+	s.QueryPlanningTimeInMillis = &v
+	return s
+}
+
+// SetQueryQueueTimeInMillis sets the QueryQueueTimeInMillis field's value.
+func (s *QueryRuntimeStatisticsTimeline) SetQueryQueueTimeInMillis(v int64) *QueryRuntimeStatisticsTimeline {
+	s.QueryQueueTimeInMillis = &v
+	return s
+}
+
+// SetServiceProcessingTimeInMillis sets the ServiceProcessingTimeInMillis field's value.
+func (s *QueryRuntimeStatisticsTimeline) SetServiceProcessingTimeInMillis(v int64) *QueryRuntimeStatisticsTimeline {
+	s.ServiceProcessingTimeInMillis = &v
+	return s
+}
+
+// SetTotalExecutionTimeInMillis sets the TotalExecutionTimeInMillis field's value.
+func (s *QueryRuntimeStatisticsTimeline) SetTotalExecutionTimeInMillis(v int64) *QueryRuntimeStatisticsTimeline {
+	s.TotalExecutionTimeInMillis = &v
+	return s
+}
+
+// Stage statistics such as input and output rows and bytes, execution time
+// and stage state. This information also includes substages and the query stage
+// plan.
+type QueryStage struct {
+	_ struct{} `type:"structure"`
+
+	// Time taken to execute this stage.
+	ExecutionTime *int64 `type:"long"`
+
+	// The number of bytes input into the stage for execution.
+	InputBytes *int64 `type:"long"`
+
+	// The number of rows input into the stage for execution.
+	InputRows *int64 `type:"long"`
+
+	// The number of bytes output from the stage after execution.
+	OutputBytes *int64 `type:"long"`
+
+	// The number of rows output from the stage after execution.
+	OutputRows *int64 `type:"long"`
+
+	// Stage plan information such as name, identifier, sub plans, and source stages.
+	QueryStagePlan *QueryStagePlanNode `type:"structure"`
+
+	// The identifier for a stage.
+	StageId *int64 `type:"long"`
+
+	// State of the stage after query execution.
+	State *string `type:"string"`
+
+	// List of sub query stages that form this stage execution plan.
+	SubStages []*QueryStage `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueryStage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueryStage) GoString() string {
+	return s.String()
+}
+
+// SetExecutionTime sets the ExecutionTime field's value.
+func (s *QueryStage) SetExecutionTime(v int64) *QueryStage {
+	s.ExecutionTime = &v
+	return s
+}
+
+// SetInputBytes sets the InputBytes field's value.
+func (s *QueryStage) SetInputBytes(v int64) *QueryStage {
+	s.InputBytes = &v
+	return s
+}
+
+// SetInputRows sets the InputRows field's value.
+func (s *QueryStage) SetInputRows(v int64) *QueryStage {
+	s.InputRows = &v
+	return s
+}
+
+// SetOutputBytes sets the OutputBytes field's value.
+func (s *QueryStage) SetOutputBytes(v int64) *QueryStage {
+	s.OutputBytes = &v
+	return s
+}
+
+// SetOutputRows sets the OutputRows field's value.
+func (s *QueryStage) SetOutputRows(v int64) *QueryStage {
+	s.OutputRows = &v
+	return s
+}
+
+// SetQueryStagePlan sets the QueryStagePlan field's value.
+func (s *QueryStage) SetQueryStagePlan(v *QueryStagePlanNode) *QueryStage {
+	s.QueryStagePlan = v
+	return s
+}
+
+// SetStageId sets the StageId field's value.
+func (s *QueryStage) SetStageId(v int64) *QueryStage {
+	s.StageId = &v
+	return s
+}
+
+// SetState sets the State field's value.
+func (s *QueryStage) SetState(v string) *QueryStage {
+	s.State = &v
+	return s
+}
+
+// SetSubStages sets the SubStages field's value.
+func (s *QueryStage) SetSubStages(v []*QueryStage) *QueryStage {
+	s.SubStages = v
+	return s
+}
+
+// Stage plan information such as name, identifier, sub plans, and remote sources.
+type QueryStagePlanNode struct {
+	_ struct{} `type:"structure"`
+
+	// Stage plan information such as name, identifier, sub plans, and remote sources
+	// of child plan nodes/
+	Children []*QueryStagePlanNode `type:"list"`
+
+	// Information about the operation this query stage plan node is performing.
+	Identifier *string `type:"string"`
+
+	// Name of the query stage plan that describes the operation this stage is performing
+	// as part of query execution.
+	Name *string `type:"string"`
+
+	// Source plan node IDs.
+	RemoteSources []*string `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueryStagePlanNode) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueryStagePlanNode) GoString() string {
+	return s.String()
+}
+
+// SetChildren sets the Children field's value.
+func (s *QueryStagePlanNode) SetChildren(v []*QueryStagePlanNode) *QueryStagePlanNode {
+	s.Children = v
+	return s
+}
+
+// SetIdentifier sets the Identifier field's value.
+func (s *QueryStagePlanNode) SetIdentifier(v string) *QueryStagePlanNode {
+	s.Identifier = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *QueryStagePlanNode) SetName(v string) *QueryStagePlanNode {
+	s.Name = &v
+	return s
+}
+
+// SetRemoteSources sets the RemoteSources field's value.
+func (s *QueryStagePlanNode) SetRemoteSources(v []*string) *QueryStagePlanNode {
+	s.RemoteSources = v
+	return s
+}
+
 // A resource, such as a workgroup, was not found.
 type ResourceNotFoundException struct {
 	_            struct{}                  `type:"structure"`
@@ -7701,6 +8571,7 @@ type ResourceNotFoundException struct {
 
 	Message_ *string `locationName:"Message" type:"string"`
 
+	// The name of the Amazon resource.
 	ResourceName *string `min:"1" type:"string"`
 }
 
@@ -7767,8 +8638,17 @@ func (s *ResourceNotFoundException) RequestID() string {
 type ResultConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// Indicates that an Amazon S3 canned ACL should be set to control ownership
+	// of stored query results. Currently the only supported canned ACL is BUCKET_OWNER_FULL_CONTROL.
+	// This is a client-side setting. If workgroup settings override client-side
+	// settings, then the query uses the ACL configuration that is specified for
+	// the workgroup, and also uses the location for storing query results specified
+	// in the workgroup. For more information, see WorkGroupConfiguration$EnforceWorkGroupConfiguration
+	// and Workgroup Settings Override Client-Side Settings (https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html).
+	AclConfiguration *AclConfiguration `type:"structure"`
+
 	// If query results are encrypted in Amazon S3, indicates the encryption option
-	// used (for example, SSE-KMS or CSE-KMS) and key information. This is a client-side
+	// used (for example, SSE_KMS or CSE_KMS) and key information. This is a client-side
 	// setting. If workgroup settings override client-side settings, then the query
 	// uses the encryption configuration that is specified for the workgroup, and
 	// also uses the location for storing query results specified in the workgroup.
@@ -7788,7 +8668,7 @@ type ResultConfiguration struct {
 	// for the workgroup, and also uses the location for storing query results specified
 	// in the workgroup. See WorkGroupConfiguration$EnforceWorkGroupConfiguration
 	// and Workgroup Settings Override Client-Side Settings (https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html).
-	ExpectedBucketOwner *string `type:"string"`
+	ExpectedBucketOwner *string `min:"12" type:"string"`
 
 	// The location in Amazon S3 where your query results are stored, such as s3://path/to/query/bucket/.
 	// To run the query, you must specify the query results location using one of
@@ -7822,6 +8702,14 @@ func (s ResultConfiguration) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *ResultConfiguration) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ResultConfiguration"}
+	if s.ExpectedBucketOwner != nil && len(*s.ExpectedBucketOwner) < 12 {
+		invalidParams.Add(request.NewErrParamMinLen("ExpectedBucketOwner", 12))
+	}
+	if s.AclConfiguration != nil {
+		if err := s.AclConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("AclConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.EncryptionConfiguration != nil {
 		if err := s.EncryptionConfiguration.Validate(); err != nil {
 			invalidParams.AddNested("EncryptionConfiguration", err.(request.ErrInvalidParams))
@@ -7832,6 +8720,12 @@ func (s *ResultConfiguration) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAclConfiguration sets the AclConfiguration field's value.
+func (s *ResultConfiguration) SetAclConfiguration(v *AclConfiguration) *ResultConfiguration {
+	s.AclConfiguration = v
+	return s
 }
 
 // SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
@@ -7857,6 +8751,9 @@ func (s *ResultConfiguration) SetOutputLocation(v string) *ResultConfiguration {
 type ResultConfigurationUpdates struct {
 	_ struct{} `type:"structure"`
 
+	// The ACL configuration for the query results.
+	AclConfiguration *AclConfiguration `type:"structure"`
+
 	// The encryption configuration for the query results.
 	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
 
@@ -7872,7 +8769,7 @@ type ResultConfigurationUpdates struct {
 	// also uses the location for storing query results specified in the workgroup.
 	// See WorkGroupConfiguration$EnforceWorkGroupConfiguration and Workgroup Settings
 	// Override Client-Side Settings (https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html).
-	ExpectedBucketOwner *string `type:"string"`
+	ExpectedBucketOwner *string `min:"12" type:"string"`
 
 	// The location in Amazon S3 where your query results are stored, such as s3://path/to/query/bucket/.
 	// For more information, see Query Results (https://docs.aws.amazon.com/athena/latest/ug/querying.html)
@@ -7882,6 +8779,14 @@ type ResultConfigurationUpdates struct {
 	// in EnforceWorkGroupConfiguration (true/false) in the WorkGroupConfiguration.
 	// See WorkGroupConfiguration$EnforceWorkGroupConfiguration.
 	OutputLocation *string `type:"string"`
+
+	// If set to true, indicates that the previously-specified ACL configuration
+	// for queries in this workgroup should be ignored and set to null. If set to
+	// false or not set, and a value is present in the AclConfiguration of ResultConfigurationUpdates,
+	// the AclConfiguration in the workgroup's ResultConfiguration is updated with
+	// the new value. For more information, see Workgroup Settings Override Client-Side
+	// Settings (https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html).
+	RemoveAclConfiguration *bool `type:"boolean"`
 
 	// If set to "true", indicates that the previously-specified encryption configuration
 	// (also known as the client-side setting) for queries in this workgroup should
@@ -7931,6 +8836,14 @@ func (s ResultConfigurationUpdates) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *ResultConfigurationUpdates) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ResultConfigurationUpdates"}
+	if s.ExpectedBucketOwner != nil && len(*s.ExpectedBucketOwner) < 12 {
+		invalidParams.Add(request.NewErrParamMinLen("ExpectedBucketOwner", 12))
+	}
+	if s.AclConfiguration != nil {
+		if err := s.AclConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("AclConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.EncryptionConfiguration != nil {
 		if err := s.EncryptionConfiguration.Validate(); err != nil {
 			invalidParams.AddNested("EncryptionConfiguration", err.(request.ErrInvalidParams))
@@ -7941,6 +8854,12 @@ func (s *ResultConfigurationUpdates) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAclConfiguration sets the AclConfiguration field's value.
+func (s *ResultConfigurationUpdates) SetAclConfiguration(v *AclConfiguration) *ResultConfigurationUpdates {
+	s.AclConfiguration = v
+	return s
 }
 
 // SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
@@ -7958,6 +8877,12 @@ func (s *ResultConfigurationUpdates) SetExpectedBucketOwner(v string) *ResultCon
 // SetOutputLocation sets the OutputLocation field's value.
 func (s *ResultConfigurationUpdates) SetOutputLocation(v string) *ResultConfigurationUpdates {
 	s.OutputLocation = &v
+	return s
+}
+
+// SetRemoveAclConfiguration sets the RemoveAclConfiguration field's value.
+func (s *ResultConfigurationUpdates) SetRemoveAclConfiguration(v bool) *ResultConfigurationUpdates {
+	s.RemoveAclConfiguration = &v
 	return s
 }
 
@@ -8101,6 +9026,10 @@ type StartQueryExecutionInput struct {
 	// Services CLI, you must provide this token or the action will fail.
 	ClientRequestToken *string `min:"32" type:"string" idempotencyToken:"true"`
 
+	// A list of values for the parameters in a query. The values are applied sequentially
+	// to the parameters in the query in the order in which the parameters occur.
+	ExecutionParameters []*string `min:"1" type:"list"`
+
 	// The database within which the query executes.
 	QueryExecutionContext *QueryExecutionContext `type:"structure"`
 
@@ -8144,6 +9073,9 @@ func (s *StartQueryExecutionInput) Validate() error {
 	if s.ClientRequestToken != nil && len(*s.ClientRequestToken) < 32 {
 		invalidParams.Add(request.NewErrParamMinLen("ClientRequestToken", 32))
 	}
+	if s.ExecutionParameters != nil && len(s.ExecutionParameters) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ExecutionParameters", 1))
+	}
 	if s.QueryString == nil {
 		invalidParams.Add(request.NewErrParamRequired("QueryString"))
 	}
@@ -8170,6 +9102,12 @@ func (s *StartQueryExecutionInput) Validate() error {
 // SetClientRequestToken sets the ClientRequestToken field's value.
 func (s *StartQueryExecutionInput) SetClientRequestToken(v string) *StartQueryExecutionInput {
 	s.ClientRequestToken = &v
+	return s
+}
+
+// SetExecutionParameters sets the ExecutionParameters field's value.
+func (s *StartQueryExecutionInput) SetExecutionParameters(v []*string) *StartQueryExecutionInput {
+	s.ExecutionParameters = v
 	return s
 }
 
@@ -8201,7 +9139,7 @@ type StartQueryExecutionOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The unique ID of the query that ran as a result of this request.
-	QueryExecutionId *string `type:"string"`
+	QueryExecutionId *string `min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -8232,7 +9170,7 @@ type StopQueryExecutionInput struct {
 	_ struct{} `type:"structure"`
 
 	// The unique ID of the query execution to stop.
-	QueryExecutionId *string `type:"string" idempotencyToken:"true"`
+	QueryExecutionId *string `min:"1" type:"string" idempotencyToken:"true"`
 }
 
 // String returns the string representation.
@@ -8251,6 +9189,19 @@ func (s StopQueryExecutionInput) String() string {
 // value will be replaced with "sensitive".
 func (s StopQueryExecutionInput) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StopQueryExecutionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StopQueryExecutionInput"}
+	if s.QueryExecutionId != nil && len(*s.QueryExecutionId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("QueryExecutionId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetQueryExecutionId sets the QueryExecutionId field's value.
@@ -8616,7 +9567,7 @@ type UnprocessedNamedQueryId struct {
 	ErrorMessage *string `type:"string"`
 
 	// The unique identifier of the named query.
-	NamedQueryId *string `type:"string"`
+	NamedQueryId *string `min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -8655,6 +9606,66 @@ func (s *UnprocessedNamedQueryId) SetNamedQueryId(v string) *UnprocessedNamedQue
 	return s
 }
 
+// The name of a prepared statement that could not be returned.
+type UnprocessedPreparedStatementName struct {
+	_ struct{} `type:"structure"`
+
+	// The error code returned when the request for the prepared statement failed.
+	ErrorCode *string `min:"1" type:"string"`
+
+	// The error message containing the reason why the prepared statement could
+	// not be returned. The following error messages are possible:
+	//
+	//    * INVALID_INPUT - The name of the prepared statement that was provided
+	//    is not valid (for example, the name is too long).
+	//
+	//    * STATEMENT_NOT_FOUND - A prepared statement with the name provided could
+	//    not be found.
+	//
+	//    * UNAUTHORIZED - The requester does not have permission to access the
+	//    workgroup that contains the prepared statement.
+	ErrorMessage *string `type:"string"`
+
+	// The name of a prepared statement that could not be returned due to an error.
+	StatementName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UnprocessedPreparedStatementName) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UnprocessedPreparedStatementName) GoString() string {
+	return s.String()
+}
+
+// SetErrorCode sets the ErrorCode field's value.
+func (s *UnprocessedPreparedStatementName) SetErrorCode(v string) *UnprocessedPreparedStatementName {
+	s.ErrorCode = &v
+	return s
+}
+
+// SetErrorMessage sets the ErrorMessage field's value.
+func (s *UnprocessedPreparedStatementName) SetErrorMessage(v string) *UnprocessedPreparedStatementName {
+	s.ErrorMessage = &v
+	return s
+}
+
+// SetStatementName sets the StatementName field's value.
+func (s *UnprocessedPreparedStatementName) SetStatementName(v string) *UnprocessedPreparedStatementName {
+	s.StatementName = &v
+	return s
+}
+
 // Describes a query execution that failed to process.
 type UnprocessedQueryExecutionId struct {
 	_ struct{} `type:"structure"`
@@ -8667,7 +9678,7 @@ type UnprocessedQueryExecutionId struct {
 	ErrorMessage *string `type:"string"`
 
 	// The unique identifier of the query execution.
-	QueryExecutionId *string `type:"string"`
+	QueryExecutionId *string `min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -8928,7 +9939,7 @@ type UpdateNamedQueryInput struct {
 	// The unique identifier (UUID) of the query.
 	//
 	// NamedQueryId is a required field
-	NamedQueryId *string `type:"string" required:"true"`
+	NamedQueryId *string `min:"1" type:"string" required:"true"`
 
 	// The contents of the query with all query statements.
 	//
@@ -8965,6 +9976,9 @@ func (s *UpdateNamedQueryInput) Validate() error {
 	}
 	if s.NamedQueryId == nil {
 		invalidParams.Add(request.NewErrParamRequired("NamedQueryId"))
+	}
+	if s.NamedQueryId != nil && len(*s.NamedQueryId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NamedQueryId", 1))
 	}
 	if s.QueryString == nil {
 		invalidParams.Add(request.NewErrParamRequired("QueryString"))
@@ -9730,6 +10744,18 @@ func QueryExecutionState_Values() []string {
 		QueryExecutionStateSucceeded,
 		QueryExecutionStateFailed,
 		QueryExecutionStateCancelled,
+	}
+}
+
+const (
+	// S3AclOptionBucketOwnerFullControl is a S3AclOption enum value
+	S3AclOptionBucketOwnerFullControl = "BUCKET_OWNER_FULL_CONTROL"
+)
+
+// S3AclOption_Values returns all elements of the S3AclOption enum
+func S3AclOption_Values() []string {
+	return []string{
+		S3AclOptionBucketOwnerFullControl,
 	}
 }
 

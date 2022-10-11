@@ -31,7 +31,7 @@ var initRequest func(*request.Request)
 // Service information constants
 const (
 	ServiceName = "data.iot"       // Name of service.
-	EndpointsID = ServiceName      // ID to lookup a service endpoint with.
+	EndpointsID = "data-ats.iot"   // ID to lookup a service endpoint with.
 	ServiceID   = "IoT Data Plane" // ServiceID is a unique identifier of a specific service.
 )
 
@@ -40,13 +40,14 @@ const (
 // aws.Config parameter to add your extra config.
 //
 // Example:
-//     mySession := session.Must(session.NewSession())
 //
-//     // Create a IoTDataPlane client from just a session.
-//     svc := iotdataplane.New(mySession)
+//	mySession := session.Must(session.NewSession())
 //
-//     // Create a IoTDataPlane client with additional configuration
-//     svc := iotdataplane.New(mySession, aws.NewConfig().WithRegion("us-west-2"))
+//	// Create a IoTDataPlane client from just a session.
+//	svc := iotdataplane.New(mySession)
+//
+//	// Create a IoTDataPlane client with additional configuration
+//	svc := iotdataplane.New(mySession, aws.NewConfig().WithRegion("us-west-2"))
 func New(p client.ConfigProvider, cfgs ...*aws.Config) *IoTDataPlane {
 	var c client.Config
 	if v, ok := p.(client.ConfigNoResolveEndpointProvider); ok {

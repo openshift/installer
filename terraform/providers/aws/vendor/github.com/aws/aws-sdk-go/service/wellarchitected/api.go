@@ -29,14 +29,13 @@ const opAssociateLenses = "AssociateLenses"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateLensesRequest method.
+//	req, resp := client.AssociateLensesRequest(params)
 //
-//    // Example sending a request using the AssociateLensesRequest method.
-//    req, resp := client.AssociateLensesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/AssociateLenses
 func (c *WellArchitected) AssociateLensesRequest(input *AssociateLensesInput) (req *request.Request, output *AssociateLensesOutput) {
@@ -63,7 +62,7 @@ func (c *WellArchitected) AssociateLensesRequest(input *AssociateLensesInput) (r
 // Up to 10 lenses can be associated with a workload in a single API operation.
 // A maximum of 20 lenses can be associated with a workload.
 //
-// Disclaimer
+// # Disclaimer
 //
 // By accessing and/or applying custom lenses created by another Amazon Web
 // Services user or account, you acknowledge that custom lenses created by other
@@ -78,23 +77,24 @@ func (c *WellArchitected) AssociateLensesRequest(input *AssociateLensesInput) (r
 // API operation AssociateLenses for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/AssociateLenses
 func (c *WellArchitected) AssociateLenses(input *AssociateLensesInput) (*AssociateLensesOutput, error) {
@@ -134,14 +134,13 @@ const opCreateLensShare = "CreateLensShare"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateLensShareRequest method.
+//	req, resp := client.CreateLensShareRequest(params)
 //
-//    // Example sending a request using the CreateLensShareRequest method.
-//    req, resp := client.CreateLensShareRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/CreateLensShare
 func (c *WellArchitected) CreateLensShareRequest(input *CreateLensShareInput) (req *request.Request, output *CreateLensShareOutput) {
@@ -168,7 +167,7 @@ func (c *WellArchitected) CreateLensShareRequest(input *CreateLensShareInput) (r
 // and IAM users in the same Amazon Web Services Region. Shared access to a
 // lens is not removed until the lens invitation is deleted.
 //
-// Disclaimer
+// # Disclaimer
 //
 // By sharing your custom lenses with other Amazon Web Services accounts, you
 // acknowledge that Amazon Web Services will make your custom lenses available
@@ -184,26 +183,27 @@ func (c *WellArchitected) CreateLensShareRequest(input *CreateLensShareInput) (r
 // API operation CreateLensShare for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ServiceQuotaExceededException
-//   The user has reached their resource quota.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ServiceQuotaExceededException
+//     The user has reached their resource quota.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/CreateLensShare
 func (c *WellArchitected) CreateLensShare(input *CreateLensShareInput) (*CreateLensShareOutput, error) {
@@ -243,14 +243,13 @@ const opCreateLensVersion = "CreateLensVersion"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateLensVersionRequest method.
+//	req, resp := client.CreateLensVersionRequest(params)
 //
-//    // Example sending a request using the CreateLensVersionRequest method.
-//    req, resp := client.CreateLensVersionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/CreateLensVersion
 func (c *WellArchitected) CreateLensVersionRequest(input *CreateLensVersionInput) (req *request.Request, output *CreateLensVersionOutput) {
@@ -288,26 +287,27 @@ func (c *WellArchitected) CreateLensVersionRequest(input *CreateLensVersionInput
 // API operation CreateLensVersion for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ServiceQuotaExceededException
-//   The user has reached their resource quota.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ServiceQuotaExceededException
+//     The user has reached their resource quota.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/CreateLensVersion
 func (c *WellArchitected) CreateLensVersion(input *CreateLensVersionInput) (*CreateLensVersionOutput, error) {
@@ -347,14 +347,13 @@ const opCreateMilestone = "CreateMilestone"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateMilestoneRequest method.
+//	req, resp := client.CreateMilestoneRequest(params)
 //
-//    // Example sending a request using the CreateMilestoneRequest method.
-//    req, resp := client.CreateMilestoneRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/CreateMilestone
 func (c *WellArchitected) CreateMilestoneRequest(input *CreateMilestoneInput) (req *request.Request, output *CreateMilestoneOutput) {
@@ -385,26 +384,27 @@ func (c *WellArchitected) CreateMilestoneRequest(input *CreateMilestoneInput) (r
 // API operation CreateMilestone for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ServiceQuotaExceededException
-//   The user has reached their resource quota.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ServiceQuotaExceededException
+//     The user has reached their resource quota.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/CreateMilestone
 func (c *WellArchitected) CreateMilestone(input *CreateMilestoneInput) (*CreateMilestoneOutput, error) {
@@ -444,14 +444,13 @@ const opCreateWorkload = "CreateWorkload"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateWorkloadRequest method.
+//	req, resp := client.CreateWorkloadRequest(params)
 //
-//    // Example sending a request using the CreateWorkloadRequest method.
-//    req, resp := client.CreateWorkloadRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/CreateWorkload
 func (c *WellArchitected) CreateWorkloadRequest(input *CreateWorkloadInput) (req *request.Request, output *CreateWorkloadOutput) {
@@ -489,23 +488,24 @@ func (c *WellArchitected) CreateWorkloadRequest(input *CreateWorkloadInput) (req
 // API operation CreateWorkload for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ServiceQuotaExceededException
-//   The user has reached their resource quota.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ServiceQuotaExceededException
+//     The user has reached their resource quota.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/CreateWorkload
 func (c *WellArchitected) CreateWorkload(input *CreateWorkloadInput) (*CreateWorkloadOutput, error) {
@@ -545,14 +545,13 @@ const opCreateWorkloadShare = "CreateWorkloadShare"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateWorkloadShareRequest method.
+//	req, resp := client.CreateWorkloadShareRequest(params)
 //
-//    // Example sending a request using the CreateWorkloadShareRequest method.
-//    req, resp := client.CreateWorkloadShareRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/CreateWorkloadShare
 func (c *WellArchitected) CreateWorkloadShareRequest(input *CreateWorkloadShareInput) (req *request.Request, output *CreateWorkloadShareOutput) {
@@ -590,26 +589,27 @@ func (c *WellArchitected) CreateWorkloadShareRequest(input *CreateWorkloadShareI
 // API operation CreateWorkloadShare for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ServiceQuotaExceededException
-//   The user has reached their resource quota.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ServiceQuotaExceededException
+//     The user has reached their resource quota.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/CreateWorkloadShare
 func (c *WellArchitected) CreateWorkloadShare(input *CreateWorkloadShareInput) (*CreateWorkloadShareOutput, error) {
@@ -649,14 +649,13 @@ const opDeleteLens = "DeleteLens"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteLensRequest method.
+//	req, resp := client.DeleteLensRequest(params)
 //
-//    // Example sending a request using the DeleteLensRequest method.
-//    req, resp := client.DeleteLensRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/DeleteLens
 func (c *WellArchitected) DeleteLensRequest(input *DeleteLensInput) (req *request.Request, output *DeleteLensOutput) {
@@ -684,7 +683,7 @@ func (c *WellArchitected) DeleteLensRequest(input *DeleteLensInput) (req *reques
 // Web Services accounts and IAM users that you shared the lens with can continue
 // to use it, but they will no longer be able to apply it to new workloads.
 //
-// Disclaimer
+// # Disclaimer
 //
 // By sharing your custom lenses with other Amazon Web Services accounts, you
 // acknowledge that Amazon Web Services will make your custom lenses available
@@ -700,23 +699,24 @@ func (c *WellArchitected) DeleteLensRequest(input *DeleteLensInput) (req *reques
 // API operation DeleteLens for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/DeleteLens
 func (c *WellArchitected) DeleteLens(input *DeleteLensInput) (*DeleteLensOutput, error) {
@@ -756,14 +756,13 @@ const opDeleteLensShare = "DeleteLensShare"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteLensShareRequest method.
+//	req, resp := client.DeleteLensShareRequest(params)
 //
-//    // Example sending a request using the DeleteLensShareRequest method.
-//    req, resp := client.DeleteLensShareRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/DeleteLensShare
 func (c *WellArchitected) DeleteLensShareRequest(input *DeleteLensShareInput) (req *request.Request, output *DeleteLensShareOutput) {
@@ -791,7 +790,7 @@ func (c *WellArchitected) DeleteLensShareRequest(input *DeleteLensShareInput) (r
 // that you shared the lens with can continue to use it, but they will no longer
 // be able to apply it to new workloads.
 //
-// Disclaimer
+// # Disclaimer
 //
 // By sharing your custom lenses with other Amazon Web Services accounts, you
 // acknowledge that Amazon Web Services will make your custom lenses available
@@ -807,23 +806,24 @@ func (c *WellArchitected) DeleteLensShareRequest(input *DeleteLensShareInput) (r
 // API operation DeleteLensShare for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/DeleteLensShare
 func (c *WellArchitected) DeleteLensShare(input *DeleteLensShareInput) (*DeleteLensShareOutput, error) {
@@ -863,14 +863,13 @@ const opDeleteWorkload = "DeleteWorkload"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteWorkloadRequest method.
+//	req, resp := client.DeleteWorkloadRequest(params)
 //
-//    // Example sending a request using the DeleteWorkloadRequest method.
-//    req, resp := client.DeleteWorkloadRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/DeleteWorkload
 func (c *WellArchitected) DeleteWorkloadRequest(input *DeleteWorkloadInput) (req *request.Request, output *DeleteWorkloadOutput) {
@@ -902,23 +901,24 @@ func (c *WellArchitected) DeleteWorkloadRequest(input *DeleteWorkloadInput) (req
 // API operation DeleteWorkload for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/DeleteWorkload
 func (c *WellArchitected) DeleteWorkload(input *DeleteWorkloadInput) (*DeleteWorkloadOutput, error) {
@@ -958,14 +958,13 @@ const opDeleteWorkloadShare = "DeleteWorkloadShare"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteWorkloadShareRequest method.
+//	req, resp := client.DeleteWorkloadShareRequest(params)
 //
-//    // Example sending a request using the DeleteWorkloadShareRequest method.
-//    req, resp := client.DeleteWorkloadShareRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/DeleteWorkloadShare
 func (c *WellArchitected) DeleteWorkloadShareRequest(input *DeleteWorkloadShareInput) (req *request.Request, output *DeleteWorkloadShareOutput) {
@@ -997,23 +996,24 @@ func (c *WellArchitected) DeleteWorkloadShareRequest(input *DeleteWorkloadShareI
 // API operation DeleteWorkloadShare for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/DeleteWorkloadShare
 func (c *WellArchitected) DeleteWorkloadShare(input *DeleteWorkloadShareInput) (*DeleteWorkloadShareOutput, error) {
@@ -1053,14 +1053,13 @@ const opDisassociateLenses = "DisassociateLenses"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateLensesRequest method.
+//	req, resp := client.DisassociateLensesRequest(params)
 //
-//    // Example sending a request using the DisassociateLensesRequest method.
-//    req, resp := client.DisassociateLensesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/DisassociateLenses
 func (c *WellArchitected) DisassociateLensesRequest(input *DisassociateLensesInput) (req *request.Request, output *DisassociateLensesOutput) {
@@ -1097,23 +1096,24 @@ func (c *WellArchitected) DisassociateLensesRequest(input *DisassociateLensesInp
 // API operation DisassociateLenses for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/DisassociateLenses
 func (c *WellArchitected) DisassociateLenses(input *DisassociateLensesInput) (*DisassociateLensesOutput, error) {
@@ -1153,14 +1153,13 @@ const opExportLens = "ExportLens"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ExportLensRequest method.
+//	req, resp := client.ExportLensRequest(params)
 //
-//    // Example sending a request using the ExportLensRequest method.
-//    req, resp := client.ExportLensRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ExportLens
 func (c *WellArchitected) ExportLensRequest(input *ExportLensInput) (req *request.Request, output *ExportLensOutput) {
@@ -1188,7 +1187,7 @@ func (c *WellArchitected) ExportLensRequest(input *ExportLensInput) (req *reques
 // in the Well-Architected Tool User Guide. Only the owner of a lens can export
 // it.
 //
-// Disclaimer
+// # Disclaimer
 //
 // Do not include or gather personal identifiable information (PII) of end users
 // or other identifiable individuals in or via your custom lenses. If your custom
@@ -1205,20 +1204,21 @@ func (c *WellArchitected) ExportLensRequest(input *ExportLensInput) (req *reques
 // API operation ExportLens for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ExportLens
 func (c *WellArchitected) ExportLens(input *ExportLensInput) (*ExportLensOutput, error) {
@@ -1258,14 +1258,13 @@ const opGetAnswer = "GetAnswer"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetAnswerRequest method.
+//	req, resp := client.GetAnswerRequest(params)
 //
-//    // Example sending a request using the GetAnswerRequest method.
-//    req, resp := client.GetAnswerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetAnswer
 func (c *WellArchitected) GetAnswerRequest(input *GetAnswerInput) (req *request.Request, output *GetAnswerOutput) {
@@ -1296,20 +1295,21 @@ func (c *WellArchitected) GetAnswerRequest(input *GetAnswerInput) (req *request.
 // API operation GetAnswer for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetAnswer
 func (c *WellArchitected) GetAnswer(input *GetAnswerInput) (*GetAnswerOutput, error) {
@@ -1349,14 +1349,13 @@ const opGetLens = "GetLens"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetLensRequest method.
+//	req, resp := client.GetLensRequest(params)
 //
-//    // Example sending a request using the GetLensRequest method.
-//    req, resp := client.GetLensRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetLens
 func (c *WellArchitected) GetLensRequest(input *GetLensInput) (req *request.Request, output *GetLensOutput) {
@@ -1387,20 +1386,21 @@ func (c *WellArchitected) GetLensRequest(input *GetLensInput) (req *request.Requ
 // API operation GetLens for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetLens
 func (c *WellArchitected) GetLens(input *GetLensInput) (*GetLensOutput, error) {
@@ -1440,14 +1440,13 @@ const opGetLensReview = "GetLensReview"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetLensReviewRequest method.
+//	req, resp := client.GetLensReviewRequest(params)
 //
-//    // Example sending a request using the GetLensReviewRequest method.
-//    req, resp := client.GetLensReviewRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetLensReview
 func (c *WellArchitected) GetLensReviewRequest(input *GetLensReviewInput) (req *request.Request, output *GetLensReviewOutput) {
@@ -1478,20 +1477,21 @@ func (c *WellArchitected) GetLensReviewRequest(input *GetLensReviewInput) (req *
 // API operation GetLensReview for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetLensReview
 func (c *WellArchitected) GetLensReview(input *GetLensReviewInput) (*GetLensReviewOutput, error) {
@@ -1531,14 +1531,13 @@ const opGetLensReviewReport = "GetLensReviewReport"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetLensReviewReportRequest method.
+//	req, resp := client.GetLensReviewReportRequest(params)
 //
-//    // Example sending a request using the GetLensReviewReportRequest method.
-//    req, resp := client.GetLensReviewReportRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetLensReviewReport
 func (c *WellArchitected) GetLensReviewReportRequest(input *GetLensReviewReportInput) (req *request.Request, output *GetLensReviewReportOutput) {
@@ -1569,20 +1568,21 @@ func (c *WellArchitected) GetLensReviewReportRequest(input *GetLensReviewReportI
 // API operation GetLensReviewReport for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetLensReviewReport
 func (c *WellArchitected) GetLensReviewReport(input *GetLensReviewReportInput) (*GetLensReviewReportOutput, error) {
@@ -1622,14 +1622,13 @@ const opGetLensVersionDifference = "GetLensVersionDifference"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetLensVersionDifferenceRequest method.
+//	req, resp := client.GetLensVersionDifferenceRequest(params)
 //
-//    // Example sending a request using the GetLensVersionDifferenceRequest method.
-//    req, resp := client.GetLensVersionDifferenceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetLensVersionDifference
 func (c *WellArchitected) GetLensVersionDifferenceRequest(input *GetLensVersionDifferenceInput) (req *request.Request, output *GetLensVersionDifferenceOutput) {
@@ -1660,20 +1659,21 @@ func (c *WellArchitected) GetLensVersionDifferenceRequest(input *GetLensVersionD
 // API operation GetLensVersionDifference for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetLensVersionDifference
 func (c *WellArchitected) GetLensVersionDifference(input *GetLensVersionDifferenceInput) (*GetLensVersionDifferenceOutput, error) {
@@ -1713,14 +1713,13 @@ const opGetMilestone = "GetMilestone"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetMilestoneRequest method.
+//	req, resp := client.GetMilestoneRequest(params)
 //
-//    // Example sending a request using the GetMilestoneRequest method.
-//    req, resp := client.GetMilestoneRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetMilestone
 func (c *WellArchitected) GetMilestoneRequest(input *GetMilestoneInput) (req *request.Request, output *GetMilestoneOutput) {
@@ -1751,20 +1750,21 @@ func (c *WellArchitected) GetMilestoneRequest(input *GetMilestoneInput) (req *re
 // API operation GetMilestone for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetMilestone
 func (c *WellArchitected) GetMilestone(input *GetMilestoneInput) (*GetMilestoneOutput, error) {
@@ -1804,14 +1804,13 @@ const opGetWorkload = "GetWorkload"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetWorkloadRequest method.
+//	req, resp := client.GetWorkloadRequest(params)
 //
-//    // Example sending a request using the GetWorkloadRequest method.
-//    req, resp := client.GetWorkloadRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetWorkload
 func (c *WellArchitected) GetWorkloadRequest(input *GetWorkloadInput) (req *request.Request, output *GetWorkloadOutput) {
@@ -1842,20 +1841,21 @@ func (c *WellArchitected) GetWorkloadRequest(input *GetWorkloadInput) (req *requ
 // API operation GetWorkload for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/GetWorkload
 func (c *WellArchitected) GetWorkload(input *GetWorkloadInput) (*GetWorkloadOutput, error) {
@@ -1895,14 +1895,13 @@ const opImportLens = "ImportLens"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ImportLensRequest method.
+//	req, resp := client.ImportLensRequest(params)
 //
-//    // Example sending a request using the ImportLensRequest method.
-//    req, resp := client.ImportLensRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ImportLens
 func (c *WellArchitected) ImportLensRequest(input *ImportLensInput) (req *request.Request, output *ImportLensOutput) {
@@ -1934,7 +1933,7 @@ func (c *WellArchitected) ImportLensRequest(input *ImportLensInput) (req *reques
 //
 // A custom lens cannot exceed 500 KB in size.
 //
-// Disclaimer
+// # Disclaimer
 //
 // Do not include or gather personal identifiable information (PII) of end users
 // or other identifiable individuals in or via your custom lenses. If your custom
@@ -1951,26 +1950,27 @@ func (c *WellArchitected) ImportLensRequest(input *ImportLensInput) (req *reques
 // API operation ImportLens for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * ServiceQuotaExceededException
-//   The user has reached their resource quota.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ServiceQuotaExceededException
+//     The user has reached their resource quota.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ImportLens
 func (c *WellArchitected) ImportLens(input *ImportLensInput) (*ImportLensOutput, error) {
@@ -2010,14 +2010,13 @@ const opListAnswers = "ListAnswers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAnswersRequest method.
+//	req, resp := client.ListAnswersRequest(params)
 //
-//    // Example sending a request using the ListAnswersRequest method.
-//    req, resp := client.ListAnswersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListAnswers
 func (c *WellArchitected) ListAnswersRequest(input *ListAnswersInput) (req *request.Request, output *ListAnswersOutput) {
@@ -2054,20 +2053,21 @@ func (c *WellArchitected) ListAnswersRequest(input *ListAnswersInput) (req *requ
 // API operation ListAnswers for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListAnswers
 func (c *WellArchitected) ListAnswers(input *ListAnswersInput) (*ListAnswersOutput, error) {
@@ -2099,15 +2099,14 @@ func (c *WellArchitected) ListAnswersWithContext(ctx aws.Context, input *ListAns
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAnswers operation.
-//    pageNum := 0
-//    err := client.ListAnswersPages(params,
-//        func(page *wellarchitected.ListAnswersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAnswers operation.
+//	pageNum := 0
+//	err := client.ListAnswersPages(params,
+//	    func(page *wellarchitected.ListAnswersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *WellArchitected) ListAnswersPages(input *ListAnswersInput, fn func(*ListAnswersOutput, bool) bool) error {
 	return c.ListAnswersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2159,14 +2158,13 @@ const opListLensReviewImprovements = "ListLensReviewImprovements"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListLensReviewImprovementsRequest method.
+//	req, resp := client.ListLensReviewImprovementsRequest(params)
 //
-//    // Example sending a request using the ListLensReviewImprovementsRequest method.
-//    req, resp := client.ListLensReviewImprovementsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListLensReviewImprovements
 func (c *WellArchitected) ListLensReviewImprovementsRequest(input *ListLensReviewImprovementsInput) (req *request.Request, output *ListLensReviewImprovementsOutput) {
@@ -2203,20 +2201,21 @@ func (c *WellArchitected) ListLensReviewImprovementsRequest(input *ListLensRevie
 // API operation ListLensReviewImprovements for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListLensReviewImprovements
 func (c *WellArchitected) ListLensReviewImprovements(input *ListLensReviewImprovementsInput) (*ListLensReviewImprovementsOutput, error) {
@@ -2248,15 +2247,14 @@ func (c *WellArchitected) ListLensReviewImprovementsWithContext(ctx aws.Context,
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListLensReviewImprovements operation.
-//    pageNum := 0
-//    err := client.ListLensReviewImprovementsPages(params,
-//        func(page *wellarchitected.ListLensReviewImprovementsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListLensReviewImprovements operation.
+//	pageNum := 0
+//	err := client.ListLensReviewImprovementsPages(params,
+//	    func(page *wellarchitected.ListLensReviewImprovementsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *WellArchitected) ListLensReviewImprovementsPages(input *ListLensReviewImprovementsInput, fn func(*ListLensReviewImprovementsOutput, bool) bool) error {
 	return c.ListLensReviewImprovementsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2308,14 +2306,13 @@ const opListLensReviews = "ListLensReviews"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListLensReviewsRequest method.
+//	req, resp := client.ListLensReviewsRequest(params)
 //
-//    // Example sending a request using the ListLensReviewsRequest method.
-//    req, resp := client.ListLensReviewsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListLensReviews
 func (c *WellArchitected) ListLensReviewsRequest(input *ListLensReviewsInput) (req *request.Request, output *ListLensReviewsOutput) {
@@ -2352,20 +2349,21 @@ func (c *WellArchitected) ListLensReviewsRequest(input *ListLensReviewsInput) (r
 // API operation ListLensReviews for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListLensReviews
 func (c *WellArchitected) ListLensReviews(input *ListLensReviewsInput) (*ListLensReviewsOutput, error) {
@@ -2397,15 +2395,14 @@ func (c *WellArchitected) ListLensReviewsWithContext(ctx aws.Context, input *Lis
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListLensReviews operation.
-//    pageNum := 0
-//    err := client.ListLensReviewsPages(params,
-//        func(page *wellarchitected.ListLensReviewsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListLensReviews operation.
+//	pageNum := 0
+//	err := client.ListLensReviewsPages(params,
+//	    func(page *wellarchitected.ListLensReviewsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *WellArchitected) ListLensReviewsPages(input *ListLensReviewsInput, fn func(*ListLensReviewsOutput, bool) bool) error {
 	return c.ListLensReviewsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2457,14 +2454,13 @@ const opListLensShares = "ListLensShares"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListLensSharesRequest method.
+//	req, resp := client.ListLensSharesRequest(params)
 //
-//    // Example sending a request using the ListLensSharesRequest method.
-//    req, resp := client.ListLensSharesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListLensShares
 func (c *WellArchitected) ListLensSharesRequest(input *ListLensSharesInput) (req *request.Request, output *ListLensSharesOutput) {
@@ -2501,20 +2497,21 @@ func (c *WellArchitected) ListLensSharesRequest(input *ListLensSharesInput) (req
 // API operation ListLensShares for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListLensShares
 func (c *WellArchitected) ListLensShares(input *ListLensSharesInput) (*ListLensSharesOutput, error) {
@@ -2546,15 +2543,14 @@ func (c *WellArchitected) ListLensSharesWithContext(ctx aws.Context, input *List
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListLensShares operation.
-//    pageNum := 0
-//    err := client.ListLensSharesPages(params,
-//        func(page *wellarchitected.ListLensSharesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListLensShares operation.
+//	pageNum := 0
+//	err := client.ListLensSharesPages(params,
+//	    func(page *wellarchitected.ListLensSharesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *WellArchitected) ListLensSharesPages(input *ListLensSharesInput, fn func(*ListLensSharesOutput, bool) bool) error {
 	return c.ListLensSharesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2606,14 +2602,13 @@ const opListLenses = "ListLenses"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListLensesRequest method.
+//	req, resp := client.ListLensesRequest(params)
 //
-//    // Example sending a request using the ListLensesRequest method.
-//    req, resp := client.ListLensesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListLenses
 func (c *WellArchitected) ListLensesRequest(input *ListLensesInput) (req *request.Request, output *ListLensesOutput) {
@@ -2650,17 +2645,18 @@ func (c *WellArchitected) ListLensesRequest(input *ListLensesInput) (req *reques
 // API operation ListLenses for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListLenses
 func (c *WellArchitected) ListLenses(input *ListLensesInput) (*ListLensesOutput, error) {
@@ -2692,15 +2688,14 @@ func (c *WellArchitected) ListLensesWithContext(ctx aws.Context, input *ListLens
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListLenses operation.
-//    pageNum := 0
-//    err := client.ListLensesPages(params,
-//        func(page *wellarchitected.ListLensesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListLenses operation.
+//	pageNum := 0
+//	err := client.ListLensesPages(params,
+//	    func(page *wellarchitected.ListLensesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *WellArchitected) ListLensesPages(input *ListLensesInput, fn func(*ListLensesOutput, bool) bool) error {
 	return c.ListLensesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2752,14 +2747,13 @@ const opListMilestones = "ListMilestones"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListMilestonesRequest method.
+//	req, resp := client.ListMilestonesRequest(params)
 //
-//    // Example sending a request using the ListMilestonesRequest method.
-//    req, resp := client.ListMilestonesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListMilestones
 func (c *WellArchitected) ListMilestonesRequest(input *ListMilestonesInput) (req *request.Request, output *ListMilestonesOutput) {
@@ -2796,20 +2790,21 @@ func (c *WellArchitected) ListMilestonesRequest(input *ListMilestonesInput) (req
 // API operation ListMilestones for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListMilestones
 func (c *WellArchitected) ListMilestones(input *ListMilestonesInput) (*ListMilestonesOutput, error) {
@@ -2841,15 +2836,14 @@ func (c *WellArchitected) ListMilestonesWithContext(ctx aws.Context, input *List
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListMilestones operation.
-//    pageNum := 0
-//    err := client.ListMilestonesPages(params,
-//        func(page *wellarchitected.ListMilestonesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListMilestones operation.
+//	pageNum := 0
+//	err := client.ListMilestonesPages(params,
+//	    func(page *wellarchitected.ListMilestonesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *WellArchitected) ListMilestonesPages(input *ListMilestonesInput, fn func(*ListMilestonesOutput, bool) bool) error {
 	return c.ListMilestonesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2901,14 +2895,13 @@ const opListNotifications = "ListNotifications"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListNotificationsRequest method.
+//	req, resp := client.ListNotificationsRequest(params)
 //
-//    // Example sending a request using the ListNotificationsRequest method.
-//    req, resp := client.ListNotificationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListNotifications
 func (c *WellArchitected) ListNotificationsRequest(input *ListNotificationsInput) (req *request.Request, output *ListNotificationsOutput) {
@@ -2945,17 +2938,18 @@ func (c *WellArchitected) ListNotificationsRequest(input *ListNotificationsInput
 // API operation ListNotifications for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListNotifications
 func (c *WellArchitected) ListNotifications(input *ListNotificationsInput) (*ListNotificationsOutput, error) {
@@ -2987,15 +2981,14 @@ func (c *WellArchitected) ListNotificationsWithContext(ctx aws.Context, input *L
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListNotifications operation.
-//    pageNum := 0
-//    err := client.ListNotificationsPages(params,
-//        func(page *wellarchitected.ListNotificationsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListNotifications operation.
+//	pageNum := 0
+//	err := client.ListNotificationsPages(params,
+//	    func(page *wellarchitected.ListNotificationsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *WellArchitected) ListNotificationsPages(input *ListNotificationsInput, fn func(*ListNotificationsOutput, bool) bool) error {
 	return c.ListNotificationsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3047,14 +3040,13 @@ const opListShareInvitations = "ListShareInvitations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListShareInvitationsRequest method.
+//	req, resp := client.ListShareInvitationsRequest(params)
 //
-//    // Example sending a request using the ListShareInvitationsRequest method.
-//    req, resp := client.ListShareInvitationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListShareInvitations
 func (c *WellArchitected) ListShareInvitationsRequest(input *ListShareInvitationsInput) (req *request.Request, output *ListShareInvitationsOutput) {
@@ -3091,17 +3083,18 @@ func (c *WellArchitected) ListShareInvitationsRequest(input *ListShareInvitation
 // API operation ListShareInvitations for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListShareInvitations
 func (c *WellArchitected) ListShareInvitations(input *ListShareInvitationsInput) (*ListShareInvitationsOutput, error) {
@@ -3133,15 +3126,14 @@ func (c *WellArchitected) ListShareInvitationsWithContext(ctx aws.Context, input
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListShareInvitations operation.
-//    pageNum := 0
-//    err := client.ListShareInvitationsPages(params,
-//        func(page *wellarchitected.ListShareInvitationsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListShareInvitations operation.
+//	pageNum := 0
+//	err := client.ListShareInvitationsPages(params,
+//	    func(page *wellarchitected.ListShareInvitationsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *WellArchitected) ListShareInvitationsPages(input *ListShareInvitationsInput, fn func(*ListShareInvitationsOutput, bool) bool) error {
 	return c.ListShareInvitationsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3193,14 +3185,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListTagsForResource
 func (c *WellArchitected) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -3223,6 +3214,8 @@ func (c *WellArchitected) ListTagsForResourceRequest(input *ListTagsForResourceI
 //
 // List the tags for a resource.
 //
+// The WorkloadArn parameter can be either a workload ARN or a custom lens ARN.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -3231,11 +3224,12 @@ func (c *WellArchitected) ListTagsForResourceRequest(input *ListTagsForResourceI
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
+//
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListTagsForResource
 func (c *WellArchitected) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -3275,14 +3269,13 @@ const opListWorkloadShares = "ListWorkloadShares"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListWorkloadSharesRequest method.
+//	req, resp := client.ListWorkloadSharesRequest(params)
 //
-//    // Example sending a request using the ListWorkloadSharesRequest method.
-//    req, resp := client.ListWorkloadSharesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListWorkloadShares
 func (c *WellArchitected) ListWorkloadSharesRequest(input *ListWorkloadSharesInput) (req *request.Request, output *ListWorkloadSharesOutput) {
@@ -3319,20 +3312,21 @@ func (c *WellArchitected) ListWorkloadSharesRequest(input *ListWorkloadSharesInp
 // API operation ListWorkloadShares for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListWorkloadShares
 func (c *WellArchitected) ListWorkloadShares(input *ListWorkloadSharesInput) (*ListWorkloadSharesOutput, error) {
@@ -3364,15 +3358,14 @@ func (c *WellArchitected) ListWorkloadSharesWithContext(ctx aws.Context, input *
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListWorkloadShares operation.
-//    pageNum := 0
-//    err := client.ListWorkloadSharesPages(params,
-//        func(page *wellarchitected.ListWorkloadSharesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListWorkloadShares operation.
+//	pageNum := 0
+//	err := client.ListWorkloadSharesPages(params,
+//	    func(page *wellarchitected.ListWorkloadSharesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *WellArchitected) ListWorkloadSharesPages(input *ListWorkloadSharesInput, fn func(*ListWorkloadSharesOutput, bool) bool) error {
 	return c.ListWorkloadSharesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3424,14 +3417,13 @@ const opListWorkloads = "ListWorkloads"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListWorkloadsRequest method.
+//	req, resp := client.ListWorkloadsRequest(params)
 //
-//    // Example sending a request using the ListWorkloadsRequest method.
-//    req, resp := client.ListWorkloadsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListWorkloads
 func (c *WellArchitected) ListWorkloadsRequest(input *ListWorkloadsInput) (req *request.Request, output *ListWorkloadsOutput) {
@@ -3468,17 +3460,18 @@ func (c *WellArchitected) ListWorkloadsRequest(input *ListWorkloadsInput) (req *
 // API operation ListWorkloads for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/ListWorkloads
 func (c *WellArchitected) ListWorkloads(input *ListWorkloadsInput) (*ListWorkloadsOutput, error) {
@@ -3510,15 +3503,14 @@ func (c *WellArchitected) ListWorkloadsWithContext(ctx aws.Context, input *ListW
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListWorkloads operation.
-//    pageNum := 0
-//    err := client.ListWorkloadsPages(params,
-//        func(page *wellarchitected.ListWorkloadsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListWorkloads operation.
+//	pageNum := 0
+//	err := client.ListWorkloadsPages(params,
+//	    func(page *wellarchitected.ListWorkloadsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *WellArchitected) ListWorkloadsPages(input *ListWorkloadsInput, fn func(*ListWorkloadsOutput, bool) bool) error {
 	return c.ListWorkloadsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3570,14 +3562,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/TagResource
 func (c *WellArchitected) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -3601,6 +3592,8 @@ func (c *WellArchitected) TagResourceRequest(input *TagResourceInput) (req *requ
 //
 // Adds one or more tags to the specified resource.
 //
+// The WorkloadArn parameter can be either a workload ARN or a custom lens ARN.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -3609,11 +3602,12 @@ func (c *WellArchitected) TagResourceRequest(input *TagResourceInput) (req *requ
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
+//
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/TagResource
 func (c *WellArchitected) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -3653,14 +3647,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UntagResource
 func (c *WellArchitected) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -3684,6 +3677,8 @@ func (c *WellArchitected) UntagResourceRequest(input *UntagResourceInput) (req *
 //
 // Deletes specified tags from a resource.
 //
+// The WorkloadArn parameter can be either a workload ARN or a custom lens ARN.
+//
 // To specify multiple tags, use separate tagKeys parameters, for example:
 //
 // DELETE /tags/WorkloadArn?tagKeys=key1&tagKeys=key2
@@ -3696,11 +3691,12 @@ func (c *WellArchitected) UntagResourceRequest(input *UntagResourceInput) (req *
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
+//
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UntagResource
 func (c *WellArchitected) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -3740,14 +3736,13 @@ const opUpdateAnswer = "UpdateAnswer"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateAnswerRequest method.
+//	req, resp := client.UpdateAnswerRequest(params)
 //
-//    // Example sending a request using the UpdateAnswerRequest method.
-//    req, resp := client.UpdateAnswerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateAnswer
 func (c *WellArchitected) UpdateAnswerRequest(input *UpdateAnswerInput) (req *request.Request, output *UpdateAnswerOutput) {
@@ -3778,23 +3773,24 @@ func (c *WellArchitected) UpdateAnswerRequest(input *UpdateAnswerInput) (req *re
 // API operation UpdateAnswer for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateAnswer
 func (c *WellArchitected) UpdateAnswer(input *UpdateAnswerInput) (*UpdateAnswerOutput, error) {
@@ -3818,6 +3814,99 @@ func (c *WellArchitected) UpdateAnswerWithContext(ctx aws.Context, input *Update
 	return out, req.Send()
 }
 
+const opUpdateGlobalSettings = "UpdateGlobalSettings"
+
+// UpdateGlobalSettingsRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateGlobalSettings operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateGlobalSettings for more information on using the UpdateGlobalSettings
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateGlobalSettingsRequest method.
+//	req, resp := client.UpdateGlobalSettingsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateGlobalSettings
+func (c *WellArchitected) UpdateGlobalSettingsRequest(input *UpdateGlobalSettingsInput) (req *request.Request, output *UpdateGlobalSettingsOutput) {
+	op := &request.Operation{
+		Name:       opUpdateGlobalSettings,
+		HTTPMethod: "PATCH",
+		HTTPPath:   "/global-settings",
+	}
+
+	if input == nil {
+		input = &UpdateGlobalSettingsInput{}
+	}
+
+	output = &UpdateGlobalSettingsOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UpdateGlobalSettings API operation for AWS Well-Architected Tool.
+//
+// Updates whether the Amazon Web Services account is opted into organization
+// sharing features.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Well-Architected Tool's
+// API operation UpdateGlobalSettings for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The user input is not valid.
+//
+//   - ConflictException
+//     The resource already exists.
+//
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
+//
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateGlobalSettings
+func (c *WellArchitected) UpdateGlobalSettings(input *UpdateGlobalSettingsInput) (*UpdateGlobalSettingsOutput, error) {
+	req, out := c.UpdateGlobalSettingsRequest(input)
+	return out, req.Send()
+}
+
+// UpdateGlobalSettingsWithContext is the same as UpdateGlobalSettings with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateGlobalSettings for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *WellArchitected) UpdateGlobalSettingsWithContext(ctx aws.Context, input *UpdateGlobalSettingsInput, opts ...request.Option) (*UpdateGlobalSettingsOutput, error) {
+	req, out := c.UpdateGlobalSettingsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateLensReview = "UpdateLensReview"
 
 // UpdateLensReviewRequest generates a "aws/request.Request" representing the
@@ -3834,14 +3923,13 @@ const opUpdateLensReview = "UpdateLensReview"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateLensReviewRequest method.
+//	req, resp := client.UpdateLensReviewRequest(params)
 //
-//    // Example sending a request using the UpdateLensReviewRequest method.
-//    req, resp := client.UpdateLensReviewRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateLensReview
 func (c *WellArchitected) UpdateLensReviewRequest(input *UpdateLensReviewInput) (req *request.Request, output *UpdateLensReviewOutput) {
@@ -3872,23 +3960,24 @@ func (c *WellArchitected) UpdateLensReviewRequest(input *UpdateLensReviewInput) 
 // API operation UpdateLensReview for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateLensReview
 func (c *WellArchitected) UpdateLensReview(input *UpdateLensReviewInput) (*UpdateLensReviewOutput, error) {
@@ -3928,14 +4017,13 @@ const opUpdateShareInvitation = "UpdateShareInvitation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateShareInvitationRequest method.
+//	req, resp := client.UpdateShareInvitationRequest(params)
 //
-//    // Example sending a request using the UpdateShareInvitationRequest method.
-//    req, resp := client.UpdateShareInvitationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateShareInvitation
 func (c *WellArchitected) UpdateShareInvitationRequest(input *UpdateShareInvitationInput) (req *request.Request, output *UpdateShareInvitationOutput) {
@@ -3966,23 +4054,24 @@ func (c *WellArchitected) UpdateShareInvitationRequest(input *UpdateShareInvitat
 // API operation UpdateShareInvitation for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateShareInvitation
 func (c *WellArchitected) UpdateShareInvitation(input *UpdateShareInvitationInput) (*UpdateShareInvitationOutput, error) {
@@ -4022,14 +4111,13 @@ const opUpdateWorkload = "UpdateWorkload"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateWorkloadRequest method.
+//	req, resp := client.UpdateWorkloadRequest(params)
 //
-//    // Example sending a request using the UpdateWorkloadRequest method.
-//    req, resp := client.UpdateWorkloadRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateWorkload
 func (c *WellArchitected) UpdateWorkloadRequest(input *UpdateWorkloadInput) (req *request.Request, output *UpdateWorkloadOutput) {
@@ -4060,23 +4148,24 @@ func (c *WellArchitected) UpdateWorkloadRequest(input *UpdateWorkloadInput) (req
 // API operation UpdateWorkload for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateWorkload
 func (c *WellArchitected) UpdateWorkload(input *UpdateWorkloadInput) (*UpdateWorkloadOutput, error) {
@@ -4116,14 +4205,13 @@ const opUpdateWorkloadShare = "UpdateWorkloadShare"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateWorkloadShareRequest method.
+//	req, resp := client.UpdateWorkloadShareRequest(params)
 //
-//    // Example sending a request using the UpdateWorkloadShareRequest method.
-//    req, resp := client.UpdateWorkloadShareRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateWorkloadShare
 func (c *WellArchitected) UpdateWorkloadShareRequest(input *UpdateWorkloadShareInput) (req *request.Request, output *UpdateWorkloadShareOutput) {
@@ -4154,23 +4242,24 @@ func (c *WellArchitected) UpdateWorkloadShareRequest(input *UpdateWorkloadShareI
 // API operation UpdateWorkloadShare for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpdateWorkloadShare
 func (c *WellArchitected) UpdateWorkloadShare(input *UpdateWorkloadShareInput) (*UpdateWorkloadShareOutput, error) {
@@ -4210,14 +4299,13 @@ const opUpgradeLensReview = "UpgradeLensReview"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpgradeLensReviewRequest method.
+//	req, resp := client.UpgradeLensReviewRequest(params)
 //
-//    // Example sending a request using the UpgradeLensReviewRequest method.
-//    req, resp := client.UpgradeLensReviewRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpgradeLensReview
 func (c *WellArchitected) UpgradeLensReviewRequest(input *UpgradeLensReviewInput) (req *request.Request, output *UpgradeLensReviewOutput) {
@@ -4249,23 +4337,24 @@ func (c *WellArchitected) UpgradeLensReviewRequest(input *UpgradeLensReviewInput
 // API operation UpgradeLensReview for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The user input is not valid.
 //
-//   * ResourceNotFoundException
-//   The requested resource was not found.
+//   - ValidationException
+//     The user input is not valid.
 //
-//   * ConflictException
-//   The resource already exists.
+//   - ResourceNotFoundException
+//     The requested resource was not found.
 //
-//   * InternalServerException
-//   There is a problem with the Well-Architected Tool API service.
+//   - ConflictException
+//     The resource already exists.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - InternalServerException
+//     There is a problem with the Well-Architected Tool API service.
 //
-//   * ThrottlingException
-//   Request was denied due to request throttling.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wellarchitected-2020-03-31/UpgradeLensReview
 func (c *WellArchitected) UpgradeLensReview(input *UpgradeLensReviewInput) (*UpgradeLensReviewOutput, error) {
@@ -4352,6 +4441,48 @@ func (s *AccessDeniedException) StatusCode() int {
 // RequestID returns the service's response RequestID for request.
 func (s *AccessDeniedException) RequestID() string {
 	return s.RespMetadata.RequestID
+}
+
+// The choice level additional resources.
+type AdditionalResources struct {
+	_ struct{} `type:"structure"`
+
+	// The URLs for additional resources, either helpful resources or improvement
+	// plans. Up to five additional URLs can be specified.
+	Content []*ChoiceContent `type:"list"`
+
+	// Type of additional resource.
+	Type *string `type:"string" enum:"AdditionalResourceType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AdditionalResources) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AdditionalResources) GoString() string {
+	return s.String()
+}
+
+// SetContent sets the Content field's value.
+func (s *AdditionalResources) SetContent(v []*ChoiceContent) *AdditionalResources {
+	s.Content = v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *AdditionalResources) SetType(v string) *AdditionalResources {
+	s.Type = &v
+	return s
 }
 
 // An answer of the question.
@@ -4714,6 +4845,11 @@ func (s AssociateLensesOutput) GoString() string {
 type Choice struct {
 	_ struct{} `type:"structure"`
 
+	// The additional resources for a choice. A choice can have up to two additional
+	// resources: one of type HELPFUL_RESOURCE, one of type IMPROVEMENT_PLAN, or
+	// both.
+	AdditionalResources []*AdditionalResources `type:"list"`
+
 	// The ID of a choice.
 	ChoiceId *string `min:"1" type:"string"`
 
@@ -4746,6 +4882,12 @@ func (s Choice) String() string {
 // value will be replaced with "sensitive".
 func (s Choice) GoString() string {
 	return s.String()
+}
+
+// SetAdditionalResources sets the AdditionalResources field's value.
+func (s *Choice) SetAdditionalResources(v []*AdditionalResources) *Choice {
+	s.AdditionalResources = v
+	return s
 }
 
 // SetChoiceId sets the ChoiceId field's value.
@@ -5136,7 +5278,12 @@ type CreateLensShareInput struct {
 	// or the request will fail.
 	ClientRequestToken *string `type:"string" idempotencyToken:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -5258,7 +5405,12 @@ type CreateLensVersionInput struct {
 	// Set to true if this new major lens version.
 	IsMajorVersion *bool `type:"boolean"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -5625,9 +5777,7 @@ type CreateWorkloadInput struct {
 
 	// The review owner of the workload. The name, email address, or identifier
 	// for the primary group or individual that owns the workload review process.
-	//
-	// ReviewOwner is a required field
-	ReviewOwner *string `min:"3" type:"string" required:"true"`
+	ReviewOwner *string `min:"3" type:"string"`
 
 	// The tags to be associated with the workload.
 	Tags map[string]*string `min:"1" type:"map"`
@@ -5673,9 +5823,6 @@ func (s *CreateWorkloadInput) Validate() error {
 	}
 	if s.Lenses == nil {
 		invalidParams.Add(request.NewErrParamRequired("Lenses"))
-	}
-	if s.ReviewOwner == nil {
-		invalidParams.Add(request.NewErrParamRequired("ReviewOwner"))
 	}
 	if s.ReviewOwner != nil && len(*s.ReviewOwner) < 3 {
 		invalidParams.Add(request.NewErrParamMinLen("ReviewOwner", 3))
@@ -5988,7 +6135,12 @@ type DeleteLensInput struct {
 	// or the request will fail.
 	ClientRequestToken *string `location:"querystring" locationName:"ClientRequestToken" type:"string" idempotencyToken:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -6094,7 +6246,12 @@ type DeleteLensShareInput struct {
 	// or the request will fail.
 	ClientRequestToken *string `location:"querystring" locationName:"ClientRequestToken" type:"string" idempotencyToken:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -6484,7 +6641,12 @@ func (s DisassociateLensesOutput) GoString() string {
 type ExportLensInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -6579,7 +6741,12 @@ func (s *ExportLensOutput) SetLensJSON(v string) *ExportLensOutput {
 type GetAnswerInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -6683,7 +6850,12 @@ type GetAnswerOutput struct {
 	// An answer of the question.
 	Answer *Answer `type:"structure"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -6752,7 +6924,12 @@ func (s *GetAnswerOutput) SetWorkloadId(v string) *GetAnswerOutput {
 type GetLensInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -6847,7 +7024,12 @@ func (s *GetLensOutput) SetLens(v *Lens) *GetLensOutput {
 type GetLensReviewInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -6984,7 +7166,12 @@ func (s *GetLensReviewOutput) SetWorkloadId(v string) *GetLensReviewOutput {
 type GetLensReviewReportInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -7123,7 +7310,12 @@ type GetLensVersionDifferenceInput struct {
 	// The base version of the lens.
 	BaseLensVersion *string `location:"querystring" locationName:"BaseLensVersion" min:"1" type:"string"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -7201,7 +7393,12 @@ type GetLensVersionDifferenceOutput struct {
 	// The latest version of the lens.
 	LatestLensVersion *string `min:"1" type:"string"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -7486,7 +7683,12 @@ type ImportLensInput struct {
 	// JSONString is a required field
 	JSONString *string `min:"2" type:"string" required:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -7766,6 +7968,9 @@ type Lens struct {
 
 	// The ID assigned to the share invitation.
 	ShareInvitationId *string `type:"string"`
+
+	// The tags assigned to the lens.
+	Tags map[string]*string `min:"1" type:"map"`
 }
 
 // String returns the string representation.
@@ -7822,11 +8027,22 @@ func (s *Lens) SetShareInvitationId(v string) *Lens {
 	return s
 }
 
+// SetTags sets the Tags field's value.
+func (s *Lens) SetTags(v map[string]*string) *Lens {
+	s.Tags = v
+	return s
+}
+
 // A lens review of a question.
 type LensReview struct {
 	_ struct{} `type:"structure"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -7946,7 +8162,12 @@ type LensReviewReport struct {
 	// This data can be used to create a PDF file.
 	Base64String *string `type:"string"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -7995,7 +8216,12 @@ func (s *LensReviewReport) SetLensArn(v string) *LensReviewReport {
 type LensReviewSummary struct {
 	_ struct{} `type:"structure"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -8092,6 +8318,9 @@ type LensShareSummary struct {
 
 	// The status of a workload share.
 	Status *string `type:"string" enum:"ShareStatus"`
+
+	// Optional message to compliment the Status field.
+	StatusMessage *string `min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -8130,6 +8359,12 @@ func (s *LensShareSummary) SetStatus(v string) *LensShareSummary {
 	return s
 }
 
+// SetStatusMessage sets the StatusMessage field's value.
+func (s *LensShareSummary) SetStatusMessage(v string) *LensShareSummary {
+	s.StatusMessage = &v
+	return s
+}
+
 // A lens summary of a lens.
 type LensSummary struct {
 	_ struct{} `type:"structure"`
@@ -8140,7 +8375,12 @@ type LensSummary struct {
 	// The description of the lens.
 	Description *string `min:"1" type:"string"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -8255,7 +8495,12 @@ type LensUpgradeSummary struct {
 	// The latest version of the lens.
 	LatestLensVersion *string `min:"1" type:"string"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -8332,7 +8577,12 @@ func (s *LensUpgradeSummary) SetWorkloadName(v string) *LensUpgradeSummary {
 type ListAnswersInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -8454,7 +8704,12 @@ type ListAnswersOutput struct {
 	// List of answer summaries of lens review in a workload.
 	AnswerSummaries []*AnswerSummary `type:"list"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -8533,7 +8788,12 @@ func (s *ListAnswersOutput) SetWorkloadId(v string) *ListAnswersOutput {
 type ListLensReviewImprovementsInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -8655,7 +8915,12 @@ type ListLensReviewImprovementsOutput struct {
 	// List of improvement summaries of lens review in a workload.
 	ImprovementSummaries []*ImprovementSummary `type:"list"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -8881,7 +9146,12 @@ func (s *ListLensReviewsOutput) SetWorkloadId(v string) *ListLensReviewsOutput {
 type ListLensSharesInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -8896,6 +9166,9 @@ type ListLensSharesInput struct {
 
 	// The Amazon Web Services account ID or IAM role with which the lens is shared.
 	SharedWithPrefix *string `location:"querystring" locationName:"SharedWithPrefix" type:"string"`
+
+	// The status of a workload share.
+	Status *string `location:"querystring" locationName:"Status" type:"string" enum:"ShareStatus"`
 }
 
 // String returns the string representation.
@@ -8956,6 +9229,12 @@ func (s *ListLensSharesInput) SetNextToken(v string) *ListLensSharesInput {
 // SetSharedWithPrefix sets the SharedWithPrefix field's value.
 func (s *ListLensSharesInput) SetSharedWithPrefix(v string) *ListLensSharesInput {
 	s.SharedWithPrefix = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *ListLensSharesInput) SetStatus(v string) *ListLensSharesInput {
+	s.Status = &v
 	return s
 }
 
@@ -9568,6 +9847,9 @@ type ListWorkloadSharesInput struct {
 	// shared.
 	SharedWithPrefix *string `location:"querystring" locationName:"SharedWithPrefix" type:"string"`
 
+	// The status of a workload share.
+	Status *string `location:"querystring" locationName:"Status" type:"string" enum:"ShareStatus"`
+
 	// The ID assigned to the workload. This ID is unique within an Amazon Web Services
 	// Region.
 	//
@@ -9627,6 +9909,12 @@ func (s *ListWorkloadSharesInput) SetNextToken(v string) *ListWorkloadSharesInpu
 // SetSharedWithPrefix sets the SharedWithPrefix field's value.
 func (s *ListWorkloadSharesInput) SetSharedWithPrefix(v string) *ListWorkloadSharesInput {
 	s.SharedWithPrefix = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *ListWorkloadSharesInput) SetStatus(v string) *ListWorkloadSharesInput {
+	s.Status = &v
 	return s
 }
 
@@ -10291,7 +10579,12 @@ func (s *ServiceQuotaExceededException) RequestID() string {
 type ShareInvitation struct {
 	_ struct{} `type:"structure"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -10726,7 +11019,12 @@ type UpdateAnswerInput struct {
 	// Defines whether this question is applicable to a lens review.
 	IsApplicable *bool `type:"boolean"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -10867,7 +11165,12 @@ type UpdateAnswerOutput struct {
 	// An answer of the question.
 	Answer *Answer `type:"structure"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	LensAlias *string `min:"1" type:"string"`
@@ -10922,11 +11225,69 @@ func (s *UpdateAnswerOutput) SetWorkloadId(v string) *UpdateAnswerOutput {
 	return s
 }
 
+type UpdateGlobalSettingsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The status of organization sharing settings.
+	OrganizationSharingStatus *string `type:"string" enum:"OrganizationSharingStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateGlobalSettingsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateGlobalSettingsInput) GoString() string {
+	return s.String()
+}
+
+// SetOrganizationSharingStatus sets the OrganizationSharingStatus field's value.
+func (s *UpdateGlobalSettingsInput) SetOrganizationSharingStatus(v string) *UpdateGlobalSettingsInput {
+	s.OrganizationSharingStatus = &v
+	return s
+}
+
+type UpdateGlobalSettingsOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateGlobalSettingsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateGlobalSettingsOutput) GoString() string {
+	return s.String()
+}
+
 // Input for update lens review.
 type UpdateLensReviewInput struct {
 	_ struct{} `type:"structure"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -11571,7 +11932,12 @@ type UpgradeLensReviewInput struct {
 	// or the request will fail.
 	ClientRequestToken *string `type:"string"`
 
-	// The alias of the lens, for example, serverless.
+	// The alias of the lens.
+	//
+	// For Amazon Web Services official lenses, this is either the lens alias, such
+	// as serverless, or the lens ARN, such as arn:aws:wellarchitected:us-west-2::lens/serverless.
+	//
+	// For custom lenses, this is the lens ARN, such as arn:aws:wellarchitected:us-east-1:123456789012:lens/my-lens.
 	//
 	// Each lens is identified by its LensSummary$LensAlias.
 	//
@@ -12238,6 +12604,9 @@ type WorkloadShareSummary struct {
 
 	// The status of a workload share.
 	Status *string `type:"string" enum:"ShareStatus"`
+
+	// Optional message to compliment the Status field.
+	StatusMessage *string `min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -12279,6 +12648,12 @@ func (s *WorkloadShareSummary) SetSharedWith(v string) *WorkloadShareSummary {
 // SetStatus sets the Status field's value.
 func (s *WorkloadShareSummary) SetStatus(v string) *WorkloadShareSummary {
 	s.Status = &v
+	return s
+}
+
+// SetStatusMessage sets the StatusMessage field's value.
+func (s *WorkloadShareSummary) SetStatusMessage(v string) *WorkloadShareSummary {
+	s.StatusMessage = &v
 	return s
 }
 
@@ -12380,6 +12755,22 @@ func (s *WorkloadSummary) SetWorkloadId(v string) *WorkloadSummary {
 func (s *WorkloadSummary) SetWorkloadName(v string) *WorkloadSummary {
 	s.WorkloadName = &v
 	return s
+}
+
+const (
+	// AdditionalResourceTypeHelpfulResource is a AdditionalResourceType enum value
+	AdditionalResourceTypeHelpfulResource = "HELPFUL_RESOURCE"
+
+	// AdditionalResourceTypeImprovementPlan is a AdditionalResourceType enum value
+	AdditionalResourceTypeImprovementPlan = "IMPROVEMENT_PLAN"
+)
+
+// AdditionalResourceType_Values returns all elements of the AdditionalResourceType enum
+func AdditionalResourceType_Values() []string {
+	return []string{
+		AdditionalResourceTypeHelpfulResource,
+		AdditionalResourceTypeImprovementPlan,
+	}
 }
 
 const (
@@ -12582,6 +12973,22 @@ func NotificationType_Values() []string {
 	}
 }
 
+const (
+	// OrganizationSharingStatusEnabled is a OrganizationSharingStatus enum value
+	OrganizationSharingStatusEnabled = "ENABLED"
+
+	// OrganizationSharingStatusDisabled is a OrganizationSharingStatus enum value
+	OrganizationSharingStatusDisabled = "DISABLED"
+)
+
+// OrganizationSharingStatus_Values returns all elements of the OrganizationSharingStatus enum
+func OrganizationSharingStatus_Values() []string {
+	return []string{
+		OrganizationSharingStatusEnabled,
+		OrganizationSharingStatusDisabled,
+	}
+}
+
 // Permission granted on a workload share.
 const (
 	// PermissionTypeReadonly is a PermissionType enum value
@@ -12677,6 +13084,15 @@ const (
 
 	// ShareStatusExpired is a ShareStatus enum value
 	ShareStatusExpired = "EXPIRED"
+
+	// ShareStatusAssociating is a ShareStatus enum value
+	ShareStatusAssociating = "ASSOCIATING"
+
+	// ShareStatusAssociated is a ShareStatus enum value
+	ShareStatusAssociated = "ASSOCIATED"
+
+	// ShareStatusFailed is a ShareStatus enum value
+	ShareStatusFailed = "FAILED"
 )
 
 // ShareStatus_Values returns all elements of the ShareStatus enum
@@ -12687,6 +13103,9 @@ func ShareStatus_Values() []string {
 		ShareStatusPending,
 		ShareStatusRevoked,
 		ShareStatusExpired,
+		ShareStatusAssociating,
+		ShareStatusAssociated,
+		ShareStatusFailed,
 	}
 }
 

@@ -29,14 +29,13 @@ const opCreateDataset = "CreateDataset"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDatasetRequest method.
+//	req, resp := client.CreateDatasetRequest(params)
 //
-//    // Example sending a request using the CreateDatasetRequest method.
-//    req, resp := client.CreateDatasetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/CreateDataset
 func (c *LookoutEquipment) CreateDatasetRequest(input *CreateDatasetInput) (req *request.Request, output *CreateDatasetOutput) {
@@ -71,27 +70,28 @@ func (c *LookoutEquipment) CreateDatasetRequest(input *CreateDatasetInput) (req 
 // API operation CreateDataset for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ConflictException
-//   The request could not be completed due to a conflict with the current state
-//   of the target resource.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
 //
-//   * ServiceQuotaExceededException
-//   Resource limitations have been exceeded.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ServiceQuotaExceededException
+//     Resource limitations have been exceeded.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/CreateDataset
 func (c *LookoutEquipment) CreateDataset(input *CreateDatasetInput) (*CreateDatasetOutput, error) {
@@ -131,14 +131,13 @@ const opCreateInferenceScheduler = "CreateInferenceScheduler"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateInferenceSchedulerRequest method.
+//	req, resp := client.CreateInferenceSchedulerRequest(params)
 //
-//    // Example sending a request using the CreateInferenceSchedulerRequest method.
-//    req, resp := client.CreateInferenceSchedulerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/CreateInferenceScheduler
 func (c *LookoutEquipment) CreateInferenceSchedulerRequest(input *CreateInferenceSchedulerInput) (req *request.Request, output *CreateInferenceSchedulerOutput) {
@@ -174,31 +173,32 @@ func (c *LookoutEquipment) CreateInferenceSchedulerRequest(input *CreateInferenc
 // API operation CreateInferenceScheduler for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   The request could not be completed due to a conflict with the current state
-//   of the target resource.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
 //
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * ServiceQuotaExceededException
-//   Resource limitations have been exceeded.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ServiceQuotaExceededException
+//     Resource limitations have been exceeded.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/CreateInferenceScheduler
 func (c *LookoutEquipment) CreateInferenceScheduler(input *CreateInferenceSchedulerInput) (*CreateInferenceSchedulerOutput, error) {
@@ -222,6 +222,206 @@ func (c *LookoutEquipment) CreateInferenceSchedulerWithContext(ctx aws.Context, 
 	return out, req.Send()
 }
 
+const opCreateLabel = "CreateLabel"
+
+// CreateLabelRequest generates a "aws/request.Request" representing the
+// client's request for the CreateLabel operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateLabel for more information on using the CreateLabel
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CreateLabelRequest method.
+//	req, resp := client.CreateLabelRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/CreateLabel
+func (c *LookoutEquipment) CreateLabelRequest(input *CreateLabelInput) (req *request.Request, output *CreateLabelOutput) {
+	op := &request.Operation{
+		Name:       opCreateLabel,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateLabelInput{}
+	}
+
+	output = &CreateLabelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateLabel API operation for Amazon Lookout for Equipment.
+//
+// Creates a label for an event.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Equipment's
+// API operation CreateLabel for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
+//
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
+//
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
+//
+//   - ThrottlingException
+//     The request was denied due to request throttling.
+//
+//   - ServiceQuotaExceededException
+//     Resource limitations have been exceeded.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/CreateLabel
+func (c *LookoutEquipment) CreateLabel(input *CreateLabelInput) (*CreateLabelOutput, error) {
+	req, out := c.CreateLabelRequest(input)
+	return out, req.Send()
+}
+
+// CreateLabelWithContext is the same as CreateLabel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateLabel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) CreateLabelWithContext(ctx aws.Context, input *CreateLabelInput, opts ...request.Option) (*CreateLabelOutput, error) {
+	req, out := c.CreateLabelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCreateLabelGroup = "CreateLabelGroup"
+
+// CreateLabelGroupRequest generates a "aws/request.Request" representing the
+// client's request for the CreateLabelGroup operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateLabelGroup for more information on using the CreateLabelGroup
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CreateLabelGroupRequest method.
+//	req, resp := client.CreateLabelGroupRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/CreateLabelGroup
+func (c *LookoutEquipment) CreateLabelGroupRequest(input *CreateLabelGroupInput) (req *request.Request, output *CreateLabelGroupOutput) {
+	op := &request.Operation{
+		Name:       opCreateLabelGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateLabelGroupInput{}
+	}
+
+	output = &CreateLabelGroupOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateLabelGroup API operation for Amazon Lookout for Equipment.
+//
+// Creates a group of labels.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Equipment's
+// API operation CreateLabelGroup for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
+//
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
+//
+//   - ThrottlingException
+//     The request was denied due to request throttling.
+//
+//   - ServiceQuotaExceededException
+//     Resource limitations have been exceeded.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/CreateLabelGroup
+func (c *LookoutEquipment) CreateLabelGroup(input *CreateLabelGroupInput) (*CreateLabelGroupOutput, error) {
+	req, out := c.CreateLabelGroupRequest(input)
+	return out, req.Send()
+}
+
+// CreateLabelGroupWithContext is the same as CreateLabelGroup with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateLabelGroup for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) CreateLabelGroupWithContext(ctx aws.Context, input *CreateLabelGroupInput, opts ...request.Option) (*CreateLabelGroupOutput, error) {
+	req, out := c.CreateLabelGroupRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateModel = "CreateModel"
 
 // CreateModelRequest generates a "aws/request.Request" representing the
@@ -238,14 +438,13 @@ const opCreateModel = "CreateModel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateModelRequest method.
+//	req, resp := client.CreateModelRequest(params)
 //
-//    // Example sending a request using the CreateModelRequest method.
-//    req, resp := client.CreateModelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/CreateModel
 func (c *LookoutEquipment) CreateModelRequest(input *CreateModelInput) (req *request.Request, output *CreateModelOutput) {
@@ -287,31 +486,32 @@ func (c *LookoutEquipment) CreateModelRequest(input *CreateModelInput) (req *req
 // API operation CreateModel for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ConflictException
-//   The request could not be completed due to a conflict with the current state
-//   of the target resource.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
 //
-//   * ServiceQuotaExceededException
-//   Resource limitations have been exceeded.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - ServiceQuotaExceededException
+//     Resource limitations have been exceeded.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/CreateModel
 func (c *LookoutEquipment) CreateModel(input *CreateModelInput) (*CreateModelOutput, error) {
@@ -351,14 +551,13 @@ const opDeleteDataset = "DeleteDataset"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDatasetRequest method.
+//	req, resp := client.DeleteDatasetRequest(params)
 //
-//    // Example sending a request using the DeleteDatasetRequest method.
-//    req, resp := client.DeleteDatasetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DeleteDataset
 func (c *LookoutEquipment) DeleteDatasetRequest(input *DeleteDatasetInput) (req *request.Request, output *DeleteDatasetOutput) {
@@ -394,24 +593,25 @@ func (c *LookoutEquipment) DeleteDatasetRequest(input *DeleteDatasetInput) (req 
 // API operation DeleteDataset for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
-//   * ConflictException
-//   The request could not be completed due to a conflict with the current state
-//   of the target resource.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DeleteDataset
 func (c *LookoutEquipment) DeleteDataset(input *DeleteDatasetInput) (*DeleteDatasetOutput, error) {
@@ -451,14 +651,13 @@ const opDeleteInferenceScheduler = "DeleteInferenceScheduler"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteInferenceSchedulerRequest method.
+//	req, resp := client.DeleteInferenceSchedulerRequest(params)
 //
-//    // Example sending a request using the DeleteInferenceSchedulerRequest method.
-//    req, resp := client.DeleteInferenceSchedulerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DeleteInferenceScheduler
 func (c *LookoutEquipment) DeleteInferenceSchedulerRequest(input *DeleteInferenceSchedulerInput) (req *request.Request, output *DeleteInferenceSchedulerOutput) {
@@ -491,28 +690,29 @@ func (c *LookoutEquipment) DeleteInferenceSchedulerRequest(input *DeleteInferenc
 // API operation DeleteInferenceScheduler for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ConflictException
-//   The request could not be completed due to a conflict with the current state
-//   of the target resource.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DeleteInferenceScheduler
 func (c *LookoutEquipment) DeleteInferenceScheduler(input *DeleteInferenceSchedulerInput) (*DeleteInferenceSchedulerOutput, error) {
@@ -536,6 +736,198 @@ func (c *LookoutEquipment) DeleteInferenceSchedulerWithContext(ctx aws.Context, 
 	return out, req.Send()
 }
 
+const opDeleteLabel = "DeleteLabel"
+
+// DeleteLabelRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteLabel operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteLabel for more information on using the DeleteLabel
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DeleteLabelRequest method.
+//	req, resp := client.DeleteLabelRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DeleteLabel
+func (c *LookoutEquipment) DeleteLabelRequest(input *DeleteLabelInput) (req *request.Request, output *DeleteLabelOutput) {
+	op := &request.Operation{
+		Name:       opDeleteLabel,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteLabelInput{}
+	}
+
+	output = &DeleteLabelOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteLabel API operation for Amazon Lookout for Equipment.
+//
+// Deletes a label.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Equipment's
+// API operation DeleteLabel for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
+//
+//   - ThrottlingException
+//     The request was denied due to request throttling.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DeleteLabel
+func (c *LookoutEquipment) DeleteLabel(input *DeleteLabelInput) (*DeleteLabelOutput, error) {
+	req, out := c.DeleteLabelRequest(input)
+	return out, req.Send()
+}
+
+// DeleteLabelWithContext is the same as DeleteLabel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteLabel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) DeleteLabelWithContext(ctx aws.Context, input *DeleteLabelInput, opts ...request.Option) (*DeleteLabelOutput, error) {
+	req, out := c.DeleteLabelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteLabelGroup = "DeleteLabelGroup"
+
+// DeleteLabelGroupRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteLabelGroup operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteLabelGroup for more information on using the DeleteLabelGroup
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DeleteLabelGroupRequest method.
+//	req, resp := client.DeleteLabelGroupRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DeleteLabelGroup
+func (c *LookoutEquipment) DeleteLabelGroupRequest(input *DeleteLabelGroupInput) (req *request.Request, output *DeleteLabelGroupOutput) {
+	op := &request.Operation{
+		Name:       opDeleteLabelGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteLabelGroupInput{}
+	}
+
+	output = &DeleteLabelGroupOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteLabelGroup API operation for Amazon Lookout for Equipment.
+//
+// Deletes a group of labels.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Equipment's
+// API operation DeleteLabelGroup for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
+//
+//   - ThrottlingException
+//     The request was denied due to request throttling.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DeleteLabelGroup
+func (c *LookoutEquipment) DeleteLabelGroup(input *DeleteLabelGroupInput) (*DeleteLabelGroupOutput, error) {
+	req, out := c.DeleteLabelGroupRequest(input)
+	return out, req.Send()
+}
+
+// DeleteLabelGroupWithContext is the same as DeleteLabelGroup with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteLabelGroup for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) DeleteLabelGroupWithContext(ctx aws.Context, input *DeleteLabelGroupInput, opts ...request.Option) (*DeleteLabelGroupOutput, error) {
+	req, out := c.DeleteLabelGroupRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteModel = "DeleteModel"
 
 // DeleteModelRequest generates a "aws/request.Request" representing the
@@ -552,14 +944,13 @@ const opDeleteModel = "DeleteModel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteModelRequest method.
+//	req, resp := client.DeleteModelRequest(params)
 //
-//    // Example sending a request using the DeleteModelRequest method.
-//    req, resp := client.DeleteModelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DeleteModel
 func (c *LookoutEquipment) DeleteModelRequest(input *DeleteModelInput) (req *request.Request, output *DeleteModelOutput) {
@@ -593,24 +984,25 @@ func (c *LookoutEquipment) DeleteModelRequest(input *DeleteModelInput) (req *req
 // API operation DeleteModel for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * ConflictException
-//   The request could not be completed due to a conflict with the current state
-//   of the target resource.
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DeleteModel
 func (c *LookoutEquipment) DeleteModel(input *DeleteModelInput) (*DeleteModelOutput, error) {
@@ -650,14 +1042,13 @@ const opDescribeDataIngestionJob = "DescribeDataIngestionJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDataIngestionJobRequest method.
+//	req, resp := client.DescribeDataIngestionJobRequest(params)
 //
-//    // Example sending a request using the DescribeDataIngestionJobRequest method.
-//    req, resp := client.DescribeDataIngestionJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeDataIngestionJob
 func (c *LookoutEquipment) DescribeDataIngestionJobRequest(input *DescribeDataIngestionJobInput) (req *request.Request, output *DescribeDataIngestionJobOutput) {
@@ -679,7 +1070,7 @@ func (c *LookoutEquipment) DescribeDataIngestionJobRequest(input *DescribeDataIn
 // DescribeDataIngestionJob API operation for Amazon Lookout for Equipment.
 //
 // Provides information on a specific data ingestion job such as creation time,
-// dataset ARN, status, and so on.
+// dataset ARN, and status.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -689,24 +1080,25 @@ func (c *LookoutEquipment) DescribeDataIngestionJobRequest(input *DescribeDataIn
 // API operation DescribeDataIngestionJob for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeDataIngestionJob
 func (c *LookoutEquipment) DescribeDataIngestionJob(input *DescribeDataIngestionJobInput) (*DescribeDataIngestionJobOutput, error) {
@@ -746,14 +1138,13 @@ const opDescribeDataset = "DescribeDataset"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDatasetRequest method.
+//	req, resp := client.DescribeDatasetRequest(params)
 //
-//    // Example sending a request using the DescribeDatasetRequest method.
-//    req, resp := client.DescribeDatasetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeDataset
 func (c *LookoutEquipment) DescribeDatasetRequest(input *DescribeDatasetInput) (req *request.Request, output *DescribeDatasetOutput) {
@@ -774,8 +1165,8 @@ func (c *LookoutEquipment) DescribeDatasetRequest(input *DescribeDatasetInput) (
 
 // DescribeDataset API operation for Amazon Lookout for Equipment.
 //
-// Provides a JSON description of the data that is in each time series dataset,
-// including names, column names, and data types.
+// Provides a JSON description of the data in each time series dataset, including
+// names, column names, and data types.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -785,24 +1176,25 @@ func (c *LookoutEquipment) DescribeDatasetRequest(input *DescribeDatasetInput) (
 // API operation DescribeDataset for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeDataset
 func (c *LookoutEquipment) DescribeDataset(input *DescribeDatasetInput) (*DescribeDatasetOutput, error) {
@@ -842,14 +1234,13 @@ const opDescribeInferenceScheduler = "DescribeInferenceScheduler"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeInferenceSchedulerRequest method.
+//	req, resp := client.DescribeInferenceSchedulerRequest(params)
 //
-//    // Example sending a request using the DescribeInferenceSchedulerRequest method.
-//    req, resp := client.DescribeInferenceSchedulerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeInferenceScheduler
 func (c *LookoutEquipment) DescribeInferenceSchedulerRequest(input *DescribeInferenceSchedulerInput) (req *request.Request, output *DescribeInferenceSchedulerOutput) {
@@ -881,24 +1272,25 @@ func (c *LookoutEquipment) DescribeInferenceSchedulerRequest(input *DescribeInfe
 // API operation DescribeInferenceScheduler for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeInferenceScheduler
 func (c *LookoutEquipment) DescribeInferenceScheduler(input *DescribeInferenceSchedulerInput) (*DescribeInferenceSchedulerOutput, error) {
@@ -922,6 +1314,196 @@ func (c *LookoutEquipment) DescribeInferenceSchedulerWithContext(ctx aws.Context
 	return out, req.Send()
 }
 
+const opDescribeLabel = "DescribeLabel"
+
+// DescribeLabelRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeLabel operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeLabel for more information on using the DescribeLabel
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeLabelRequest method.
+//	req, resp := client.DescribeLabelRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeLabel
+func (c *LookoutEquipment) DescribeLabelRequest(input *DescribeLabelInput) (req *request.Request, output *DescribeLabelOutput) {
+	op := &request.Operation{
+		Name:       opDescribeLabel,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeLabelInput{}
+	}
+
+	output = &DescribeLabelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeLabel API operation for Amazon Lookout for Equipment.
+//
+// Returns the name of the label.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Equipment's
+// API operation DescribeLabel for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
+//
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
+//
+//   - ThrottlingException
+//     The request was denied due to request throttling.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeLabel
+func (c *LookoutEquipment) DescribeLabel(input *DescribeLabelInput) (*DescribeLabelOutput, error) {
+	req, out := c.DescribeLabelRequest(input)
+	return out, req.Send()
+}
+
+// DescribeLabelWithContext is the same as DescribeLabel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeLabel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) DescribeLabelWithContext(ctx aws.Context, input *DescribeLabelInput, opts ...request.Option) (*DescribeLabelOutput, error) {
+	req, out := c.DescribeLabelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeLabelGroup = "DescribeLabelGroup"
+
+// DescribeLabelGroupRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeLabelGroup operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeLabelGroup for more information on using the DescribeLabelGroup
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeLabelGroupRequest method.
+//	req, resp := client.DescribeLabelGroupRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeLabelGroup
+func (c *LookoutEquipment) DescribeLabelGroupRequest(input *DescribeLabelGroupInput) (req *request.Request, output *DescribeLabelGroupOutput) {
+	op := &request.Operation{
+		Name:       opDescribeLabelGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeLabelGroupInput{}
+	}
+
+	output = &DescribeLabelGroupOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeLabelGroup API operation for Amazon Lookout for Equipment.
+//
+// Returns information about the label group.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Equipment's
+// API operation DescribeLabelGroup for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
+//
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
+//
+//   - ThrottlingException
+//     The request was denied due to request throttling.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeLabelGroup
+func (c *LookoutEquipment) DescribeLabelGroup(input *DescribeLabelGroupInput) (*DescribeLabelGroupOutput, error) {
+	req, out := c.DescribeLabelGroupRequest(input)
+	return out, req.Send()
+}
+
+// DescribeLabelGroupWithContext is the same as DescribeLabelGroup with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeLabelGroup for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) DescribeLabelGroupWithContext(ctx aws.Context, input *DescribeLabelGroupInput, opts ...request.Option) (*DescribeLabelGroupOutput, error) {
+	req, out := c.DescribeLabelGroupRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeModel = "DescribeModel"
 
 // DescribeModelRequest generates a "aws/request.Request" representing the
@@ -938,14 +1520,13 @@ const opDescribeModel = "DescribeModel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeModelRequest method.
+//	req, resp := client.DescribeModelRequest(params)
 //
-//    // Example sending a request using the DescribeModelRequest method.
-//    req, resp := client.DescribeModelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeModel
 func (c *LookoutEquipment) DescribeModelRequest(input *DescribeModelInput) (req *request.Request, output *DescribeModelOutput) {
@@ -978,24 +1559,25 @@ func (c *LookoutEquipment) DescribeModelRequest(input *DescribeModelInput) (req 
 // API operation DescribeModel for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/DescribeModel
 func (c *LookoutEquipment) DescribeModel(input *DescribeModelInput) (*DescribeModelOutput, error) {
@@ -1035,14 +1617,13 @@ const opListDataIngestionJobs = "ListDataIngestionJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDataIngestionJobsRequest method.
+//	req, resp := client.ListDataIngestionJobsRequest(params)
 //
-//    // Example sending a request using the ListDataIngestionJobsRequest method.
-//    req, resp := client.ListDataIngestionJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListDataIngestionJobs
 func (c *LookoutEquipment) ListDataIngestionJobsRequest(input *ListDataIngestionJobsInput) (req *request.Request, output *ListDataIngestionJobsOutput) {
@@ -1080,20 +1661,21 @@ func (c *LookoutEquipment) ListDataIngestionJobsRequest(input *ListDataIngestion
 // API operation ListDataIngestionJobs for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListDataIngestionJobs
 func (c *LookoutEquipment) ListDataIngestionJobs(input *ListDataIngestionJobsInput) (*ListDataIngestionJobsOutput, error) {
@@ -1125,15 +1707,14 @@ func (c *LookoutEquipment) ListDataIngestionJobsWithContext(ctx aws.Context, inp
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDataIngestionJobs operation.
-//    pageNum := 0
-//    err := client.ListDataIngestionJobsPages(params,
-//        func(page *lookoutequipment.ListDataIngestionJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListDataIngestionJobs operation.
+//	pageNum := 0
+//	err := client.ListDataIngestionJobsPages(params,
+//	    func(page *lookoutequipment.ListDataIngestionJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutEquipment) ListDataIngestionJobsPages(input *ListDataIngestionJobsInput, fn func(*ListDataIngestionJobsOutput, bool) bool) error {
 	return c.ListDataIngestionJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1185,14 +1766,13 @@ const opListDatasets = "ListDatasets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDatasetsRequest method.
+//	req, resp := client.ListDatasetsRequest(params)
 //
-//    // Example sending a request using the ListDatasetsRequest method.
-//    req, resp := client.ListDatasetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListDatasets
 func (c *LookoutEquipment) ListDatasetsRequest(input *ListDatasetsInput) (req *request.Request, output *ListDatasetsOutput) {
@@ -1230,20 +1810,21 @@ func (c *LookoutEquipment) ListDatasetsRequest(input *ListDatasetsInput) (req *r
 // API operation ListDatasets for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListDatasets
 func (c *LookoutEquipment) ListDatasets(input *ListDatasetsInput) (*ListDatasetsOutput, error) {
@@ -1275,15 +1856,14 @@ func (c *LookoutEquipment) ListDatasetsWithContext(ctx aws.Context, input *ListD
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDatasets operation.
-//    pageNum := 0
-//    err := client.ListDatasetsPages(params,
-//        func(page *lookoutequipment.ListDatasetsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListDatasets operation.
+//	pageNum := 0
+//	err := client.ListDatasetsPages(params,
+//	    func(page *lookoutequipment.ListDatasetsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutEquipment) ListDatasetsPages(input *ListDatasetsInput, fn func(*ListDatasetsOutput, bool) bool) error {
 	return c.ListDatasetsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1319,6 +1899,159 @@ func (c *LookoutEquipment) ListDatasetsPagesWithContext(ctx aws.Context, input *
 	return p.Err()
 }
 
+const opListInferenceEvents = "ListInferenceEvents"
+
+// ListInferenceEventsRequest generates a "aws/request.Request" representing the
+// client's request for the ListInferenceEvents operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListInferenceEvents for more information on using the ListInferenceEvents
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListInferenceEventsRequest method.
+//	req, resp := client.ListInferenceEventsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListInferenceEvents
+func (c *LookoutEquipment) ListInferenceEventsRequest(input *ListInferenceEventsInput) (req *request.Request, output *ListInferenceEventsOutput) {
+	op := &request.Operation{
+		Name:       opListInferenceEvents,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListInferenceEventsInput{}
+	}
+
+	output = &ListInferenceEventsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListInferenceEvents API operation for Amazon Lookout for Equipment.
+//
+// Lists all inference events that have been found for the specified inference
+// scheduler.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Equipment's
+// API operation ListInferenceEvents for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
+//
+//   - ThrottlingException
+//     The request was denied due to request throttling.
+//
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListInferenceEvents
+func (c *LookoutEquipment) ListInferenceEvents(input *ListInferenceEventsInput) (*ListInferenceEventsOutput, error) {
+	req, out := c.ListInferenceEventsRequest(input)
+	return out, req.Send()
+}
+
+// ListInferenceEventsWithContext is the same as ListInferenceEvents with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListInferenceEvents for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) ListInferenceEventsWithContext(ctx aws.Context, input *ListInferenceEventsInput, opts ...request.Option) (*ListInferenceEventsOutput, error) {
+	req, out := c.ListInferenceEventsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListInferenceEventsPages iterates over the pages of a ListInferenceEvents operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListInferenceEvents method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListInferenceEvents operation.
+//	pageNum := 0
+//	err := client.ListInferenceEventsPages(params,
+//	    func(page *lookoutequipment.ListInferenceEventsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *LookoutEquipment) ListInferenceEventsPages(input *ListInferenceEventsInput, fn func(*ListInferenceEventsOutput, bool) bool) error {
+	return c.ListInferenceEventsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListInferenceEventsPagesWithContext same as ListInferenceEventsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) ListInferenceEventsPagesWithContext(ctx aws.Context, input *ListInferenceEventsInput, fn func(*ListInferenceEventsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListInferenceEventsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListInferenceEventsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListInferenceEventsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListInferenceExecutions = "ListInferenceExecutions"
 
 // ListInferenceExecutionsRequest generates a "aws/request.Request" representing the
@@ -1335,14 +2068,13 @@ const opListInferenceExecutions = "ListInferenceExecutions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListInferenceExecutionsRequest method.
+//	req, resp := client.ListInferenceExecutionsRequest(params)
 //
-//    // Example sending a request using the ListInferenceExecutionsRequest method.
-//    req, resp := client.ListInferenceExecutionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListInferenceExecutions
 func (c *LookoutEquipment) ListInferenceExecutionsRequest(input *ListInferenceExecutionsInput) (req *request.Request, output *ListInferenceExecutionsOutput) {
@@ -1380,24 +2112,25 @@ func (c *LookoutEquipment) ListInferenceExecutionsRequest(input *ListInferenceEx
 // API operation ListInferenceExecutions for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListInferenceExecutions
 func (c *LookoutEquipment) ListInferenceExecutions(input *ListInferenceExecutionsInput) (*ListInferenceExecutionsOutput, error) {
@@ -1429,15 +2162,14 @@ func (c *LookoutEquipment) ListInferenceExecutionsWithContext(ctx aws.Context, i
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListInferenceExecutions operation.
-//    pageNum := 0
-//    err := client.ListInferenceExecutionsPages(params,
-//        func(page *lookoutequipment.ListInferenceExecutionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListInferenceExecutions operation.
+//	pageNum := 0
+//	err := client.ListInferenceExecutionsPages(params,
+//	    func(page *lookoutequipment.ListInferenceExecutionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutEquipment) ListInferenceExecutionsPages(input *ListInferenceExecutionsInput, fn func(*ListInferenceExecutionsOutput, bool) bool) error {
 	return c.ListInferenceExecutionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1489,14 +2221,13 @@ const opListInferenceSchedulers = "ListInferenceSchedulers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListInferenceSchedulersRequest method.
+//	req, resp := client.ListInferenceSchedulersRequest(params)
 //
-//    // Example sending a request using the ListInferenceSchedulersRequest method.
-//    req, resp := client.ListInferenceSchedulersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListInferenceSchedulers
 func (c *LookoutEquipment) ListInferenceSchedulersRequest(input *ListInferenceSchedulersInput) (req *request.Request, output *ListInferenceSchedulersOutput) {
@@ -1534,20 +2265,21 @@ func (c *LookoutEquipment) ListInferenceSchedulersRequest(input *ListInferenceSc
 // API operation ListInferenceSchedulers for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListInferenceSchedulers
 func (c *LookoutEquipment) ListInferenceSchedulers(input *ListInferenceSchedulersInput) (*ListInferenceSchedulersOutput, error) {
@@ -1579,15 +2311,14 @@ func (c *LookoutEquipment) ListInferenceSchedulersWithContext(ctx aws.Context, i
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListInferenceSchedulers operation.
-//    pageNum := 0
-//    err := client.ListInferenceSchedulersPages(params,
-//        func(page *lookoutequipment.ListInferenceSchedulersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListInferenceSchedulers operation.
+//	pageNum := 0
+//	err := client.ListInferenceSchedulersPages(params,
+//	    func(page *lookoutequipment.ListInferenceSchedulersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutEquipment) ListInferenceSchedulersPages(input *ListInferenceSchedulersInput, fn func(*ListInferenceSchedulersOutput, bool) bool) error {
 	return c.ListInferenceSchedulersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1623,6 +2354,302 @@ func (c *LookoutEquipment) ListInferenceSchedulersPagesWithContext(ctx aws.Conte
 	return p.Err()
 }
 
+const opListLabelGroups = "ListLabelGroups"
+
+// ListLabelGroupsRequest generates a "aws/request.Request" representing the
+// client's request for the ListLabelGroups operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListLabelGroups for more information on using the ListLabelGroups
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListLabelGroupsRequest method.
+//	req, resp := client.ListLabelGroupsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListLabelGroups
+func (c *LookoutEquipment) ListLabelGroupsRequest(input *ListLabelGroupsInput) (req *request.Request, output *ListLabelGroupsOutput) {
+	op := &request.Operation{
+		Name:       opListLabelGroups,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListLabelGroupsInput{}
+	}
+
+	output = &ListLabelGroupsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListLabelGroups API operation for Amazon Lookout for Equipment.
+//
+// Returns a list of the label groups.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Equipment's
+// API operation ListLabelGroups for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
+//
+//   - ThrottlingException
+//     The request was denied due to request throttling.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListLabelGroups
+func (c *LookoutEquipment) ListLabelGroups(input *ListLabelGroupsInput) (*ListLabelGroupsOutput, error) {
+	req, out := c.ListLabelGroupsRequest(input)
+	return out, req.Send()
+}
+
+// ListLabelGroupsWithContext is the same as ListLabelGroups with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListLabelGroups for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) ListLabelGroupsWithContext(ctx aws.Context, input *ListLabelGroupsInput, opts ...request.Option) (*ListLabelGroupsOutput, error) {
+	req, out := c.ListLabelGroupsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListLabelGroupsPages iterates over the pages of a ListLabelGroups operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListLabelGroups method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListLabelGroups operation.
+//	pageNum := 0
+//	err := client.ListLabelGroupsPages(params,
+//	    func(page *lookoutequipment.ListLabelGroupsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *LookoutEquipment) ListLabelGroupsPages(input *ListLabelGroupsInput, fn func(*ListLabelGroupsOutput, bool) bool) error {
+	return c.ListLabelGroupsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListLabelGroupsPagesWithContext same as ListLabelGroupsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) ListLabelGroupsPagesWithContext(ctx aws.Context, input *ListLabelGroupsInput, fn func(*ListLabelGroupsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListLabelGroupsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListLabelGroupsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListLabelGroupsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
+const opListLabels = "ListLabels"
+
+// ListLabelsRequest generates a "aws/request.Request" representing the
+// client's request for the ListLabels operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListLabels for more information on using the ListLabels
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListLabelsRequest method.
+//	req, resp := client.ListLabelsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListLabels
+func (c *LookoutEquipment) ListLabelsRequest(input *ListLabelsInput) (req *request.Request, output *ListLabelsOutput) {
+	op := &request.Operation{
+		Name:       opListLabels,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListLabelsInput{}
+	}
+
+	output = &ListLabelsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListLabels API operation for Amazon Lookout for Equipment.
+//
+// Provides a list of labels.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Equipment's
+// API operation ListLabels for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
+//
+//   - ThrottlingException
+//     The request was denied due to request throttling.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListLabels
+func (c *LookoutEquipment) ListLabels(input *ListLabelsInput) (*ListLabelsOutput, error) {
+	req, out := c.ListLabelsRequest(input)
+	return out, req.Send()
+}
+
+// ListLabelsWithContext is the same as ListLabels with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListLabels for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) ListLabelsWithContext(ctx aws.Context, input *ListLabelsInput, opts ...request.Option) (*ListLabelsOutput, error) {
+	req, out := c.ListLabelsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListLabelsPages iterates over the pages of a ListLabels operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListLabels method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListLabels operation.
+//	pageNum := 0
+//	err := client.ListLabelsPages(params,
+//	    func(page *lookoutequipment.ListLabelsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *LookoutEquipment) ListLabelsPages(input *ListLabelsInput, fn func(*ListLabelsOutput, bool) bool) error {
+	return c.ListLabelsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListLabelsPagesWithContext same as ListLabelsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) ListLabelsPagesWithContext(ctx aws.Context, input *ListLabelsInput, fn func(*ListLabelsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListLabelsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListLabelsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListLabelsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListModels = "ListModels"
 
 // ListModelsRequest generates a "aws/request.Request" representing the
@@ -1639,14 +2666,13 @@ const opListModels = "ListModels"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListModelsRequest method.
+//	req, resp := client.ListModelsRequest(params)
 //
-//    // Example sending a request using the ListModelsRequest method.
-//    req, resp := client.ListModelsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListModels
 func (c *LookoutEquipment) ListModelsRequest(input *ListModelsInput) (req *request.Request, output *ListModelsOutput) {
@@ -1684,20 +2710,21 @@ func (c *LookoutEquipment) ListModelsRequest(input *ListModelsInput) (req *reque
 // API operation ListModels for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListModels
 func (c *LookoutEquipment) ListModels(input *ListModelsInput) (*ListModelsOutput, error) {
@@ -1729,15 +2756,14 @@ func (c *LookoutEquipment) ListModelsWithContext(ctx aws.Context, input *ListMod
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListModels operation.
-//    pageNum := 0
-//    err := client.ListModelsPages(params,
-//        func(page *lookoutequipment.ListModelsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListModels operation.
+//	pageNum := 0
+//	err := client.ListModelsPages(params,
+//	    func(page *lookoutequipment.ListModelsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LookoutEquipment) ListModelsPages(input *ListModelsInput, fn func(*ListModelsOutput, bool) bool) error {
 	return c.ListModelsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1773,6 +2799,160 @@ func (c *LookoutEquipment) ListModelsPagesWithContext(ctx aws.Context, input *Li
 	return p.Err()
 }
 
+const opListSensorStatistics = "ListSensorStatistics"
+
+// ListSensorStatisticsRequest generates a "aws/request.Request" representing the
+// client's request for the ListSensorStatistics operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListSensorStatistics for more information on using the ListSensorStatistics
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListSensorStatisticsRequest method.
+//	req, resp := client.ListSensorStatisticsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListSensorStatistics
+func (c *LookoutEquipment) ListSensorStatisticsRequest(input *ListSensorStatisticsInput) (req *request.Request, output *ListSensorStatisticsOutput) {
+	op := &request.Operation{
+		Name:       opListSensorStatistics,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListSensorStatisticsInput{}
+	}
+
+	output = &ListSensorStatisticsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListSensorStatistics API operation for Amazon Lookout for Equipment.
+//
+// Lists statistics about the data collected for each of the sensors that have
+// been successfully ingested in the particular dataset. Can also be used to
+// retreive Sensor Statistics for a previous ingestion job.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Equipment's
+// API operation ListSensorStatistics for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
+//
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
+//
+//   - ThrottlingException
+//     The request was denied due to request throttling.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListSensorStatistics
+func (c *LookoutEquipment) ListSensorStatistics(input *ListSensorStatisticsInput) (*ListSensorStatisticsOutput, error) {
+	req, out := c.ListSensorStatisticsRequest(input)
+	return out, req.Send()
+}
+
+// ListSensorStatisticsWithContext is the same as ListSensorStatistics with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListSensorStatistics for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) ListSensorStatisticsWithContext(ctx aws.Context, input *ListSensorStatisticsInput, opts ...request.Option) (*ListSensorStatisticsOutput, error) {
+	req, out := c.ListSensorStatisticsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListSensorStatisticsPages iterates over the pages of a ListSensorStatistics operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListSensorStatistics method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListSensorStatistics operation.
+//	pageNum := 0
+//	err := client.ListSensorStatisticsPages(params,
+//	    func(page *lookoutequipment.ListSensorStatisticsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *LookoutEquipment) ListSensorStatisticsPages(input *ListSensorStatisticsInput, fn func(*ListSensorStatisticsOutput, bool) bool) error {
+	return c.ListSensorStatisticsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListSensorStatisticsPagesWithContext same as ListSensorStatisticsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) ListSensorStatisticsPagesWithContext(ctx aws.Context, input *ListSensorStatisticsInput, fn func(*ListSensorStatisticsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListSensorStatisticsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListSensorStatisticsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListSensorStatisticsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListTagsForResource = "ListTagsForResource"
 
 // ListTagsForResourceRequest generates a "aws/request.Request" representing the
@@ -1789,14 +2969,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListTagsForResource
 func (c *LookoutEquipment) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -1827,24 +3006,25 @@ func (c *LookoutEquipment) ListTagsForResourceRequest(input *ListTagsForResource
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/ListTagsForResource
 func (c *LookoutEquipment) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -1884,14 +3064,13 @@ const opStartDataIngestionJob = "StartDataIngestionJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartDataIngestionJobRequest method.
+//	req, resp := client.StartDataIngestionJobRequest(params)
 //
-//    // Example sending a request using the StartDataIngestionJobRequest method.
-//    req, resp := client.StartDataIngestionJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/StartDataIngestionJob
 func (c *LookoutEquipment) StartDataIngestionJobRequest(input *StartDataIngestionJobInput) (req *request.Request, output *StartDataIngestionJobOutput) {
@@ -1923,31 +3102,32 @@ func (c *LookoutEquipment) StartDataIngestionJobRequest(input *StartDataIngestio
 // API operation StartDataIngestionJob for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ConflictException
-//   The request could not be completed due to a conflict with the current state
-//   of the target resource.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
 //
-//   * ServiceQuotaExceededException
-//   Resource limitations have been exceeded.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ServiceQuotaExceededException
+//     Resource limitations have been exceeded.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/StartDataIngestionJob
 func (c *LookoutEquipment) StartDataIngestionJob(input *StartDataIngestionJobInput) (*StartDataIngestionJobOutput, error) {
@@ -1987,14 +3167,13 @@ const opStartInferenceScheduler = "StartInferenceScheduler"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartInferenceSchedulerRequest method.
+//	req, resp := client.StartInferenceSchedulerRequest(params)
 //
-//    // Example sending a request using the StartInferenceSchedulerRequest method.
-//    req, resp := client.StartInferenceSchedulerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/StartInferenceScheduler
 func (c *LookoutEquipment) StartInferenceSchedulerRequest(input *StartInferenceSchedulerInput) (req *request.Request, output *StartInferenceSchedulerOutput) {
@@ -2025,28 +3204,29 @@ func (c *LookoutEquipment) StartInferenceSchedulerRequest(input *StartInferenceS
 // API operation StartInferenceScheduler for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ConflictException
-//   The request could not be completed due to a conflict with the current state
-//   of the target resource.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/StartInferenceScheduler
 func (c *LookoutEquipment) StartInferenceScheduler(input *StartInferenceSchedulerInput) (*StartInferenceSchedulerOutput, error) {
@@ -2086,14 +3266,13 @@ const opStopInferenceScheduler = "StopInferenceScheduler"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopInferenceSchedulerRequest method.
+//	req, resp := client.StopInferenceSchedulerRequest(params)
 //
-//    // Example sending a request using the StopInferenceSchedulerRequest method.
-//    req, resp := client.StopInferenceSchedulerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/StopInferenceScheduler
 func (c *LookoutEquipment) StopInferenceSchedulerRequest(input *StopInferenceSchedulerInput) (req *request.Request, output *StopInferenceSchedulerOutput) {
@@ -2124,28 +3303,29 @@ func (c *LookoutEquipment) StopInferenceSchedulerRequest(input *StopInferenceSch
 // API operation StopInferenceScheduler for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ConflictException
-//   The request could not be completed due to a conflict with the current state
-//   of the target resource.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/StopInferenceScheduler
 func (c *LookoutEquipment) StopInferenceScheduler(input *StopInferenceSchedulerInput) (*StopInferenceSchedulerOutput, error) {
@@ -2185,14 +3365,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/TagResource
 func (c *LookoutEquipment) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -2228,27 +3407,28 @@ func (c *LookoutEquipment) TagResourceRequest(input *TagResourceInput) (req *req
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ServiceQuotaExceededException
-//   Resource limitations have been exceeded.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ServiceQuotaExceededException
+//     Resource limitations have been exceeded.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/TagResource
 func (c *LookoutEquipment) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -2288,14 +3468,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/UntagResource
 func (c *LookoutEquipment) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -2328,24 +3507,25 @@ func (c *LookoutEquipment) UntagResourceRequest(input *UntagResourceInput) (req 
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/UntagResource
 func (c *LookoutEquipment) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -2385,14 +3565,13 @@ const opUpdateInferenceScheduler = "UpdateInferenceScheduler"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateInferenceSchedulerRequest method.
+//	req, resp := client.UpdateInferenceSchedulerRequest(params)
 //
-//    // Example sending a request using the UpdateInferenceSchedulerRequest method.
-//    req, resp := client.UpdateInferenceSchedulerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/UpdateInferenceScheduler
 func (c *LookoutEquipment) UpdateInferenceSchedulerRequest(input *UpdateInferenceSchedulerInput) (req *request.Request, output *UpdateInferenceSchedulerOutput) {
@@ -2424,28 +3603,29 @@ func (c *LookoutEquipment) UpdateInferenceSchedulerRequest(input *UpdateInferenc
 // API operation UpdateInferenceScheduler for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   The request could not be completed due to a conflict with the current state
-//   of the target resource.
 //
-//   * ResourceNotFoundException
-//   The resource requested could not be found. Verify the resource ID and retry
-//   your request.
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
 //
-//   * ValidationException
-//   The input fails to satisfy constraints specified by Amazon Lookout for Equipment
-//   or a related AWS service that's being utilized.
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
 //
-//   * ThrottlingException
-//   The request was denied due to request throttling.
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
 //
-//   * AccessDeniedException
-//   The request could not be completed because you do not have access to the
-//   resource.
+//   - ThrottlingException
+//     The request was denied due to request throttling.
 //
-//   * InternalServerException
-//   Processing of the request has failed because of an unknown error, exception
-//   or failure.
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/UpdateInferenceScheduler
 func (c *LookoutEquipment) UpdateInferenceScheduler(input *UpdateInferenceSchedulerInput) (*UpdateInferenceSchedulerOutput, error) {
@@ -2464,6 +3644,106 @@ func (c *LookoutEquipment) UpdateInferenceScheduler(input *UpdateInferenceSchedu
 // for more information on using Contexts.
 func (c *LookoutEquipment) UpdateInferenceSchedulerWithContext(ctx aws.Context, input *UpdateInferenceSchedulerInput, opts ...request.Option) (*UpdateInferenceSchedulerOutput, error) {
 	req, out := c.UpdateInferenceSchedulerRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateLabelGroup = "UpdateLabelGroup"
+
+// UpdateLabelGroupRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateLabelGroup operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateLabelGroup for more information on using the UpdateLabelGroup
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateLabelGroupRequest method.
+//	req, resp := client.UpdateLabelGroupRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/UpdateLabelGroup
+func (c *LookoutEquipment) UpdateLabelGroupRequest(input *UpdateLabelGroupInput) (req *request.Request, output *UpdateLabelGroupOutput) {
+	op := &request.Operation{
+		Name:       opUpdateLabelGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateLabelGroupInput{}
+	}
+
+	output = &UpdateLabelGroupOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UpdateLabelGroup API operation for Amazon Lookout for Equipment.
+//
+// Updates the label group.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lookout for Equipment's
+// API operation UpdateLabelGroup for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ConflictException
+//     The request could not be completed due to a conflict with the current state
+//     of the target resource.
+//
+//   - ResourceNotFoundException
+//     The resource requested could not be found. Verify the resource ID and retry
+//     your request.
+//
+//   - ValidationException
+//     The input fails to satisfy constraints specified by Amazon Lookout for Equipment
+//     or a related AWS service that's being utilized.
+//
+//   - ThrottlingException
+//     The request was denied due to request throttling.
+//
+//   - AccessDeniedException
+//     The request could not be completed because you do not have access to the
+//     resource.
+//
+//   - InternalServerException
+//     Processing of the request has failed because of an unknown error, exception
+//     or failure.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lookoutequipment-2020-12-15/UpdateLabelGroup
+func (c *LookoutEquipment) UpdateLabelGroup(input *UpdateLabelGroupInput) (*UpdateLabelGroupOutput, error) {
+	req, out := c.UpdateLabelGroupRequest(input)
+	return out, req.Send()
+}
+
+// UpdateLabelGroupWithContext is the same as UpdateLabelGroup with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateLabelGroup for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LookoutEquipment) UpdateLabelGroupWithContext(ctx aws.Context, input *UpdateLabelGroupInput, opts ...request.Option) (*UpdateLabelGroupOutput, error) {
+	req, out := c.UpdateLabelGroupRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2534,6 +3814,50 @@ func (s *AccessDeniedException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Entity that comprises information on categorical values in data.
+type CategoricalValues struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the number of categories in the data.
+	NumberOfCategory *int64 `type:"integer"`
+
+	// Indicates whether there is a potential data issue related to categorical
+	// values.
+	//
+	// Status is a required field
+	Status *string `type:"string" required:"true" enum:"StatisticalIssueStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CategoricalValues) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CategoricalValues) GoString() string {
+	return s.String()
+}
+
+// SetNumberOfCategory sets the NumberOfCategory field's value.
+func (s *CategoricalValues) SetNumberOfCategory(v int64) *CategoricalValues {
+	s.NumberOfCategory = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *CategoricalValues) SetStatus(v string) *CategoricalValues {
+	s.Status = &v
+	return s
+}
+
 // The request could not be completed due to a conflict with the current state
 // of the target resource.
 type ConflictException struct {
@@ -2599,6 +3923,51 @@ func (s *ConflictException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Entity that comprises information of count and percentage.
+type CountPercent struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the count of occurences of the given statistic.
+	//
+	// Count is a required field
+	Count *int64 `type:"integer" required:"true"`
+
+	// Indicates the percentage of occurances of the given statistic.
+	//
+	// Percentage is a required field
+	Percentage *float64 `type:"float" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CountPercent) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CountPercent) GoString() string {
+	return s.String()
+}
+
+// SetCount sets the Count field's value.
+func (s *CountPercent) SetCount(v int64) *CountPercent {
+	s.Count = &v
+	return s
+}
+
+// SetPercentage sets the Percentage field's value.
+func (s *CountPercent) SetPercentage(v float64) *CountPercent {
+	s.Percentage = &v
+	return s
+}
+
 type CreateDatasetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2613,9 +3982,7 @@ type CreateDatasetInput struct {
 
 	// A JSON description of the data that is in each time series dataset, including
 	// names, column names, and data types.
-	//
-	// DatasetSchema is a required field
-	DatasetSchema *DatasetSchema `type:"structure" required:"true"`
+	DatasetSchema *DatasetSchema `type:"structure"`
 
 	// Provides the identifier of the KMS key used to encrypt dataset data by Amazon
 	// Lookout for Equipment.
@@ -2654,9 +4021,6 @@ func (s *CreateDatasetInput) Validate() error {
 	}
 	if s.DatasetName != nil && len(*s.DatasetName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DatasetName", 1))
-	}
-	if s.DatasetSchema == nil {
-		invalidParams.Add(request.NewErrParamRequired("DatasetSchema"))
 	}
 	if s.ServerSideKmsKeyId != nil && len(*s.ServerSideKmsKeyId) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("ServerSideKmsKeyId", 1))
@@ -2764,14 +4128,16 @@ type CreateInferenceSchedulerInput struct {
 	// token, Amazon Lookout for Equipment generates one.
 	ClientToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
-	// A period of time (in minutes) by which inference on the data is delayed after
-	// the data starts. For instance, if you select an offset delay time of five
-	// minutes, inference will not begin on the data until the first data measurement
-	// after the five minute mark. For example, if five minutes is selected, the
-	// inference scheduler will wake up at the configured frequency with the additional
-	// five minute delay time to check the customer S3 bucket. The customer can
-	// upload data at the same frequency and they don't need to stop and restart
-	// the scheduler when uploading new data.
+	// The interval (in minutes) of planned delay at the start of each inference
+	// segment. For example, if inference is set to run every ten minutes, the delay
+	// is set to five minutes and the time is 09:08. The inference scheduler will
+	// wake up at the configured interval (which, without a delay configured, would
+	// be 09:10) plus the additional five minute delay time (so 09:15) to check
+	// your Amazon S3 bucket. The delay provides a buffer for you to upload data
+	// at the same frequency, so that you don't have to stop and restart the scheduler
+	// when uploading new data.
+	//
+	// For more information, see Understanding the inference process (https://docs.aws.amazon.com/lookout-for-equipment/latest/ug/understanding-inference-process.html).
 	DataDelayOffsetInMinutes *int64 `type:"long"`
 
 	// Specifies configuration information for the input data for the inference
@@ -2786,12 +4152,13 @@ type CreateInferenceSchedulerInput struct {
 	// DataOutputConfiguration is a required field
 	DataOutputConfiguration *InferenceOutputConfiguration `type:"structure" required:"true"`
 
-	// How often data is uploaded to the source S3 bucket for the input data. The
-	// value chosen is the length of time between data uploads. For instance, if
-	// you select 5 minutes, Amazon Lookout for Equipment will upload the real-time
+	// How often data is uploaded to the source Amazon S3 bucket for the input data.
+	// The value chosen is the length of time between data uploads. For instance,
+	// if you select 5 minutes, Amazon Lookout for Equipment will upload the real-time
 	// data to the source bucket once every 5 minutes. This frequency also determines
-	// how often Amazon Lookout for Equipment starts a scheduled inference on your
-	// data. In this example, it starts once every 5 minutes.
+	// how often Amazon Lookout for Equipment runs inference on your data.
+	//
+	// For more information, see Understanding the inference process (https://docs.aws.amazon.com/lookout-for-equipment/latest/ug/understanding-inference-process.html).
 	//
 	// DataUploadFrequency is a required field
 	DataUploadFrequency *string `type:"string" required:"true" enum:"DataUploadFrequency"`
@@ -3008,6 +4375,332 @@ func (s *CreateInferenceSchedulerOutput) SetInferenceSchedulerName(v string) *Cr
 // SetStatus sets the Status field's value.
 func (s *CreateInferenceSchedulerOutput) SetStatus(v string) *CreateInferenceSchedulerOutput {
 	s.Status = &v
+	return s
+}
+
+type CreateLabelGroupInput struct {
+	_ struct{} `type:"structure"`
+
+	// A unique identifier for the request to create a label group. If you do not
+	// set the client request token, Lookout for Equipment generates one.
+	ClientToken *string `min:"1" type:"string" idempotencyToken:"true"`
+
+	// The acceptable fault codes (indicating the type of anomaly associated with
+	// the label) that can be used with this label group.
+	//
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	FaultCodes []*string `type:"list"`
+
+	// Names a group of labels.
+	//
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	//
+	// LabelGroupName is a required field
+	LabelGroupName *string `min:"1" type:"string" required:"true"`
+
+	// Tags that provide metadata about the label group you are creating.
+	//
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	Tags []*Tag `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLabelGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLabelGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateLabelGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateLabelGroupInput"}
+	if s.ClientToken != nil && len(*s.ClientToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientToken", 1))
+	}
+	if s.LabelGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LabelGroupName"))
+	}
+	if s.LabelGroupName != nil && len(*s.LabelGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelGroupName", 1))
+	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *CreateLabelGroupInput) SetClientToken(v string) *CreateLabelGroupInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetFaultCodes sets the FaultCodes field's value.
+func (s *CreateLabelGroupInput) SetFaultCodes(v []*string) *CreateLabelGroupInput {
+	s.FaultCodes = v
+	return s
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *CreateLabelGroupInput) SetLabelGroupName(v string) *CreateLabelGroupInput {
+	s.LabelGroupName = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateLabelGroupInput) SetTags(v []*Tag) *CreateLabelGroupInput {
+	s.Tags = v
+	return s
+}
+
+type CreateLabelGroupOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the label group that you have created.
+	LabelGroupArn *string `min:"20" type:"string"`
+
+	// The name of the label group that you have created. Data in this field will
+	// be retained for service usage. Follow best practices for the security of
+	// your data.
+	LabelGroupName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLabelGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLabelGroupOutput) GoString() string {
+	return s.String()
+}
+
+// SetLabelGroupArn sets the LabelGroupArn field's value.
+func (s *CreateLabelGroupOutput) SetLabelGroupArn(v string) *CreateLabelGroupOutput {
+	s.LabelGroupArn = &v
+	return s
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *CreateLabelGroupOutput) SetLabelGroupName(v string) *CreateLabelGroupOutput {
+	s.LabelGroupName = &v
+	return s
+}
+
+type CreateLabelInput struct {
+	_ struct{} `type:"structure"`
+
+	// A unique identifier for the request to create a label. If you do not set
+	// the client request token, Lookout for Equipment generates one.
+	ClientToken *string `min:"1" type:"string" idempotencyToken:"true"`
+
+	// The end time of the labeled event.
+	//
+	// EndTime is a required field
+	EndTime *time.Time `type:"timestamp" required:"true"`
+
+	// Indicates that a label pertains to a particular piece of equipment.
+	//
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	Equipment *string `min:"1" type:"string"`
+
+	// Provides additional information about the label. The fault code must be defined
+	// in the FaultCodes attribute of the label group.
+	//
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	FaultCode *string `min:"1" type:"string"`
+
+	// The name of a group of labels.
+	//
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	//
+	// LabelGroupName is a required field
+	LabelGroupName *string `min:"1" type:"string" required:"true"`
+
+	// Metadata providing additional information about the label.
+	//
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	Notes *string `min:"1" type:"string"`
+
+	// Indicates whether a labeled event represents an anomaly.
+	//
+	// Rating is a required field
+	Rating *string `type:"string" required:"true" enum:"LabelRating"`
+
+	// The start time of the labeled event.
+	//
+	// StartTime is a required field
+	StartTime *time.Time `type:"timestamp" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLabelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLabelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateLabelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateLabelInput"}
+	if s.ClientToken != nil && len(*s.ClientToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientToken", 1))
+	}
+	if s.EndTime == nil {
+		invalidParams.Add(request.NewErrParamRequired("EndTime"))
+	}
+	if s.Equipment != nil && len(*s.Equipment) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Equipment", 1))
+	}
+	if s.FaultCode != nil && len(*s.FaultCode) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FaultCode", 1))
+	}
+	if s.LabelGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LabelGroupName"))
+	}
+	if s.LabelGroupName != nil && len(*s.LabelGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelGroupName", 1))
+	}
+	if s.Notes != nil && len(*s.Notes) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Notes", 1))
+	}
+	if s.Rating == nil {
+		invalidParams.Add(request.NewErrParamRequired("Rating"))
+	}
+	if s.StartTime == nil {
+		invalidParams.Add(request.NewErrParamRequired("StartTime"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *CreateLabelInput) SetClientToken(v string) *CreateLabelInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetEndTime sets the EndTime field's value.
+func (s *CreateLabelInput) SetEndTime(v time.Time) *CreateLabelInput {
+	s.EndTime = &v
+	return s
+}
+
+// SetEquipment sets the Equipment field's value.
+func (s *CreateLabelInput) SetEquipment(v string) *CreateLabelInput {
+	s.Equipment = &v
+	return s
+}
+
+// SetFaultCode sets the FaultCode field's value.
+func (s *CreateLabelInput) SetFaultCode(v string) *CreateLabelInput {
+	s.FaultCode = &v
+	return s
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *CreateLabelInput) SetLabelGroupName(v string) *CreateLabelInput {
+	s.LabelGroupName = &v
+	return s
+}
+
+// SetNotes sets the Notes field's value.
+func (s *CreateLabelInput) SetNotes(v string) *CreateLabelInput {
+	s.Notes = &v
+	return s
+}
+
+// SetRating sets the Rating field's value.
+func (s *CreateLabelInput) SetRating(v string) *CreateLabelInput {
+	s.Rating = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *CreateLabelInput) SetStartTime(v time.Time) *CreateLabelInput {
+	s.StartTime = &v
+	return s
+}
+
+type CreateLabelOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the label that you have created.
+	LabelId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLabelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLabelOutput) GoString() string {
+	return s.String()
+}
+
+// SetLabelId sets the LabelId field's value.
+func (s *CreateLabelOutput) SetLabelId(v string) *CreateLabelOutput {
+	s.LabelId = &v
 	return s
 }
 
@@ -3284,7 +4977,7 @@ type DataIngestionJobSummary struct {
 	DatasetName *string `min:"1" type:"string"`
 
 	// Specifies information for the input data for the data inference job, including
-	// data S3 location parameters.
+	// data Amazon S3 location parameters.
 	IngestionInputConfiguration *IngestionInputConfiguration `type:"structure"`
 
 	// Indicates the job ID of the data ingestion job.
@@ -3388,6 +5081,93 @@ func (s DataPreProcessingConfiguration) GoString() string {
 // SetTargetSamplingRate sets the TargetSamplingRate field's value.
 func (s *DataPreProcessingConfiguration) SetTargetSamplingRate(v string) *DataPreProcessingConfiguration {
 	s.TargetSamplingRate = &v
+	return s
+}
+
+// DataQualitySummary gives aggregated statistics over all the sensors about
+// a completed ingestion job. It primarily gives more information about statistics
+// over different incorrect data like MissingCompleteSensorData, MissingSensorData,
+// UnsupportedDateFormats, InsufficientSensorData, DuplicateTimeStamps.
+type DataQualitySummary struct {
+	_ struct{} `type:"structure"`
+
+	// Parameter that gives information about duplicate timestamps in the input
+	// data.
+	//
+	// DuplicateTimestamps is a required field
+	DuplicateTimestamps *DuplicateTimestamps `type:"structure" required:"true"`
+
+	// Parameter that gives information about insufficient data for sensors in the
+	// dataset. This includes information about those sensors that have complete
+	// data missing and those with a short date range.
+	//
+	// InsufficientSensorData is a required field
+	InsufficientSensorData *InsufficientSensorData `type:"structure" required:"true"`
+
+	// Parameter that gives information about data that is invalid over all the
+	// sensors in the input data.
+	//
+	// InvalidSensorData is a required field
+	InvalidSensorData *InvalidSensorData `type:"structure" required:"true"`
+
+	// Parameter that gives information about data that is missing over all the
+	// sensors in the input data.
+	//
+	// MissingSensorData is a required field
+	MissingSensorData *MissingSensorData `type:"structure" required:"true"`
+
+	// Parameter that gives information about unsupported timestamps in the input
+	// data.
+	//
+	// UnsupportedTimestamps is a required field
+	UnsupportedTimestamps *UnsupportedTimestamps `type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualitySummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualitySummary) GoString() string {
+	return s.String()
+}
+
+// SetDuplicateTimestamps sets the DuplicateTimestamps field's value.
+func (s *DataQualitySummary) SetDuplicateTimestamps(v *DuplicateTimestamps) *DataQualitySummary {
+	s.DuplicateTimestamps = v
+	return s
+}
+
+// SetInsufficientSensorData sets the InsufficientSensorData field's value.
+func (s *DataQualitySummary) SetInsufficientSensorData(v *InsufficientSensorData) *DataQualitySummary {
+	s.InsufficientSensorData = v
+	return s
+}
+
+// SetInvalidSensorData sets the InvalidSensorData field's value.
+func (s *DataQualitySummary) SetInvalidSensorData(v *InvalidSensorData) *DataQualitySummary {
+	s.InvalidSensorData = v
+	return s
+}
+
+// SetMissingSensorData sets the MissingSensorData field's value.
+func (s *DataQualitySummary) SetMissingSensorData(v *MissingSensorData) *DataQualitySummary {
+	s.MissingSensorData = v
+	return s
+}
+
+// SetUnsupportedTimestamps sets the UnsupportedTimestamps field's value.
+func (s *DataQualitySummary) SetUnsupportedTimestamps(v *UnsupportedTimestamps) *DataQualitySummary {
+	s.UnsupportedTimestamps = v
 	return s
 }
 
@@ -3624,6 +5404,166 @@ func (s DeleteInferenceSchedulerOutput) GoString() string {
 	return s.String()
 }
 
+type DeleteLabelGroupInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the label group that you want to delete. Data in this field will
+	// be retained for service usage. Follow best practices for the security of
+	// your data.
+	//
+	// LabelGroupName is a required field
+	LabelGroupName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLabelGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLabelGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteLabelGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteLabelGroupInput"}
+	if s.LabelGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LabelGroupName"))
+	}
+	if s.LabelGroupName != nil && len(*s.LabelGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelGroupName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *DeleteLabelGroupInput) SetLabelGroupName(v string) *DeleteLabelGroupInput {
+	s.LabelGroupName = &v
+	return s
+}
+
+type DeleteLabelGroupOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLabelGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLabelGroupOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteLabelInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the label group that contains the label that you want to delete.
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	//
+	// LabelGroupName is a required field
+	LabelGroupName *string `min:"1" type:"string" required:"true"`
+
+	// The ID of the label that you want to delete.
+	//
+	// LabelId is a required field
+	LabelId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLabelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLabelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteLabelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteLabelInput"}
+	if s.LabelGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LabelGroupName"))
+	}
+	if s.LabelGroupName != nil && len(*s.LabelGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelGroupName", 1))
+	}
+	if s.LabelId == nil {
+		invalidParams.Add(request.NewErrParamRequired("LabelId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *DeleteLabelInput) SetLabelGroupName(v string) *DeleteLabelInput {
+	s.LabelGroupName = &v
+	return s
+}
+
+// SetLabelId sets the LabelId field's value.
+func (s *DeleteLabelInput) SetLabelId(v string) *DeleteLabelInput {
+	s.LabelId = &v
+	return s
+}
+
+type DeleteLabelOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLabelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLabelOutput) GoString() string {
+	return s.String()
+}
+
 type DeleteModelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3747,12 +5687,32 @@ type DescribeDataIngestionJobOutput struct {
 	// The time at which the data ingestion job was created.
 	CreatedAt *time.Time `type:"timestamp"`
 
+	// Indicates the latest timestamp corresponding to data that was successfully
+	// ingested during this specific ingestion job.
+	DataEndTime *time.Time `type:"timestamp"`
+
+	// Gives statistics about a completed ingestion job. These statistics primarily
+	// relate to quantifying incorrect data such as MissingCompleteSensorData, MissingSensorData,
+	// UnsupportedDateFormats, InsufficientSensorData, and DuplicateTimeStamps.
+	DataQualitySummary *DataQualitySummary `type:"structure"`
+
+	// Indicates the earliest timestamp corresponding to data that was successfully
+	// ingested during this specific ingestion job.
+	DataStartTime *time.Time `type:"timestamp"`
+
 	// The Amazon Resource Name (ARN) of the dataset being used in the data ingestion
 	// job.
 	DatasetArn *string `min:"20" type:"string"`
 
 	// Specifies the reason for failure when a data ingestion job has failed.
 	FailedReason *string `min:"1" type:"string"`
+
+	// Indicates the size of the ingested dataset.
+	IngestedDataSize *int64 `type:"long"`
+
+	// Gives statistics about how many files have been ingested, and which files
+	// have not been ingested, for a particular ingestion job.
+	IngestedFilesSummary *IngestedFilesSummary `type:"structure"`
 
 	// Specifies the S3 location configuration for the data input for the data ingestion
 	// job.
@@ -3767,6 +5727,9 @@ type DescribeDataIngestionJobOutput struct {
 
 	// Indicates the status of the DataIngestionJob operation.
 	Status *string `type:"string" enum:"IngestionJobStatus"`
+
+	// Provides details about status of the ingestion job that is currently in progress.
+	StatusDetail *string `min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -3793,6 +5756,24 @@ func (s *DescribeDataIngestionJobOutput) SetCreatedAt(v time.Time) *DescribeData
 	return s
 }
 
+// SetDataEndTime sets the DataEndTime field's value.
+func (s *DescribeDataIngestionJobOutput) SetDataEndTime(v time.Time) *DescribeDataIngestionJobOutput {
+	s.DataEndTime = &v
+	return s
+}
+
+// SetDataQualitySummary sets the DataQualitySummary field's value.
+func (s *DescribeDataIngestionJobOutput) SetDataQualitySummary(v *DataQualitySummary) *DescribeDataIngestionJobOutput {
+	s.DataQualitySummary = v
+	return s
+}
+
+// SetDataStartTime sets the DataStartTime field's value.
+func (s *DescribeDataIngestionJobOutput) SetDataStartTime(v time.Time) *DescribeDataIngestionJobOutput {
+	s.DataStartTime = &v
+	return s
+}
+
 // SetDatasetArn sets the DatasetArn field's value.
 func (s *DescribeDataIngestionJobOutput) SetDatasetArn(v string) *DescribeDataIngestionJobOutput {
 	s.DatasetArn = &v
@@ -3802,6 +5783,18 @@ func (s *DescribeDataIngestionJobOutput) SetDatasetArn(v string) *DescribeDataIn
 // SetFailedReason sets the FailedReason field's value.
 func (s *DescribeDataIngestionJobOutput) SetFailedReason(v string) *DescribeDataIngestionJobOutput {
 	s.FailedReason = &v
+	return s
+}
+
+// SetIngestedDataSize sets the IngestedDataSize field's value.
+func (s *DescribeDataIngestionJobOutput) SetIngestedDataSize(v int64) *DescribeDataIngestionJobOutput {
+	s.IngestedDataSize = &v
+	return s
+}
+
+// SetIngestedFilesSummary sets the IngestedFilesSummary field's value.
+func (s *DescribeDataIngestionJobOutput) SetIngestedFilesSummary(v *IngestedFilesSummary) *DescribeDataIngestionJobOutput {
+	s.IngestedFilesSummary = v
 	return s
 }
 
@@ -3826,6 +5819,12 @@ func (s *DescribeDataIngestionJobOutput) SetRoleArn(v string) *DescribeDataInges
 // SetStatus sets the Status field's value.
 func (s *DescribeDataIngestionJobOutput) SetStatus(v string) *DescribeDataIngestionJobOutput {
 	s.Status = &v
+	return s
+}
+
+// SetStatusDetail sets the StatusDetail field's value.
+func (s *DescribeDataIngestionJobOutput) SetStatusDetail(v string) *DescribeDataIngestionJobOutput {
+	s.StatusDetail = &v
 	return s
 }
 
@@ -3881,8 +5880,22 @@ func (s *DescribeDatasetInput) SetDatasetName(v string) *DescribeDatasetInput {
 type DescribeDatasetOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies the time the dataset was created in Amazon Lookout for Equipment.
+	// Specifies the time the dataset was created in Lookout for Equipment.
 	CreatedAt *time.Time `type:"timestamp"`
+
+	// Indicates the latest timestamp corresponding to data that was successfully
+	// ingested during the most recent ingestion of this particular dataset.
+	DataEndTime *time.Time `type:"timestamp"`
+
+	// Gives statistics associated with the given dataset for the latest successful
+	// associated ingestion job id. These statistics primarily relate to quantifying
+	// incorrect data such as MissingCompleteSensorData, MissingSensorData, UnsupportedDateFormats,
+	// InsufficientSensorData, and DuplicateTimeStamps.
+	DataQualitySummary *DataQualitySummary `type:"structure"`
+
+	// Indicates the earliest timestamp corresponding to data that was successfully
+	// ingested during the most recent ingestion of this particular dataset.
+	DataStartTime *time.Time `type:"timestamp"`
 
 	// The Amazon Resource Name (ARN) of the dataset being described.
 	DatasetArn *string `min:"20" type:"string"`
@@ -3890,12 +5903,20 @@ type DescribeDatasetOutput struct {
 	// The name of the dataset being described.
 	DatasetName *string `min:"1" type:"string"`
 
+	// IngestedFilesSummary associated with the given dataset for the latest successful
+	// associated ingestion job id.
+	IngestedFilesSummary *IngestedFilesSummary `type:"structure"`
+
 	// Specifies the S3 location configuration for the data input for the data ingestion
 	// job.
 	IngestionInputConfiguration *IngestionInputConfiguration `type:"structure"`
 
 	// Specifies the time the dataset was last updated, if it was.
 	LastUpdatedAt *time.Time `type:"timestamp"`
+
+	// The Amazon Resource Name (ARN) of the IAM role that you are using for this
+	// the data ingestion job.
+	RoleArn *string `min:"20" type:"string"`
 
 	// A JSON description of the data that is in each time series dataset, including
 	// names, column names, and data types.
@@ -3933,6 +5954,24 @@ func (s *DescribeDatasetOutput) SetCreatedAt(v time.Time) *DescribeDatasetOutput
 	return s
 }
 
+// SetDataEndTime sets the DataEndTime field's value.
+func (s *DescribeDatasetOutput) SetDataEndTime(v time.Time) *DescribeDatasetOutput {
+	s.DataEndTime = &v
+	return s
+}
+
+// SetDataQualitySummary sets the DataQualitySummary field's value.
+func (s *DescribeDatasetOutput) SetDataQualitySummary(v *DataQualitySummary) *DescribeDatasetOutput {
+	s.DataQualitySummary = v
+	return s
+}
+
+// SetDataStartTime sets the DataStartTime field's value.
+func (s *DescribeDatasetOutput) SetDataStartTime(v time.Time) *DescribeDatasetOutput {
+	s.DataStartTime = &v
+	return s
+}
+
 // SetDatasetArn sets the DatasetArn field's value.
 func (s *DescribeDatasetOutput) SetDatasetArn(v string) *DescribeDatasetOutput {
 	s.DatasetArn = &v
@@ -3945,6 +5984,12 @@ func (s *DescribeDatasetOutput) SetDatasetName(v string) *DescribeDatasetOutput 
 	return s
 }
 
+// SetIngestedFilesSummary sets the IngestedFilesSummary field's value.
+func (s *DescribeDatasetOutput) SetIngestedFilesSummary(v *IngestedFilesSummary) *DescribeDatasetOutput {
+	s.IngestedFilesSummary = v
+	return s
+}
+
 // SetIngestionInputConfiguration sets the IngestionInputConfiguration field's value.
 func (s *DescribeDatasetOutput) SetIngestionInputConfiguration(v *IngestionInputConfiguration) *DescribeDatasetOutput {
 	s.IngestionInputConfiguration = v
@@ -3954,6 +5999,12 @@ func (s *DescribeDatasetOutput) SetIngestionInputConfiguration(v *IngestionInput
 // SetLastUpdatedAt sets the LastUpdatedAt field's value.
 func (s *DescribeDatasetOutput) SetLastUpdatedAt(v time.Time) *DescribeDatasetOutput {
 	s.LastUpdatedAt = &v
+	return s
+}
+
+// SetRoleArn sets the RoleArn field's value.
+func (s *DescribeDatasetOutput) SetRoleArn(v string) *DescribeDatasetOutput {
+	s.RoleArn = &v
 	return s
 }
 
@@ -4062,6 +6113,10 @@ type DescribeInferenceSchedulerOutput struct {
 	// The name of the inference scheduler being described.
 	InferenceSchedulerName *string `min:"1" type:"string"`
 
+	// Indicates whether the latest execution for the inference scheduler was Anomalous
+	// (anomalous events found) or Normal (no anomalous events found).
+	LatestInferenceResult *string `type:"string" enum:"LatestInferenceResult"`
+
 	// The Amazon Resource Name (ARN) of the ML model of the inference scheduler
 	// being described.
 	ModelArn *string `min:"20" type:"string"`
@@ -4145,6 +6200,12 @@ func (s *DescribeInferenceSchedulerOutput) SetInferenceSchedulerName(v string) *
 	return s
 }
 
+// SetLatestInferenceResult sets the LatestInferenceResult field's value.
+func (s *DescribeInferenceSchedulerOutput) SetLatestInferenceResult(v string) *DescribeInferenceSchedulerOutput {
+	s.LatestInferenceResult = &v
+	return s
+}
+
 // SetModelArn sets the ModelArn field's value.
 func (s *DescribeInferenceSchedulerOutput) SetModelArn(v string) *DescribeInferenceSchedulerOutput {
 	s.ModelArn = &v
@@ -4178,6 +6239,304 @@ func (s *DescribeInferenceSchedulerOutput) SetStatus(v string) *DescribeInferenc
 // SetUpdatedAt sets the UpdatedAt field's value.
 func (s *DescribeInferenceSchedulerOutput) SetUpdatedAt(v time.Time) *DescribeInferenceSchedulerOutput {
 	s.UpdatedAt = &v
+	return s
+}
+
+type DescribeLabelGroupInput struct {
+	_ struct{} `type:"structure"`
+
+	// Returns the name of the label group.
+	//
+	// LabelGroupName is a required field
+	LabelGroupName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLabelGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLabelGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeLabelGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeLabelGroupInput"}
+	if s.LabelGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LabelGroupName"))
+	}
+	if s.LabelGroupName != nil && len(*s.LabelGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelGroupName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *DescribeLabelGroupInput) SetLabelGroupName(v string) *DescribeLabelGroupInput {
+	s.LabelGroupName = &v
+	return s
+}
+
+type DescribeLabelGroupOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The time at which the label group was created.
+	CreatedAt *time.Time `type:"timestamp"`
+
+	// Codes indicating the type of anomaly associated with the labels in the lagbel
+	// group.
+	FaultCodes []*string `type:"list"`
+
+	// The ARN of the label group.
+	LabelGroupArn *string `min:"20" type:"string"`
+
+	// The name of the label group.
+	LabelGroupName *string `min:"1" type:"string"`
+
+	// The time at which the label group was updated.
+	UpdatedAt *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLabelGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLabelGroupOutput) GoString() string {
+	return s.String()
+}
+
+// SetCreatedAt sets the CreatedAt field's value.
+func (s *DescribeLabelGroupOutput) SetCreatedAt(v time.Time) *DescribeLabelGroupOutput {
+	s.CreatedAt = &v
+	return s
+}
+
+// SetFaultCodes sets the FaultCodes field's value.
+func (s *DescribeLabelGroupOutput) SetFaultCodes(v []*string) *DescribeLabelGroupOutput {
+	s.FaultCodes = v
+	return s
+}
+
+// SetLabelGroupArn sets the LabelGroupArn field's value.
+func (s *DescribeLabelGroupOutput) SetLabelGroupArn(v string) *DescribeLabelGroupOutput {
+	s.LabelGroupArn = &v
+	return s
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *DescribeLabelGroupOutput) SetLabelGroupName(v string) *DescribeLabelGroupOutput {
+	s.LabelGroupName = &v
+	return s
+}
+
+// SetUpdatedAt sets the UpdatedAt field's value.
+func (s *DescribeLabelGroupOutput) SetUpdatedAt(v time.Time) *DescribeLabelGroupOutput {
+	s.UpdatedAt = &v
+	return s
+}
+
+type DescribeLabelInput struct {
+	_ struct{} `type:"structure"`
+
+	// Returns the name of the group containing the label.
+	//
+	// LabelGroupName is a required field
+	LabelGroupName *string `min:"1" type:"string" required:"true"`
+
+	// Returns the ID of the label.
+	//
+	// LabelId is a required field
+	LabelId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLabelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLabelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeLabelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeLabelInput"}
+	if s.LabelGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LabelGroupName"))
+	}
+	if s.LabelGroupName != nil && len(*s.LabelGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelGroupName", 1))
+	}
+	if s.LabelId == nil {
+		invalidParams.Add(request.NewErrParamRequired("LabelId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *DescribeLabelInput) SetLabelGroupName(v string) *DescribeLabelInput {
+	s.LabelGroupName = &v
+	return s
+}
+
+// SetLabelId sets the LabelId field's value.
+func (s *DescribeLabelInput) SetLabelId(v string) *DescribeLabelInput {
+	s.LabelId = &v
+	return s
+}
+
+type DescribeLabelOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The time at which the label was created.
+	CreatedAt *time.Time `type:"timestamp"`
+
+	// The end time of the requested label.
+	EndTime *time.Time `type:"timestamp"`
+
+	// Indicates that a label pertains to a particular piece of equipment.
+	Equipment *string `min:"1" type:"string"`
+
+	// Indicates the type of anomaly associated with the label.
+	//
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	FaultCode *string `min:"1" type:"string"`
+
+	// The ARN of the requested label group.
+	LabelGroupArn *string `min:"20" type:"string"`
+
+	// The name of the requested label group.
+	LabelGroupName *string `min:"1" type:"string"`
+
+	// The ID of the requested label.
+	LabelId *string `type:"string"`
+
+	// Metadata providing additional information about the label.
+	//
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	Notes *string `min:"1" type:"string"`
+
+	// Indicates whether a labeled event represents an anomaly.
+	Rating *string `type:"string" enum:"LabelRating"`
+
+	// The start time of the requested label.
+	StartTime *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLabelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLabelOutput) GoString() string {
+	return s.String()
+}
+
+// SetCreatedAt sets the CreatedAt field's value.
+func (s *DescribeLabelOutput) SetCreatedAt(v time.Time) *DescribeLabelOutput {
+	s.CreatedAt = &v
+	return s
+}
+
+// SetEndTime sets the EndTime field's value.
+func (s *DescribeLabelOutput) SetEndTime(v time.Time) *DescribeLabelOutput {
+	s.EndTime = &v
+	return s
+}
+
+// SetEquipment sets the Equipment field's value.
+func (s *DescribeLabelOutput) SetEquipment(v string) *DescribeLabelOutput {
+	s.Equipment = &v
+	return s
+}
+
+// SetFaultCode sets the FaultCode field's value.
+func (s *DescribeLabelOutput) SetFaultCode(v string) *DescribeLabelOutput {
+	s.FaultCode = &v
+	return s
+}
+
+// SetLabelGroupArn sets the LabelGroupArn field's value.
+func (s *DescribeLabelOutput) SetLabelGroupArn(v string) *DescribeLabelOutput {
+	s.LabelGroupArn = &v
+	return s
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *DescribeLabelOutput) SetLabelGroupName(v string) *DescribeLabelOutput {
+	s.LabelGroupName = &v
+	return s
+}
+
+// SetLabelId sets the LabelId field's value.
+func (s *DescribeLabelOutput) SetLabelId(v string) *DescribeLabelOutput {
+	s.LabelId = &v
+	return s
+}
+
+// SetNotes sets the Notes field's value.
+func (s *DescribeLabelOutput) SetNotes(v string) *DescribeLabelOutput {
+	s.Notes = &v
+	return s
+}
+
+// SetRating sets the Rating field's value.
+func (s *DescribeLabelOutput) SetRating(v string) *DescribeLabelOutput {
+	s.Rating = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *DescribeLabelOutput) SetStartTime(v time.Time) *DescribeLabelOutput {
+	s.StartTime = &v
 	return s
 }
 
@@ -4466,6 +6825,120 @@ func (s *DescribeModelOutput) SetTrainingExecutionStartTime(v time.Time) *Descri
 	return s
 }
 
+// Entity that comprises information abount duplicate timestamps in the dataset.
+type DuplicateTimestamps struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the total number of duplicate timestamps.
+	//
+	// TotalNumberOfDuplicateTimestamps is a required field
+	TotalNumberOfDuplicateTimestamps *int64 `type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DuplicateTimestamps) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DuplicateTimestamps) GoString() string {
+	return s.String()
+}
+
+// SetTotalNumberOfDuplicateTimestamps sets the TotalNumberOfDuplicateTimestamps field's value.
+func (s *DuplicateTimestamps) SetTotalNumberOfDuplicateTimestamps(v int64) *DuplicateTimestamps {
+	s.TotalNumberOfDuplicateTimestamps = &v
+	return s
+}
+
+// Contains information about the specific inference event, including start
+// and end time, diagnostics information, event duration and so on.
+type InferenceEventSummary struct {
+	_ struct{} `type:"structure"`
+
+	// An array which specifies the names and values of all sensors contributing
+	// to an inference event.
+	Diagnostics *string `min:"1" type:"string"`
+
+	// Indicates the size of an inference event in seconds.
+	EventDurationInSeconds *int64 `type:"long"`
+
+	// Indicates the ending time of an inference event.
+	EventEndTime *time.Time `type:"timestamp"`
+
+	// Indicates the starting time of an inference event.
+	EventStartTime *time.Time `type:"timestamp"`
+
+	// The Amazon Resource Name (ARN) of the inference scheduler being used for
+	// the inference event.
+	InferenceSchedulerArn *string `min:"20" type:"string"`
+
+	// The name of the inference scheduler being used for the inference events.
+	InferenceSchedulerName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InferenceEventSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InferenceEventSummary) GoString() string {
+	return s.String()
+}
+
+// SetDiagnostics sets the Diagnostics field's value.
+func (s *InferenceEventSummary) SetDiagnostics(v string) *InferenceEventSummary {
+	s.Diagnostics = &v
+	return s
+}
+
+// SetEventDurationInSeconds sets the EventDurationInSeconds field's value.
+func (s *InferenceEventSummary) SetEventDurationInSeconds(v int64) *InferenceEventSummary {
+	s.EventDurationInSeconds = &v
+	return s
+}
+
+// SetEventEndTime sets the EventEndTime field's value.
+func (s *InferenceEventSummary) SetEventEndTime(v time.Time) *InferenceEventSummary {
+	s.EventEndTime = &v
+	return s
+}
+
+// SetEventStartTime sets the EventStartTime field's value.
+func (s *InferenceEventSummary) SetEventStartTime(v time.Time) *InferenceEventSummary {
+	s.EventStartTime = &v
+	return s
+}
+
+// SetInferenceSchedulerArn sets the InferenceSchedulerArn field's value.
+func (s *InferenceEventSummary) SetInferenceSchedulerArn(v string) *InferenceEventSummary {
+	s.InferenceSchedulerArn = &v
+	return s
+}
+
+// SetInferenceSchedulerName sets the InferenceSchedulerName field's value.
+func (s *InferenceEventSummary) SetInferenceSchedulerName(v string) *InferenceEventSummary {
+	s.InferenceSchedulerName = &v
+	return s
+}
+
 // Contains information about the specific inference execution, including input
 // and output data configuration, inference scheduling information, status,
 // and so on.
@@ -4484,7 +6957,7 @@ type InferenceExecutionSummary struct {
 	DataInputConfiguration *InferenceInputConfiguration `type:"structure"`
 
 	// Specifies configuration information for the output results from for the inference
-	// execution, including the output S3 location.
+	// execution, including the output Amazon S3 location.
 	DataOutputConfiguration *InferenceOutputConfiguration `type:"structure"`
 
 	// Indicates the time reference in the dataset at which the inference execution
@@ -4606,7 +7079,7 @@ func (s *InferenceExecutionSummary) SetStatus(v string) *InferenceExecutionSumma
 }
 
 // Specifies configuration information for the input data for the inference,
-// including S3 location of input data..
+// including Amazon S3 location of input data..
 type InferenceInputConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -4614,11 +7087,12 @@ type InferenceInputConfiguration struct {
 	// including timestamp format and delimiter.
 	InferenceInputNameConfiguration *InferenceInputNameConfiguration `type:"structure"`
 
-	// Indicates the difference between your time zone and Greenwich Mean Time (GMT).
+	// Indicates the difference between your time zone and Coordinated Universal
+	// Time (UTC).
 	InputTimeZoneOffset *string `type:"string"`
 
 	// Specifies configuration information for the input data for the inference,
-	// including S3 location of input data..
+	// including Amazon S3 location of input data.
 	S3InputConfiguration *InferenceS3InputConfiguration `type:"structure"`
 }
 
@@ -4931,6 +7405,10 @@ type InferenceSchedulerSummary struct {
 	// The name of the inference scheduler.
 	InferenceSchedulerName *string `min:"1" type:"string"`
 
+	// Indicates whether the latest execution for the inference scheduler was Anomalous
+	// (anomalous events found) or Normal (no anomalous events found).
+	LatestInferenceResult *string `type:"string" enum:"LatestInferenceResult"`
+
 	// The Amazon Resource Name (ARN) of the ML model used by the inference scheduler.
 	ModelArn *string `min:"20" type:"string"`
 
@@ -4983,6 +7461,12 @@ func (s *InferenceSchedulerSummary) SetInferenceSchedulerName(v string) *Inferen
 	return s
 }
 
+// SetLatestInferenceResult sets the LatestInferenceResult field's value.
+func (s *InferenceSchedulerSummary) SetLatestInferenceResult(v string) *InferenceSchedulerSummary {
+	s.LatestInferenceResult = &v
+	return s
+}
+
 // SetModelArn sets the ModelArn field's value.
 func (s *InferenceSchedulerSummary) SetModelArn(v string) *InferenceSchedulerSummary {
 	s.ModelArn = &v
@@ -4998,6 +7482,62 @@ func (s *InferenceSchedulerSummary) SetModelName(v string) *InferenceSchedulerSu
 // SetStatus sets the Status field's value.
 func (s *InferenceSchedulerSummary) SetStatus(v string) *InferenceSchedulerSummary {
 	s.Status = &v
+	return s
+}
+
+// Gives statistics about how many files have been ingested, and which files
+// have not been ingested, for a particular ingestion job.
+type IngestedFilesSummary struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the number of files that were discarded. A file could be discarded
+	// because its format is invalid (for example, a jpg or pdf) or not readable.
+	DiscardedFiles []*S3Object `type:"list"`
+
+	// Indicates the number of files that were successfully ingested.
+	//
+	// IngestedNumberOfFiles is a required field
+	IngestedNumberOfFiles *int64 `type:"integer" required:"true"`
+
+	// Indicates the total number of files that were submitted for ingestion.
+	//
+	// TotalNumberOfFiles is a required field
+	TotalNumberOfFiles *int64 `type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s IngestedFilesSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s IngestedFilesSummary) GoString() string {
+	return s.String()
+}
+
+// SetDiscardedFiles sets the DiscardedFiles field's value.
+func (s *IngestedFilesSummary) SetDiscardedFiles(v []*S3Object) *IngestedFilesSummary {
+	s.DiscardedFiles = v
+	return s
+}
+
+// SetIngestedNumberOfFiles sets the IngestedNumberOfFiles field's value.
+func (s *IngestedFilesSummary) SetIngestedNumberOfFiles(v int64) *IngestedFilesSummary {
+	s.IngestedNumberOfFiles = &v
+	return s
+}
+
+// SetTotalNumberOfFiles sets the TotalNumberOfFiles field's value.
+func (s *IngestedFilesSummary) SetTotalNumberOfFiles(v int64) *IngestedFilesSummary {
+	s.TotalNumberOfFiles = &v
 	return s
 }
 
@@ -5065,6 +7605,11 @@ type IngestionS3InputConfiguration struct {
 	// Bucket is a required field
 	Bucket *string `min:"3" type:"string" required:"true"`
 
+	// Pattern for matching the Amazon S3 files which will be used for ingestion.
+	// If no KeyPattern is provided, we will use the default hierarchy file structure,
+	// which is same as KeyPattern {prefix}/{component_name}/*
+	KeyPattern *string `min:"1" type:"string"`
+
 	// The prefix for the S3 location being used for the input data for the data
 	// ingestion.
 	Prefix *string `type:"string"`
@@ -5097,6 +7642,9 @@ func (s *IngestionS3InputConfiguration) Validate() error {
 	if s.Bucket != nil && len(*s.Bucket) < 3 {
 		invalidParams.Add(request.NewErrParamMinLen("Bucket", 3))
 	}
+	if s.KeyPattern != nil && len(*s.KeyPattern) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("KeyPattern", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -5110,9 +7658,63 @@ func (s *IngestionS3InputConfiguration) SetBucket(v string) *IngestionS3InputCon
 	return s
 }
 
+// SetKeyPattern sets the KeyPattern field's value.
+func (s *IngestionS3InputConfiguration) SetKeyPattern(v string) *IngestionS3InputConfiguration {
+	s.KeyPattern = &v
+	return s
+}
+
 // SetPrefix sets the Prefix field's value.
 func (s *IngestionS3InputConfiguration) SetPrefix(v string) *IngestionS3InputConfiguration {
 	s.Prefix = &v
+	return s
+}
+
+// Entity that comprises aggregated information on sensors having insufficient
+// data.
+type InsufficientSensorData struct {
+	_ struct{} `type:"structure"`
+
+	// Parameter that describes the total number of sensors that have data completely
+	// missing for it.
+	//
+	// MissingCompleteSensorData is a required field
+	MissingCompleteSensorData *MissingCompleteSensorData `type:"structure" required:"true"`
+
+	// Parameter that describes the total number of sensors that have a short date
+	// range of less than 90 days of data overall.
+	//
+	// SensorsWithShortDateRange is a required field
+	SensorsWithShortDateRange *SensorsWithShortDateRange `type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InsufficientSensorData) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InsufficientSensorData) GoString() string {
+	return s.String()
+}
+
+// SetMissingCompleteSensorData sets the MissingCompleteSensorData field's value.
+func (s *InsufficientSensorData) SetMissingCompleteSensorData(v *MissingCompleteSensorData) *InsufficientSensorData {
+	s.MissingCompleteSensorData = v
+	return s
+}
+
+// SetSensorsWithShortDateRange sets the SensorsWithShortDateRange field's value.
+func (s *InsufficientSensorData) SetSensorsWithShortDateRange(v *SensorsWithShortDateRange) *InsufficientSensorData {
+	s.SensorsWithShortDateRange = v
 	return s
 }
 
@@ -5181,15 +7783,228 @@ func (s *InternalServerException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Entity that comprises aggregated information on sensors having insufficient
+// data.
+type InvalidSensorData struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the number of sensors that have at least some invalid values.
+	//
+	// AffectedSensorCount is a required field
+	AffectedSensorCount *int64 `type:"integer" required:"true"`
+
+	// Indicates the total number of invalid values across all the sensors.
+	//
+	// TotalNumberOfInvalidValues is a required field
+	TotalNumberOfInvalidValues *int64 `type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InvalidSensorData) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InvalidSensorData) GoString() string {
+	return s.String()
+}
+
+// SetAffectedSensorCount sets the AffectedSensorCount field's value.
+func (s *InvalidSensorData) SetAffectedSensorCount(v int64) *InvalidSensorData {
+	s.AffectedSensorCount = &v
+	return s
+}
+
+// SetTotalNumberOfInvalidValues sets the TotalNumberOfInvalidValues field's value.
+func (s *InvalidSensorData) SetTotalNumberOfInvalidValues(v int64) *InvalidSensorData {
+	s.TotalNumberOfInvalidValues = &v
+	return s
+}
+
+// Contains information about the label group.
+type LabelGroupSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The time at which the label group was created.
+	CreatedAt *time.Time `type:"timestamp"`
+
+	// The ARN of the label group.
+	LabelGroupArn *string `min:"20" type:"string"`
+
+	// The name of the label group.
+	LabelGroupName *string `min:"1" type:"string"`
+
+	// The time at which the label group was updated.
+	UpdatedAt *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LabelGroupSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LabelGroupSummary) GoString() string {
+	return s.String()
+}
+
+// SetCreatedAt sets the CreatedAt field's value.
+func (s *LabelGroupSummary) SetCreatedAt(v time.Time) *LabelGroupSummary {
+	s.CreatedAt = &v
+	return s
+}
+
+// SetLabelGroupArn sets the LabelGroupArn field's value.
+func (s *LabelGroupSummary) SetLabelGroupArn(v string) *LabelGroupSummary {
+	s.LabelGroupArn = &v
+	return s
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *LabelGroupSummary) SetLabelGroupName(v string) *LabelGroupSummary {
+	s.LabelGroupName = &v
+	return s
+}
+
+// SetUpdatedAt sets the UpdatedAt field's value.
+func (s *LabelGroupSummary) SetUpdatedAt(v time.Time) *LabelGroupSummary {
+	s.UpdatedAt = &v
+	return s
+}
+
+// Information about the label.
+type LabelSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The time at which the label was created.
+	CreatedAt *time.Time `type:"timestamp"`
+
+	// The timestamp indicating the end of the label.
+	EndTime *time.Time `type:"timestamp"`
+
+	// Indicates that a label pertains to a particular piece of equipment.
+	Equipment *string `min:"1" type:"string"`
+
+	// Indicates the type of anomaly associated with the label.
+	//
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	FaultCode *string `min:"1" type:"string"`
+
+	// The ARN of the label group.
+	LabelGroupArn *string `min:"20" type:"string"`
+
+	// The name of the label group.
+	LabelGroupName *string `min:"1" type:"string"`
+
+	// The ID of the label.
+	LabelId *string `type:"string"`
+
+	// Indicates whether a labeled event represents an anomaly.
+	Rating *string `type:"string" enum:"LabelRating"`
+
+	// The timestamp indicating the start of the label.
+	StartTime *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LabelSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LabelSummary) GoString() string {
+	return s.String()
+}
+
+// SetCreatedAt sets the CreatedAt field's value.
+func (s *LabelSummary) SetCreatedAt(v time.Time) *LabelSummary {
+	s.CreatedAt = &v
+	return s
+}
+
+// SetEndTime sets the EndTime field's value.
+func (s *LabelSummary) SetEndTime(v time.Time) *LabelSummary {
+	s.EndTime = &v
+	return s
+}
+
+// SetEquipment sets the Equipment field's value.
+func (s *LabelSummary) SetEquipment(v string) *LabelSummary {
+	s.Equipment = &v
+	return s
+}
+
+// SetFaultCode sets the FaultCode field's value.
+func (s *LabelSummary) SetFaultCode(v string) *LabelSummary {
+	s.FaultCode = &v
+	return s
+}
+
+// SetLabelGroupArn sets the LabelGroupArn field's value.
+func (s *LabelSummary) SetLabelGroupArn(v string) *LabelSummary {
+	s.LabelGroupArn = &v
+	return s
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *LabelSummary) SetLabelGroupName(v string) *LabelSummary {
+	s.LabelGroupName = &v
+	return s
+}
+
+// SetLabelId sets the LabelId field's value.
+func (s *LabelSummary) SetLabelId(v string) *LabelSummary {
+	s.LabelId = &v
+	return s
+}
+
+// SetRating sets the Rating field's value.
+func (s *LabelSummary) SetRating(v string) *LabelSummary {
+	s.Rating = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *LabelSummary) SetStartTime(v time.Time) *LabelSummary {
+	s.StartTime = &v
+	return s
+}
+
 // Contains the configuration information for the S3 location being used to
 // hold label data.
 type LabelsInputConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// The name of the label group to be used for label data.
+	LabelGroupName *string `min:"1" type:"string"`
+
 	// Contains location information for the S3 location being used for label data.
-	//
-	// S3InputConfiguration is a required field
-	S3InputConfiguration *LabelsS3InputConfiguration `type:"structure" required:"true"`
+	S3InputConfiguration *LabelsS3InputConfiguration `type:"structure"`
 }
 
 // String returns the string representation.
@@ -5213,8 +8028,8 @@ func (s LabelsInputConfiguration) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *LabelsInputConfiguration) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "LabelsInputConfiguration"}
-	if s.S3InputConfiguration == nil {
-		invalidParams.Add(request.NewErrParamRequired("S3InputConfiguration"))
+	if s.LabelGroupName != nil && len(*s.LabelGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelGroupName", 1))
 	}
 	if s.S3InputConfiguration != nil {
 		if err := s.S3InputConfiguration.Validate(); err != nil {
@@ -5226,6 +8041,12 @@ func (s *LabelsInputConfiguration) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *LabelsInputConfiguration) SetLabelGroupName(v string) *LabelsInputConfiguration {
+	s.LabelGroupName = &v
+	return s
 }
 
 // SetS3InputConfiguration sets the S3InputConfiguration field's value.
@@ -5291,6 +8112,60 @@ func (s *LabelsS3InputConfiguration) SetBucket(v string) *LabelsS3InputConfigura
 // SetPrefix sets the Prefix field's value.
 func (s *LabelsS3InputConfiguration) SetPrefix(v string) *LabelsS3InputConfiguration {
 	s.Prefix = &v
+	return s
+}
+
+// Entity that comprises information on large gaps between consecutive timestamps
+// in data.
+type LargeTimestampGaps struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the size of the largest timestamp gap, in days.
+	MaxTimestampGapInDays *int64 `type:"integer"`
+
+	// Indicates the number of large timestamp gaps, if there are any.
+	NumberOfLargeTimestampGaps *int64 `type:"integer"`
+
+	// Indicates whether there is a potential data issue related to large gaps in
+	// timestamps.
+	//
+	// Status is a required field
+	Status *string `type:"string" required:"true" enum:"StatisticalIssueStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LargeTimestampGaps) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LargeTimestampGaps) GoString() string {
+	return s.String()
+}
+
+// SetMaxTimestampGapInDays sets the MaxTimestampGapInDays field's value.
+func (s *LargeTimestampGaps) SetMaxTimestampGapInDays(v int64) *LargeTimestampGaps {
+	s.MaxTimestampGapInDays = &v
+	return s
+}
+
+// SetNumberOfLargeTimestampGaps sets the NumberOfLargeTimestampGaps field's value.
+func (s *LargeTimestampGaps) SetNumberOfLargeTimestampGaps(v int64) *LargeTimestampGaps {
+	s.NumberOfLargeTimestampGaps = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *LargeTimestampGaps) SetStatus(v string) *LargeTimestampGaps {
+	s.Status = &v
 	return s
 }
 
@@ -5513,6 +8388,150 @@ func (s *ListDatasetsOutput) SetDatasetSummaries(v []*DatasetSummary) *ListDatas
 
 // SetNextToken sets the NextToken field's value.
 func (s *ListDatasetsOutput) SetNextToken(v string) *ListDatasetsOutput {
+	s.NextToken = &v
+	return s
+}
+
+type ListInferenceEventsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the inference scheduler for the inference events listed.
+	//
+	// InferenceSchedulerName is a required field
+	InferenceSchedulerName *string `min:"1" type:"string" required:"true"`
+
+	// Returns all the inference events with an end start time equal to or greater
+	// than less than the end time given
+	//
+	// IntervalEndTime is a required field
+	IntervalEndTime *time.Time `type:"timestamp" required:"true"`
+
+	// Lookout for Equipment will return all the inference events with an end time
+	// equal to or greater than the start time given.
+	//
+	// IntervalStartTime is a required field
+	IntervalStartTime *time.Time `type:"timestamp" required:"true"`
+
+	// Specifies the maximum number of inference events to list.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// An opaque pagination token indicating where to continue the listing of inference
+	// events.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListInferenceEventsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListInferenceEventsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListInferenceEventsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListInferenceEventsInput"}
+	if s.InferenceSchedulerName == nil {
+		invalidParams.Add(request.NewErrParamRequired("InferenceSchedulerName"))
+	}
+	if s.InferenceSchedulerName != nil && len(*s.InferenceSchedulerName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("InferenceSchedulerName", 1))
+	}
+	if s.IntervalEndTime == nil {
+		invalidParams.Add(request.NewErrParamRequired("IntervalEndTime"))
+	}
+	if s.IntervalStartTime == nil {
+		invalidParams.Add(request.NewErrParamRequired("IntervalStartTime"))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetInferenceSchedulerName sets the InferenceSchedulerName field's value.
+func (s *ListInferenceEventsInput) SetInferenceSchedulerName(v string) *ListInferenceEventsInput {
+	s.InferenceSchedulerName = &v
+	return s
+}
+
+// SetIntervalEndTime sets the IntervalEndTime field's value.
+func (s *ListInferenceEventsInput) SetIntervalEndTime(v time.Time) *ListInferenceEventsInput {
+	s.IntervalEndTime = &v
+	return s
+}
+
+// SetIntervalStartTime sets the IntervalStartTime field's value.
+func (s *ListInferenceEventsInput) SetIntervalStartTime(v time.Time) *ListInferenceEventsInput {
+	s.IntervalStartTime = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListInferenceEventsInput) SetMaxResults(v int64) *ListInferenceEventsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListInferenceEventsInput) SetNextToken(v string) *ListInferenceEventsInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListInferenceEventsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Provides an array of information about the individual inference events returned
+	// from the ListInferenceEvents operation, including scheduler used, event start
+	// time, event end time, diagnostics, and so on.
+	InferenceEventSummaries []*InferenceEventSummary `type:"list"`
+
+	// An opaque pagination token indicating where to continue the listing of inference
+	// executions.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListInferenceEventsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListInferenceEventsOutput) GoString() string {
+	return s.String()
+}
+
+// SetInferenceEventSummaries sets the InferenceEventSummaries field's value.
+func (s *ListInferenceEventsOutput) SetInferenceEventSummaries(v []*InferenceEventSummary) *ListInferenceEventsOutput {
+	s.InferenceEventSummaries = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListInferenceEventsOutput) SetNextToken(v string) *ListInferenceEventsOutput {
 	s.NextToken = &v
 	return s
 }
@@ -5780,6 +8799,267 @@ func (s *ListInferenceSchedulersOutput) SetNextToken(v string) *ListInferenceSch
 	return s
 }
 
+type ListLabelGroupsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The beginning of the name of the label groups to be listed.
+	LabelGroupNameBeginsWith *string `min:"1" type:"string"`
+
+	// Specifies the maximum number of label groups to list.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// An opaque pagination token indicating where to continue the listing of label
+	// groups.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLabelGroupsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLabelGroupsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListLabelGroupsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListLabelGroupsInput"}
+	if s.LabelGroupNameBeginsWith != nil && len(*s.LabelGroupNameBeginsWith) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelGroupNameBeginsWith", 1))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLabelGroupNameBeginsWith sets the LabelGroupNameBeginsWith field's value.
+func (s *ListLabelGroupsInput) SetLabelGroupNameBeginsWith(v string) *ListLabelGroupsInput {
+	s.LabelGroupNameBeginsWith = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListLabelGroupsInput) SetMaxResults(v int64) *ListLabelGroupsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListLabelGroupsInput) SetNextToken(v string) *ListLabelGroupsInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListLabelGroupsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A summary of the label groups.
+	LabelGroupSummaries []*LabelGroupSummary `type:"list"`
+
+	// An opaque pagination token indicating where to continue the listing of label
+	// groups.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLabelGroupsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLabelGroupsOutput) GoString() string {
+	return s.String()
+}
+
+// SetLabelGroupSummaries sets the LabelGroupSummaries field's value.
+func (s *ListLabelGroupsOutput) SetLabelGroupSummaries(v []*LabelGroupSummary) *ListLabelGroupsOutput {
+	s.LabelGroupSummaries = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListLabelGroupsOutput) SetNextToken(v string) *ListLabelGroupsOutput {
+	s.NextToken = &v
+	return s
+}
+
+type ListLabelsInput struct {
+	_ struct{} `type:"structure"`
+
+	// Lists the labels that pertain to a particular piece of equipment.
+	Equipment *string `min:"1" type:"string"`
+
+	// Returns labels with a particular fault code.
+	FaultCode *string `min:"1" type:"string"`
+
+	// Returns all labels with a start time earlier than the end time given.
+	IntervalEndTime *time.Time `type:"timestamp"`
+
+	// Returns all the labels with a end time equal to or later than the start time
+	// given.
+	IntervalStartTime *time.Time `type:"timestamp"`
+
+	// Retruns the name of the label group.
+	//
+	// LabelGroupName is a required field
+	LabelGroupName *string `min:"1" type:"string" required:"true"`
+
+	// Specifies the maximum number of labels to list.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// An opaque pagination token indicating where to continue the listing of label
+	// groups.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLabelsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLabelsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListLabelsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListLabelsInput"}
+	if s.Equipment != nil && len(*s.Equipment) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Equipment", 1))
+	}
+	if s.FaultCode != nil && len(*s.FaultCode) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FaultCode", 1))
+	}
+	if s.LabelGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LabelGroupName"))
+	}
+	if s.LabelGroupName != nil && len(*s.LabelGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelGroupName", 1))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEquipment sets the Equipment field's value.
+func (s *ListLabelsInput) SetEquipment(v string) *ListLabelsInput {
+	s.Equipment = &v
+	return s
+}
+
+// SetFaultCode sets the FaultCode field's value.
+func (s *ListLabelsInput) SetFaultCode(v string) *ListLabelsInput {
+	s.FaultCode = &v
+	return s
+}
+
+// SetIntervalEndTime sets the IntervalEndTime field's value.
+func (s *ListLabelsInput) SetIntervalEndTime(v time.Time) *ListLabelsInput {
+	s.IntervalEndTime = &v
+	return s
+}
+
+// SetIntervalStartTime sets the IntervalStartTime field's value.
+func (s *ListLabelsInput) SetIntervalStartTime(v time.Time) *ListLabelsInput {
+	s.IntervalStartTime = &v
+	return s
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *ListLabelsInput) SetLabelGroupName(v string) *ListLabelsInput {
+	s.LabelGroupName = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListLabelsInput) SetMaxResults(v int64) *ListLabelsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListLabelsInput) SetNextToken(v string) *ListLabelsInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListLabelsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A summary of the items in the label group.
+	LabelSummaries []*LabelSummary `type:"list"`
+
+	// An opaque pagination token indicating where to continue the listing of datasets.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLabelsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLabelsOutput) GoString() string {
+	return s.String()
+}
+
+// SetLabelSummaries sets the LabelSummaries field's value.
+func (s *ListLabelsOutput) SetLabelSummaries(v []*LabelSummary) *ListLabelsOutput {
+	s.LabelSummaries = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListLabelsOutput) SetNextToken(v string) *ListLabelsOutput {
+	s.NextToken = &v
+	return s
+}
+
 type ListModelsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5909,6 +9189,132 @@ func (s *ListModelsOutput) SetNextToken(v string) *ListModelsOutput {
 	return s
 }
 
+type ListSensorStatisticsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the dataset associated with the list of Sensor Statistics.
+	//
+	// DatasetName is a required field
+	DatasetName *string `min:"1" type:"string" required:"true"`
+
+	// The ingestion job id associated with the list of Sensor Statistics. To get
+	// sensor statistics for a particular ingestion job id, both dataset name and
+	// ingestion job id must be submitted as inputs.
+	IngestionJobId *string `type:"string"`
+
+	// Specifies the maximum number of sensors for which to retrieve statistics.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// An opaque pagination token indicating where to continue the listing of sensor
+	// statistics.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListSensorStatisticsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListSensorStatisticsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListSensorStatisticsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListSensorStatisticsInput"}
+	if s.DatasetName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatasetName"))
+	}
+	if s.DatasetName != nil && len(*s.DatasetName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatasetName", 1))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDatasetName sets the DatasetName field's value.
+func (s *ListSensorStatisticsInput) SetDatasetName(v string) *ListSensorStatisticsInput {
+	s.DatasetName = &v
+	return s
+}
+
+// SetIngestionJobId sets the IngestionJobId field's value.
+func (s *ListSensorStatisticsInput) SetIngestionJobId(v string) *ListSensorStatisticsInput {
+	s.IngestionJobId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListSensorStatisticsInput) SetMaxResults(v int64) *ListSensorStatisticsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListSensorStatisticsInput) SetNextToken(v string) *ListSensorStatisticsInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListSensorStatisticsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An opaque pagination token indicating where to continue the listing of sensor
+	// statistics.
+	NextToken *string `type:"string"`
+
+	// Provides ingestion-based statistics regarding the specified sensor with respect
+	// to various validation types, such as whether data exists, the number and
+	// percentage of missing values, and the number and percentage of duplicate
+	// timestamps.
+	SensorStatisticsSummaries []*SensorStatisticsSummary `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListSensorStatisticsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListSensorStatisticsOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListSensorStatisticsOutput) SetNextToken(v string) *ListSensorStatisticsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetSensorStatisticsSummaries sets the SensorStatisticsSummaries field's value.
+func (s *ListSensorStatisticsOutput) SetSensorStatisticsSummaries(v []*SensorStatisticsSummary) *ListSensorStatisticsOutput {
+	s.SensorStatisticsSummaries = v
+	return s
+}
+
 type ListTagsForResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5990,6 +9396,86 @@ func (s *ListTagsForResourceOutput) SetTags(v []*Tag) *ListTagsForResourceOutput
 	return s
 }
 
+// Entity that comprises information on sensors that have sensor data completely
+// missing.
+type MissingCompleteSensorData struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the number of sensors that have data missing completely.
+	//
+	// AffectedSensorCount is a required field
+	AffectedSensorCount *int64 `type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MissingCompleteSensorData) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MissingCompleteSensorData) GoString() string {
+	return s.String()
+}
+
+// SetAffectedSensorCount sets the AffectedSensorCount field's value.
+func (s *MissingCompleteSensorData) SetAffectedSensorCount(v int64) *MissingCompleteSensorData {
+	s.AffectedSensorCount = &v
+	return s
+}
+
+// Entity that comprises aggregated information on sensors having missing data.
+type MissingSensorData struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the number of sensors that have atleast some data missing.
+	//
+	// AffectedSensorCount is a required field
+	AffectedSensorCount *int64 `type:"integer" required:"true"`
+
+	// Indicates the total number of missing values across all the sensors.
+	//
+	// TotalNumberOfMissingValues is a required field
+	TotalNumberOfMissingValues *int64 `type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MissingSensorData) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MissingSensorData) GoString() string {
+	return s.String()
+}
+
+// SetAffectedSensorCount sets the AffectedSensorCount field's value.
+func (s *MissingSensorData) SetAffectedSensorCount(v int64) *MissingSensorData {
+	s.AffectedSensorCount = &v
+	return s
+}
+
+// SetTotalNumberOfMissingValues sets the TotalNumberOfMissingValues field's value.
+func (s *MissingSensorData) SetTotalNumberOfMissingValues(v int64) *MissingSensorData {
+	s.TotalNumberOfMissingValues = &v
+	return s
+}
+
 // Provides information about the specified ML model, including dataset and
 // model names and ARNs, as well as status.
 type ModelSummary struct {
@@ -6064,6 +9550,85 @@ func (s *ModelSummary) SetModelName(v string) *ModelSummary {
 
 // SetStatus sets the Status field's value.
 func (s *ModelSummary) SetStatus(v string) *ModelSummary {
+	s.Status = &v
+	return s
+}
+
+// Entity that comprises information on monotonic values in the data.
+type MonotonicValues struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the monotonicity of values. Can be INCREASING, DECREASING, or STATIC.
+	Monotonicity *string `type:"string" enum:"Monotonicity"`
+
+	// Indicates whether there is a potential data issue related to having monotonic
+	// values.
+	//
+	// Status is a required field
+	Status *string `type:"string" required:"true" enum:"StatisticalIssueStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MonotonicValues) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MonotonicValues) GoString() string {
+	return s.String()
+}
+
+// SetMonotonicity sets the Monotonicity field's value.
+func (s *MonotonicValues) SetMonotonicity(v string) *MonotonicValues {
+	s.Monotonicity = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *MonotonicValues) SetStatus(v string) *MonotonicValues {
+	s.Status = &v
+	return s
+}
+
+// Entity that comprises information on operating modes in data.
+type MultipleOperatingModes struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates whether there is a potential data issue related to having multiple
+	// operating modes.
+	//
+	// Status is a required field
+	Status *string `type:"string" required:"true" enum:"StatisticalIssueStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MultipleOperatingModes) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MultipleOperatingModes) GoString() string {
+	return s.String()
+}
+
+// SetStatus sets the Status field's value.
+func (s *MultipleOperatingModes) SetStatus(v string) *MultipleOperatingModes {
 	s.Status = &v
 	return s
 }
@@ -6176,6 +9741,193 @@ func (s *S3Object) SetBucket(v string) *S3Object {
 // SetKey sets the Key field's value.
 func (s *S3Object) SetKey(v string) *S3Object {
 	s.Key = &v
+	return s
+}
+
+// Summary of ingestion statistics like whether data exists, number of missing
+// values, number of invalid values and so on related to the particular sensor.
+type SensorStatisticsSummary struct {
+	_ struct{} `type:"structure"`
+
+	// Parameter that describes potential risk about whether data associated with
+	// the sensor is categorical.
+	CategoricalValues *CategoricalValues `type:"structure"`
+
+	// Name of the component to which the particular sensor belongs for which the
+	// statistics belong to.
+	ComponentName *string `min:"1" type:"string"`
+
+	// Indicates the time reference to indicate the end of valid data associated
+	// with the sensor that the statistics belong to.
+	DataEndTime *time.Time `type:"timestamp"`
+
+	// Parameter that indicates whether data exists for the sensor that the statistics
+	// belong to.
+	DataExists *bool `type:"boolean"`
+
+	// Indicates the time reference to indicate the beginning of valid data associated
+	// with the sensor that the statistics belong to.
+	DataStartTime *time.Time `type:"timestamp"`
+
+	// Parameter that describes the total number of duplicate timestamp records
+	// associated with the sensor that the statistics belong to.
+	DuplicateTimestamps *CountPercent `type:"structure"`
+
+	// Parameter that describes the total number of invalid date entries associated
+	// with the sensor that the statistics belong to.
+	InvalidDateEntries *CountPercent `type:"structure"`
+
+	// Parameter that describes the total number of, and percentage of, values that
+	// are invalid for the sensor that the statistics belong to.
+	InvalidValues *CountPercent `type:"structure"`
+
+	// Parameter that describes potential risk about whether data associated with
+	// the sensor contains one or more large gaps between consecutive timestamps.
+	LargeTimestampGaps *LargeTimestampGaps `type:"structure"`
+
+	// Parameter that describes the total number of, and percentage of, values that
+	// are missing for the sensor that the statistics belong to.
+	MissingValues *CountPercent `type:"structure"`
+
+	// Parameter that describes potential risk about whether data associated with
+	// the sensor is mostly monotonic.
+	MonotonicValues *MonotonicValues `type:"structure"`
+
+	// Parameter that describes potential risk about whether data associated with
+	// the sensor has more than one operating mode.
+	MultipleOperatingModes *MultipleOperatingModes `type:"structure"`
+
+	// Name of the sensor that the statistics belong to.
+	SensorName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SensorStatisticsSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SensorStatisticsSummary) GoString() string {
+	return s.String()
+}
+
+// SetCategoricalValues sets the CategoricalValues field's value.
+func (s *SensorStatisticsSummary) SetCategoricalValues(v *CategoricalValues) *SensorStatisticsSummary {
+	s.CategoricalValues = v
+	return s
+}
+
+// SetComponentName sets the ComponentName field's value.
+func (s *SensorStatisticsSummary) SetComponentName(v string) *SensorStatisticsSummary {
+	s.ComponentName = &v
+	return s
+}
+
+// SetDataEndTime sets the DataEndTime field's value.
+func (s *SensorStatisticsSummary) SetDataEndTime(v time.Time) *SensorStatisticsSummary {
+	s.DataEndTime = &v
+	return s
+}
+
+// SetDataExists sets the DataExists field's value.
+func (s *SensorStatisticsSummary) SetDataExists(v bool) *SensorStatisticsSummary {
+	s.DataExists = &v
+	return s
+}
+
+// SetDataStartTime sets the DataStartTime field's value.
+func (s *SensorStatisticsSummary) SetDataStartTime(v time.Time) *SensorStatisticsSummary {
+	s.DataStartTime = &v
+	return s
+}
+
+// SetDuplicateTimestamps sets the DuplicateTimestamps field's value.
+func (s *SensorStatisticsSummary) SetDuplicateTimestamps(v *CountPercent) *SensorStatisticsSummary {
+	s.DuplicateTimestamps = v
+	return s
+}
+
+// SetInvalidDateEntries sets the InvalidDateEntries field's value.
+func (s *SensorStatisticsSummary) SetInvalidDateEntries(v *CountPercent) *SensorStatisticsSummary {
+	s.InvalidDateEntries = v
+	return s
+}
+
+// SetInvalidValues sets the InvalidValues field's value.
+func (s *SensorStatisticsSummary) SetInvalidValues(v *CountPercent) *SensorStatisticsSummary {
+	s.InvalidValues = v
+	return s
+}
+
+// SetLargeTimestampGaps sets the LargeTimestampGaps field's value.
+func (s *SensorStatisticsSummary) SetLargeTimestampGaps(v *LargeTimestampGaps) *SensorStatisticsSummary {
+	s.LargeTimestampGaps = v
+	return s
+}
+
+// SetMissingValues sets the MissingValues field's value.
+func (s *SensorStatisticsSummary) SetMissingValues(v *CountPercent) *SensorStatisticsSummary {
+	s.MissingValues = v
+	return s
+}
+
+// SetMonotonicValues sets the MonotonicValues field's value.
+func (s *SensorStatisticsSummary) SetMonotonicValues(v *MonotonicValues) *SensorStatisticsSummary {
+	s.MonotonicValues = v
+	return s
+}
+
+// SetMultipleOperatingModes sets the MultipleOperatingModes field's value.
+func (s *SensorStatisticsSummary) SetMultipleOperatingModes(v *MultipleOperatingModes) *SensorStatisticsSummary {
+	s.MultipleOperatingModes = v
+	return s
+}
+
+// SetSensorName sets the SensorName field's value.
+func (s *SensorStatisticsSummary) SetSensorName(v string) *SensorStatisticsSummary {
+	s.SensorName = &v
+	return s
+}
+
+// Entity that comprises information on sensors that have shorter date range.
+type SensorsWithShortDateRange struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the number of sensors that have less than 90 days of data.
+	//
+	// AffectedSensorCount is a required field
+	AffectedSensorCount *int64 `type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SensorsWithShortDateRange) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SensorsWithShortDateRange) GoString() string {
+	return s.String()
+}
+
+// SetAffectedSensorCount sets the AffectedSensorCount field's value.
+func (s *SensorsWithShortDateRange) SetAffectedSensorCount(v int64) *SensorsWithShortDateRange {
+	s.AffectedSensorCount = &v
 	return s
 }
 
@@ -6842,6 +10594,41 @@ func (s *ThrottlingException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Entity that comprises information abount unsupported timestamps in the dataset.
+type UnsupportedTimestamps struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the total number of unsupported timestamps across the ingested
+	// data.
+	//
+	// TotalNumberOfUnsupportedTimestamps is a required field
+	TotalNumberOfUnsupportedTimestamps *int64 `type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UnsupportedTimestamps) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UnsupportedTimestamps) GoString() string {
+	return s.String()
+}
+
+// SetTotalNumberOfUnsupportedTimestamps sets the TotalNumberOfUnsupportedTimestamps field's value.
+func (s *UnsupportedTimestamps) SetTotalNumberOfUnsupportedTimestamps(v int64) *UnsupportedTimestamps {
+	s.TotalNumberOfUnsupportedTimestamps = &v
+	return s
+}
+
 type UntagResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7072,6 +10859,89 @@ func (s UpdateInferenceSchedulerOutput) GoString() string {
 	return s.String()
 }
 
+type UpdateLabelGroupInput struct {
+	_ struct{} `type:"structure"`
+
+	// Updates the code indicating the type of anomaly associated with the label.
+	//
+	// Data in this field will be retained for service usage. Follow best practices
+	// for the security of your data.
+	FaultCodes []*string `type:"list"`
+
+	// The name of the label group to be updated.
+	//
+	// LabelGroupName is a required field
+	LabelGroupName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLabelGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLabelGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateLabelGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateLabelGroupInput"}
+	if s.LabelGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LabelGroupName"))
+	}
+	if s.LabelGroupName != nil && len(*s.LabelGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelGroupName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFaultCodes sets the FaultCodes field's value.
+func (s *UpdateLabelGroupInput) SetFaultCodes(v []*string) *UpdateLabelGroupInput {
+	s.FaultCodes = v
+	return s
+}
+
+// SetLabelGroupName sets the LabelGroupName field's value.
+func (s *UpdateLabelGroupInput) SetLabelGroupName(v string) *UpdateLabelGroupInput {
+	s.LabelGroupName = &v
+	return s
+}
+
+type UpdateLabelGroupOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLabelGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLabelGroupOutput) GoString() string {
+	return s.String()
+}
+
 // The input fails to satisfy constraints specified by Amazon Lookout for Equipment
 // or a related AWS service that's being utilized.
 type ValidationException struct {
@@ -7250,6 +11120,42 @@ func IngestionJobStatus_Values() []string {
 }
 
 const (
+	// LabelRatingAnomaly is a LabelRating enum value
+	LabelRatingAnomaly = "ANOMALY"
+
+	// LabelRatingNoAnomaly is a LabelRating enum value
+	LabelRatingNoAnomaly = "NO_ANOMALY"
+
+	// LabelRatingNeutral is a LabelRating enum value
+	LabelRatingNeutral = "NEUTRAL"
+)
+
+// LabelRating_Values returns all elements of the LabelRating enum
+func LabelRating_Values() []string {
+	return []string{
+		LabelRatingAnomaly,
+		LabelRatingNoAnomaly,
+		LabelRatingNeutral,
+	}
+}
+
+const (
+	// LatestInferenceResultAnomalous is a LatestInferenceResult enum value
+	LatestInferenceResultAnomalous = "ANOMALOUS"
+
+	// LatestInferenceResultNormal is a LatestInferenceResult enum value
+	LatestInferenceResultNormal = "NORMAL"
+)
+
+// LatestInferenceResult_Values returns all elements of the LatestInferenceResult enum
+func LatestInferenceResult_Values() []string {
+	return []string{
+		LatestInferenceResultAnomalous,
+		LatestInferenceResultNormal,
+	}
+}
+
+const (
 	// ModelStatusInProgress is a ModelStatus enum value
 	ModelStatusInProgress = "IN_PROGRESS"
 
@@ -7266,6 +11172,42 @@ func ModelStatus_Values() []string {
 		ModelStatusInProgress,
 		ModelStatusSuccess,
 		ModelStatusFailed,
+	}
+}
+
+const (
+	// MonotonicityDecreasing is a Monotonicity enum value
+	MonotonicityDecreasing = "DECREASING"
+
+	// MonotonicityIncreasing is a Monotonicity enum value
+	MonotonicityIncreasing = "INCREASING"
+
+	// MonotonicityStatic is a Monotonicity enum value
+	MonotonicityStatic = "STATIC"
+)
+
+// Monotonicity_Values returns all elements of the Monotonicity enum
+func Monotonicity_Values() []string {
+	return []string{
+		MonotonicityDecreasing,
+		MonotonicityIncreasing,
+		MonotonicityStatic,
+	}
+}
+
+const (
+	// StatisticalIssueStatusPotentialIssueDetected is a StatisticalIssueStatus enum value
+	StatisticalIssueStatusPotentialIssueDetected = "POTENTIAL_ISSUE_DETECTED"
+
+	// StatisticalIssueStatusNoIssueDetected is a StatisticalIssueStatus enum value
+	StatisticalIssueStatusNoIssueDetected = "NO_ISSUE_DETECTED"
+)
+
+// StatisticalIssueStatus_Values returns all elements of the StatisticalIssueStatus enum
+func StatisticalIssueStatus_Values() []string {
+	return []string{
+		StatisticalIssueStatusPotentialIssueDetected,
+		StatisticalIssueStatusNoIssueDetected,
 	}
 }
 

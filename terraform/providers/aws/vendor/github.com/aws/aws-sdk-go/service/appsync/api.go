@@ -28,14 +28,13 @@ const opAssociateApi = "AssociateApi"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateApiRequest method.
+//	req, resp := client.AssociateApiRequest(params)
 //
-//    // Example sending a request using the AssociateApiRequest method.
-//    req, resp := client.AssociateApiRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/AssociateApi
 func (c *AppSync) AssociateApiRequest(input *AssociateApiInput) (req *request.Request, output *AssociateApiOutput) {
@@ -66,19 +65,20 @@ func (c *AppSync) AssociateApiRequest(input *AssociateApiInput) (req *request.Re
 // API operation AssociateApi for usage and error information.
 //
 // Returned Error Types:
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
 //
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/AssociateApi
 func (c *AppSync) AssociateApi(input *AssociateApiInput) (*AssociateApiOutput, error) {
@@ -118,14 +118,13 @@ const opCreateApiCache = "CreateApiCache"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateApiCacheRequest method.
+//	req, resp := client.CreateApiCacheRequest(params)
 //
-//    // Example sending a request using the CreateApiCacheRequest method.
-//    req, resp := client.CreateApiCacheRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateApiCache
 func (c *AppSync) CreateApiCacheRequest(input *CreateApiCacheInput) (req *request.Request, output *CreateApiCacheOutput) {
@@ -156,23 +155,24 @@ func (c *AppSync) CreateApiCacheRequest(input *CreateApiCacheInput) (req *reques
 // API operation CreateApiCache for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateApiCache
 func (c *AppSync) CreateApiCache(input *CreateApiCacheInput) (*CreateApiCacheOutput, error) {
@@ -212,14 +212,13 @@ const opCreateApiKey = "CreateApiKey"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateApiKeyRequest method.
+//	req, resp := client.CreateApiKeyRequest(params)
 //
-//    // Example sending a request using the CreateApiKeyRequest method.
-//    req, resp := client.CreateApiKeyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateApiKey
 func (c *AppSync) CreateApiKeyRequest(input *CreateApiKeyInput) (req *request.Request, output *CreateApiKeyOutput) {
@@ -250,32 +249,33 @@ func (c *AppSync) CreateApiKeyRequest(input *CreateApiKeyInput) (req *request.Re
 // API operation CreateApiKey for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * LimitExceededException
-//   The request exceeded a limit. Try your request again.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - LimitExceededException
+//     The request exceeded a limit. Try your request again.
 //
-//   * LimitExceededException
-//   The request exceeded a limit. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - LimitExceededException
+//     The request exceeded a limit. Try your request again.
 //
-//   * ApiKeyLimitExceededException
-//   The API key exceeded a limit. Try your request again.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
-//   * ApiKeyValidityOutOfBoundsException
-//   The API key expiration must be set to a value between 1 and 365 days from
-//   creation (for CreateApiKey) or from update (for UpdateApiKey).
+//   - ApiKeyLimitExceededException
+//     The API key exceeded a limit. Try your request again.
+//
+//   - ApiKeyValidityOutOfBoundsException
+//     The API key expiration must be set to a value between 1 and 365 days from
+//     creation (for CreateApiKey) or from update (for UpdateApiKey).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateApiKey
 func (c *AppSync) CreateApiKey(input *CreateApiKeyInput) (*CreateApiKeyOutput, error) {
@@ -315,14 +315,13 @@ const opCreateDataSource = "CreateDataSource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDataSourceRequest method.
+//	req, resp := client.CreateDataSourceRequest(params)
 //
-//    // Example sending a request using the CreateDataSourceRequest method.
-//    req, resp := client.CreateDataSourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateDataSource
 func (c *AppSync) CreateDataSourceRequest(input *CreateDataSourceInput) (req *request.Request, output *CreateDataSourceOutput) {
@@ -353,23 +352,24 @@ func (c *AppSync) CreateDataSourceRequest(input *CreateDataSourceInput) (req *re
 // API operation CreateDataSource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateDataSource
 func (c *AppSync) CreateDataSource(input *CreateDataSourceInput) (*CreateDataSourceOutput, error) {
@@ -409,14 +409,13 @@ const opCreateDomainName = "CreateDomainName"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDomainNameRequest method.
+//	req, resp := client.CreateDomainNameRequest(params)
 //
-//    // Example sending a request using the CreateDomainNameRequest method.
-//    req, resp := client.CreateDomainNameRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateDomainName
 func (c *AppSync) CreateDomainNameRequest(input *CreateDomainNameInput) (req *request.Request, output *CreateDomainNameOutput) {
@@ -447,15 +446,16 @@ func (c *AppSync) CreateDomainNameRequest(input *CreateDomainNameInput) (req *re
 // API operation CreateDomainName for usage and error information.
 //
 // Returned Error Types:
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
 //
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateDomainName
 func (c *AppSync) CreateDomainName(input *CreateDomainNameInput) (*CreateDomainNameOutput, error) {
@@ -495,14 +495,13 @@ const opCreateFunction = "CreateFunction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateFunctionRequest method.
+//	req, resp := client.CreateFunctionRequest(params)
 //
-//    // Example sending a request using the CreateFunctionRequest method.
-//    req, resp := client.CreateFunctionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateFunction
 func (c *AppSync) CreateFunctionRequest(input *CreateFunctionInput) (req *request.Request, output *CreateFunctionOutput) {
@@ -536,19 +535,20 @@ func (c *AppSync) CreateFunctionRequest(input *CreateFunctionInput) (req *reques
 // API operation CreateFunction for usage and error information.
 //
 // Returned Error Types:
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateFunction
 func (c *AppSync) CreateFunction(input *CreateFunctionInput) (*CreateFunctionOutput, error) {
@@ -588,14 +588,13 @@ const opCreateGraphqlApi = "CreateGraphqlApi"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateGraphqlApiRequest method.
+//	req, resp := client.CreateGraphqlApiRequest(params)
 //
-//    // Example sending a request using the CreateGraphqlApiRequest method.
-//    req, resp := client.CreateGraphqlApiRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateGraphqlApi
 func (c *AppSync) CreateGraphqlApiRequest(input *CreateGraphqlApiInput) (req *request.Request, output *CreateGraphqlApiOutput) {
@@ -626,25 +625,26 @@ func (c *AppSync) CreateGraphqlApiRequest(input *CreateGraphqlApiInput) (req *re
 // API operation CreateGraphqlApi for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * LimitExceededException
-//   The request exceeded a limit. Try your request again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - LimitExceededException
+//     The request exceeded a limit. Try your request again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
 //
-//   * ApiLimitExceededException
-//   The GraphQL API exceeded a limit. Try your request again.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - ApiLimitExceededException
+//     The GraphQL API exceeded a limit. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateGraphqlApi
 func (c *AppSync) CreateGraphqlApi(input *CreateGraphqlApiInput) (*CreateGraphqlApiOutput, error) {
@@ -684,14 +684,13 @@ const opCreateResolver = "CreateResolver"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateResolverRequest method.
+//	req, resp := client.CreateResolverRequest(params)
 //
-//    // Example sending a request using the CreateResolverRequest method.
-//    req, resp := client.CreateResolverRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateResolver
 func (c *AppSync) CreateResolverRequest(input *CreateResolverInput) (req *request.Request, output *CreateResolverOutput) {
@@ -725,19 +724,20 @@ func (c *AppSync) CreateResolverRequest(input *CreateResolverInput) (req *reques
 // API operation CreateResolver for usage and error information.
 //
 // Returned Error Types:
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateResolver
 func (c *AppSync) CreateResolver(input *CreateResolverInput) (*CreateResolverOutput, error) {
@@ -777,14 +777,13 @@ const opCreateType = "CreateType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateTypeRequest method.
+//	req, resp := client.CreateTypeRequest(params)
 //
-//    // Example sending a request using the CreateTypeRequest method.
-//    req, resp := client.CreateTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateType
 func (c *AppSync) CreateTypeRequest(input *CreateTypeInput) (req *request.Request, output *CreateTypeOutput) {
@@ -815,23 +814,24 @@ func (c *AppSync) CreateTypeRequest(input *CreateTypeInput) (req *request.Reques
 // API operation CreateType for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/CreateType
 func (c *AppSync) CreateType(input *CreateTypeInput) (*CreateTypeOutput, error) {
@@ -871,14 +871,13 @@ const opDeleteApiCache = "DeleteApiCache"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteApiCacheRequest method.
+//	req, resp := client.DeleteApiCacheRequest(params)
 //
-//    // Example sending a request using the DeleteApiCacheRequest method.
-//    req, resp := client.DeleteApiCacheRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteApiCache
 func (c *AppSync) DeleteApiCacheRequest(input *DeleteApiCacheInput) (req *request.Request, output *DeleteApiCacheOutput) {
@@ -910,23 +909,24 @@ func (c *AppSync) DeleteApiCacheRequest(input *DeleteApiCacheInput) (req *reques
 // API operation DeleteApiCache for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteApiCache
 func (c *AppSync) DeleteApiCache(input *DeleteApiCacheInput) (*DeleteApiCacheOutput, error) {
@@ -966,14 +966,13 @@ const opDeleteApiKey = "DeleteApiKey"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteApiKeyRequest method.
+//	req, resp := client.DeleteApiKeyRequest(params)
 //
-//    // Example sending a request using the DeleteApiKeyRequest method.
-//    req, resp := client.DeleteApiKeyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteApiKey
 func (c *AppSync) DeleteApiKeyRequest(input *DeleteApiKeyInput) (req *request.Request, output *DeleteApiKeyOutput) {
@@ -1005,19 +1004,20 @@ func (c *AppSync) DeleteApiKeyRequest(input *DeleteApiKeyInput) (req *request.Re
 // API operation DeleteApiKey for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteApiKey
 func (c *AppSync) DeleteApiKey(input *DeleteApiKeyInput) (*DeleteApiKeyOutput, error) {
@@ -1057,14 +1057,13 @@ const opDeleteDataSource = "DeleteDataSource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDataSourceRequest method.
+//	req, resp := client.DeleteDataSourceRequest(params)
 //
-//    // Example sending a request using the DeleteDataSourceRequest method.
-//    req, resp := client.DeleteDataSourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteDataSource
 func (c *AppSync) DeleteDataSourceRequest(input *DeleteDataSourceInput) (req *request.Request, output *DeleteDataSourceOutput) {
@@ -1096,23 +1095,24 @@ func (c *AppSync) DeleteDataSourceRequest(input *DeleteDataSourceInput) (req *re
 // API operation DeleteDataSource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteDataSource
 func (c *AppSync) DeleteDataSource(input *DeleteDataSourceInput) (*DeleteDataSourceOutput, error) {
@@ -1152,14 +1152,13 @@ const opDeleteDomainName = "DeleteDomainName"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDomainNameRequest method.
+//	req, resp := client.DeleteDomainNameRequest(params)
 //
-//    // Example sending a request using the DeleteDomainNameRequest method.
-//    req, resp := client.DeleteDomainNameRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteDomainName
 func (c *AppSync) DeleteDomainNameRequest(input *DeleteDomainNameInput) (req *request.Request, output *DeleteDomainNameOutput) {
@@ -1191,23 +1190,24 @@ func (c *AppSync) DeleteDomainNameRequest(input *DeleteDomainNameInput) (req *re
 // API operation DeleteDomainName for usage and error information.
 //
 // Returned Error Types:
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
 //
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteDomainName
 func (c *AppSync) DeleteDomainName(input *DeleteDomainNameInput) (*DeleteDomainNameOutput, error) {
@@ -1247,14 +1247,13 @@ const opDeleteFunction = "DeleteFunction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteFunctionRequest method.
+//	req, resp := client.DeleteFunctionRequest(params)
 //
-//    // Example sending a request using the DeleteFunctionRequest method.
-//    req, resp := client.DeleteFunctionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteFunction
 func (c *AppSync) DeleteFunctionRequest(input *DeleteFunctionInput) (req *request.Request, output *DeleteFunctionOutput) {
@@ -1286,19 +1285,20 @@ func (c *AppSync) DeleteFunctionRequest(input *DeleteFunctionInput) (req *reques
 // API operation DeleteFunction for usage and error information.
 //
 // Returned Error Types:
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteFunction
 func (c *AppSync) DeleteFunction(input *DeleteFunctionInput) (*DeleteFunctionOutput, error) {
@@ -1338,14 +1338,13 @@ const opDeleteGraphqlApi = "DeleteGraphqlApi"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteGraphqlApiRequest method.
+//	req, resp := client.DeleteGraphqlApiRequest(params)
 //
-//    // Example sending a request using the DeleteGraphqlApiRequest method.
-//    req, resp := client.DeleteGraphqlApiRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteGraphqlApi
 func (c *AppSync) DeleteGraphqlApiRequest(input *DeleteGraphqlApiInput) (req *request.Request, output *DeleteGraphqlApiOutput) {
@@ -1377,26 +1376,27 @@ func (c *AppSync) DeleteGraphqlApiRequest(input *DeleteGraphqlApiInput) (req *re
 // API operation DeleteGraphqlApi for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
 //
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteGraphqlApi
 func (c *AppSync) DeleteGraphqlApi(input *DeleteGraphqlApiInput) (*DeleteGraphqlApiOutput, error) {
@@ -1436,14 +1436,13 @@ const opDeleteResolver = "DeleteResolver"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteResolverRequest method.
+//	req, resp := client.DeleteResolverRequest(params)
 //
-//    // Example sending a request using the DeleteResolverRequest method.
-//    req, resp := client.DeleteResolverRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteResolver
 func (c *AppSync) DeleteResolverRequest(input *DeleteResolverInput) (req *request.Request, output *DeleteResolverOutput) {
@@ -1475,19 +1474,20 @@ func (c *AppSync) DeleteResolverRequest(input *DeleteResolverInput) (req *reques
 // API operation DeleteResolver for usage and error information.
 //
 // Returned Error Types:
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteResolver
 func (c *AppSync) DeleteResolver(input *DeleteResolverInput) (*DeleteResolverOutput, error) {
@@ -1527,14 +1527,13 @@ const opDeleteType = "DeleteType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteTypeRequest method.
+//	req, resp := client.DeleteTypeRequest(params)
 //
-//    // Example sending a request using the DeleteTypeRequest method.
-//    req, resp := client.DeleteTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteType
 func (c *AppSync) DeleteTypeRequest(input *DeleteTypeInput) (req *request.Request, output *DeleteTypeOutput) {
@@ -1566,23 +1565,24 @@ func (c *AppSync) DeleteTypeRequest(input *DeleteTypeInput) (req *request.Reques
 // API operation DeleteType for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DeleteType
 func (c *AppSync) DeleteType(input *DeleteTypeInput) (*DeleteTypeOutput, error) {
@@ -1622,14 +1622,13 @@ const opDisassociateApi = "DisassociateApi"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateApiRequest method.
+//	req, resp := client.DisassociateApiRequest(params)
 //
-//    // Example sending a request using the DisassociateApiRequest method.
-//    req, resp := client.DisassociateApiRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DisassociateApi
 func (c *AppSync) DisassociateApiRequest(input *DisassociateApiInput) (req *request.Request, output *DisassociateApiOutput) {
@@ -1661,23 +1660,24 @@ func (c *AppSync) DisassociateApiRequest(input *DisassociateApiInput) (req *requ
 // API operation DisassociateApi for usage and error information.
 //
 // Returned Error Types:
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
 //
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/DisassociateApi
 func (c *AppSync) DisassociateApi(input *DisassociateApiInput) (*DisassociateApiOutput, error) {
@@ -1701,6 +1701,100 @@ func (c *AppSync) DisassociateApiWithContext(ctx aws.Context, input *Disassociat
 	return out, req.Send()
 }
 
+const opEvaluateMappingTemplate = "EvaluateMappingTemplate"
+
+// EvaluateMappingTemplateRequest generates a "aws/request.Request" representing the
+// client's request for the EvaluateMappingTemplate operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See EvaluateMappingTemplate for more information on using the EvaluateMappingTemplate
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the EvaluateMappingTemplateRequest method.
+//	req, resp := client.EvaluateMappingTemplateRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/EvaluateMappingTemplate
+func (c *AppSync) EvaluateMappingTemplateRequest(input *EvaluateMappingTemplateInput) (req *request.Request, output *EvaluateMappingTemplateOutput) {
+	op := &request.Operation{
+		Name:       opEvaluateMappingTemplate,
+		HTTPMethod: "POST",
+		HTTPPath:   "/v1/dataplane-evaluatetemplate",
+	}
+
+	if input == nil {
+		input = &EvaluateMappingTemplateInput{}
+	}
+
+	output = &EvaluateMappingTemplateOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// EvaluateMappingTemplate API operation for AWS AppSync.
+//
+// Evaluates a given template and returns the response. The mapping template
+// can be a request or response template.
+//
+// Request templates take the incoming request after a GraphQL operation is
+// parsed and convert it into a request configuration for the selected data
+// source operation. Response templates interpret responses from the data source
+// and map it to the shape of the GraphQL field output type.
+//
+// Mapping templates are written in the Apache Velocity Template Language (VTL).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS AppSync's
+// API operation EvaluateMappingTemplate for usage and error information.
+//
+// Returned Error Types:
+//
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/EvaluateMappingTemplate
+func (c *AppSync) EvaluateMappingTemplate(input *EvaluateMappingTemplateInput) (*EvaluateMappingTemplateOutput, error) {
+	req, out := c.EvaluateMappingTemplateRequest(input)
+	return out, req.Send()
+}
+
+// EvaluateMappingTemplateWithContext is the same as EvaluateMappingTemplate with the addition of
+// the ability to pass a context and additional request options.
+//
+// See EvaluateMappingTemplate for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *AppSync) EvaluateMappingTemplateWithContext(ctx aws.Context, input *EvaluateMappingTemplateInput, opts ...request.Option) (*EvaluateMappingTemplateOutput, error) {
+	req, out := c.EvaluateMappingTemplateRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opFlushApiCache = "FlushApiCache"
 
 // FlushApiCacheRequest generates a "aws/request.Request" representing the
@@ -1717,14 +1811,13 @@ const opFlushApiCache = "FlushApiCache"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the FlushApiCacheRequest method.
+//	req, resp := client.FlushApiCacheRequest(params)
 //
-//    // Example sending a request using the FlushApiCacheRequest method.
-//    req, resp := client.FlushApiCacheRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/FlushApiCache
 func (c *AppSync) FlushApiCacheRequest(input *FlushApiCacheInput) (req *request.Request, output *FlushApiCacheOutput) {
@@ -1756,23 +1849,24 @@ func (c *AppSync) FlushApiCacheRequest(input *FlushApiCacheInput) (req *request.
 // API operation FlushApiCache for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/FlushApiCache
 func (c *AppSync) FlushApiCache(input *FlushApiCacheInput) (*FlushApiCacheOutput, error) {
@@ -1812,14 +1906,13 @@ const opGetApiAssociation = "GetApiAssociation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetApiAssociationRequest method.
+//	req, resp := client.GetApiAssociationRequest(params)
 //
-//    // Example sending a request using the GetApiAssociationRequest method.
-//    req, resp := client.GetApiAssociationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetApiAssociation
 func (c *AppSync) GetApiAssociationRequest(input *GetApiAssociationInput) (req *request.Request, output *GetApiAssociationOutput) {
@@ -1850,19 +1943,20 @@ func (c *AppSync) GetApiAssociationRequest(input *GetApiAssociationInput) (req *
 // API operation GetApiAssociation for usage and error information.
 //
 // Returned Error Types:
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
 //
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetApiAssociation
 func (c *AppSync) GetApiAssociation(input *GetApiAssociationInput) (*GetApiAssociationOutput, error) {
@@ -1902,14 +1996,13 @@ const opGetApiCache = "GetApiCache"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetApiCacheRequest method.
+//	req, resp := client.GetApiCacheRequest(params)
 //
-//    // Example sending a request using the GetApiCacheRequest method.
-//    req, resp := client.GetApiCacheRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetApiCache
 func (c *AppSync) GetApiCacheRequest(input *GetApiCacheInput) (req *request.Request, output *GetApiCacheOutput) {
@@ -1940,23 +2033,24 @@ func (c *AppSync) GetApiCacheRequest(input *GetApiCacheInput) (req *request.Requ
 // API operation GetApiCache for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetApiCache
 func (c *AppSync) GetApiCache(input *GetApiCacheInput) (*GetApiCacheOutput, error) {
@@ -1996,14 +2090,13 @@ const opGetDataSource = "GetDataSource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDataSourceRequest method.
+//	req, resp := client.GetDataSourceRequest(params)
 //
-//    // Example sending a request using the GetDataSourceRequest method.
-//    req, resp := client.GetDataSourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetDataSource
 func (c *AppSync) GetDataSourceRequest(input *GetDataSourceInput) (req *request.Request, output *GetDataSourceOutput) {
@@ -2034,23 +2127,24 @@ func (c *AppSync) GetDataSourceRequest(input *GetDataSourceInput) (req *request.
 // API operation GetDataSource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetDataSource
 func (c *AppSync) GetDataSource(input *GetDataSourceInput) (*GetDataSourceOutput, error) {
@@ -2090,14 +2184,13 @@ const opGetDomainName = "GetDomainName"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDomainNameRequest method.
+//	req, resp := client.GetDomainNameRequest(params)
 //
-//    // Example sending a request using the GetDomainNameRequest method.
-//    req, resp := client.GetDomainNameRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetDomainName
 func (c *AppSync) GetDomainNameRequest(input *GetDomainNameInput) (req *request.Request, output *GetDomainNameOutput) {
@@ -2128,19 +2221,20 @@ func (c *AppSync) GetDomainNameRequest(input *GetDomainNameInput) (req *request.
 // API operation GetDomainName for usage and error information.
 //
 // Returned Error Types:
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
 //
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetDomainName
 func (c *AppSync) GetDomainName(input *GetDomainNameInput) (*GetDomainNameOutput, error) {
@@ -2180,14 +2274,13 @@ const opGetFunction = "GetFunction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetFunctionRequest method.
+//	req, resp := client.GetFunctionRequest(params)
 //
-//    // Example sending a request using the GetFunctionRequest method.
-//    req, resp := client.GetFunctionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetFunction
 func (c *AppSync) GetFunctionRequest(input *GetFunctionInput) (req *request.Request, output *GetFunctionOutput) {
@@ -2218,16 +2311,17 @@ func (c *AppSync) GetFunctionRequest(input *GetFunctionInput) (req *request.Requ
 // API operation GetFunction for usage and error information.
 //
 // Returned Error Types:
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
+//
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetFunction
 func (c *AppSync) GetFunction(input *GetFunctionInput) (*GetFunctionOutput, error) {
@@ -2267,14 +2361,13 @@ const opGetGraphqlApi = "GetGraphqlApi"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetGraphqlApiRequest method.
+//	req, resp := client.GetGraphqlApiRequest(params)
 //
-//    // Example sending a request using the GetGraphqlApiRequest method.
-//    req, resp := client.GetGraphqlApiRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetGraphqlApi
 func (c *AppSync) GetGraphqlApiRequest(input *GetGraphqlApiInput) (req *request.Request, output *GetGraphqlApiOutput) {
@@ -2305,22 +2398,23 @@ func (c *AppSync) GetGraphqlApiRequest(input *GetGraphqlApiInput) (req *request.
 // API operation GetGraphqlApi for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
 //
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetGraphqlApi
 func (c *AppSync) GetGraphqlApi(input *GetGraphqlApiInput) (*GetGraphqlApiOutput, error) {
@@ -2360,14 +2454,13 @@ const opGetIntrospectionSchema = "GetIntrospectionSchema"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetIntrospectionSchemaRequest method.
+//	req, resp := client.GetIntrospectionSchemaRequest(params)
 //
-//    // Example sending a request using the GetIntrospectionSchemaRequest method.
-//    req, resp := client.GetIntrospectionSchemaRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetIntrospectionSchema
 func (c *AppSync) GetIntrospectionSchemaRequest(input *GetIntrospectionSchemaInput) (req *request.Request, output *GetIntrospectionSchemaOutput) {
@@ -2398,18 +2491,19 @@ func (c *AppSync) GetIntrospectionSchemaRequest(input *GetIntrospectionSchemaInp
 // API operation GetIntrospectionSchema for usage and error information.
 //
 // Returned Error Types:
-//   * GraphQLSchemaException
-//   The GraphQL schema is not valid.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - GraphQLSchemaException
+//     The GraphQL schema is not valid.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetIntrospectionSchema
 func (c *AppSync) GetIntrospectionSchema(input *GetIntrospectionSchemaInput) (*GetIntrospectionSchemaOutput, error) {
@@ -2449,14 +2543,13 @@ const opGetResolver = "GetResolver"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetResolverRequest method.
+//	req, resp := client.GetResolverRequest(params)
 //
-//    // Example sending a request using the GetResolverRequest method.
-//    req, resp := client.GetResolverRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetResolver
 func (c *AppSync) GetResolverRequest(input *GetResolverInput) (req *request.Request, output *GetResolverOutput) {
@@ -2487,16 +2580,17 @@ func (c *AppSync) GetResolverRequest(input *GetResolverInput) (req *request.Requ
 // API operation GetResolver for usage and error information.
 //
 // Returned Error Types:
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
+//
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetResolver
 func (c *AppSync) GetResolver(input *GetResolverInput) (*GetResolverOutput, error) {
@@ -2536,14 +2630,13 @@ const opGetSchemaCreationStatus = "GetSchemaCreationStatus"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetSchemaCreationStatusRequest method.
+//	req, resp := client.GetSchemaCreationStatusRequest(params)
 //
-//    // Example sending a request using the GetSchemaCreationStatusRequest method.
-//    req, resp := client.GetSchemaCreationStatusRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetSchemaCreationStatus
 func (c *AppSync) GetSchemaCreationStatusRequest(input *GetSchemaCreationStatusInput) (req *request.Request, output *GetSchemaCreationStatusOutput) {
@@ -2574,19 +2667,20 @@ func (c *AppSync) GetSchemaCreationStatusRequest(input *GetSchemaCreationStatusI
 // API operation GetSchemaCreationStatus for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetSchemaCreationStatus
 func (c *AppSync) GetSchemaCreationStatus(input *GetSchemaCreationStatusInput) (*GetSchemaCreationStatusOutput, error) {
@@ -2626,14 +2720,13 @@ const opGetType = "GetType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetTypeRequest method.
+//	req, resp := client.GetTypeRequest(params)
 //
-//    // Example sending a request using the GetTypeRequest method.
-//    req, resp := client.GetTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetType
 func (c *AppSync) GetTypeRequest(input *GetTypeInput) (req *request.Request, output *GetTypeOutput) {
@@ -2664,23 +2757,24 @@ func (c *AppSync) GetTypeRequest(input *GetTypeInput) (req *request.Request, out
 // API operation GetType for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/GetType
 func (c *AppSync) GetType(input *GetTypeInput) (*GetTypeOutput, error) {
@@ -2720,14 +2814,13 @@ const opListApiKeys = "ListApiKeys"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListApiKeysRequest method.
+//	req, resp := client.ListApiKeysRequest(params)
 //
-//    // Example sending a request using the ListApiKeysRequest method.
-//    req, resp := client.ListApiKeysRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListApiKeys
 func (c *AppSync) ListApiKeysRequest(input *ListApiKeysInput) (req *request.Request, output *ListApiKeysOutput) {
@@ -2763,19 +2856,20 @@ func (c *AppSync) ListApiKeysRequest(input *ListApiKeysInput) (req *request.Requ
 // API operation ListApiKeys for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListApiKeys
 func (c *AppSync) ListApiKeys(input *ListApiKeysInput) (*ListApiKeysOutput, error) {
@@ -2815,14 +2909,13 @@ const opListDataSources = "ListDataSources"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDataSourcesRequest method.
+//	req, resp := client.ListDataSourcesRequest(params)
 //
-//    // Example sending a request using the ListDataSourcesRequest method.
-//    req, resp := client.ListDataSourcesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListDataSources
 func (c *AppSync) ListDataSourcesRequest(input *ListDataSourcesInput) (req *request.Request, output *ListDataSourcesOutput) {
@@ -2853,19 +2946,20 @@ func (c *AppSync) ListDataSourcesRequest(input *ListDataSourcesInput) (req *requ
 // API operation ListDataSources for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListDataSources
 func (c *AppSync) ListDataSources(input *ListDataSourcesInput) (*ListDataSourcesOutput, error) {
@@ -2905,14 +2999,13 @@ const opListDomainNames = "ListDomainNames"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDomainNamesRequest method.
+//	req, resp := client.ListDomainNamesRequest(params)
 //
-//    // Example sending a request using the ListDomainNamesRequest method.
-//    req, resp := client.ListDomainNamesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListDomainNames
 func (c *AppSync) ListDomainNamesRequest(input *ListDomainNamesInput) (req *request.Request, output *ListDomainNamesOutput) {
@@ -2943,15 +3036,16 @@ func (c *AppSync) ListDomainNamesRequest(input *ListDomainNamesInput) (req *requ
 // API operation ListDomainNames for usage and error information.
 //
 // Returned Error Types:
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
 //
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListDomainNames
 func (c *AppSync) ListDomainNames(input *ListDomainNamesInput) (*ListDomainNamesOutput, error) {
@@ -2991,14 +3085,13 @@ const opListFunctions = "ListFunctions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListFunctionsRequest method.
+//	req, resp := client.ListFunctionsRequest(params)
 //
-//    // Example sending a request using the ListFunctionsRequest method.
-//    req, resp := client.ListFunctionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListFunctions
 func (c *AppSync) ListFunctionsRequest(input *ListFunctionsInput) (req *request.Request, output *ListFunctionsOutput) {
@@ -3029,19 +3122,20 @@ func (c *AppSync) ListFunctionsRequest(input *ListFunctionsInput) (req *request.
 // API operation ListFunctions for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListFunctions
 func (c *AppSync) ListFunctions(input *ListFunctionsInput) (*ListFunctionsOutput, error) {
@@ -3081,14 +3175,13 @@ const opListGraphqlApis = "ListGraphqlApis"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListGraphqlApisRequest method.
+//	req, resp := client.ListGraphqlApisRequest(params)
 //
-//    // Example sending a request using the ListGraphqlApisRequest method.
-//    req, resp := client.ListGraphqlApisRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListGraphqlApis
 func (c *AppSync) ListGraphqlApisRequest(input *ListGraphqlApisInput) (req *request.Request, output *ListGraphqlApisOutput) {
@@ -3119,15 +3212,16 @@ func (c *AppSync) ListGraphqlApisRequest(input *ListGraphqlApisInput) (req *requ
 // API operation ListGraphqlApis for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListGraphqlApis
 func (c *AppSync) ListGraphqlApis(input *ListGraphqlApisInput) (*ListGraphqlApisOutput, error) {
@@ -3167,14 +3261,13 @@ const opListResolvers = "ListResolvers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListResolversRequest method.
+//	req, resp := client.ListResolversRequest(params)
 //
-//    // Example sending a request using the ListResolversRequest method.
-//    req, resp := client.ListResolversRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListResolvers
 func (c *AppSync) ListResolversRequest(input *ListResolversInput) (req *request.Request, output *ListResolversOutput) {
@@ -3205,19 +3298,20 @@ func (c *AppSync) ListResolversRequest(input *ListResolversInput) (req *request.
 // API operation ListResolvers for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListResolvers
 func (c *AppSync) ListResolvers(input *ListResolversInput) (*ListResolversOutput, error) {
@@ -3257,14 +3351,13 @@ const opListResolversByFunction = "ListResolversByFunction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListResolversByFunctionRequest method.
+//	req, resp := client.ListResolversByFunctionRequest(params)
 //
-//    // Example sending a request using the ListResolversByFunctionRequest method.
-//    req, resp := client.ListResolversByFunctionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListResolversByFunction
 func (c *AppSync) ListResolversByFunctionRequest(input *ListResolversByFunctionInput) (req *request.Request, output *ListResolversByFunctionOutput) {
@@ -3295,19 +3388,20 @@ func (c *AppSync) ListResolversByFunctionRequest(input *ListResolversByFunctionI
 // API operation ListResolversByFunction for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListResolversByFunction
 func (c *AppSync) ListResolversByFunction(input *ListResolversByFunctionInput) (*ListResolversByFunctionOutput, error) {
@@ -3347,14 +3441,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListTagsForResource
 func (c *AppSync) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -3385,25 +3478,26 @@ func (c *AppSync) ListTagsForResourceRequest(input *ListTagsForResourceInput) (r
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * LimitExceededException
-//   The request exceeded a limit. Try your request again.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - LimitExceededException
+//     The request exceeded a limit. Try your request again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
 //
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListTagsForResource
 func (c *AppSync) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -3443,14 +3537,13 @@ const opListTypes = "ListTypes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTypesRequest method.
+//	req, resp := client.ListTypesRequest(params)
 //
-//    // Example sending a request using the ListTypesRequest method.
-//    req, resp := client.ListTypesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListTypes
 func (c *AppSync) ListTypesRequest(input *ListTypesInput) (req *request.Request, output *ListTypesOutput) {
@@ -3481,23 +3574,24 @@ func (c *AppSync) ListTypesRequest(input *ListTypesInput) (req *request.Request,
 // API operation ListTypes for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/ListTypes
 func (c *AppSync) ListTypes(input *ListTypesInput) (*ListTypesOutput, error) {
@@ -3537,14 +3631,13 @@ const opStartSchemaCreation = "StartSchemaCreation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartSchemaCreationRequest method.
+//	req, resp := client.StartSchemaCreationRequest(params)
 //
-//    // Example sending a request using the StartSchemaCreationRequest method.
-//    req, resp := client.StartSchemaCreationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/StartSchemaCreation
 func (c *AppSync) StartSchemaCreationRequest(input *StartSchemaCreationInput) (req *request.Request, output *StartSchemaCreationOutput) {
@@ -3577,23 +3670,24 @@ func (c *AppSync) StartSchemaCreationRequest(input *StartSchemaCreationInput) (r
 // API operation StartSchemaCreation for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/StartSchemaCreation
 func (c *AppSync) StartSchemaCreation(input *StartSchemaCreationInput) (*StartSchemaCreationOutput, error) {
@@ -3633,14 +3727,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/TagResource
 func (c *AppSync) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -3672,25 +3765,26 @@ func (c *AppSync) TagResourceRequest(input *TagResourceInput) (req *request.Requ
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * LimitExceededException
-//   The request exceeded a limit. Try your request again.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - LimitExceededException
+//     The request exceeded a limit. Try your request again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
 //
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/TagResource
 func (c *AppSync) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -3730,14 +3824,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UntagResource
 func (c *AppSync) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -3769,25 +3862,26 @@ func (c *AppSync) UntagResourceRequest(input *UntagResourceInput) (req *request.
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * LimitExceededException
-//   The request exceeded a limit. Try your request again.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - LimitExceededException
+//     The request exceeded a limit. Try your request again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
 //
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UntagResource
 func (c *AppSync) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -3827,14 +3921,13 @@ const opUpdateApiCache = "UpdateApiCache"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateApiCacheRequest method.
+//	req, resp := client.UpdateApiCacheRequest(params)
 //
-//    // Example sending a request using the UpdateApiCacheRequest method.
-//    req, resp := client.UpdateApiCacheRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateApiCache
 func (c *AppSync) UpdateApiCacheRequest(input *UpdateApiCacheInput) (req *request.Request, output *UpdateApiCacheOutput) {
@@ -3865,23 +3958,24 @@ func (c *AppSync) UpdateApiCacheRequest(input *UpdateApiCacheInput) (req *reques
 // API operation UpdateApiCache for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateApiCache
 func (c *AppSync) UpdateApiCache(input *UpdateApiCacheInput) (*UpdateApiCacheOutput, error) {
@@ -3921,14 +4015,13 @@ const opUpdateApiKey = "UpdateApiKey"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateApiKeyRequest method.
+//	req, resp := client.UpdateApiKeyRequest(params)
 //
-//    // Example sending a request using the UpdateApiKeyRequest method.
-//    req, resp := client.UpdateApiKeyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateApiKey
 func (c *AppSync) UpdateApiKeyRequest(input *UpdateApiKeyInput) (req *request.Request, output *UpdateApiKeyOutput) {
@@ -3959,26 +4052,27 @@ func (c *AppSync) UpdateApiKeyRequest(input *UpdateApiKeyInput) (req *request.Re
 // API operation UpdateApiKey for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * LimitExceededException
-//   The request exceeded a limit. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - LimitExceededException
+//     The request exceeded a limit. Try your request again.
 //
-//   * ApiKeyValidityOutOfBoundsException
-//   The API key expiration must be set to a value between 1 and 365 days from
-//   creation (for CreateApiKey) or from update (for UpdateApiKey).
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - ApiKeyValidityOutOfBoundsException
+//     The API key expiration must be set to a value between 1 and 365 days from
+//     creation (for CreateApiKey) or from update (for UpdateApiKey).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateApiKey
 func (c *AppSync) UpdateApiKey(input *UpdateApiKeyInput) (*UpdateApiKeyOutput, error) {
@@ -4018,14 +4112,13 @@ const opUpdateDataSource = "UpdateDataSource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateDataSourceRequest method.
+//	req, resp := client.UpdateDataSourceRequest(params)
 //
-//    // Example sending a request using the UpdateDataSourceRequest method.
-//    req, resp := client.UpdateDataSourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateDataSource
 func (c *AppSync) UpdateDataSourceRequest(input *UpdateDataSourceInput) (req *request.Request, output *UpdateDataSourceOutput) {
@@ -4056,23 +4149,24 @@ func (c *AppSync) UpdateDataSourceRequest(input *UpdateDataSourceInput) (req *re
 // API operation UpdateDataSource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateDataSource
 func (c *AppSync) UpdateDataSource(input *UpdateDataSourceInput) (*UpdateDataSourceOutput, error) {
@@ -4112,14 +4206,13 @@ const opUpdateDomainName = "UpdateDomainName"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateDomainNameRequest method.
+//	req, resp := client.UpdateDomainNameRequest(params)
 //
-//    // Example sending a request using the UpdateDomainNameRequest method.
-//    req, resp := client.UpdateDomainNameRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateDomainName
 func (c *AppSync) UpdateDomainNameRequest(input *UpdateDomainNameInput) (req *request.Request, output *UpdateDomainNameOutput) {
@@ -4150,23 +4243,24 @@ func (c *AppSync) UpdateDomainNameRequest(input *UpdateDomainNameInput) (req *re
 // API operation UpdateDomainName for usage and error information.
 //
 // Returned Error Types:
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
 //
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateDomainName
 func (c *AppSync) UpdateDomainName(input *UpdateDomainNameInput) (*UpdateDomainNameOutput, error) {
@@ -4206,14 +4300,13 @@ const opUpdateFunction = "UpdateFunction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateFunctionRequest method.
+//	req, resp := client.UpdateFunctionRequest(params)
 //
-//    // Example sending a request using the UpdateFunctionRequest method.
-//    req, resp := client.UpdateFunctionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateFunction
 func (c *AppSync) UpdateFunctionRequest(input *UpdateFunctionInput) (req *request.Request, output *UpdateFunctionOutput) {
@@ -4244,19 +4337,20 @@ func (c *AppSync) UpdateFunctionRequest(input *UpdateFunctionInput) (req *reques
 // API operation UpdateFunction for usage and error information.
 //
 // Returned Error Types:
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateFunction
 func (c *AppSync) UpdateFunction(input *UpdateFunctionInput) (*UpdateFunctionOutput, error) {
@@ -4296,14 +4390,13 @@ const opUpdateGraphqlApi = "UpdateGraphqlApi"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateGraphqlApiRequest method.
+//	req, resp := client.UpdateGraphqlApiRequest(params)
 //
-//    // Example sending a request using the UpdateGraphqlApiRequest method.
-//    req, resp := client.UpdateGraphqlApiRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateGraphqlApi
 func (c *AppSync) UpdateGraphqlApiRequest(input *UpdateGraphqlApiInput) (req *request.Request, output *UpdateGraphqlApiOutput) {
@@ -4334,26 +4427,27 @@ func (c *AppSync) UpdateGraphqlApiRequest(input *UpdateGraphqlApiInput) (req *re
 // API operation UpdateGraphqlApi for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
 //
-//   * AccessDeniedException
-//   You don't have access to perform this operation on this resource.
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
+//
+//   - AccessDeniedException
+//     You don't have access to perform this operation on this resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateGraphqlApi
 func (c *AppSync) UpdateGraphqlApi(input *UpdateGraphqlApiInput) (*UpdateGraphqlApiOutput, error) {
@@ -4393,14 +4487,13 @@ const opUpdateResolver = "UpdateResolver"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateResolverRequest method.
+//	req, resp := client.UpdateResolverRequest(params)
 //
-//    // Example sending a request using the UpdateResolverRequest method.
-//    req, resp := client.UpdateResolverRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateResolver
 func (c *AppSync) UpdateResolverRequest(input *UpdateResolverInput) (req *request.Request, output *UpdateResolverOutput) {
@@ -4431,19 +4524,20 @@ func (c *AppSync) UpdateResolverRequest(input *UpdateResolverInput) (req *reques
 // API operation UpdateResolver for usage and error information.
 //
 // Returned Error Types:
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateResolver
 func (c *AppSync) UpdateResolver(input *UpdateResolverInput) (*UpdateResolverOutput, error) {
@@ -4483,14 +4577,13 @@ const opUpdateType = "UpdateType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateTypeRequest method.
+//	req, resp := client.UpdateTypeRequest(params)
 //
-//    // Example sending a request using the UpdateTypeRequest method.
-//    req, resp := client.UpdateTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateType
 func (c *AppSync) UpdateTypeRequest(input *UpdateTypeInput) (req *request.Request, output *UpdateTypeOutput) {
@@ -4521,23 +4614,24 @@ func (c *AppSync) UpdateTypeRequest(input *UpdateTypeInput) (req *request.Reques
 // API operation UpdateType for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   The request is not well formed. For example, a value is invalid or a required
-//   field is missing. Check the field values, and then try again.
 //
-//   * ConcurrentModificationException
-//   Another modification is in progress at this time and it must complete before
-//   you can make your change.
+//   - BadRequestException
+//     The request is not well formed. For example, a value is invalid or a required
+//     field is missing. Check the field values, and then try again.
 //
-//   * NotFoundException
-//   The resource specified in the request was not found. Check the resource,
-//   and then try again.
+//   - ConcurrentModificationException
+//     Another modification is in progress at this time and it must complete before
+//     you can make your change.
 //
-//   * UnauthorizedException
-//   You aren't authorized to perform this operation.
+//   - NotFoundException
+//     The resource specified in the request was not found. Check the resource,
+//     and then try again.
 //
-//   * InternalFailureException
-//   An internal AppSync error occurred. Try your request again.
+//   - UnauthorizedException
+//     You aren't authorized to perform this operation.
+//
+//   - InternalFailureException
+//     An internal AppSync error occurred. Try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/appsync-2017-07-25/UpdateType
 func (c *AppSync) UpdateType(input *UpdateTypeInput) (*UpdateTypeOutput, error) {
@@ -4918,40 +5012,40 @@ func (s *ApiCache) SetType(v string) *ApiCache {
 // ceased to be valid after February 21, 2018, and they should no longer be
 // used.
 //
-//    * ListApiKeys returns the expiration time in milliseconds.
+//   - ListApiKeys returns the expiration time in milliseconds.
 //
-//    * CreateApiKey returns the expiration time in milliseconds.
+//   - CreateApiKey returns the expiration time in milliseconds.
 //
-//    * UpdateApiKey is not available for this key version.
+//   - UpdateApiKey is not available for this key version.
 //
-//    * DeleteApiKey deletes the item from the table.
+//   - DeleteApiKey deletes the item from the table.
 //
-//    * Expiration is stored in DynamoDB as milliseconds. This results in a
-//    bug where keys are not automatically deleted because DynamoDB expects
-//    the TTL to be stored in seconds. As a one-time action, we deleted these
-//    keys from the table on February 21, 2018.
+//   - Expiration is stored in DynamoDB as milliseconds. This results in a
+//     bug where keys are not automatically deleted because DynamoDB expects
+//     the TTL to be stored in seconds. As a one-time action, we deleted these
+//     keys from the table on February 21, 2018.
 //
 // da2: We introduced this version in February 2018 when AppSync added support
 // to extend key expiration.
 //
-//    * ListApiKeys returns the expiration time and deletion time in seconds.
+//   - ListApiKeys returns the expiration time and deletion time in seconds.
 //
-//    * CreateApiKey returns the expiration time and deletion time in seconds
-//    and accepts a user-provided expiration time in seconds.
+//   - CreateApiKey returns the expiration time and deletion time in seconds
+//     and accepts a user-provided expiration time in seconds.
 //
-//    * UpdateApiKey returns the expiration time and and deletion time in seconds
-//    and accepts a user-provided expiration time in seconds. Expired API keys
-//    are kept for 60 days after the expiration time. You can update the key
-//    expiration time as long as the key isn't deleted.
+//   - UpdateApiKey returns the expiration time and and deletion time in seconds
+//     and accepts a user-provided expiration time in seconds. Expired API keys
+//     are kept for 60 days after the expiration time. You can update the key
+//     expiration time as long as the key isn't deleted.
 //
-//    * DeleteApiKey deletes the item from the table.
+//   - DeleteApiKey deletes the item from the table.
 //
-//    * Expiration is stored in DynamoDB as seconds. After the expiration time,
-//    using the key to authenticate will fail. However, you can reinstate the
-//    key before deletion.
+//   - Expiration is stored in DynamoDB as seconds. After the expiration time,
+//     using the key to authenticate will fail. However, you can reinstate the
+//     key before deletion.
 //
-//    * Deletion is stored in DynamoDB as seconds. The key is deleted after
-//    deletion time.
+//   - Deletion is stored in DynamoDB as seconds. The key is deleted after
+//     deletion time.
 type ApiKey struct {
 	_ struct{} `type:"structure"`
 
@@ -5476,7 +5570,9 @@ type CachingConfig struct {
 	// The TTL in seconds for a resolver that has caching activated.
 	//
 	// Valid values are 1–3,600 seconds.
-	Ttl *int64 `locationName:"ttl" type:"long"`
+	//
+	// Ttl is a required field
+	Ttl *int64 `locationName:"ttl" type:"long" required:"true"`
 }
 
 // String returns the string representation.
@@ -5497,6 +5593,19 @@ func (s CachingConfig) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CachingConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CachingConfig"}
+	if s.Ttl == nil {
+		invalidParams.Add(request.NewErrParamRequired("Ttl"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetCachingKeys sets the CachingKeys field's value.
 func (s *CachingConfig) SetCachingKeys(v []*string) *CachingConfig {
 	s.CachingKeys = v
@@ -5514,7 +5623,7 @@ type CognitoUserPoolConfig struct {
 	_ struct{} `type:"structure"`
 
 	// A regular expression for validating the incoming Amazon Cognito user pool
-	// app client ID.
+	// app client ID. If this value isn't set, no filtering is applied.
 	AppIdClientRegex *string `locationName:"appIdClientRegex" type:"string"`
 
 	// The Amazon Web Services Region in which the user pool was created.
@@ -6731,6 +6840,11 @@ func (s *CreateResolverInput) Validate() error {
 	}
 	if s.TypeName != nil && len(*s.TypeName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("TypeName", 1))
+	}
+	if s.CachingConfig != nil {
+		if err := s.CachingConfig.Validate(); err != nil {
+			invalidParams.AddNested("CachingConfig", err.(request.ErrInvalidParams))
+		}
 	}
 
 	if invalidParams.Len() > 0 {
@@ -8103,6 +8217,147 @@ func (s *ElasticsearchDataSourceConfig) SetAwsRegion(v string) *ElasticsearchDat
 // SetEndpoint sets the Endpoint field's value.
 func (s *ElasticsearchDataSourceConfig) SetEndpoint(v string) *ElasticsearchDataSourceConfig {
 	s.Endpoint = &v
+	return s
+}
+
+// Contains the list of errors generated when attempting to evaluate a mapping
+// template.
+type ErrorDetail struct {
+	_ struct{} `type:"structure"`
+
+	// The error payload.
+	Message *string `locationName:"message" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ErrorDetail) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ErrorDetail) GoString() string {
+	return s.String()
+}
+
+// SetMessage sets the Message field's value.
+func (s *ErrorDetail) SetMessage(v string) *ErrorDetail {
+	s.Message = &v
+	return s
+}
+
+type EvaluateMappingTemplateInput struct {
+	_ struct{} `type:"structure"`
+
+	// The map that holds all of the contextual information for your resolver invocation.
+	// A context is required for this action.
+	//
+	// Context is a required field
+	Context *string `locationName:"context" min:"2" type:"string" required:"true"`
+
+	// The mapping template; this can be a request or response template. A template
+	// is required for this action.
+	//
+	// Template is a required field
+	Template *string `locationName:"template" min:"2" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EvaluateMappingTemplateInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EvaluateMappingTemplateInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EvaluateMappingTemplateInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EvaluateMappingTemplateInput"}
+	if s.Context == nil {
+		invalidParams.Add(request.NewErrParamRequired("Context"))
+	}
+	if s.Context != nil && len(*s.Context) < 2 {
+		invalidParams.Add(request.NewErrParamMinLen("Context", 2))
+	}
+	if s.Template == nil {
+		invalidParams.Add(request.NewErrParamRequired("Template"))
+	}
+	if s.Template != nil && len(*s.Template) < 2 {
+		invalidParams.Add(request.NewErrParamMinLen("Template", 2))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetContext sets the Context field's value.
+func (s *EvaluateMappingTemplateInput) SetContext(v string) *EvaluateMappingTemplateInput {
+	s.Context = &v
+	return s
+}
+
+// SetTemplate sets the Template field's value.
+func (s *EvaluateMappingTemplateInput) SetTemplate(v string) *EvaluateMappingTemplateInput {
+	s.Template = &v
+	return s
+}
+
+type EvaluateMappingTemplateOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ErrorDetail object.
+	Error *ErrorDetail `locationName:"error" type:"structure"`
+
+	// The mapping template; this can be a request or response template.
+	EvaluationResult *string `locationName:"evaluationResult" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EvaluateMappingTemplateOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EvaluateMappingTemplateOutput) GoString() string {
+	return s.String()
+}
+
+// SetError sets the Error field's value.
+func (s *EvaluateMappingTemplateOutput) SetError(v *ErrorDetail) *EvaluateMappingTemplateOutput {
+	s.Error = v
+	return s
+}
+
+// SetEvaluationResult sets the EvaluationResult field's value.
+func (s *EvaluateMappingTemplateOutput) SetEvaluationResult(v string) *EvaluateMappingTemplateOutput {
+	s.EvaluationResult = &v
 	return s
 }
 
@@ -12880,6 +13135,11 @@ func (s *UpdateResolverInput) Validate() error {
 	if s.TypeName != nil && len(*s.TypeName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("TypeName", 1))
 	}
+	if s.CachingConfig != nil {
+		if err := s.CachingConfig.Validate(); err != nil {
+			invalidParams.AddNested("CachingConfig", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -13109,7 +13369,7 @@ type UserPoolConfig struct {
 	_ struct{} `type:"structure"`
 
 	// A regular expression for validating the incoming Amazon Cognito user pool
-	// app client ID.
+	// app client ID. If this value isn't set, no filtering is applied.
 	AppIdClientRegex *string `locationName:"appIdClientRegex" type:"string"`
 
 	// The Amazon Web Services Region in which the user pool was created.

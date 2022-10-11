@@ -23,12 +23,12 @@ import ( // nosemgrep: no-sdkv2-imports-in-awsv1shim
 func getSessionOptions(awsC *awsv2.Config, c *awsbase.Config) (*session.Options, error) {
 	useFIPSEndpoint, _, err := awsconfig.ResolveUseFIPSEndpoint(context.Background(), awsC.ConfigSources)
 	if err != nil {
-		return nil, fmt.Errorf("error resolving configuration: %w", err)
+		return nil, fmt.Errorf("error resolving FIPS endpoint configuration: %w", err)
 	}
 
 	useDualStackEndpoint, _, err := awsconfig.ResolveUseDualStackEndpoint(context.Background(), awsC.ConfigSources)
 	if err != nil {
-		return nil, fmt.Errorf("error resolving configuration: %w", err)
+		return nil, fmt.Errorf("error resolving dual-stack endpoint configuration: %w", err)
 	}
 
 	httpClient, err := defaultHttpClient(c)
@@ -40,8 +40,6 @@ func getSessionOptions(awsC *awsv2.Config, c *awsbase.Config) (*session.Options,
 		Config: aws.Config{
 			Credentials:          newV2Credentials(awsC.Credentials),
 			HTTPClient:           httpClient,
-			LogLevel:             aws.LogLevel(aws.LogDebugWithHTTPBody | aws.LogDebugWithRequestRetries | aws.LogDebugWithRequestErrors),
-			Logger:               debugLogger{},
 			MaxRetries:           aws.Int(0),
 			Region:               aws.String(awsC.Region),
 			UseFIPSEndpoint:      convertFIPSEndpointState(useFIPSEndpoint),
@@ -49,11 +47,22 @@ func getSessionOptions(awsC *awsv2.Config, c *awsbase.Config) (*session.Options,
 		},
 	}
 
+	if !c.SuppressDebugLog {
+		options.Config.LogLevel = aws.LogLevel(aws.LogDebugWithHTTPBody | aws.LogDebugWithRequestRetries | aws.LogDebugWithRequestErrors)
+		options.Config.Logger = debugLogger{}
+	}
+
+	// We can't reuse the io.Reader from the awsv2.Config, because it's already been read.
+	// Re-create it here from the filename.
 	if c.CustomCABundle != "" {
 		reader, err := c.CustomCABundleReader()
 		if err != nil {
 			return nil, err
 		}
+		options.CustomCABundle = reader
+	} else if reader, found, err := resolveCustomCABundle(context.Background(), awsC.ConfigSources); err != nil {
+		return nil, fmt.Errorf("error resolving custom CA bundle configuration: %w", err)
+	} else if found {
 		options.CustomCABundle = reader
 	}
 
@@ -81,6 +90,8 @@ func GetSession(awsC *awsv2.Config, c *awsbase.Config) (*session.Session, error)
 	}
 
 	SetSessionUserAgent(sess, c.APNInfo, c.UserAgent)
+
+	sess.Handlers.Build.PushBack(userAgentFromContextHandler)
 
 	// Add custom input from ENV to the User-Agent request header
 	// Reference: https://github.com/terraform-providers/terraform-provider-aws/issues/9149

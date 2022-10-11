@@ -29,14 +29,13 @@ const opAddAssociation = "AddAssociation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddAssociationRequest method.
+//	req, resp := client.AddAssociationRequest(params)
 //
-//    // Example sending a request using the AddAssociationRequest method.
-//    req, resp := client.AddAssociationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/AddAssociation
 func (c *SageMaker) AddAssociationRequest(input *AddAssociationInput) (req *request.Request, output *AddAssociationOutput) {
@@ -70,12 +69,13 @@ func (c *SageMaker) AddAssociationRequest(input *AddAssociationInput) (req *requ
 // API operation AddAssociation for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/AddAssociation
 func (c *SageMaker) AddAssociation(input *AddAssociationInput) (*AddAssociationOutput, error) {
@@ -115,14 +115,13 @@ const opAddTags = "AddTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddTagsRequest method.
+//	req, resp := client.AddTagsRequest(params)
 //
-//    // Example sending a request using the AddTagsRequest method.
-//    req, resp := client.AddTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/AddTags
 func (c *SageMaker) AddTagsRequest(input *AddTagsInput) (req *request.Request, output *AddTagsOutput) {
@@ -143,7 +142,7 @@ func (c *SageMaker) AddTagsRequest(input *AddTagsInput) (req *request.Request, o
 
 // AddTags API operation for Amazon SageMaker Service.
 //
-// Adds or overwrites one or more tags for the specified Amazon SageMaker resource.
+// Adds or overwrites one or more tags for the specified SageMaker resource.
 // You can add tags to notebook instances, training jobs, hyperparameter tuning
 // jobs, batch transform jobs, models, labeling jobs, work teams, endpoint configurations,
 // and endpoints.
@@ -213,14 +212,13 @@ const opAssociateTrialComponent = "AssociateTrialComponent"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateTrialComponentRequest method.
+//	req, resp := client.AssociateTrialComponentRequest(params)
 //
-//    // Example sending a request using the AssociateTrialComponentRequest method.
-//    req, resp := client.AssociateTrialComponentRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/AssociateTrialComponent
 func (c *SageMaker) AssociateTrialComponentRequest(input *AssociateTrialComponentInput) (req *request.Request, output *AssociateTrialComponentOutput) {
@@ -253,12 +251,13 @@ func (c *SageMaker) AssociateTrialComponentRequest(input *AssociateTrialComponen
 // API operation AssociateTrialComponent for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/AssociateTrialComponent
 func (c *SageMaker) AssociateTrialComponent(input *AssociateTrialComponentInput) (*AssociateTrialComponentOutput, error) {
@@ -298,14 +297,13 @@ const opBatchDescribeModelPackage = "BatchDescribeModelPackage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchDescribeModelPackageRequest method.
+//	req, resp := client.BatchDescribeModelPackageRequest(params)
 //
-//    // Example sending a request using the BatchDescribeModelPackageRequest method.
-//    req, resp := client.BatchDescribeModelPackageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/BatchDescribeModelPackage
 func (c *SageMaker) BatchDescribeModelPackageRequest(input *BatchDescribeModelPackageInput) (req *request.Request, output *BatchDescribeModelPackageOutput) {
@@ -326,7 +324,7 @@ func (c *SageMaker) BatchDescribeModelPackageRequest(input *BatchDescribeModelPa
 
 // BatchDescribeModelPackage API operation for Amazon SageMaker Service.
 //
-// This action batch describes a list of versioned model packages
+// # This action batch describes a list of versioned model packages
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -372,14 +370,13 @@ const opCreateAction = "CreateAction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateActionRequest method.
+//	req, resp := client.CreateActionRequest(params)
 //
-//    // Example sending a request using the CreateActionRequest method.
-//    req, resp := client.CreateActionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateAction
 func (c *SageMaker) CreateActionRequest(input *CreateActionInput) (req *request.Request, output *CreateActionOutput) {
@@ -413,9 +410,9 @@ func (c *SageMaker) CreateActionRequest(input *CreateActionInput) (req *request.
 // API operation CreateAction for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateAction
 func (c *SageMaker) CreateAction(input *CreateActionInput) (*CreateActionOutput, error) {
@@ -455,14 +452,13 @@ const opCreateAlgorithm = "CreateAlgorithm"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateAlgorithmRequest method.
+//	req, resp := client.CreateAlgorithmRequest(params)
 //
-//    // Example sending a request using the CreateAlgorithmRequest method.
-//    req, resp := client.CreateAlgorithmRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateAlgorithm
 func (c *SageMaker) CreateAlgorithmRequest(input *CreateAlgorithmInput) (req *request.Request, output *CreateAlgorithmOutput) {
@@ -483,8 +479,8 @@ func (c *SageMaker) CreateAlgorithmRequest(input *CreateAlgorithmInput) (req *re
 
 // CreateAlgorithm API operation for Amazon SageMaker Service.
 //
-// Create a machine learning algorithm that you can use in Amazon SageMaker
-// and list in the Amazon Web Services Marketplace.
+// Create a machine learning algorithm that you can use in SageMaker and list
+// in the Amazon Web Services Marketplace.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -530,14 +526,13 @@ const opCreateApp = "CreateApp"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateAppRequest method.
+//	req, resp := client.CreateAppRequest(params)
 //
-//    // Example sending a request using the CreateAppRequest method.
-//    req, resp := client.CreateAppRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateApp
 func (c *SageMaker) CreateAppRequest(input *CreateAppInput) (req *request.Request, output *CreateAppOutput) {
@@ -558,10 +553,10 @@ func (c *SageMaker) CreateAppRequest(input *CreateAppInput) (req *request.Reques
 
 // CreateApp API operation for Amazon SageMaker Service.
 //
-// Creates a running app for the specified UserProfile. Supported apps are JupyterServer
-// and KernelGateway. This operation is automatically invoked by Amazon SageMaker
-// Studio upon access to the associated Domain, and when new kernel configurations
-// are selected by the user. A user may have multiple Apps active simultaneously.
+// Creates a running app for the specified UserProfile. This operation is automatically
+// invoked by Amazon SageMaker Studio upon access to the associated Domain,
+// and when new kernel configurations are selected by the user. A user may have
+// multiple Apps active simultaneously.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -571,12 +566,13 @@ func (c *SageMaker) CreateAppRequest(input *CreateAppInput) (req *request.Reques
 // API operation CreateApp for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateApp
 func (c *SageMaker) CreateApp(input *CreateAppInput) (*CreateAppOutput, error) {
@@ -616,14 +612,13 @@ const opCreateAppImageConfig = "CreateAppImageConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateAppImageConfigRequest method.
+//	req, resp := client.CreateAppImageConfigRequest(params)
 //
-//    // Example sending a request using the CreateAppImageConfigRequest method.
-//    req, resp := client.CreateAppImageConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateAppImageConfig
 func (c *SageMaker) CreateAppImageConfigRequest(input *CreateAppImageConfigInput) (req *request.Request, output *CreateAppImageConfigOutput) {
@@ -656,8 +651,8 @@ func (c *SageMaker) CreateAppImageConfigRequest(input *CreateAppImageConfigInput
 // API operation CreateAppImageConfig for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateAppImageConfig
 func (c *SageMaker) CreateAppImageConfig(input *CreateAppImageConfigInput) (*CreateAppImageConfigOutput, error) {
@@ -697,14 +692,13 @@ const opCreateArtifact = "CreateArtifact"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateArtifactRequest method.
+//	req, resp := client.CreateArtifactRequest(params)
 //
-//    // Example sending a request using the CreateArtifactRequest method.
-//    req, resp := client.CreateArtifactRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateArtifact
 func (c *SageMaker) CreateArtifactRequest(input *CreateArtifactInput) (req *request.Request, output *CreateArtifactOutput) {
@@ -738,9 +732,9 @@ func (c *SageMaker) CreateArtifactRequest(input *CreateArtifactInput) (req *requ
 // API operation CreateArtifact for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateArtifact
 func (c *SageMaker) CreateArtifact(input *CreateArtifactInput) (*CreateArtifactOutput, error) {
@@ -780,14 +774,13 @@ const opCreateAutoMLJob = "CreateAutoMLJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateAutoMLJobRequest method.
+//	req, resp := client.CreateAutoMLJobRequest(params)
 //
-//    // Example sending a request using the CreateAutoMLJobRequest method.
-//    req, resp := client.CreateAutoMLJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateAutoMLJob
 func (c *SageMaker) CreateAutoMLJobRequest(input *CreateAutoMLJobInput) (req *request.Request, output *CreateAutoMLJobOutput) {
@@ -823,12 +816,13 @@ func (c *SageMaker) CreateAutoMLJobRequest(input *CreateAutoMLJobInput) (req *re
 // API operation CreateAutoMLJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateAutoMLJob
 func (c *SageMaker) CreateAutoMLJob(input *CreateAutoMLJobInput) (*CreateAutoMLJobOutput, error) {
@@ -868,14 +862,13 @@ const opCreateCodeRepository = "CreateCodeRepository"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateCodeRepositoryRequest method.
+//	req, resp := client.CreateCodeRepositoryRequest(params)
 //
-//    // Example sending a request using the CreateCodeRepositoryRequest method.
-//    req, resp := client.CreateCodeRepositoryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateCodeRepository
 func (c *SageMaker) CreateCodeRepositoryRequest(input *CreateCodeRepositoryInput) (req *request.Request, output *CreateCodeRepositoryOutput) {
@@ -896,12 +889,12 @@ func (c *SageMaker) CreateCodeRepositoryRequest(input *CreateCodeRepositoryInput
 
 // CreateCodeRepository API operation for Amazon SageMaker Service.
 //
-// Creates a Git repository as a resource in your Amazon SageMaker account.
-// You can associate the repository with notebook instances so that you can
-// use Git source control for the notebooks you create. The Git repository is
-// a resource in your Amazon SageMaker account, so it can be associated with
-// more than one notebook instance, and it persists independently from the lifecycle
-// of any notebook instances it is associated with.
+// Creates a Git repository as a resource in your SageMaker account. You can
+// associate the repository with notebook instances so that you can use Git
+// source control for the notebooks you create. The Git repository is a resource
+// in your SageMaker account, so it can be associated with more than one notebook
+// instance, and it persists independently from the lifecycle of any notebook
+// instances it is associated with.
 //
 // The repository can be hosted either in Amazon Web Services CodeCommit (https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html)
 // or in any other Git repository.
@@ -950,14 +943,13 @@ const opCreateCompilationJob = "CreateCompilationJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateCompilationJobRequest method.
+//	req, resp := client.CreateCompilationJobRequest(params)
 //
-//    // Example sending a request using the CreateCompilationJobRequest method.
-//    req, resp := client.CreateCompilationJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateCompilationJob
 func (c *SageMaker) CreateCompilationJobRequest(input *CreateCompilationJobInput) (req *request.Request, output *CreateCompilationJobOutput) {
@@ -989,15 +981,15 @@ func (c *SageMaker) CreateCompilationJobRequest(input *CreateCompilationJobInput
 //
 // In the request body, you provide the following:
 //
-//    * A name for the compilation job
+//   - A name for the compilation job
 //
-//    * Information about the input model artifacts
+//   - Information about the input model artifacts
 //
-//    * The output location for the compiled model and the device (target) that
-//    the model runs on
+//   - The output location for the compiled model and the device (target) that
+//     the model runs on
 //
-//    * The Amazon Resource Name (ARN) of the IAM role that Amazon SageMaker
-//    assumes to perform the model compilation job.
+//   - The Amazon Resource Name (ARN) of the IAM role that Amazon SageMaker
+//     assumes to perform the model compilation job.
 //
 // You can also provide a Tag to track the model compilation job's resource
 // use and costs. The response body contains the CompilationJobArn for the compiled
@@ -1015,12 +1007,13 @@ func (c *SageMaker) CreateCompilationJobRequest(input *CreateCompilationJobInput
 // API operation CreateCompilationJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateCompilationJob
 func (c *SageMaker) CreateCompilationJob(input *CreateCompilationJobInput) (*CreateCompilationJobOutput, error) {
@@ -1060,14 +1053,13 @@ const opCreateContext = "CreateContext"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateContextRequest method.
+//	req, resp := client.CreateContextRequest(params)
 //
-//    // Example sending a request using the CreateContextRequest method.
-//    req, resp := client.CreateContextRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateContext
 func (c *SageMaker) CreateContextRequest(input *CreateContextInput) (req *request.Request, output *CreateContextOutput) {
@@ -1101,9 +1093,9 @@ func (c *SageMaker) CreateContextRequest(input *CreateContextInput) (req *reques
 // API operation CreateContext for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateContext
 func (c *SageMaker) CreateContext(input *CreateContextInput) (*CreateContextOutput, error) {
@@ -1143,14 +1135,13 @@ const opCreateDataQualityJobDefinition = "CreateDataQualityJobDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDataQualityJobDefinitionRequest method.
+//	req, resp := client.CreateDataQualityJobDefinitionRequest(params)
 //
-//    // Example sending a request using the CreateDataQualityJobDefinitionRequest method.
-//    req, resp := client.CreateDataQualityJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateDataQualityJobDefinition
 func (c *SageMaker) CreateDataQualityJobDefinitionRequest(input *CreateDataQualityJobDefinitionInput) (req *request.Request, output *CreateDataQualityJobDefinitionOutput) {
@@ -1182,12 +1173,13 @@ func (c *SageMaker) CreateDataQualityJobDefinitionRequest(input *CreateDataQuali
 // API operation CreateDataQualityJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateDataQualityJobDefinition
 func (c *SageMaker) CreateDataQualityJobDefinition(input *CreateDataQualityJobDefinitionInput) (*CreateDataQualityJobDefinitionOutput, error) {
@@ -1227,14 +1219,13 @@ const opCreateDeviceFleet = "CreateDeviceFleet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDeviceFleetRequest method.
+//	req, resp := client.CreateDeviceFleetRequest(params)
 //
-//    // Example sending a request using the CreateDeviceFleetRequest method.
-//    req, resp := client.CreateDeviceFleetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateDeviceFleet
 func (c *SageMaker) CreateDeviceFleetRequest(input *CreateDeviceFleetInput) (req *request.Request, output *CreateDeviceFleetOutput) {
@@ -1266,12 +1257,13 @@ func (c *SageMaker) CreateDeviceFleetRequest(input *CreateDeviceFleetInput) (req
 // API operation CreateDeviceFleet for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateDeviceFleet
 func (c *SageMaker) CreateDeviceFleet(input *CreateDeviceFleetInput) (*CreateDeviceFleetOutput, error) {
@@ -1311,14 +1303,13 @@ const opCreateDomain = "CreateDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDomainRequest method.
+//	req, resp := client.CreateDomainRequest(params)
 //
-//    // Example sending a request using the CreateDomainRequest method.
-//    req, resp := client.CreateDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateDomain
 func (c *SageMaker) CreateDomainRequest(input *CreateDomainInput) (req *request.Request, output *CreateDomainOutput) {
@@ -1346,7 +1337,7 @@ func (c *SageMaker) CreateDomainRequest(input *CreateDomainInput) (req *request.
 // to one domain per region. Users within a domain can share notebook files
 // and other artifacts with each other.
 //
-// EFS storage
+// # EFS storage
 //
 // When a domain is created, an EFS volume is created for use by all of the
 // users within the domain. Each user receives a private home directory within
@@ -1358,7 +1349,7 @@ func (c *SageMaker) CreateDomainRequest(input *CreateDomainInput) (req *request.
 // customer managed key. For more information, see Protect Data at Rest Using
 // Encryption (https://docs.aws.amazon.com/sagemaker/latest/dg/encryption-at-rest.html).
 //
-// VPC configuration
+// # VPC configuration
 //
 // All SageMaker Studio traffic between the domain and the EFS volume is through
 // the specified VPC and subnets. For other Studio traffic, you can specify
@@ -1366,15 +1357,15 @@ func (c *SageMaker) CreateDomainRequest(input *CreateDomainInput) (req *request.
 // network access type that you choose when you onboard to Studio. The following
 // options are available:
 //
-//    * PublicInternetOnly - Non-EFS traffic goes through a VPC managed by Amazon
-//    SageMaker, which allows internet access. This is the default value.
+//   - PublicInternetOnly - Non-EFS traffic goes through a VPC managed by Amazon
+//     SageMaker, which allows internet access. This is the default value.
 //
-//    * VpcOnly - All Studio traffic is through the specified VPC and subnets.
-//    Internet access is disabled by default. To allow internet access, you
-//    must specify a NAT gateway. When internet access is disabled, you won't
-//    be able to run a Studio notebook or to train or host models unless your
-//    VPC has an interface endpoint to the SageMaker API and runtime or a NAT
-//    gateway and your security groups allow outbound connections.
+//   - VpcOnly - All Studio traffic is through the specified VPC and subnets.
+//     Internet access is disabled by default. To allow internet access, you
+//     must specify a NAT gateway. When internet access is disabled, you won't
+//     be able to run a Studio notebook or to train or host models unless your
+//     VPC has an interface endpoint to the SageMaker API and runtime or a NAT
+//     gateway and your security groups allow outbound connections.
 //
 // NFS traffic over TCP on port 2049 needs to be allowed in both inbound and
 // outbound rules in order to launch a SageMaker Studio app successfully.
@@ -1390,12 +1381,13 @@ func (c *SageMaker) CreateDomainRequest(input *CreateDomainInput) (req *request.
 // API operation CreateDomain for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateDomain
 func (c *SageMaker) CreateDomain(input *CreateDomainInput) (*CreateDomainOutput, error) {
@@ -1419,6 +1411,166 @@ func (c *SageMaker) CreateDomainWithContext(ctx aws.Context, input *CreateDomain
 	return out, req.Send()
 }
 
+const opCreateEdgeDeploymentPlan = "CreateEdgeDeploymentPlan"
+
+// CreateEdgeDeploymentPlanRequest generates a "aws/request.Request" representing the
+// client's request for the CreateEdgeDeploymentPlan operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateEdgeDeploymentPlan for more information on using the CreateEdgeDeploymentPlan
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CreateEdgeDeploymentPlanRequest method.
+//	req, resp := client.CreateEdgeDeploymentPlanRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateEdgeDeploymentPlan
+func (c *SageMaker) CreateEdgeDeploymentPlanRequest(input *CreateEdgeDeploymentPlanInput) (req *request.Request, output *CreateEdgeDeploymentPlanOutput) {
+	op := &request.Operation{
+		Name:       opCreateEdgeDeploymentPlan,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateEdgeDeploymentPlanInput{}
+	}
+
+	output = &CreateEdgeDeploymentPlanOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateEdgeDeploymentPlan API operation for Amazon SageMaker Service.
+//
+// Creates an edge deployment plan, consisting of multiple stages. Each stage
+// may have a different deployment configuration and devices.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation CreateEdgeDeploymentPlan for usage and error information.
+//
+// Returned Error Types:
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateEdgeDeploymentPlan
+func (c *SageMaker) CreateEdgeDeploymentPlan(input *CreateEdgeDeploymentPlanInput) (*CreateEdgeDeploymentPlanOutput, error) {
+	req, out := c.CreateEdgeDeploymentPlanRequest(input)
+	return out, req.Send()
+}
+
+// CreateEdgeDeploymentPlanWithContext is the same as CreateEdgeDeploymentPlan with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateEdgeDeploymentPlan for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) CreateEdgeDeploymentPlanWithContext(ctx aws.Context, input *CreateEdgeDeploymentPlanInput, opts ...request.Option) (*CreateEdgeDeploymentPlanOutput, error) {
+	req, out := c.CreateEdgeDeploymentPlanRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCreateEdgeDeploymentStage = "CreateEdgeDeploymentStage"
+
+// CreateEdgeDeploymentStageRequest generates a "aws/request.Request" representing the
+// client's request for the CreateEdgeDeploymentStage operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateEdgeDeploymentStage for more information on using the CreateEdgeDeploymentStage
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CreateEdgeDeploymentStageRequest method.
+//	req, resp := client.CreateEdgeDeploymentStageRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateEdgeDeploymentStage
+func (c *SageMaker) CreateEdgeDeploymentStageRequest(input *CreateEdgeDeploymentStageInput) (req *request.Request, output *CreateEdgeDeploymentStageOutput) {
+	op := &request.Operation{
+		Name:       opCreateEdgeDeploymentStage,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateEdgeDeploymentStageInput{}
+	}
+
+	output = &CreateEdgeDeploymentStageOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// CreateEdgeDeploymentStage API operation for Amazon SageMaker Service.
+//
+// Creates a new stage in an existing edge deployment plan.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation CreateEdgeDeploymentStage for usage and error information.
+//
+// Returned Error Types:
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateEdgeDeploymentStage
+func (c *SageMaker) CreateEdgeDeploymentStage(input *CreateEdgeDeploymentStageInput) (*CreateEdgeDeploymentStageOutput, error) {
+	req, out := c.CreateEdgeDeploymentStageRequest(input)
+	return out, req.Send()
+}
+
+// CreateEdgeDeploymentStageWithContext is the same as CreateEdgeDeploymentStage with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateEdgeDeploymentStage for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) CreateEdgeDeploymentStageWithContext(ctx aws.Context, input *CreateEdgeDeploymentStageInput, opts ...request.Option) (*CreateEdgeDeploymentStageOutput, error) {
+	req, out := c.CreateEdgeDeploymentStageRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateEdgePackagingJob = "CreateEdgePackagingJob"
 
 // CreateEdgePackagingJobRequest generates a "aws/request.Request" representing the
@@ -1435,14 +1587,13 @@ const opCreateEdgePackagingJob = "CreateEdgePackagingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateEdgePackagingJobRequest method.
+//	req, resp := client.CreateEdgePackagingJobRequest(params)
 //
-//    // Example sending a request using the CreateEdgePackagingJobRequest method.
-//    req, resp := client.CreateEdgePackagingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateEdgePackagingJob
 func (c *SageMaker) CreateEdgePackagingJobRequest(input *CreateEdgePackagingJobInput) (req *request.Request, output *CreateEdgePackagingJobOutput) {
@@ -1477,9 +1628,9 @@ func (c *SageMaker) CreateEdgePackagingJobRequest(input *CreateEdgePackagingJobI
 // API operation CreateEdgePackagingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateEdgePackagingJob
 func (c *SageMaker) CreateEdgePackagingJob(input *CreateEdgePackagingJobInput) (*CreateEdgePackagingJobOutput, error) {
@@ -1519,14 +1670,13 @@ const opCreateEndpoint = "CreateEndpoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateEndpointRequest method.
+//	req, resp := client.CreateEndpointRequest(params)
 //
-//    // Example sending a request using the CreateEndpointRequest method.
-//    req, resp := client.CreateEndpointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateEndpoint
 func (c *SageMaker) CreateEndpointRequest(input *CreateEndpointInput) (req *request.Request, output *CreateEndpointOutput) {
@@ -1548,12 +1698,12 @@ func (c *SageMaker) CreateEndpointRequest(input *CreateEndpointInput) (req *requ
 // CreateEndpoint API operation for Amazon SageMaker Service.
 //
 // Creates an endpoint using the endpoint configuration specified in the request.
-// Amazon SageMaker uses the endpoint to provision resources and deploy models.
-// You create the endpoint configuration with the CreateEndpointConfig API.
+// SageMaker uses the endpoint to provision resources and deploy models. You
+// create the endpoint configuration with the CreateEndpointConfig API.
 //
-// Use this API to deploy models using Amazon SageMaker hosting services.
+// Use this API to deploy models using SageMaker hosting services.
 //
-// For an example that calls this method when deploying a model to Amazon SageMaker
+// For an example that calls this method when deploying a model to SageMaker
 // hosting services, see the Create Endpoint example notebook. (https://github.com/aws/amazon-sagemaker-examples/blob/master/sagemaker-fundamentals/create-endpoint/create_endpoint.ipynb)
 //
 // You must not delete an EndpointConfig that is in use by an endpoint that
@@ -1563,8 +1713,8 @@ func (c *SageMaker) CreateEndpointRequest(input *CreateEndpointInput) (req *requ
 // The endpoint name must be unique within an Amazon Web Services Region in
 // your Amazon Web Services account.
 //
-// When it receives the request, Amazon SageMaker creates the endpoint, launches
-// the resources (ML compute instances), and deploys the model(s) on them.
+// When it receives the request, SageMaker creates the endpoint, launches the
+// resources (ML compute instances), and deploys the model(s) on them.
 //
 // When you call CreateEndpoint, a load call is made to DynamoDB to verify that
 // your endpoint configuration exists. When you read data from a DynamoDB table
@@ -1577,14 +1727,14 @@ func (c *SageMaker) CreateEndpointRequest(input *CreateEndpointInput) (req *requ
 // that customers call DescribeEndpointConfig before calling CreateEndpoint
 // to minimize the potential impact of a DynamoDB eventually consistent read.
 //
-// When Amazon SageMaker receives the request, it sets the endpoint status to
-// Creating. After it creates the endpoint, it sets the status to InService.
-// Amazon SageMaker can then process incoming requests for inferences. To check
-// the status of an endpoint, use the DescribeEndpoint API.
+// When SageMaker receives the request, it sets the endpoint status to Creating.
+// After it creates the endpoint, it sets the status to InService. SageMaker
+// can then process incoming requests for inferences. To check the status of
+// an endpoint, use the DescribeEndpoint API.
 //
 // If any of the models hosted at this endpoint get model data from an Amazon
-// S3 location, Amazon SageMaker uses Amazon Web Services Security Token Service
-// to download model artifacts from the S3 path you provided. Amazon Web Services
+// S3 location, SageMaker uses Amazon Web Services Security Token Service to
+// download model artifacts from the S3 path you provided. Amazon Web Services
 // STS is activated in your IAM user account by default. If you previously deactivated
 // Amazon Web Services STS for a region, you need to reactivate Amazon Web Services
 // STS for that region. For more information, see Activating and Deactivating
@@ -1597,15 +1747,15 @@ func (c *SageMaker) CreateEndpointRequest(input *CreateEndpointInput) (req *requ
 // the CreateEndpoint and CreateEndpointConfig API operations, add the following
 // policies to the role.
 //
-//    * Option 1: For a full SageMaker access, search and attach the AmazonSageMakerFullAccess
-//    policy.
+//   - Option 1: For a full SageMaker access, search and attach the AmazonSageMakerFullAccess
+//     policy.
 //
-//    * Option 2: For granting a limited access to an IAM role, paste the following
-//    Action elements manually into the JSON file of the IAM role: "Action":
-//    ["sagemaker:CreateEndpoint", "sagemaker:CreateEndpointConfig"] "Resource":
-//    [ "arn:aws:sagemaker:region:account-id:endpoint/endpointName" "arn:aws:sagemaker:region:account-id:endpoint-config/endpointConfigName"
-//    ] For more information, see SageMaker API Permissions: Actions, Permissions,
-//    and Resources Reference (https://docs.aws.amazon.com/sagemaker/latest/dg/api-permissions-reference.html).
+//   - Option 2: For granting a limited access to an IAM role, paste the following
+//     Action elements manually into the JSON file of the IAM role: "Action":
+//     ["sagemaker:CreateEndpoint", "sagemaker:CreateEndpointConfig"] "Resource":
+//     [ "arn:aws:sagemaker:region:account-id:endpoint/endpointName" "arn:aws:sagemaker:region:account-id:endpoint-config/endpointConfigName"
+//     ] For more information, see SageMaker API Permissions: Actions, Permissions,
+//     and Resources Reference (https://docs.aws.amazon.com/sagemaker/latest/dg/api-permissions-reference.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1615,9 +1765,9 @@ func (c *SageMaker) CreateEndpointRequest(input *CreateEndpointInput) (req *requ
 // API operation CreateEndpoint for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateEndpoint
 func (c *SageMaker) CreateEndpoint(input *CreateEndpointInput) (*CreateEndpointOutput, error) {
@@ -1657,14 +1807,13 @@ const opCreateEndpointConfig = "CreateEndpointConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateEndpointConfigRequest method.
+//	req, resp := client.CreateEndpointConfigRequest(params)
 //
-//    // Example sending a request using the CreateEndpointConfigRequest method.
-//    req, resp := client.CreateEndpointConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateEndpointConfig
 func (c *SageMaker) CreateEndpointConfigRequest(input *CreateEndpointConfigInput) (req *request.Request, output *CreateEndpointConfigOutput) {
@@ -1685,24 +1834,24 @@ func (c *SageMaker) CreateEndpointConfigRequest(input *CreateEndpointConfigInput
 
 // CreateEndpointConfig API operation for Amazon SageMaker Service.
 //
-// Creates an endpoint configuration that Amazon SageMaker hosting services
-// uses to deploy models. In the configuration, you identify one or more models,
-// created using the CreateModel API, to deploy and the resources that you want
-// Amazon SageMaker to provision. Then you call the CreateEndpoint API.
+// Creates an endpoint configuration that SageMaker hosting services uses to
+// deploy models. In the configuration, you identify one or more models, created
+// using the CreateModel API, to deploy and the resources that you want SageMaker
+// to provision. Then you call the CreateEndpoint API.
 //
-// Use this API if you want to use Amazon SageMaker hosting services to deploy
-// models into production.
+// Use this API if you want to use SageMaker hosting services to deploy models
+// into production.
 //
 // In the request, you define a ProductionVariant, for each model that you want
 // to deploy. Each ProductionVariant parameter also describes the resources
-// that you want Amazon SageMaker to provision. This includes the number and
-// type of ML compute instances to deploy.
+// that you want SageMaker to provision. This includes the number and type of
+// ML compute instances to deploy.
 //
 // If you are hosting multiple models, you also assign a VariantWeight to specify
 // how much traffic you want to allocate to each model. For example, suppose
 // that you want to host two models, A and B, and you assign traffic weight
-// 2 for model A and 1 for model B. Amazon SageMaker distributes two-thirds
-// of the traffic to Model A, and one-third to model B.
+// 2 for model A and 1 for model B. SageMaker distributes two-thirds of the
+// traffic to Model A, and one-third to model B.
 //
 // When you call CreateEndpoint, a load call is made to DynamoDB to verify that
 // your endpoint configuration exists. When you read data from a DynamoDB table
@@ -1723,9 +1872,9 @@ func (c *SageMaker) CreateEndpointConfigRequest(input *CreateEndpointConfigInput
 // API operation CreateEndpointConfig for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateEndpointConfig
 func (c *SageMaker) CreateEndpointConfig(input *CreateEndpointConfigInput) (*CreateEndpointConfigOutput, error) {
@@ -1765,14 +1914,13 @@ const opCreateExperiment = "CreateExperiment"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateExperimentRequest method.
+//	req, resp := client.CreateExperimentRequest(params)
 //
-//    // Example sending a request using the CreateExperimentRequest method.
-//    req, resp := client.CreateExperimentRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateExperiment
 func (c *SageMaker) CreateExperimentRequest(input *CreateExperimentInput) (req *request.Request, output *CreateExperimentOutput) {
@@ -1827,9 +1975,9 @@ func (c *SageMaker) CreateExperimentRequest(input *CreateExperimentInput) (req *
 // API operation CreateExperiment for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateExperiment
 func (c *SageMaker) CreateExperiment(input *CreateExperimentInput) (*CreateExperimentOutput, error) {
@@ -1869,14 +2017,13 @@ const opCreateFeatureGroup = "CreateFeatureGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateFeatureGroupRequest method.
+//	req, resp := client.CreateFeatureGroupRequest(params)
 //
-//    // Example sending a request using the CreateFeatureGroupRequest method.
-//    req, resp := client.CreateFeatureGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateFeatureGroup
 func (c *SageMaker) CreateFeatureGroupRequest(input *CreateFeatureGroupInput) (req *request.Request, output *CreateFeatureGroupOutput) {
@@ -1917,12 +2064,13 @@ func (c *SageMaker) CreateFeatureGroupRequest(input *CreateFeatureGroupInput) (r
 // API operation CreateFeatureGroup for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateFeatureGroup
 func (c *SageMaker) CreateFeatureGroup(input *CreateFeatureGroupInput) (*CreateFeatureGroupOutput, error) {
@@ -1962,14 +2110,13 @@ const opCreateFlowDefinition = "CreateFlowDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateFlowDefinitionRequest method.
+//	req, resp := client.CreateFlowDefinitionRequest(params)
 //
-//    // Example sending a request using the CreateFlowDefinitionRequest method.
-//    req, resp := client.CreateFlowDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateFlowDefinition
 func (c *SageMaker) CreateFlowDefinitionRequest(input *CreateFlowDefinitionInput) (req *request.Request, output *CreateFlowDefinitionOutput) {
@@ -2000,12 +2147,13 @@ func (c *SageMaker) CreateFlowDefinitionRequest(input *CreateFlowDefinitionInput
 // API operation CreateFlowDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateFlowDefinition
 func (c *SageMaker) CreateFlowDefinition(input *CreateFlowDefinitionInput) (*CreateFlowDefinitionOutput, error) {
@@ -2045,14 +2193,13 @@ const opCreateHumanTaskUi = "CreateHumanTaskUi"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateHumanTaskUiRequest method.
+//	req, resp := client.CreateHumanTaskUiRequest(params)
 //
-//    // Example sending a request using the CreateHumanTaskUiRequest method.
-//    req, resp := client.CreateHumanTaskUiRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateHumanTaskUi
 func (c *SageMaker) CreateHumanTaskUiRequest(input *CreateHumanTaskUiInput) (req *request.Request, output *CreateHumanTaskUiOutput) {
@@ -2085,12 +2232,13 @@ func (c *SageMaker) CreateHumanTaskUiRequest(input *CreateHumanTaskUiInput) (req
 // API operation CreateHumanTaskUi for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateHumanTaskUi
 func (c *SageMaker) CreateHumanTaskUi(input *CreateHumanTaskUiInput) (*CreateHumanTaskUiOutput, error) {
@@ -2130,14 +2278,13 @@ const opCreateHyperParameterTuningJob = "CreateHyperParameterTuningJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateHyperParameterTuningJobRequest method.
+//	req, resp := client.CreateHyperParameterTuningJobRequest(params)
 //
-//    // Example sending a request using the CreateHyperParameterTuningJobRequest method.
-//    req, resp := client.CreateHyperParameterTuningJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateHyperParameterTuningJob
 func (c *SageMaker) CreateHyperParameterTuningJobRequest(input *CreateHyperParameterTuningJobInput) (req *request.Request, output *CreateHyperParameterTuningJobOutput) {
@@ -2172,12 +2319,13 @@ func (c *SageMaker) CreateHyperParameterTuningJobRequest(input *CreateHyperParam
 // API operation CreateHyperParameterTuningJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateHyperParameterTuningJob
 func (c *SageMaker) CreateHyperParameterTuningJob(input *CreateHyperParameterTuningJobInput) (*CreateHyperParameterTuningJobOutput, error) {
@@ -2217,14 +2365,13 @@ const opCreateImage = "CreateImage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateImageRequest method.
+//	req, resp := client.CreateImageRequest(params)
 //
-//    // Example sending a request using the CreateImageRequest method.
-//    req, resp := client.CreateImageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateImage
 func (c *SageMaker) CreateImageRequest(input *CreateImageInput) (req *request.Request, output *CreateImageOutput) {
@@ -2246,9 +2393,9 @@ func (c *SageMaker) CreateImageRequest(input *CreateImageInput) (req *request.Re
 // CreateImage API operation for Amazon SageMaker Service.
 //
 // Creates a custom SageMaker image. A SageMaker image is a set of image versions.
-// Each image version represents a container image stored in Amazon Container
-// Registry (ECR). For more information, see Bring your own SageMaker image
-// (https://docs.aws.amazon.com/sagemaker/latest/dg/studio-byoi.html).
+// Each image version represents a container image stored in Amazon Elastic
+// Container Registry (ECR). For more information, see Bring your own SageMaker
+// image (https://docs.aws.amazon.com/sagemaker/latest/dg/studio-byoi.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2258,12 +2405,13 @@ func (c *SageMaker) CreateImageRequest(input *CreateImageInput) (req *request.Re
 // API operation CreateImage for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateImage
 func (c *SageMaker) CreateImage(input *CreateImageInput) (*CreateImageOutput, error) {
@@ -2303,14 +2451,13 @@ const opCreateImageVersion = "CreateImageVersion"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateImageVersionRequest method.
+//	req, resp := client.CreateImageVersionRequest(params)
 //
-//    // Example sending a request using the CreateImageVersionRequest method.
-//    req, resp := client.CreateImageVersionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateImageVersion
 func (c *SageMaker) CreateImageVersionRequest(input *CreateImageVersionInput) (req *request.Request, output *CreateImageVersionOutput) {
@@ -2332,7 +2479,7 @@ func (c *SageMaker) CreateImageVersionRequest(input *CreateImageVersionInput) (r
 // CreateImageVersion API operation for Amazon SageMaker Service.
 //
 // Creates a version of the SageMaker image specified by ImageName. The version
-// represents the Amazon Container Registry (ECR) container image specified
+// represents the Amazon Elastic Container Registry (ECR) container image specified
 // by BaseImage.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -2343,15 +2490,16 @@ func (c *SageMaker) CreateImageVersionRequest(input *CreateImageVersionInput) (r
 // API operation CreateImageVersion for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateImageVersion
 func (c *SageMaker) CreateImageVersion(input *CreateImageVersionInput) (*CreateImageVersionOutput, error) {
@@ -2391,14 +2539,13 @@ const opCreateInferenceRecommendationsJob = "CreateInferenceRecommendationsJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateInferenceRecommendationsJobRequest method.
+//	req, resp := client.CreateInferenceRecommendationsJobRequest(params)
 //
-//    // Example sending a request using the CreateInferenceRecommendationsJobRequest method.
-//    req, resp := client.CreateInferenceRecommendationsJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateInferenceRecommendationsJob
 func (c *SageMaker) CreateInferenceRecommendationsJobRequest(input *CreateInferenceRecommendationsJobInput) (req *request.Request, output *CreateInferenceRecommendationsJobOutput) {
@@ -2430,12 +2577,13 @@ func (c *SageMaker) CreateInferenceRecommendationsJobRequest(input *CreateInfere
 // API operation CreateInferenceRecommendationsJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateInferenceRecommendationsJob
 func (c *SageMaker) CreateInferenceRecommendationsJob(input *CreateInferenceRecommendationsJobInput) (*CreateInferenceRecommendationsJobOutput, error) {
@@ -2475,14 +2623,13 @@ const opCreateLabelingJob = "CreateLabelingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateLabelingJobRequest method.
+//	req, resp := client.CreateLabelingJobRequest(params)
 //
-//    // Example sending a request using the CreateLabelingJobRequest method.
-//    req, resp := client.CreateLabelingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateLabelingJob
 func (c *SageMaker) CreateLabelingJobRequest(input *CreateLabelingJobInput) (req *request.Request, output *CreateLabelingJobOutput) {
@@ -2508,16 +2655,16 @@ func (c *SageMaker) CreateLabelingJobRequest(input *CreateLabelingJobInput) (req
 //
 // You can select your workforce from one of three providers:
 //
-//    * A private workforce that you create. It can include employees, contractors,
-//    and outside experts. Use a private workforce when want the data to stay
-//    within your organization or when a specific set of skills is required.
+//   - A private workforce that you create. It can include employees, contractors,
+//     and outside experts. Use a private workforce when want the data to stay
+//     within your organization or when a specific set of skills is required.
 //
-//    * One or more vendors that you select from the Amazon Web Services Marketplace.
-//    Vendors provide expertise in specific areas.
+//   - One or more vendors that you select from the Amazon Web Services Marketplace.
+//     Vendors provide expertise in specific areas.
 //
-//    * The Amazon Mechanical Turk workforce. This is the largest workforce,
-//    but it should only be used for public data or data that has been stripped
-//    of any personally identifiable information.
+//   - The Amazon Mechanical Turk workforce. This is the largest workforce,
+//     but it should only be used for public data or data that has been stripped
+//     of any personally identifiable information.
 //
 // You can also use automated data labeling to reduce the number of data objects
 // that need to be labeled by a human. Automated data labeling uses active learning
@@ -2550,12 +2697,13 @@ func (c *SageMaker) CreateLabelingJobRequest(input *CreateLabelingJobInput) (req
 // API operation CreateLabelingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateLabelingJob
 func (c *SageMaker) CreateLabelingJob(input *CreateLabelingJobInput) (*CreateLabelingJobOutput, error) {
@@ -2595,14 +2743,13 @@ const opCreateModel = "CreateModel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateModelRequest method.
+//	req, resp := client.CreateModelRequest(params)
 //
-//    // Example sending a request using the CreateModelRequest method.
-//    req, resp := client.CreateModelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModel
 func (c *SageMaker) CreateModelRequest(input *CreateModelInput) (req *request.Request, output *CreateModelOutput) {
@@ -2623,33 +2770,30 @@ func (c *SageMaker) CreateModelRequest(input *CreateModelInput) (req *request.Re
 
 // CreateModel API operation for Amazon SageMaker Service.
 //
-// Creates a model in Amazon SageMaker. In the request, you name the model and
-// describe a primary container. For the primary container, you specify the
-// Docker image that contains inference code, artifacts (from prior training),
-// and a custom environment map that the inference code uses when you deploy
-// the model for predictions.
+// Creates a model in SageMaker. In the request, you name the model and describe
+// a primary container. For the primary container, you specify the Docker image
+// that contains inference code, artifacts (from prior training), and a custom
+// environment map that the inference code uses when you deploy the model for
+// predictions.
 //
-// Use this API to create a model if you want to use Amazon SageMaker hosting
-// services or run a batch transform job.
+// Use this API to create a model if you want to use SageMaker hosting services
+// or run a batch transform job.
 //
 // To host your model, you create an endpoint configuration with the CreateEndpointConfig
-// API, and then create an endpoint with the CreateEndpoint API. Amazon SageMaker
-// then deploys all of the containers that you defined for the model in the
-// hosting environment.
+// API, and then create an endpoint with the CreateEndpoint API. SageMaker then
+// deploys all of the containers that you defined for the model in the hosting
+// environment.
 //
-// For an example that calls this method when deploying a model to Amazon SageMaker
-// hosting services, see Deploy the Model to Amazon SageMaker Hosting Services
-// (Amazon Web Services SDK for Python (Boto 3)). (https://docs.aws.amazon.com/sagemaker/latest/dg/ex1-deploy-model.html#ex1-deploy-model-boto)
+// For an example that calls this method when deploying a model to SageMaker
+// hosting services, see Create a Model (Amazon Web Services SDK for Python
+// (Boto 3)). (https://docs.aws.amazon.com/sagemaker/latest/dg/realtime-endpoints-deployment.html#realtime-endpoints-deployment-create-model)
 //
 // To run a batch transform using your model, you start a job with the CreateTransformJob
-// API. Amazon SageMaker uses your model and your dataset to get inferences
-// which are then saved to a specified S3 location.
+// API. SageMaker uses your model and your dataset to get inferences which are
+// then saved to a specified S3 location.
 //
-// In the CreateModel request, you must define a container with the PrimaryContainer
-// parameter.
-//
-// In the request, you also provide an IAM role that Amazon SageMaker can assume
-// to access model artifacts and docker image for deployment on ML compute hosting
+// In the request, you also provide an IAM role that SageMaker can assume to
+// access model artifacts and docker image for deployment on ML compute hosting
 // instances or for batch transform jobs. In addition, you also use the IAM
 // role to manage permissions the inference code needs. For example, if the
 // inference code access any other Amazon Web Services resources, you grant
@@ -2663,9 +2807,9 @@ func (c *SageMaker) CreateModelRequest(input *CreateModelInput) (req *request.Re
 // API operation CreateModel for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModel
 func (c *SageMaker) CreateModel(input *CreateModelInput) (*CreateModelOutput, error) {
@@ -2705,14 +2849,13 @@ const opCreateModelBiasJobDefinition = "CreateModelBiasJobDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateModelBiasJobDefinitionRequest method.
+//	req, resp := client.CreateModelBiasJobDefinitionRequest(params)
 //
-//    // Example sending a request using the CreateModelBiasJobDefinitionRequest method.
-//    req, resp := client.CreateModelBiasJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModelBiasJobDefinition
 func (c *SageMaker) CreateModelBiasJobDefinitionRequest(input *CreateModelBiasJobDefinitionInput) (req *request.Request, output *CreateModelBiasJobDefinitionOutput) {
@@ -2743,12 +2886,13 @@ func (c *SageMaker) CreateModelBiasJobDefinitionRequest(input *CreateModelBiasJo
 // API operation CreateModelBiasJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModelBiasJobDefinition
 func (c *SageMaker) CreateModelBiasJobDefinition(input *CreateModelBiasJobDefinitionInput) (*CreateModelBiasJobDefinitionOutput, error) {
@@ -2788,14 +2932,13 @@ const opCreateModelExplainabilityJobDefinition = "CreateModelExplainabilityJobDe
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateModelExplainabilityJobDefinitionRequest method.
+//	req, resp := client.CreateModelExplainabilityJobDefinitionRequest(params)
 //
-//    // Example sending a request using the CreateModelExplainabilityJobDefinitionRequest method.
-//    req, resp := client.CreateModelExplainabilityJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModelExplainabilityJobDefinition
 func (c *SageMaker) CreateModelExplainabilityJobDefinitionRequest(input *CreateModelExplainabilityJobDefinitionInput) (req *request.Request, output *CreateModelExplainabilityJobDefinitionOutput) {
@@ -2826,12 +2969,13 @@ func (c *SageMaker) CreateModelExplainabilityJobDefinitionRequest(input *CreateM
 // API operation CreateModelExplainabilityJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModelExplainabilityJobDefinition
 func (c *SageMaker) CreateModelExplainabilityJobDefinition(input *CreateModelExplainabilityJobDefinitionInput) (*CreateModelExplainabilityJobDefinitionOutput, error) {
@@ -2871,14 +3015,13 @@ const opCreateModelPackage = "CreateModelPackage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateModelPackageRequest method.
+//	req, resp := client.CreateModelPackageRequest(params)
 //
-//    // Example sending a request using the CreateModelPackageRequest method.
-//    req, resp := client.CreateModelPackageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModelPackage
 func (c *SageMaker) CreateModelPackageRequest(input *CreateModelPackageInput) (req *request.Request, output *CreateModelPackageOutput) {
@@ -2899,10 +3042,10 @@ func (c *SageMaker) CreateModelPackageRequest(input *CreateModelPackageInput) (r
 
 // CreateModelPackage API operation for Amazon SageMaker Service.
 //
-// Creates a model package that you can use to create Amazon SageMaker models
-// or list on Amazon Web Services Marketplace, or a versioned model that is
-// part of a model group. Buyers can subscribe to model packages listed on Amazon
-// Web Services Marketplace to create models in Amazon SageMaker.
+// Creates a model package that you can use to create SageMaker models or list
+// on Amazon Web Services Marketplace, or a versioned model that is part of
+// a model group. Buyers can subscribe to model packages listed on Amazon Web
+// Services Marketplace to create models in SageMaker.
 //
 // To create a model package by specifying a Docker container that contains
 // your inference code and the Amazon S3 location of your model artifacts, provide
@@ -2912,9 +3055,9 @@ func (c *SageMaker) CreateModelPackageRequest(input *CreateModelPackageInput) (r
 //
 // There are two types of model packages:
 //
-//    * Versioned - a model that is part of a model group in the model registry.
+//   - Versioned - a model that is part of a model group in the model registry.
 //
-//    * Unversioned - a model package that is not part of a model group.
+//   - Unversioned - a model package that is not part of a model group.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2924,13 +3067,14 @@ func (c *SageMaker) CreateModelPackageRequest(input *CreateModelPackageInput) (r
 // API operation CreateModelPackage for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict when you attempted to modify a SageMaker entity such
-//   as an Experiment or Artifact.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModelPackage
 func (c *SageMaker) CreateModelPackage(input *CreateModelPackageInput) (*CreateModelPackageOutput, error) {
@@ -2970,14 +3114,13 @@ const opCreateModelPackageGroup = "CreateModelPackageGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateModelPackageGroupRequest method.
+//	req, resp := client.CreateModelPackageGroupRequest(params)
 //
-//    // Example sending a request using the CreateModelPackageGroupRequest method.
-//    req, resp := client.CreateModelPackageGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModelPackageGroup
 func (c *SageMaker) CreateModelPackageGroupRequest(input *CreateModelPackageGroupInput) (req *request.Request, output *CreateModelPackageGroupOutput) {
@@ -3008,9 +3151,9 @@ func (c *SageMaker) CreateModelPackageGroupRequest(input *CreateModelPackageGrou
 // API operation CreateModelPackageGroup for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModelPackageGroup
 func (c *SageMaker) CreateModelPackageGroup(input *CreateModelPackageGroupInput) (*CreateModelPackageGroupOutput, error) {
@@ -3050,14 +3193,13 @@ const opCreateModelQualityJobDefinition = "CreateModelQualityJobDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateModelQualityJobDefinitionRequest method.
+//	req, resp := client.CreateModelQualityJobDefinitionRequest(params)
 //
-//    // Example sending a request using the CreateModelQualityJobDefinitionRequest method.
-//    req, resp := client.CreateModelQualityJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModelQualityJobDefinition
 func (c *SageMaker) CreateModelQualityJobDefinitionRequest(input *CreateModelQualityJobDefinitionInput) (req *request.Request, output *CreateModelQualityJobDefinitionOutput) {
@@ -3089,12 +3231,13 @@ func (c *SageMaker) CreateModelQualityJobDefinitionRequest(input *CreateModelQua
 // API operation CreateModelQualityJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModelQualityJobDefinition
 func (c *SageMaker) CreateModelQualityJobDefinition(input *CreateModelQualityJobDefinitionInput) (*CreateModelQualityJobDefinitionOutput, error) {
@@ -3134,14 +3277,13 @@ const opCreateMonitoringSchedule = "CreateMonitoringSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateMonitoringScheduleRequest method.
+//	req, resp := client.CreateMonitoringScheduleRequest(params)
 //
-//    // Example sending a request using the CreateMonitoringScheduleRequest method.
-//    req, resp := client.CreateMonitoringScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateMonitoringSchedule
 func (c *SageMaker) CreateMonitoringScheduleRequest(input *CreateMonitoringScheduleInput) (req *request.Request, output *CreateMonitoringScheduleOutput) {
@@ -3173,12 +3315,13 @@ func (c *SageMaker) CreateMonitoringScheduleRequest(input *CreateMonitoringSched
 // API operation CreateMonitoringSchedule for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateMonitoringSchedule
 func (c *SageMaker) CreateMonitoringSchedule(input *CreateMonitoringScheduleInput) (*CreateMonitoringScheduleOutput, error) {
@@ -3218,14 +3361,13 @@ const opCreateNotebookInstance = "CreateNotebookInstance"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateNotebookInstanceRequest method.
+//	req, resp := client.CreateNotebookInstanceRequest(params)
 //
-//    // Example sending a request using the CreateNotebookInstanceRequest method.
-//    req, resp := client.CreateNotebookInstanceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateNotebookInstance
 func (c *SageMaker) CreateNotebookInstanceRequest(input *CreateNotebookInstanceInput) (req *request.Request, output *CreateNotebookInstanceOutput) {
@@ -3246,42 +3388,42 @@ func (c *SageMaker) CreateNotebookInstanceRequest(input *CreateNotebookInstanceI
 
 // CreateNotebookInstance API operation for Amazon SageMaker Service.
 //
-// Creates an Amazon SageMaker notebook instance. A notebook instance is a machine
+// Creates an SageMaker notebook instance. A notebook instance is a machine
 // learning (ML) compute instance running on a Jupyter notebook.
 //
 // In a CreateNotebookInstance request, specify the type of ML compute instance
-// that you want to run. Amazon SageMaker launches the instance, installs common
-// libraries that you can use to explore datasets for model training, and attaches
-// an ML storage volume to the notebook instance.
+// that you want to run. SageMaker launches the instance, installs common libraries
+// that you can use to explore datasets for model training, and attaches an
+// ML storage volume to the notebook instance.
 //
-// Amazon SageMaker also provides a set of example notebooks. Each notebook
-// demonstrates how to use Amazon SageMaker with a specific algorithm or with
-// a machine learning framework.
+// SageMaker also provides a set of example notebooks. Each notebook demonstrates
+// how to use SageMaker with a specific algorithm or with a machine learning
+// framework.
 //
-// After receiving the request, Amazon SageMaker does the following:
+// After receiving the request, SageMaker does the following:
 //
-// Creates a network interface in the Amazon SageMaker VPC.
+// Creates a network interface in the SageMaker VPC.
 //
-// (Option) If you specified SubnetId, Amazon SageMaker creates a network interface
+// (Option) If you specified SubnetId, SageMaker creates a network interface
 // in your own VPC, which is inferred from the subnet ID that you provide in
-// the input. When creating this network interface, Amazon SageMaker attaches
-// the security group that you specified in the request to the network interface
-// that it creates in your VPC.
+// the input. When creating this network interface, SageMaker attaches the security
+// group that you specified in the request to the network interface that it
+// creates in your VPC.
 //
-// Launches an EC2 instance of the type specified in the request in the Amazon
-// SageMaker VPC. If you specified SubnetId of your VPC, Amazon SageMaker specifies
-// both network interfaces when launching this instance. This enables inbound
-// traffic from your own VPC to the notebook instance, assuming that the security
-// groups allow it.
+// Launches an EC2 instance of the type specified in the request in the SageMaker
+// VPC. If you specified SubnetId of your VPC, SageMaker specifies both network
+// interfaces when launching this instance. This enables inbound traffic from
+// your own VPC to the notebook instance, assuming that the security groups
+// allow it.
 //
-// After creating the notebook instance, Amazon SageMaker returns its Amazon
-// Resource Name (ARN). You can't change the name of a notebook instance after
-// you create it.
+// After creating the notebook instance, SageMaker returns its Amazon Resource
+// Name (ARN). You can't change the name of a notebook instance after you create
+// it.
 //
-// After Amazon SageMaker creates the notebook instance, you can connect to
-// the Jupyter server and work in Jupyter notebooks. For example, you can write
-// code to explore a dataset that you can use for model training, train a model,
-// host models by creating Amazon SageMaker endpoints, and validate hosted models.
+// After SageMaker creates the notebook instance, you can connect to the Jupyter
+// server and work in Jupyter notebooks. For example, you can write code to
+// explore a dataset that you can use for model training, train a model, host
+// models by creating SageMaker endpoints, and validate hosted models.
 //
 // For more information, see How It Works (https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works.html).
 //
@@ -3293,9 +3435,9 @@ func (c *SageMaker) CreateNotebookInstanceRequest(input *CreateNotebookInstanceI
 // API operation CreateNotebookInstance for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateNotebookInstance
 func (c *SageMaker) CreateNotebookInstance(input *CreateNotebookInstanceInput) (*CreateNotebookInstanceOutput, error) {
@@ -3335,14 +3477,13 @@ const opCreateNotebookInstanceLifecycleConfig = "CreateNotebookInstanceLifecycle
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateNotebookInstanceLifecycleConfigRequest method.
+//	req, resp := client.CreateNotebookInstanceLifecycleConfigRequest(params)
 //
-//    // Example sending a request using the CreateNotebookInstanceLifecycleConfigRequest method.
-//    req, resp := client.CreateNotebookInstanceLifecycleConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateNotebookInstanceLifecycleConfig
 func (c *SageMaker) CreateNotebookInstanceLifecycleConfigRequest(input *CreateNotebookInstanceLifecycleConfigInput) (req *request.Request, output *CreateNotebookInstanceLifecycleConfigOutput) {
@@ -3390,9 +3531,9 @@ func (c *SageMaker) CreateNotebookInstanceLifecycleConfigRequest(input *CreateNo
 // API operation CreateNotebookInstanceLifecycleConfig for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateNotebookInstanceLifecycleConfig
 func (c *SageMaker) CreateNotebookInstanceLifecycleConfig(input *CreateNotebookInstanceLifecycleConfigInput) (*CreateNotebookInstanceLifecycleConfigOutput, error) {
@@ -3432,14 +3573,13 @@ const opCreatePipeline = "CreatePipeline"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreatePipelineRequest method.
+//	req, resp := client.CreatePipelineRequest(params)
 //
-//    // Example sending a request using the CreatePipelineRequest method.
-//    req, resp := client.CreatePipelineRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreatePipeline
 func (c *SageMaker) CreatePipelineRequest(input *CreatePipelineInput) (req *request.Request, output *CreatePipelineOutput) {
@@ -3470,12 +3610,13 @@ func (c *SageMaker) CreatePipelineRequest(input *CreatePipelineInput) (req *requ
 // API operation CreatePipeline for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreatePipeline
 func (c *SageMaker) CreatePipeline(input *CreatePipelineInput) (*CreatePipelineOutput, error) {
@@ -3515,14 +3656,13 @@ const opCreatePresignedDomainUrl = "CreatePresignedDomainUrl"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreatePresignedDomainUrlRequest method.
+//	req, resp := client.CreatePresignedDomainUrlRequest(params)
 //
-//    // Example sending a request using the CreatePresignedDomainUrlRequest method.
-//    req, resp := client.CreatePresignedDomainUrlRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreatePresignedDomainUrl
 func (c *SageMaker) CreatePresignedDomainUrlRequest(input *CreatePresignedDomainUrlInput) (req *request.Request, output *CreatePresignedDomainUrlOutput) {
@@ -3549,7 +3689,7 @@ func (c *SageMaker) CreatePresignedDomainUrlRequest(input *CreatePresignedDomain
 // Domain's Amazon Elastic File System (EFS) volume. This operation can only
 // be called when the authentication mode equals IAM.
 //
-// The IAM role or user used to call this API defines the permissions to access
+// The IAM role or user passed to this API defines the permissions to access
 // the app. Once the presigned URL is created, no additional permission is required
 // to access this URL. IAM authorization policies for this API are also enforced
 // for every HTTP request and WebSocket frame that attempts to connect to the
@@ -3573,8 +3713,8 @@ func (c *SageMaker) CreatePresignedDomainUrlRequest(input *CreatePresignedDomain
 // API operation CreatePresignedDomainUrl for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreatePresignedDomainUrl
 func (c *SageMaker) CreatePresignedDomainUrl(input *CreatePresignedDomainUrlInput) (*CreatePresignedDomainUrlOutput, error) {
@@ -3614,14 +3754,13 @@ const opCreatePresignedNotebookInstanceUrl = "CreatePresignedNotebookInstanceUrl
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreatePresignedNotebookInstanceUrlRequest method.
+//	req, resp := client.CreatePresignedNotebookInstanceUrlRequest(params)
 //
-//    // Example sending a request using the CreatePresignedNotebookInstanceUrlRequest method.
-//    req, resp := client.CreatePresignedNotebookInstanceUrlRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreatePresignedNotebookInstanceUrl
 func (c *SageMaker) CreatePresignedNotebookInstanceUrlRequest(input *CreatePresignedNotebookInstanceUrlInput) (req *request.Request, output *CreatePresignedNotebookInstanceUrlOutput) {
@@ -3643,10 +3782,10 @@ func (c *SageMaker) CreatePresignedNotebookInstanceUrlRequest(input *CreatePresi
 // CreatePresignedNotebookInstanceUrl API operation for Amazon SageMaker Service.
 //
 // Returns a URL that you can use to connect to the Jupyter server from a notebook
-// instance. In the Amazon SageMaker console, when you choose Open next to a
-// notebook instance, Amazon SageMaker opens a new tab showing the Jupyter server
-// home page from the notebook instance. The console uses this API to get the
-// URL and show the page.
+// instance. In the SageMaker console, when you choose Open next to a notebook
+// instance, SageMaker opens a new tab showing the Jupyter server home page
+// from the notebook instance. The console uses this API to get the URL and
+// show the page.
 //
 // The IAM role or user used to call this API defines the permissions to access
 // the notebook instance. Once the presigned URL is created, no additional permission
@@ -3708,14 +3847,13 @@ const opCreateProcessingJob = "CreateProcessingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateProcessingJobRequest method.
+//	req, resp := client.CreateProcessingJobRequest(params)
 //
-//    // Example sending a request using the CreateProcessingJobRequest method.
-//    req, resp := client.CreateProcessingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateProcessingJob
 func (c *SageMaker) CreateProcessingJobRequest(input *CreateProcessingJobInput) (req *request.Request, output *CreateProcessingJobOutput) {
@@ -3746,15 +3884,16 @@ func (c *SageMaker) CreateProcessingJobRequest(input *CreateProcessingJobInput) 
 // API operation CreateProcessingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateProcessingJob
 func (c *SageMaker) CreateProcessingJob(input *CreateProcessingJobInput) (*CreateProcessingJobOutput, error) {
@@ -3794,14 +3933,13 @@ const opCreateProject = "CreateProject"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateProjectRequest method.
+//	req, resp := client.CreateProjectRequest(params)
 //
-//    // Example sending a request using the CreateProjectRequest method.
-//    req, resp := client.CreateProjectRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateProject
 func (c *SageMaker) CreateProjectRequest(input *CreateProjectInput) (req *request.Request, output *CreateProjectOutput) {
@@ -3833,9 +3971,9 @@ func (c *SageMaker) CreateProjectRequest(input *CreateProjectInput) (req *reques
 // API operation CreateProject for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateProject
 func (c *SageMaker) CreateProject(input *CreateProjectInput) (*CreateProjectOutput, error) {
@@ -3875,14 +4013,13 @@ const opCreateStudioLifecycleConfig = "CreateStudioLifecycleConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateStudioLifecycleConfigRequest method.
+//	req, resp := client.CreateStudioLifecycleConfigRequest(params)
 //
-//    // Example sending a request using the CreateStudioLifecycleConfigRequest method.
-//    req, resp := client.CreateStudioLifecycleConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateStudioLifecycleConfig
 func (c *SageMaker) CreateStudioLifecycleConfigRequest(input *CreateStudioLifecycleConfigInput) (req *request.Request, output *CreateStudioLifecycleConfigOutput) {
@@ -3913,8 +4050,8 @@ func (c *SageMaker) CreateStudioLifecycleConfigRequest(input *CreateStudioLifecy
 // API operation CreateStudioLifecycleConfig for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateStudioLifecycleConfig
 func (c *SageMaker) CreateStudioLifecycleConfig(input *CreateStudioLifecycleConfigInput) (*CreateStudioLifecycleConfigOutput, error) {
@@ -3954,14 +4091,13 @@ const opCreateTrainingJob = "CreateTrainingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateTrainingJobRequest method.
+//	req, resp := client.CreateTrainingJobRequest(params)
 //
-//    // Example sending a request using the CreateTrainingJobRequest method.
-//    req, resp := client.CreateTrainingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateTrainingJob
 func (c *SageMaker) CreateTrainingJobRequest(input *CreateTrainingJobInput) (req *request.Request, output *CreateTrainingJobOutput) {
@@ -3982,53 +4118,56 @@ func (c *SageMaker) CreateTrainingJobRequest(input *CreateTrainingJobInput) (req
 
 // CreateTrainingJob API operation for Amazon SageMaker Service.
 //
-// Starts a model training job. After training completes, Amazon SageMaker saves
-// the resulting model artifacts to an Amazon S3 location that you specify.
+// Starts a model training job. After training completes, SageMaker saves the
+// resulting model artifacts to an Amazon S3 location that you specify.
 //
-// If you choose to host your model using Amazon SageMaker hosting services,
-// you can use the resulting model artifacts as part of the model. You can also
-// use the artifacts in a machine learning service other than Amazon SageMaker,
-// provided that you know how to use them for inference.
+// If you choose to host your model using SageMaker hosting services, you can
+// use the resulting model artifacts as part of the model. You can also use
+// the artifacts in a machine learning service other than SageMaker, provided
+// that you know how to use them for inference.
 //
 // In the request body, you provide the following:
 //
-//    * AlgorithmSpecification - Identifies the training algorithm to use.
+//   - AlgorithmSpecification - Identifies the training algorithm to use.
 //
-//    * HyperParameters - Specify these algorithm-specific parameters to enable
-//    the estimation of model parameters during training. Hyperparameters can
-//    be tuned to optimize this learning process. For a list of hyperparameters
-//    for each training algorithm provided by Amazon SageMaker, see Algorithms
-//    (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
+//   - HyperParameters - Specify these algorithm-specific parameters to enable
+//     the estimation of model parameters during training. Hyperparameters can
+//     be tuned to optimize this learning process. For a list of hyperparameters
+//     for each training algorithm provided by SageMaker, see Algorithms (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
+//     You must not include any security-sensitive information, such as account
+//     access IDs, secrets, and tokens, in the dictionary for configuring hyperparameters.
+//     SageMaker rejects the training job request and returns an exception error
+//     for detected credentials, if such user input is found.
 //
-//    * InputDataConfig - Describes the training dataset and the Amazon S3,
-//    EFS, or FSx location where it is stored.
+//   - InputDataConfig - Describes the training dataset and the Amazon S3,
+//     EFS, or FSx location where it is stored.
 //
-//    * OutputDataConfig - Identifies the Amazon S3 bucket where you want Amazon
-//    SageMaker to save the results of model training.
+//   - OutputDataConfig - Identifies the Amazon S3 bucket where you want SageMaker
+//     to save the results of model training.
 //
-//    * ResourceConfig - Identifies the resources, ML compute instances, and
-//    ML storage volumes to deploy for model training. In distributed training,
-//    you specify more than one instance.
+//   - ResourceConfig - Identifies the resources, ML compute instances, and
+//     ML storage volumes to deploy for model training. In distributed training,
+//     you specify more than one instance.
 //
-//    * EnableManagedSpotTraining - Optimize the cost of training machine learning
-//    models by up to 80% by using Amazon EC2 Spot instances. For more information,
-//    see Managed Spot Training (https://docs.aws.amazon.com/sagemaker/latest/dg/model-managed-spot-training.html).
+//   - EnableManagedSpotTraining - Optimize the cost of training machine learning
+//     models by up to 80% by using Amazon EC2 Spot instances. For more information,
+//     see Managed Spot Training (https://docs.aws.amazon.com/sagemaker/latest/dg/model-managed-spot-training.html).
 //
-//    * RoleArn - The Amazon Resource Name (ARN) that Amazon SageMaker assumes
-//    to perform tasks on your behalf during model training. You must grant
-//    this role the necessary permissions so that Amazon SageMaker can successfully
-//    complete model training.
+//   - RoleArn - The Amazon Resource Name (ARN) that SageMaker assumes to perform
+//     tasks on your behalf during model training. You must grant this role the
+//     necessary permissions so that SageMaker can successfully complete model
+//     training.
 //
-//    * StoppingCondition - To help cap training costs, use MaxRuntimeInSeconds
-//    to set a time limit for training. Use MaxWaitTimeInSeconds to specify
-//    how long a managed spot training job has to complete.
+//   - StoppingCondition - To help cap training costs, use MaxRuntimeInSeconds
+//     to set a time limit for training. Use MaxWaitTimeInSeconds to specify
+//     how long a managed spot training job has to complete.
 //
-//    * Environment - The environment variables to set in the Docker container.
+//   - Environment - The environment variables to set in the Docker container.
 //
-//    * RetryStrategy - The number of times to retry the job when the job fails
-//    due to an InternalServerError.
+//   - RetryStrategy - The number of times to retry the job when the job fails
+//     due to an InternalServerError.
 //
-// For more information about Amazon SageMaker, see How It Works (https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works.html).
+// For more information about SageMaker, see How It Works (https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4038,15 +4177,16 @@ func (c *SageMaker) CreateTrainingJobRequest(input *CreateTrainingJobInput) (req
 // API operation CreateTrainingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateTrainingJob
 func (c *SageMaker) CreateTrainingJob(input *CreateTrainingJobInput) (*CreateTrainingJobOutput, error) {
@@ -4086,14 +4226,13 @@ const opCreateTransformJob = "CreateTransformJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateTransformJobRequest method.
+//	req, resp := client.CreateTransformJobRequest(params)
 //
-//    // Example sending a request using the CreateTransformJobRequest method.
-//    req, resp := client.CreateTransformJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateTransformJob
 func (c *SageMaker) CreateTransformJobRequest(input *CreateTransformJobInput) (req *request.Request, output *CreateTransformJobOutput) {
@@ -4122,22 +4261,22 @@ func (c *SageMaker) CreateTransformJobRequest(input *CreateTransformJobInput) (r
 //
 // In the request body, you provide the following:
 //
-//    * TransformJobName - Identifies the transform job. The name must be unique
-//    within an Amazon Web Services Region in an Amazon Web Services account.
+//   - TransformJobName - Identifies the transform job. The name must be unique
+//     within an Amazon Web Services Region in an Amazon Web Services account.
 //
-//    * ModelName - Identifies the model to use. ModelName must be the name
-//    of an existing Amazon SageMaker model in the same Amazon Web Services
-//    Region and Amazon Web Services account. For information on creating a
-//    model, see CreateModel.
+//   - ModelName - Identifies the model to use. ModelName must be the name
+//     of an existing Amazon SageMaker model in the same Amazon Web Services
+//     Region and Amazon Web Services account. For information on creating a
+//     model, see CreateModel (https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateModel.html).
 //
-//    * TransformInput - Describes the dataset to be transformed and the Amazon
-//    S3 location where it is stored.
+//   - TransformInput - Describes the dataset to be transformed and the Amazon
+//     S3 location where it is stored.
 //
-//    * TransformOutput - Identifies the Amazon S3 location where you want Amazon
-//    SageMaker to save the results from the transform job.
+//   - TransformOutput - Identifies the Amazon S3 location where you want Amazon
+//     SageMaker to save the results from the transform job.
 //
-//    * TransformResources - Identifies the ML compute instances for the transform
-//    job.
+//   - TransformResources - Identifies the ML compute instances for the transform
+//     job.
 //
 // For more information about how batch transformation works, see Batch Transform
 // (https://docs.aws.amazon.com/sagemaker/latest/dg/batch-transform.html).
@@ -4150,15 +4289,16 @@ func (c *SageMaker) CreateTransformJobRequest(input *CreateTransformJobInput) (r
 // API operation CreateTransformJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateTransformJob
 func (c *SageMaker) CreateTransformJob(input *CreateTransformJobInput) (*CreateTransformJobOutput, error) {
@@ -4198,14 +4338,13 @@ const opCreateTrial = "CreateTrial"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateTrialRequest method.
+//	req, resp := client.CreateTrialRequest(params)
 //
-//    // Example sending a request using the CreateTrialRequest method.
-//    req, resp := client.CreateTrialRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateTrial
 func (c *SageMaker) CreateTrialRequest(input *CreateTrialInput) (req *request.Request, output *CreateTrialOutput) {
@@ -4250,12 +4389,13 @@ func (c *SageMaker) CreateTrialRequest(input *CreateTrialInput) (req *request.Re
 // API operation CreateTrial for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateTrial
 func (c *SageMaker) CreateTrial(input *CreateTrialInput) (*CreateTrialOutput, error) {
@@ -4295,14 +4435,13 @@ const opCreateTrialComponent = "CreateTrialComponent"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateTrialComponentRequest method.
+//	req, resp := client.CreateTrialComponentRequest(params)
 //
-//    // Example sending a request using the CreateTrialComponentRequest method.
-//    req, resp := client.CreateTrialComponentRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateTrialComponent
 func (c *SageMaker) CreateTrialComponentRequest(input *CreateTrialComponentInput) (req *request.Request, output *CreateTrialComponentOutput) {
@@ -4346,9 +4485,9 @@ func (c *SageMaker) CreateTrialComponentRequest(input *CreateTrialComponentInput
 // API operation CreateTrialComponent for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateTrialComponent
 func (c *SageMaker) CreateTrialComponent(input *CreateTrialComponentInput) (*CreateTrialComponentOutput, error) {
@@ -4388,14 +4527,13 @@ const opCreateUserProfile = "CreateUserProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateUserProfileRequest method.
+//	req, resp := client.CreateUserProfileRequest(params)
 //
-//    // Example sending a request using the CreateUserProfileRequest method.
-//    req, resp := client.CreateUserProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateUserProfile
 func (c *SageMaker) CreateUserProfileRequest(input *CreateUserProfileInput) (req *request.Request, output *CreateUserProfileOutput) {
@@ -4420,10 +4558,10 @@ func (c *SageMaker) CreateUserProfileRequest(input *CreateUserProfileInput) (req
 // domain, and is the main way to reference a "person" for the purposes of sharing,
 // reporting, and other user-oriented features. This entity is created when
 // a user onboards to Amazon SageMaker Studio. If an administrator invites a
-// person by email or imports them from SSO, a user profile is automatically
-// created. A user profile is the primary holder of settings for an individual
-// user and has a reference to the user's private Amazon Elastic File System
-// (EFS) home directory.
+// person by email or imports them from IAM Identity Center, a user profile
+// is automatically created. A user profile is the primary holder of settings
+// for an individual user and has a reference to the user's private Amazon Elastic
+// File System (EFS) home directory.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4433,12 +4571,13 @@ func (c *SageMaker) CreateUserProfileRequest(input *CreateUserProfileInput) (req
 // API operation CreateUserProfile for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateUserProfile
 func (c *SageMaker) CreateUserProfile(input *CreateUserProfileInput) (*CreateUserProfileOutput, error) {
@@ -4478,14 +4617,13 @@ const opCreateWorkforce = "CreateWorkforce"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateWorkforceRequest method.
+//	req, resp := client.CreateWorkforceRequest(params)
 //
-//    // Example sending a request using the CreateWorkforceRequest method.
-//    req, resp := client.CreateWorkforceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateWorkforce
 func (c *SageMaker) CreateWorkforceRequest(input *CreateWorkforceInput) (req *request.Request, output *CreateWorkforceOutput) {
@@ -4569,14 +4707,13 @@ const opCreateWorkteam = "CreateWorkteam"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateWorkteamRequest method.
+//	req, resp := client.CreateWorkteamRequest(params)
 //
-//    // Example sending a request using the CreateWorkteamRequest method.
-//    req, resp := client.CreateWorkteamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateWorkteam
 func (c *SageMaker) CreateWorkteamRequest(input *CreateWorkteamInput) (req *request.Request, output *CreateWorkteamOutput) {
@@ -4611,12 +4748,13 @@ func (c *SageMaker) CreateWorkteamRequest(input *CreateWorkteamInput) (req *requ
 // API operation CreateWorkteam for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateWorkteam
 func (c *SageMaker) CreateWorkteam(input *CreateWorkteamInput) (*CreateWorkteamOutput, error) {
@@ -4656,14 +4794,13 @@ const opDeleteAction = "DeleteAction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteActionRequest method.
+//	req, resp := client.DeleteActionRequest(params)
 //
-//    // Example sending a request using the DeleteActionRequest method.
-//    req, resp := client.DeleteActionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteAction
 func (c *SageMaker) DeleteActionRequest(input *DeleteActionInput) (req *request.Request, output *DeleteActionOutput) {
@@ -4694,8 +4831,8 @@ func (c *SageMaker) DeleteActionRequest(input *DeleteActionInput) (req *request.
 // API operation DeleteAction for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteAction
 func (c *SageMaker) DeleteAction(input *DeleteActionInput) (*DeleteActionOutput, error) {
@@ -4735,14 +4872,13 @@ const opDeleteAlgorithm = "DeleteAlgorithm"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAlgorithmRequest method.
+//	req, resp := client.DeleteAlgorithmRequest(params)
 //
-//    // Example sending a request using the DeleteAlgorithmRequest method.
-//    req, resp := client.DeleteAlgorithmRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteAlgorithm
 func (c *SageMaker) DeleteAlgorithmRequest(input *DeleteAlgorithmInput) (req *request.Request, output *DeleteAlgorithmOutput) {
@@ -4810,14 +4946,13 @@ const opDeleteApp = "DeleteApp"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAppRequest method.
+//	req, resp := client.DeleteAppRequest(params)
 //
-//    // Example sending a request using the DeleteAppRequest method.
-//    req, resp := client.DeleteAppRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteApp
 func (c *SageMaker) DeleteAppRequest(input *DeleteAppInput) (req *request.Request, output *DeleteAppOutput) {
@@ -4849,11 +4984,12 @@ func (c *SageMaker) DeleteAppRequest(input *DeleteAppInput) (req *request.Reques
 // API operation DeleteApp for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteApp
 func (c *SageMaker) DeleteApp(input *DeleteAppInput) (*DeleteAppOutput, error) {
@@ -4893,14 +5029,13 @@ const opDeleteAppImageConfig = "DeleteAppImageConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAppImageConfigRequest method.
+//	req, resp := client.DeleteAppImageConfigRequest(params)
 //
-//    // Example sending a request using the DeleteAppImageConfigRequest method.
-//    req, resp := client.DeleteAppImageConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteAppImageConfig
 func (c *SageMaker) DeleteAppImageConfigRequest(input *DeleteAppImageConfigInput) (req *request.Request, output *DeleteAppImageConfigOutput) {
@@ -4932,8 +5067,8 @@ func (c *SageMaker) DeleteAppImageConfigRequest(input *DeleteAppImageConfigInput
 // API operation DeleteAppImageConfig for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteAppImageConfig
 func (c *SageMaker) DeleteAppImageConfig(input *DeleteAppImageConfigInput) (*DeleteAppImageConfigOutput, error) {
@@ -4973,14 +5108,13 @@ const opDeleteArtifact = "DeleteArtifact"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteArtifactRequest method.
+//	req, resp := client.DeleteArtifactRequest(params)
 //
-//    // Example sending a request using the DeleteArtifactRequest method.
-//    req, resp := client.DeleteArtifactRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteArtifact
 func (c *SageMaker) DeleteArtifactRequest(input *DeleteArtifactInput) (req *request.Request, output *DeleteArtifactOutput) {
@@ -5011,8 +5145,8 @@ func (c *SageMaker) DeleteArtifactRequest(input *DeleteArtifactInput) (req *requ
 // API operation DeleteArtifact for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteArtifact
 func (c *SageMaker) DeleteArtifact(input *DeleteArtifactInput) (*DeleteArtifactOutput, error) {
@@ -5052,14 +5186,13 @@ const opDeleteAssociation = "DeleteAssociation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAssociationRequest method.
+//	req, resp := client.DeleteAssociationRequest(params)
 //
-//    // Example sending a request using the DeleteAssociationRequest method.
-//    req, resp := client.DeleteAssociationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteAssociation
 func (c *SageMaker) DeleteAssociationRequest(input *DeleteAssociationInput) (req *request.Request, output *DeleteAssociationOutput) {
@@ -5090,8 +5223,8 @@ func (c *SageMaker) DeleteAssociationRequest(input *DeleteAssociationInput) (req
 // API operation DeleteAssociation for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteAssociation
 func (c *SageMaker) DeleteAssociation(input *DeleteAssociationInput) (*DeleteAssociationOutput, error) {
@@ -5131,14 +5264,13 @@ const opDeleteCodeRepository = "DeleteCodeRepository"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteCodeRepositoryRequest method.
+//	req, resp := client.DeleteCodeRepositoryRequest(params)
 //
-//    // Example sending a request using the DeleteCodeRepositoryRequest method.
-//    req, resp := client.DeleteCodeRepositoryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteCodeRepository
 func (c *SageMaker) DeleteCodeRepositoryRequest(input *DeleteCodeRepositoryInput) (req *request.Request, output *DeleteCodeRepositoryOutput) {
@@ -5206,14 +5338,13 @@ const opDeleteContext = "DeleteContext"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteContextRequest method.
+//	req, resp := client.DeleteContextRequest(params)
 //
-//    // Example sending a request using the DeleteContextRequest method.
-//    req, resp := client.DeleteContextRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteContext
 func (c *SageMaker) DeleteContextRequest(input *DeleteContextInput) (req *request.Request, output *DeleteContextOutput) {
@@ -5244,8 +5375,8 @@ func (c *SageMaker) DeleteContextRequest(input *DeleteContextInput) (req *reques
 // API operation DeleteContext for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteContext
 func (c *SageMaker) DeleteContext(input *DeleteContextInput) (*DeleteContextOutput, error) {
@@ -5285,14 +5416,13 @@ const opDeleteDataQualityJobDefinition = "DeleteDataQualityJobDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDataQualityJobDefinitionRequest method.
+//	req, resp := client.DeleteDataQualityJobDefinitionRequest(params)
 //
-//    // Example sending a request using the DeleteDataQualityJobDefinitionRequest method.
-//    req, resp := client.DeleteDataQualityJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteDataQualityJobDefinition
 func (c *SageMaker) DeleteDataQualityJobDefinitionRequest(input *DeleteDataQualityJobDefinitionInput) (req *request.Request, output *DeleteDataQualityJobDefinitionOutput) {
@@ -5324,8 +5454,8 @@ func (c *SageMaker) DeleteDataQualityJobDefinitionRequest(input *DeleteDataQuali
 // API operation DeleteDataQualityJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteDataQualityJobDefinition
 func (c *SageMaker) DeleteDataQualityJobDefinition(input *DeleteDataQualityJobDefinitionInput) (*DeleteDataQualityJobDefinitionOutput, error) {
@@ -5365,14 +5495,13 @@ const opDeleteDeviceFleet = "DeleteDeviceFleet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDeviceFleetRequest method.
+//	req, resp := client.DeleteDeviceFleetRequest(params)
 //
-//    // Example sending a request using the DeleteDeviceFleetRequest method.
-//    req, resp := client.DeleteDeviceFleetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteDeviceFleet
 func (c *SageMaker) DeleteDeviceFleetRequest(input *DeleteDeviceFleetInput) (req *request.Request, output *DeleteDeviceFleetOutput) {
@@ -5404,8 +5533,8 @@ func (c *SageMaker) DeleteDeviceFleetRequest(input *DeleteDeviceFleetInput) (req
 // API operation DeleteDeviceFleet for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteDeviceFleet
 func (c *SageMaker) DeleteDeviceFleet(input *DeleteDeviceFleetInput) (*DeleteDeviceFleetOutput, error) {
@@ -5445,14 +5574,13 @@ const opDeleteDomain = "DeleteDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDomainRequest method.
+//	req, resp := client.DeleteDomainRequest(params)
 //
-//    // Example sending a request using the DeleteDomainRequest method.
-//    req, resp := client.DeleteDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteDomain
 func (c *SageMaker) DeleteDomainRequest(input *DeleteDomainInput) (req *request.Request, output *DeleteDomainOutput) {
@@ -5475,9 +5603,9 @@ func (c *SageMaker) DeleteDomainRequest(input *DeleteDomainInput) (req *request.
 // DeleteDomain API operation for Amazon SageMaker Service.
 //
 // Used to delete a domain. If you onboarded with IAM mode, you will need to
-// delete your domain to onboard again using SSO. Use with caution. All of the
-// members of the domain will lose access to their EFS volume, including data,
-// notebooks, and other artifacts.
+// delete your domain to onboard again using IAM Identity Center. Use with caution.
+// All of the members of the domain will lose access to their EFS volume, including
+// data, notebooks, and other artifacts.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5487,11 +5615,12 @@ func (c *SageMaker) DeleteDomainRequest(input *DeleteDomainInput) (req *request.
 // API operation DeleteDomain for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteDomain
 func (c *SageMaker) DeleteDomain(input *DeleteDomainInput) (*DeleteDomainOutput, error) {
@@ -5515,6 +5644,165 @@ func (c *SageMaker) DeleteDomainWithContext(ctx aws.Context, input *DeleteDomain
 	return out, req.Send()
 }
 
+const opDeleteEdgeDeploymentPlan = "DeleteEdgeDeploymentPlan"
+
+// DeleteEdgeDeploymentPlanRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteEdgeDeploymentPlan operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteEdgeDeploymentPlan for more information on using the DeleteEdgeDeploymentPlan
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DeleteEdgeDeploymentPlanRequest method.
+//	req, resp := client.DeleteEdgeDeploymentPlanRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteEdgeDeploymentPlan
+func (c *SageMaker) DeleteEdgeDeploymentPlanRequest(input *DeleteEdgeDeploymentPlanInput) (req *request.Request, output *DeleteEdgeDeploymentPlanOutput) {
+	op := &request.Operation{
+		Name:       opDeleteEdgeDeploymentPlan,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteEdgeDeploymentPlanInput{}
+	}
+
+	output = &DeleteEdgeDeploymentPlanOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteEdgeDeploymentPlan API operation for Amazon SageMaker Service.
+//
+// Deletes an edge deployment plan if (and only if) all the stages in the plan
+// are inactive or there are no stages in the plan.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation DeleteEdgeDeploymentPlan for usage and error information.
+//
+// Returned Error Types:
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteEdgeDeploymentPlan
+func (c *SageMaker) DeleteEdgeDeploymentPlan(input *DeleteEdgeDeploymentPlanInput) (*DeleteEdgeDeploymentPlanOutput, error) {
+	req, out := c.DeleteEdgeDeploymentPlanRequest(input)
+	return out, req.Send()
+}
+
+// DeleteEdgeDeploymentPlanWithContext is the same as DeleteEdgeDeploymentPlan with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteEdgeDeploymentPlan for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) DeleteEdgeDeploymentPlanWithContext(ctx aws.Context, input *DeleteEdgeDeploymentPlanInput, opts ...request.Option) (*DeleteEdgeDeploymentPlanOutput, error) {
+	req, out := c.DeleteEdgeDeploymentPlanRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteEdgeDeploymentStage = "DeleteEdgeDeploymentStage"
+
+// DeleteEdgeDeploymentStageRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteEdgeDeploymentStage operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteEdgeDeploymentStage for more information on using the DeleteEdgeDeploymentStage
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DeleteEdgeDeploymentStageRequest method.
+//	req, resp := client.DeleteEdgeDeploymentStageRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteEdgeDeploymentStage
+func (c *SageMaker) DeleteEdgeDeploymentStageRequest(input *DeleteEdgeDeploymentStageInput) (req *request.Request, output *DeleteEdgeDeploymentStageOutput) {
+	op := &request.Operation{
+		Name:       opDeleteEdgeDeploymentStage,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteEdgeDeploymentStageInput{}
+	}
+
+	output = &DeleteEdgeDeploymentStageOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteEdgeDeploymentStage API operation for Amazon SageMaker Service.
+//
+// Delete a stage in an edge deployment plan if (and only if) the stage is inactive.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation DeleteEdgeDeploymentStage for usage and error information.
+//
+// Returned Error Types:
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteEdgeDeploymentStage
+func (c *SageMaker) DeleteEdgeDeploymentStage(input *DeleteEdgeDeploymentStageInput) (*DeleteEdgeDeploymentStageOutput, error) {
+	req, out := c.DeleteEdgeDeploymentStageRequest(input)
+	return out, req.Send()
+}
+
+// DeleteEdgeDeploymentStageWithContext is the same as DeleteEdgeDeploymentStage with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteEdgeDeploymentStage for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) DeleteEdgeDeploymentStageWithContext(ctx aws.Context, input *DeleteEdgeDeploymentStageInput, opts ...request.Option) (*DeleteEdgeDeploymentStageOutput, error) {
+	req, out := c.DeleteEdgeDeploymentStageRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteEndpoint = "DeleteEndpoint"
 
 // DeleteEndpointRequest generates a "aws/request.Request" representing the
@@ -5531,14 +5819,13 @@ const opDeleteEndpoint = "DeleteEndpoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteEndpointRequest method.
+//	req, resp := client.DeleteEndpointRequest(params)
 //
-//    // Example sending a request using the DeleteEndpointRequest method.
-//    req, resp := client.DeleteEndpointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteEndpoint
 func (c *SageMaker) DeleteEndpointRequest(input *DeleteEndpointInput) (req *request.Request, output *DeleteEndpointOutput) {
@@ -5560,12 +5847,18 @@ func (c *SageMaker) DeleteEndpointRequest(input *DeleteEndpointInput) (req *requ
 
 // DeleteEndpoint API operation for Amazon SageMaker Service.
 //
-// Deletes an endpoint. Amazon SageMaker frees up all of the resources that
-// were deployed when the endpoint was created.
+// Deletes an endpoint. SageMaker frees up all of the resources that were deployed
+// when the endpoint was created.
 //
-// Amazon SageMaker retires any custom KMS key grants associated with the endpoint,
+// SageMaker retires any custom KMS key grants associated with the endpoint,
 // meaning you don't need to use the RevokeGrant (http://docs.aws.amazon.com/kms/latest/APIReference/API_RevokeGrant.html)
 // API call.
+//
+// When you delete your endpoint, SageMaker asynchronously deletes associated
+// endpoint resources such as KMS key grants. You might still see these resources
+// in your account for a few minutes after deleting your endpoint. Do not delete
+// or revoke the permissions for your ExecutionRoleArn (https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateModel.html#sagemaker-CreateModel-request-ExecutionRoleArn)
+// , otherwise SageMaker cannot delete these resources.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5611,14 +5904,13 @@ const opDeleteEndpointConfig = "DeleteEndpointConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteEndpointConfigRequest method.
+//	req, resp := client.DeleteEndpointConfigRequest(params)
 //
-//    // Example sending a request using the DeleteEndpointConfigRequest method.
-//    req, resp := client.DeleteEndpointConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteEndpointConfig
 func (c *SageMaker) DeleteEndpointConfigRequest(input *DeleteEndpointConfigInput) (req *request.Request, output *DeleteEndpointConfigOutput) {
@@ -5695,14 +5987,13 @@ const opDeleteExperiment = "DeleteExperiment"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteExperimentRequest method.
+//	req, resp := client.DeleteExperimentRequest(params)
 //
-//    // Example sending a request using the DeleteExperimentRequest method.
-//    req, resp := client.DeleteExperimentRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteExperiment
 func (c *SageMaker) DeleteExperimentRequest(input *DeleteExperimentInput) (req *request.Request, output *DeleteExperimentOutput) {
@@ -5735,8 +6026,8 @@ func (c *SageMaker) DeleteExperimentRequest(input *DeleteExperimentInput) (req *
 // API operation DeleteExperiment for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteExperiment
 func (c *SageMaker) DeleteExperiment(input *DeleteExperimentInput) (*DeleteExperimentOutput, error) {
@@ -5776,14 +6067,13 @@ const opDeleteFeatureGroup = "DeleteFeatureGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteFeatureGroupRequest method.
+//	req, resp := client.DeleteFeatureGroupRequest(params)
 //
-//    // Example sending a request using the DeleteFeatureGroupRequest method.
-//    req, resp := client.DeleteFeatureGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteFeatureGroup
 func (c *SageMaker) DeleteFeatureGroupRequest(input *DeleteFeatureGroupInput) (req *request.Request, output *DeleteFeatureGroupOutput) {
@@ -5821,8 +6111,8 @@ func (c *SageMaker) DeleteFeatureGroupRequest(input *DeleteFeatureGroupInput) (r
 // API operation DeleteFeatureGroup for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteFeatureGroup
 func (c *SageMaker) DeleteFeatureGroup(input *DeleteFeatureGroupInput) (*DeleteFeatureGroupOutput, error) {
@@ -5862,14 +6152,13 @@ const opDeleteFlowDefinition = "DeleteFlowDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteFlowDefinitionRequest method.
+//	req, resp := client.DeleteFlowDefinitionRequest(params)
 //
-//    // Example sending a request using the DeleteFlowDefinitionRequest method.
-//    req, resp := client.DeleteFlowDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteFlowDefinition
 func (c *SageMaker) DeleteFlowDefinitionRequest(input *DeleteFlowDefinitionInput) (req *request.Request, output *DeleteFlowDefinitionOutput) {
@@ -5901,11 +6190,12 @@ func (c *SageMaker) DeleteFlowDefinitionRequest(input *DeleteFlowDefinitionInput
 // API operation DeleteFlowDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteFlowDefinition
 func (c *SageMaker) DeleteFlowDefinition(input *DeleteFlowDefinitionInput) (*DeleteFlowDefinitionOutput, error) {
@@ -5945,14 +6235,13 @@ const opDeleteHumanTaskUi = "DeleteHumanTaskUi"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteHumanTaskUiRequest method.
+//	req, resp := client.DeleteHumanTaskUiRequest(params)
 //
-//    // Example sending a request using the DeleteHumanTaskUiRequest method.
-//    req, resp := client.DeleteHumanTaskUiRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteHumanTaskUi
 func (c *SageMaker) DeleteHumanTaskUiRequest(input *DeleteHumanTaskUiInput) (req *request.Request, output *DeleteHumanTaskUiOutput) {
@@ -5988,8 +6277,8 @@ func (c *SageMaker) DeleteHumanTaskUiRequest(input *DeleteHumanTaskUiInput) (req
 // API operation DeleteHumanTaskUi for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteHumanTaskUi
 func (c *SageMaker) DeleteHumanTaskUi(input *DeleteHumanTaskUiInput) (*DeleteHumanTaskUiOutput, error) {
@@ -6029,14 +6318,13 @@ const opDeleteImage = "DeleteImage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteImageRequest method.
+//	req, resp := client.DeleteImageRequest(params)
 //
-//    // Example sending a request using the DeleteImageRequest method.
-//    req, resp := client.DeleteImageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteImage
 func (c *SageMaker) DeleteImageRequest(input *DeleteImageInput) (req *request.Request, output *DeleteImageOutput) {
@@ -6069,11 +6357,12 @@ func (c *SageMaker) DeleteImageRequest(input *DeleteImageInput) (req *request.Re
 // API operation DeleteImage for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteImage
 func (c *SageMaker) DeleteImage(input *DeleteImageInput) (*DeleteImageOutput, error) {
@@ -6113,14 +6402,13 @@ const opDeleteImageVersion = "DeleteImageVersion"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteImageVersionRequest method.
+//	req, resp := client.DeleteImageVersionRequest(params)
 //
-//    // Example sending a request using the DeleteImageVersionRequest method.
-//    req, resp := client.DeleteImageVersionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteImageVersion
 func (c *SageMaker) DeleteImageVersionRequest(input *DeleteImageVersionInput) (req *request.Request, output *DeleteImageVersionOutput) {
@@ -6153,11 +6441,12 @@ func (c *SageMaker) DeleteImageVersionRequest(input *DeleteImageVersionInput) (r
 // API operation DeleteImageVersion for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteImageVersion
 func (c *SageMaker) DeleteImageVersion(input *DeleteImageVersionInput) (*DeleteImageVersionOutput, error) {
@@ -6197,14 +6486,13 @@ const opDeleteModel = "DeleteModel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteModelRequest method.
+//	req, resp := client.DeleteModelRequest(params)
 //
-//    // Example sending a request using the DeleteModelRequest method.
-//    req, resp := client.DeleteModelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModel
 func (c *SageMaker) DeleteModelRequest(input *DeleteModelInput) (req *request.Request, output *DeleteModelOutput) {
@@ -6227,9 +6515,9 @@ func (c *SageMaker) DeleteModelRequest(input *DeleteModelInput) (req *request.Re
 // DeleteModel API operation for Amazon SageMaker Service.
 //
 // Deletes a model. The DeleteModel API deletes only the model entry that was
-// created in Amazon SageMaker when you called the CreateModel API. It does
-// not delete model artifacts, inference code, or the IAM role that you specified
-// when creating the model.
+// created in SageMaker when you called the CreateModel API. It does not delete
+// model artifacts, inference code, or the IAM role that you specified when
+// creating the model.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -6275,14 +6563,13 @@ const opDeleteModelBiasJobDefinition = "DeleteModelBiasJobDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteModelBiasJobDefinitionRequest method.
+//	req, resp := client.DeleteModelBiasJobDefinitionRequest(params)
 //
-//    // Example sending a request using the DeleteModelBiasJobDefinitionRequest method.
-//    req, resp := client.DeleteModelBiasJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModelBiasJobDefinition
 func (c *SageMaker) DeleteModelBiasJobDefinitionRequest(input *DeleteModelBiasJobDefinitionInput) (req *request.Request, output *DeleteModelBiasJobDefinitionOutput) {
@@ -6314,8 +6601,8 @@ func (c *SageMaker) DeleteModelBiasJobDefinitionRequest(input *DeleteModelBiasJo
 // API operation DeleteModelBiasJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModelBiasJobDefinition
 func (c *SageMaker) DeleteModelBiasJobDefinition(input *DeleteModelBiasJobDefinitionInput) (*DeleteModelBiasJobDefinitionOutput, error) {
@@ -6355,14 +6642,13 @@ const opDeleteModelExplainabilityJobDefinition = "DeleteModelExplainabilityJobDe
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteModelExplainabilityJobDefinitionRequest method.
+//	req, resp := client.DeleteModelExplainabilityJobDefinitionRequest(params)
 //
-//    // Example sending a request using the DeleteModelExplainabilityJobDefinitionRequest method.
-//    req, resp := client.DeleteModelExplainabilityJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModelExplainabilityJobDefinition
 func (c *SageMaker) DeleteModelExplainabilityJobDefinitionRequest(input *DeleteModelExplainabilityJobDefinitionInput) (req *request.Request, output *DeleteModelExplainabilityJobDefinitionOutput) {
@@ -6394,8 +6680,8 @@ func (c *SageMaker) DeleteModelExplainabilityJobDefinitionRequest(input *DeleteM
 // API operation DeleteModelExplainabilityJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModelExplainabilityJobDefinition
 func (c *SageMaker) DeleteModelExplainabilityJobDefinition(input *DeleteModelExplainabilityJobDefinitionInput) (*DeleteModelExplainabilityJobDefinitionOutput, error) {
@@ -6435,14 +6721,13 @@ const opDeleteModelPackage = "DeleteModelPackage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteModelPackageRequest method.
+//	req, resp := client.DeleteModelPackageRequest(params)
 //
-//    // Example sending a request using the DeleteModelPackageRequest method.
-//    req, resp := client.DeleteModelPackageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModelPackage
 func (c *SageMaker) DeleteModelPackageRequest(input *DeleteModelPackageInput) (req *request.Request, output *DeleteModelPackageOutput) {
@@ -6466,9 +6751,9 @@ func (c *SageMaker) DeleteModelPackageRequest(input *DeleteModelPackageInput) (r
 //
 // Deletes a model package.
 //
-// A model package is used to create Amazon SageMaker models or list on Amazon
-// Web Services Marketplace. Buyers can subscribe to model packages listed on
-// Amazon Web Services Marketplace to create models in Amazon SageMaker.
+// A model package is used to create SageMaker models or list on Amazon Web
+// Services Marketplace. Buyers can subscribe to model packages listed on Amazon
+// Web Services Marketplace to create models in SageMaker.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -6478,9 +6763,9 @@ func (c *SageMaker) DeleteModelPackageRequest(input *DeleteModelPackageInput) (r
 // API operation DeleteModelPackage for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict when you attempted to modify a SageMaker entity such
-//   as an Experiment or Artifact.
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModelPackage
 func (c *SageMaker) DeleteModelPackage(input *DeleteModelPackageInput) (*DeleteModelPackageOutput, error) {
@@ -6520,14 +6805,13 @@ const opDeleteModelPackageGroup = "DeleteModelPackageGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteModelPackageGroupRequest method.
+//	req, resp := client.DeleteModelPackageGroupRequest(params)
 //
-//    // Example sending a request using the DeleteModelPackageGroupRequest method.
-//    req, resp := client.DeleteModelPackageGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModelPackageGroup
 func (c *SageMaker) DeleteModelPackageGroupRequest(input *DeleteModelPackageGroupInput) (req *request.Request, output *DeleteModelPackageGroupOutput) {
@@ -6559,9 +6843,9 @@ func (c *SageMaker) DeleteModelPackageGroupRequest(input *DeleteModelPackageGrou
 // API operation DeleteModelPackageGroup for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict when you attempted to modify a SageMaker entity such
-//   as an Experiment or Artifact.
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModelPackageGroup
 func (c *SageMaker) DeleteModelPackageGroup(input *DeleteModelPackageGroupInput) (*DeleteModelPackageGroupOutput, error) {
@@ -6601,14 +6885,13 @@ const opDeleteModelPackageGroupPolicy = "DeleteModelPackageGroupPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteModelPackageGroupPolicyRequest method.
+//	req, resp := client.DeleteModelPackageGroupPolicyRequest(params)
 //
-//    // Example sending a request using the DeleteModelPackageGroupPolicyRequest method.
-//    req, resp := client.DeleteModelPackageGroupPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModelPackageGroupPolicy
 func (c *SageMaker) DeleteModelPackageGroupPolicyRequest(input *DeleteModelPackageGroupPolicyInput) (req *request.Request, output *DeleteModelPackageGroupPolicyOutput) {
@@ -6676,14 +6959,13 @@ const opDeleteModelQualityJobDefinition = "DeleteModelQualityJobDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteModelQualityJobDefinitionRequest method.
+//	req, resp := client.DeleteModelQualityJobDefinitionRequest(params)
 //
-//    // Example sending a request using the DeleteModelQualityJobDefinitionRequest method.
-//    req, resp := client.DeleteModelQualityJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModelQualityJobDefinition
 func (c *SageMaker) DeleteModelQualityJobDefinitionRequest(input *DeleteModelQualityJobDefinitionInput) (req *request.Request, output *DeleteModelQualityJobDefinitionOutput) {
@@ -6715,8 +6997,8 @@ func (c *SageMaker) DeleteModelQualityJobDefinitionRequest(input *DeleteModelQua
 // API operation DeleteModelQualityJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteModelQualityJobDefinition
 func (c *SageMaker) DeleteModelQualityJobDefinition(input *DeleteModelQualityJobDefinitionInput) (*DeleteModelQualityJobDefinitionOutput, error) {
@@ -6756,14 +7038,13 @@ const opDeleteMonitoringSchedule = "DeleteMonitoringSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteMonitoringScheduleRequest method.
+//	req, resp := client.DeleteMonitoringScheduleRequest(params)
 //
-//    // Example sending a request using the DeleteMonitoringScheduleRequest method.
-//    req, resp := client.DeleteMonitoringScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteMonitoringSchedule
 func (c *SageMaker) DeleteMonitoringScheduleRequest(input *DeleteMonitoringScheduleInput) (req *request.Request, output *DeleteMonitoringScheduleOutput) {
@@ -6797,8 +7078,8 @@ func (c *SageMaker) DeleteMonitoringScheduleRequest(input *DeleteMonitoringSched
 // API operation DeleteMonitoringSchedule for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteMonitoringSchedule
 func (c *SageMaker) DeleteMonitoringSchedule(input *DeleteMonitoringScheduleInput) (*DeleteMonitoringScheduleOutput, error) {
@@ -6838,14 +7119,13 @@ const opDeleteNotebookInstance = "DeleteNotebookInstance"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteNotebookInstanceRequest method.
+//	req, resp := client.DeleteNotebookInstanceRequest(params)
 //
-//    // Example sending a request using the DeleteNotebookInstanceRequest method.
-//    req, resp := client.DeleteNotebookInstanceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteNotebookInstance
 func (c *SageMaker) DeleteNotebookInstanceRequest(input *DeleteNotebookInstanceInput) (req *request.Request, output *DeleteNotebookInstanceOutput) {
@@ -6867,10 +7147,10 @@ func (c *SageMaker) DeleteNotebookInstanceRequest(input *DeleteNotebookInstanceI
 
 // DeleteNotebookInstance API operation for Amazon SageMaker Service.
 //
-// Deletes an Amazon SageMaker notebook instance. Before you can delete a notebook
+// Deletes an SageMaker notebook instance. Before you can delete a notebook
 // instance, you must call the StopNotebookInstance API.
 //
-// When you delete a notebook instance, you lose all of your data. Amazon SageMaker
+// When you delete a notebook instance, you lose all of your data. SageMaker
 // removes the ML compute instance, and deletes the ML storage volume and the
 // network interface associated with the notebook instance.
 //
@@ -6918,14 +7198,13 @@ const opDeleteNotebookInstanceLifecycleConfig = "DeleteNotebookInstanceLifecycle
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteNotebookInstanceLifecycleConfigRequest method.
+//	req, resp := client.DeleteNotebookInstanceLifecycleConfigRequest(params)
 //
-//    // Example sending a request using the DeleteNotebookInstanceLifecycleConfigRequest method.
-//    req, resp := client.DeleteNotebookInstanceLifecycleConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteNotebookInstanceLifecycleConfig
 func (c *SageMaker) DeleteNotebookInstanceLifecycleConfigRequest(input *DeleteNotebookInstanceLifecycleConfigInput) (req *request.Request, output *DeleteNotebookInstanceLifecycleConfigOutput) {
@@ -6993,14 +7272,13 @@ const opDeletePipeline = "DeletePipeline"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeletePipelineRequest method.
+//	req, resp := client.DeletePipelineRequest(params)
 //
-//    // Example sending a request using the DeletePipelineRequest method.
-//    req, resp := client.DeletePipelineRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeletePipeline
 func (c *SageMaker) DeletePipelineRequest(input *DeletePipelineInput) (req *request.Request, output *DeletePipelineOutput) {
@@ -7034,8 +7312,8 @@ func (c *SageMaker) DeletePipelineRequest(input *DeletePipelineInput) (req *requ
 // API operation DeletePipeline for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeletePipeline
 func (c *SageMaker) DeletePipeline(input *DeletePipelineInput) (*DeletePipelineOutput, error) {
@@ -7075,14 +7353,13 @@ const opDeleteProject = "DeleteProject"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteProjectRequest method.
+//	req, resp := client.DeleteProjectRequest(params)
 //
-//    // Example sending a request using the DeleteProjectRequest method.
-//    req, resp := client.DeleteProjectRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteProject
 func (c *SageMaker) DeleteProjectRequest(input *DeleteProjectInput) (req *request.Request, output *DeleteProjectOutput) {
@@ -7114,9 +7391,9 @@ func (c *SageMaker) DeleteProjectRequest(input *DeleteProjectInput) (req *reques
 // API operation DeleteProject for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict when you attempted to modify a SageMaker entity such
-//   as an Experiment or Artifact.
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteProject
 func (c *SageMaker) DeleteProject(input *DeleteProjectInput) (*DeleteProjectOutput, error) {
@@ -7156,14 +7433,13 @@ const opDeleteStudioLifecycleConfig = "DeleteStudioLifecycleConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteStudioLifecycleConfigRequest method.
+//	req, resp := client.DeleteStudioLifecycleConfigRequest(params)
 //
-//    // Example sending a request using the DeleteStudioLifecycleConfigRequest method.
-//    req, resp := client.DeleteStudioLifecycleConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteStudioLifecycleConfig
 func (c *SageMaker) DeleteStudioLifecycleConfigRequest(input *DeleteStudioLifecycleConfigInput) (req *request.Request, output *DeleteStudioLifecycleConfigOutput) {
@@ -7198,11 +7474,12 @@ func (c *SageMaker) DeleteStudioLifecycleConfigRequest(input *DeleteStudioLifecy
 // API operation DeleteStudioLifecycleConfig for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteStudioLifecycleConfig
 func (c *SageMaker) DeleteStudioLifecycleConfig(input *DeleteStudioLifecycleConfigInput) (*DeleteStudioLifecycleConfigOutput, error) {
@@ -7242,14 +7519,13 @@ const opDeleteTags = "DeleteTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteTagsRequest method.
+//	req, resp := client.DeleteTagsRequest(params)
 //
-//    // Example sending a request using the DeleteTagsRequest method.
-//    req, resp := client.DeleteTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteTags
 func (c *SageMaker) DeleteTagsRequest(input *DeleteTagsInput) (req *request.Request, output *DeleteTagsOutput) {
@@ -7271,7 +7547,7 @@ func (c *SageMaker) DeleteTagsRequest(input *DeleteTagsInput) (req *request.Requ
 
 // DeleteTags API operation for Amazon SageMaker Service.
 //
-// Deletes the specified tags from an Amazon SageMaker resource.
+// Deletes the specified tags from an SageMaker resource.
 //
 // To list a resource's tags, use the ListTags API.
 //
@@ -7327,14 +7603,13 @@ const opDeleteTrial = "DeleteTrial"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteTrialRequest method.
+//	req, resp := client.DeleteTrialRequest(params)
 //
-//    // Example sending a request using the DeleteTrialRequest method.
-//    req, resp := client.DeleteTrialRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteTrial
 func (c *SageMaker) DeleteTrialRequest(input *DeleteTrialInput) (req *request.Request, output *DeleteTrialOutput) {
@@ -7367,8 +7642,8 @@ func (c *SageMaker) DeleteTrialRequest(input *DeleteTrialInput) (req *request.Re
 // API operation DeleteTrial for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteTrial
 func (c *SageMaker) DeleteTrial(input *DeleteTrialInput) (*DeleteTrialOutput, error) {
@@ -7408,14 +7683,13 @@ const opDeleteTrialComponent = "DeleteTrialComponent"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteTrialComponentRequest method.
+//	req, resp := client.DeleteTrialComponentRequest(params)
 //
-//    // Example sending a request using the DeleteTrialComponentRequest method.
-//    req, resp := client.DeleteTrialComponentRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteTrialComponent
 func (c *SageMaker) DeleteTrialComponentRequest(input *DeleteTrialComponentInput) (req *request.Request, output *DeleteTrialComponentOutput) {
@@ -7448,8 +7722,8 @@ func (c *SageMaker) DeleteTrialComponentRequest(input *DeleteTrialComponentInput
 // API operation DeleteTrialComponent for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteTrialComponent
 func (c *SageMaker) DeleteTrialComponent(input *DeleteTrialComponentInput) (*DeleteTrialComponentOutput, error) {
@@ -7489,14 +7763,13 @@ const opDeleteUserProfile = "DeleteUserProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteUserProfileRequest method.
+//	req, resp := client.DeleteUserProfileRequest(params)
 //
-//    // Example sending a request using the DeleteUserProfileRequest method.
-//    req, resp := client.DeleteUserProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteUserProfile
 func (c *SageMaker) DeleteUserProfileRequest(input *DeleteUserProfileInput) (req *request.Request, output *DeleteUserProfileOutput) {
@@ -7529,11 +7802,12 @@ func (c *SageMaker) DeleteUserProfileRequest(input *DeleteUserProfileInput) (req
 // API operation DeleteUserProfile for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteUserProfile
 func (c *SageMaker) DeleteUserProfile(input *DeleteUserProfileInput) (*DeleteUserProfileOutput, error) {
@@ -7573,14 +7847,13 @@ const opDeleteWorkforce = "DeleteWorkforce"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteWorkforceRequest method.
+//	req, resp := client.DeleteWorkforceRequest(params)
 //
-//    // Example sending a request using the DeleteWorkforceRequest method.
-//    req, resp := client.DeleteWorkforceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteWorkforce
 func (c *SageMaker) DeleteWorkforceRequest(input *DeleteWorkforceInput) (req *request.Request, output *DeleteWorkforceOutput) {
@@ -7657,14 +7930,13 @@ const opDeleteWorkteam = "DeleteWorkteam"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteWorkteamRequest method.
+//	req, resp := client.DeleteWorkteamRequest(params)
 //
-//    // Example sending a request using the DeleteWorkteamRequest method.
-//    req, resp := client.DeleteWorkteamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteWorkteam
 func (c *SageMaker) DeleteWorkteamRequest(input *DeleteWorkteamInput) (req *request.Request, output *DeleteWorkteamOutput) {
@@ -7695,9 +7967,9 @@ func (c *SageMaker) DeleteWorkteamRequest(input *DeleteWorkteamInput) (req *requ
 // API operation DeleteWorkteam for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeleteWorkteam
 func (c *SageMaker) DeleteWorkteam(input *DeleteWorkteamInput) (*DeleteWorkteamOutput, error) {
@@ -7737,14 +8009,13 @@ const opDeregisterDevices = "DeregisterDevices"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeregisterDevicesRequest method.
+//	req, resp := client.DeregisterDevicesRequest(params)
 //
-//    // Example sending a request using the DeregisterDevicesRequest method.
-//    req, resp := client.DeregisterDevicesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeregisterDevices
 func (c *SageMaker) DeregisterDevicesRequest(input *DeregisterDevicesInput) (req *request.Request, output *DeregisterDevicesOutput) {
@@ -7813,14 +8084,13 @@ const opDescribeAction = "DescribeAction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeActionRequest method.
+//	req, resp := client.DescribeActionRequest(params)
 //
-//    // Example sending a request using the DescribeActionRequest method.
-//    req, resp := client.DescribeActionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeAction
 func (c *SageMaker) DescribeActionRequest(input *DescribeActionInput) (req *request.Request, output *DescribeActionOutput) {
@@ -7851,8 +8121,8 @@ func (c *SageMaker) DescribeActionRequest(input *DescribeActionInput) (req *requ
 // API operation DescribeAction for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeAction
 func (c *SageMaker) DescribeAction(input *DescribeActionInput) (*DescribeActionOutput, error) {
@@ -7892,14 +8162,13 @@ const opDescribeAlgorithm = "DescribeAlgorithm"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAlgorithmRequest method.
+//	req, resp := client.DescribeAlgorithmRequest(params)
 //
-//    // Example sending a request using the DescribeAlgorithmRequest method.
-//    req, resp := client.DescribeAlgorithmRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeAlgorithm
 func (c *SageMaker) DescribeAlgorithmRequest(input *DescribeAlgorithmInput) (req *request.Request, output *DescribeAlgorithmOutput) {
@@ -7966,14 +8235,13 @@ const opDescribeApp = "DescribeApp"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAppRequest method.
+//	req, resp := client.DescribeAppRequest(params)
 //
-//    // Example sending a request using the DescribeAppRequest method.
-//    req, resp := client.DescribeAppRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeApp
 func (c *SageMaker) DescribeAppRequest(input *DescribeAppInput) (req *request.Request, output *DescribeAppOutput) {
@@ -8004,8 +8272,8 @@ func (c *SageMaker) DescribeAppRequest(input *DescribeAppInput) (req *request.Re
 // API operation DescribeApp for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeApp
 func (c *SageMaker) DescribeApp(input *DescribeAppInput) (*DescribeAppOutput, error) {
@@ -8045,14 +8313,13 @@ const opDescribeAppImageConfig = "DescribeAppImageConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAppImageConfigRequest method.
+//	req, resp := client.DescribeAppImageConfigRequest(params)
 //
-//    // Example sending a request using the DescribeAppImageConfigRequest method.
-//    req, resp := client.DescribeAppImageConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeAppImageConfig
 func (c *SageMaker) DescribeAppImageConfigRequest(input *DescribeAppImageConfigInput) (req *request.Request, output *DescribeAppImageConfigOutput) {
@@ -8083,8 +8350,8 @@ func (c *SageMaker) DescribeAppImageConfigRequest(input *DescribeAppImageConfigI
 // API operation DescribeAppImageConfig for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeAppImageConfig
 func (c *SageMaker) DescribeAppImageConfig(input *DescribeAppImageConfigInput) (*DescribeAppImageConfigOutput, error) {
@@ -8124,14 +8391,13 @@ const opDescribeArtifact = "DescribeArtifact"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeArtifactRequest method.
+//	req, resp := client.DescribeArtifactRequest(params)
 //
-//    // Example sending a request using the DescribeArtifactRequest method.
-//    req, resp := client.DescribeArtifactRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeArtifact
 func (c *SageMaker) DescribeArtifactRequest(input *DescribeArtifactInput) (req *request.Request, output *DescribeArtifactOutput) {
@@ -8162,8 +8428,8 @@ func (c *SageMaker) DescribeArtifactRequest(input *DescribeArtifactInput) (req *
 // API operation DescribeArtifact for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeArtifact
 func (c *SageMaker) DescribeArtifact(input *DescribeArtifactInput) (*DescribeArtifactOutput, error) {
@@ -8203,14 +8469,13 @@ const opDescribeAutoMLJob = "DescribeAutoMLJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAutoMLJobRequest method.
+//	req, resp := client.DescribeAutoMLJobRequest(params)
 //
-//    // Example sending a request using the DescribeAutoMLJobRequest method.
-//    req, resp := client.DescribeAutoMLJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeAutoMLJob
 func (c *SageMaker) DescribeAutoMLJobRequest(input *DescribeAutoMLJobInput) (req *request.Request, output *DescribeAutoMLJobOutput) {
@@ -8241,8 +8506,8 @@ func (c *SageMaker) DescribeAutoMLJobRequest(input *DescribeAutoMLJobInput) (req
 // API operation DescribeAutoMLJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeAutoMLJob
 func (c *SageMaker) DescribeAutoMLJob(input *DescribeAutoMLJobInput) (*DescribeAutoMLJobOutput, error) {
@@ -8282,14 +8547,13 @@ const opDescribeCodeRepository = "DescribeCodeRepository"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeCodeRepositoryRequest method.
+//	req, resp := client.DescribeCodeRepositoryRequest(params)
 //
-//    // Example sending a request using the DescribeCodeRepositoryRequest method.
-//    req, resp := client.DescribeCodeRepositoryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeCodeRepository
 func (c *SageMaker) DescribeCodeRepositoryRequest(input *DescribeCodeRepositoryInput) (req *request.Request, output *DescribeCodeRepositoryOutput) {
@@ -8356,14 +8620,13 @@ const opDescribeCompilationJob = "DescribeCompilationJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeCompilationJobRequest method.
+//	req, resp := client.DescribeCompilationJobRequest(params)
 //
-//    // Example sending a request using the DescribeCompilationJobRequest method.
-//    req, resp := client.DescribeCompilationJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeCompilationJob
 func (c *SageMaker) DescribeCompilationJobRequest(input *DescribeCompilationJobInput) (req *request.Request, output *DescribeCompilationJobOutput) {
@@ -8397,8 +8660,8 @@ func (c *SageMaker) DescribeCompilationJobRequest(input *DescribeCompilationJobI
 // API operation DescribeCompilationJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeCompilationJob
 func (c *SageMaker) DescribeCompilationJob(input *DescribeCompilationJobInput) (*DescribeCompilationJobOutput, error) {
@@ -8438,14 +8701,13 @@ const opDescribeContext = "DescribeContext"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeContextRequest method.
+//	req, resp := client.DescribeContextRequest(params)
 //
-//    // Example sending a request using the DescribeContextRequest method.
-//    req, resp := client.DescribeContextRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeContext
 func (c *SageMaker) DescribeContextRequest(input *DescribeContextInput) (req *request.Request, output *DescribeContextOutput) {
@@ -8476,8 +8738,8 @@ func (c *SageMaker) DescribeContextRequest(input *DescribeContextInput) (req *re
 // API operation DescribeContext for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeContext
 func (c *SageMaker) DescribeContext(input *DescribeContextInput) (*DescribeContextOutput, error) {
@@ -8517,14 +8779,13 @@ const opDescribeDataQualityJobDefinition = "DescribeDataQualityJobDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDataQualityJobDefinitionRequest method.
+//	req, resp := client.DescribeDataQualityJobDefinitionRequest(params)
 //
-//    // Example sending a request using the DescribeDataQualityJobDefinitionRequest method.
-//    req, resp := client.DescribeDataQualityJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeDataQualityJobDefinition
 func (c *SageMaker) DescribeDataQualityJobDefinitionRequest(input *DescribeDataQualityJobDefinitionInput) (req *request.Request, output *DescribeDataQualityJobDefinitionOutput) {
@@ -8555,8 +8816,8 @@ func (c *SageMaker) DescribeDataQualityJobDefinitionRequest(input *DescribeDataQ
 // API operation DescribeDataQualityJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeDataQualityJobDefinition
 func (c *SageMaker) DescribeDataQualityJobDefinition(input *DescribeDataQualityJobDefinitionInput) (*DescribeDataQualityJobDefinitionOutput, error) {
@@ -8596,14 +8857,13 @@ const opDescribeDevice = "DescribeDevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDeviceRequest method.
+//	req, resp := client.DescribeDeviceRequest(params)
 //
-//    // Example sending a request using the DescribeDeviceRequest method.
-//    req, resp := client.DescribeDeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeDevice
 func (c *SageMaker) DescribeDeviceRequest(input *DescribeDeviceInput) (req *request.Request, output *DescribeDeviceOutput) {
@@ -8634,8 +8894,8 @@ func (c *SageMaker) DescribeDeviceRequest(input *DescribeDeviceInput) (req *requ
 // API operation DescribeDevice for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeDevice
 func (c *SageMaker) DescribeDevice(input *DescribeDeviceInput) (*DescribeDeviceOutput, error) {
@@ -8675,14 +8935,13 @@ const opDescribeDeviceFleet = "DescribeDeviceFleet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDeviceFleetRequest method.
+//	req, resp := client.DescribeDeviceFleetRequest(params)
 //
-//    // Example sending a request using the DescribeDeviceFleetRequest method.
-//    req, resp := client.DescribeDeviceFleetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeDeviceFleet
 func (c *SageMaker) DescribeDeviceFleetRequest(input *DescribeDeviceFleetInput) (req *request.Request, output *DescribeDeviceFleetOutput) {
@@ -8713,8 +8972,8 @@ func (c *SageMaker) DescribeDeviceFleetRequest(input *DescribeDeviceFleetInput) 
 // API operation DescribeDeviceFleet for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeDeviceFleet
 func (c *SageMaker) DescribeDeviceFleet(input *DescribeDeviceFleetInput) (*DescribeDeviceFleetOutput, error) {
@@ -8754,14 +9013,13 @@ const opDescribeDomain = "DescribeDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDomainRequest method.
+//	req, resp := client.DescribeDomainRequest(params)
 //
-//    // Example sending a request using the DescribeDomainRequest method.
-//    req, resp := client.DescribeDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeDomain
 func (c *SageMaker) DescribeDomainRequest(input *DescribeDomainInput) (req *request.Request, output *DescribeDomainOutput) {
@@ -8792,8 +9050,8 @@ func (c *SageMaker) DescribeDomainRequest(input *DescribeDomainInput) (req *requ
 // API operation DescribeDomain for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeDomain
 func (c *SageMaker) DescribeDomain(input *DescribeDomainInput) (*DescribeDomainOutput, error) {
@@ -8817,6 +9075,84 @@ func (c *SageMaker) DescribeDomainWithContext(ctx aws.Context, input *DescribeDo
 	return out, req.Send()
 }
 
+const opDescribeEdgeDeploymentPlan = "DescribeEdgeDeploymentPlan"
+
+// DescribeEdgeDeploymentPlanRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeEdgeDeploymentPlan operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeEdgeDeploymentPlan for more information on using the DescribeEdgeDeploymentPlan
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeEdgeDeploymentPlanRequest method.
+//	req, resp := client.DescribeEdgeDeploymentPlanRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeEdgeDeploymentPlan
+func (c *SageMaker) DescribeEdgeDeploymentPlanRequest(input *DescribeEdgeDeploymentPlanInput) (req *request.Request, output *DescribeEdgeDeploymentPlanOutput) {
+	op := &request.Operation{
+		Name:       opDescribeEdgeDeploymentPlan,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeEdgeDeploymentPlanInput{}
+	}
+
+	output = &DescribeEdgeDeploymentPlanOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeEdgeDeploymentPlan API operation for Amazon SageMaker Service.
+//
+// Describes an edge deployment plan with deployment status per stage.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation DescribeEdgeDeploymentPlan for usage and error information.
+//
+// Returned Error Types:
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeEdgeDeploymentPlan
+func (c *SageMaker) DescribeEdgeDeploymentPlan(input *DescribeEdgeDeploymentPlanInput) (*DescribeEdgeDeploymentPlanOutput, error) {
+	req, out := c.DescribeEdgeDeploymentPlanRequest(input)
+	return out, req.Send()
+}
+
+// DescribeEdgeDeploymentPlanWithContext is the same as DescribeEdgeDeploymentPlan with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeEdgeDeploymentPlan for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) DescribeEdgeDeploymentPlanWithContext(ctx aws.Context, input *DescribeEdgeDeploymentPlanInput, opts ...request.Option) (*DescribeEdgeDeploymentPlanOutput, error) {
+	req, out := c.DescribeEdgeDeploymentPlanRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeEdgePackagingJob = "DescribeEdgePackagingJob"
 
 // DescribeEdgePackagingJobRequest generates a "aws/request.Request" representing the
@@ -8833,14 +9169,13 @@ const opDescribeEdgePackagingJob = "DescribeEdgePackagingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeEdgePackagingJobRequest method.
+//	req, resp := client.DescribeEdgePackagingJobRequest(params)
 //
-//    // Example sending a request using the DescribeEdgePackagingJobRequest method.
-//    req, resp := client.DescribeEdgePackagingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeEdgePackagingJob
 func (c *SageMaker) DescribeEdgePackagingJobRequest(input *DescribeEdgePackagingJobInput) (req *request.Request, output *DescribeEdgePackagingJobOutput) {
@@ -8871,8 +9206,8 @@ func (c *SageMaker) DescribeEdgePackagingJobRequest(input *DescribeEdgePackaging
 // API operation DescribeEdgePackagingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeEdgePackagingJob
 func (c *SageMaker) DescribeEdgePackagingJob(input *DescribeEdgePackagingJobInput) (*DescribeEdgePackagingJobOutput, error) {
@@ -8912,14 +9247,13 @@ const opDescribeEndpoint = "DescribeEndpoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeEndpointRequest method.
+//	req, resp := client.DescribeEndpointRequest(params)
 //
-//    // Example sending a request using the DescribeEndpointRequest method.
-//    req, resp := client.DescribeEndpointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeEndpoint
 func (c *SageMaker) DescribeEndpointRequest(input *DescribeEndpointInput) (req *request.Request, output *DescribeEndpointOutput) {
@@ -8986,14 +9320,13 @@ const opDescribeEndpointConfig = "DescribeEndpointConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeEndpointConfigRequest method.
+//	req, resp := client.DescribeEndpointConfigRequest(params)
 //
-//    // Example sending a request using the DescribeEndpointConfigRequest method.
-//    req, resp := client.DescribeEndpointConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeEndpointConfig
 func (c *SageMaker) DescribeEndpointConfigRequest(input *DescribeEndpointConfigInput) (req *request.Request, output *DescribeEndpointConfigOutput) {
@@ -9061,14 +9394,13 @@ const opDescribeExperiment = "DescribeExperiment"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeExperimentRequest method.
+//	req, resp := client.DescribeExperimentRequest(params)
 //
-//    // Example sending a request using the DescribeExperimentRequest method.
-//    req, resp := client.DescribeExperimentRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeExperiment
 func (c *SageMaker) DescribeExperimentRequest(input *DescribeExperimentInput) (req *request.Request, output *DescribeExperimentOutput) {
@@ -9099,8 +9431,8 @@ func (c *SageMaker) DescribeExperimentRequest(input *DescribeExperimentInput) (r
 // API operation DescribeExperiment for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeExperiment
 func (c *SageMaker) DescribeExperiment(input *DescribeExperimentInput) (*DescribeExperimentOutput, error) {
@@ -9140,14 +9472,13 @@ const opDescribeFeatureGroup = "DescribeFeatureGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeFeatureGroupRequest method.
+//	req, resp := client.DescribeFeatureGroupRequest(params)
 //
-//    // Example sending a request using the DescribeFeatureGroupRequest method.
-//    req, resp := client.DescribeFeatureGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeFeatureGroup
 func (c *SageMaker) DescribeFeatureGroupRequest(input *DescribeFeatureGroupInput) (req *request.Request, output *DescribeFeatureGroupOutput) {
@@ -9180,8 +9511,8 @@ func (c *SageMaker) DescribeFeatureGroupRequest(input *DescribeFeatureGroupInput
 // API operation DescribeFeatureGroup for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeFeatureGroup
 func (c *SageMaker) DescribeFeatureGroup(input *DescribeFeatureGroupInput) (*DescribeFeatureGroupOutput, error) {
@@ -9205,6 +9536,84 @@ func (c *SageMaker) DescribeFeatureGroupWithContext(ctx aws.Context, input *Desc
 	return out, req.Send()
 }
 
+const opDescribeFeatureMetadata = "DescribeFeatureMetadata"
+
+// DescribeFeatureMetadataRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeFeatureMetadata operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeFeatureMetadata for more information on using the DescribeFeatureMetadata
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeFeatureMetadataRequest method.
+//	req, resp := client.DescribeFeatureMetadataRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeFeatureMetadata
+func (c *SageMaker) DescribeFeatureMetadataRequest(input *DescribeFeatureMetadataInput) (req *request.Request, output *DescribeFeatureMetadataOutput) {
+	op := &request.Operation{
+		Name:       opDescribeFeatureMetadata,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeFeatureMetadataInput{}
+	}
+
+	output = &DescribeFeatureMetadataOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeFeatureMetadata API operation for Amazon SageMaker Service.
+//
+// Shows the metadata for a feature within a feature group.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation DescribeFeatureMetadata for usage and error information.
+//
+// Returned Error Types:
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeFeatureMetadata
+func (c *SageMaker) DescribeFeatureMetadata(input *DescribeFeatureMetadataInput) (*DescribeFeatureMetadataOutput, error) {
+	req, out := c.DescribeFeatureMetadataRequest(input)
+	return out, req.Send()
+}
+
+// DescribeFeatureMetadataWithContext is the same as DescribeFeatureMetadata with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeFeatureMetadata for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) DescribeFeatureMetadataWithContext(ctx aws.Context, input *DescribeFeatureMetadataInput, opts ...request.Option) (*DescribeFeatureMetadataOutput, error) {
+	req, out := c.DescribeFeatureMetadataRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeFlowDefinition = "DescribeFlowDefinition"
 
 // DescribeFlowDefinitionRequest generates a "aws/request.Request" representing the
@@ -9221,14 +9630,13 @@ const opDescribeFlowDefinition = "DescribeFlowDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeFlowDefinitionRequest method.
+//	req, resp := client.DescribeFlowDefinitionRequest(params)
 //
-//    // Example sending a request using the DescribeFlowDefinitionRequest method.
-//    req, resp := client.DescribeFlowDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeFlowDefinition
 func (c *SageMaker) DescribeFlowDefinitionRequest(input *DescribeFlowDefinitionInput) (req *request.Request, output *DescribeFlowDefinitionOutput) {
@@ -9259,8 +9667,8 @@ func (c *SageMaker) DescribeFlowDefinitionRequest(input *DescribeFlowDefinitionI
 // API operation DescribeFlowDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeFlowDefinition
 func (c *SageMaker) DescribeFlowDefinition(input *DescribeFlowDefinitionInput) (*DescribeFlowDefinitionOutput, error) {
@@ -9300,14 +9708,13 @@ const opDescribeHumanTaskUi = "DescribeHumanTaskUi"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeHumanTaskUiRequest method.
+//	req, resp := client.DescribeHumanTaskUiRequest(params)
 //
-//    // Example sending a request using the DescribeHumanTaskUiRequest method.
-//    req, resp := client.DescribeHumanTaskUiRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeHumanTaskUi
 func (c *SageMaker) DescribeHumanTaskUiRequest(input *DescribeHumanTaskUiInput) (req *request.Request, output *DescribeHumanTaskUiOutput) {
@@ -9339,8 +9746,8 @@ func (c *SageMaker) DescribeHumanTaskUiRequest(input *DescribeHumanTaskUiInput) 
 // API operation DescribeHumanTaskUi for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeHumanTaskUi
 func (c *SageMaker) DescribeHumanTaskUi(input *DescribeHumanTaskUiInput) (*DescribeHumanTaskUiOutput, error) {
@@ -9380,14 +9787,13 @@ const opDescribeHyperParameterTuningJob = "DescribeHyperParameterTuningJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeHyperParameterTuningJobRequest method.
+//	req, resp := client.DescribeHyperParameterTuningJobRequest(params)
 //
-//    // Example sending a request using the DescribeHyperParameterTuningJobRequest method.
-//    req, resp := client.DescribeHyperParameterTuningJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeHyperParameterTuningJob
 func (c *SageMaker) DescribeHyperParameterTuningJobRequest(input *DescribeHyperParameterTuningJobInput) (req *request.Request, output *DescribeHyperParameterTuningJobOutput) {
@@ -9418,8 +9824,8 @@ func (c *SageMaker) DescribeHyperParameterTuningJobRequest(input *DescribeHyperP
 // API operation DescribeHyperParameterTuningJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeHyperParameterTuningJob
 func (c *SageMaker) DescribeHyperParameterTuningJob(input *DescribeHyperParameterTuningJobInput) (*DescribeHyperParameterTuningJobOutput, error) {
@@ -9459,14 +9865,13 @@ const opDescribeImage = "DescribeImage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeImageRequest method.
+//	req, resp := client.DescribeImageRequest(params)
 //
-//    // Example sending a request using the DescribeImageRequest method.
-//    req, resp := client.DescribeImageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeImage
 func (c *SageMaker) DescribeImageRequest(input *DescribeImageInput) (req *request.Request, output *DescribeImageOutput) {
@@ -9497,8 +9902,8 @@ func (c *SageMaker) DescribeImageRequest(input *DescribeImageInput) (req *reques
 // API operation DescribeImage for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeImage
 func (c *SageMaker) DescribeImage(input *DescribeImageInput) (*DescribeImageOutput, error) {
@@ -9538,14 +9943,13 @@ const opDescribeImageVersion = "DescribeImageVersion"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeImageVersionRequest method.
+//	req, resp := client.DescribeImageVersionRequest(params)
 //
-//    // Example sending a request using the DescribeImageVersionRequest method.
-//    req, resp := client.DescribeImageVersionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeImageVersion
 func (c *SageMaker) DescribeImageVersionRequest(input *DescribeImageVersionInput) (req *request.Request, output *DescribeImageVersionOutput) {
@@ -9576,8 +9980,8 @@ func (c *SageMaker) DescribeImageVersionRequest(input *DescribeImageVersionInput
 // API operation DescribeImageVersion for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeImageVersion
 func (c *SageMaker) DescribeImageVersion(input *DescribeImageVersionInput) (*DescribeImageVersionOutput, error) {
@@ -9617,14 +10021,13 @@ const opDescribeInferenceRecommendationsJob = "DescribeInferenceRecommendationsJ
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeInferenceRecommendationsJobRequest method.
+//	req, resp := client.DescribeInferenceRecommendationsJobRequest(params)
 //
-//    // Example sending a request using the DescribeInferenceRecommendationsJobRequest method.
-//    req, resp := client.DescribeInferenceRecommendationsJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeInferenceRecommendationsJob
 func (c *SageMaker) DescribeInferenceRecommendationsJobRequest(input *DescribeInferenceRecommendationsJobInput) (req *request.Request, output *DescribeInferenceRecommendationsJobOutput) {
@@ -9656,8 +10059,8 @@ func (c *SageMaker) DescribeInferenceRecommendationsJobRequest(input *DescribeIn
 // API operation DescribeInferenceRecommendationsJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeInferenceRecommendationsJob
 func (c *SageMaker) DescribeInferenceRecommendationsJob(input *DescribeInferenceRecommendationsJobInput) (*DescribeInferenceRecommendationsJobOutput, error) {
@@ -9697,14 +10100,13 @@ const opDescribeLabelingJob = "DescribeLabelingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeLabelingJobRequest method.
+//	req, resp := client.DescribeLabelingJobRequest(params)
 //
-//    // Example sending a request using the DescribeLabelingJobRequest method.
-//    req, resp := client.DescribeLabelingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeLabelingJob
 func (c *SageMaker) DescribeLabelingJobRequest(input *DescribeLabelingJobInput) (req *request.Request, output *DescribeLabelingJobOutput) {
@@ -9735,8 +10137,8 @@ func (c *SageMaker) DescribeLabelingJobRequest(input *DescribeLabelingJobInput) 
 // API operation DescribeLabelingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeLabelingJob
 func (c *SageMaker) DescribeLabelingJob(input *DescribeLabelingJobInput) (*DescribeLabelingJobOutput, error) {
@@ -9776,14 +10178,13 @@ const opDescribeLineageGroup = "DescribeLineageGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeLineageGroupRequest method.
+//	req, resp := client.DescribeLineageGroupRequest(params)
 //
-//    // Example sending a request using the DescribeLineageGroupRequest method.
-//    req, resp := client.DescribeLineageGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeLineageGroup
 func (c *SageMaker) DescribeLineageGroupRequest(input *DescribeLineageGroupInput) (req *request.Request, output *DescribeLineageGroupOutput) {
@@ -9816,8 +10217,8 @@ func (c *SageMaker) DescribeLineageGroupRequest(input *DescribeLineageGroupInput
 // API operation DescribeLineageGroup for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeLineageGroup
 func (c *SageMaker) DescribeLineageGroup(input *DescribeLineageGroupInput) (*DescribeLineageGroupOutput, error) {
@@ -9857,14 +10258,13 @@ const opDescribeModel = "DescribeModel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeModelRequest method.
+//	req, resp := client.DescribeModelRequest(params)
 //
-//    // Example sending a request using the DescribeModelRequest method.
-//    req, resp := client.DescribeModelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeModel
 func (c *SageMaker) DescribeModelRequest(input *DescribeModelInput) (req *request.Request, output *DescribeModelOutput) {
@@ -9931,14 +10331,13 @@ const opDescribeModelBiasJobDefinition = "DescribeModelBiasJobDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeModelBiasJobDefinitionRequest method.
+//	req, resp := client.DescribeModelBiasJobDefinitionRequest(params)
 //
-//    // Example sending a request using the DescribeModelBiasJobDefinitionRequest method.
-//    req, resp := client.DescribeModelBiasJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeModelBiasJobDefinition
 func (c *SageMaker) DescribeModelBiasJobDefinitionRequest(input *DescribeModelBiasJobDefinitionInput) (req *request.Request, output *DescribeModelBiasJobDefinitionOutput) {
@@ -9969,8 +10368,8 @@ func (c *SageMaker) DescribeModelBiasJobDefinitionRequest(input *DescribeModelBi
 // API operation DescribeModelBiasJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeModelBiasJobDefinition
 func (c *SageMaker) DescribeModelBiasJobDefinition(input *DescribeModelBiasJobDefinitionInput) (*DescribeModelBiasJobDefinitionOutput, error) {
@@ -10010,14 +10409,13 @@ const opDescribeModelExplainabilityJobDefinition = "DescribeModelExplainabilityJ
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeModelExplainabilityJobDefinitionRequest method.
+//	req, resp := client.DescribeModelExplainabilityJobDefinitionRequest(params)
 //
-//    // Example sending a request using the DescribeModelExplainabilityJobDefinitionRequest method.
-//    req, resp := client.DescribeModelExplainabilityJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeModelExplainabilityJobDefinition
 func (c *SageMaker) DescribeModelExplainabilityJobDefinitionRequest(input *DescribeModelExplainabilityJobDefinitionInput) (req *request.Request, output *DescribeModelExplainabilityJobDefinitionOutput) {
@@ -10048,8 +10446,8 @@ func (c *SageMaker) DescribeModelExplainabilityJobDefinitionRequest(input *Descr
 // API operation DescribeModelExplainabilityJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeModelExplainabilityJobDefinition
 func (c *SageMaker) DescribeModelExplainabilityJobDefinition(input *DescribeModelExplainabilityJobDefinitionInput) (*DescribeModelExplainabilityJobDefinitionOutput, error) {
@@ -10089,14 +10487,13 @@ const opDescribeModelPackage = "DescribeModelPackage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeModelPackageRequest method.
+//	req, resp := client.DescribeModelPackageRequest(params)
 //
-//    // Example sending a request using the DescribeModelPackageRequest method.
-//    req, resp := client.DescribeModelPackageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeModelPackage
 func (c *SageMaker) DescribeModelPackageRequest(input *DescribeModelPackageInput) (req *request.Request, output *DescribeModelPackageOutput) {
@@ -10167,14 +10564,13 @@ const opDescribeModelPackageGroup = "DescribeModelPackageGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeModelPackageGroupRequest method.
+//	req, resp := client.DescribeModelPackageGroupRequest(params)
 //
-//    // Example sending a request using the DescribeModelPackageGroupRequest method.
-//    req, resp := client.DescribeModelPackageGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeModelPackageGroup
 func (c *SageMaker) DescribeModelPackageGroupRequest(input *DescribeModelPackageGroupInput) (req *request.Request, output *DescribeModelPackageGroupOutput) {
@@ -10241,14 +10637,13 @@ const opDescribeModelQualityJobDefinition = "DescribeModelQualityJobDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeModelQualityJobDefinitionRequest method.
+//	req, resp := client.DescribeModelQualityJobDefinitionRequest(params)
 //
-//    // Example sending a request using the DescribeModelQualityJobDefinitionRequest method.
-//    req, resp := client.DescribeModelQualityJobDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeModelQualityJobDefinition
 func (c *SageMaker) DescribeModelQualityJobDefinitionRequest(input *DescribeModelQualityJobDefinitionInput) (req *request.Request, output *DescribeModelQualityJobDefinitionOutput) {
@@ -10279,8 +10674,8 @@ func (c *SageMaker) DescribeModelQualityJobDefinitionRequest(input *DescribeMode
 // API operation DescribeModelQualityJobDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeModelQualityJobDefinition
 func (c *SageMaker) DescribeModelQualityJobDefinition(input *DescribeModelQualityJobDefinitionInput) (*DescribeModelQualityJobDefinitionOutput, error) {
@@ -10320,14 +10715,13 @@ const opDescribeMonitoringSchedule = "DescribeMonitoringSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeMonitoringScheduleRequest method.
+//	req, resp := client.DescribeMonitoringScheduleRequest(params)
 //
-//    // Example sending a request using the DescribeMonitoringScheduleRequest method.
-//    req, resp := client.DescribeMonitoringScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeMonitoringSchedule
 func (c *SageMaker) DescribeMonitoringScheduleRequest(input *DescribeMonitoringScheduleInput) (req *request.Request, output *DescribeMonitoringScheduleOutput) {
@@ -10358,8 +10752,8 @@ func (c *SageMaker) DescribeMonitoringScheduleRequest(input *DescribeMonitoringS
 // API operation DescribeMonitoringSchedule for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeMonitoringSchedule
 func (c *SageMaker) DescribeMonitoringSchedule(input *DescribeMonitoringScheduleInput) (*DescribeMonitoringScheduleOutput, error) {
@@ -10399,14 +10793,13 @@ const opDescribeNotebookInstance = "DescribeNotebookInstance"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeNotebookInstanceRequest method.
+//	req, resp := client.DescribeNotebookInstanceRequest(params)
 //
-//    // Example sending a request using the DescribeNotebookInstanceRequest method.
-//    req, resp := client.DescribeNotebookInstanceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeNotebookInstance
 func (c *SageMaker) DescribeNotebookInstanceRequest(input *DescribeNotebookInstanceInput) (req *request.Request, output *DescribeNotebookInstanceOutput) {
@@ -10473,14 +10866,13 @@ const opDescribeNotebookInstanceLifecycleConfig = "DescribeNotebookInstanceLifec
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeNotebookInstanceLifecycleConfigRequest method.
+//	req, resp := client.DescribeNotebookInstanceLifecycleConfigRequest(params)
 //
-//    // Example sending a request using the DescribeNotebookInstanceLifecycleConfigRequest method.
-//    req, resp := client.DescribeNotebookInstanceLifecycleConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeNotebookInstanceLifecycleConfig
 func (c *SageMaker) DescribeNotebookInstanceLifecycleConfigRequest(input *DescribeNotebookInstanceLifecycleConfigInput) (req *request.Request, output *DescribeNotebookInstanceLifecycleConfigOutput) {
@@ -10550,14 +10942,13 @@ const opDescribePipeline = "DescribePipeline"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribePipelineRequest method.
+//	req, resp := client.DescribePipelineRequest(params)
 //
-//    // Example sending a request using the DescribePipelineRequest method.
-//    req, resp := client.DescribePipelineRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribePipeline
 func (c *SageMaker) DescribePipelineRequest(input *DescribePipelineInput) (req *request.Request, output *DescribePipelineOutput) {
@@ -10588,8 +10979,8 @@ func (c *SageMaker) DescribePipelineRequest(input *DescribePipelineInput) (req *
 // API operation DescribePipeline for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribePipeline
 func (c *SageMaker) DescribePipeline(input *DescribePipelineInput) (*DescribePipelineOutput, error) {
@@ -10629,14 +11020,13 @@ const opDescribePipelineDefinitionForExecution = "DescribePipelineDefinitionForE
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribePipelineDefinitionForExecutionRequest method.
+//	req, resp := client.DescribePipelineDefinitionForExecutionRequest(params)
 //
-//    // Example sending a request using the DescribePipelineDefinitionForExecutionRequest method.
-//    req, resp := client.DescribePipelineDefinitionForExecutionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribePipelineDefinitionForExecution
 func (c *SageMaker) DescribePipelineDefinitionForExecutionRequest(input *DescribePipelineDefinitionForExecutionInput) (req *request.Request, output *DescribePipelineDefinitionForExecutionOutput) {
@@ -10667,8 +11057,8 @@ func (c *SageMaker) DescribePipelineDefinitionForExecutionRequest(input *Describ
 // API operation DescribePipelineDefinitionForExecution for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribePipelineDefinitionForExecution
 func (c *SageMaker) DescribePipelineDefinitionForExecution(input *DescribePipelineDefinitionForExecutionInput) (*DescribePipelineDefinitionForExecutionOutput, error) {
@@ -10708,14 +11098,13 @@ const opDescribePipelineExecution = "DescribePipelineExecution"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribePipelineExecutionRequest method.
+//	req, resp := client.DescribePipelineExecutionRequest(params)
 //
-//    // Example sending a request using the DescribePipelineExecutionRequest method.
-//    req, resp := client.DescribePipelineExecutionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribePipelineExecution
 func (c *SageMaker) DescribePipelineExecutionRequest(input *DescribePipelineExecutionInput) (req *request.Request, output *DescribePipelineExecutionOutput) {
@@ -10746,8 +11135,8 @@ func (c *SageMaker) DescribePipelineExecutionRequest(input *DescribePipelineExec
 // API operation DescribePipelineExecution for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribePipelineExecution
 func (c *SageMaker) DescribePipelineExecution(input *DescribePipelineExecutionInput) (*DescribePipelineExecutionOutput, error) {
@@ -10787,14 +11176,13 @@ const opDescribeProcessingJob = "DescribeProcessingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeProcessingJobRequest method.
+//	req, resp := client.DescribeProcessingJobRequest(params)
 //
-//    // Example sending a request using the DescribeProcessingJobRequest method.
-//    req, resp := client.DescribeProcessingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeProcessingJob
 func (c *SageMaker) DescribeProcessingJobRequest(input *DescribeProcessingJobInput) (req *request.Request, output *DescribeProcessingJobOutput) {
@@ -10825,8 +11213,8 @@ func (c *SageMaker) DescribeProcessingJobRequest(input *DescribeProcessingJobInp
 // API operation DescribeProcessingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeProcessingJob
 func (c *SageMaker) DescribeProcessingJob(input *DescribeProcessingJobInput) (*DescribeProcessingJobOutput, error) {
@@ -10866,14 +11254,13 @@ const opDescribeProject = "DescribeProject"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeProjectRequest method.
+//	req, resp := client.DescribeProjectRequest(params)
 //
-//    // Example sending a request using the DescribeProjectRequest method.
-//    req, resp := client.DescribeProjectRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeProject
 func (c *SageMaker) DescribeProjectRequest(input *DescribeProjectInput) (req *request.Request, output *DescribeProjectOutput) {
@@ -10940,14 +11327,13 @@ const opDescribeStudioLifecycleConfig = "DescribeStudioLifecycleConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStudioLifecycleConfigRequest method.
+//	req, resp := client.DescribeStudioLifecycleConfigRequest(params)
 //
-//    // Example sending a request using the DescribeStudioLifecycleConfigRequest method.
-//    req, resp := client.DescribeStudioLifecycleConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeStudioLifecycleConfig
 func (c *SageMaker) DescribeStudioLifecycleConfigRequest(input *DescribeStudioLifecycleConfigInput) (req *request.Request, output *DescribeStudioLifecycleConfigOutput) {
@@ -10978,8 +11364,8 @@ func (c *SageMaker) DescribeStudioLifecycleConfigRequest(input *DescribeStudioLi
 // API operation DescribeStudioLifecycleConfig for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeStudioLifecycleConfig
 func (c *SageMaker) DescribeStudioLifecycleConfig(input *DescribeStudioLifecycleConfigInput) (*DescribeStudioLifecycleConfigOutput, error) {
@@ -11019,14 +11405,13 @@ const opDescribeSubscribedWorkteam = "DescribeSubscribedWorkteam"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeSubscribedWorkteamRequest method.
+//	req, resp := client.DescribeSubscribedWorkteamRequest(params)
 //
-//    // Example sending a request using the DescribeSubscribedWorkteamRequest method.
-//    req, resp := client.DescribeSubscribedWorkteamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeSubscribedWorkteam
 func (c *SageMaker) DescribeSubscribedWorkteamRequest(input *DescribeSubscribedWorkteamInput) (req *request.Request, output *DescribeSubscribedWorkteamOutput) {
@@ -11094,14 +11479,13 @@ const opDescribeTrainingJob = "DescribeTrainingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTrainingJobRequest method.
+//	req, resp := client.DescribeTrainingJobRequest(params)
 //
-//    // Example sending a request using the DescribeTrainingJobRequest method.
-//    req, resp := client.DescribeTrainingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeTrainingJob
 func (c *SageMaker) DescribeTrainingJobRequest(input *DescribeTrainingJobInput) (req *request.Request, output *DescribeTrainingJobOutput) {
@@ -11137,8 +11521,8 @@ func (c *SageMaker) DescribeTrainingJobRequest(input *DescribeTrainingJobInput) 
 // API operation DescribeTrainingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeTrainingJob
 func (c *SageMaker) DescribeTrainingJob(input *DescribeTrainingJobInput) (*DescribeTrainingJobOutput, error) {
@@ -11178,14 +11562,13 @@ const opDescribeTransformJob = "DescribeTransformJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTransformJobRequest method.
+//	req, resp := client.DescribeTransformJobRequest(params)
 //
-//    // Example sending a request using the DescribeTransformJobRequest method.
-//    req, resp := client.DescribeTransformJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeTransformJob
 func (c *SageMaker) DescribeTransformJobRequest(input *DescribeTransformJobInput) (req *request.Request, output *DescribeTransformJobOutput) {
@@ -11216,8 +11599,8 @@ func (c *SageMaker) DescribeTransformJobRequest(input *DescribeTransformJobInput
 // API operation DescribeTransformJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeTransformJob
 func (c *SageMaker) DescribeTransformJob(input *DescribeTransformJobInput) (*DescribeTransformJobOutput, error) {
@@ -11257,14 +11640,13 @@ const opDescribeTrial = "DescribeTrial"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTrialRequest method.
+//	req, resp := client.DescribeTrialRequest(params)
 //
-//    // Example sending a request using the DescribeTrialRequest method.
-//    req, resp := client.DescribeTrialRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeTrial
 func (c *SageMaker) DescribeTrialRequest(input *DescribeTrialInput) (req *request.Request, output *DescribeTrialOutput) {
@@ -11295,8 +11677,8 @@ func (c *SageMaker) DescribeTrialRequest(input *DescribeTrialInput) (req *reques
 // API operation DescribeTrial for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeTrial
 func (c *SageMaker) DescribeTrial(input *DescribeTrialInput) (*DescribeTrialOutput, error) {
@@ -11336,14 +11718,13 @@ const opDescribeTrialComponent = "DescribeTrialComponent"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTrialComponentRequest method.
+//	req, resp := client.DescribeTrialComponentRequest(params)
 //
-//    // Example sending a request using the DescribeTrialComponentRequest method.
-//    req, resp := client.DescribeTrialComponentRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeTrialComponent
 func (c *SageMaker) DescribeTrialComponentRequest(input *DescribeTrialComponentInput) (req *request.Request, output *DescribeTrialComponentOutput) {
@@ -11374,8 +11755,8 @@ func (c *SageMaker) DescribeTrialComponentRequest(input *DescribeTrialComponentI
 // API operation DescribeTrialComponent for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeTrialComponent
 func (c *SageMaker) DescribeTrialComponent(input *DescribeTrialComponentInput) (*DescribeTrialComponentOutput, error) {
@@ -11415,14 +11796,13 @@ const opDescribeUserProfile = "DescribeUserProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeUserProfileRequest method.
+//	req, resp := client.DescribeUserProfileRequest(params)
 //
-//    // Example sending a request using the DescribeUserProfileRequest method.
-//    req, resp := client.DescribeUserProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeUserProfile
 func (c *SageMaker) DescribeUserProfileRequest(input *DescribeUserProfileInput) (req *request.Request, output *DescribeUserProfileOutput) {
@@ -11453,8 +11833,8 @@ func (c *SageMaker) DescribeUserProfileRequest(input *DescribeUserProfileInput) 
 // API operation DescribeUserProfile for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeUserProfile
 func (c *SageMaker) DescribeUserProfile(input *DescribeUserProfileInput) (*DescribeUserProfileOutput, error) {
@@ -11494,14 +11874,13 @@ const opDescribeWorkforce = "DescribeWorkforce"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeWorkforceRequest method.
+//	req, resp := client.DescribeWorkforceRequest(params)
 //
-//    // Example sending a request using the DescribeWorkforceRequest method.
-//    req, resp := client.DescribeWorkforceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeWorkforce
 func (c *SageMaker) DescribeWorkforceRequest(input *DescribeWorkforceInput) (req *request.Request, output *DescribeWorkforceOutput) {
@@ -11573,14 +11952,13 @@ const opDescribeWorkteam = "DescribeWorkteam"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeWorkteamRequest method.
+//	req, resp := client.DescribeWorkteamRequest(params)
 //
-//    // Example sending a request using the DescribeWorkteamRequest method.
-//    req, resp := client.DescribeWorkteamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeWorkteam
 func (c *SageMaker) DescribeWorkteamRequest(input *DescribeWorkteamInput) (req *request.Request, output *DescribeWorkteamOutput) {
@@ -11649,14 +12027,13 @@ const opDisableSagemakerServicecatalogPortfolio = "DisableSagemakerServicecatalo
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisableSagemakerServicecatalogPortfolioRequest method.
+//	req, resp := client.DisableSagemakerServicecatalogPortfolioRequest(params)
 //
-//    // Example sending a request using the DisableSagemakerServicecatalogPortfolioRequest method.
-//    req, resp := client.DisableSagemakerServicecatalogPortfolioRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DisableSagemakerServicecatalogPortfolio
 func (c *SageMaker) DisableSagemakerServicecatalogPortfolioRequest(input *DisableSagemakerServicecatalogPortfolioInput) (req *request.Request, output *DisableSagemakerServicecatalogPortfolioOutput) {
@@ -11725,14 +12102,13 @@ const opDisassociateTrialComponent = "DisassociateTrialComponent"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateTrialComponentRequest method.
+//	req, resp := client.DisassociateTrialComponentRequest(params)
 //
-//    // Example sending a request using the DisassociateTrialComponentRequest method.
-//    req, resp := client.DisassociateTrialComponentRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DisassociateTrialComponent
 func (c *SageMaker) DisassociateTrialComponentRequest(input *DisassociateTrialComponentInput) (req *request.Request, output *DisassociateTrialComponentOutput) {
@@ -11771,8 +12147,8 @@ func (c *SageMaker) DisassociateTrialComponentRequest(input *DisassociateTrialCo
 // API operation DisassociateTrialComponent for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DisassociateTrialComponent
 func (c *SageMaker) DisassociateTrialComponent(input *DisassociateTrialComponentInput) (*DisassociateTrialComponentOutput, error) {
@@ -11812,14 +12188,13 @@ const opEnableSagemakerServicecatalogPortfolio = "EnableSagemakerServicecatalogP
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the EnableSagemakerServicecatalogPortfolioRequest method.
+//	req, resp := client.EnableSagemakerServicecatalogPortfolioRequest(params)
 //
-//    // Example sending a request using the EnableSagemakerServicecatalogPortfolioRequest method.
-//    req, resp := client.EnableSagemakerServicecatalogPortfolioRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/EnableSagemakerServicecatalogPortfolio
 func (c *SageMaker) EnableSagemakerServicecatalogPortfolioRequest(input *EnableSagemakerServicecatalogPortfolioInput) (req *request.Request, output *EnableSagemakerServicecatalogPortfolioOutput) {
@@ -11888,14 +12263,13 @@ const opGetDeviceFleetReport = "GetDeviceFleetReport"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDeviceFleetReportRequest method.
+//	req, resp := client.GetDeviceFleetReportRequest(params)
 //
-//    // Example sending a request using the GetDeviceFleetReportRequest method.
-//    req, resp := client.GetDeviceFleetReportRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/GetDeviceFleetReport
 func (c *SageMaker) GetDeviceFleetReportRequest(input *GetDeviceFleetReportInput) (req *request.Request, output *GetDeviceFleetReportOutput) {
@@ -11962,14 +12336,13 @@ const opGetLineageGroupPolicy = "GetLineageGroupPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetLineageGroupPolicyRequest method.
+//	req, resp := client.GetLineageGroupPolicyRequest(params)
 //
-//    // Example sending a request using the GetLineageGroupPolicyRequest method.
-//    req, resp := client.GetLineageGroupPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/GetLineageGroupPolicy
 func (c *SageMaker) GetLineageGroupPolicyRequest(input *GetLineageGroupPolicyInput) (req *request.Request, output *GetLineageGroupPolicyOutput) {
@@ -12000,8 +12373,8 @@ func (c *SageMaker) GetLineageGroupPolicyRequest(input *GetLineageGroupPolicyInp
 // API operation GetLineageGroupPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/GetLineageGroupPolicy
 func (c *SageMaker) GetLineageGroupPolicy(input *GetLineageGroupPolicyInput) (*GetLineageGroupPolicyOutput, error) {
@@ -12041,14 +12414,13 @@ const opGetModelPackageGroupPolicy = "GetModelPackageGroupPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetModelPackageGroupPolicyRequest method.
+//	req, resp := client.GetModelPackageGroupPolicyRequest(params)
 //
-//    // Example sending a request using the GetModelPackageGroupPolicyRequest method.
-//    req, resp := client.GetModelPackageGroupPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/GetModelPackageGroupPolicy
 func (c *SageMaker) GetModelPackageGroupPolicyRequest(input *GetModelPackageGroupPolicyInput) (req *request.Request, output *GetModelPackageGroupPolicyOutput) {
@@ -12118,14 +12490,13 @@ const opGetSagemakerServicecatalogPortfolioStatus = "GetSagemakerServicecatalogP
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetSagemakerServicecatalogPortfolioStatusRequest method.
+//	req, resp := client.GetSagemakerServicecatalogPortfolioStatusRequest(params)
 //
-//    // Example sending a request using the GetSagemakerServicecatalogPortfolioStatusRequest method.
-//    req, resp := client.GetSagemakerServicecatalogPortfolioStatusRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/GetSagemakerServicecatalogPortfolioStatus
 func (c *SageMaker) GetSagemakerServicecatalogPortfolioStatusRequest(input *GetSagemakerServicecatalogPortfolioStatusInput) (req *request.Request, output *GetSagemakerServicecatalogPortfolioStatusOutput) {
@@ -12193,14 +12564,13 @@ const opGetSearchSuggestions = "GetSearchSuggestions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetSearchSuggestionsRequest method.
+//	req, resp := client.GetSearchSuggestionsRequest(params)
 //
-//    // Example sending a request using the GetSearchSuggestionsRequest method.
-//    req, resp := client.GetSearchSuggestionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/GetSearchSuggestions
 func (c *SageMaker) GetSearchSuggestionsRequest(input *GetSearchSuggestionsInput) (req *request.Request, output *GetSearchSuggestionsOutput) {
@@ -12270,14 +12640,13 @@ const opListActions = "ListActions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListActionsRequest method.
+//	req, resp := client.ListActionsRequest(params)
 //
-//    // Example sending a request using the ListActionsRequest method.
-//    req, resp := client.ListActionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListActions
 func (c *SageMaker) ListActionsRequest(input *ListActionsInput) (req *request.Request, output *ListActionsOutput) {
@@ -12314,8 +12683,8 @@ func (c *SageMaker) ListActionsRequest(input *ListActionsInput) (req *request.Re
 // API operation ListActions for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListActions
 func (c *SageMaker) ListActions(input *ListActionsInput) (*ListActionsOutput, error) {
@@ -12347,15 +12716,14 @@ func (c *SageMaker) ListActionsWithContext(ctx aws.Context, input *ListActionsIn
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListActions operation.
-//    pageNum := 0
-//    err := client.ListActionsPages(params,
-//        func(page *sagemaker.ListActionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListActions operation.
+//	pageNum := 0
+//	err := client.ListActionsPages(params,
+//	    func(page *sagemaker.ListActionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListActionsPages(input *ListActionsInput, fn func(*ListActionsOutput, bool) bool) error {
 	return c.ListActionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -12407,14 +12775,13 @@ const opListAlgorithms = "ListAlgorithms"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAlgorithmsRequest method.
+//	req, resp := client.ListAlgorithmsRequest(params)
 //
-//    // Example sending a request using the ListAlgorithmsRequest method.
-//    req, resp := client.ListAlgorithmsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListAlgorithms
 func (c *SageMaker) ListAlgorithmsRequest(input *ListAlgorithmsInput) (req *request.Request, output *ListAlgorithmsOutput) {
@@ -12479,15 +12846,14 @@ func (c *SageMaker) ListAlgorithmsWithContext(ctx aws.Context, input *ListAlgori
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAlgorithms operation.
-//    pageNum := 0
-//    err := client.ListAlgorithmsPages(params,
-//        func(page *sagemaker.ListAlgorithmsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAlgorithms operation.
+//	pageNum := 0
+//	err := client.ListAlgorithmsPages(params,
+//	    func(page *sagemaker.ListAlgorithmsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListAlgorithmsPages(input *ListAlgorithmsInput, fn func(*ListAlgorithmsOutput, bool) bool) error {
 	return c.ListAlgorithmsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -12539,14 +12905,13 @@ const opListAppImageConfigs = "ListAppImageConfigs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAppImageConfigsRequest method.
+//	req, resp := client.ListAppImageConfigsRequest(params)
 //
-//    // Example sending a request using the ListAppImageConfigsRequest method.
-//    req, resp := client.ListAppImageConfigsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListAppImageConfigs
 func (c *SageMaker) ListAppImageConfigsRequest(input *ListAppImageConfigsInput) (req *request.Request, output *ListAppImageConfigsOutput) {
@@ -12613,15 +12978,14 @@ func (c *SageMaker) ListAppImageConfigsWithContext(ctx aws.Context, input *ListA
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAppImageConfigs operation.
-//    pageNum := 0
-//    err := client.ListAppImageConfigsPages(params,
-//        func(page *sagemaker.ListAppImageConfigsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAppImageConfigs operation.
+//	pageNum := 0
+//	err := client.ListAppImageConfigsPages(params,
+//	    func(page *sagemaker.ListAppImageConfigsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListAppImageConfigsPages(input *ListAppImageConfigsInput, fn func(*ListAppImageConfigsOutput, bool) bool) error {
 	return c.ListAppImageConfigsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -12673,14 +13037,13 @@ const opListApps = "ListApps"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAppsRequest method.
+//	req, resp := client.ListAppsRequest(params)
 //
-//    // Example sending a request using the ListAppsRequest method.
-//    req, resp := client.ListAppsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListApps
 func (c *SageMaker) ListAppsRequest(input *ListAppsInput) (req *request.Request, output *ListAppsOutput) {
@@ -12745,15 +13108,14 @@ func (c *SageMaker) ListAppsWithContext(ctx aws.Context, input *ListAppsInput, o
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListApps operation.
-//    pageNum := 0
-//    err := client.ListAppsPages(params,
-//        func(page *sagemaker.ListAppsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListApps operation.
+//	pageNum := 0
+//	err := client.ListAppsPages(params,
+//	    func(page *sagemaker.ListAppsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListAppsPages(input *ListAppsInput, fn func(*ListAppsOutput, bool) bool) error {
 	return c.ListAppsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -12805,14 +13167,13 @@ const opListArtifacts = "ListArtifacts"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListArtifactsRequest method.
+//	req, resp := client.ListArtifactsRequest(params)
 //
-//    // Example sending a request using the ListArtifactsRequest method.
-//    req, resp := client.ListArtifactsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListArtifacts
 func (c *SageMaker) ListArtifactsRequest(input *ListArtifactsInput) (req *request.Request, output *ListArtifactsOutput) {
@@ -12849,8 +13210,8 @@ func (c *SageMaker) ListArtifactsRequest(input *ListArtifactsInput) (req *reques
 // API operation ListArtifacts for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListArtifacts
 func (c *SageMaker) ListArtifacts(input *ListArtifactsInput) (*ListArtifactsOutput, error) {
@@ -12882,15 +13243,14 @@ func (c *SageMaker) ListArtifactsWithContext(ctx aws.Context, input *ListArtifac
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListArtifacts operation.
-//    pageNum := 0
-//    err := client.ListArtifactsPages(params,
-//        func(page *sagemaker.ListArtifactsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListArtifacts operation.
+//	pageNum := 0
+//	err := client.ListArtifactsPages(params,
+//	    func(page *sagemaker.ListArtifactsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListArtifactsPages(input *ListArtifactsInput, fn func(*ListArtifactsOutput, bool) bool) error {
 	return c.ListArtifactsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -12942,14 +13302,13 @@ const opListAssociations = "ListAssociations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAssociationsRequest method.
+//	req, resp := client.ListAssociationsRequest(params)
 //
-//    // Example sending a request using the ListAssociationsRequest method.
-//    req, resp := client.ListAssociationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListAssociations
 func (c *SageMaker) ListAssociationsRequest(input *ListAssociationsInput) (req *request.Request, output *ListAssociationsOutput) {
@@ -12986,8 +13345,8 @@ func (c *SageMaker) ListAssociationsRequest(input *ListAssociationsInput) (req *
 // API operation ListAssociations for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListAssociations
 func (c *SageMaker) ListAssociations(input *ListAssociationsInput) (*ListAssociationsOutput, error) {
@@ -13019,15 +13378,14 @@ func (c *SageMaker) ListAssociationsWithContext(ctx aws.Context, input *ListAsso
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAssociations operation.
-//    pageNum := 0
-//    err := client.ListAssociationsPages(params,
-//        func(page *sagemaker.ListAssociationsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAssociations operation.
+//	pageNum := 0
+//	err := client.ListAssociationsPages(params,
+//	    func(page *sagemaker.ListAssociationsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListAssociationsPages(input *ListAssociationsInput, fn func(*ListAssociationsOutput, bool) bool) error {
 	return c.ListAssociationsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -13079,14 +13437,13 @@ const opListAutoMLJobs = "ListAutoMLJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAutoMLJobsRequest method.
+//	req, resp := client.ListAutoMLJobsRequest(params)
 //
-//    // Example sending a request using the ListAutoMLJobsRequest method.
-//    req, resp := client.ListAutoMLJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListAutoMLJobs
 func (c *SageMaker) ListAutoMLJobsRequest(input *ListAutoMLJobsInput) (req *request.Request, output *ListAutoMLJobsOutput) {
@@ -13151,15 +13508,14 @@ func (c *SageMaker) ListAutoMLJobsWithContext(ctx aws.Context, input *ListAutoML
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAutoMLJobs operation.
-//    pageNum := 0
-//    err := client.ListAutoMLJobsPages(params,
-//        func(page *sagemaker.ListAutoMLJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAutoMLJobs operation.
+//	pageNum := 0
+//	err := client.ListAutoMLJobsPages(params,
+//	    func(page *sagemaker.ListAutoMLJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListAutoMLJobsPages(input *ListAutoMLJobsInput, fn func(*ListAutoMLJobsOutput, bool) bool) error {
 	return c.ListAutoMLJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -13211,14 +13567,13 @@ const opListCandidatesForAutoMLJob = "ListCandidatesForAutoMLJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListCandidatesForAutoMLJobRequest method.
+//	req, resp := client.ListCandidatesForAutoMLJobRequest(params)
 //
-//    // Example sending a request using the ListCandidatesForAutoMLJobRequest method.
-//    req, resp := client.ListCandidatesForAutoMLJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListCandidatesForAutoMLJob
 func (c *SageMaker) ListCandidatesForAutoMLJobRequest(input *ListCandidatesForAutoMLJobInput) (req *request.Request, output *ListCandidatesForAutoMLJobOutput) {
@@ -13255,8 +13610,8 @@ func (c *SageMaker) ListCandidatesForAutoMLJobRequest(input *ListCandidatesForAu
 // API operation ListCandidatesForAutoMLJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListCandidatesForAutoMLJob
 func (c *SageMaker) ListCandidatesForAutoMLJob(input *ListCandidatesForAutoMLJobInput) (*ListCandidatesForAutoMLJobOutput, error) {
@@ -13288,15 +13643,14 @@ func (c *SageMaker) ListCandidatesForAutoMLJobWithContext(ctx aws.Context, input
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListCandidatesForAutoMLJob operation.
-//    pageNum := 0
-//    err := client.ListCandidatesForAutoMLJobPages(params,
-//        func(page *sagemaker.ListCandidatesForAutoMLJobOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListCandidatesForAutoMLJob operation.
+//	pageNum := 0
+//	err := client.ListCandidatesForAutoMLJobPages(params,
+//	    func(page *sagemaker.ListCandidatesForAutoMLJobOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListCandidatesForAutoMLJobPages(input *ListCandidatesForAutoMLJobInput, fn func(*ListCandidatesForAutoMLJobOutput, bool) bool) error {
 	return c.ListCandidatesForAutoMLJobPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -13348,14 +13702,13 @@ const opListCodeRepositories = "ListCodeRepositories"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListCodeRepositoriesRequest method.
+//	req, resp := client.ListCodeRepositoriesRequest(params)
 //
-//    // Example sending a request using the ListCodeRepositoriesRequest method.
-//    req, resp := client.ListCodeRepositoriesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListCodeRepositories
 func (c *SageMaker) ListCodeRepositoriesRequest(input *ListCodeRepositoriesInput) (req *request.Request, output *ListCodeRepositoriesOutput) {
@@ -13420,15 +13773,14 @@ func (c *SageMaker) ListCodeRepositoriesWithContext(ctx aws.Context, input *List
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListCodeRepositories operation.
-//    pageNum := 0
-//    err := client.ListCodeRepositoriesPages(params,
-//        func(page *sagemaker.ListCodeRepositoriesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListCodeRepositories operation.
+//	pageNum := 0
+//	err := client.ListCodeRepositoriesPages(params,
+//	    func(page *sagemaker.ListCodeRepositoriesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListCodeRepositoriesPages(input *ListCodeRepositoriesInput, fn func(*ListCodeRepositoriesOutput, bool) bool) error {
 	return c.ListCodeRepositoriesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -13480,14 +13832,13 @@ const opListCompilationJobs = "ListCompilationJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListCompilationJobsRequest method.
+//	req, resp := client.ListCompilationJobsRequest(params)
 //
-//    // Example sending a request using the ListCompilationJobsRequest method.
-//    req, resp := client.ListCompilationJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListCompilationJobs
 func (c *SageMaker) ListCompilationJobsRequest(input *ListCompilationJobsInput) (req *request.Request, output *ListCompilationJobsOutput) {
@@ -13555,15 +13906,14 @@ func (c *SageMaker) ListCompilationJobsWithContext(ctx aws.Context, input *ListC
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListCompilationJobs operation.
-//    pageNum := 0
-//    err := client.ListCompilationJobsPages(params,
-//        func(page *sagemaker.ListCompilationJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListCompilationJobs operation.
+//	pageNum := 0
+//	err := client.ListCompilationJobsPages(params,
+//	    func(page *sagemaker.ListCompilationJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListCompilationJobsPages(input *ListCompilationJobsInput, fn func(*ListCompilationJobsOutput, bool) bool) error {
 	return c.ListCompilationJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -13615,14 +13965,13 @@ const opListContexts = "ListContexts"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListContextsRequest method.
+//	req, resp := client.ListContextsRequest(params)
 //
-//    // Example sending a request using the ListContextsRequest method.
-//    req, resp := client.ListContextsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListContexts
 func (c *SageMaker) ListContextsRequest(input *ListContextsInput) (req *request.Request, output *ListContextsOutput) {
@@ -13659,8 +14008,8 @@ func (c *SageMaker) ListContextsRequest(input *ListContextsInput) (req *request.
 // API operation ListContexts for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListContexts
 func (c *SageMaker) ListContexts(input *ListContextsInput) (*ListContextsOutput, error) {
@@ -13692,15 +14041,14 @@ func (c *SageMaker) ListContextsWithContext(ctx aws.Context, input *ListContexts
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListContexts operation.
-//    pageNum := 0
-//    err := client.ListContextsPages(params,
-//        func(page *sagemaker.ListContextsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListContexts operation.
+//	pageNum := 0
+//	err := client.ListContextsPages(params,
+//	    func(page *sagemaker.ListContextsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListContextsPages(input *ListContextsInput, fn func(*ListContextsOutput, bool) bool) error {
 	return c.ListContextsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -13752,14 +14100,13 @@ const opListDataQualityJobDefinitions = "ListDataQualityJobDefinitions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDataQualityJobDefinitionsRequest method.
+//	req, resp := client.ListDataQualityJobDefinitionsRequest(params)
 //
-//    // Example sending a request using the ListDataQualityJobDefinitionsRequest method.
-//    req, resp := client.ListDataQualityJobDefinitionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListDataQualityJobDefinitions
 func (c *SageMaker) ListDataQualityJobDefinitionsRequest(input *ListDataQualityJobDefinitionsInput) (req *request.Request, output *ListDataQualityJobDefinitionsOutput) {
@@ -13824,15 +14171,14 @@ func (c *SageMaker) ListDataQualityJobDefinitionsWithContext(ctx aws.Context, in
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDataQualityJobDefinitions operation.
-//    pageNum := 0
-//    err := client.ListDataQualityJobDefinitionsPages(params,
-//        func(page *sagemaker.ListDataQualityJobDefinitionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListDataQualityJobDefinitions operation.
+//	pageNum := 0
+//	err := client.ListDataQualityJobDefinitionsPages(params,
+//	    func(page *sagemaker.ListDataQualityJobDefinitionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListDataQualityJobDefinitionsPages(input *ListDataQualityJobDefinitionsInput, fn func(*ListDataQualityJobDefinitionsOutput, bool) bool) error {
 	return c.ListDataQualityJobDefinitionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -13884,14 +14230,13 @@ const opListDeviceFleets = "ListDeviceFleets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDeviceFleetsRequest method.
+//	req, resp := client.ListDeviceFleetsRequest(params)
 //
-//    // Example sending a request using the ListDeviceFleetsRequest method.
-//    req, resp := client.ListDeviceFleetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListDeviceFleets
 func (c *SageMaker) ListDeviceFleetsRequest(input *ListDeviceFleetsInput) (req *request.Request, output *ListDeviceFleetsOutput) {
@@ -13956,15 +14301,14 @@ func (c *SageMaker) ListDeviceFleetsWithContext(ctx aws.Context, input *ListDevi
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDeviceFleets operation.
-//    pageNum := 0
-//    err := client.ListDeviceFleetsPages(params,
-//        func(page *sagemaker.ListDeviceFleetsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListDeviceFleets operation.
+//	pageNum := 0
+//	err := client.ListDeviceFleetsPages(params,
+//	    func(page *sagemaker.ListDeviceFleetsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListDeviceFleetsPages(input *ListDeviceFleetsInput, fn func(*ListDeviceFleetsOutput, bool) bool) error {
 	return c.ListDeviceFleetsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -14016,14 +14360,13 @@ const opListDevices = "ListDevices"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDevicesRequest method.
+//	req, resp := client.ListDevicesRequest(params)
 //
-//    // Example sending a request using the ListDevicesRequest method.
-//    req, resp := client.ListDevicesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListDevices
 func (c *SageMaker) ListDevicesRequest(input *ListDevicesInput) (req *request.Request, output *ListDevicesOutput) {
@@ -14088,15 +14431,14 @@ func (c *SageMaker) ListDevicesWithContext(ctx aws.Context, input *ListDevicesIn
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDevices operation.
-//    pageNum := 0
-//    err := client.ListDevicesPages(params,
-//        func(page *sagemaker.ListDevicesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListDevices operation.
+//	pageNum := 0
+//	err := client.ListDevicesPages(params,
+//	    func(page *sagemaker.ListDevicesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListDevicesPages(input *ListDevicesInput, fn func(*ListDevicesOutput, bool) bool) error {
 	return c.ListDevicesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -14148,14 +14490,13 @@ const opListDomains = "ListDomains"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDomainsRequest method.
+//	req, resp := client.ListDomainsRequest(params)
 //
-//    // Example sending a request using the ListDomainsRequest method.
-//    req, resp := client.ListDomainsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListDomains
 func (c *SageMaker) ListDomainsRequest(input *ListDomainsInput) (req *request.Request, output *ListDomainsOutput) {
@@ -14220,15 +14561,14 @@ func (c *SageMaker) ListDomainsWithContext(ctx aws.Context, input *ListDomainsIn
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDomains operation.
-//    pageNum := 0
-//    err := client.ListDomainsPages(params,
-//        func(page *sagemaker.ListDomainsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListDomains operation.
+//	pageNum := 0
+//	err := client.ListDomainsPages(params,
+//	    func(page *sagemaker.ListDomainsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListDomainsPages(input *ListDomainsInput, fn func(*ListDomainsOutput, bool) bool) error {
 	return c.ListDomainsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -14264,6 +14604,136 @@ func (c *SageMaker) ListDomainsPagesWithContext(ctx aws.Context, input *ListDoma
 	return p.Err()
 }
 
+const opListEdgeDeploymentPlans = "ListEdgeDeploymentPlans"
+
+// ListEdgeDeploymentPlansRequest generates a "aws/request.Request" representing the
+// client's request for the ListEdgeDeploymentPlans operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListEdgeDeploymentPlans for more information on using the ListEdgeDeploymentPlans
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListEdgeDeploymentPlansRequest method.
+//	req, resp := client.ListEdgeDeploymentPlansRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListEdgeDeploymentPlans
+func (c *SageMaker) ListEdgeDeploymentPlansRequest(input *ListEdgeDeploymentPlansInput) (req *request.Request, output *ListEdgeDeploymentPlansOutput) {
+	op := &request.Operation{
+		Name:       opListEdgeDeploymentPlans,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListEdgeDeploymentPlansInput{}
+	}
+
+	output = &ListEdgeDeploymentPlansOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListEdgeDeploymentPlans API operation for Amazon SageMaker Service.
+//
+// Lists all edge deployment plans.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation ListEdgeDeploymentPlans for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListEdgeDeploymentPlans
+func (c *SageMaker) ListEdgeDeploymentPlans(input *ListEdgeDeploymentPlansInput) (*ListEdgeDeploymentPlansOutput, error) {
+	req, out := c.ListEdgeDeploymentPlansRequest(input)
+	return out, req.Send()
+}
+
+// ListEdgeDeploymentPlansWithContext is the same as ListEdgeDeploymentPlans with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListEdgeDeploymentPlans for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) ListEdgeDeploymentPlansWithContext(ctx aws.Context, input *ListEdgeDeploymentPlansInput, opts ...request.Option) (*ListEdgeDeploymentPlansOutput, error) {
+	req, out := c.ListEdgeDeploymentPlansRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListEdgeDeploymentPlansPages iterates over the pages of a ListEdgeDeploymentPlans operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListEdgeDeploymentPlans method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListEdgeDeploymentPlans operation.
+//	pageNum := 0
+//	err := client.ListEdgeDeploymentPlansPages(params,
+//	    func(page *sagemaker.ListEdgeDeploymentPlansOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *SageMaker) ListEdgeDeploymentPlansPages(input *ListEdgeDeploymentPlansInput, fn func(*ListEdgeDeploymentPlansOutput, bool) bool) error {
+	return c.ListEdgeDeploymentPlansPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListEdgeDeploymentPlansPagesWithContext same as ListEdgeDeploymentPlansPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) ListEdgeDeploymentPlansPagesWithContext(ctx aws.Context, input *ListEdgeDeploymentPlansInput, fn func(*ListEdgeDeploymentPlansOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListEdgeDeploymentPlansInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListEdgeDeploymentPlansRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListEdgeDeploymentPlansOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListEdgePackagingJobs = "ListEdgePackagingJobs"
 
 // ListEdgePackagingJobsRequest generates a "aws/request.Request" representing the
@@ -14280,14 +14750,13 @@ const opListEdgePackagingJobs = "ListEdgePackagingJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListEdgePackagingJobsRequest method.
+//	req, resp := client.ListEdgePackagingJobsRequest(params)
 //
-//    // Example sending a request using the ListEdgePackagingJobsRequest method.
-//    req, resp := client.ListEdgePackagingJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListEdgePackagingJobs
 func (c *SageMaker) ListEdgePackagingJobsRequest(input *ListEdgePackagingJobsInput) (req *request.Request, output *ListEdgePackagingJobsOutput) {
@@ -14352,15 +14821,14 @@ func (c *SageMaker) ListEdgePackagingJobsWithContext(ctx aws.Context, input *Lis
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListEdgePackagingJobs operation.
-//    pageNum := 0
-//    err := client.ListEdgePackagingJobsPages(params,
-//        func(page *sagemaker.ListEdgePackagingJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListEdgePackagingJobs operation.
+//	pageNum := 0
+//	err := client.ListEdgePackagingJobsPages(params,
+//	    func(page *sagemaker.ListEdgePackagingJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListEdgePackagingJobsPages(input *ListEdgePackagingJobsInput, fn func(*ListEdgePackagingJobsOutput, bool) bool) error {
 	return c.ListEdgePackagingJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -14412,14 +14880,13 @@ const opListEndpointConfigs = "ListEndpointConfigs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListEndpointConfigsRequest method.
+//	req, resp := client.ListEndpointConfigsRequest(params)
 //
-//    // Example sending a request using the ListEndpointConfigsRequest method.
-//    req, resp := client.ListEndpointConfigsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListEndpointConfigs
 func (c *SageMaker) ListEndpointConfigsRequest(input *ListEndpointConfigsInput) (req *request.Request, output *ListEndpointConfigsOutput) {
@@ -14484,15 +14951,14 @@ func (c *SageMaker) ListEndpointConfigsWithContext(ctx aws.Context, input *ListE
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListEndpointConfigs operation.
-//    pageNum := 0
-//    err := client.ListEndpointConfigsPages(params,
-//        func(page *sagemaker.ListEndpointConfigsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListEndpointConfigs operation.
+//	pageNum := 0
+//	err := client.ListEndpointConfigsPages(params,
+//	    func(page *sagemaker.ListEndpointConfigsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListEndpointConfigsPages(input *ListEndpointConfigsInput, fn func(*ListEndpointConfigsOutput, bool) bool) error {
 	return c.ListEndpointConfigsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -14544,14 +15010,13 @@ const opListEndpoints = "ListEndpoints"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListEndpointsRequest method.
+//	req, resp := client.ListEndpointsRequest(params)
 //
-//    // Example sending a request using the ListEndpointsRequest method.
-//    req, resp := client.ListEndpointsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListEndpoints
 func (c *SageMaker) ListEndpointsRequest(input *ListEndpointsInput) (req *request.Request, output *ListEndpointsOutput) {
@@ -14616,15 +15081,14 @@ func (c *SageMaker) ListEndpointsWithContext(ctx aws.Context, input *ListEndpoin
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListEndpoints operation.
-//    pageNum := 0
-//    err := client.ListEndpointsPages(params,
-//        func(page *sagemaker.ListEndpointsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListEndpoints operation.
+//	pageNum := 0
+//	err := client.ListEndpointsPages(params,
+//	    func(page *sagemaker.ListEndpointsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListEndpointsPages(input *ListEndpointsInput, fn func(*ListEndpointsOutput, bool) bool) error {
 	return c.ListEndpointsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -14676,14 +15140,13 @@ const opListExperiments = "ListExperiments"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListExperimentsRequest method.
+//	req, resp := client.ListExperimentsRequest(params)
 //
-//    // Example sending a request using the ListExperimentsRequest method.
-//    req, resp := client.ListExperimentsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListExperiments
 func (c *SageMaker) ListExperimentsRequest(input *ListExperimentsInput) (req *request.Request, output *ListExperimentsOutput) {
@@ -14750,15 +15213,14 @@ func (c *SageMaker) ListExperimentsWithContext(ctx aws.Context, input *ListExper
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListExperiments operation.
-//    pageNum := 0
-//    err := client.ListExperimentsPages(params,
-//        func(page *sagemaker.ListExperimentsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListExperiments operation.
+//	pageNum := 0
+//	err := client.ListExperimentsPages(params,
+//	    func(page *sagemaker.ListExperimentsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListExperimentsPages(input *ListExperimentsInput, fn func(*ListExperimentsOutput, bool) bool) error {
 	return c.ListExperimentsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -14810,14 +15272,13 @@ const opListFeatureGroups = "ListFeatureGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListFeatureGroupsRequest method.
+//	req, resp := client.ListFeatureGroupsRequest(params)
 //
-//    // Example sending a request using the ListFeatureGroupsRequest method.
-//    req, resp := client.ListFeatureGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListFeatureGroups
 func (c *SageMaker) ListFeatureGroupsRequest(input *ListFeatureGroupsInput) (req *request.Request, output *ListFeatureGroupsOutput) {
@@ -14882,15 +15343,14 @@ func (c *SageMaker) ListFeatureGroupsWithContext(ctx aws.Context, input *ListFea
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListFeatureGroups operation.
-//    pageNum := 0
-//    err := client.ListFeatureGroupsPages(params,
-//        func(page *sagemaker.ListFeatureGroupsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListFeatureGroups operation.
+//	pageNum := 0
+//	err := client.ListFeatureGroupsPages(params,
+//	    func(page *sagemaker.ListFeatureGroupsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListFeatureGroupsPages(input *ListFeatureGroupsInput, fn func(*ListFeatureGroupsOutput, bool) bool) error {
 	return c.ListFeatureGroupsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -14942,14 +15402,13 @@ const opListFlowDefinitions = "ListFlowDefinitions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListFlowDefinitionsRequest method.
+//	req, resp := client.ListFlowDefinitionsRequest(params)
 //
-//    // Example sending a request using the ListFlowDefinitionsRequest method.
-//    req, resp := client.ListFlowDefinitionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListFlowDefinitions
 func (c *SageMaker) ListFlowDefinitionsRequest(input *ListFlowDefinitionsInput) (req *request.Request, output *ListFlowDefinitionsOutput) {
@@ -15014,15 +15473,14 @@ func (c *SageMaker) ListFlowDefinitionsWithContext(ctx aws.Context, input *ListF
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListFlowDefinitions operation.
-//    pageNum := 0
-//    err := client.ListFlowDefinitionsPages(params,
-//        func(page *sagemaker.ListFlowDefinitionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListFlowDefinitions operation.
+//	pageNum := 0
+//	err := client.ListFlowDefinitionsPages(params,
+//	    func(page *sagemaker.ListFlowDefinitionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListFlowDefinitionsPages(input *ListFlowDefinitionsInput, fn func(*ListFlowDefinitionsOutput, bool) bool) error {
 	return c.ListFlowDefinitionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -15074,14 +15532,13 @@ const opListHumanTaskUis = "ListHumanTaskUis"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListHumanTaskUisRequest method.
+//	req, resp := client.ListHumanTaskUisRequest(params)
 //
-//    // Example sending a request using the ListHumanTaskUisRequest method.
-//    req, resp := client.ListHumanTaskUisRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListHumanTaskUis
 func (c *SageMaker) ListHumanTaskUisRequest(input *ListHumanTaskUisInput) (req *request.Request, output *ListHumanTaskUisOutput) {
@@ -15146,15 +15603,14 @@ func (c *SageMaker) ListHumanTaskUisWithContext(ctx aws.Context, input *ListHuma
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListHumanTaskUis operation.
-//    pageNum := 0
-//    err := client.ListHumanTaskUisPages(params,
-//        func(page *sagemaker.ListHumanTaskUisOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListHumanTaskUis operation.
+//	pageNum := 0
+//	err := client.ListHumanTaskUisPages(params,
+//	    func(page *sagemaker.ListHumanTaskUisOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListHumanTaskUisPages(input *ListHumanTaskUisInput, fn func(*ListHumanTaskUisOutput, bool) bool) error {
 	return c.ListHumanTaskUisPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -15206,14 +15662,13 @@ const opListHyperParameterTuningJobs = "ListHyperParameterTuningJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListHyperParameterTuningJobsRequest method.
+//	req, resp := client.ListHyperParameterTuningJobsRequest(params)
 //
-//    // Example sending a request using the ListHyperParameterTuningJobsRequest method.
-//    req, resp := client.ListHyperParameterTuningJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListHyperParameterTuningJobs
 func (c *SageMaker) ListHyperParameterTuningJobsRequest(input *ListHyperParameterTuningJobsInput) (req *request.Request, output *ListHyperParameterTuningJobsOutput) {
@@ -15279,15 +15734,14 @@ func (c *SageMaker) ListHyperParameterTuningJobsWithContext(ctx aws.Context, inp
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListHyperParameterTuningJobs operation.
-//    pageNum := 0
-//    err := client.ListHyperParameterTuningJobsPages(params,
-//        func(page *sagemaker.ListHyperParameterTuningJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListHyperParameterTuningJobs operation.
+//	pageNum := 0
+//	err := client.ListHyperParameterTuningJobsPages(params,
+//	    func(page *sagemaker.ListHyperParameterTuningJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListHyperParameterTuningJobsPages(input *ListHyperParameterTuningJobsInput, fn func(*ListHyperParameterTuningJobsOutput, bool) bool) error {
 	return c.ListHyperParameterTuningJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -15339,14 +15793,13 @@ const opListImageVersions = "ListImageVersions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListImageVersionsRequest method.
+//	req, resp := client.ListImageVersionsRequest(params)
 //
-//    // Example sending a request using the ListImageVersionsRequest method.
-//    req, resp := client.ListImageVersionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListImageVersions
 func (c *SageMaker) ListImageVersionsRequest(input *ListImageVersionsInput) (req *request.Request, output *ListImageVersionsOutput) {
@@ -15384,8 +15837,8 @@ func (c *SageMaker) ListImageVersionsRequest(input *ListImageVersionsInput) (req
 // API operation ListImageVersions for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListImageVersions
 func (c *SageMaker) ListImageVersions(input *ListImageVersionsInput) (*ListImageVersionsOutput, error) {
@@ -15417,15 +15870,14 @@ func (c *SageMaker) ListImageVersionsWithContext(ctx aws.Context, input *ListIma
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListImageVersions operation.
-//    pageNum := 0
-//    err := client.ListImageVersionsPages(params,
-//        func(page *sagemaker.ListImageVersionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListImageVersions operation.
+//	pageNum := 0
+//	err := client.ListImageVersionsPages(params,
+//	    func(page *sagemaker.ListImageVersionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListImageVersionsPages(input *ListImageVersionsInput, fn func(*ListImageVersionsOutput, bool) bool) error {
 	return c.ListImageVersionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -15477,14 +15929,13 @@ const opListImages = "ListImages"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListImagesRequest method.
+//	req, resp := client.ListImagesRequest(params)
 //
-//    // Example sending a request using the ListImagesRequest method.
-//    req, resp := client.ListImagesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListImages
 func (c *SageMaker) ListImagesRequest(input *ListImagesInput) (req *request.Request, output *ListImagesOutput) {
@@ -15551,15 +16002,14 @@ func (c *SageMaker) ListImagesWithContext(ctx aws.Context, input *ListImagesInpu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListImages operation.
-//    pageNum := 0
-//    err := client.ListImagesPages(params,
-//        func(page *sagemaker.ListImagesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListImages operation.
+//	pageNum := 0
+//	err := client.ListImagesPages(params,
+//	    func(page *sagemaker.ListImagesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListImagesPages(input *ListImagesInput, fn func(*ListImagesOutput, bool) bool) error {
 	return c.ListImagesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -15611,14 +16061,13 @@ const opListInferenceRecommendationsJobs = "ListInferenceRecommendationsJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListInferenceRecommendationsJobsRequest method.
+//	req, resp := client.ListInferenceRecommendationsJobsRequest(params)
 //
-//    // Example sending a request using the ListInferenceRecommendationsJobsRequest method.
-//    req, resp := client.ListInferenceRecommendationsJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListInferenceRecommendationsJobs
 func (c *SageMaker) ListInferenceRecommendationsJobsRequest(input *ListInferenceRecommendationsJobsInput) (req *request.Request, output *ListInferenceRecommendationsJobsOutput) {
@@ -15683,15 +16132,14 @@ func (c *SageMaker) ListInferenceRecommendationsJobsWithContext(ctx aws.Context,
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListInferenceRecommendationsJobs operation.
-//    pageNum := 0
-//    err := client.ListInferenceRecommendationsJobsPages(params,
-//        func(page *sagemaker.ListInferenceRecommendationsJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListInferenceRecommendationsJobs operation.
+//	pageNum := 0
+//	err := client.ListInferenceRecommendationsJobsPages(params,
+//	    func(page *sagemaker.ListInferenceRecommendationsJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListInferenceRecommendationsJobsPages(input *ListInferenceRecommendationsJobsInput, fn func(*ListInferenceRecommendationsJobsOutput, bool) bool) error {
 	return c.ListInferenceRecommendationsJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -15743,14 +16191,13 @@ const opListLabelingJobs = "ListLabelingJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListLabelingJobsRequest method.
+//	req, resp := client.ListLabelingJobsRequest(params)
 //
-//    // Example sending a request using the ListLabelingJobsRequest method.
-//    req, resp := client.ListLabelingJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListLabelingJobs
 func (c *SageMaker) ListLabelingJobsRequest(input *ListLabelingJobsInput) (req *request.Request, output *ListLabelingJobsOutput) {
@@ -15815,15 +16262,14 @@ func (c *SageMaker) ListLabelingJobsWithContext(ctx aws.Context, input *ListLabe
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListLabelingJobs operation.
-//    pageNum := 0
-//    err := client.ListLabelingJobsPages(params,
-//        func(page *sagemaker.ListLabelingJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListLabelingJobs operation.
+//	pageNum := 0
+//	err := client.ListLabelingJobsPages(params,
+//	    func(page *sagemaker.ListLabelingJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListLabelingJobsPages(input *ListLabelingJobsInput, fn func(*ListLabelingJobsOutput, bool) bool) error {
 	return c.ListLabelingJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -15875,14 +16321,13 @@ const opListLabelingJobsForWorkteam = "ListLabelingJobsForWorkteam"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListLabelingJobsForWorkteamRequest method.
+//	req, resp := client.ListLabelingJobsForWorkteamRequest(params)
 //
-//    // Example sending a request using the ListLabelingJobsForWorkteamRequest method.
-//    req, resp := client.ListLabelingJobsForWorkteamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListLabelingJobsForWorkteam
 func (c *SageMaker) ListLabelingJobsForWorkteamRequest(input *ListLabelingJobsForWorkteamInput) (req *request.Request, output *ListLabelingJobsForWorkteamOutput) {
@@ -15919,8 +16364,8 @@ func (c *SageMaker) ListLabelingJobsForWorkteamRequest(input *ListLabelingJobsFo
 // API operation ListLabelingJobsForWorkteam for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListLabelingJobsForWorkteam
 func (c *SageMaker) ListLabelingJobsForWorkteam(input *ListLabelingJobsForWorkteamInput) (*ListLabelingJobsForWorkteamOutput, error) {
@@ -15952,15 +16397,14 @@ func (c *SageMaker) ListLabelingJobsForWorkteamWithContext(ctx aws.Context, inpu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListLabelingJobsForWorkteam operation.
-//    pageNum := 0
-//    err := client.ListLabelingJobsForWorkteamPages(params,
-//        func(page *sagemaker.ListLabelingJobsForWorkteamOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListLabelingJobsForWorkteam operation.
+//	pageNum := 0
+//	err := client.ListLabelingJobsForWorkteamPages(params,
+//	    func(page *sagemaker.ListLabelingJobsForWorkteamOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListLabelingJobsForWorkteamPages(input *ListLabelingJobsForWorkteamInput, fn func(*ListLabelingJobsForWorkteamOutput, bool) bool) error {
 	return c.ListLabelingJobsForWorkteamPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -16012,14 +16456,13 @@ const opListLineageGroups = "ListLineageGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListLineageGroupsRequest method.
+//	req, resp := client.ListLineageGroupsRequest(params)
 //
-//    // Example sending a request using the ListLineageGroupsRequest method.
-//    req, resp := client.ListLineageGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListLineageGroups
 func (c *SageMaker) ListLineageGroupsRequest(input *ListLineageGroupsInput) (req *request.Request, output *ListLineageGroupsOutput) {
@@ -16086,15 +16529,14 @@ func (c *SageMaker) ListLineageGroupsWithContext(ctx aws.Context, input *ListLin
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListLineageGroups operation.
-//    pageNum := 0
-//    err := client.ListLineageGroupsPages(params,
-//        func(page *sagemaker.ListLineageGroupsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListLineageGroups operation.
+//	pageNum := 0
+//	err := client.ListLineageGroupsPages(params,
+//	    func(page *sagemaker.ListLineageGroupsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListLineageGroupsPages(input *ListLineageGroupsInput, fn func(*ListLineageGroupsOutput, bool) bool) error {
 	return c.ListLineageGroupsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -16146,14 +16588,13 @@ const opListModelBiasJobDefinitions = "ListModelBiasJobDefinitions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListModelBiasJobDefinitionsRequest method.
+//	req, resp := client.ListModelBiasJobDefinitionsRequest(params)
 //
-//    // Example sending a request using the ListModelBiasJobDefinitionsRequest method.
-//    req, resp := client.ListModelBiasJobDefinitionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListModelBiasJobDefinitions
 func (c *SageMaker) ListModelBiasJobDefinitionsRequest(input *ListModelBiasJobDefinitionsInput) (req *request.Request, output *ListModelBiasJobDefinitionsOutput) {
@@ -16218,15 +16659,14 @@ func (c *SageMaker) ListModelBiasJobDefinitionsWithContext(ctx aws.Context, inpu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListModelBiasJobDefinitions operation.
-//    pageNum := 0
-//    err := client.ListModelBiasJobDefinitionsPages(params,
-//        func(page *sagemaker.ListModelBiasJobDefinitionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListModelBiasJobDefinitions operation.
+//	pageNum := 0
+//	err := client.ListModelBiasJobDefinitionsPages(params,
+//	    func(page *sagemaker.ListModelBiasJobDefinitionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListModelBiasJobDefinitionsPages(input *ListModelBiasJobDefinitionsInput, fn func(*ListModelBiasJobDefinitionsOutput, bool) bool) error {
 	return c.ListModelBiasJobDefinitionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -16278,14 +16718,13 @@ const opListModelExplainabilityJobDefinitions = "ListModelExplainabilityJobDefin
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListModelExplainabilityJobDefinitionsRequest method.
+//	req, resp := client.ListModelExplainabilityJobDefinitionsRequest(params)
 //
-//    // Example sending a request using the ListModelExplainabilityJobDefinitionsRequest method.
-//    req, resp := client.ListModelExplainabilityJobDefinitionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListModelExplainabilityJobDefinitions
 func (c *SageMaker) ListModelExplainabilityJobDefinitionsRequest(input *ListModelExplainabilityJobDefinitionsInput) (req *request.Request, output *ListModelExplainabilityJobDefinitionsOutput) {
@@ -16350,15 +16789,14 @@ func (c *SageMaker) ListModelExplainabilityJobDefinitionsWithContext(ctx aws.Con
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListModelExplainabilityJobDefinitions operation.
-//    pageNum := 0
-//    err := client.ListModelExplainabilityJobDefinitionsPages(params,
-//        func(page *sagemaker.ListModelExplainabilityJobDefinitionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListModelExplainabilityJobDefinitions operation.
+//	pageNum := 0
+//	err := client.ListModelExplainabilityJobDefinitionsPages(params,
+//	    func(page *sagemaker.ListModelExplainabilityJobDefinitionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListModelExplainabilityJobDefinitionsPages(input *ListModelExplainabilityJobDefinitionsInput, fn func(*ListModelExplainabilityJobDefinitionsOutput, bool) bool) error {
 	return c.ListModelExplainabilityJobDefinitionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -16410,14 +16848,13 @@ const opListModelMetadata = "ListModelMetadata"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListModelMetadataRequest method.
+//	req, resp := client.ListModelMetadataRequest(params)
 //
-//    // Example sending a request using the ListModelMetadataRequest method.
-//    req, resp := client.ListModelMetadataRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListModelMetadata
 func (c *SageMaker) ListModelMetadataRequest(input *ListModelMetadataInput) (req *request.Request, output *ListModelMetadataOutput) {
@@ -16483,15 +16920,14 @@ func (c *SageMaker) ListModelMetadataWithContext(ctx aws.Context, input *ListMod
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListModelMetadata operation.
-//    pageNum := 0
-//    err := client.ListModelMetadataPages(params,
-//        func(page *sagemaker.ListModelMetadataOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListModelMetadata operation.
+//	pageNum := 0
+//	err := client.ListModelMetadataPages(params,
+//	    func(page *sagemaker.ListModelMetadataOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListModelMetadataPages(input *ListModelMetadataInput, fn func(*ListModelMetadataOutput, bool) bool) error {
 	return c.ListModelMetadataPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -16543,14 +16979,13 @@ const opListModelPackageGroups = "ListModelPackageGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListModelPackageGroupsRequest method.
+//	req, resp := client.ListModelPackageGroupsRequest(params)
 //
-//    // Example sending a request using the ListModelPackageGroupsRequest method.
-//    req, resp := client.ListModelPackageGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListModelPackageGroups
 func (c *SageMaker) ListModelPackageGroupsRequest(input *ListModelPackageGroupsInput) (req *request.Request, output *ListModelPackageGroupsOutput) {
@@ -16615,15 +17050,14 @@ func (c *SageMaker) ListModelPackageGroupsWithContext(ctx aws.Context, input *Li
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListModelPackageGroups operation.
-//    pageNum := 0
-//    err := client.ListModelPackageGroupsPages(params,
-//        func(page *sagemaker.ListModelPackageGroupsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListModelPackageGroups operation.
+//	pageNum := 0
+//	err := client.ListModelPackageGroupsPages(params,
+//	    func(page *sagemaker.ListModelPackageGroupsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListModelPackageGroupsPages(input *ListModelPackageGroupsInput, fn func(*ListModelPackageGroupsOutput, bool) bool) error {
 	return c.ListModelPackageGroupsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -16675,14 +17109,13 @@ const opListModelPackages = "ListModelPackages"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListModelPackagesRequest method.
+//	req, resp := client.ListModelPackagesRequest(params)
 //
-//    // Example sending a request using the ListModelPackagesRequest method.
-//    req, resp := client.ListModelPackagesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListModelPackages
 func (c *SageMaker) ListModelPackagesRequest(input *ListModelPackagesInput) (req *request.Request, output *ListModelPackagesOutput) {
@@ -16747,15 +17180,14 @@ func (c *SageMaker) ListModelPackagesWithContext(ctx aws.Context, input *ListMod
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListModelPackages operation.
-//    pageNum := 0
-//    err := client.ListModelPackagesPages(params,
-//        func(page *sagemaker.ListModelPackagesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListModelPackages operation.
+//	pageNum := 0
+//	err := client.ListModelPackagesPages(params,
+//	    func(page *sagemaker.ListModelPackagesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListModelPackagesPages(input *ListModelPackagesInput, fn func(*ListModelPackagesOutput, bool) bool) error {
 	return c.ListModelPackagesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -16807,14 +17239,13 @@ const opListModelQualityJobDefinitions = "ListModelQualityJobDefinitions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListModelQualityJobDefinitionsRequest method.
+//	req, resp := client.ListModelQualityJobDefinitionsRequest(params)
 //
-//    // Example sending a request using the ListModelQualityJobDefinitionsRequest method.
-//    req, resp := client.ListModelQualityJobDefinitionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListModelQualityJobDefinitions
 func (c *SageMaker) ListModelQualityJobDefinitionsRequest(input *ListModelQualityJobDefinitionsInput) (req *request.Request, output *ListModelQualityJobDefinitionsOutput) {
@@ -16879,15 +17310,14 @@ func (c *SageMaker) ListModelQualityJobDefinitionsWithContext(ctx aws.Context, i
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListModelQualityJobDefinitions operation.
-//    pageNum := 0
-//    err := client.ListModelQualityJobDefinitionsPages(params,
-//        func(page *sagemaker.ListModelQualityJobDefinitionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListModelQualityJobDefinitions operation.
+//	pageNum := 0
+//	err := client.ListModelQualityJobDefinitionsPages(params,
+//	    func(page *sagemaker.ListModelQualityJobDefinitionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListModelQualityJobDefinitionsPages(input *ListModelQualityJobDefinitionsInput, fn func(*ListModelQualityJobDefinitionsOutput, bool) bool) error {
 	return c.ListModelQualityJobDefinitionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -16939,14 +17369,13 @@ const opListModels = "ListModels"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListModelsRequest method.
+//	req, resp := client.ListModelsRequest(params)
 //
-//    // Example sending a request using the ListModelsRequest method.
-//    req, resp := client.ListModelsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListModels
 func (c *SageMaker) ListModelsRequest(input *ListModelsInput) (req *request.Request, output *ListModelsOutput) {
@@ -17011,15 +17440,14 @@ func (c *SageMaker) ListModelsWithContext(ctx aws.Context, input *ListModelsInpu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListModels operation.
-//    pageNum := 0
-//    err := client.ListModelsPages(params,
-//        func(page *sagemaker.ListModelsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListModels operation.
+//	pageNum := 0
+//	err := client.ListModelsPages(params,
+//	    func(page *sagemaker.ListModelsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListModelsPages(input *ListModelsInput, fn func(*ListModelsOutput, bool) bool) error {
 	return c.ListModelsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -17071,14 +17499,13 @@ const opListMonitoringExecutions = "ListMonitoringExecutions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListMonitoringExecutionsRequest method.
+//	req, resp := client.ListMonitoringExecutionsRequest(params)
 //
-//    // Example sending a request using the ListMonitoringExecutionsRequest method.
-//    req, resp := client.ListMonitoringExecutionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListMonitoringExecutions
 func (c *SageMaker) ListMonitoringExecutionsRequest(input *ListMonitoringExecutionsInput) (req *request.Request, output *ListMonitoringExecutionsOutput) {
@@ -17143,15 +17570,14 @@ func (c *SageMaker) ListMonitoringExecutionsWithContext(ctx aws.Context, input *
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListMonitoringExecutions operation.
-//    pageNum := 0
-//    err := client.ListMonitoringExecutionsPages(params,
-//        func(page *sagemaker.ListMonitoringExecutionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListMonitoringExecutions operation.
+//	pageNum := 0
+//	err := client.ListMonitoringExecutionsPages(params,
+//	    func(page *sagemaker.ListMonitoringExecutionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListMonitoringExecutionsPages(input *ListMonitoringExecutionsInput, fn func(*ListMonitoringExecutionsOutput, bool) bool) error {
 	return c.ListMonitoringExecutionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -17203,14 +17629,13 @@ const opListMonitoringSchedules = "ListMonitoringSchedules"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListMonitoringSchedulesRequest method.
+//	req, resp := client.ListMonitoringSchedulesRequest(params)
 //
-//    // Example sending a request using the ListMonitoringSchedulesRequest method.
-//    req, resp := client.ListMonitoringSchedulesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListMonitoringSchedules
 func (c *SageMaker) ListMonitoringSchedulesRequest(input *ListMonitoringSchedulesInput) (req *request.Request, output *ListMonitoringSchedulesOutput) {
@@ -17275,15 +17700,14 @@ func (c *SageMaker) ListMonitoringSchedulesWithContext(ctx aws.Context, input *L
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListMonitoringSchedules operation.
-//    pageNum := 0
-//    err := client.ListMonitoringSchedulesPages(params,
-//        func(page *sagemaker.ListMonitoringSchedulesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListMonitoringSchedules operation.
+//	pageNum := 0
+//	err := client.ListMonitoringSchedulesPages(params,
+//	    func(page *sagemaker.ListMonitoringSchedulesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListMonitoringSchedulesPages(input *ListMonitoringSchedulesInput, fn func(*ListMonitoringSchedulesOutput, bool) bool) error {
 	return c.ListMonitoringSchedulesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -17335,14 +17759,13 @@ const opListNotebookInstanceLifecycleConfigs = "ListNotebookInstanceLifecycleCon
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListNotebookInstanceLifecycleConfigsRequest method.
+//	req, resp := client.ListNotebookInstanceLifecycleConfigsRequest(params)
 //
-//    // Example sending a request using the ListNotebookInstanceLifecycleConfigsRequest method.
-//    req, resp := client.ListNotebookInstanceLifecycleConfigsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListNotebookInstanceLifecycleConfigs
 func (c *SageMaker) ListNotebookInstanceLifecycleConfigsRequest(input *ListNotebookInstanceLifecycleConfigsInput) (req *request.Request, output *ListNotebookInstanceLifecycleConfigsOutput) {
@@ -17408,15 +17831,14 @@ func (c *SageMaker) ListNotebookInstanceLifecycleConfigsWithContext(ctx aws.Cont
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListNotebookInstanceLifecycleConfigs operation.
-//    pageNum := 0
-//    err := client.ListNotebookInstanceLifecycleConfigsPages(params,
-//        func(page *sagemaker.ListNotebookInstanceLifecycleConfigsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListNotebookInstanceLifecycleConfigs operation.
+//	pageNum := 0
+//	err := client.ListNotebookInstanceLifecycleConfigsPages(params,
+//	    func(page *sagemaker.ListNotebookInstanceLifecycleConfigsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListNotebookInstanceLifecycleConfigsPages(input *ListNotebookInstanceLifecycleConfigsInput, fn func(*ListNotebookInstanceLifecycleConfigsOutput, bool) bool) error {
 	return c.ListNotebookInstanceLifecycleConfigsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -17468,14 +17890,13 @@ const opListNotebookInstances = "ListNotebookInstances"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListNotebookInstancesRequest method.
+//	req, resp := client.ListNotebookInstancesRequest(params)
 //
-//    // Example sending a request using the ListNotebookInstancesRequest method.
-//    req, resp := client.ListNotebookInstancesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListNotebookInstances
 func (c *SageMaker) ListNotebookInstancesRequest(input *ListNotebookInstancesInput) (req *request.Request, output *ListNotebookInstancesOutput) {
@@ -17502,8 +17923,8 @@ func (c *SageMaker) ListNotebookInstancesRequest(input *ListNotebookInstancesInp
 
 // ListNotebookInstances API operation for Amazon SageMaker Service.
 //
-// Returns a list of the Amazon SageMaker notebook instances in the requester's
-// account in an Amazon Web Services Region.
+// Returns a list of the SageMaker notebook instances in the requester's account
+// in an Amazon Web Services Region.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -17541,15 +17962,14 @@ func (c *SageMaker) ListNotebookInstancesWithContext(ctx aws.Context, input *Lis
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListNotebookInstances operation.
-//    pageNum := 0
-//    err := client.ListNotebookInstancesPages(params,
-//        func(page *sagemaker.ListNotebookInstancesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListNotebookInstances operation.
+//	pageNum := 0
+//	err := client.ListNotebookInstancesPages(params,
+//	    func(page *sagemaker.ListNotebookInstancesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListNotebookInstancesPages(input *ListNotebookInstancesInput, fn func(*ListNotebookInstancesOutput, bool) bool) error {
 	return c.ListNotebookInstancesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -17601,14 +18021,13 @@ const opListPipelineExecutionSteps = "ListPipelineExecutionSteps"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPipelineExecutionStepsRequest method.
+//	req, resp := client.ListPipelineExecutionStepsRequest(params)
 //
-//    // Example sending a request using the ListPipelineExecutionStepsRequest method.
-//    req, resp := client.ListPipelineExecutionStepsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListPipelineExecutionSteps
 func (c *SageMaker) ListPipelineExecutionStepsRequest(input *ListPipelineExecutionStepsInput) (req *request.Request, output *ListPipelineExecutionStepsOutput) {
@@ -17645,8 +18064,8 @@ func (c *SageMaker) ListPipelineExecutionStepsRequest(input *ListPipelineExecuti
 // API operation ListPipelineExecutionSteps for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListPipelineExecutionSteps
 func (c *SageMaker) ListPipelineExecutionSteps(input *ListPipelineExecutionStepsInput) (*ListPipelineExecutionStepsOutput, error) {
@@ -17678,15 +18097,14 @@ func (c *SageMaker) ListPipelineExecutionStepsWithContext(ctx aws.Context, input
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListPipelineExecutionSteps operation.
-//    pageNum := 0
-//    err := client.ListPipelineExecutionStepsPages(params,
-//        func(page *sagemaker.ListPipelineExecutionStepsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListPipelineExecutionSteps operation.
+//	pageNum := 0
+//	err := client.ListPipelineExecutionStepsPages(params,
+//	    func(page *sagemaker.ListPipelineExecutionStepsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListPipelineExecutionStepsPages(input *ListPipelineExecutionStepsInput, fn func(*ListPipelineExecutionStepsOutput, bool) bool) error {
 	return c.ListPipelineExecutionStepsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -17738,14 +18156,13 @@ const opListPipelineExecutions = "ListPipelineExecutions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPipelineExecutionsRequest method.
+//	req, resp := client.ListPipelineExecutionsRequest(params)
 //
-//    // Example sending a request using the ListPipelineExecutionsRequest method.
-//    req, resp := client.ListPipelineExecutionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListPipelineExecutions
 func (c *SageMaker) ListPipelineExecutionsRequest(input *ListPipelineExecutionsInput) (req *request.Request, output *ListPipelineExecutionsOutput) {
@@ -17782,8 +18199,8 @@ func (c *SageMaker) ListPipelineExecutionsRequest(input *ListPipelineExecutionsI
 // API operation ListPipelineExecutions for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListPipelineExecutions
 func (c *SageMaker) ListPipelineExecutions(input *ListPipelineExecutionsInput) (*ListPipelineExecutionsOutput, error) {
@@ -17815,15 +18232,14 @@ func (c *SageMaker) ListPipelineExecutionsWithContext(ctx aws.Context, input *Li
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListPipelineExecutions operation.
-//    pageNum := 0
-//    err := client.ListPipelineExecutionsPages(params,
-//        func(page *sagemaker.ListPipelineExecutionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListPipelineExecutions operation.
+//	pageNum := 0
+//	err := client.ListPipelineExecutionsPages(params,
+//	    func(page *sagemaker.ListPipelineExecutionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListPipelineExecutionsPages(input *ListPipelineExecutionsInput, fn func(*ListPipelineExecutionsOutput, bool) bool) error {
 	return c.ListPipelineExecutionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -17875,14 +18291,13 @@ const opListPipelineParametersForExecution = "ListPipelineParametersForExecution
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPipelineParametersForExecutionRequest method.
+//	req, resp := client.ListPipelineParametersForExecutionRequest(params)
 //
-//    // Example sending a request using the ListPipelineParametersForExecutionRequest method.
-//    req, resp := client.ListPipelineParametersForExecutionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListPipelineParametersForExecution
 func (c *SageMaker) ListPipelineParametersForExecutionRequest(input *ListPipelineParametersForExecutionInput) (req *request.Request, output *ListPipelineParametersForExecutionOutput) {
@@ -17919,8 +18334,8 @@ func (c *SageMaker) ListPipelineParametersForExecutionRequest(input *ListPipelin
 // API operation ListPipelineParametersForExecution for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListPipelineParametersForExecution
 func (c *SageMaker) ListPipelineParametersForExecution(input *ListPipelineParametersForExecutionInput) (*ListPipelineParametersForExecutionOutput, error) {
@@ -17952,15 +18367,14 @@ func (c *SageMaker) ListPipelineParametersForExecutionWithContext(ctx aws.Contex
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListPipelineParametersForExecution operation.
-//    pageNum := 0
-//    err := client.ListPipelineParametersForExecutionPages(params,
-//        func(page *sagemaker.ListPipelineParametersForExecutionOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListPipelineParametersForExecution operation.
+//	pageNum := 0
+//	err := client.ListPipelineParametersForExecutionPages(params,
+//	    func(page *sagemaker.ListPipelineParametersForExecutionOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListPipelineParametersForExecutionPages(input *ListPipelineParametersForExecutionInput, fn func(*ListPipelineParametersForExecutionOutput, bool) bool) error {
 	return c.ListPipelineParametersForExecutionPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -18012,14 +18426,13 @@ const opListPipelines = "ListPipelines"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPipelinesRequest method.
+//	req, resp := client.ListPipelinesRequest(params)
 //
-//    // Example sending a request using the ListPipelinesRequest method.
-//    req, resp := client.ListPipelinesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListPipelines
 func (c *SageMaker) ListPipelinesRequest(input *ListPipelinesInput) (req *request.Request, output *ListPipelinesOutput) {
@@ -18084,15 +18497,14 @@ func (c *SageMaker) ListPipelinesWithContext(ctx aws.Context, input *ListPipelin
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListPipelines operation.
-//    pageNum := 0
-//    err := client.ListPipelinesPages(params,
-//        func(page *sagemaker.ListPipelinesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListPipelines operation.
+//	pageNum := 0
+//	err := client.ListPipelinesPages(params,
+//	    func(page *sagemaker.ListPipelinesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListPipelinesPages(input *ListPipelinesInput, fn func(*ListPipelinesOutput, bool) bool) error {
 	return c.ListPipelinesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -18144,14 +18556,13 @@ const opListProcessingJobs = "ListProcessingJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListProcessingJobsRequest method.
+//	req, resp := client.ListProcessingJobsRequest(params)
 //
-//    // Example sending a request using the ListProcessingJobsRequest method.
-//    req, resp := client.ListProcessingJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListProcessingJobs
 func (c *SageMaker) ListProcessingJobsRequest(input *ListProcessingJobsInput) (req *request.Request, output *ListProcessingJobsOutput) {
@@ -18216,15 +18627,14 @@ func (c *SageMaker) ListProcessingJobsWithContext(ctx aws.Context, input *ListPr
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListProcessingJobs operation.
-//    pageNum := 0
-//    err := client.ListProcessingJobsPages(params,
-//        func(page *sagemaker.ListProcessingJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListProcessingJobs operation.
+//	pageNum := 0
+//	err := client.ListProcessingJobsPages(params,
+//	    func(page *sagemaker.ListProcessingJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListProcessingJobsPages(input *ListProcessingJobsInput, fn func(*ListProcessingJobsOutput, bool) bool) error {
 	return c.ListProcessingJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -18276,14 +18686,13 @@ const opListProjects = "ListProjects"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListProjectsRequest method.
+//	req, resp := client.ListProjectsRequest(params)
 //
-//    // Example sending a request using the ListProjectsRequest method.
-//    req, resp := client.ListProjectsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListProjects
 func (c *SageMaker) ListProjectsRequest(input *ListProjectsInput) (req *request.Request, output *ListProjectsOutput) {
@@ -18348,15 +18757,14 @@ func (c *SageMaker) ListProjectsWithContext(ctx aws.Context, input *ListProjects
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListProjects operation.
-//    pageNum := 0
-//    err := client.ListProjectsPages(params,
-//        func(page *sagemaker.ListProjectsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListProjects operation.
+//	pageNum := 0
+//	err := client.ListProjectsPages(params,
+//	    func(page *sagemaker.ListProjectsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListProjectsPages(input *ListProjectsInput, fn func(*ListProjectsOutput, bool) bool) error {
 	return c.ListProjectsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -18392,6 +18800,137 @@ func (c *SageMaker) ListProjectsPagesWithContext(ctx aws.Context, input *ListPro
 	return p.Err()
 }
 
+const opListStageDevices = "ListStageDevices"
+
+// ListStageDevicesRequest generates a "aws/request.Request" representing the
+// client's request for the ListStageDevices operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListStageDevices for more information on using the ListStageDevices
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListStageDevicesRequest method.
+//	req, resp := client.ListStageDevicesRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListStageDevices
+func (c *SageMaker) ListStageDevicesRequest(input *ListStageDevicesInput) (req *request.Request, output *ListStageDevicesOutput) {
+	op := &request.Operation{
+		Name:       opListStageDevices,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListStageDevicesInput{}
+	}
+
+	output = &ListStageDevicesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListStageDevices API operation for Amazon SageMaker Service.
+//
+// Lists devices allocated to the stage, containing detailed device information
+// and deployment status.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation ListStageDevices for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListStageDevices
+func (c *SageMaker) ListStageDevices(input *ListStageDevicesInput) (*ListStageDevicesOutput, error) {
+	req, out := c.ListStageDevicesRequest(input)
+	return out, req.Send()
+}
+
+// ListStageDevicesWithContext is the same as ListStageDevices with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListStageDevices for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) ListStageDevicesWithContext(ctx aws.Context, input *ListStageDevicesInput, opts ...request.Option) (*ListStageDevicesOutput, error) {
+	req, out := c.ListStageDevicesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListStageDevicesPages iterates over the pages of a ListStageDevices operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListStageDevices method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListStageDevices operation.
+//	pageNum := 0
+//	err := client.ListStageDevicesPages(params,
+//	    func(page *sagemaker.ListStageDevicesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *SageMaker) ListStageDevicesPages(input *ListStageDevicesInput, fn func(*ListStageDevicesOutput, bool) bool) error {
+	return c.ListStageDevicesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListStageDevicesPagesWithContext same as ListStageDevicesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) ListStageDevicesPagesWithContext(ctx aws.Context, input *ListStageDevicesInput, fn func(*ListStageDevicesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListStageDevicesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListStageDevicesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListStageDevicesOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListStudioLifecycleConfigs = "ListStudioLifecycleConfigs"
 
 // ListStudioLifecycleConfigsRequest generates a "aws/request.Request" representing the
@@ -18408,14 +18947,13 @@ const opListStudioLifecycleConfigs = "ListStudioLifecycleConfigs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListStudioLifecycleConfigsRequest method.
+//	req, resp := client.ListStudioLifecycleConfigsRequest(params)
 //
-//    // Example sending a request using the ListStudioLifecycleConfigsRequest method.
-//    req, resp := client.ListStudioLifecycleConfigsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListStudioLifecycleConfigs
 func (c *SageMaker) ListStudioLifecycleConfigsRequest(input *ListStudioLifecycleConfigsInput) (req *request.Request, output *ListStudioLifecycleConfigsOutput) {
@@ -18452,8 +18990,8 @@ func (c *SageMaker) ListStudioLifecycleConfigsRequest(input *ListStudioLifecycle
 // API operation ListStudioLifecycleConfigs for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListStudioLifecycleConfigs
 func (c *SageMaker) ListStudioLifecycleConfigs(input *ListStudioLifecycleConfigsInput) (*ListStudioLifecycleConfigsOutput, error) {
@@ -18485,15 +19023,14 @@ func (c *SageMaker) ListStudioLifecycleConfigsWithContext(ctx aws.Context, input
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListStudioLifecycleConfigs operation.
-//    pageNum := 0
-//    err := client.ListStudioLifecycleConfigsPages(params,
-//        func(page *sagemaker.ListStudioLifecycleConfigsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListStudioLifecycleConfigs operation.
+//	pageNum := 0
+//	err := client.ListStudioLifecycleConfigsPages(params,
+//	    func(page *sagemaker.ListStudioLifecycleConfigsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListStudioLifecycleConfigsPages(input *ListStudioLifecycleConfigsInput, fn func(*ListStudioLifecycleConfigsOutput, bool) bool) error {
 	return c.ListStudioLifecycleConfigsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -18545,14 +19082,13 @@ const opListSubscribedWorkteams = "ListSubscribedWorkteams"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListSubscribedWorkteamsRequest method.
+//	req, resp := client.ListSubscribedWorkteamsRequest(params)
 //
-//    // Example sending a request using the ListSubscribedWorkteamsRequest method.
-//    req, resp := client.ListSubscribedWorkteamsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListSubscribedWorkteams
 func (c *SageMaker) ListSubscribedWorkteamsRequest(input *ListSubscribedWorkteamsInput) (req *request.Request, output *ListSubscribedWorkteamsOutput) {
@@ -18619,15 +19155,14 @@ func (c *SageMaker) ListSubscribedWorkteamsWithContext(ctx aws.Context, input *L
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListSubscribedWorkteams operation.
-//    pageNum := 0
-//    err := client.ListSubscribedWorkteamsPages(params,
-//        func(page *sagemaker.ListSubscribedWorkteamsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListSubscribedWorkteams operation.
+//	pageNum := 0
+//	err := client.ListSubscribedWorkteamsPages(params,
+//	    func(page *sagemaker.ListSubscribedWorkteamsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListSubscribedWorkteamsPages(input *ListSubscribedWorkteamsInput, fn func(*ListSubscribedWorkteamsOutput, bool) bool) error {
 	return c.ListSubscribedWorkteamsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -18679,14 +19214,13 @@ const opListTags = "ListTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsRequest method.
+//	req, resp := client.ListTagsRequest(params)
 //
-//    // Example sending a request using the ListTagsRequest method.
-//    req, resp := client.ListTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTags
 func (c *SageMaker) ListTagsRequest(input *ListTagsInput) (req *request.Request, output *ListTagsOutput) {
@@ -18713,7 +19247,7 @@ func (c *SageMaker) ListTagsRequest(input *ListTagsInput) (req *request.Request,
 
 // ListTags API operation for Amazon SageMaker Service.
 //
-// Returns the tags for the specified Amazon SageMaker resource.
+// Returns the tags for the specified SageMaker resource.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -18751,15 +19285,14 @@ func (c *SageMaker) ListTagsWithContext(ctx aws.Context, input *ListTagsInput, o
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTags operation.
-//    pageNum := 0
-//    err := client.ListTagsPages(params,
-//        func(page *sagemaker.ListTagsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTags operation.
+//	pageNum := 0
+//	err := client.ListTagsPages(params,
+//	    func(page *sagemaker.ListTagsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListTagsPages(input *ListTagsInput, fn func(*ListTagsOutput, bool) bool) error {
 	return c.ListTagsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -18811,14 +19344,13 @@ const opListTrainingJobs = "ListTrainingJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTrainingJobsRequest method.
+//	req, resp := client.ListTrainingJobsRequest(params)
 //
-//    // Example sending a request using the ListTrainingJobsRequest method.
-//    req, resp := client.ListTrainingJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTrainingJobs
 func (c *SageMaker) ListTrainingJobsRequest(input *ListTrainingJobsInput) (req *request.Request, output *ListTrainingJobsOutput) {
@@ -18901,15 +19433,14 @@ func (c *SageMaker) ListTrainingJobsWithContext(ctx aws.Context, input *ListTrai
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTrainingJobs operation.
-//    pageNum := 0
-//    err := client.ListTrainingJobsPages(params,
-//        func(page *sagemaker.ListTrainingJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTrainingJobs operation.
+//	pageNum := 0
+//	err := client.ListTrainingJobsPages(params,
+//	    func(page *sagemaker.ListTrainingJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListTrainingJobsPages(input *ListTrainingJobsInput, fn func(*ListTrainingJobsOutput, bool) bool) error {
 	return c.ListTrainingJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -18961,14 +19492,13 @@ const opListTrainingJobsForHyperParameterTuningJob = "ListTrainingJobsForHyperPa
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTrainingJobsForHyperParameterTuningJobRequest method.
+//	req, resp := client.ListTrainingJobsForHyperParameterTuningJobRequest(params)
 //
-//    // Example sending a request using the ListTrainingJobsForHyperParameterTuningJobRequest method.
-//    req, resp := client.ListTrainingJobsForHyperParameterTuningJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTrainingJobsForHyperParameterTuningJob
 func (c *SageMaker) ListTrainingJobsForHyperParameterTuningJobRequest(input *ListTrainingJobsForHyperParameterTuningJobInput) (req *request.Request, output *ListTrainingJobsForHyperParameterTuningJobOutput) {
@@ -19006,8 +19536,8 @@ func (c *SageMaker) ListTrainingJobsForHyperParameterTuningJobRequest(input *Lis
 // API operation ListTrainingJobsForHyperParameterTuningJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTrainingJobsForHyperParameterTuningJob
 func (c *SageMaker) ListTrainingJobsForHyperParameterTuningJob(input *ListTrainingJobsForHyperParameterTuningJobInput) (*ListTrainingJobsForHyperParameterTuningJobOutput, error) {
@@ -19039,15 +19569,14 @@ func (c *SageMaker) ListTrainingJobsForHyperParameterTuningJobWithContext(ctx aw
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTrainingJobsForHyperParameterTuningJob operation.
-//    pageNum := 0
-//    err := client.ListTrainingJobsForHyperParameterTuningJobPages(params,
-//        func(page *sagemaker.ListTrainingJobsForHyperParameterTuningJobOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTrainingJobsForHyperParameterTuningJob operation.
+//	pageNum := 0
+//	err := client.ListTrainingJobsForHyperParameterTuningJobPages(params,
+//	    func(page *sagemaker.ListTrainingJobsForHyperParameterTuningJobOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListTrainingJobsForHyperParameterTuningJobPages(input *ListTrainingJobsForHyperParameterTuningJobInput, fn func(*ListTrainingJobsForHyperParameterTuningJobOutput, bool) bool) error {
 	return c.ListTrainingJobsForHyperParameterTuningJobPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -19099,14 +19628,13 @@ const opListTransformJobs = "ListTransformJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTransformJobsRequest method.
+//	req, resp := client.ListTransformJobsRequest(params)
 //
-//    // Example sending a request using the ListTransformJobsRequest method.
-//    req, resp := client.ListTransformJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTransformJobs
 func (c *SageMaker) ListTransformJobsRequest(input *ListTransformJobsInput) (req *request.Request, output *ListTransformJobsOutput) {
@@ -19171,15 +19699,14 @@ func (c *SageMaker) ListTransformJobsWithContext(ctx aws.Context, input *ListTra
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTransformJobs operation.
-//    pageNum := 0
-//    err := client.ListTransformJobsPages(params,
-//        func(page *sagemaker.ListTransformJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTransformJobs operation.
+//	pageNum := 0
+//	err := client.ListTransformJobsPages(params,
+//	    func(page *sagemaker.ListTransformJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListTransformJobsPages(input *ListTransformJobsInput, fn func(*ListTransformJobsOutput, bool) bool) error {
 	return c.ListTransformJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -19231,14 +19758,13 @@ const opListTrialComponents = "ListTrialComponents"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTrialComponentsRequest method.
+//	req, resp := client.ListTrialComponentsRequest(params)
 //
-//    // Example sending a request using the ListTrialComponentsRequest method.
-//    req, resp := client.ListTrialComponentsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTrialComponents
 func (c *SageMaker) ListTrialComponentsRequest(input *ListTrialComponentsInput) (req *request.Request, output *ListTrialComponentsOutput) {
@@ -19270,11 +19796,11 @@ func (c *SageMaker) ListTrialComponentsRequest(input *ListTrialComponentsInput) 
 // that were created in a specific time range. You can also filter on one of
 // the following:
 //
-//    * ExperimentName
+//   - ExperimentName
 //
-//    * SourceArn
+//   - SourceArn
 //
-//    * TrialName
+//   - TrialName
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -19284,8 +19810,8 @@ func (c *SageMaker) ListTrialComponentsRequest(input *ListTrialComponentsInput) 
 // API operation ListTrialComponents for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTrialComponents
 func (c *SageMaker) ListTrialComponents(input *ListTrialComponentsInput) (*ListTrialComponentsOutput, error) {
@@ -19317,15 +19843,14 @@ func (c *SageMaker) ListTrialComponentsWithContext(ctx aws.Context, input *ListT
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTrialComponents operation.
-//    pageNum := 0
-//    err := client.ListTrialComponentsPages(params,
-//        func(page *sagemaker.ListTrialComponentsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTrialComponents operation.
+//	pageNum := 0
+//	err := client.ListTrialComponentsPages(params,
+//	    func(page *sagemaker.ListTrialComponentsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListTrialComponentsPages(input *ListTrialComponentsInput, fn func(*ListTrialComponentsOutput, bool) bool) error {
 	return c.ListTrialComponentsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -19377,14 +19902,13 @@ const opListTrials = "ListTrials"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTrialsRequest method.
+//	req, resp := client.ListTrialsRequest(params)
 //
-//    // Example sending a request using the ListTrialsRequest method.
-//    req, resp := client.ListTrialsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTrials
 func (c *SageMaker) ListTrialsRequest(input *ListTrialsInput) (req *request.Request, output *ListTrialsOutput) {
@@ -19425,8 +19949,8 @@ func (c *SageMaker) ListTrialsRequest(input *ListTrialsInput) (req *request.Requ
 // API operation ListTrials for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTrials
 func (c *SageMaker) ListTrials(input *ListTrialsInput) (*ListTrialsOutput, error) {
@@ -19458,15 +19982,14 @@ func (c *SageMaker) ListTrialsWithContext(ctx aws.Context, input *ListTrialsInpu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTrials operation.
-//    pageNum := 0
-//    err := client.ListTrialsPages(params,
-//        func(page *sagemaker.ListTrialsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTrials operation.
+//	pageNum := 0
+//	err := client.ListTrialsPages(params,
+//	    func(page *sagemaker.ListTrialsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListTrialsPages(input *ListTrialsInput, fn func(*ListTrialsOutput, bool) bool) error {
 	return c.ListTrialsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -19518,14 +20041,13 @@ const opListUserProfiles = "ListUserProfiles"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListUserProfilesRequest method.
+//	req, resp := client.ListUserProfilesRequest(params)
 //
-//    // Example sending a request using the ListUserProfilesRequest method.
-//    req, resp := client.ListUserProfilesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListUserProfiles
 func (c *SageMaker) ListUserProfilesRequest(input *ListUserProfilesInput) (req *request.Request, output *ListUserProfilesOutput) {
@@ -19590,15 +20112,14 @@ func (c *SageMaker) ListUserProfilesWithContext(ctx aws.Context, input *ListUser
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListUserProfiles operation.
-//    pageNum := 0
-//    err := client.ListUserProfilesPages(params,
-//        func(page *sagemaker.ListUserProfilesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListUserProfiles operation.
+//	pageNum := 0
+//	err := client.ListUserProfilesPages(params,
+//	    func(page *sagemaker.ListUserProfilesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListUserProfilesPages(input *ListUserProfilesInput, fn func(*ListUserProfilesOutput, bool) bool) error {
 	return c.ListUserProfilesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -19650,14 +20171,13 @@ const opListWorkforces = "ListWorkforces"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListWorkforcesRequest method.
+//	req, resp := client.ListWorkforcesRequest(params)
 //
-//    // Example sending a request using the ListWorkforcesRequest method.
-//    req, resp := client.ListWorkforcesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListWorkforces
 func (c *SageMaker) ListWorkforcesRequest(input *ListWorkforcesInput) (req *request.Request, output *ListWorkforcesOutput) {
@@ -19724,15 +20244,14 @@ func (c *SageMaker) ListWorkforcesWithContext(ctx aws.Context, input *ListWorkfo
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListWorkforces operation.
-//    pageNum := 0
-//    err := client.ListWorkforcesPages(params,
-//        func(page *sagemaker.ListWorkforcesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListWorkforces operation.
+//	pageNum := 0
+//	err := client.ListWorkforcesPages(params,
+//	    func(page *sagemaker.ListWorkforcesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListWorkforcesPages(input *ListWorkforcesInput, fn func(*ListWorkforcesOutput, bool) bool) error {
 	return c.ListWorkforcesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -19784,14 +20303,13 @@ const opListWorkteams = "ListWorkteams"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListWorkteamsRequest method.
+//	req, resp := client.ListWorkteamsRequest(params)
 //
-//    // Example sending a request using the ListWorkteamsRequest method.
-//    req, resp := client.ListWorkteamsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListWorkteams
 func (c *SageMaker) ListWorkteamsRequest(input *ListWorkteamsInput) (req *request.Request, output *ListWorkteamsOutput) {
@@ -19858,15 +20376,14 @@ func (c *SageMaker) ListWorkteamsWithContext(ctx aws.Context, input *ListWorktea
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListWorkteams operation.
-//    pageNum := 0
-//    err := client.ListWorkteamsPages(params,
-//        func(page *sagemaker.ListWorkteamsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListWorkteams operation.
+//	pageNum := 0
+//	err := client.ListWorkteamsPages(params,
+//	    func(page *sagemaker.ListWorkteamsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) ListWorkteamsPages(input *ListWorkteamsInput, fn func(*ListWorkteamsOutput, bool) bool) error {
 	return c.ListWorkteamsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -19918,14 +20435,13 @@ const opPutModelPackageGroupPolicy = "PutModelPackageGroupPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutModelPackageGroupPolicyRequest method.
+//	req, resp := client.PutModelPackageGroupPolicyRequest(params)
 //
-//    // Example sending a request using the PutModelPackageGroupPolicyRequest method.
-//    req, resp := client.PutModelPackageGroupPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/PutModelPackageGroupPolicy
 func (c *SageMaker) PutModelPackageGroupPolicyRequest(input *PutModelPackageGroupPolicyInput) (req *request.Request, output *PutModelPackageGroupPolicyOutput) {
@@ -19995,14 +20511,13 @@ const opQueryLineage = "QueryLineage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the QueryLineageRequest method.
+//	req, resp := client.QueryLineageRequest(params)
 //
-//    // Example sending a request using the QueryLineageRequest method.
-//    req, resp := client.QueryLineageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/QueryLineage
 func (c *SageMaker) QueryLineageRequest(input *QueryLineageInput) (req *request.Request, output *QueryLineageOutput) {
@@ -20041,8 +20556,8 @@ func (c *SageMaker) QueryLineageRequest(input *QueryLineageInput) (req *request.
 // API operation QueryLineage for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/QueryLineage
 func (c *SageMaker) QueryLineage(input *QueryLineageInput) (*QueryLineageOutput, error) {
@@ -20074,15 +20589,14 @@ func (c *SageMaker) QueryLineageWithContext(ctx aws.Context, input *QueryLineage
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a QueryLineage operation.
-//    pageNum := 0
-//    err := client.QueryLineagePages(params,
-//        func(page *sagemaker.QueryLineageOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a QueryLineage operation.
+//	pageNum := 0
+//	err := client.QueryLineagePages(params,
+//	    func(page *sagemaker.QueryLineageOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) QueryLineagePages(input *QueryLineageInput, fn func(*QueryLineageOutput, bool) bool) error {
 	return c.QueryLineagePagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -20134,14 +20648,13 @@ const opRegisterDevices = "RegisterDevices"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RegisterDevicesRequest method.
+//	req, resp := client.RegisterDevicesRequest(params)
 //
-//    // Example sending a request using the RegisterDevicesRequest method.
-//    req, resp := client.RegisterDevicesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/RegisterDevices
 func (c *SageMaker) RegisterDevicesRequest(input *RegisterDevicesInput) (req *request.Request, output *RegisterDevicesOutput) {
@@ -20173,9 +20686,9 @@ func (c *SageMaker) RegisterDevicesRequest(input *RegisterDevicesInput) (req *re
 // API operation RegisterDevices for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/RegisterDevices
 func (c *SageMaker) RegisterDevices(input *RegisterDevicesInput) (*RegisterDevicesOutput, error) {
@@ -20215,14 +20728,13 @@ const opRenderUiTemplate = "RenderUiTemplate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RenderUiTemplateRequest method.
+//	req, resp := client.RenderUiTemplateRequest(params)
 //
-//    // Example sending a request using the RenderUiTemplateRequest method.
-//    req, resp := client.RenderUiTemplateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/RenderUiTemplate
 func (c *SageMaker) RenderUiTemplateRequest(input *RenderUiTemplateInput) (req *request.Request, output *RenderUiTemplateOutput) {
@@ -20253,8 +20765,8 @@ func (c *SageMaker) RenderUiTemplateRequest(input *RenderUiTemplateInput) (req *
 // API operation RenderUiTemplate for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/RenderUiTemplate
 func (c *SageMaker) RenderUiTemplate(input *RenderUiTemplateInput) (*RenderUiTemplateOutput, error) {
@@ -20294,14 +20806,13 @@ const opRetryPipelineExecution = "RetryPipelineExecution"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RetryPipelineExecutionRequest method.
+//	req, resp := client.RetryPipelineExecutionRequest(params)
 //
-//    // Example sending a request using the RetryPipelineExecutionRequest method.
-//    req, resp := client.RetryPipelineExecutionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/RetryPipelineExecution
 func (c *SageMaker) RetryPipelineExecutionRequest(input *RetryPipelineExecutionInput) (req *request.Request, output *RetryPipelineExecutionOutput) {
@@ -20332,16 +20843,17 @@ func (c *SageMaker) RetryPipelineExecutionRequest(input *RetryPipelineExecutionI
 // API operation RetryPipelineExecution for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
-//   * ConflictException
-//   There was a conflict when you attempted to modify a SageMaker entity such
-//   as an Experiment or Artifact.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/RetryPipelineExecution
 func (c *SageMaker) RetryPipelineExecution(input *RetryPipelineExecutionInput) (*RetryPipelineExecutionOutput, error) {
@@ -20381,14 +20893,13 @@ const opSearch = "Search"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SearchRequest method.
+//	req, resp := client.SearchRequest(params)
 //
-//    // Example sending a request using the SearchRequest method.
-//    req, resp := client.SearchRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/Search
 func (c *SageMaker) SearchRequest(input *SearchInput) (req *request.Request, output *SearchOutput) {
@@ -20459,15 +20970,14 @@ func (c *SageMaker) SearchWithContext(ctx aws.Context, input *SearchInput, opts 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a Search operation.
-//    pageNum := 0
-//    err := client.SearchPages(params,
-//        func(page *sagemaker.SearchOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a Search operation.
+//	pageNum := 0
+//	err := client.SearchPages(params,
+//	    func(page *sagemaker.SearchOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SageMaker) SearchPages(input *SearchInput, fn func(*SearchOutput, bool) bool) error {
 	return c.SearchPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -20519,14 +21029,13 @@ const opSendPipelineExecutionStepFailure = "SendPipelineExecutionStepFailure"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SendPipelineExecutionStepFailureRequest method.
+//	req, resp := client.SendPipelineExecutionStepFailureRequest(params)
 //
-//    // Example sending a request using the SendPipelineExecutionStepFailureRequest method.
-//    req, resp := client.SendPipelineExecutionStepFailureRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/SendPipelineExecutionStepFailure
 func (c *SageMaker) SendPipelineExecutionStepFailureRequest(input *SendPipelineExecutionStepFailureInput) (req *request.Request, output *SendPipelineExecutionStepFailureOutput) {
@@ -20560,12 +21069,13 @@ func (c *SageMaker) SendPipelineExecutionStepFailureRequest(input *SendPipelineE
 // API operation SendPipelineExecutionStepFailure for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/SendPipelineExecutionStepFailure
 func (c *SageMaker) SendPipelineExecutionStepFailure(input *SendPipelineExecutionStepFailureInput) (*SendPipelineExecutionStepFailureOutput, error) {
@@ -20605,14 +21115,13 @@ const opSendPipelineExecutionStepSuccess = "SendPipelineExecutionStepSuccess"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SendPipelineExecutionStepSuccessRequest method.
+//	req, resp := client.SendPipelineExecutionStepSuccessRequest(params)
 //
-//    // Example sending a request using the SendPipelineExecutionStepSuccessRequest method.
-//    req, resp := client.SendPipelineExecutionStepSuccessRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/SendPipelineExecutionStepSuccess
 func (c *SageMaker) SendPipelineExecutionStepSuccessRequest(input *SendPipelineExecutionStepSuccessInput) (req *request.Request, output *SendPipelineExecutionStepSuccessOutput) {
@@ -20646,12 +21155,13 @@ func (c *SageMaker) SendPipelineExecutionStepSuccessRequest(input *SendPipelineE
 // API operation SendPipelineExecutionStepSuccess for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/SendPipelineExecutionStepSuccess
 func (c *SageMaker) SendPipelineExecutionStepSuccess(input *SendPipelineExecutionStepSuccessInput) (*SendPipelineExecutionStepSuccessOutput, error) {
@@ -20675,6 +21185,80 @@ func (c *SageMaker) SendPipelineExecutionStepSuccessWithContext(ctx aws.Context,
 	return out, req.Send()
 }
 
+const opStartEdgeDeploymentStage = "StartEdgeDeploymentStage"
+
+// StartEdgeDeploymentStageRequest generates a "aws/request.Request" representing the
+// client's request for the StartEdgeDeploymentStage operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See StartEdgeDeploymentStage for more information on using the StartEdgeDeploymentStage
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the StartEdgeDeploymentStageRequest method.
+//	req, resp := client.StartEdgeDeploymentStageRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StartEdgeDeploymentStage
+func (c *SageMaker) StartEdgeDeploymentStageRequest(input *StartEdgeDeploymentStageInput) (req *request.Request, output *StartEdgeDeploymentStageOutput) {
+	op := &request.Operation{
+		Name:       opStartEdgeDeploymentStage,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StartEdgeDeploymentStageInput{}
+	}
+
+	output = &StartEdgeDeploymentStageOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// StartEdgeDeploymentStage API operation for Amazon SageMaker Service.
+//
+// Starts a stage in an edge deployment plan.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation StartEdgeDeploymentStage for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StartEdgeDeploymentStage
+func (c *SageMaker) StartEdgeDeploymentStage(input *StartEdgeDeploymentStageInput) (*StartEdgeDeploymentStageOutput, error) {
+	req, out := c.StartEdgeDeploymentStageRequest(input)
+	return out, req.Send()
+}
+
+// StartEdgeDeploymentStageWithContext is the same as StartEdgeDeploymentStage with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StartEdgeDeploymentStage for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) StartEdgeDeploymentStageWithContext(ctx aws.Context, input *StartEdgeDeploymentStageInput, opts ...request.Option) (*StartEdgeDeploymentStageOutput, error) {
+	req, out := c.StartEdgeDeploymentStageRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opStartMonitoringSchedule = "StartMonitoringSchedule"
 
 // StartMonitoringScheduleRequest generates a "aws/request.Request" representing the
@@ -20691,14 +21275,13 @@ const opStartMonitoringSchedule = "StartMonitoringSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartMonitoringScheduleRequest method.
+//	req, resp := client.StartMonitoringScheduleRequest(params)
 //
-//    // Example sending a request using the StartMonitoringScheduleRequest method.
-//    req, resp := client.StartMonitoringScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StartMonitoringSchedule
 func (c *SageMaker) StartMonitoringScheduleRequest(input *StartMonitoringScheduleInput) (req *request.Request, output *StartMonitoringScheduleOutput) {
@@ -20733,8 +21316,8 @@ func (c *SageMaker) StartMonitoringScheduleRequest(input *StartMonitoringSchedul
 // API operation StartMonitoringSchedule for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StartMonitoringSchedule
 func (c *SageMaker) StartMonitoringSchedule(input *StartMonitoringScheduleInput) (*StartMonitoringScheduleOutput, error) {
@@ -20774,14 +21357,13 @@ const opStartNotebookInstance = "StartNotebookInstance"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartNotebookInstanceRequest method.
+//	req, resp := client.StartNotebookInstanceRequest(params)
 //
-//    // Example sending a request using the StartNotebookInstanceRequest method.
-//    req, resp := client.StartNotebookInstanceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StartNotebookInstance
 func (c *SageMaker) StartNotebookInstanceRequest(input *StartNotebookInstanceInput) (req *request.Request, output *StartNotebookInstanceOutput) {
@@ -20805,9 +21387,8 @@ func (c *SageMaker) StartNotebookInstanceRequest(input *StartNotebookInstanceInp
 //
 // Launches an ML compute instance with the latest version of the libraries
 // and attaches your ML storage volume. After configuring the notebook instance,
-// Amazon SageMaker sets the notebook instance status to InService. A notebook
-// instance's status must be InService before you can connect to your Jupyter
-// notebook.
+// SageMaker sets the notebook instance status to InService. A notebook instance's
+// status must be InService before you can connect to your Jupyter notebook.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -20817,9 +21398,9 @@ func (c *SageMaker) StartNotebookInstanceRequest(input *StartNotebookInstanceInp
 // API operation StartNotebookInstance for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StartNotebookInstance
 func (c *SageMaker) StartNotebookInstance(input *StartNotebookInstanceInput) (*StartNotebookInstanceOutput, error) {
@@ -20859,14 +21440,13 @@ const opStartPipelineExecution = "StartPipelineExecution"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartPipelineExecutionRequest method.
+//	req, resp := client.StartPipelineExecutionRequest(params)
 //
-//    // Example sending a request using the StartPipelineExecutionRequest method.
-//    req, resp := client.StartPipelineExecutionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StartPipelineExecution
 func (c *SageMaker) StartPipelineExecutionRequest(input *StartPipelineExecutionInput) (req *request.Request, output *StartPipelineExecutionOutput) {
@@ -20897,12 +21477,13 @@ func (c *SageMaker) StartPipelineExecutionRequest(input *StartPipelineExecutionI
 // API operation StartPipelineExecution for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
 //
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StartPipelineExecution
 func (c *SageMaker) StartPipelineExecution(input *StartPipelineExecutionInput) (*StartPipelineExecutionOutput, error) {
@@ -20942,14 +21523,13 @@ const opStopAutoMLJob = "StopAutoMLJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopAutoMLJobRequest method.
+//	req, resp := client.StopAutoMLJobRequest(params)
 //
-//    // Example sending a request using the StopAutoMLJobRequest method.
-//    req, resp := client.StopAutoMLJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopAutoMLJob
 func (c *SageMaker) StopAutoMLJobRequest(input *StopAutoMLJobInput) (req *request.Request, output *StopAutoMLJobOutput) {
@@ -20981,8 +21561,8 @@ func (c *SageMaker) StopAutoMLJobRequest(input *StopAutoMLJobInput) (req *reques
 // API operation StopAutoMLJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopAutoMLJob
 func (c *SageMaker) StopAutoMLJob(input *StopAutoMLJobInput) (*StopAutoMLJobOutput, error) {
@@ -21022,14 +21602,13 @@ const opStopCompilationJob = "StopCompilationJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopCompilationJobRequest method.
+//	req, resp := client.StopCompilationJobRequest(params)
 //
-//    // Example sending a request using the StopCompilationJobRequest method.
-//    req, resp := client.StopCompilationJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopCompilationJob
 func (c *SageMaker) StopCompilationJobRequest(input *StopCompilationJobInput) (req *request.Request, output *StopCompilationJobOutput) {
@@ -21070,8 +21649,8 @@ func (c *SageMaker) StopCompilationJobRequest(input *StopCompilationJobInput) (r
 // API operation StopCompilationJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopCompilationJob
 func (c *SageMaker) StopCompilationJob(input *StopCompilationJobInput) (*StopCompilationJobOutput, error) {
@@ -21095,6 +21674,80 @@ func (c *SageMaker) StopCompilationJobWithContext(ctx aws.Context, input *StopCo
 	return out, req.Send()
 }
 
+const opStopEdgeDeploymentStage = "StopEdgeDeploymentStage"
+
+// StopEdgeDeploymentStageRequest generates a "aws/request.Request" representing the
+// client's request for the StopEdgeDeploymentStage operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See StopEdgeDeploymentStage for more information on using the StopEdgeDeploymentStage
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the StopEdgeDeploymentStageRequest method.
+//	req, resp := client.StopEdgeDeploymentStageRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopEdgeDeploymentStage
+func (c *SageMaker) StopEdgeDeploymentStageRequest(input *StopEdgeDeploymentStageInput) (req *request.Request, output *StopEdgeDeploymentStageOutput) {
+	op := &request.Operation{
+		Name:       opStopEdgeDeploymentStage,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StopEdgeDeploymentStageInput{}
+	}
+
+	output = &StopEdgeDeploymentStageOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// StopEdgeDeploymentStage API operation for Amazon SageMaker Service.
+//
+// Stops a stage in an edge deployment plan.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation StopEdgeDeploymentStage for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopEdgeDeploymentStage
+func (c *SageMaker) StopEdgeDeploymentStage(input *StopEdgeDeploymentStageInput) (*StopEdgeDeploymentStageOutput, error) {
+	req, out := c.StopEdgeDeploymentStageRequest(input)
+	return out, req.Send()
+}
+
+// StopEdgeDeploymentStageWithContext is the same as StopEdgeDeploymentStage with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StopEdgeDeploymentStage for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) StopEdgeDeploymentStageWithContext(ctx aws.Context, input *StopEdgeDeploymentStageInput, opts ...request.Option) (*StopEdgeDeploymentStageOutput, error) {
+	req, out := c.StopEdgeDeploymentStageRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opStopEdgePackagingJob = "StopEdgePackagingJob"
 
 // StopEdgePackagingJobRequest generates a "aws/request.Request" representing the
@@ -21111,14 +21764,13 @@ const opStopEdgePackagingJob = "StopEdgePackagingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopEdgePackagingJobRequest method.
+//	req, resp := client.StopEdgePackagingJobRequest(params)
 //
-//    // Example sending a request using the StopEdgePackagingJobRequest method.
-//    req, resp := client.StopEdgePackagingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopEdgePackagingJob
 func (c *SageMaker) StopEdgePackagingJobRequest(input *StopEdgePackagingJobInput) (req *request.Request, output *StopEdgePackagingJobOutput) {
@@ -21186,14 +21838,13 @@ const opStopHyperParameterTuningJob = "StopHyperParameterTuningJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopHyperParameterTuningJobRequest method.
+//	req, resp := client.StopHyperParameterTuningJobRequest(params)
 //
-//    // Example sending a request using the StopHyperParameterTuningJobRequest method.
-//    req, resp := client.StopHyperParameterTuningJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopHyperParameterTuningJob
 func (c *SageMaker) StopHyperParameterTuningJobRequest(input *StopHyperParameterTuningJobInput) (req *request.Request, output *StopHyperParameterTuningJobOutput) {
@@ -21231,8 +21882,8 @@ func (c *SageMaker) StopHyperParameterTuningJobRequest(input *StopHyperParameter
 // API operation StopHyperParameterTuningJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopHyperParameterTuningJob
 func (c *SageMaker) StopHyperParameterTuningJob(input *StopHyperParameterTuningJobInput) (*StopHyperParameterTuningJobOutput, error) {
@@ -21272,14 +21923,13 @@ const opStopInferenceRecommendationsJob = "StopInferenceRecommendationsJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopInferenceRecommendationsJobRequest method.
+//	req, resp := client.StopInferenceRecommendationsJobRequest(params)
 //
-//    // Example sending a request using the StopInferenceRecommendationsJobRequest method.
-//    req, resp := client.StopInferenceRecommendationsJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopInferenceRecommendationsJob
 func (c *SageMaker) StopInferenceRecommendationsJobRequest(input *StopInferenceRecommendationsJobInput) (req *request.Request, output *StopInferenceRecommendationsJobOutput) {
@@ -21311,8 +21961,8 @@ func (c *SageMaker) StopInferenceRecommendationsJobRequest(input *StopInferenceR
 // API operation StopInferenceRecommendationsJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopInferenceRecommendationsJob
 func (c *SageMaker) StopInferenceRecommendationsJob(input *StopInferenceRecommendationsJobInput) (*StopInferenceRecommendationsJobOutput, error) {
@@ -21352,14 +22002,13 @@ const opStopLabelingJob = "StopLabelingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopLabelingJobRequest method.
+//	req, resp := client.StopLabelingJobRequest(params)
 //
-//    // Example sending a request using the StopLabelingJobRequest method.
-//    req, resp := client.StopLabelingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopLabelingJob
 func (c *SageMaker) StopLabelingJobRequest(input *StopLabelingJobInput) (req *request.Request, output *StopLabelingJobOutput) {
@@ -21393,8 +22042,8 @@ func (c *SageMaker) StopLabelingJobRequest(input *StopLabelingJobInput) (req *re
 // API operation StopLabelingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopLabelingJob
 func (c *SageMaker) StopLabelingJob(input *StopLabelingJobInput) (*StopLabelingJobOutput, error) {
@@ -21434,14 +22083,13 @@ const opStopMonitoringSchedule = "StopMonitoringSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopMonitoringScheduleRequest method.
+//	req, resp := client.StopMonitoringScheduleRequest(params)
 //
-//    // Example sending a request using the StopMonitoringScheduleRequest method.
-//    req, resp := client.StopMonitoringScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopMonitoringSchedule
 func (c *SageMaker) StopMonitoringScheduleRequest(input *StopMonitoringScheduleInput) (req *request.Request, output *StopMonitoringScheduleOutput) {
@@ -21473,8 +22121,8 @@ func (c *SageMaker) StopMonitoringScheduleRequest(input *StopMonitoringScheduleI
 // API operation StopMonitoringSchedule for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopMonitoringSchedule
 func (c *SageMaker) StopMonitoringSchedule(input *StopMonitoringScheduleInput) (*StopMonitoringScheduleOutput, error) {
@@ -21514,14 +22162,13 @@ const opStopNotebookInstance = "StopNotebookInstance"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopNotebookInstanceRequest method.
+//	req, resp := client.StopNotebookInstanceRequest(params)
 //
-//    // Example sending a request using the StopNotebookInstanceRequest method.
-//    req, resp := client.StopNotebookInstanceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopNotebookInstance
 func (c *SageMaker) StopNotebookInstanceRequest(input *StopNotebookInstanceInput) (req *request.Request, output *StopNotebookInstanceOutput) {
@@ -21543,10 +22190,10 @@ func (c *SageMaker) StopNotebookInstanceRequest(input *StopNotebookInstanceInput
 
 // StopNotebookInstance API operation for Amazon SageMaker Service.
 //
-// Terminates the ML compute instance. Before terminating the instance, Amazon
-// SageMaker disconnects the ML storage volume from it. Amazon SageMaker preserves
-// the ML storage volume. Amazon SageMaker stops charging you for the ML compute
-// instance when you call StopNotebookInstance.
+// Terminates the ML compute instance. Before terminating the instance, SageMaker
+// disconnects the ML storage volume from it. SageMaker preserves the ML storage
+// volume. SageMaker stops charging you for the ML compute instance when you
+// call StopNotebookInstance.
 //
 // To access data on the ML storage volume for a notebook instance that has
 // been terminated, call the StartNotebookInstance API. StartNotebookInstance
@@ -21597,14 +22244,13 @@ const opStopPipelineExecution = "StopPipelineExecution"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopPipelineExecutionRequest method.
+//	req, resp := client.StopPipelineExecutionRequest(params)
 //
-//    // Example sending a request using the StopPipelineExecutionRequest method.
-//    req, resp := client.StopPipelineExecutionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopPipelineExecution
 func (c *SageMaker) StopPipelineExecutionRequest(input *StopPipelineExecutionInput) (req *request.Request, output *StopPipelineExecutionOutput) {
@@ -21627,7 +22273,7 @@ func (c *SageMaker) StopPipelineExecutionRequest(input *StopPipelineExecutionInp
 //
 // Stops a pipeline execution.
 //
-// Callback Step
+// # Callback Step
 //
 // A pipeline execution won't stop while a callback step is running. When you
 // call StopPipelineExecution on a pipeline execution with a running callback
@@ -21642,7 +22288,7 @@ func (c *SageMaker) StopPipelineExecutionRequest(input *StopPipelineExecutionInp
 // Only when SageMaker Pipelines receives one of these calls will it stop the
 // pipeline execution.
 //
-// Lambda Step
+// # Lambda Step
 //
 // A pipeline execution can't be stopped while a lambda step is running because
 // the Lambda function invoked by the lambda step can't be stopped. If you attempt
@@ -21660,8 +22306,8 @@ func (c *SageMaker) StopPipelineExecutionRequest(input *StopPipelineExecutionInp
 // API operation StopPipelineExecution for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopPipelineExecution
 func (c *SageMaker) StopPipelineExecution(input *StopPipelineExecutionInput) (*StopPipelineExecutionOutput, error) {
@@ -21701,14 +22347,13 @@ const opStopProcessingJob = "StopProcessingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopProcessingJobRequest method.
+//	req, resp := client.StopProcessingJobRequest(params)
 //
-//    // Example sending a request using the StopProcessingJobRequest method.
-//    req, resp := client.StopProcessingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopProcessingJob
 func (c *SageMaker) StopProcessingJobRequest(input *StopProcessingJobInput) (req *request.Request, output *StopProcessingJobOutput) {
@@ -21740,8 +22385,8 @@ func (c *SageMaker) StopProcessingJobRequest(input *StopProcessingJobInput) (req
 // API operation StopProcessingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopProcessingJob
 func (c *SageMaker) StopProcessingJob(input *StopProcessingJobInput) (*StopProcessingJobOutput, error) {
@@ -21781,14 +22426,13 @@ const opStopTrainingJob = "StopTrainingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopTrainingJobRequest method.
+//	req, resp := client.StopTrainingJobRequest(params)
 //
-//    // Example sending a request using the StopTrainingJobRequest method.
-//    req, resp := client.StopTrainingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopTrainingJob
 func (c *SageMaker) StopTrainingJobRequest(input *StopTrainingJobInput) (req *request.Request, output *StopTrainingJobOutput) {
@@ -21810,14 +22454,14 @@ func (c *SageMaker) StopTrainingJobRequest(input *StopTrainingJobInput) (req *re
 
 // StopTrainingJob API operation for Amazon SageMaker Service.
 //
-// Stops a training job. To stop a job, Amazon SageMaker sends the algorithm
-// the SIGTERM signal, which delays job termination for 120 seconds. Algorithms
-// might use this 120-second window to save the model artifacts, so the results
-// of the training is not lost.
+// Stops a training job. To stop a job, SageMaker sends the algorithm the SIGTERM
+// signal, which delays job termination for 120 seconds. Algorithms might use
+// this 120-second window to save the model artifacts, so the results of the
+// training is not lost.
 //
-// When it receives a StopTrainingJob request, Amazon SageMaker changes the
-// status of the job to Stopping. After Amazon SageMaker stops the job, it sets
-// the status to Stopped.
+// When it receives a StopTrainingJob request, SageMaker changes the status
+// of the job to Stopping. After SageMaker stops the job, it sets the status
+// to Stopped.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -21827,8 +22471,8 @@ func (c *SageMaker) StopTrainingJobRequest(input *StopTrainingJobInput) (req *re
 // API operation StopTrainingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopTrainingJob
 func (c *SageMaker) StopTrainingJob(input *StopTrainingJobInput) (*StopTrainingJobOutput, error) {
@@ -21868,14 +22512,13 @@ const opStopTransformJob = "StopTransformJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopTransformJobRequest method.
+//	req, resp := client.StopTransformJobRequest(params)
 //
-//    // Example sending a request using the StopTransformJobRequest method.
-//    req, resp := client.StopTransformJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopTransformJob
 func (c *SageMaker) StopTransformJobRequest(input *StopTransformJobInput) (req *request.Request, output *StopTransformJobOutput) {
@@ -21912,8 +22555,8 @@ func (c *SageMaker) StopTransformJobRequest(input *StopTransformJobInput) (req *
 // API operation StopTransformJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopTransformJob
 func (c *SageMaker) StopTransformJob(input *StopTransformJobInput) (*StopTransformJobOutput, error) {
@@ -21953,14 +22596,13 @@ const opUpdateAction = "UpdateAction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateActionRequest method.
+//	req, resp := client.UpdateActionRequest(params)
 //
-//    // Example sending a request using the UpdateActionRequest method.
-//    req, resp := client.UpdateActionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateAction
 func (c *SageMaker) UpdateActionRequest(input *UpdateActionInput) (req *request.Request, output *UpdateActionOutput) {
@@ -21991,12 +22633,13 @@ func (c *SageMaker) UpdateActionRequest(input *UpdateActionInput) (req *request.
 // API operation UpdateAction for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict when you attempted to modify a SageMaker entity such
-//   as an Experiment or Artifact.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateAction
 func (c *SageMaker) UpdateAction(input *UpdateActionInput) (*UpdateActionOutput, error) {
@@ -22036,14 +22679,13 @@ const opUpdateAppImageConfig = "UpdateAppImageConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateAppImageConfigRequest method.
+//	req, resp := client.UpdateAppImageConfigRequest(params)
 //
-//    // Example sending a request using the UpdateAppImageConfigRequest method.
-//    req, resp := client.UpdateAppImageConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateAppImageConfig
 func (c *SageMaker) UpdateAppImageConfigRequest(input *UpdateAppImageConfigInput) (req *request.Request, output *UpdateAppImageConfigOutput) {
@@ -22074,8 +22716,8 @@ func (c *SageMaker) UpdateAppImageConfigRequest(input *UpdateAppImageConfigInput
 // API operation UpdateAppImageConfig for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateAppImageConfig
 func (c *SageMaker) UpdateAppImageConfig(input *UpdateAppImageConfigInput) (*UpdateAppImageConfigOutput, error) {
@@ -22115,14 +22757,13 @@ const opUpdateArtifact = "UpdateArtifact"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateArtifactRequest method.
+//	req, resp := client.UpdateArtifactRequest(params)
 //
-//    // Example sending a request using the UpdateArtifactRequest method.
-//    req, resp := client.UpdateArtifactRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateArtifact
 func (c *SageMaker) UpdateArtifactRequest(input *UpdateArtifactInput) (req *request.Request, output *UpdateArtifactOutput) {
@@ -22153,12 +22794,13 @@ func (c *SageMaker) UpdateArtifactRequest(input *UpdateArtifactInput) (req *requ
 // API operation UpdateArtifact for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict when you attempted to modify a SageMaker entity such
-//   as an Experiment or Artifact.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateArtifact
 func (c *SageMaker) UpdateArtifact(input *UpdateArtifactInput) (*UpdateArtifactOutput, error) {
@@ -22198,14 +22840,13 @@ const opUpdateCodeRepository = "UpdateCodeRepository"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateCodeRepositoryRequest method.
+//	req, resp := client.UpdateCodeRepositoryRequest(params)
 //
-//    // Example sending a request using the UpdateCodeRepositoryRequest method.
-//    req, resp := client.UpdateCodeRepositoryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateCodeRepository
 func (c *SageMaker) UpdateCodeRepositoryRequest(input *UpdateCodeRepositoryInput) (req *request.Request, output *UpdateCodeRepositoryOutput) {
@@ -22272,14 +22913,13 @@ const opUpdateContext = "UpdateContext"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateContextRequest method.
+//	req, resp := client.UpdateContextRequest(params)
 //
-//    // Example sending a request using the UpdateContextRequest method.
-//    req, resp := client.UpdateContextRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateContext
 func (c *SageMaker) UpdateContextRequest(input *UpdateContextInput) (req *request.Request, output *UpdateContextOutput) {
@@ -22310,12 +22950,13 @@ func (c *SageMaker) UpdateContextRequest(input *UpdateContextInput) (req *reques
 // API operation UpdateContext for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict when you attempted to modify a SageMaker entity such
-//   as an Experiment or Artifact.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateContext
 func (c *SageMaker) UpdateContext(input *UpdateContextInput) (*UpdateContextOutput, error) {
@@ -22355,14 +22996,13 @@ const opUpdateDeviceFleet = "UpdateDeviceFleet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateDeviceFleetRequest method.
+//	req, resp := client.UpdateDeviceFleetRequest(params)
 //
-//    // Example sending a request using the UpdateDeviceFleetRequest method.
-//    req, resp := client.UpdateDeviceFleetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateDeviceFleet
 func (c *SageMaker) UpdateDeviceFleetRequest(input *UpdateDeviceFleetInput) (req *request.Request, output *UpdateDeviceFleetOutput) {
@@ -22394,8 +23034,8 @@ func (c *SageMaker) UpdateDeviceFleetRequest(input *UpdateDeviceFleetInput) (req
 // API operation UpdateDeviceFleet for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceInUse
+//     Resource being accessed is in use.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateDeviceFleet
 func (c *SageMaker) UpdateDeviceFleet(input *UpdateDeviceFleetInput) (*UpdateDeviceFleetOutput, error) {
@@ -22435,14 +23075,13 @@ const opUpdateDevices = "UpdateDevices"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateDevicesRequest method.
+//	req, resp := client.UpdateDevicesRequest(params)
 //
-//    // Example sending a request using the UpdateDevicesRequest method.
-//    req, resp := client.UpdateDevicesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateDevices
 func (c *SageMaker) UpdateDevicesRequest(input *UpdateDevicesInput) (req *request.Request, output *UpdateDevicesOutput) {
@@ -22510,14 +23149,13 @@ const opUpdateDomain = "UpdateDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateDomainRequest method.
+//	req, resp := client.UpdateDomainRequest(params)
 //
-//    // Example sending a request using the UpdateDomainRequest method.
-//    req, resp := client.UpdateDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateDomain
 func (c *SageMaker) UpdateDomainRequest(input *UpdateDomainInput) (req *request.Request, output *UpdateDomainOutput) {
@@ -22548,15 +23186,16 @@ func (c *SageMaker) UpdateDomainRequest(input *UpdateDomainInput) (req *request.
 // API operation UpdateDomain for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateDomain
 func (c *SageMaker) UpdateDomain(input *UpdateDomainInput) (*UpdateDomainOutput, error) {
@@ -22596,14 +23235,13 @@ const opUpdateEndpoint = "UpdateEndpoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateEndpointRequest method.
+//	req, resp := client.UpdateEndpointRequest(params)
 //
-//    // Example sending a request using the UpdateEndpointRequest method.
-//    req, resp := client.UpdateEndpointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateEndpoint
 func (c *SageMaker) UpdateEndpointRequest(input *UpdateEndpointInput) (req *request.Request, output *UpdateEndpointOutput) {
@@ -22628,9 +23266,9 @@ func (c *SageMaker) UpdateEndpointRequest(input *UpdateEndpointInput) (req *requ
 // newly created endpoint, and then deletes resources provisioned for the endpoint
 // using the previous EndpointConfig (there is no availability loss).
 //
-// When Amazon SageMaker receives the request, it sets the endpoint status to
-// Updating. After updating the endpoint, it sets the status to InService. To
-// check the status of an endpoint, use the DescribeEndpoint API.
+// When SageMaker receives the request, it sets the endpoint status to Updating.
+// After updating the endpoint, it sets the status to InService. To check the
+// status of an endpoint, use the DescribeEndpoint API.
 //
 // You must not delete an EndpointConfig in use by an endpoint that is live
 // or while the UpdateEndpoint or CreateEndpoint operations are being performed
@@ -22648,9 +23286,9 @@ func (c *SageMaker) UpdateEndpointRequest(input *UpdateEndpointInput) (req *requ
 // API operation UpdateEndpoint for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateEndpoint
 func (c *SageMaker) UpdateEndpoint(input *UpdateEndpointInput) (*UpdateEndpointOutput, error) {
@@ -22690,14 +23328,13 @@ const opUpdateEndpointWeightsAndCapacities = "UpdateEndpointWeightsAndCapacities
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateEndpointWeightsAndCapacitiesRequest method.
+//	req, resp := client.UpdateEndpointWeightsAndCapacitiesRequest(params)
 //
-//    // Example sending a request using the UpdateEndpointWeightsAndCapacitiesRequest method.
-//    req, resp := client.UpdateEndpointWeightsAndCapacitiesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateEndpointWeightsAndCapacities
 func (c *SageMaker) UpdateEndpointWeightsAndCapacitiesRequest(input *UpdateEndpointWeightsAndCapacitiesInput) (req *request.Request, output *UpdateEndpointWeightsAndCapacitiesOutput) {
@@ -22720,9 +23357,9 @@ func (c *SageMaker) UpdateEndpointWeightsAndCapacitiesRequest(input *UpdateEndpo
 //
 // Updates variant weight of one or more variants associated with an existing
 // endpoint, or capacity of one variant associated with an existing endpoint.
-// When it receives the request, Amazon SageMaker sets the endpoint status to
-// Updating. After updating the endpoint, it sets the status to InService. To
-// check the status of an endpoint, use the DescribeEndpoint API.
+// When it receives the request, SageMaker sets the endpoint status to Updating.
+// After updating the endpoint, it sets the status to InService. To check the
+// status of an endpoint, use the DescribeEndpoint API.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -22732,9 +23369,9 @@ func (c *SageMaker) UpdateEndpointWeightsAndCapacitiesRequest(input *UpdateEndpo
 // API operation UpdateEndpointWeightsAndCapacities for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateEndpointWeightsAndCapacities
 func (c *SageMaker) UpdateEndpointWeightsAndCapacities(input *UpdateEndpointWeightsAndCapacitiesInput) (*UpdateEndpointWeightsAndCapacitiesOutput, error) {
@@ -22774,14 +23411,13 @@ const opUpdateExperiment = "UpdateExperiment"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateExperimentRequest method.
+//	req, resp := client.UpdateExperimentRequest(params)
 //
-//    // Example sending a request using the UpdateExperimentRequest method.
-//    req, resp := client.UpdateExperimentRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateExperiment
 func (c *SageMaker) UpdateExperimentRequest(input *UpdateExperimentInput) (req *request.Request, output *UpdateExperimentOutput) {
@@ -22813,12 +23449,13 @@ func (c *SageMaker) UpdateExperimentRequest(input *UpdateExperimentInput) (req *
 // API operation UpdateExperiment for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict when you attempted to modify a SageMaker entity such
-//   as an Experiment or Artifact.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateExperiment
 func (c *SageMaker) UpdateExperiment(input *UpdateExperimentInput) (*UpdateExperimentOutput, error) {
@@ -22842,6 +23479,163 @@ func (c *SageMaker) UpdateExperimentWithContext(ctx aws.Context, input *UpdateEx
 	return out, req.Send()
 }
 
+const opUpdateFeatureGroup = "UpdateFeatureGroup"
+
+// UpdateFeatureGroupRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateFeatureGroup operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateFeatureGroup for more information on using the UpdateFeatureGroup
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateFeatureGroupRequest method.
+//	req, resp := client.UpdateFeatureGroupRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateFeatureGroup
+func (c *SageMaker) UpdateFeatureGroupRequest(input *UpdateFeatureGroupInput) (req *request.Request, output *UpdateFeatureGroupOutput) {
+	op := &request.Operation{
+		Name:       opUpdateFeatureGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateFeatureGroupInput{}
+	}
+
+	output = &UpdateFeatureGroupOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateFeatureGroup API operation for Amazon SageMaker Service.
+//
+// Updates the feature group.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation UpdateFeatureGroup for usage and error information.
+//
+// Returned Error Types:
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateFeatureGroup
+func (c *SageMaker) UpdateFeatureGroup(input *UpdateFeatureGroupInput) (*UpdateFeatureGroupOutput, error) {
+	req, out := c.UpdateFeatureGroupRequest(input)
+	return out, req.Send()
+}
+
+// UpdateFeatureGroupWithContext is the same as UpdateFeatureGroup with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateFeatureGroup for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) UpdateFeatureGroupWithContext(ctx aws.Context, input *UpdateFeatureGroupInput, opts ...request.Option) (*UpdateFeatureGroupOutput, error) {
+	req, out := c.UpdateFeatureGroupRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateFeatureMetadata = "UpdateFeatureMetadata"
+
+// UpdateFeatureMetadataRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateFeatureMetadata operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateFeatureMetadata for more information on using the UpdateFeatureMetadata
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateFeatureMetadataRequest method.
+//	req, resp := client.UpdateFeatureMetadataRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateFeatureMetadata
+func (c *SageMaker) UpdateFeatureMetadataRequest(input *UpdateFeatureMetadataInput) (req *request.Request, output *UpdateFeatureMetadataOutput) {
+	op := &request.Operation{
+		Name:       opUpdateFeatureMetadata,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateFeatureMetadataInput{}
+	}
+
+	output = &UpdateFeatureMetadataOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UpdateFeatureMetadata API operation for Amazon SageMaker Service.
+//
+// Updates the description and parameters of the feature group.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon SageMaker Service's
+// API operation UpdateFeatureMetadata for usage and error information.
+//
+// Returned Error Types:
+//   - ResourceNotFound
+//     Resource being access is not found.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateFeatureMetadata
+func (c *SageMaker) UpdateFeatureMetadata(input *UpdateFeatureMetadataInput) (*UpdateFeatureMetadataOutput, error) {
+	req, out := c.UpdateFeatureMetadataRequest(input)
+	return out, req.Send()
+}
+
+// UpdateFeatureMetadataWithContext is the same as UpdateFeatureMetadata with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateFeatureMetadata for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SageMaker) UpdateFeatureMetadataWithContext(ctx aws.Context, input *UpdateFeatureMetadataInput, opts ...request.Option) (*UpdateFeatureMetadataOutput, error) {
+	req, out := c.UpdateFeatureMetadataRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateImage = "UpdateImage"
 
 // UpdateImageRequest generates a "aws/request.Request" representing the
@@ -22858,14 +23652,13 @@ const opUpdateImage = "UpdateImage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateImageRequest method.
+//	req, resp := client.UpdateImageRequest(params)
 //
-//    // Example sending a request using the UpdateImageRequest method.
-//    req, resp := client.UpdateImageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateImage
 func (c *SageMaker) UpdateImageRequest(input *UpdateImageInput) (req *request.Request, output *UpdateImageOutput) {
@@ -22897,11 +23690,12 @@ func (c *SageMaker) UpdateImageRequest(input *UpdateImageInput) (req *request.Re
 // API operation UpdateImage for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUse
-//   Resource being accessed is in use.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateImage
 func (c *SageMaker) UpdateImage(input *UpdateImageInput) (*UpdateImageOutput, error) {
@@ -22941,14 +23735,13 @@ const opUpdateModelPackage = "UpdateModelPackage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateModelPackageRequest method.
+//	req, resp := client.UpdateModelPackageRequest(params)
 //
-//    // Example sending a request using the UpdateModelPackageRequest method.
-//    req, resp := client.UpdateModelPackageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateModelPackage
 func (c *SageMaker) UpdateModelPackageRequest(input *UpdateModelPackageInput) (req *request.Request, output *UpdateModelPackageOutput) {
@@ -23015,14 +23808,13 @@ const opUpdateMonitoringSchedule = "UpdateMonitoringSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateMonitoringScheduleRequest method.
+//	req, resp := client.UpdateMonitoringScheduleRequest(params)
 //
-//    // Example sending a request using the UpdateMonitoringScheduleRequest method.
-//    req, resp := client.UpdateMonitoringScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateMonitoringSchedule
 func (c *SageMaker) UpdateMonitoringScheduleRequest(input *UpdateMonitoringScheduleInput) (req *request.Request, output *UpdateMonitoringScheduleOutput) {
@@ -23053,12 +23845,13 @@ func (c *SageMaker) UpdateMonitoringScheduleRequest(input *UpdateMonitoringSched
 // API operation UpdateMonitoringSchedule for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateMonitoringSchedule
 func (c *SageMaker) UpdateMonitoringSchedule(input *UpdateMonitoringScheduleInput) (*UpdateMonitoringScheduleOutput, error) {
@@ -23098,14 +23891,13 @@ const opUpdateNotebookInstance = "UpdateNotebookInstance"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateNotebookInstanceRequest method.
+//	req, resp := client.UpdateNotebookInstanceRequest(params)
 //
-//    // Example sending a request using the UpdateNotebookInstanceRequest method.
-//    req, resp := client.UpdateNotebookInstanceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateNotebookInstance
 func (c *SageMaker) UpdateNotebookInstanceRequest(input *UpdateNotebookInstanceInput) (req *request.Request, output *UpdateNotebookInstanceOutput) {
@@ -23139,9 +23931,9 @@ func (c *SageMaker) UpdateNotebookInstanceRequest(input *UpdateNotebookInstanceI
 // API operation UpdateNotebookInstance for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateNotebookInstance
 func (c *SageMaker) UpdateNotebookInstance(input *UpdateNotebookInstanceInput) (*UpdateNotebookInstanceOutput, error) {
@@ -23181,14 +23973,13 @@ const opUpdateNotebookInstanceLifecycleConfig = "UpdateNotebookInstanceLifecycle
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateNotebookInstanceLifecycleConfigRequest method.
+//	req, resp := client.UpdateNotebookInstanceLifecycleConfigRequest(params)
 //
-//    // Example sending a request using the UpdateNotebookInstanceLifecycleConfigRequest method.
-//    req, resp := client.UpdateNotebookInstanceLifecycleConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateNotebookInstanceLifecycleConfig
 func (c *SageMaker) UpdateNotebookInstanceLifecycleConfigRequest(input *UpdateNotebookInstanceLifecycleConfigInput) (req *request.Request, output *UpdateNotebookInstanceLifecycleConfigOutput) {
@@ -23221,9 +24012,9 @@ func (c *SageMaker) UpdateNotebookInstanceLifecycleConfigRequest(input *UpdateNo
 // API operation UpdateNotebookInstanceLifecycleConfig for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateNotebookInstanceLifecycleConfig
 func (c *SageMaker) UpdateNotebookInstanceLifecycleConfig(input *UpdateNotebookInstanceLifecycleConfigInput) (*UpdateNotebookInstanceLifecycleConfigOutput, error) {
@@ -23263,14 +24054,13 @@ const opUpdatePipeline = "UpdatePipeline"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdatePipelineRequest method.
+//	req, resp := client.UpdatePipelineRequest(params)
 //
-//    // Example sending a request using the UpdatePipelineRequest method.
-//    req, resp := client.UpdatePipelineRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdatePipeline
 func (c *SageMaker) UpdatePipelineRequest(input *UpdatePipelineInput) (req *request.Request, output *UpdatePipelineOutput) {
@@ -23301,8 +24091,8 @@ func (c *SageMaker) UpdatePipelineRequest(input *UpdatePipelineInput) (req *requ
 // API operation UpdatePipeline for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdatePipeline
 func (c *SageMaker) UpdatePipeline(input *UpdatePipelineInput) (*UpdatePipelineOutput, error) {
@@ -23342,14 +24132,13 @@ const opUpdatePipelineExecution = "UpdatePipelineExecution"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdatePipelineExecutionRequest method.
+//	req, resp := client.UpdatePipelineExecutionRequest(params)
 //
-//    // Example sending a request using the UpdatePipelineExecutionRequest method.
-//    req, resp := client.UpdatePipelineExecutionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdatePipelineExecution
 func (c *SageMaker) UpdatePipelineExecutionRequest(input *UpdatePipelineExecutionInput) (req *request.Request, output *UpdatePipelineExecutionOutput) {
@@ -23380,8 +24169,8 @@ func (c *SageMaker) UpdatePipelineExecutionRequest(input *UpdatePipelineExecutio
 // API operation UpdatePipelineExecution for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdatePipelineExecution
 func (c *SageMaker) UpdatePipelineExecution(input *UpdatePipelineExecutionInput) (*UpdatePipelineExecutionOutput, error) {
@@ -23421,14 +24210,13 @@ const opUpdateProject = "UpdateProject"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateProjectRequest method.
+//	req, resp := client.UpdateProjectRequest(params)
 //
-//    // Example sending a request using the UpdateProjectRequest method.
-//    req, resp := client.UpdateProjectRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateProject
 func (c *SageMaker) UpdateProjectRequest(input *UpdateProjectInput) (req *request.Request, output *UpdateProjectOutput) {
@@ -23500,14 +24288,13 @@ const opUpdateTrainingJob = "UpdateTrainingJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateTrainingJobRequest method.
+//	req, resp := client.UpdateTrainingJobRequest(params)
 //
-//    // Example sending a request using the UpdateTrainingJobRequest method.
-//    req, resp := client.UpdateTrainingJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateTrainingJob
 func (c *SageMaker) UpdateTrainingJobRequest(input *UpdateTrainingJobInput) (req *request.Request, output *UpdateTrainingJobOutput) {
@@ -23528,7 +24315,8 @@ func (c *SageMaker) UpdateTrainingJobRequest(input *UpdateTrainingJobInput) (req
 
 // UpdateTrainingJob API operation for Amazon SageMaker Service.
 //
-// Update a model training job to request a new Debugger profiling configuration.
+// Update a model training job to request a new Debugger profiling configuration
+// or to change warm pool retention length.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -23538,8 +24326,8 @@ func (c *SageMaker) UpdateTrainingJobRequest(input *UpdateTrainingJobInput) (req
 // API operation UpdateTrainingJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateTrainingJob
 func (c *SageMaker) UpdateTrainingJob(input *UpdateTrainingJobInput) (*UpdateTrainingJobOutput, error) {
@@ -23579,14 +24367,13 @@ const opUpdateTrial = "UpdateTrial"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateTrialRequest method.
+//	req, resp := client.UpdateTrialRequest(params)
 //
-//    // Example sending a request using the UpdateTrialRequest method.
-//    req, resp := client.UpdateTrialRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateTrial
 func (c *SageMaker) UpdateTrialRequest(input *UpdateTrialInput) (req *request.Request, output *UpdateTrialOutput) {
@@ -23617,12 +24404,13 @@ func (c *SageMaker) UpdateTrialRequest(input *UpdateTrialInput) (req *request.Re
 // API operation UpdateTrial for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict when you attempted to modify a SageMaker entity such
-//   as an Experiment or Artifact.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateTrial
 func (c *SageMaker) UpdateTrial(input *UpdateTrialInput) (*UpdateTrialOutput, error) {
@@ -23662,14 +24450,13 @@ const opUpdateTrialComponent = "UpdateTrialComponent"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateTrialComponentRequest method.
+//	req, resp := client.UpdateTrialComponentRequest(params)
 //
-//    // Example sending a request using the UpdateTrialComponentRequest method.
-//    req, resp := client.UpdateTrialComponentRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateTrialComponent
 func (c *SageMaker) UpdateTrialComponentRequest(input *UpdateTrialComponentInput) (req *request.Request, output *UpdateTrialComponentOutput) {
@@ -23700,12 +24487,13 @@ func (c *SageMaker) UpdateTrialComponentRequest(input *UpdateTrialComponentInput
 // API operation UpdateTrialComponent for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictException
-//   There was a conflict when you attempted to modify a SageMaker entity such
-//   as an Experiment or Artifact.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateTrialComponent
 func (c *SageMaker) UpdateTrialComponent(input *UpdateTrialComponentInput) (*UpdateTrialComponentOutput, error) {
@@ -23745,14 +24533,13 @@ const opUpdateUserProfile = "UpdateUserProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateUserProfileRequest method.
+//	req, resp := client.UpdateUserProfileRequest(params)
 //
-//    // Example sending a request using the UpdateUserProfileRequest method.
-//    req, resp := client.UpdateUserProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateUserProfile
 func (c *SageMaker) UpdateUserProfileRequest(input *UpdateUserProfileInput) (req *request.Request, output *UpdateUserProfileOutput) {
@@ -23783,15 +24570,16 @@ func (c *SageMaker) UpdateUserProfileRequest(input *UpdateUserProfileInput) (req
 // API operation UpdateUserProfile for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
 //
-//   * ResourceInUse
-//   Resource being accessed is in use.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
-//   * ResourceNotFound
-//   Resource being access is not found.
+//   - ResourceInUse
+//     Resource being accessed is in use.
+//
+//   - ResourceNotFound
+//     Resource being access is not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateUserProfile
 func (c *SageMaker) UpdateUserProfile(input *UpdateUserProfileInput) (*UpdateUserProfileOutput, error) {
@@ -23831,14 +24619,13 @@ const opUpdateWorkforce = "UpdateWorkforce"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateWorkforceRequest method.
+//	req, resp := client.UpdateWorkforceRequest(params)
 //
-//    // Example sending a request using the UpdateWorkforceRequest method.
-//    req, resp := client.UpdateWorkforceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateWorkforce
 func (c *SageMaker) UpdateWorkforceRequest(input *UpdateWorkforceInput) (req *request.Request, output *UpdateWorkforceOutput) {
@@ -23863,6 +24650,8 @@ func (c *SageMaker) UpdateWorkforceRequest(input *UpdateWorkforceInput) (req *re
 // require that workers use specific IP addresses to work on tasks and to update
 // your OpenID Connect (OIDC) Identity Provider (IdP) workforce configuration.
 //
+// The worker portal is now supported in VPC and public internet.
+//
 // Use SourceIpConfig to restrict worker access to tasks to a specific range
 // of IP addresses. You specify allowed IP addresses by creating a list of up
 // to ten CIDRs (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html).
@@ -23870,6 +24659,12 @@ func (c *SageMaker) UpdateWorkforceRequest(input *UpdateWorkforceInput) (req *re
 // specify a range of IP addresses, workers who attempt to access tasks using
 // any IP address outside the specified range are denied and get a Not Found
 // error message on the worker portal.
+//
+// To restrict access to all the workers in public internet, add the SourceIpConfig
+// CIDR value as "0.0.0.0/0".
+//
+// Amazon SageMaker does not support Source Ip restriction for worker portals
+// in VPC.
 //
 // Use OidcConfig to update the configuration of a workforce created using your
 // own OIDC IdP.
@@ -23889,6 +24684,12 @@ func (c *SageMaker) UpdateWorkforceRequest(input *UpdateWorkforceInput) (req *re
 //
 // See the AWS API reference guide for Amazon SageMaker Service's
 // API operation UpdateWorkforce for usage and error information.
+//
+// Returned Error Types:
+//   - ConflictException
+//     There was a conflict when you attempted to modify a SageMaker entity such
+//     as an Experiment or Artifact.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateWorkforce
 func (c *SageMaker) UpdateWorkforce(input *UpdateWorkforceInput) (*UpdateWorkforceOutput, error) {
 	req, out := c.UpdateWorkforceRequest(input)
@@ -23927,14 +24728,13 @@ const opUpdateWorkteam = "UpdateWorkteam"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateWorkteamRequest method.
+//	req, resp := client.UpdateWorkteamRequest(params)
 //
-//    // Example sending a request using the UpdateWorkteamRequest method.
-//    req, resp := client.UpdateWorkteamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateWorkteam
 func (c *SageMaker) UpdateWorkteamRequest(input *UpdateWorkteamInput) (req *request.Request, output *UpdateWorkteamOutput) {
@@ -23965,9 +24765,9 @@ func (c *SageMaker) UpdateWorkteamRequest(input *UpdateWorkteamInput) (req *requ
 // API operation UpdateWorkteam for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceLimitExceeded
-//   You have exceeded an Amazon SageMaker resource limit. For example, you might
-//   have too many training jobs created.
+//   - ResourceLimitExceeded
+//     You have exceeded an SageMaker resource limit. For example, you might have
+//     too many training jobs created.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateWorkteam
 func (c *SageMaker) UpdateWorkteam(input *UpdateWorkteamInput) (*UpdateWorkteamOutput, error) {
@@ -24344,7 +25144,7 @@ func (s *AddTagsInput) SetTags(v []*Tag) *AddTagsInput {
 type AddTagsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of tags associated with the Amazon SageMaker resource.
+	// A list of tags associated with the SageMaker resource.
 	Tags []*Tag `type:"list"`
 }
 
@@ -24398,14 +25198,14 @@ type AdditionalInferenceSpecificationDefinition struct {
 	SupportedContentTypes []*string `type:"list"`
 
 	// A list of the instance types that are used to generate inferences in real-time.
-	SupportedRealtimeInferenceInstanceTypes []*string `type:"list"`
+	SupportedRealtimeInferenceInstanceTypes []*string `type:"list" enum:"ProductionVariantInstanceType"`
 
 	// The supported MIME types for the output data.
 	SupportedResponseMIMETypes []*string `type:"list"`
 
 	// A list of the instance types on which a transformation job can be run or
 	// on which an endpoint can be deployed.
-	SupportedTransformInstanceTypes []*string `min:"1" type:"list"`
+	SupportedTransformInstanceTypes []*string `min:"1" type:"list" enum:"TransformInstanceType"`
 }
 
 // String returns the string representation.
@@ -24595,7 +25395,7 @@ func (s *Alarm) SetAlarmName(v string) *Alarm {
 
 // Specifies the training algorithm to use in a CreateTrainingJob request.
 //
-// For more information about algorithms provided by Amazon SageMaker, see Algorithms
+// For more information about algorithms provided by SageMaker, see Algorithms
 // (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html). For information
 // about using your own algorithms, see Using Your Own Algorithms with Amazon
 // SageMaker (https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html).
@@ -24604,18 +25404,27 @@ type AlgorithmSpecification struct {
 
 	// The name of the algorithm resource to use for the training job. This must
 	// be an algorithm resource that you created or subscribe to on Amazon Web Services
-	// Marketplace. If you specify a value for this parameter, you can't specify
-	// a value for TrainingImage.
+	// Marketplace.
+	//
+	// You must specify either the algorithm name to the AlgorithmName parameter
+	// or the image URI of the algorithm container to the TrainingImage parameter.
+	//
+	// Note that the AlgorithmName parameter is mutually exclusive with the TrainingImage
+	// parameter. If you specify a value for the AlgorithmName parameter, you can't
+	// specify a value for TrainingImage, and vice versa.
+	//
+	// If you specify values for both parameters, the training job might break;
+	// if you don't specify any value for both parameters, the training job might
+	// raise a null error.
 	AlgorithmName *string `min:"1" type:"string"`
 
 	// To generate and save time-series metrics during training, set to true. The
 	// default is false and time-series metrics aren't generated except in the following
 	// cases:
 	//
-	//    * You use one of the Amazon SageMaker built-in algorithms
+	//    * You use one of the SageMaker built-in algorithms
 	//
-	//    * You use one of the following Prebuilt Amazon SageMaker Docker Images
-	//    (https://docs.aws.amazon.com/sagemaker/latest/dg/pre-built-containers-frameworks-deep-learning.html):
+	//    * You use one of the following Prebuilt SageMaker Docker Images (https://docs.aws.amazon.com/sagemaker/latest/dg/pre-built-containers-frameworks-deep-learning.html):
 	//    Tensorflow (version >= 1.15) MXNet (version >= 1.6) PyTorch (version >=
 	//    1.3)
 	//
@@ -24623,16 +25432,22 @@ type AlgorithmSpecification struct {
 	EnableSageMakerMetricsTimeSeries *bool `type:"boolean"`
 
 	// A list of metric definition objects. Each object specifies the metric name
-	// and regular expressions used to parse algorithm logs. Amazon SageMaker publishes
+	// and regular expressions used to parse algorithm logs. SageMaker publishes
 	// each metric to Amazon CloudWatch.
 	MetricDefinitions []*MetricDefinition `type:"list"`
 
 	// The registry path of the Docker image that contains the training algorithm.
-	// For information about docker registry paths for built-in algorithms, see
-	// Algorithms Provided by Amazon SageMaker: Common Parameters (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html).
-	// Amazon SageMaker supports both registry/repository[:tag] and registry/repository[@digest]
-	// image path formats. For more information, see Using Your Own Algorithms with
-	// Amazon SageMaker (https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html).
+	// For information about docker registry paths for SageMaker built-in algorithms,
+	// see Docker Registry Paths and Example Code (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html)
+	// in the Amazon SageMaker developer guide. SageMaker supports both registry/repository[:tag]
+	// and registry/repository[@digest] image path formats. For more information
+	// about using your custom training container, see Using Your Own Algorithms
+	// with Amazon SageMaker (https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html).
+	//
+	// You must specify either the algorithm name to the AlgorithmName parameter
+	// or the image URI of the algorithm container to the TrainingImage parameter.
+	//
+	// For more information, see the note in the AlgorithmName parameter description.
 	TrainingImage *string `type:"string"`
 
 	// The training input mode that the algorithm supports. For more information
@@ -24921,8 +25736,8 @@ func (s *AlgorithmSummary) SetCreationTime(v time.Time) *AlgorithmSummary {
 	return s
 }
 
-// Defines a training job and a batch transform job that Amazon SageMaker runs
-// to validate your algorithm.
+// Defines a training job and a batch transform job that SageMaker runs to validate
+// your algorithm.
 //
 // The data provided in the validation profile is made available to your buyers
 // on Amazon Web Services Marketplace.
@@ -24935,14 +25750,14 @@ type AlgorithmValidationProfile struct {
 	// ProfileName is a required field
 	ProfileName *string `min:"1" type:"string" required:"true"`
 
-	// The TrainingJobDefinition object that describes the training job that Amazon
-	// SageMaker runs to validate your algorithm.
+	// The TrainingJobDefinition object that describes the training job that SageMaker
+	// runs to validate your algorithm.
 	//
 	// TrainingJobDefinition is a required field
 	TrainingJobDefinition *TrainingJobDefinition `type:"structure" required:"true"`
 
-	// The TransformJobDefinition object that describes the transform job that Amazon
-	// SageMaker runs to validate your algorithm.
+	// The TransformJobDefinition object that describes the transform job that SageMaker
+	// runs to validate your algorithm.
 	TransformJobDefinition *TransformJobDefinition `type:"structure"`
 }
 
@@ -25011,19 +25826,19 @@ func (s *AlgorithmValidationProfile) SetTransformJobDefinition(v *TransformJobDe
 	return s
 }
 
-// Specifies configurations for one or more training jobs that Amazon SageMaker
-// runs to test the algorithm.
+// Specifies configurations for one or more training jobs that SageMaker runs
+// to test the algorithm.
 type AlgorithmValidationSpecification struct {
 	_ struct{} `type:"structure"`
 
 	// An array of AlgorithmValidationProfile objects, each of which specifies a
-	// training job and batch transform job that Amazon SageMaker runs to validate
-	// your algorithm.
+	// training job and batch transform job that SageMaker runs to validate your
+	// algorithm.
 	//
 	// ValidationProfiles is a required field
 	ValidationProfiles []*AlgorithmValidationProfile `min:"1" type:"list" required:"true"`
 
-	// The IAM roles that Amazon SageMaker uses to run the training jobs.
+	// The IAM roles that SageMaker uses to run the training jobs.
 	//
 	// ValidationRole is a required field
 	ValidationRole *string `min:"20" type:"string" required:"true"`
@@ -26404,14 +27219,14 @@ func (s *AssociationSummary) SetSourceType(v string) *AssociationSummary {
 	return s
 }
 
-// Configures the behavior of the client used by Amazon SageMaker to interact
-// with the model container during asynchronous inference.
+// Configures the behavior of the client used by SageMaker to interact with
+// the model container during asynchronous inference.
 type AsyncInferenceClientConfig struct {
 	_ struct{} `type:"structure"`
 
 	// The maximum number of concurrent requests sent by the SageMaker client to
-	// the model container. If no value is provided, Amazon SageMaker will choose
-	// an optimal value for you.
+	// the model container. If no value is provided, SageMaker chooses an optimal
+	// value.
 	MaxConcurrentInvocationsPerInstance *int64 `min:"1" type:"integer"`
 }
 
@@ -26456,8 +27271,8 @@ func (s *AsyncInferenceClientConfig) SetMaxConcurrentInvocationsPerInstance(v in
 type AsyncInferenceConfig struct {
 	_ struct{} `type:"structure"`
 
-	// Configures the behavior of the client used by Amazon SageMaker to interact
-	// with the model container during asynchronous inference.
+	// Configures the behavior of the client used by SageMaker to interact with
+	// the model container during asynchronous inference.
 	ClientConfig *AsyncInferenceClientConfig `type:"structure"`
 
 	// Specifies the configuration for asynchronous inference invocation outputs.
@@ -26568,8 +27383,8 @@ type AsyncInferenceOutputConfig struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Web Services Key Management Service (Amazon Web Services KMS)
-	// key that Amazon SageMaker uses to encrypt the asynchronous inference output
-	// in Amazon S3.
+	// key that SageMaker uses to encrypt the asynchronous inference output in Amazon
+	// S3.
 	KmsKeyId *string `type:"string"`
 
 	// Specifies the configuration for notifications of inference results for asynchronous
@@ -26910,6 +27725,64 @@ func (s *AutoMLCandidate) SetObjectiveStatus(v string) *AutoMLCandidate {
 	return s
 }
 
+// Stores the config information for how a candidate is generated (optional).
+type AutoMLCandidateGenerationConfig struct {
+	_ struct{} `type:"structure"`
+
+	// A URL to the Amazon S3 data source containing selected features from the
+	// input data source to run an Autopilot job. You can input FeatureAttributeNames
+	// (optional) in JSON format as shown below:
+	//
+	// { "FeatureAttributeNames":["col1", "col2", ...] }.
+	//
+	// You can also specify the data type of the feature (optional) in the format
+	// shown below:
+	//
+	// { "FeatureDataTypes":{"col1":"numeric", "col2":"categorical" ... } }
+	//
+	// These column keys may not include the target column.
+	//
+	// In ensembling mode, Autopilot will only support the following data types:
+	// numeric, categorical, text and datetime. In HPO mode, Autopilot can support
+	// numeric, categorical, text, datetime and sequence.
+	//
+	// If only FeatureDataTypes is provided, the column keys (col1, col2,..) should
+	// be a subset of the column names in the input data.
+	//
+	// If both FeatureDataTypes and FeatureAttributeNames are provided, then the
+	// column keys should be a subset of the column names provided in FeatureAttributeNames.
+	//
+	// The key name FeatureAttributeNames is fixed. The values listed in ["col1",
+	// "col2", ...] is case sensitive and should be a list of strings containing
+	// unique values that are a subset of the column names in the input data. The
+	// list of columns provided must not include the target column.
+	FeatureSpecificationS3Uri *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AutoMLCandidateGenerationConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AutoMLCandidateGenerationConfig) GoString() string {
+	return s.String()
+}
+
+// SetFeatureSpecificationS3Uri sets the FeatureSpecificationS3Uri field's value.
+func (s *AutoMLCandidateGenerationConfig) SetFeatureSpecificationS3Uri(v string) *AutoMLCandidateGenerationConfig {
+	s.FeatureSpecificationS3Uri = &v
+	return s
+}
+
 // Information about the steps for a candidate and what step it is working on.
 type AutoMLCandidateStep struct {
 	_ struct{} `type:"structure"`
@@ -26966,10 +27839,19 @@ func (s *AutoMLCandidateStep) SetCandidateStepType(v string) *AutoMLCandidateSte
 	return s
 }
 
-// A channel is a named input source that training algorithms can consume. For
-// more information, see .
+// A channel is a named input source that training algorithms can consume. The
+// validation dataset size is limited to less than 2 GB. The training dataset
+// size must be less than 100 GB. For more information, see .
+//
+// A validation dataset must contain the same headers as the training dataset.
 type AutoMLChannel struct {
 	_ struct{} `type:"structure"`
+
+	// The channel type (optional) is an enum string. The default value is training.
+	// Channels for training and validation must share the same ContentType and
+	// TargetAttributeName. For information on specifying training and validation
+	// channel types, see How to specify training and validation datasets (https://docs.aws.amazon.com/sagemaker/latest/dg/autopilot-datasets-problem-types.html#autopilot-data-sources-training-or-validation).
+	ChannelType *string `type:"string" enum:"AutoMLChannelType"`
 
 	// You can use Gzip or None. The default value is None.
 	CompressionType *string `type:"string" enum:"CompressionType"`
@@ -27030,6 +27912,12 @@ func (s *AutoMLChannel) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetChannelType sets the ChannelType field's value.
+func (s *AutoMLChannel) SetChannelType(v string) *AutoMLChannel {
+	s.ChannelType = &v
+	return s
 }
 
 // SetCompressionType sets the CompressionType field's value.
@@ -27119,8 +28007,6 @@ type AutoMLDataSource struct {
 
 	// The Amazon S3 location of the input data.
 	//
-	// The input data must be in CSV format and contain at least 500 rows.
-	//
 	// S3DataSource is a required field
 	S3DataSource *AutoMLS3DataSource `type:"structure" required:"true"`
 }
@@ -27164,6 +28050,43 @@ func (s *AutoMLDataSource) Validate() error {
 // SetS3DataSource sets the S3DataSource field's value.
 func (s *AutoMLDataSource) SetS3DataSource(v *AutoMLS3DataSource) *AutoMLDataSource {
 	s.S3DataSource = v
+	return s
+}
+
+// This structure specifies how to split the data into train and validation
+// datasets. The validation and training datasets must contain the same headers.
+// The validation dataset must be less than 2 GB in size.
+type AutoMLDataSplitConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The validation fraction (optional) is a float that specifies the portion
+	// of the training dataset to be used for validation. The default value is 0.2,
+	// and values must be greater than 0 and less than 1. We recommend setting this
+	// value to be less than 0.5.
+	ValidationFraction *float64 `type:"float"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AutoMLDataSplitConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AutoMLDataSplitConfig) GoString() string {
+	return s.String()
+}
+
+// SetValidationFraction sets the ValidationFraction field's value.
+func (s *AutoMLDataSplitConfig) SetValidationFraction(v float64) *AutoMLDataSplitConfig {
+	s.ValidationFraction = &v
 	return s
 }
 
@@ -27225,9 +28148,9 @@ type AutoMLJobCompletionCriteria struct {
 	// The maximum number of times a training job is allowed to run.
 	MaxCandidates *int64 `min:"1" type:"integer"`
 
-	// The maximum time, in seconds, that each training job is allowed to run as
-	// part of a hyperparameter tuning job. For more information, see the used by
-	// the action.
+	// The maximum time, in seconds, that each training job executed inside hyperparameter
+	// tuning is allowed to run as part of a hyperparameter tuning job. For more
+	// information, see the used by the action.
 	MaxRuntimePerTrainingJobInSeconds *int64 `min:"1" type:"integer"`
 }
 
@@ -27290,9 +28213,38 @@ func (s *AutoMLJobCompletionCriteria) SetMaxRuntimePerTrainingJobInSeconds(v int
 type AutoMLJobConfig struct {
 	_ struct{} `type:"structure"`
 
+	// The configuration for generating a candidate for an AutoML job (optional).
+	CandidateGenerationConfig *AutoMLCandidateGenerationConfig `type:"structure"`
+
 	// How long an AutoML job is allowed to run, or how many candidates a job is
 	// allowed to generate.
 	CompletionCriteria *AutoMLJobCompletionCriteria `type:"structure"`
+
+	// The configuration for splitting the input training dataset.
+	//
+	// Type: AutoMLDataSplitConfig
+	DataSplitConfig *AutoMLDataSplitConfig `type:"structure"`
+
+	// The method that Autopilot uses to train the data. You can either specify
+	// the mode manually or let Autopilot choose for you based on the dataset size
+	// by selecting AUTO. In AUTO mode, Autopilot chooses ENSEMBLING for datasets
+	// smaller than 100 MB, and HYPERPARAMETER_TUNING for larger ones.
+	//
+	// The ENSEMBLING mode uses a multi-stack ensemble model to predict classification
+	// and regression tasks directly from your dataset. This machine learning mode
+	// combines several base models to produce an optimal predictive model. It then
+	// uses a stacking ensemble method to combine predictions from contributing
+	// members. A multi-stack ensemble model can provide better performance over
+	// a single model by combining the predictive capabilities of multiple models.
+	// See Autopilot algorithm support (https://docs.aws.amazon.com/sagemaker/latest/dg/autopilot-model-support-validation.html#autopilot-algorithm-suppprt)
+	// for a list of algorithms supported by ENSEMBLING mode.
+	//
+	// The HYPERPARAMETER_TUNING (HPO) mode uses the best hyperparameters to train
+	// the best version of a model. HPO will automatically select an algorithm for
+	// the type of problem you want to solve. Then HPO finds the best hyperparameters
+	// according to your objective metric. See Autopilot algorithm support (https://docs.aws.amazon.com/sagemaker/latest/dg/autopilot-model-support-validation.html#autopilot-algorithm-suppprt)
+	// for a list of algorithms supported by HYPERPARAMETER_TUNING mode.
+	Mode *string `type:"string" enum:"AutoMLMode"`
 
 	// The security configuration for traffic encryption or Amazon VPC settings.
 	SecurityConfig *AutoMLSecurityConfig `type:"structure"`
@@ -27336,9 +28288,27 @@ func (s *AutoMLJobConfig) Validate() error {
 	return nil
 }
 
+// SetCandidateGenerationConfig sets the CandidateGenerationConfig field's value.
+func (s *AutoMLJobConfig) SetCandidateGenerationConfig(v *AutoMLCandidateGenerationConfig) *AutoMLJobConfig {
+	s.CandidateGenerationConfig = v
+	return s
+}
+
 // SetCompletionCriteria sets the CompletionCriteria field's value.
 func (s *AutoMLJobConfig) SetCompletionCriteria(v *AutoMLJobCompletionCriteria) *AutoMLJobConfig {
 	s.CompletionCriteria = v
+	return s
+}
+
+// SetDataSplitConfig sets the DataSplitConfig field's value.
+func (s *AutoMLJobConfig) SetDataSplitConfig(v *AutoMLDataSplitConfig) *AutoMLJobConfig {
+	s.DataSplitConfig = v
+	return s
+}
+
+// SetMode sets the Mode field's value.
+func (s *AutoMLJobConfig) SetMode(v string) *AutoMLJobConfig {
+	s.Mode = &v
 	return s
 }
 
@@ -27670,6 +28640,20 @@ type AutoMLS3DataSource struct {
 	_ struct{} `type:"structure"`
 
 	// The data type.
+	//
+	// A ManifestFile should have the format shown below:
+	//
+	// [ {"prefix": "s3://DOC-EXAMPLE-BUCKET/DOC-EXAMPLE-FOLDER/DOC-EXAMPLE-PREFIX/"},
+	//
+	// "DOC-EXAMPLE-RELATIVE-PATH/DOC-EXAMPLE-FOLDER/DATA-1",
+	//
+	// "DOC-EXAMPLE-RELATIVE-PATH/DOC-EXAMPLE-FOLDER/DATA-2",
+	//
+	// ... "DOC-EXAMPLE-RELATIVE-PATH/DOC-EXAMPLE-FOLDER/DATA-N" ]
+	//
+	// An S3Prefix should have the following format:
+	//
+	// s3://DOC-EXAMPLE-BUCKET/DOC-EXAMPLE-FOLDER-OR-FILE
 	//
 	// S3DataType is a required field
 	S3DataType *string `type:"string" required:"true" enum:"AutoMLS3DataType"`
@@ -28089,8 +29073,10 @@ func (s *BatchDescribeModelPackageSummary) SetModelPackageVersion(v int64) *Batc
 type Bias struct {
 	_ struct{} `type:"structure"`
 
+	// The post-training bias report for a model.
 	PostTrainingReport *MetricsSource `type:"structure"`
 
+	// The pre-training bias report for a model.
 	PreTrainingReport *MetricsSource `type:"structure"`
 
 	// The bias report for a model
@@ -28409,6 +29395,53 @@ func (s *CandidateProperties) SetCandidateMetrics(v []*MetricDatum) *CandidatePr
 	return s
 }
 
+// The SageMaker Canvas app settings.
+type CanvasAppSettings struct {
+	_ struct{} `type:"structure"`
+
+	// Time series forecast settings for the Canvas app.
+	TimeSeriesForecastingSettings *TimeSeriesForecastingSettings `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CanvasAppSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CanvasAppSettings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CanvasAppSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CanvasAppSettings"}
+	if s.TimeSeriesForecastingSettings != nil {
+		if err := s.TimeSeriesForecastingSettings.Validate(); err != nil {
+			invalidParams.AddNested("TimeSeriesForecastingSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetTimeSeriesForecastingSettings sets the TimeSeriesForecastingSettings field's value.
+func (s *CanvasAppSettings) SetTimeSeriesForecastingSettings(v *TimeSeriesForecastingSettings) *CanvasAppSettings {
+	s.TimeSeriesForecastingSettings = v
+	return s
+}
+
 // Specifies the endpoint capacity to activate for production.
 type CapacitySize struct {
 	_ struct{} `type:"structure"`
@@ -28479,11 +29512,17 @@ func (s *CapacitySize) SetValue(v int64) *CapacitySize {
 	return s
 }
 
+// Configuration specifying how to treat different headers. If no headers are
+// specified SageMaker will by default base64 encode when capturing the data.
 type CaptureContentTypeHeader struct {
 	_ struct{} `type:"structure"`
 
+	// The list of all content type headers that SageMaker will treat as CSV and
+	// capture accordingly.
 	CsvContentTypes []*string `min:"1" type:"list"`
 
+	// The list of all content type headers that SageMaker will treat as JSON and
+	// capture accordingly.
 	JsonContentTypes []*string `min:"1" type:"list"`
 }
 
@@ -28533,9 +29572,12 @@ func (s *CaptureContentTypeHeader) SetJsonContentTypes(v []*string) *CaptureCont
 	return s
 }
 
+// Specifies data Model Monitor will capture.
 type CaptureOption struct {
 	_ struct{} `type:"structure"`
 
+	// Specify the boundary of data to capture.
+	//
 	// CaptureMode is a required field
 	CaptureMode *string `type:"string" required:"true" enum:"CaptureMode"`
 }
@@ -28778,11 +29820,11 @@ type Channel struct {
 	DataSource *DataSource `type:"structure" required:"true"`
 
 	// (Optional) The input mode to use for the data channel in a training job.
-	// If you don't set a value for InputMode, Amazon SageMaker uses the value set
-	// for TrainingInputMode. Use this parameter to override the TrainingInputMode
-	// setting in a AlgorithmSpecification request when you have a channel that
-	// needs a different input mode from the training job's general setting. To
-	// download the data from Amazon Simple Storage Service (Amazon S3) to the provisioned
+	// If you don't set a value for InputMode, SageMaker uses the value set for
+	// TrainingInputMode. Use this parameter to override the TrainingInputMode setting
+	// in a AlgorithmSpecification request when you have a channel that needs a
+	// different input mode from the training job's general setting. To download
+	// the data from Amazon Simple Storage Service (Amazon S3) to the provisioned
 	// ML storage volume, and mount the directory to a Docker volume, use File input
 	// mode. To stream data directly from Amazon S3 to the container, choose Pipe
 	// input mode.
@@ -28791,9 +29833,9 @@ type Channel struct {
 	InputMode *string `type:"string" enum:"TrainingInputMode"`
 
 	// Specify RecordIO as the value when input data is in raw format but the training
-	// algorithm requires the RecordIO format. In this case, Amazon SageMaker wraps
-	// each individual S3 object in a RecordIO record. If the input data is already
-	// in RecordIO format, you don't need to set this attribute. For more information,
+	// algorithm requires the RecordIO format. In this case, SageMaker wraps each
+	// individual S3 object in a RecordIO record. If the input data is already in
+	// RecordIO format, you don't need to set this attribute. For more information,
 	// see Create a Dataset Using RecordIO (https://mxnet.apache.org/api/architecture/note_data_loading#data-format).
 	//
 	// In File mode, leave this field unset or set it to None.
@@ -28921,7 +29963,7 @@ type ChannelSpecification struct {
 	Name *string `min:"1" type:"string" required:"true"`
 
 	// The allowed compression types, if data compression is used.
-	SupportedCompressionTypes []*string `type:"list"`
+	SupportedCompressionTypes []*string `type:"list" enum:"CompressionType"`
 
 	// The supported MIME types for the data.
 	//
@@ -28938,7 +29980,7 @@ type ChannelSpecification struct {
 	// to your algorithm without using the EBS volume.
 	//
 	// SupportedInputModes is a required field
-	SupportedInputModes []*string `min:"1" type:"list" required:"true"`
+	SupportedInputModes []*string `min:"1" type:"list" required:"true" enum:"TrainingInputMode"`
 }
 
 // String returns the string representation.
@@ -29029,8 +30071,8 @@ type CheckpointConfig struct {
 	// directory is /opt/ml/checkpoints/.
 	LocalPath *string `type:"string"`
 
-	// Identifies the S3 path where you want Amazon SageMaker to store checkpoints.
-	// For example, s3://bucket-name/key-name-prefix.
+	// Identifies the S3 path where you want SageMaker to store checkpoints. For
+	// example, s3://bucket-name/key-name-prefix.
 	//
 	// S3Uri is a required field
 	S3Uri *string `type:"string" required:"true"`
@@ -29180,6 +30222,564 @@ func (s *ClarifyCheckStepMetadata) SetSkipCheck(v bool) *ClarifyCheckStepMetadat
 // SetViolationReport sets the ViolationReport field's value.
 func (s *ClarifyCheckStepMetadata) SetViolationReport(v string) *ClarifyCheckStepMetadata {
 	s.ViolationReport = &v
+	return s
+}
+
+// The configuration parameters for the SageMaker Clarify explainer.
+type ClarifyExplainerConfig struct {
+	_ struct{} `type:"structure"`
+
+	// A JMESPath boolean expression used to filter which records to explain. Explanations
+	// are activated by default. See EnableExplanations (https://docs.aws.amazon.com/sagemaker-dg/src/AWSIronmanApiDoc/build/server-root/sagemaker/latest/dg/clarify-online-explainability-create-endpoint.html#clarify-online-explainability-create-endpoint-enable)for
+	// additional information.
+	EnableExplanations *string `min:"1" type:"string"`
+
+	// The inference configuration parameter for the model container.
+	InferenceConfig *ClarifyInferenceConfig `type:"structure"`
+
+	// The configuration for SHAP analysis.
+	//
+	// ShapConfig is a required field
+	ShapConfig *ClarifyShapConfig `type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClarifyExplainerConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClarifyExplainerConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ClarifyExplainerConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ClarifyExplainerConfig"}
+	if s.EnableExplanations != nil && len(*s.EnableExplanations) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EnableExplanations", 1))
+	}
+	if s.ShapConfig == nil {
+		invalidParams.Add(request.NewErrParamRequired("ShapConfig"))
+	}
+	if s.InferenceConfig != nil {
+		if err := s.InferenceConfig.Validate(); err != nil {
+			invalidParams.AddNested("InferenceConfig", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.ShapConfig != nil {
+		if err := s.ShapConfig.Validate(); err != nil {
+			invalidParams.AddNested("ShapConfig", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEnableExplanations sets the EnableExplanations field's value.
+func (s *ClarifyExplainerConfig) SetEnableExplanations(v string) *ClarifyExplainerConfig {
+	s.EnableExplanations = &v
+	return s
+}
+
+// SetInferenceConfig sets the InferenceConfig field's value.
+func (s *ClarifyExplainerConfig) SetInferenceConfig(v *ClarifyInferenceConfig) *ClarifyExplainerConfig {
+	s.InferenceConfig = v
+	return s
+}
+
+// SetShapConfig sets the ShapConfig field's value.
+func (s *ClarifyExplainerConfig) SetShapConfig(v *ClarifyShapConfig) *ClarifyExplainerConfig {
+	s.ShapConfig = v
+	return s
+}
+
+// The inference configuration parameter for the model container.
+type ClarifyInferenceConfig struct {
+	_ struct{} `type:"structure"`
+
+	// A template string used to format a JSON record into an acceptable model container
+	// input. For example, a ContentTemplate string '{"myfeatures":$features}' will
+	// format a list of features [1,2,3] into the record string '{"myfeatures":[1,2,3]}'.
+	// Required only when the model container input is in JSON Lines format.
+	ContentTemplate *string `min:"1" type:"string"`
+
+	// The names of the features. If provided, these are included in the endpoint
+	// response payload to help readability of the InvokeEndpoint output. See the
+	// Response (https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-online-explainability-invoke-endpoint.html#clarify-online-explainability-response)
+	// section under Invoke the endpoint in the Developer Guide for more information.
+	FeatureHeaders []*string `min:"1" type:"list"`
+
+	// A list of data types of the features (optional). Applicable only to NLP explainability.
+	// If provided, FeatureTypes must have at least one 'text' string (for example,
+	// ['text']). If FeatureTypes is not provided, the explainer infers the feature
+	// types based on the baseline data. The feature types are included in the endpoint
+	// response payload. For additional information see the response (https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-online-explainability-invoke-endpoint.html#clarify-online-explainability-response)
+	// section under Invoke the endpoint in the Developer Guide for more information.
+	FeatureTypes []*string `min:"1" type:"list" enum:"ClarifyFeatureType"`
+
+	// Provides the JMESPath expression to extract the features from a model container
+	// input in JSON Lines format. For example, if FeaturesAttribute is the JMESPath
+	// expression 'myfeatures', it extracts a list of features [1,2,3] from request
+	// data '{"myfeatures":[1,2,3}'.
+	FeaturesAttribute *string `min:"1" type:"string"`
+
+	// A JMESPath expression used to locate the list of label headers in the model
+	// container output.
+	//
+	// Example: If the model container output of a batch request is '{"labels":["cat","dog","fish"],"probability":[0.6,0.3,0.1]}',
+	// then set LabelAttribute to 'labels' to extract the list of label headers
+	// ["cat","dog","fish"]
+	LabelAttribute *string `min:"1" type:"string"`
+
+	// For multiclass classification problems, the label headers are the names of
+	// the classes. Otherwise, the label header is the name of the predicted label.
+	// These are used to help readability for the output of the InvokeEndpoint API.
+	// See the response (https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-online-explainability-invoke-endpoint.html#clarify-online-explainability-response)
+	// section under Invoke the endpoint in the Developer Guide for more information.
+	// If there are no label headers in the model container output, provide them
+	// manually using this parameter.
+	LabelHeaders []*string `min:"1" type:"list"`
+
+	// A zero-based index used to extract a label header or list of label headers
+	// from model container output in CSV format.
+	//
+	// Example for a multiclass model: If the model container output consists of
+	// label headers followed by probabilities: '"[\'cat\',\'dog\',\'fish\']","[0.1,0.6,0.3]"',
+	// set LabelIndex to 0 to select the label headers ['cat','dog','fish'].
+	LabelIndex *int64 `type:"integer"`
+
+	// The maximum payload size (MB) allowed of a request from the explainer to
+	// the model container. Defaults to 6 MB.
+	MaxPayloadInMB *int64 `min:"1" type:"integer"`
+
+	// The maximum number of records in a request that the model container can process
+	// when querying the model container for the predictions of a synthetic dataset
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-online-explainability-create-endpoint.html#clarify-online-explainability-create-endpoint-synthetic).
+	// A record is a unit of input data that inference can be made on, for example,
+	// a single line in CSV data. If MaxRecordCount is 1, the model container expects
+	// one record per request. A value of 2 or greater means that the model expects
+	// batch requests, which can reduce overhead and speed up the inferencing process.
+	// If this parameter is not provided, the explainer will tune the record count
+	// per request according to the model container's capacity at runtime.
+	MaxRecordCount *int64 `min:"1" type:"integer"`
+
+	// A JMESPath expression used to extract the probability (or score) from the
+	// model container output if the model container is in JSON Lines format.
+	//
+	// Example: If the model container output of a single request is '{"predicted_label":1,"probability":0.6}',
+	// then set ProbabilityAttribute to 'probability'.
+	ProbabilityAttribute *string `min:"1" type:"string"`
+
+	// A zero-based index used to extract a probability value (score) or list from
+	// model container output in CSV format. If this value is not provided, the
+	// entire model container output will be treated as a probability value (score)
+	// or list.
+	//
+	// Example for a single class model: If the model container output consists
+	// of a string-formatted prediction label followed by its probability: '1,0.6',
+	// set ProbabilityIndex to 1 to select the probability value 0.6.
+	//
+	// Example for a multiclass model: If the model container output consists of
+	// a string-formatted prediction label followed by its probability: '"[\'cat\',\'dog\',\'fish\']","[0.1,0.6,0.3]"',
+	// set ProbabilityIndex to 1 to select the probability values [0.1,0.6,0.3].
+	ProbabilityIndex *int64 `type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClarifyInferenceConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClarifyInferenceConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ClarifyInferenceConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ClarifyInferenceConfig"}
+	if s.ContentTemplate != nil && len(*s.ContentTemplate) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ContentTemplate", 1))
+	}
+	if s.FeatureHeaders != nil && len(s.FeatureHeaders) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FeatureHeaders", 1))
+	}
+	if s.FeatureTypes != nil && len(s.FeatureTypes) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FeatureTypes", 1))
+	}
+	if s.FeaturesAttribute != nil && len(*s.FeaturesAttribute) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FeaturesAttribute", 1))
+	}
+	if s.LabelAttribute != nil && len(*s.LabelAttribute) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelAttribute", 1))
+	}
+	if s.LabelHeaders != nil && len(s.LabelHeaders) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LabelHeaders", 1))
+	}
+	if s.MaxPayloadInMB != nil && *s.MaxPayloadInMB < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxPayloadInMB", 1))
+	}
+	if s.MaxRecordCount != nil && *s.MaxRecordCount < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxRecordCount", 1))
+	}
+	if s.ProbabilityAttribute != nil && len(*s.ProbabilityAttribute) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ProbabilityAttribute", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetContentTemplate sets the ContentTemplate field's value.
+func (s *ClarifyInferenceConfig) SetContentTemplate(v string) *ClarifyInferenceConfig {
+	s.ContentTemplate = &v
+	return s
+}
+
+// SetFeatureHeaders sets the FeatureHeaders field's value.
+func (s *ClarifyInferenceConfig) SetFeatureHeaders(v []*string) *ClarifyInferenceConfig {
+	s.FeatureHeaders = v
+	return s
+}
+
+// SetFeatureTypes sets the FeatureTypes field's value.
+func (s *ClarifyInferenceConfig) SetFeatureTypes(v []*string) *ClarifyInferenceConfig {
+	s.FeatureTypes = v
+	return s
+}
+
+// SetFeaturesAttribute sets the FeaturesAttribute field's value.
+func (s *ClarifyInferenceConfig) SetFeaturesAttribute(v string) *ClarifyInferenceConfig {
+	s.FeaturesAttribute = &v
+	return s
+}
+
+// SetLabelAttribute sets the LabelAttribute field's value.
+func (s *ClarifyInferenceConfig) SetLabelAttribute(v string) *ClarifyInferenceConfig {
+	s.LabelAttribute = &v
+	return s
+}
+
+// SetLabelHeaders sets the LabelHeaders field's value.
+func (s *ClarifyInferenceConfig) SetLabelHeaders(v []*string) *ClarifyInferenceConfig {
+	s.LabelHeaders = v
+	return s
+}
+
+// SetLabelIndex sets the LabelIndex field's value.
+func (s *ClarifyInferenceConfig) SetLabelIndex(v int64) *ClarifyInferenceConfig {
+	s.LabelIndex = &v
+	return s
+}
+
+// SetMaxPayloadInMB sets the MaxPayloadInMB field's value.
+func (s *ClarifyInferenceConfig) SetMaxPayloadInMB(v int64) *ClarifyInferenceConfig {
+	s.MaxPayloadInMB = &v
+	return s
+}
+
+// SetMaxRecordCount sets the MaxRecordCount field's value.
+func (s *ClarifyInferenceConfig) SetMaxRecordCount(v int64) *ClarifyInferenceConfig {
+	s.MaxRecordCount = &v
+	return s
+}
+
+// SetProbabilityAttribute sets the ProbabilityAttribute field's value.
+func (s *ClarifyInferenceConfig) SetProbabilityAttribute(v string) *ClarifyInferenceConfig {
+	s.ProbabilityAttribute = &v
+	return s
+}
+
+// SetProbabilityIndex sets the ProbabilityIndex field's value.
+func (s *ClarifyInferenceConfig) SetProbabilityIndex(v int64) *ClarifyInferenceConfig {
+	s.ProbabilityIndex = &v
+	return s
+}
+
+// The configuration for the SHAP baseline (https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-feature-attribute-shap-baselines.html)
+// (also called the background or reference dataset) of the Kernal SHAP algorithm.
+//
+//   - The number of records in the baseline data determines the size of the
+//     synthetic dataset, which has an impact on latency of explainability requests.
+//     For more information, see the Synthetic data of Configure and create an
+//     endpoint (https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-online-explainability-create-endpoint.html).
+//
+//   - ShapBaseline and ShapBaselineUri are mutually exclusive parameters.
+//     One or the either is required to configure a SHAP baseline.
+type ClarifyShapBaselineConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The MIME type of the baseline data. Choose from 'text/csv' or 'application/jsonlines'.
+	// Defaults to 'text/csv'.
+	MimeType *string `type:"string"`
+
+	// The inline SHAP baseline data in string format. ShapBaseline can have one
+	// or multiple records to be used as the baseline dataset. The format of the
+	// SHAP baseline file should be the same format as the training dataset. For
+	// example, if the training dataset is in CSV format and each record contains
+	// four features, and all features are numerical, then the format of the baseline
+	// data should also share these characteristics. For natural language processing
+	// (NLP) of text columns, the baseline value should be the value used to replace
+	// the unit of text specified by the Granularity of the TextConfig parameter.
+	// The size limit for ShapBasline is 4 KB. Use the ShapBaselineUri parameter
+	// if you want to provide more than 4 KB of baseline data.
+	ShapBaseline *string `min:"1" type:"string"`
+
+	// The uniform resource identifier (URI) of the S3 bucket where the SHAP baseline
+	// file is stored. The format of the SHAP baseline file should be the same format
+	// as the format of the training dataset. For example, if the training dataset
+	// is in CSV format, and each record in the training dataset has four features,
+	// and all features are numerical, then the baseline file should also have this
+	// same format. Each record should contain only the features. If you are using
+	// a virtual private cloud (VPC), the ShapBaselineUri should be accessible to
+	// the VPC. For more information about setting up endpoints with Amazon Virtual
+	// Private Cloud, see Give SageMaker access to Resources in your Amazon Virtual
+	// Private Cloud (https://docs.aws.amazon.com/sagemaker/latest/dg/infrastructure-give-access.html).
+	ShapBaselineUri *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClarifyShapBaselineConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClarifyShapBaselineConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ClarifyShapBaselineConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ClarifyShapBaselineConfig"}
+	if s.ShapBaseline != nil && len(*s.ShapBaseline) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ShapBaseline", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMimeType sets the MimeType field's value.
+func (s *ClarifyShapBaselineConfig) SetMimeType(v string) *ClarifyShapBaselineConfig {
+	s.MimeType = &v
+	return s
+}
+
+// SetShapBaseline sets the ShapBaseline field's value.
+func (s *ClarifyShapBaselineConfig) SetShapBaseline(v string) *ClarifyShapBaselineConfig {
+	s.ShapBaseline = &v
+	return s
+}
+
+// SetShapBaselineUri sets the ShapBaselineUri field's value.
+func (s *ClarifyShapBaselineConfig) SetShapBaselineUri(v string) *ClarifyShapBaselineConfig {
+	s.ShapBaselineUri = &v
+	return s
+}
+
+// The configuration for SHAP analysis using SageMaker Clarify Explainer.
+type ClarifyShapConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The number of samples to be used for analysis by the Kernal SHAP algorithm.
+	//
+	// The number of samples determines the size of the synthetic dataset, which
+	// has an impact on latency of explainability requests. For more information,
+	// see the Synthetic data of Configure and create an endpoint (https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-online-explainability-create-endpoint.html).
+	NumberOfSamples *int64 `min:"1" type:"integer"`
+
+	// The starting value used to initialize the random number generator in the
+	// explainer. Provide a value for this parameter to obtain a deterministic SHAP
+	// result.
+	Seed *int64 `type:"integer"`
+
+	// The configuration for the SHAP baseline of the Kernal SHAP algorithm.
+	//
+	// ShapBaselineConfig is a required field
+	ShapBaselineConfig *ClarifyShapBaselineConfig `type:"structure" required:"true"`
+
+	// A parameter that indicates if text features are treated as text and explanations
+	// are provided for individual units of text. Required for natural language
+	// processing (NLP) explainability only.
+	TextConfig *ClarifyTextConfig `type:"structure"`
+
+	// A Boolean toggle to indicate if you want to use the logit function (true)
+	// or log-odds units (false) for model predictions. Defaults to false.
+	UseLogit *bool `type:"boolean"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClarifyShapConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClarifyShapConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ClarifyShapConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ClarifyShapConfig"}
+	if s.NumberOfSamples != nil && *s.NumberOfSamples < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("NumberOfSamples", 1))
+	}
+	if s.ShapBaselineConfig == nil {
+		invalidParams.Add(request.NewErrParamRequired("ShapBaselineConfig"))
+	}
+	if s.ShapBaselineConfig != nil {
+		if err := s.ShapBaselineConfig.Validate(); err != nil {
+			invalidParams.AddNested("ShapBaselineConfig", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.TextConfig != nil {
+		if err := s.TextConfig.Validate(); err != nil {
+			invalidParams.AddNested("TextConfig", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetNumberOfSamples sets the NumberOfSamples field's value.
+func (s *ClarifyShapConfig) SetNumberOfSamples(v int64) *ClarifyShapConfig {
+	s.NumberOfSamples = &v
+	return s
+}
+
+// SetSeed sets the Seed field's value.
+func (s *ClarifyShapConfig) SetSeed(v int64) *ClarifyShapConfig {
+	s.Seed = &v
+	return s
+}
+
+// SetShapBaselineConfig sets the ShapBaselineConfig field's value.
+func (s *ClarifyShapConfig) SetShapBaselineConfig(v *ClarifyShapBaselineConfig) *ClarifyShapConfig {
+	s.ShapBaselineConfig = v
+	return s
+}
+
+// SetTextConfig sets the TextConfig field's value.
+func (s *ClarifyShapConfig) SetTextConfig(v *ClarifyTextConfig) *ClarifyShapConfig {
+	s.TextConfig = v
+	return s
+}
+
+// SetUseLogit sets the UseLogit field's value.
+func (s *ClarifyShapConfig) SetUseLogit(v bool) *ClarifyShapConfig {
+	s.UseLogit = &v
+	return s
+}
+
+// A parameter used to configure the SageMaker Clarify explainer to treat text
+// features as text so that explanations are provided for individual units of
+// text. Required only for natural language processing (NLP) explainability.
+type ClarifyTextConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The unit of granularity for the analysis of text features. For example, if
+	// the unit is 'token', then each token (like a word in English) of the text
+	// is treated as a feature. SHAP values are computed for each unit/feature.
+	//
+	// Granularity is a required field
+	Granularity *string `type:"string" required:"true" enum:"ClarifyTextGranularity"`
+
+	// Specifies the language of the text features in ISO 639-1 (https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
+	// or ISO 639-3 (https://en.wikipedia.org/wiki/ISO_639-3) code of a supported
+	// language.
+	//
+	// For a mix of multiple languages, use code 'xx'.
+	//
+	// Language is a required field
+	Language *string `type:"string" required:"true" enum:"ClarifyTextLanguage"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClarifyTextConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClarifyTextConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ClarifyTextConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ClarifyTextConfig"}
+	if s.Granularity == nil {
+		invalidParams.Add(request.NewErrParamRequired("Granularity"))
+	}
+	if s.Language == nil {
+		invalidParams.Add(request.NewErrParamRequired("Language"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetGranularity sets the Granularity field's value.
+func (s *ClarifyTextConfig) SetGranularity(v string) *ClarifyTextConfig {
+	s.Granularity = &v
+	return s
+}
+
+// SetLanguage sets the Language field's value.
+func (s *ClarifyTextConfig) SetLanguage(v string) *ClarifyTextConfig {
+	s.Language = &v
 	return s
 }
 
@@ -29733,11 +31333,10 @@ type ContainerDefinition struct {
 	// The path where inference code is stored. This can be either in Amazon EC2
 	// Container Registry or in a Docker registry that is accessible from the same
 	// VPC that you configure for your endpoint. If you are using your own custom
-	// algorithm instead of an algorithm provided by Amazon SageMaker, the inference
-	// code must meet Amazon SageMaker requirements. Amazon SageMaker supports both
-	// registry/repository[:tag] and registry/repository[@digest] image path formats.
-	// For more information, see Using Your Own Algorithms with Amazon SageMaker
-	// (https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html)
+	// algorithm instead of an algorithm provided by SageMaker, the inference code
+	// must meet SageMaker requirements. SageMaker supports both registry/repository[:tag]
+	// and registry/repository[@digest] image path formats. For more information,
+	// see Using Your Own Algorithms with Amazon SageMaker (https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html)
 	Image *string `type:"string"`
 
 	// Specifies whether the model container is in Amazon ECR or a private Docker
@@ -29754,24 +31353,24 @@ type ContainerDefinition struct {
 
 	// The S3 path where the model artifacts, which result from model training,
 	// are stored. This path must point to a single gzip compressed tar archive
-	// (.tar.gz suffix). The S3 path is required for Amazon SageMaker built-in algorithms,
+	// (.tar.gz suffix). The S3 path is required for SageMaker built-in algorithms,
 	// but not if you use your own algorithms. For more information on built-in
 	// algorithms, see Common Parameters (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html).
 	//
 	// The model artifacts must be in an S3 bucket that is in the same region as
 	// the model or endpoint you are creating.
 	//
-	// If you provide a value for this parameter, Amazon SageMaker uses Amazon Web
-	// Services Security Token Service to download model artifacts from the S3 path
-	// you provide. Amazon Web Services STS is activated in your IAM user account
-	// by default. If you previously deactivated Amazon Web Services STS for a region,
-	// you need to reactivate Amazon Web Services STS for that region. For more
-	// information, see Activating and Deactivating Amazon Web Services STS in an
-	// Amazon Web Services Region (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
+	// If you provide a value for this parameter, SageMaker uses Amazon Web Services
+	// Security Token Service to download model artifacts from the S3 path you provide.
+	// Amazon Web Services STS is activated in your IAM user account by default.
+	// If you previously deactivated Amazon Web Services STS for a region, you need
+	// to reactivate Amazon Web Services STS for that region. For more information,
+	// see Activating and Deactivating Amazon Web Services STS in an Amazon Web
+	// Services Region (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
 	// in the Amazon Web Services Identity and Access Management User Guide.
 	//
-	// If you use a built-in algorithm to create a model, Amazon SageMaker requires
-	// that you provide a S3 path to the model artifacts in ModelDataUrl.
+	// If you use a built-in algorithm to create a model, SageMaker requires that
+	// you provide a S3 path to the model artifacts in ModelDataUrl.
 	ModelDataUrl *string `type:"string"`
 
 	// The name or Amazon Resource Name (ARN) of the model package to use to create
@@ -30046,7 +31645,7 @@ type ContinuousParameterRange struct {
 	//
 	// Auto
 	//
-	// Amazon SageMaker hyperparameter tuning chooses the best scale for the hyperparameter.
+	// SageMaker hyperparameter tuning chooses the best scale for the hyperparameter.
 	//
 	// Linear
 	//
@@ -30418,10 +32017,9 @@ type CreateAlgorithmInput struct {
 	// TrainingSpecification is a required field
 	TrainingSpecification *TrainingSpecification `type:"structure" required:"true"`
 
-	// Specifies configurations for one or more training jobs and that Amazon SageMaker
+	// Specifies configurations for one or more training jobs and that SageMaker
 	// runs to test the algorithm's training code and, optionally, one or more batch
-	// transform jobs that Amazon SageMaker runs to test the algorithm's inference
-	// code.
+	// transform jobs that SageMaker runs to test the algorithm's inference code.
 	ValidationSpecification *AlgorithmValidationSpecification `type:"structure"`
 }
 
@@ -30570,7 +32168,9 @@ type CreateAppImageConfigInput struct {
 	// AppImageConfigName is a required field
 	AppImageConfigName *string `type:"string" required:"true"`
 
-	// The KernelGatewayImageConfig.
+	// The KernelGatewayImageConfig. You can only specify one image kernel in the
+	// AppImageConfig API. This kernel will be shown to users before the image starts.
+	// Once the image runs, all kernels are visible in JupyterLab.
 	KernelGatewayImageConfig *KernelGatewayImageConfig `type:"structure"`
 
 	// A list of tags to apply to the AppImageConfig.
@@ -30680,8 +32280,7 @@ type CreateAppInput struct {
 	// AppName is a required field
 	AppName *string `type:"string" required:"true"`
 
-	// The type of app. Supported apps are JupyterServer and KernelGateway. TensorBoard
-	// is not supported.
+	// The type of app.
 	//
 	// AppType is a required field
 	AppType *string `type:"string" required:"true" enum:"AppType"`
@@ -30693,6 +32292,12 @@ type CreateAppInput struct {
 
 	// The instance type and the Amazon Resource Name (ARN) of the SageMaker image
 	// created on the instance.
+	//
+	// The value of InstanceType passed as part of the ResourceSpec in the CreateApp
+	// call overrides the value passed as part of the ResourceSpec configured for
+	// the user profile or the domain. If InstanceType is not specified in any of
+	// those three ResourceSpec values for a KernelGateway app, the CreateApp call
+	// fails with a request validation error.
 	ResourceSpec *ResourceSpec `type:"structure"`
 
 	// Each tag consists of a key and an optional value. Tag keys must be unique
@@ -30971,7 +32576,7 @@ func (s *CreateArtifactOutput) SetArtifactArn(v string) *CreateArtifactOutput {
 type CreateAutoMLJobInput struct {
 	_ struct{} `type:"structure"`
 
-	// Contains CompletionCriteria and SecurityConfig settings for the AutoML job.
+	// A collection of settings used to configure an AutoML job.
 	AutoMLJobConfig *AutoMLJobConfig `type:"structure"`
 
 	// Identifies an Autopilot job. The name must be unique to your account and
@@ -30992,7 +32597,9 @@ type CreateAutoMLJobInput struct {
 
 	// An array of channel objects that describes the input data and its location.
 	// Each channel is a named input source. Similar to InputDataConfig supported
-	// by . Format(s) supported: CSV. Minimum of 500 rows.
+	// by . Format(s) supported: CSV, Parquet. A minimum of 500 rows is required
+	// for the training dataset. There is not a minimum number of rows required
+	// for the validation dataset.
 	//
 	// InputDataConfig is a required field
 	InputDataConfig []*AutoMLChannel `min:"1" type:"list" required:"true"`
@@ -31007,9 +32614,8 @@ type CreateAutoMLJobInput struct {
 	// OutputDataConfig is a required field
 	OutputDataConfig *AutoMLOutputDataConfig `type:"structure" required:"true"`
 
-	// Defines the type of supervised learning available for the candidates. Options
-	// include: BinaryClassification, MulticlassClassification, and Regression.
-	// For more information, see Amazon SageMaker Autopilot problem types and algorithm
+	// Defines the type of supervised learning available for the candidates. For
+	// more information, see Amazon SageMaker Autopilot problem types and algorithm
 	// support (https://docs.aws.amazon.com/sagemaker/latest/dg/autopilot-automate-model-development-problem-types.html).
 	ProblemType *string `type:"string" enum:"ProblemType"`
 
@@ -32333,6 +33939,263 @@ func (s *CreateDomainOutput) SetUrl(v string) *CreateDomainOutput {
 	return s
 }
 
+type CreateEdgeDeploymentPlanInput struct {
+	_ struct{} `type:"structure"`
+
+	// The device fleet used for this edge deployment plan.
+	//
+	// DeviceFleetName is a required field
+	DeviceFleetName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the edge deployment plan.
+	//
+	// EdgeDeploymentPlanName is a required field
+	EdgeDeploymentPlanName *string `min:"1" type:"string" required:"true"`
+
+	// List of models associated with the edge deployment plan.
+	//
+	// ModelConfigs is a required field
+	ModelConfigs []*EdgeDeploymentModelConfig `type:"list" required:"true"`
+
+	// List of stages of the edge deployment plan. The number of stages is limited
+	// to 10 per deployment.
+	Stages []*DeploymentStage `type:"list"`
+
+	// List of tags with which to tag the edge deployment plan.
+	Tags []*Tag `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateEdgeDeploymentPlanInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateEdgeDeploymentPlanInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateEdgeDeploymentPlanInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateEdgeDeploymentPlanInput"}
+	if s.DeviceFleetName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DeviceFleetName"))
+	}
+	if s.DeviceFleetName != nil && len(*s.DeviceFleetName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DeviceFleetName", 1))
+	}
+	if s.EdgeDeploymentPlanName == nil {
+		invalidParams.Add(request.NewErrParamRequired("EdgeDeploymentPlanName"))
+	}
+	if s.EdgeDeploymentPlanName != nil && len(*s.EdgeDeploymentPlanName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EdgeDeploymentPlanName", 1))
+	}
+	if s.ModelConfigs == nil {
+		invalidParams.Add(request.NewErrParamRequired("ModelConfigs"))
+	}
+	if s.ModelConfigs != nil {
+		for i, v := range s.ModelConfigs {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "ModelConfigs", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.Stages != nil {
+		for i, v := range s.Stages {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Stages", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDeviceFleetName sets the DeviceFleetName field's value.
+func (s *CreateEdgeDeploymentPlanInput) SetDeviceFleetName(v string) *CreateEdgeDeploymentPlanInput {
+	s.DeviceFleetName = &v
+	return s
+}
+
+// SetEdgeDeploymentPlanName sets the EdgeDeploymentPlanName field's value.
+func (s *CreateEdgeDeploymentPlanInput) SetEdgeDeploymentPlanName(v string) *CreateEdgeDeploymentPlanInput {
+	s.EdgeDeploymentPlanName = &v
+	return s
+}
+
+// SetModelConfigs sets the ModelConfigs field's value.
+func (s *CreateEdgeDeploymentPlanInput) SetModelConfigs(v []*EdgeDeploymentModelConfig) *CreateEdgeDeploymentPlanInput {
+	s.ModelConfigs = v
+	return s
+}
+
+// SetStages sets the Stages field's value.
+func (s *CreateEdgeDeploymentPlanInput) SetStages(v []*DeploymentStage) *CreateEdgeDeploymentPlanInput {
+	s.Stages = v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateEdgeDeploymentPlanInput) SetTags(v []*Tag) *CreateEdgeDeploymentPlanInput {
+	s.Tags = v
+	return s
+}
+
+type CreateEdgeDeploymentPlanOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the edge deployment plan.
+	//
+	// EdgeDeploymentPlanArn is a required field
+	EdgeDeploymentPlanArn *string `min:"20" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateEdgeDeploymentPlanOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateEdgeDeploymentPlanOutput) GoString() string {
+	return s.String()
+}
+
+// SetEdgeDeploymentPlanArn sets the EdgeDeploymentPlanArn field's value.
+func (s *CreateEdgeDeploymentPlanOutput) SetEdgeDeploymentPlanArn(v string) *CreateEdgeDeploymentPlanOutput {
+	s.EdgeDeploymentPlanArn = &v
+	return s
+}
+
+type CreateEdgeDeploymentStageInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the edge deployment plan.
+	//
+	// EdgeDeploymentPlanName is a required field
+	EdgeDeploymentPlanName *string `min:"1" type:"string" required:"true"`
+
+	// List of stages to be added to the edge deployment plan.
+	//
+	// Stages is a required field
+	Stages []*DeploymentStage `type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateEdgeDeploymentStageInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateEdgeDeploymentStageInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateEdgeDeploymentStageInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateEdgeDeploymentStageInput"}
+	if s.EdgeDeploymentPlanName == nil {
+		invalidParams.Add(request.NewErrParamRequired("EdgeDeploymentPlanName"))
+	}
+	if s.EdgeDeploymentPlanName != nil && len(*s.EdgeDeploymentPlanName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EdgeDeploymentPlanName", 1))
+	}
+	if s.Stages == nil {
+		invalidParams.Add(request.NewErrParamRequired("Stages"))
+	}
+	if s.Stages != nil {
+		for i, v := range s.Stages {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Stages", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEdgeDeploymentPlanName sets the EdgeDeploymentPlanName field's value.
+func (s *CreateEdgeDeploymentStageInput) SetEdgeDeploymentPlanName(v string) *CreateEdgeDeploymentStageInput {
+	s.EdgeDeploymentPlanName = &v
+	return s
+}
+
+// SetStages sets the Stages field's value.
+func (s *CreateEdgeDeploymentStageInput) SetStages(v []*DeploymentStage) *CreateEdgeDeploymentStageInput {
+	s.Stages = v
+	return s
+}
+
+type CreateEdgeDeploymentStageOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateEdgeDeploymentStageOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateEdgeDeploymentStageOutput) GoString() string {
+	return s.String()
+}
+
 type CreateEdgePackagingJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -32530,6 +34393,7 @@ type CreateEndpointConfigInput struct {
 	// (https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_runtime_InvokeEndpointAsync.html).
 	AsyncInferenceConfig *AsyncInferenceConfig `type:"structure"`
 
+	// Configuration to control how SageMaker captures inference data.
 	DataCaptureConfig *DataCaptureConfig `type:"structure"`
 
 	// The name of the endpoint configuration. You specify this name in a CreateEndpoint
@@ -32538,9 +34402,12 @@ type CreateEndpointConfigInput struct {
 	// EndpointConfigName is a required field
 	EndpointConfigName *string `type:"string" required:"true"`
 
+	// A member of CreateEndpointConfig that enables explainers.
+	ExplainerConfig *ExplainerConfig `type:"structure"`
+
 	// The Amazon Resource Name (ARN) of a Amazon Web Services Key Management Service
-	// key that Amazon SageMaker uses to encrypt data on the storage volume attached
-	// to the ML compute instance that hosts the endpoint.
+	// key that SageMaker uses to encrypt data on the storage volume attached to
+	// the ML compute instance that hosts the endpoint.
 	//
 	// The KmsKeyId can be any of the following formats:
 	//
@@ -32626,6 +34493,11 @@ func (s *CreateEndpointConfigInput) Validate() error {
 			invalidParams.AddNested("DataCaptureConfig", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.ExplainerConfig != nil {
+		if err := s.ExplainerConfig.Validate(); err != nil {
+			invalidParams.AddNested("ExplainerConfig", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.ProductionVariants != nil {
 		for i, v := range s.ProductionVariants {
 			if v == nil {
@@ -32668,6 +34540,12 @@ func (s *CreateEndpointConfigInput) SetDataCaptureConfig(v *DataCaptureConfig) *
 // SetEndpointConfigName sets the EndpointConfigName field's value.
 func (s *CreateEndpointConfigInput) SetEndpointConfigName(v string) *CreateEndpointConfigInput {
 	s.EndpointConfigName = &v
+	return s
+}
+
+// SetExplainerConfig sets the ExplainerConfig field's value.
+func (s *CreateEndpointConfigInput) SetExplainerConfig(v *ExplainerConfig) *CreateEndpointConfigInput {
+	s.ExplainerConfig = v
 	return s
 }
 
@@ -33727,8 +35605,8 @@ func (s *CreateHyperParameterTuningJobInput) SetWarmStartConfig(v *HyperParamete
 type CreateHyperParameterTuningJobOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of the tuning job. Amazon SageMaker assigns
-	// an ARN to a hyperparameter tuning job when you create it.
+	// The Amazon Resource Name (ARN) of the tuning job. SageMaker assigns an ARN
+	// to a hyperparameter tuning job when you create it.
 	//
 	// HyperParameterTuningJobArn is a required field
 	HyperParameterTuningJobArn *string `type:"string" required:"true"`
@@ -33903,8 +35781,8 @@ type CreateImageVersionInput struct {
 	_ struct{} `type:"structure"`
 
 	// The registry path of the container image to use as the starting point for
-	// this version. The path is an Amazon Container Registry (ECR) URI in the following
-	// format:
+	// this version. The path is an Amazon Elastic Container Registry (ECR) URI
+	// in the following format:
 	//
 	// <acct-id>.dkr.ecr.<region>.amazonaws.com/<repo-name[:tag] or [@digest]>
 	//
@@ -34040,6 +35918,10 @@ type CreateInferenceRecommendationsJobInput struct {
 	// JobType is a required field
 	JobType *string `type:"string" required:"true" enum:"RecommendationJobType"`
 
+	// Provides information about the output artifacts and the KMS key to use for
+	// Amazon S3 server-side encryption.
+	OutputConfig *RecommendationJobOutputConfig `type:"structure"`
+
 	// The Amazon Resource Name (ARN) of an IAM role that enables Amazon SageMaker
 	// to perform tasks on your behalf.
 	//
@@ -34145,6 +36027,12 @@ func (s *CreateInferenceRecommendationsJobInput) SetJobName(v string) *CreateInf
 // SetJobType sets the JobType field's value.
 func (s *CreateInferenceRecommendationsJobInput) SetJobType(v string) *CreateInferenceRecommendationsJobInput {
 	s.JobType = &v
+	return s
+}
+
+// SetOutputConfig sets the OutputConfig field's value.
+func (s *CreateInferenceRecommendationsJobInput) SetOutputConfig(v *RecommendationJobOutputConfig) *CreateInferenceRecommendationsJobInput {
+	s.OutputConfig = v
 	return s
 }
 
@@ -35015,14 +36903,13 @@ type CreateModelInput struct {
 	// made to or from the model container.
 	EnableNetworkIsolation *bool `type:"boolean"`
 
-	// The Amazon Resource Name (ARN) of the IAM role that Amazon SageMaker can
-	// assume to access model artifacts and docker image for deployment on ML compute
-	// instances or for batch transform jobs. Deploying on ML compute instances
-	// is part of model hosting. For more information, see Amazon SageMaker Roles
-	// (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
+	// The Amazon Resource Name (ARN) of the IAM role that SageMaker can assume
+	// to access model artifacts and docker image for deployment on ML compute instances
+	// or for batch transform jobs. Deploying on ML compute instances is part of
+	// model hosting. For more information, see SageMaker Roles (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
 	//
-	// To be able to pass this role to Amazon SageMaker, the caller of this API
-	// must have the iam:PassRole permission.
+	// To be able to pass this role to SageMaker, the caller of this API must have
+	// the iam:PassRole permission.
 	//
 	// ExecutionRoleArn is a required field
 	ExecutionRoleArn *string `min:"20" type:"string" required:"true"`
@@ -35178,7 +37065,7 @@ func (s *CreateModelInput) SetVpcConfig(v *VpcConfig) *CreateModelInput {
 type CreateModelOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN of the model created in Amazon SageMaker.
+	// The ARN of the model created in SageMaker.
 	//
 	// ModelArn is a required field
 	ModelArn *string `min:"20" type:"string" required:"true"`
@@ -35410,11 +37297,16 @@ type CreateModelPackageInput struct {
 	Tags []*Tag `type:"list"`
 
 	// The machine learning task your model package accomplishes. Common machine
-	// learning tasks include object detection and image classification.
+	// learning tasks include object detection and image classification. The following
+	// tasks are supported by Inference Recommender: "IMAGE_CLASSIFICATION" | "OBJECT_DETECTION"
+	// | "TEXT_GENERATION" |"IMAGE_SEGMENTATION" | "FILL_MASK" | "CLASSIFICATION"
+	// | "REGRESSION" | "OTHER".
+	//
+	// Specify "OTHER" if none of the tasks listed fit your use case.
 	Task *string `type:"string"`
 
-	// Specifies configurations for one or more transform jobs that Amazon SageMaker
-	// runs to test the model package.
+	// Specifies configurations for one or more transform jobs that SageMaker runs
+	// to test the model package.
 	ValidationSpecification *ModelPackageValidationSpecification `type:"structure"`
 }
 
@@ -36017,7 +37909,7 @@ type CreateNotebookInstanceInput struct {
 	// instance. Currently, only one instance type can be associated with a notebook
 	// instance. For more information, see Using Elastic Inference in Amazon SageMaker
 	// (https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html).
-	AcceleratorTypes []*string `type:"list"`
+	AcceleratorTypes []*string `type:"list" enum:"NotebookInstanceAcceleratorType"`
 
 	// An array of up to three Git repositories to associate with the notebook instance.
 	// These can be either the names of Git repositories stored as resources in
@@ -36025,8 +37917,7 @@ type CreateNotebookInstanceInput struct {
 	// (https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html) or
 	// in any other Git repository. These repositories are cloned at the same level
 	// as the default repository of your notebook instance. For more information,
-	// see Associating Git Repositories with Amazon SageMaker Notebook Instances
-	// (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
+	// see Associating Git Repositories with SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
 	AdditionalCodeRepositories []*string `type:"list"`
 
 	// A Git repository to associate with the notebook instance as its default code
@@ -36035,13 +37926,13 @@ type CreateNotebookInstanceInput struct {
 	// (https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html) or
 	// in any other Git repository. When you open a notebook instance, it opens
 	// in the directory that contains this repository. For more information, see
-	// Associating Git Repositories with Amazon SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
+	// Associating Git Repositories with SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
 	DefaultCodeRepository *string `min:"1" type:"string"`
 
-	// Sets whether Amazon SageMaker provides internet access to the notebook instance.
+	// Sets whether SageMaker provides internet access to the notebook instance.
 	// If you set this to Disabled this notebook instance is able to access resources
-	// only in your VPC, and is not be able to connect to Amazon SageMaker training
-	// and endpoint services unless you configure a NAT Gateway in your VPC.
+	// only in your VPC, and is not be able to connect to SageMaker training and
+	// endpoint services unless you configure a NAT Gateway in your VPC.
 	//
 	// For more information, see Notebook Instances Are Internet-Enabled by Default
 	// (https://docs.aws.amazon.com/sagemaker/latest/dg/appendix-additional-considerations.html#appendix-notebook-and-internet-access).
@@ -36049,14 +37940,17 @@ type CreateNotebookInstanceInput struct {
 	// for the SubnetId parameter.
 	DirectInternetAccess *string `type:"string" enum:"DirectInternetAccess"`
 
+	// Information on the IMDS configuration of the notebook instance
+	InstanceMetadataServiceConfiguration *InstanceMetadataServiceConfiguration `type:"structure"`
+
 	// The type of ML compute instance to launch for the notebook instance.
 	//
 	// InstanceType is a required field
 	InstanceType *string `type:"string" required:"true" enum:"InstanceType"`
 
 	// The Amazon Resource Name (ARN) of a Amazon Web Services Key Management Service
-	// key that Amazon SageMaker uses to encrypt data on the storage volume attached
-	// to your notebook instance. The KMS key you provide must be enabled. For information,
+	// key that SageMaker uses to encrypt data on the storage volume attached to
+	// your notebook instance. The KMS key you provide must be enabled. For information,
 	// see Enabling and Disabling Keys (https://docs.aws.amazon.com/kms/latest/developerguide/enabling-keys.html)
 	// in the Amazon Web Services Key Management Service Developer Guide.
 	KmsKeyId *string `type:"string"`
@@ -36075,14 +37969,14 @@ type CreateNotebookInstanceInput struct {
 	PlatformIdentifier *string `type:"string"`
 
 	// When you send any requests to Amazon Web Services resources from the notebook
-	// instance, Amazon SageMaker assumes this role to perform tasks on your behalf.
-	// You must grant this role necessary permissions so Amazon SageMaker can perform
-	// these tasks. The policy must allow the Amazon SageMaker service principal
-	// (sagemaker.amazonaws.com) permissions to assume this role. For more information,
-	// see Amazon SageMaker Roles (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
+	// instance, SageMaker assumes this role to perform tasks on your behalf. You
+	// must grant this role necessary permissions so SageMaker can perform these
+	// tasks. The policy must allow the SageMaker service principal (sagemaker.amazonaws.com)
+	// permissions to assume this role. For more information, see SageMaker Roles
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
 	//
-	// To be able to pass this role to Amazon SageMaker, the caller of this API
-	// must have the iam:PassRole permission.
+	// To be able to pass this role to SageMaker, the caller of this API must have
+	// the iam:PassRole permission.
 	//
 	// RoleArn is a required field
 	RoleArn *string `min:"20" type:"string" required:"true"`
@@ -36154,6 +38048,11 @@ func (s *CreateNotebookInstanceInput) Validate() error {
 	if s.VolumeSizeInGB != nil && *s.VolumeSizeInGB < 5 {
 		invalidParams.Add(request.NewErrParamMinValue("VolumeSizeInGB", 5))
 	}
+	if s.InstanceMetadataServiceConfiguration != nil {
+		if err := s.InstanceMetadataServiceConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("InstanceMetadataServiceConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.Tags != nil {
 		for i, v := range s.Tags {
 			if v == nil {
@@ -36192,6 +38091,12 @@ func (s *CreateNotebookInstanceInput) SetDefaultCodeRepository(v string) *Create
 // SetDirectInternetAccess sets the DirectInternetAccess field's value.
 func (s *CreateNotebookInstanceInput) SetDirectInternetAccess(v string) *CreateNotebookInstanceInput {
 	s.DirectInternetAccess = &v
+	return s
+}
+
+// SetInstanceMetadataServiceConfiguration sets the InstanceMetadataServiceConfiguration field's value.
+func (s *CreateNotebookInstanceInput) SetInstanceMetadataServiceConfiguration(v *InstanceMetadataServiceConfiguration) *CreateNotebookInstanceInput {
+	s.InstanceMetadataServiceConfiguration = v
 	return s
 }
 
@@ -37345,7 +39250,7 @@ type CreateTrainingJobInput struct {
 
 	// The registry path of the Docker image that contains the training algorithm
 	// and algorithm-specific metadata, including the input mode. For more information
-	// about algorithms provided by Amazon SageMaker, see Algorithms (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
+	// about algorithms provided by SageMaker, see Algorithms (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
 	// For information about providing your own algorithms, see Using Your Own Algorithms
 	// with Amazon SageMaker (https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html).
 	//
@@ -37389,9 +39294,9 @@ type CreateTrainingJobInput struct {
 	// Isolates the training container. No inbound or outbound network calls can
 	// be made, except for calls between peers within a training cluster for distributed
 	// training. If you enable network isolation for training jobs that are configured
-	// to use a VPC, Amazon SageMaker downloads and uploads customer data and model
-	// artifacts through the specified VPC, but the training container does not
-	// have network access.
+	// to use a VPC, SageMaker downloads and uploads customer data and model artifacts
+	// through the specified VPC, but the training container does not have network
+	// access.
 	EnableNetworkIsolation *bool `type:"boolean"`
 
 	// The environment variables to set in the Docker container.
@@ -37409,12 +39314,17 @@ type CreateTrainingJobInput struct {
 
 	// Algorithm-specific parameters that influence the quality of the model. You
 	// set hyperparameters before you start the learning process. For a list of
-	// hyperparameters for each training algorithm provided by Amazon SageMaker,
-	// see Algorithms (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
+	// hyperparameters for each training algorithm provided by SageMaker, see Algorithms
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
 	//
 	// You can specify a maximum of 100 hyperparameters. Each hyperparameter is
 	// a key-value pair. Each key and value is limited to 256 characters, as specified
 	// by the Length Constraint.
+	//
+	// You must not include any security-sensitive information, such as account
+	// access IDs, secrets, and tokens, in the dictionary for configuring hyperparameters.
+	// SageMaker rejects the training job request and returns an exception error
+	// for detected credentials, if such user input is found.
 	HyperParameters map[string]*string `type:"map"`
 
 	// An array of Channel objects. Each channel is a named input source. InputDataConfig
@@ -37427,15 +39337,15 @@ type CreateTrainingJobInput struct {
 	// data: the MIME type, compression method, and whether the data is wrapped
 	// in RecordIO format.
 	//
-	// Depending on the input mode that the algorithm supports, Amazon SageMaker
-	// either copies input data files from an S3 bucket to a local directory in
-	// the Docker container, or makes it available as input streams. For example,
-	// if you specify an EFS location, input data files will be made available as
-	// input streams. They do not need to be downloaded.
+	// Depending on the input mode that the algorithm supports, SageMaker either
+	// copies input data files from an S3 bucket to a local directory in the Docker
+	// container, or makes it available as input streams. For example, if you specify
+	// an EFS location, input data files are available as input streams. They do
+	// not need to be downloaded.
 	InputDataConfig []*Channel `min:"1" type:"list"`
 
 	// Specifies the path to the S3 location where you want to store model artifacts.
-	// Amazon SageMaker creates subfolders for the artifacts.
+	// SageMaker creates subfolders for the artifacts.
 	//
 	// OutputDataConfig is a required field
 	OutputDataConfig *OutputDataConfig `type:"structure" required:"true"`
@@ -37453,9 +39363,9 @@ type CreateTrainingJobInput struct {
 	//
 	// ML storage volumes store model artifacts and incremental states. Training
 	// algorithms might also use ML storage volumes for scratch space. If you want
-	// Amazon SageMaker to use the ML storage volume to store the training data,
-	// choose File as the TrainingInputMode in the algorithm specification. For
-	// distributed training algorithms, specify an instance count greater than 1.
+	// SageMaker to use the ML storage volume to store the training data, choose
+	// File as the TrainingInputMode in the algorithm specification. For distributed
+	// training algorithms, specify an instance count greater than 1.
 	//
 	// ResourceConfig is a required field
 	ResourceConfig *ResourceConfig `type:"structure" required:"true"`
@@ -37463,30 +39373,29 @@ type CreateTrainingJobInput struct {
 	// The number of times to retry the job when the job fails due to an InternalServerError.
 	RetryStrategy *RetryStrategy `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of an IAM role that Amazon SageMaker can assume
-	// to perform tasks on your behalf.
+	// The Amazon Resource Name (ARN) of an IAM role that SageMaker can assume to
+	// perform tasks on your behalf.
 	//
-	// During model training, Amazon SageMaker needs your permission to read input
-	// data from an S3 bucket, download a Docker image that contains training code,
-	// write model artifacts to an S3 bucket, write logs to Amazon CloudWatch Logs,
-	// and publish metrics to Amazon CloudWatch. You grant permissions for all of
-	// these tasks to an IAM role. For more information, see Amazon SageMaker Roles
-	// (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
+	// During model training, SageMaker needs your permission to read input data
+	// from an S3 bucket, download a Docker image that contains training code, write
+	// model artifacts to an S3 bucket, write logs to Amazon CloudWatch Logs, and
+	// publish metrics to Amazon CloudWatch. You grant permissions for all of these
+	// tasks to an IAM role. For more information, see SageMaker Roles (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
 	//
-	// To be able to pass this role to Amazon SageMaker, the caller of this API
-	// must have the iam:PassRole permission.
+	// To be able to pass this role to SageMaker, the caller of this API must have
+	// the iam:PassRole permission.
 	//
 	// RoleArn is a required field
 	RoleArn *string `min:"20" type:"string" required:"true"`
 
 	// Specifies a limit to how long a model training job can run. It also specifies
 	// how long a managed Spot training job has to complete. When the job reaches
-	// the time limit, Amazon SageMaker ends the training job. Use this API to cap
-	// model training costs.
+	// the time limit, SageMaker ends the training job. Use this API to cap model
+	// training costs.
 	//
-	// To stop a job, Amazon SageMaker sends the algorithm the SIGTERM signal, which
-	// delays job termination for 120 seconds. Algorithms can use this 120-second
-	// window to save the model artifacts, so the results of training are not lost.
+	// To stop a job, SageMaker sends the algorithm the SIGTERM signal, which delays
+	// job termination for 120 seconds. Algorithms can use this 120-second window
+	// to save the model artifacts, so the results of training are not lost.
 	//
 	// StoppingCondition is a required field
 	StoppingCondition *StoppingCondition `type:"structure" required:"true"`
@@ -37883,6 +39792,10 @@ type CreateTransformJobInput struct {
 	// record in MB, divide the size of your dataset by the number of records. To
 	// ensure that the records fit within the maximum payload size, we recommend
 	// using a slightly larger value. The default value is 6 MB.
+	//
+	// The value of MaxPayloadInMB cannot be greater than 100 MB. If you specify
+	// the MaxConcurrentTransforms parameter, the value of (MaxConcurrentTransforms
+	// * MaxPayloadInMB) also cannot exceed 100 MB.
 	//
 	// For cases where the payload might be arbitrarily large and is transmitted
 	// using HTTP chunked encoding, set the value to 0. This feature works only
@@ -38475,15 +40388,16 @@ type CreateUserProfileInput struct {
 	DomainId *string `type:"string" required:"true"`
 
 	// A specifier for the type of value specified in SingleSignOnUserValue. Currently,
-	// the only supported value is "UserName". If the Domain's AuthMode is SSO,
-	// this field is required. If the Domain's AuthMode is not SSO, this field cannot
-	// be specified.
+	// the only supported value is "UserName". If the Domain's AuthMode is IAM Identity
+	// Center, this field is required. If the Domain's AuthMode is not IAM Identity
+	// Center, this field cannot be specified.
 	SingleSignOnUserIdentifier *string `type:"string"`
 
 	// The username of the associated Amazon Web Services Single Sign-On User for
-	// this UserProfile. If the Domain's AuthMode is SSO, this field is required,
-	// and must match a valid username of a user in your directory. If the Domain's
-	// AuthMode is not SSO, this field cannot be specified.
+	// this UserProfile. If the Domain's AuthMode is IAM Identity Center, this field
+	// is required, and must match a valid username of a user in your directory.
+	// If the Domain's AuthMode is not IAM Identity Center, this field cannot be
+	// specified.
 	SingleSignOnUserValue *string `type:"string"`
 
 	// Each tag consists of a key and an optional value. Tag keys must be unique
@@ -38649,6 +40563,9 @@ type CreateWorkforceInput struct {
 	//
 	// WorkforceName is a required field
 	WorkforceName *string `min:"1" type:"string" required:"true"`
+
+	// Use this parameter to configure a workforce using VPC.
+	WorkforceVpcConfig *WorkforceVpcConfigRequest `type:"structure"`
 }
 
 // String returns the string representation.
@@ -38703,6 +40620,11 @@ func (s *CreateWorkforceInput) Validate() error {
 			}
 		}
 	}
+	if s.WorkforceVpcConfig != nil {
+		if err := s.WorkforceVpcConfig.Validate(); err != nil {
+			invalidParams.AddNested("WorkforceVpcConfig", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -38737,6 +40659,12 @@ func (s *CreateWorkforceInput) SetTags(v []*Tag) *CreateWorkforceInput {
 // SetWorkforceName sets the WorkforceName field's value.
 func (s *CreateWorkforceInput) SetWorkforceName(v string) *CreateWorkforceInput {
 	s.WorkforceName = &v
+	return s
+}
+
+// SetWorkforceVpcConfig sets the WorkforceVpcConfig field's value.
+func (s *CreateWorkforceInput) SetWorkforceVpcConfig(v *WorkforceVpcConfigRequest) *CreateWorkforceInput {
+	s.WorkforceVpcConfig = v
 	return s
 }
 
@@ -39033,22 +40961,47 @@ func (s *CustomImage) SetImageVersionNumber(v int64) *CustomImage {
 	return s
 }
 
+// Configuration to control how SageMaker captures inference data.
 type DataCaptureConfig struct {
 	_ struct{} `type:"structure"`
 
+	// Configuration specifying how to treat different headers. If no headers are
+	// specified SageMaker will by default base64 encode when capturing the data.
 	CaptureContentTypeHeader *CaptureContentTypeHeader `type:"structure"`
 
+	// Specifies data Model Monitor will capture. You can configure whether to collect
+	// only input, only output, or both
+	//
 	// CaptureOptions is a required field
 	CaptureOptions []*CaptureOption `min:"1" type:"list" required:"true"`
 
+	// The Amazon S3 location used to capture the data.
+	//
 	// DestinationS3Uri is a required field
 	DestinationS3Uri *string `type:"string" required:"true"`
 
+	// Whether data capture should be enabled or disabled (defaults to enabled).
 	EnableCapture *bool `type:"boolean"`
 
+	// The percentage of requests SageMaker will capture. A lower value is recommended
+	// for Endpoints with high traffic.
+	//
 	// InitialSamplingPercentage is a required field
 	InitialSamplingPercentage *int64 `type:"integer" required:"true"`
 
+	// The Amazon Resource Name (ARN) of a Amazon Web Services Key Management Service
+	// key that SageMaker uses to encrypt data on the storage volume attached to
+	// the ML compute instance that hosts the endpoint.
+	//
+	// The KmsKeyId can be any of the following formats:
+	//
+	//    * Key ID: 1234abcd-12ab-34cd-56ef-1234567890ab
+	//
+	//    * Key ARN: arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
+	//
+	//    * Alias name: alias/ExampleAlias
+	//
+	//    * Alias name ARN: arn:aws:kms:us-west-2:111122223333:alias/ExampleAlias
 	KmsKeyId *string `type:"string"`
 }
 
@@ -39143,21 +41096,32 @@ func (s *DataCaptureConfig) SetKmsKeyId(v string) *DataCaptureConfig {
 	return s
 }
 
+// The currently active data capture configuration used by your Endpoint.
 type DataCaptureConfigSummary struct {
 	_ struct{} `type:"structure"`
 
+	// Whether data capture is currently functional.
+	//
 	// CaptureStatus is a required field
 	CaptureStatus *string `type:"string" required:"true" enum:"CaptureStatus"`
 
+	// The percentage of requests being captured by your Endpoint.
+	//
 	// CurrentSamplingPercentage is a required field
 	CurrentSamplingPercentage *int64 `type:"integer" required:"true"`
 
+	// The Amazon S3 location being used to capture the data.
+	//
 	// DestinationS3Uri is a required field
 	DestinationS3Uri *string `type:"string" required:"true"`
 
+	// Whether data capture is enabled or disabled.
+	//
 	// EnableCapture is a required field
 	EnableCapture *bool `type:"boolean" required:"true"`
 
+	// The KMS key being used to encrypt the data in Amazon S3.
+	//
 	// KmsKeyId is a required field
 	KmsKeyId *string `type:"string" required:"true"`
 }
@@ -39307,8 +41271,8 @@ type DataProcessing struct {
 	// A JSONPath (https://docs.aws.amazon.com/sagemaker/latest/dg/batch-transform-data-processing.html#data-processing-operators)
 	// expression used to select a portion of the input data to pass to the algorithm.
 	// Use the InputFilter parameter to exclude fields, such as an ID column, from
-	// the input. If you want Amazon SageMaker to pass the entire input dataset
-	// to the algorithm, accept the default value $.
+	// the input. If you want SageMaker to pass the entire input dataset to the
+	// algorithm, accept the default value $.
 	//
 	// Examples: "$", "$[1:]", "$.features"
 	InputFilter *string `type:"string"`
@@ -39338,10 +41302,10 @@ type DataProcessing struct {
 
 	// A JSONPath (https://docs.aws.amazon.com/sagemaker/latest/dg/batch-transform-data-processing.html#data-processing-operators)
 	// expression used to select a portion of the joined dataset to save in the
-	// output file for a batch transform job. If you want Amazon SageMaker to store
-	// the entire input dataset in the output file, leave the default value, $.
-	// If you specify indexes that aren't within the dimension size of the joined
-	// dataset, you get an error.
+	// output file for a batch transform job. If you want SageMaker to store the
+	// entire input dataset in the output file, leave the default value, $. If you
+	// specify indexes that aren't within the dimension size of the joined dataset,
+	// you get an error.
 	//
 	// Examples: "$", "$[0,5:]", "$['id','SageMakerOutput']"
 	OutputFilter *string `type:"string"`
@@ -40921,6 +42885,165 @@ func (s DeleteDomainOutput) GoString() string {
 	return s.String()
 }
 
+type DeleteEdgeDeploymentPlanInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the edge deployment plan to delete.
+	//
+	// EdgeDeploymentPlanName is a required field
+	EdgeDeploymentPlanName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteEdgeDeploymentPlanInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteEdgeDeploymentPlanInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteEdgeDeploymentPlanInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteEdgeDeploymentPlanInput"}
+	if s.EdgeDeploymentPlanName == nil {
+		invalidParams.Add(request.NewErrParamRequired("EdgeDeploymentPlanName"))
+	}
+	if s.EdgeDeploymentPlanName != nil && len(*s.EdgeDeploymentPlanName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EdgeDeploymentPlanName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEdgeDeploymentPlanName sets the EdgeDeploymentPlanName field's value.
+func (s *DeleteEdgeDeploymentPlanInput) SetEdgeDeploymentPlanName(v string) *DeleteEdgeDeploymentPlanInput {
+	s.EdgeDeploymentPlanName = &v
+	return s
+}
+
+type DeleteEdgeDeploymentPlanOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteEdgeDeploymentPlanOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteEdgeDeploymentPlanOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteEdgeDeploymentStageInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the edge deployment plan from which the stage will be deleted.
+	//
+	// EdgeDeploymentPlanName is a required field
+	EdgeDeploymentPlanName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the stage.
+	//
+	// StageName is a required field
+	StageName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteEdgeDeploymentStageInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteEdgeDeploymentStageInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteEdgeDeploymentStageInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteEdgeDeploymentStageInput"}
+	if s.EdgeDeploymentPlanName == nil {
+		invalidParams.Add(request.NewErrParamRequired("EdgeDeploymentPlanName"))
+	}
+	if s.EdgeDeploymentPlanName != nil && len(*s.EdgeDeploymentPlanName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EdgeDeploymentPlanName", 1))
+	}
+	if s.StageName == nil {
+		invalidParams.Add(request.NewErrParamRequired("StageName"))
+	}
+	if s.StageName != nil && len(*s.StageName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StageName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEdgeDeploymentPlanName sets the EdgeDeploymentPlanName field's value.
+func (s *DeleteEdgeDeploymentStageInput) SetEdgeDeploymentPlanName(v string) *DeleteEdgeDeploymentStageInput {
+	s.EdgeDeploymentPlanName = &v
+	return s
+}
+
+// SetStageName sets the StageName field's value.
+func (s *DeleteEdgeDeploymentStageInput) SetStageName(v string) *DeleteEdgeDeploymentStageInput {
+	s.StageName = &v
+	return s
+}
+
+type DeleteEdgeDeploymentStageOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteEdgeDeploymentStageOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteEdgeDeploymentStageOutput) GoString() string {
+	return s.String()
+}
+
 type DeleteEndpointConfigInput struct {
 	_ struct{} `type:"structure"`
 
@@ -42079,7 +44202,7 @@ func (s DeleteMonitoringScheduleOutput) GoString() string {
 type DeleteNotebookInstanceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the Amazon SageMaker notebook instance to delete.
+	// The name of the SageMaker notebook instance to delete.
 	//
 	// NotebookInstanceName is a required field
 	NotebookInstanceName *string `type:"string" required:"true"`
@@ -43056,6 +45179,156 @@ func (s *DeploymentConfig) SetBlueGreenUpdatePolicy(v *BlueGreenUpdatePolicy) *D
 	return s
 }
 
+// Contains information about a stage in an edge deployment plan.
+type DeploymentStage struct {
+	_ struct{} `type:"structure"`
+
+	// Configuration of the deployment details.
+	DeploymentConfig *EdgeDeploymentConfig `type:"structure"`
+
+	// Configuration of the devices in the stage.
+	//
+	// DeviceSelectionConfig is a required field
+	DeviceSelectionConfig *DeviceSelectionConfig `type:"structure" required:"true"`
+
+	// The name of the stage.
+	//
+	// StageName is a required field
+	StageName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeploymentStage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeploymentStage) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeploymentStage) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeploymentStage"}
+	if s.DeviceSelectionConfig == nil {
+		invalidParams.Add(request.NewErrParamRequired("DeviceSelectionConfig"))
+	}
+	if s.StageName == nil {
+		invalidParams.Add(request.NewErrParamRequired("StageName"))
+	}
+	if s.StageName != nil && len(*s.StageName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StageName", 1))
+	}
+	if s.DeploymentConfig != nil {
+		if err := s.DeploymentConfig.Validate(); err != nil {
+			invalidParams.AddNested("DeploymentConfig", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.DeviceSelectionConfig != nil {
+		if err := s.DeviceSelectionConfig.Validate(); err != nil {
+			invalidParams.AddNested("DeviceSelectionConfig", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDeploymentConfig sets the DeploymentConfig field's value.
+func (s *DeploymentStage) SetDeploymentConfig(v *EdgeDeploymentConfig) *DeploymentStage {
+	s.DeploymentConfig = v
+	return s
+}
+
+// SetDeviceSelectionConfig sets the DeviceSelectionConfig field's value.
+func (s *DeploymentStage) SetDeviceSelectionConfig(v *DeviceSelectionConfig) *DeploymentStage {
+	s.DeviceSelectionConfig = v
+	return s
+}
+
+// SetStageName sets the StageName field's value.
+func (s *DeploymentStage) SetStageName(v string) *DeploymentStage {
+	s.StageName = &v
+	return s
+}
+
+// Contains information summarizing the deployment stage results.
+type DeploymentStageStatusSummary struct {
+	_ struct{} `type:"structure"`
+
+	// Configuration of the deployment details.
+	//
+	// DeploymentConfig is a required field
+	DeploymentConfig *EdgeDeploymentConfig `type:"structure" required:"true"`
+
+	// General status of the current state.
+	//
+	// DeploymentStatus is a required field
+	DeploymentStatus *EdgeDeploymentStatus `type:"structure" required:"true"`
+
+	// Configuration of the devices in the stage.
+	//
+	// DeviceSelectionConfig is a required field
+	DeviceSelectionConfig *DeviceSelectionConfig `type:"structure" required:"true"`
+
+	// The name of the stage.
+	//
+	// StageName is a required field
+	StageName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeploymentStageStatusSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeploymentStageStatusSummary) GoString() string {
+	return s.String()
+}
+
+// SetDeploymentConfig sets the DeploymentConfig field's value.
+func (s *DeploymentStageStatusSummary) SetDeploymentConfig(v *EdgeDeploymentConfig) *DeploymentStageStatusSummary {
+	s.DeploymentConfig = v
+	return s
+}
+
+// SetDeploymentStatus sets the DeploymentStatus field's value.
+func (s *DeploymentStageStatusSummary) SetDeploymentStatus(v *EdgeDeploymentStatus) *DeploymentStageStatusSummary {
+	s.DeploymentStatus = v
+	return s
+}
+
+// SetDeviceSelectionConfig sets the DeviceSelectionConfig field's value.
+func (s *DeploymentStageStatusSummary) SetDeviceSelectionConfig(v *DeviceSelectionConfig) *DeploymentStageStatusSummary {
+	s.DeviceSelectionConfig = v
+	return s
+}
+
+// SetStageName sets the StageName field's value.
+func (s *DeploymentStageStatusSummary) SetStageName(v string) *DeploymentStageStatusSummary {
+	s.StageName = &v
+	return s
+}
+
 type DeregisterDevicesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -43425,7 +45698,7 @@ type DescribeAlgorithmOutput struct {
 	// TrainingSpecification is a required field
 	TrainingSpecification *TrainingSpecification `type:"structure" required:"true"`
 
-	// Details about configurations for one or more training jobs that Amazon SageMaker
+	// Details about configurations for one or more training jobs that SageMaker
 	// runs to test the algorithm.
 	ValidationSpecification *AlgorithmValidationSpecification `type:"structure"`
 }
@@ -45513,7 +47786,7 @@ type DescribeDomainOutput struct {
 	// apps and the RStudioServerPro app.
 	SecurityGroupIdForDomainBoundary *string `type:"string"`
 
-	// The SSO managed application instance ID.
+	// The IAM Identity Center managed application instance ID.
 	SingleSignOnManagedApplicationInstanceId *string `type:"string"`
 
 	// The status.
@@ -45664,6 +47937,205 @@ func (s *DescribeDomainOutput) SetUrl(v string) *DescribeDomainOutput {
 // SetVpcId sets the VpcId field's value.
 func (s *DescribeDomainOutput) SetVpcId(v string) *DescribeDomainOutput {
 	s.VpcId = &v
+	return s
+}
+
+type DescribeEdgeDeploymentPlanInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the deployment plan to describe.
+	//
+	// EdgeDeploymentPlanName is a required field
+	EdgeDeploymentPlanName *string `min:"1" type:"string" required:"true"`
+
+	// The maximum number of results to select (50 by default).
+	MaxResults *int64 `type:"integer"`
+
+	// If the edge deployment plan has enough stages to require tokening, then this
+	// is the response from the last list of stages returned.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeEdgeDeploymentPlanInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeEdgeDeploymentPlanInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeEdgeDeploymentPlanInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeEdgeDeploymentPlanInput"}
+	if s.EdgeDeploymentPlanName == nil {
+		invalidParams.Add(request.NewErrParamRequired("EdgeDeploymentPlanName"))
+	}
+	if s.EdgeDeploymentPlanName != nil && len(*s.EdgeDeploymentPlanName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EdgeDeploymentPlanName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEdgeDeploymentPlanName sets the EdgeDeploymentPlanName field's value.
+func (s *DescribeEdgeDeploymentPlanInput) SetEdgeDeploymentPlanName(v string) *DescribeEdgeDeploymentPlanInput {
+	s.EdgeDeploymentPlanName = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeEdgeDeploymentPlanInput) SetMaxResults(v int64) *DescribeEdgeDeploymentPlanInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeEdgeDeploymentPlanInput) SetNextToken(v string) *DescribeEdgeDeploymentPlanInput {
+	s.NextToken = &v
+	return s
+}
+
+type DescribeEdgeDeploymentPlanOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The time when the edge deployment plan was created.
+	CreationTime *time.Time `type:"timestamp"`
+
+	// The device fleet used for this edge deployment plan.
+	//
+	// DeviceFleetName is a required field
+	DeviceFleetName *string `min:"1" type:"string" required:"true"`
+
+	// The number of edge devices that failed the deployment.
+	EdgeDeploymentFailed *int64 `type:"integer"`
+
+	// The number of edge devices yet to pick up deployment, or in progress.
+	EdgeDeploymentPending *int64 `type:"integer"`
+
+	// The ARN of edge deployment plan.
+	//
+	// EdgeDeploymentPlanArn is a required field
+	EdgeDeploymentPlanArn *string `min:"20" type:"string" required:"true"`
+
+	// The name of the edge deployment plan.
+	//
+	// EdgeDeploymentPlanName is a required field
+	EdgeDeploymentPlanName *string `min:"1" type:"string" required:"true"`
+
+	// The number of edge devices with the successful deployment.
+	EdgeDeploymentSuccess *int64 `type:"integer"`
+
+	// The time when the edge deployment plan was last updated.
+	LastModifiedTime *time.Time `type:"timestamp"`
+
+	// List of models associated with the edge deployment plan.
+	//
+	// ModelConfigs is a required field
+	ModelConfigs []*EdgeDeploymentModelConfig `type:"list" required:"true"`
+
+	// Token to use when calling the next set of stages in the edge deployment plan.
+	NextToken *string `type:"string"`
+
+	// List of stages in the edge deployment plan.
+	//
+	// Stages is a required field
+	Stages []*DeploymentStageStatusSummary `type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeEdgeDeploymentPlanOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeEdgeDeploymentPlanOutput) GoString() string {
+	return s.String()
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *DescribeEdgeDeploymentPlanOutput) SetCreationTime(v time.Time) *DescribeEdgeDeploymentPlanOutput {
+	s.CreationTime = &v
+	return s
+}
+
+// SetDeviceFleetName sets the DeviceFleetName field's value.
+func (s *DescribeEdgeDeploymentPlanOutput) SetDeviceFleetName(v string) *DescribeEdgeDeploymentPlanOutput {
+	s.DeviceFleetName = &v
+	return s
+}
+
+// SetEdgeDeploymentFailed sets the EdgeDeploymentFailed field's value.
+func (s *DescribeEdgeDeploymentPlanOutput) SetEdgeDeploymentFailed(v int64) *DescribeEdgeDeploymentPlanOutput {
+	s.EdgeDeploymentFailed = &v
+	return s
+}
+
+// SetEdgeDeploymentPending sets the EdgeDeploymentPending field's value.
+func (s *DescribeEdgeDeploymentPlanOutput) SetEdgeDeploymentPending(v int64) *DescribeEdgeDeploymentPlanOutput {
+	s.EdgeDeploymentPending = &v
+	return s
+}
+
+// SetEdgeDeploymentPlanArn sets the EdgeDeploymentPlanArn field's value.
+func (s *DescribeEdgeDeploymentPlanOutput) SetEdgeDeploymentPlanArn(v string) *DescribeEdgeDeploymentPlanOutput {
+	s.EdgeDeploymentPlanArn = &v
+	return s
+}
+
+// SetEdgeDeploymentPlanName sets the EdgeDeploymentPlanName field's value.
+func (s *DescribeEdgeDeploymentPlanOutput) SetEdgeDeploymentPlanName(v string) *DescribeEdgeDeploymentPlanOutput {
+	s.EdgeDeploymentPlanName = &v
+	return s
+}
+
+// SetEdgeDeploymentSuccess sets the EdgeDeploymentSuccess field's value.
+func (s *DescribeEdgeDeploymentPlanOutput) SetEdgeDeploymentSuccess(v int64) *DescribeEdgeDeploymentPlanOutput {
+	s.EdgeDeploymentSuccess = &v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *DescribeEdgeDeploymentPlanOutput) SetLastModifiedTime(v time.Time) *DescribeEdgeDeploymentPlanOutput {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetModelConfigs sets the ModelConfigs field's value.
+func (s *DescribeEdgeDeploymentPlanOutput) SetModelConfigs(v []*EdgeDeploymentModelConfig) *DescribeEdgeDeploymentPlanOutput {
+	s.ModelConfigs = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeEdgeDeploymentPlanOutput) SetNextToken(v string) *DescribeEdgeDeploymentPlanOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetStages sets the Stages field's value.
+func (s *DescribeEdgeDeploymentPlanOutput) SetStages(v []*DeploymentStageStatusSummary) *DescribeEdgeDeploymentPlanOutput {
+	s.Stages = v
 	return s
 }
 
@@ -45941,6 +48413,7 @@ type DescribeEndpointConfigOutput struct {
 	// CreationTime is a required field
 	CreationTime *time.Time `type:"timestamp" required:"true"`
 
+	// Configuration to control how SageMaker captures inference data.
 	DataCaptureConfig *DataCaptureConfig `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the endpoint configuration.
@@ -45948,10 +48421,13 @@ type DescribeEndpointConfigOutput struct {
 	// EndpointConfigArn is a required field
 	EndpointConfigArn *string `min:"20" type:"string" required:"true"`
 
-	// Name of the Amazon SageMaker endpoint configuration.
+	// Name of the SageMaker endpoint configuration.
 	//
 	// EndpointConfigName is a required field
 	EndpointConfigName *string `type:"string" required:"true"`
+
+	// The configuration parameters for an explainer.
+	ExplainerConfig *ExplainerConfig `type:"structure"`
 
 	// Amazon Web Services KMS key ID Amazon SageMaker uses to encrypt data when
 	// storing it on the ML storage volume attached to the instance.
@@ -46009,6 +48485,12 @@ func (s *DescribeEndpointConfigOutput) SetEndpointConfigArn(v string) *DescribeE
 // SetEndpointConfigName sets the EndpointConfigName field's value.
 func (s *DescribeEndpointConfigOutput) SetEndpointConfigName(v string) *DescribeEndpointConfigOutput {
 	s.EndpointConfigName = &v
+	return s
+}
+
+// SetExplainerConfig sets the ExplainerConfig field's value.
+func (s *DescribeEndpointConfigOutput) SetExplainerConfig(v *ExplainerConfig) *DescribeEndpointConfigOutput {
+	s.ExplainerConfig = v
 	return s
 }
 
@@ -46083,6 +48565,7 @@ type DescribeEndpointOutput struct {
 	// CreationTime is a required field
 	CreationTime *time.Time `type:"timestamp" required:"true"`
 
+	// The currently active data capture configuration used by your Endpoint.
 	DataCaptureConfig *DataCaptureConfigSummary `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the endpoint.
@@ -46131,6 +48614,9 @@ type DescribeEndpointOutput struct {
 	//
 	// EndpointStatus is a required field
 	EndpointStatus *string `type:"string" required:"true" enum:"EndpointStatus"`
+
+	// The configuration parameters for an explainer.
+	ExplainerConfig *ExplainerConfig `type:"structure"`
 
 	// If the status of the endpoint is Failed, the reason why it failed.
 	FailureReason *string `type:"string"`
@@ -46209,6 +48695,12 @@ func (s *DescribeEndpointOutput) SetEndpointName(v string) *DescribeEndpointOutp
 // SetEndpointStatus sets the EndpointStatus field's value.
 func (s *DescribeEndpointOutput) SetEndpointStatus(v string) *DescribeEndpointOutput {
 	s.EndpointStatus = &v
+	return s
+}
+
+// SetExplainerConfig sets the ExplainerConfig field's value.
+func (s *DescribeEndpointOutput) SetExplainerConfig(v *ExplainerConfig) *DescribeEndpointOutput {
+	s.ExplainerConfig = v
 	return s
 }
 
@@ -46501,6 +48993,12 @@ type DescribeFeatureGroupOutput struct {
 	// The status of the feature group.
 	FeatureGroupStatus *string `type:"string" enum:"FeatureGroupStatus"`
 
+	// A timestamp indicating when the feature group was last updated.
+	LastModifiedTime *time.Time `type:"timestamp"`
+
+	// A value indicating whether the update made to the feature group was successful.
+	LastUpdateStatus *LastUpdateStatus `type:"structure"`
+
 	// A token to resume pagination of the list of Features (FeatureDefinitions).
 	//
 	// NextToken is a required field
@@ -46517,6 +49015,9 @@ type DescribeFeatureGroupOutput struct {
 
 	// The configuration for the OnlineStore.
 	OnlineStoreConfig *OnlineStoreConfig `type:"structure"`
+
+	// The size of the OnlineStore in bytes.
+	OnlineStoreTotalSizeBytes *int64 `type:"long"`
 
 	// The name of the Feature used for RecordIdentifier, whose value uniquely identifies
 	// a record stored in the feature store.
@@ -46595,6 +49096,18 @@ func (s *DescribeFeatureGroupOutput) SetFeatureGroupStatus(v string) *DescribeFe
 	return s
 }
 
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *DescribeFeatureGroupOutput) SetLastModifiedTime(v time.Time) *DescribeFeatureGroupOutput {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetLastUpdateStatus sets the LastUpdateStatus field's value.
+func (s *DescribeFeatureGroupOutput) SetLastUpdateStatus(v *LastUpdateStatus) *DescribeFeatureGroupOutput {
+	s.LastUpdateStatus = v
+	return s
+}
+
 // SetNextToken sets the NextToken field's value.
 func (s *DescribeFeatureGroupOutput) SetNextToken(v string) *DescribeFeatureGroupOutput {
 	s.NextToken = &v
@@ -46619,6 +49132,12 @@ func (s *DescribeFeatureGroupOutput) SetOnlineStoreConfig(v *OnlineStoreConfig) 
 	return s
 }
 
+// SetOnlineStoreTotalSizeBytes sets the OnlineStoreTotalSizeBytes field's value.
+func (s *DescribeFeatureGroupOutput) SetOnlineStoreTotalSizeBytes(v int64) *DescribeFeatureGroupOutput {
+	s.OnlineStoreTotalSizeBytes = &v
+	return s
+}
+
 // SetRecordIdentifierFeatureName sets the RecordIdentifierFeatureName field's value.
 func (s *DescribeFeatureGroupOutput) SetRecordIdentifierFeatureName(v string) *DescribeFeatureGroupOutput {
 	s.RecordIdentifierFeatureName = &v
@@ -46628,6 +49147,180 @@ func (s *DescribeFeatureGroupOutput) SetRecordIdentifierFeatureName(v string) *D
 // SetRoleArn sets the RoleArn field's value.
 func (s *DescribeFeatureGroupOutput) SetRoleArn(v string) *DescribeFeatureGroupOutput {
 	s.RoleArn = &v
+	return s
+}
+
+type DescribeFeatureMetadataInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the feature group containing the feature.
+	//
+	// FeatureGroupName is a required field
+	FeatureGroupName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the feature.
+	//
+	// FeatureName is a required field
+	FeatureName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeFeatureMetadataInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeFeatureMetadataInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeFeatureMetadataInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeFeatureMetadataInput"}
+	if s.FeatureGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("FeatureGroupName"))
+	}
+	if s.FeatureGroupName != nil && len(*s.FeatureGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FeatureGroupName", 1))
+	}
+	if s.FeatureName == nil {
+		invalidParams.Add(request.NewErrParamRequired("FeatureName"))
+	}
+	if s.FeatureName != nil && len(*s.FeatureName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FeatureName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFeatureGroupName sets the FeatureGroupName field's value.
+func (s *DescribeFeatureMetadataInput) SetFeatureGroupName(v string) *DescribeFeatureMetadataInput {
+	s.FeatureGroupName = &v
+	return s
+}
+
+// SetFeatureName sets the FeatureName field's value.
+func (s *DescribeFeatureMetadataInput) SetFeatureName(v string) *DescribeFeatureMetadataInput {
+	s.FeatureName = &v
+	return s
+}
+
+type DescribeFeatureMetadataOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A timestamp indicating when the feature was created.
+	//
+	// CreationTime is a required field
+	CreationTime *time.Time `type:"timestamp" required:"true"`
+
+	// The description you added to describe the feature.
+	Description *string `type:"string"`
+
+	// The Amazon Resource Number (ARN) of the feature group that contains the feature.
+	//
+	// FeatureGroupArn is a required field
+	FeatureGroupArn *string `type:"string" required:"true"`
+
+	// The name of the feature group that you've specified.
+	//
+	// FeatureGroupName is a required field
+	FeatureGroupName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the feature that you've specified.
+	//
+	// FeatureName is a required field
+	FeatureName *string `min:"1" type:"string" required:"true"`
+
+	// The data type of the feature.
+	//
+	// FeatureType is a required field
+	FeatureType *string `type:"string" required:"true" enum:"FeatureType"`
+
+	// A timestamp indicating when the metadata for the feature group was modified.
+	// For example, if you add a parameter describing the feature, the timestamp
+	// changes to reflect the last time you
+	//
+	// LastModifiedTime is a required field
+	LastModifiedTime *time.Time `type:"timestamp" required:"true"`
+
+	// The key-value pairs that you added to describe the feature.
+	Parameters []*FeatureParameter `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeFeatureMetadataOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeFeatureMetadataOutput) GoString() string {
+	return s.String()
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *DescribeFeatureMetadataOutput) SetCreationTime(v time.Time) *DescribeFeatureMetadataOutput {
+	s.CreationTime = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *DescribeFeatureMetadataOutput) SetDescription(v string) *DescribeFeatureMetadataOutput {
+	s.Description = &v
+	return s
+}
+
+// SetFeatureGroupArn sets the FeatureGroupArn field's value.
+func (s *DescribeFeatureMetadataOutput) SetFeatureGroupArn(v string) *DescribeFeatureMetadataOutput {
+	s.FeatureGroupArn = &v
+	return s
+}
+
+// SetFeatureGroupName sets the FeatureGroupName field's value.
+func (s *DescribeFeatureMetadataOutput) SetFeatureGroupName(v string) *DescribeFeatureMetadataOutput {
+	s.FeatureGroupName = &v
+	return s
+}
+
+// SetFeatureName sets the FeatureName field's value.
+func (s *DescribeFeatureMetadataOutput) SetFeatureName(v string) *DescribeFeatureMetadataOutput {
+	s.FeatureName = &v
+	return s
+}
+
+// SetFeatureType sets the FeatureType field's value.
+func (s *DescribeFeatureMetadataOutput) SetFeatureType(v string) *DescribeFeatureMetadataOutput {
+	s.FeatureType = &v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *DescribeFeatureMetadataOutput) SetLastModifiedTime(v time.Time) *DescribeFeatureMetadataOutput {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetParameters sets the Parameters field's value.
+func (s *DescribeFeatureMetadataOutput) SetParameters(v []*FeatureParameter) *DescribeFeatureMetadataOutput {
+	s.Parameters = v
 	return s
 }
 
@@ -47853,8 +50546,8 @@ type DescribeLabelingJobOutput struct {
 	// OutputConfig is a required field
 	OutputConfig *LabelingJobOutputConfig `type:"structure" required:"true"`
 
-	// The Amazon Resource Name (ARN) that Amazon SageMaker assumes to perform tasks
-	// on your behalf during data labeling.
+	// The Amazon Resource Name (ARN) that SageMaker assumes to perform tasks on
+	// your behalf during data labeling.
 	//
 	// RoleArn is a required field
 	RoleArn *string `min:"20" type:"string" required:"true"`
@@ -48597,7 +51290,7 @@ type DescribeModelOutput struct {
 	// ModelArn is a required field
 	ModelArn *string `min:"20" type:"string" required:"true"`
 
-	// Name of the Amazon SageMaker model.
+	// Name of the SageMaker model.
 	//
 	// ModelName is a required field
 	ModelName *string `type:"string" required:"true"`
@@ -48687,7 +51380,7 @@ func (s *DescribeModelOutput) SetVpcConfig(v *VpcConfig) *DescribeModelOutput {
 type DescribeModelPackageGroupInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the model group to describe.
+	// The name of gthe model group to describe.
 	//
 	// ModelPackageGroupName is a required field
 	ModelPackageGroupName *string `min:"1" type:"string" required:"true"`
@@ -48918,7 +51611,7 @@ type DescribeModelPackageOutput struct {
 	// trial component, lineage group, or project.
 	LastModifiedBy *UserContext `type:"structure"`
 
-	// The last time the model package was modified.
+	// The last time that the model package was modified.
 	LastModifiedTime *time.Time `type:"timestamp"`
 
 	// Metadata properties of the tracking entity, trial, or trial component.
@@ -49695,7 +52388,7 @@ type DescribeNotebookInstanceOutput struct {
 	// notebook instance. Currently only one EI instance type can be associated
 	// with a notebook instance. For more information, see Using Elastic Inference
 	// in Amazon SageMaker (https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html).
-	AcceleratorTypes []*string `type:"list"`
+	AcceleratorTypes []*string `type:"list" enum:"NotebookInstanceAcceleratorType"`
 
 	// An array of up to three Git repositories associated with the notebook instance.
 	// These can be either the names of Git repositories stored as resources in
@@ -49703,8 +52396,7 @@ type DescribeNotebookInstanceOutput struct {
 	// (https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html) or
 	// in any other Git repository. These repositories are cloned at the same level
 	// as the default repository of your notebook instance. For more information,
-	// see Associating Git Repositories with Amazon SageMaker Notebook Instances
-	// (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
+	// see Associating Git Repositories with SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
 	AdditionalCodeRepositories []*string `type:"list"`
 
 	// A timestamp. Use this parameter to return the time when the notebook instance
@@ -49717,13 +52409,12 @@ type DescribeNotebookInstanceOutput struct {
 	// (https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html) or
 	// in any other Git repository. When you open a notebook instance, it opens
 	// in the directory that contains this repository. For more information, see
-	// Associating Git Repositories with Amazon SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
+	// Associating Git Repositories with SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
 	DefaultCodeRepository *string `min:"1" type:"string"`
 
-	// Describes whether Amazon SageMaker provides internet access to the notebook
-	// instance. If this value is set to Disabled, the notebook instance does not
-	// have internet access, and cannot connect to Amazon SageMaker training and
-	// endpoint services.
+	// Describes whether SageMaker provides internet access to the notebook instance.
+	// If this value is set to Disabled, the notebook instance does not have internet
+	// access, and cannot connect to SageMaker training and endpoint services.
 	//
 	// For more information, see Notebook Instances Are Internet-Enabled by Default
 	// (https://docs.aws.amazon.com/sagemaker/latest/dg/appendix-additional-considerations.html#appendix-notebook-and-internet-access).
@@ -49732,18 +52423,21 @@ type DescribeNotebookInstanceOutput struct {
 	// If status is Failed, the reason it failed.
 	FailureReason *string `type:"string"`
 
+	// Information on the IMDS configuration of the notebook instance
+	InstanceMetadataServiceConfiguration *InstanceMetadataServiceConfiguration `type:"structure"`
+
 	// The type of ML compute instance running on the notebook instance.
 	InstanceType *string `type:"string" enum:"InstanceType"`
 
-	// The Amazon Web Services KMS key ID Amazon SageMaker uses to encrypt data
-	// when storing it on the ML storage volume attached to the instance.
+	// The Amazon Web Services KMS key ID SageMaker uses to encrypt data when storing
+	// it on the ML storage volume attached to the instance.
 	KmsKeyId *string `type:"string"`
 
 	// A timestamp. Use this parameter to retrieve the time when the notebook instance
 	// was last modified.
 	LastModifiedTime *time.Time `type:"timestamp"`
 
-	// The network interface IDs that Amazon SageMaker created at the time of creating
+	// The network interface IDs that SageMaker created at the time of creating
 	// the instance.
 	NetworkInterfaceId *string `type:"string"`
 
@@ -49756,7 +52450,7 @@ type DescribeNotebookInstanceOutput struct {
 	// 2.1: (Optional) Customize a Notebook Instance (https://docs.aws.amazon.com/sagemaker/latest/dg/notebook-lifecycle-config.html)
 	NotebookInstanceLifecycleConfigName *string `type:"string"`
 
-	// The name of the Amazon SageMaker notebook instance.
+	// The name of the SageMaker notebook instance.
 	NotebookInstanceName *string `type:"string"`
 
 	// The status of the notebook instance.
@@ -49841,6 +52535,12 @@ func (s *DescribeNotebookInstanceOutput) SetDirectInternetAccess(v string) *Desc
 // SetFailureReason sets the FailureReason field's value.
 func (s *DescribeNotebookInstanceOutput) SetFailureReason(v string) *DescribeNotebookInstanceOutput {
 	s.FailureReason = &v
+	return s
+}
+
+// SetInstanceMetadataServiceConfiguration sets the InstanceMetadataServiceConfiguration field's value.
+func (s *DescribeNotebookInstanceOutput) SetInstanceMetadataServiceConfiguration(v *InstanceMetadataServiceConfiguration) *DescribeNotebookInstanceOutput {
+	s.InstanceMetadataServiceConfiguration = v
 	return s
 }
 
@@ -51119,8 +53819,8 @@ type DescribeTrainingJobOutput struct {
 	// time.
 	//
 	// Multiply BillableTimeInSeconds by the number of instances (InstanceCount)
-	// in your training cluster to get the total compute time SageMaker will bill
-	// you if you run distributed training. The formula is as follows: BillableTimeInSeconds
+	// in your training cluster to get the total compute time SageMaker bills you
+	// if you run distributed training. The formula is as follows: BillableTimeInSeconds
 	// * InstanceCount .
 	//
 	// You can calculate the savings from using managed spot training using the
@@ -51164,9 +53864,9 @@ type DescribeTrainingJobOutput struct {
 	// If you want to allow inbound or outbound network calls, except for calls
 	// between peers within a training cluster for distributed training, choose
 	// True. If you enable network isolation for training jobs that are configured
-	// to use a VPC, Amazon SageMaker downloads and uploads customer data and model
-	// artifacts through the specified VPC, but the training container does not
-	// have network access.
+	// to use a VPC, SageMaker downloads and uploads customer data and model artifacts
+	// through the specified VPC, but the training container does not have network
+	// access.
 	EnableNetworkIsolation *bool `type:"boolean"`
 
 	// The environment variables to set in the Docker container.
@@ -51195,8 +53895,8 @@ type DescribeTrainingJobOutput struct {
 	// An array of Channel objects that describes each data input channel.
 	InputDataConfig []*Channel `min:"1" type:"list"`
 
-	// The Amazon Resource Name (ARN) of the Amazon SageMaker Ground Truth labeling
-	// job that created the transform or training job.
+	// The Amazon Resource Name (ARN) of the SageMaker Ground Truth labeling job
+	// that created the transform or training job.
 	LabelingJobArn *string `type:"string"`
 
 	// A timestamp that indicates when the status of the training job was last modified.
@@ -51209,7 +53909,7 @@ type DescribeTrainingJobOutput struct {
 	ModelArtifacts *ModelArtifacts `type:"structure" required:"true"`
 
 	// The S3 path where model artifacts that you configured when creating the job
-	// are stored. Amazon SageMaker creates subfolders for model artifacts.
+	// are stored. SageMaker creates subfolders for model artifacts.
 	OutputDataConfig *OutputDataConfig `type:"structure"`
 
 	// Configuration information for Debugger system monitoring, framework profiling,
@@ -51243,8 +53943,8 @@ type DescribeTrainingJobOutput struct {
 	// information on the secondary status of the training job, see StatusMessage
 	// under SecondaryStatusTransition.
 	//
-	// Amazon SageMaker provides primary statuses and secondary statuses that apply
-	// to each of them:
+	// SageMaker provides primary statuses and secondary statuses that apply to
+	// each of them:
 	//
 	// InProgress
 	//
@@ -51304,12 +54004,12 @@ type DescribeTrainingJobOutput struct {
 
 	// Specifies a limit to how long a model training job can run. It also specifies
 	// how long a managed Spot training job has to complete. When the job reaches
-	// the time limit, Amazon SageMaker ends the training job. Use this API to cap
-	// model training costs.
+	// the time limit, SageMaker ends the training job. Use this API to cap model
+	// training costs.
 	//
-	// To stop a job, Amazon SageMaker sends the algorithm the SIGTERM signal, which
-	// delays job termination for 120 seconds. Algorithms can use this 120-second
-	// window to save the model artifacts, so the results of training are not lost.
+	// To stop a job, SageMaker sends the algorithm the SIGTERM signal, which delays
+	// job termination for 120 seconds. Algorithms can use this 120-second window
+	// to save the model artifacts, so the results of training are not lost.
 	//
 	// StoppingCondition is a required field
 	StoppingCondition *StoppingCondition `type:"structure" required:"true"`
@@ -51320,7 +54020,7 @@ type DescribeTrainingJobOutput struct {
 	// Indicates the time when the training job ends on training instances. You
 	// are billed for the time interval between the value of TrainingStartTime and
 	// this time. For successful jobs and stopped jobs, this is the time after model
-	// artifacts are uploaded. For failed jobs, this is the time when Amazon SageMaker
+	// artifacts are uploaded. For failed jobs, this is the time when SageMaker
 	// detects a job failure.
 	TrainingEndTime *time.Time `type:"timestamp"`
 
@@ -51336,7 +54036,7 @@ type DescribeTrainingJobOutput struct {
 
 	// The status of the training job.
 	//
-	// Amazon SageMaker provides the following training job statuses:
+	// SageMaker provides the following training job statuses:
 	//
 	//    * InProgress - The training is in progress.
 	//
@@ -51373,6 +54073,9 @@ type DescribeTrainingJobOutput struct {
 	// to. For more information, see Protect Training Jobs by Using an Amazon Virtual
 	// Private Cloud (https://docs.aws.amazon.com/sagemaker/latest/dg/train-vpc.html).
 	VpcConfig *VpcConfig `type:"structure"`
+
+	// The status of the warm pool associated with the training job.
+	WarmPoolStatus *WarmPoolStatus `type:"structure"`
 }
 
 // String returns the string representation.
@@ -51630,6 +54333,12 @@ func (s *DescribeTrainingJobOutput) SetTuningJobArn(v string) *DescribeTrainingJ
 // SetVpcConfig sets the VpcConfig field's value.
 func (s *DescribeTrainingJobOutput) SetVpcConfig(v *VpcConfig) *DescribeTrainingJobOutput {
 	s.VpcConfig = v
+	return s
+}
+
+// SetWarmPoolStatus sets the WarmPoolStatus field's value.
+func (s *DescribeTrainingJobOutput) SetWarmPoolStatus(v *WarmPoolStatus) *DescribeTrainingJobOutput {
+	s.WarmPoolStatus = v
 	return s
 }
 
@@ -52400,10 +55109,10 @@ type DescribeUserProfileOutput struct {
 	// The last modified time.
 	LastModifiedTime *time.Time `type:"timestamp"`
 
-	// The SSO user identifier.
+	// The IAM Identity Center user identifier.
 	SingleSignOnUserIdentifier *string `type:"string"`
 
-	// The SSO user value.
+	// The IAM Identity Center user value.
 	SingleSignOnUserValue *string `type:"string"`
 
 	// The status.
@@ -52810,6 +55519,138 @@ func (s *Device) SetIotThingName(v string) *Device {
 	return s
 }
 
+// Contains information summarizing device details and deployment status.
+type DeviceDeploymentSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the deployed stage.
+	DeployedStageName *string `min:"1" type:"string"`
+
+	// The time when the deployment on the device started.
+	DeploymentStartTime *time.Time `type:"timestamp"`
+
+	// The description of the device.
+	Description *string `min:"1" type:"string"`
+
+	// The ARN of the device.
+	//
+	// DeviceArn is a required field
+	DeviceArn *string `min:"20" type:"string" required:"true"`
+
+	// The deployment status of the device.
+	DeviceDeploymentStatus *string `type:"string" enum:"DeviceDeploymentStatus"`
+
+	// The detailed error message for the deployoment status result.
+	DeviceDeploymentStatusMessage *string `type:"string"`
+
+	// The name of the fleet to which the device belongs to.
+	DeviceFleetName *string `min:"1" type:"string"`
+
+	// The name of the device.
+	//
+	// DeviceName is a required field
+	DeviceName *string `min:"1" type:"string" required:"true"`
+
+	// The ARN of the edge deployment plan.
+	//
+	// EdgeDeploymentPlanArn is a required field
+	EdgeDeploymentPlanArn *string `min:"20" type:"string" required:"true"`
+
+	// The name of the edge deployment plan.
+	//
+	// EdgeDeploymentPlanName is a required field
+	EdgeDeploymentPlanName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the stage in the edge deployment plan.
+	//
+	// StageName is a required field
+	StageName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeviceDeploymentSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeviceDeploymentSummary) GoString() string {
+	return s.String()
+}
+
+// SetDeployedStageName sets the DeployedStageName field's value.
+func (s *DeviceDeploymentSummary) SetDeployedStageName(v string) *DeviceDeploymentSummary {
+	s.DeployedStageName = &v
+	return s
+}
+
+// SetDeploymentStartTime sets the DeploymentStartTime field's value.
+func (s *DeviceDeploymentSummary) SetDeploymentStartTime(v time.Time) *DeviceDeploymentSummary {
+	s.DeploymentStartTime = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *DeviceDeploymentSummary) SetDescription(v string) *DeviceDeploymentSummary {
+	s.Description = &v
+	return s
+}
+
+// SetDeviceArn sets the DeviceArn field's value.
+func (s *DeviceDeploymentSummary) SetDeviceArn(v string) *DeviceDeploymentSummary {
+	s.DeviceArn = &v
+	return s
+}
+
+// SetDeviceDeploymentStatus sets the DeviceDeploymentStatus field's value.
+func (s *DeviceDeploymentSummary) SetDeviceDeploymentStatus(v string) *DeviceDeploymentSummary {
+	s.DeviceDeploymentStatus = &v
+	return s
+}
+
+// SetDeviceDeploymentStatusMessage sets the DeviceDeploymentStatusMessage field's value.
+func (s *DeviceDeploymentSummary) SetDeviceDeploymentStatusMessage(v string) *DeviceDeploymentSummary {
+	s.DeviceDeploymentStatusMessage = &v
+	return s
+}
+
+// SetDeviceFleetName sets the DeviceFleetName field's value.
+func (s *DeviceDeploymentSummary) SetDeviceFleetName(v string) *DeviceDeploymentSummary {
+	s.DeviceFleetName = &v
+	return s
+}
+
+// SetDeviceName sets the DeviceName field's value.
+func (s *DeviceDeploymentSummary) SetDeviceName(v string) *DeviceDeploymentSummary {
+	s.DeviceName = &v
+	return s
+}
+
+// SetEdgeDeploymentPlanArn sets the EdgeDeploymentPlanArn field's value.
+func (s *DeviceDeploymentSummary) SetEdgeDeploymentPlanArn(v string) *DeviceDeploymentSummary {
+	s.EdgeDeploymentPlanArn = &v
+	return s
+}
+
+// SetEdgeDeploymentPlanName sets the EdgeDeploymentPlanName field's value.
+func (s *DeviceDeploymentSummary) SetEdgeDeploymentPlanName(v string) *DeviceDeploymentSummary {
+	s.EdgeDeploymentPlanName = &v
+	return s
+}
+
+// SetStageName sets the StageName field's value.
+func (s *DeviceDeploymentSummary) SetStageName(v string) *DeviceDeploymentSummary {
+	s.StageName = &v
+	return s
+}
+
 // Summary of the device fleet.
 type DeviceFleetSummary struct {
 	_ struct{} `type:"structure"`
@@ -52870,6 +55711,83 @@ func (s *DeviceFleetSummary) SetDeviceFleetName(v string) *DeviceFleetSummary {
 // SetLastModifiedTime sets the LastModifiedTime field's value.
 func (s *DeviceFleetSummary) SetLastModifiedTime(v time.Time) *DeviceFleetSummary {
 	s.LastModifiedTime = &v
+	return s
+}
+
+// Contains information about the configurations of selected devices.
+type DeviceSelectionConfig struct {
+	_ struct{} `type:"structure"`
+
+	// A filter to select devices with names containing this name.
+	DeviceNameContains *string `min:"1" type:"string"`
+
+	// List of devices chosen to deploy.
+	DeviceNames []*string `type:"list"`
+
+	// Type of device subsets to deploy to the current stage.
+	//
+	// DeviceSubsetType is a required field
+	DeviceSubsetType *string `type:"string" required:"true" enum:"DeviceSubsetType"`
+
+	// Percentage of devices in the fleet to deploy to the current stage.
+	Percentage *int64 `type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeviceSelectionConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeviceSelectionConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeviceSelectionConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeviceSelectionConfig"}
+	if s.DeviceNameContains != nil && len(*s.DeviceNameContains) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DeviceNameContains", 1))
+	}
+	if s.DeviceSubsetType == nil {
+		invalidParams.Add(request.NewErrParamRequired("DeviceSubsetType"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDeviceNameContains sets the DeviceNameContains field's value.
+func (s *DeviceSelectionConfig) SetDeviceNameContains(v string) *DeviceSelectionConfig {
+	s.DeviceNameContains = &v
+	return s
+}
+
+// SetDeviceNames sets the DeviceNames field's value.
+func (s *DeviceSelectionConfig) SetDeviceNames(v []*string) *DeviceSelectionConfig {
+	s.DeviceNames = v
+	return s
+}
+
+// SetDeviceSubsetType sets the DeviceSubsetType field's value.
+func (s *DeviceSelectionConfig) SetDeviceSubsetType(v string) *DeviceSelectionConfig {
+	s.DeviceSubsetType = &v
+	return s
+}
+
+// SetPercentage sets the Percentage field's value.
+func (s *DeviceSelectionConfig) SetPercentage(v int64) *DeviceSelectionConfig {
+	s.Percentage = &v
 	return s
 }
 
@@ -53268,6 +56186,10 @@ func (s *DomainDetails) SetUrl(v string) *DomainDetails {
 type DomainSettings struct {
 	_ struct{} `type:"structure"`
 
+	// The configuration for attaching a SageMaker user profile name to the execution
+	// role as a sts:SourceIdentity key (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_control-access_monitor.html).
+	ExecutionRoleIdentityConfig *string `type:"string" enum:"ExecutionRoleIdentityConfig"`
+
 	// A collection of settings that configure the RStudioServerPro Domain-level
 	// app.
 	RStudioServerProDomainSettings *RStudioServerProDomainSettings `type:"structure"`
@@ -53310,6 +56232,12 @@ func (s *DomainSettings) Validate() error {
 	return nil
 }
 
+// SetExecutionRoleIdentityConfig sets the ExecutionRoleIdentityConfig field's value.
+func (s *DomainSettings) SetExecutionRoleIdentityConfig(v string) *DomainSettings {
+	s.ExecutionRoleIdentityConfig = &v
+	return s
+}
+
 // SetRStudioServerProDomainSettings sets the RStudioServerProDomainSettings field's value.
 func (s *DomainSettings) SetRStudioServerProDomainSettings(v *RStudioServerProDomainSettings) *DomainSettings {
 	s.RStudioServerProDomainSettings = v
@@ -53325,6 +56253,12 @@ func (s *DomainSettings) SetSecurityGroupIds(v []*string) *DomainSettings {
 // A collection of Domain configuration settings to update.
 type DomainSettingsForUpdate struct {
 	_ struct{} `type:"structure"`
+
+	// The configuration for attaching a SageMaker user profile name to the execution
+	// role as a sts:SourceIdentity key (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_control-access_monitor.html).
+	// This configuration can only be modified if there are no apps in the InService
+	// or Pending state.
+	ExecutionRoleIdentityConfig *string `type:"string" enum:"ExecutionRoleIdentityConfig"`
 
 	// A collection of RStudioServerPro Domain-level app settings to update.
 	RStudioServerProDomainSettingsForUpdate *RStudioServerProDomainSettingsForUpdate `type:"structure"`
@@ -53361,6 +56295,12 @@ func (s *DomainSettingsForUpdate) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetExecutionRoleIdentityConfig sets the ExecutionRoleIdentityConfig field's value.
+func (s *DomainSettingsForUpdate) SetExecutionRoleIdentityConfig(v string) *DomainSettingsForUpdate {
+	s.ExecutionRoleIdentityConfig = &v
+	return s
 }
 
 // SetRStudioServerProDomainSettingsForUpdate sets the RStudioServerProDomainSettingsForUpdate field's value.
@@ -53471,8 +56411,10 @@ type DriftCheckBias struct {
 	// The bias config file for a model.
 	ConfigFile *FileSource `type:"structure"`
 
+	// The post-training constraints.
 	PostTrainingConstraints *MetricsSource `type:"structure"`
 
+	// The pre-training constraints.
 	PreTrainingConstraints *MetricsSource `type:"structure"`
 }
 
@@ -53545,6 +56487,7 @@ type DriftCheckExplainability struct {
 	// The explainability config file for the model.
 	ConfigFile *FileSource `type:"structure"`
 
+	// The drift check explainability constraints.
 	Constraints *MetricsSource `type:"structure"`
 }
 
@@ -53603,8 +56546,10 @@ func (s *DriftCheckExplainability) SetConstraints(v *MetricsSource) *DriftCheckE
 type DriftCheckModelDataQuality struct {
 	_ struct{} `type:"structure"`
 
+	// The drift check model data quality constraints.
 	Constraints *MetricsSource `type:"structure"`
 
+	// The drift check model data quality statistics.
 	Statistics *MetricsSource `type:"structure"`
 }
 
@@ -53663,8 +56608,10 @@ func (s *DriftCheckModelDataQuality) SetStatistics(v *MetricsSource) *DriftCheck
 type DriftCheckModelQuality struct {
 	_ struct{} `type:"structure"`
 
+	// The drift check model quality constraints.
 	Constraints *MetricsSource `type:"structure"`
 
+	// The drift check model quality statistics.
 	Statistics *MetricsSource `type:"structure"`
 }
 
@@ -53827,6 +56774,316 @@ func (s *Edge) SetDestinationArn(v string) *Edge {
 // SetSourceArn sets the SourceArn field's value.
 func (s *Edge) SetSourceArn(v string) *Edge {
 	s.SourceArn = &v
+	return s
+}
+
+// Contains information about the configuration of a deployment.
+type EdgeDeploymentConfig struct {
+	_ struct{} `type:"structure"`
+
+	// Toggle that determines whether to rollback to previous configuration if the
+	// current deployment fails. By default this is turned on. You may turn this
+	// off if you want to investigate the errors yourself.
+	//
+	// FailureHandlingPolicy is a required field
+	FailureHandlingPolicy *string `type:"string" required:"true" enum:"FailureHandlingPolicy"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EdgeDeploymentConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EdgeDeploymentConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EdgeDeploymentConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EdgeDeploymentConfig"}
+	if s.FailureHandlingPolicy == nil {
+		invalidParams.Add(request.NewErrParamRequired("FailureHandlingPolicy"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFailureHandlingPolicy sets the FailureHandlingPolicy field's value.
+func (s *EdgeDeploymentConfig) SetFailureHandlingPolicy(v string) *EdgeDeploymentConfig {
+	s.FailureHandlingPolicy = &v
+	return s
+}
+
+// Contains information about the configuration of a model in a deployment.
+type EdgeDeploymentModelConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The edge packaging job associated with this deployment.
+	//
+	// EdgePackagingJobName is a required field
+	EdgePackagingJobName *string `min:"1" type:"string" required:"true"`
+
+	// The name the device application uses to reference this model.
+	//
+	// ModelHandle is a required field
+	ModelHandle *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EdgeDeploymentModelConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EdgeDeploymentModelConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EdgeDeploymentModelConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EdgeDeploymentModelConfig"}
+	if s.EdgePackagingJobName == nil {
+		invalidParams.Add(request.NewErrParamRequired("EdgePackagingJobName"))
+	}
+	if s.EdgePackagingJobName != nil && len(*s.EdgePackagingJobName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EdgePackagingJobName", 1))
+	}
+	if s.ModelHandle == nil {
+		invalidParams.Add(request.NewErrParamRequired("ModelHandle"))
+	}
+	if s.ModelHandle != nil && len(*s.ModelHandle) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ModelHandle", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEdgePackagingJobName sets the EdgePackagingJobName field's value.
+func (s *EdgeDeploymentModelConfig) SetEdgePackagingJobName(v string) *EdgeDeploymentModelConfig {
+	s.EdgePackagingJobName = &v
+	return s
+}
+
+// SetModelHandle sets the ModelHandle field's value.
+func (s *EdgeDeploymentModelConfig) SetModelHandle(v string) *EdgeDeploymentModelConfig {
+	s.ModelHandle = &v
+	return s
+}
+
+// Contains information summarizing an edge deployment plan.
+type EdgeDeploymentPlanSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The time when the edge deployment plan was created.
+	CreationTime *time.Time `type:"timestamp"`
+
+	// The name of the device fleet used for the deployment.
+	//
+	// DeviceFleetName is a required field
+	DeviceFleetName *string `min:"1" type:"string" required:"true"`
+
+	// The number of edge devices that failed the deployment.
+	//
+	// EdgeDeploymentFailed is a required field
+	EdgeDeploymentFailed *int64 `type:"integer" required:"true"`
+
+	// The number of edge devices yet to pick up the deployment, or in progress.
+	//
+	// EdgeDeploymentPending is a required field
+	EdgeDeploymentPending *int64 `type:"integer" required:"true"`
+
+	// The ARN of the edge deployment plan.
+	//
+	// EdgeDeploymentPlanArn is a required field
+	EdgeDeploymentPlanArn *string `min:"20" type:"string" required:"true"`
+
+	// The name of the edge deployment plan.
+	//
+	// EdgeDeploymentPlanName is a required field
+	EdgeDeploymentPlanName *string `min:"1" type:"string" required:"true"`
+
+	// The number of edge devices with the successful deployment.
+	//
+	// EdgeDeploymentSuccess is a required field
+	EdgeDeploymentSuccess *int64 `type:"integer" required:"true"`
+
+	// The time when the edge deployment plan was last updated.
+	LastModifiedTime *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EdgeDeploymentPlanSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EdgeDeploymentPlanSummary) GoString() string {
+	return s.String()
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *EdgeDeploymentPlanSummary) SetCreationTime(v time.Time) *EdgeDeploymentPlanSummary {
+	s.CreationTime = &v
+	return s
+}
+
+// SetDeviceFleetName sets the DeviceFleetName field's value.
+func (s *EdgeDeploymentPlanSummary) SetDeviceFleetName(v string) *EdgeDeploymentPlanSummary {
+	s.DeviceFleetName = &v
+	return s
+}
+
+// SetEdgeDeploymentFailed sets the EdgeDeploymentFailed field's value.
+func (s *EdgeDeploymentPlanSummary) SetEdgeDeploymentFailed(v int64) *EdgeDeploymentPlanSummary {
+	s.EdgeDeploymentFailed = &v
+	return s
+}
+
+// SetEdgeDeploymentPending sets the EdgeDeploymentPending field's value.
+func (s *EdgeDeploymentPlanSummary) SetEdgeDeploymentPending(v int64) *EdgeDeploymentPlanSummary {
+	s.EdgeDeploymentPending = &v
+	return s
+}
+
+// SetEdgeDeploymentPlanArn sets the EdgeDeploymentPlanArn field's value.
+func (s *EdgeDeploymentPlanSummary) SetEdgeDeploymentPlanArn(v string) *EdgeDeploymentPlanSummary {
+	s.EdgeDeploymentPlanArn = &v
+	return s
+}
+
+// SetEdgeDeploymentPlanName sets the EdgeDeploymentPlanName field's value.
+func (s *EdgeDeploymentPlanSummary) SetEdgeDeploymentPlanName(v string) *EdgeDeploymentPlanSummary {
+	s.EdgeDeploymentPlanName = &v
+	return s
+}
+
+// SetEdgeDeploymentSuccess sets the EdgeDeploymentSuccess field's value.
+func (s *EdgeDeploymentPlanSummary) SetEdgeDeploymentSuccess(v int64) *EdgeDeploymentPlanSummary {
+	s.EdgeDeploymentSuccess = &v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *EdgeDeploymentPlanSummary) SetLastModifiedTime(v time.Time) *EdgeDeploymentPlanSummary {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// Contains information summarizing the deployment stage results.
+type EdgeDeploymentStatus struct {
+	_ struct{} `type:"structure"`
+
+	// The number of edge devices that failed the deployment in current stage.
+	//
+	// EdgeDeploymentFailedInStage is a required field
+	EdgeDeploymentFailedInStage *int64 `type:"integer" required:"true"`
+
+	// The number of edge devices yet to pick up the deployment in current stage,
+	// or in progress.
+	//
+	// EdgeDeploymentPendingInStage is a required field
+	EdgeDeploymentPendingInStage *int64 `type:"integer" required:"true"`
+
+	// The time when the deployment API started.
+	EdgeDeploymentStageStartTime *time.Time `type:"timestamp"`
+
+	// A detailed message about deployment status in current stage.
+	EdgeDeploymentStatusMessage *string `type:"string"`
+
+	// The number of edge devices with the successful deployment in the current
+	// stage.
+	//
+	// EdgeDeploymentSuccessInStage is a required field
+	EdgeDeploymentSuccessInStage *int64 `type:"integer" required:"true"`
+
+	// The general status of the current stage.
+	//
+	// StageStatus is a required field
+	StageStatus *string `type:"string" required:"true" enum:"StageStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EdgeDeploymentStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EdgeDeploymentStatus) GoString() string {
+	return s.String()
+}
+
+// SetEdgeDeploymentFailedInStage sets the EdgeDeploymentFailedInStage field's value.
+func (s *EdgeDeploymentStatus) SetEdgeDeploymentFailedInStage(v int64) *EdgeDeploymentStatus {
+	s.EdgeDeploymentFailedInStage = &v
+	return s
+}
+
+// SetEdgeDeploymentPendingInStage sets the EdgeDeploymentPendingInStage field's value.
+func (s *EdgeDeploymentStatus) SetEdgeDeploymentPendingInStage(v int64) *EdgeDeploymentStatus {
+	s.EdgeDeploymentPendingInStage = &v
+	return s
+}
+
+// SetEdgeDeploymentStageStartTime sets the EdgeDeploymentStageStartTime field's value.
+func (s *EdgeDeploymentStatus) SetEdgeDeploymentStageStartTime(v time.Time) *EdgeDeploymentStatus {
+	s.EdgeDeploymentStageStartTime = &v
+	return s
+}
+
+// SetEdgeDeploymentStatusMessage sets the EdgeDeploymentStatusMessage field's value.
+func (s *EdgeDeploymentStatus) SetEdgeDeploymentStatusMessage(v string) *EdgeDeploymentStatus {
+	s.EdgeDeploymentStatusMessage = &v
+	return s
+}
+
+// SetEdgeDeploymentSuccessInStage sets the EdgeDeploymentSuccessInStage field's value.
+func (s *EdgeDeploymentStatus) SetEdgeDeploymentSuccessInStage(v int64) *EdgeDeploymentStatus {
+	s.EdgeDeploymentSuccessInStage = &v
+	return s
+}
+
+// SetStageStatus sets the StageStatus field's value.
+func (s *EdgeDeploymentStatus) SetStageStatus(v string) *EdgeDeploymentStatus {
+	s.StageStatus = &v
 	return s
 }
 
@@ -54344,6 +57601,7 @@ type Endpoint struct {
 	// CreationTime is a required field
 	CreationTime *time.Time `type:"timestamp" required:"true"`
 
+	// The currently active data capture configuration used by your Endpoint.
 	DataCaptureConfig *DataCaptureConfigSummary `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the endpoint.
@@ -55155,11 +58413,11 @@ func (s *Experiment) SetTags(v []*Tag) *Experiment {
 // Associates a SageMaker job as a trial component with an experiment and trial.
 // Specified when you call the following APIs:
 //
-//    * CreateProcessingJob
+//   - CreateProcessingJob
 //
-//    * CreateTrainingJob
+//   - CreateTrainingJob
 //
-//    * CreateTransformJob
+//   - CreateTransformJob
 type ExperimentConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -55399,6 +58657,54 @@ func (s *Explainability) SetReport(v *MetricsSource) *Explainability {
 	return s
 }
 
+// A parameter to activate explainers.
+type ExplainerConfig struct {
+	_ struct{} `type:"structure"`
+
+	// A member of ExplainerConfig that contains configuration parameters for the
+	// SageMaker Clarify explainer.
+	ClarifyExplainerConfig *ClarifyExplainerConfig `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExplainerConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ExplainerConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ExplainerConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ExplainerConfig"}
+	if s.ClarifyExplainerConfig != nil {
+		if err := s.ClarifyExplainerConfig.Validate(); err != nil {
+			invalidParams.AddNested("ClarifyExplainerConfig", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClarifyExplainerConfig sets the ClarifyExplainerConfig field's value.
+func (s *ExplainerConfig) SetClarifyExplainerConfig(v *ClarifyExplainerConfig) *ExplainerConfig {
+	s.ClarifyExplainerConfig = v
+	return s
+}
+
 // The container for the metadata for Fail step.
 type FailStepMetadata struct {
 	_ struct{} `type:"structure"`
@@ -55531,6 +58837,12 @@ type FeatureGroup struct {
 	// A FeatureGroup status.
 	FeatureGroupStatus *string `type:"string" enum:"FeatureGroupStatus"`
 
+	// A timestamp indicating the last time you updated the feature group.
+	LastModifiedTime *time.Time `type:"timestamp"`
+
+	// A value that indicates whether the feature group was updated successfully.
+	LastUpdateStatus *LastUpdateStatus `type:"structure"`
+
 	// The configuration of an OfflineStore.
 	//
 	// Provide an OfflineStoreConfig in a request to CreateFeatureGroup to create
@@ -55624,6 +58936,18 @@ func (s *FeatureGroup) SetFeatureGroupName(v string) *FeatureGroup {
 // SetFeatureGroupStatus sets the FeatureGroupStatus field's value.
 func (s *FeatureGroup) SetFeatureGroupStatus(v string) *FeatureGroup {
 	s.FeatureGroupStatus = &v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *FeatureGroup) SetLastModifiedTime(v time.Time) *FeatureGroup {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetLastUpdateStatus sets the LastUpdateStatus field's value.
+func (s *FeatureGroup) SetLastUpdateStatus(v *LastUpdateStatus) *FeatureGroup {
+	s.LastUpdateStatus = v
 	return s
 }
 
@@ -55737,6 +59061,159 @@ func (s *FeatureGroupSummary) SetFeatureGroupStatus(v string) *FeatureGroupSumma
 // SetOfflineStoreStatus sets the OfflineStoreStatus field's value.
 func (s *FeatureGroupSummary) SetOfflineStoreStatus(v *OfflineStoreStatus) *FeatureGroupSummary {
 	s.OfflineStoreStatus = v
+	return s
+}
+
+// The metadata for a feature. It can either be metadata that you specify, or
+// metadata that is updated automatically.
+type FeatureMetadata struct {
+	_ struct{} `type:"structure"`
+
+	// A timestamp indicating when the feature was created.
+	CreationTime *time.Time `type:"timestamp"`
+
+	// An optional description that you specify to better describe the feature.
+	Description *string `type:"string"`
+
+	// The Amazon Resource Number (ARN) of the feature group.
+	FeatureGroupArn *string `type:"string"`
+
+	// The name of the feature group containing the feature.
+	FeatureGroupName *string `min:"1" type:"string"`
+
+	// The name of feature.
+	FeatureName *string `min:"1" type:"string"`
+
+	// The data type of the feature.
+	FeatureType *string `type:"string" enum:"FeatureType"`
+
+	// A timestamp indicating when the feature was last modified.
+	LastModifiedTime *time.Time `type:"timestamp"`
+
+	// Optional key-value pairs that you specify to better describe the feature.
+	Parameters []*FeatureParameter `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FeatureMetadata) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FeatureMetadata) GoString() string {
+	return s.String()
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *FeatureMetadata) SetCreationTime(v time.Time) *FeatureMetadata {
+	s.CreationTime = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *FeatureMetadata) SetDescription(v string) *FeatureMetadata {
+	s.Description = &v
+	return s
+}
+
+// SetFeatureGroupArn sets the FeatureGroupArn field's value.
+func (s *FeatureMetadata) SetFeatureGroupArn(v string) *FeatureMetadata {
+	s.FeatureGroupArn = &v
+	return s
+}
+
+// SetFeatureGroupName sets the FeatureGroupName field's value.
+func (s *FeatureMetadata) SetFeatureGroupName(v string) *FeatureMetadata {
+	s.FeatureGroupName = &v
+	return s
+}
+
+// SetFeatureName sets the FeatureName field's value.
+func (s *FeatureMetadata) SetFeatureName(v string) *FeatureMetadata {
+	s.FeatureName = &v
+	return s
+}
+
+// SetFeatureType sets the FeatureType field's value.
+func (s *FeatureMetadata) SetFeatureType(v string) *FeatureMetadata {
+	s.FeatureType = &v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *FeatureMetadata) SetLastModifiedTime(v time.Time) *FeatureMetadata {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetParameters sets the Parameters field's value.
+func (s *FeatureMetadata) SetParameters(v []*FeatureParameter) *FeatureMetadata {
+	s.Parameters = v
+	return s
+}
+
+// A key-value pair that you specify to describe the feature.
+type FeatureParameter struct {
+	_ struct{} `type:"structure"`
+
+	// A key that must contain a value to describe the feature.
+	Key *string `min:"1" type:"string"`
+
+	// The value that belongs to a key.
+	Value *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FeatureParameter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FeatureParameter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *FeatureParameter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "FeatureParameter"}
+	if s.Key != nil && len(*s.Key) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Key", 1))
+	}
+	if s.Value != nil && len(*s.Value) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Value", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetKey sets the Key field's value.
+func (s *FeatureParameter) SetKey(v string) *FeatureParameter {
+	s.Key = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *FeatureParameter) SetValue(v string) *FeatureParameter {
+	s.Value = &v
 	return s
 }
 
@@ -55959,7 +59436,7 @@ func (s *FileSystemDataSource) SetFileSystemType(v string) *FileSystemDataSource
 //
 // In search, there are several property types:
 //
-// Metrics
+// # Metrics
 //
 // To define a metric filter, enter a value using the form "Metrics.<name>",
 // where <name> is a metric name. For example, the following filter searches
@@ -55975,7 +59452,7 @@ func (s *FileSystemDataSource) SetFileSystemType(v string) *FileSystemDataSource
 //
 // }
 //
-// HyperParameters
+// # HyperParameters
 //
 // To define a hyperparameter filter, enter a value with the form "HyperParameters.<name>".
 // Decimal hyperparameter values are treated as a decimal in a comparison if
@@ -55994,7 +59471,7 @@ func (s *FileSystemDataSource) SetFileSystemType(v string) *FileSystemDataSource
 //
 // }
 //
-// Tags
+// # Tags
 //
 // To define a tag filter, enter a value with the form Tags.<key>.
 type Filter struct {
@@ -57529,7 +61006,8 @@ type HumanTaskConfig struct {
 
 	// Defines the maximum number of data objects that can be labeled by human workers
 	// at the same time. Also referred to as batch size. Each object may have more
-	// than one worker at one time. The default value is 1000 objects.
+	// than one worker at one time. The default value is 1000 objects. To increase
+	// the maximum value to 5000 objects, contact Amazon Web Services Support.
 	MaxConcurrentTaskCount *int64 `min:"1" type:"integer"`
 
 	// The number of human workers that will label an object.
@@ -58459,7 +61937,7 @@ type HyperParameterAlgorithmSpecification struct {
 	// The registry path of the Docker image that contains the training algorithm.
 	// For information about Docker registry paths for built-in algorithms, see
 	// Algorithms Provided by Amazon SageMaker: Common Parameters (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html).
-	// Amazon SageMaker supports both registry/repository[:tag] and registry/repository[@digest]
+	// SageMaker supports both registry/repository[:tag] and registry/repository[@digest]
 	// image path formats. For more information, see Using Your Own Algorithms with
 	// Amazon SageMaker (https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html).
 	TrainingImage *string `type:"string"`
@@ -58718,9 +62196,9 @@ type HyperParameterTrainingJobDefinition struct {
 	// Isolates the training container. No inbound or outbound network calls can
 	// be made, except for calls between peers within a training cluster for distributed
 	// training. If network isolation is used for training jobs that are configured
-	// to use a VPC, Amazon SageMaker downloads and uploads customer data and model
-	// artifacts through the specified VPC, but the training container does not
-	// have network access.
+	// to use a VPC, SageMaker downloads and uploads customer data and model artifacts
+	// through the specified VPC, but the training container does not have network
+	// access.
 	EnableNetworkIsolation *bool `type:"boolean"`
 
 	// Specifies ranges of integer, continuous, and categorical hyperparameters
@@ -58730,10 +62208,18 @@ type HyperParameterTrainingJobDefinition struct {
 	// performance as measured by the objective metric of the hyperparameter tuning
 	// job.
 	//
-	// You can specify a maximum of 20 hyperparameters that a hyperparameter tuning
-	// job can search over. Every possible value of a categorical parameter range
-	// counts against this limit.
+	// The maximum number of items specified for Array Members refers to the maximum
+	// number of hyperparameters for each range and also the maximum for the hyperparameter
+	// tuning job itself. That is, the sum of the number of hyperparameters for
+	// all the ranges can't exceed the maximum number specified.
 	HyperParameterRanges *ParameterRanges `type:"structure"`
+
+	// The configuration for the hyperparameter tuning resources, including the
+	// compute instances and storage volumes, used for training jobs launched by
+	// the tuning job. By default, storage volumes hold model artifacts and incremental
+	// states. Choose File for TrainingInputMode in the AlgorithmSpecification parameter
+	// to additionally store training data in the storage volume (optional).
+	HyperParameterTuningResourceConfig *HyperParameterTuningResourceConfig `type:"structure"`
 
 	// An array of Channel objects that specify the input for the training jobs
 	// that the tuning job launches.
@@ -58749,13 +62235,14 @@ type HyperParameterTrainingJobDefinition struct {
 	// for the training jobs that the tuning job launches.
 	//
 	// Storage volumes store model artifacts and incremental states. Training algorithms
-	// might also use storage volumes for scratch space. If you want Amazon SageMaker
-	// to use the storage volume to store the training data, choose File as the
-	// TrainingInputMode in the algorithm specification. For distributed training
-	// algorithms, specify an instance count greater than 1.
+	// might also use storage volumes for scratch space. If you want SageMaker to
+	// use the storage volume to store the training data, choose File as the TrainingInputMode
+	// in the algorithm specification. For distributed training algorithms, specify
+	// an instance count greater than 1.
 	//
-	// ResourceConfig is a required field
-	ResourceConfig *ResourceConfig `type:"structure" required:"true"`
+	// If you want to use hyperparameter optimization with instance type flexibility,
+	// use HyperParameterTuningResourceConfig instead.
+	ResourceConfig *ResourceConfig `type:"structure"`
 
 	// The number of times to retry the job when the job fails due to an InternalServerError.
 	RetryStrategy *RetryStrategy `type:"structure"`
@@ -58772,8 +62259,8 @@ type HyperParameterTrainingJobDefinition struct {
 
 	// Specifies a limit to how long a model hyperparameter training job can run.
 	// It also specifies how long a managed spot training job has to complete. When
-	// the job reaches the time limit, Amazon SageMaker ends the training job. Use
-	// this API to cap model training costs.
+	// the job reaches the time limit, SageMaker ends the training job. Use this
+	// API to cap model training costs.
 	//
 	// StoppingCondition is a required field
 	StoppingCondition *StoppingCondition `type:"structure" required:"true"`
@@ -58824,9 +62311,6 @@ func (s *HyperParameterTrainingJobDefinition) Validate() error {
 	if s.OutputDataConfig == nil {
 		invalidParams.Add(request.NewErrParamRequired("OutputDataConfig"))
 	}
-	if s.ResourceConfig == nil {
-		invalidParams.Add(request.NewErrParamRequired("ResourceConfig"))
-	}
 	if s.RoleArn == nil {
 		invalidParams.Add(request.NewErrParamRequired("RoleArn"))
 	}
@@ -58849,6 +62333,11 @@ func (s *HyperParameterTrainingJobDefinition) Validate() error {
 	if s.HyperParameterRanges != nil {
 		if err := s.HyperParameterRanges.Validate(); err != nil {
 			invalidParams.AddNested("HyperParameterRanges", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.HyperParameterTuningResourceConfig != nil {
+		if err := s.HyperParameterTuningResourceConfig.Validate(); err != nil {
+			invalidParams.AddNested("HyperParameterTuningResourceConfig", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.InputDataConfig != nil {
@@ -58940,6 +62429,12 @@ func (s *HyperParameterTrainingJobDefinition) SetHyperParameterRanges(v *Paramet
 	return s
 }
 
+// SetHyperParameterTuningResourceConfig sets the HyperParameterTuningResourceConfig field's value.
+func (s *HyperParameterTrainingJobDefinition) SetHyperParameterTuningResourceConfig(v *HyperParameterTuningResourceConfig) *HyperParameterTrainingJobDefinition {
+	s.HyperParameterTuningResourceConfig = v
+	return s
+}
+
 // SetInputDataConfig sets the InputDataConfig field's value.
 func (s *HyperParameterTrainingJobDefinition) SetInputDataConfig(v []*Channel) *HyperParameterTrainingJobDefinition {
 	s.InputDataConfig = v
@@ -58994,7 +62489,7 @@ func (s *HyperParameterTrainingJobDefinition) SetVpcConfig(v *VpcConfig) *HyperP
 	return s
 }
 
-// Specifies summary information about a training job.
+// The container for the summary information about a training job.
 type HyperParameterTrainingJobSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -59028,7 +62523,7 @@ type HyperParameterTrainingJobSummary struct {
 	// Specifies the time when the training job ends on training instances. You
 	// are billed for the time interval between the value of TrainingStartTime and
 	// this time. For successful jobs and stopped jobs, this is the time after model
-	// artifacts are uploaded. For failed jobs, this is the time when Amazon SageMaker
+	// artifacts are uploaded. For failed jobs, this is the time when SageMaker
 	// detects a job failure.
 	TrainingEndTime *time.Time `type:"timestamp"`
 
@@ -59152,6 +62647,95 @@ func (s *HyperParameterTrainingJobSummary) SetTuningJobName(v string) *HyperPara
 	return s
 }
 
+// The configuration for hyperparameter tuning resources for use in training
+// jobs launched by the tuning job. These resources include compute instances
+// and storage volumes. Specify one or more compute instance configurations
+// and allocation strategies to select resources (optional).
+type HyperParameterTuningInstanceConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The number of instances of the type specified by InstanceType. Choose an
+	// instance count larger than 1 for distributed training algorithms. See SageMaker
+	// distributed training jobs (https://docs.aws.amazon.com/data-parallel-use-api.html)
+	// for more information.
+	//
+	// InstanceCount is a required field
+	InstanceCount *int64 `type:"integer" required:"true"`
+
+	// The instance type used for processing of hyperparameter optimization jobs.
+	// Choose from general purpose (no GPUs) instance types: ml.m5.xlarge, ml.m5.2xlarge,
+	// and ml.m5.4xlarge or compute optimized (no GPUs) instance types: ml.c5.xlarge
+	// and ml.c5.2xlarge. For more information about instance types, see instance
+	// type descriptions (https://docs.aws.amazon.com/sagemaker/latest/dg/notebooks-available-instance-types.html).
+	//
+	// InstanceType is a required field
+	InstanceType *string `type:"string" required:"true" enum:"TrainingInstanceType"`
+
+	// The volume size in GB of the data to be processed for hyperparameter optimization
+	// (optional).
+	//
+	// VolumeSizeInGB is a required field
+	VolumeSizeInGB *int64 `min:"1" type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HyperParameterTuningInstanceConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HyperParameterTuningInstanceConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HyperParameterTuningInstanceConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "HyperParameterTuningInstanceConfig"}
+	if s.InstanceCount == nil {
+		invalidParams.Add(request.NewErrParamRequired("InstanceCount"))
+	}
+	if s.InstanceType == nil {
+		invalidParams.Add(request.NewErrParamRequired("InstanceType"))
+	}
+	if s.VolumeSizeInGB == nil {
+		invalidParams.Add(request.NewErrParamRequired("VolumeSizeInGB"))
+	}
+	if s.VolumeSizeInGB != nil && *s.VolumeSizeInGB < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("VolumeSizeInGB", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetInstanceCount sets the InstanceCount field's value.
+func (s *HyperParameterTuningInstanceConfig) SetInstanceCount(v int64) *HyperParameterTuningInstanceConfig {
+	s.InstanceCount = &v
+	return s
+}
+
+// SetInstanceType sets the InstanceType field's value.
+func (s *HyperParameterTuningInstanceConfig) SetInstanceType(v string) *HyperParameterTuningInstanceConfig {
+	s.InstanceType = &v
+	return s
+}
+
+// SetVolumeSizeInGB sets the VolumeSizeInGB field's value.
+func (s *HyperParameterTuningInstanceConfig) SetVolumeSizeInGB(v int64) *HyperParameterTuningInstanceConfig {
+	s.VolumeSizeInGB = &v
+	return s
+}
+
 // Configures a hyperparameter tuning job.
 type HyperParameterTuningJobConfig struct {
 	_ struct{} `type:"structure"`
@@ -59171,17 +62755,21 @@ type HyperParameterTuningJobConfig struct {
 	ResourceLimits *ResourceLimits `type:"structure" required:"true"`
 
 	// Specifies how hyperparameter tuning chooses the combinations of hyperparameter
-	// values to use for the training job it launches. To use the Bayesian search
-	// strategy, set this to Bayesian. To randomly search, set it to Random. For
-	// information about search strategies, see How Hyperparameter Tuning Works
-	// (https://docs.aws.amazon.com/sagemaker/latest/dg/automatic-model-tuning-how-it-works.html).
+	// values to use for the training job it launches. For information about search
+	// strategies, see How Hyperparameter Tuning Works (https://docs.aws.amazon.com/sagemaker/latest/dg/automatic-model-tuning-how-it-works.html).
 	//
 	// Strategy is a required field
 	Strategy *string `type:"string" required:"true" enum:"HyperParameterTuningJobStrategyType"`
 
+	// The configuration for the Hyperband optimization strategy. This parameter
+	// should be provided only if Hyperband is selected as the strategy for HyperParameterTuningJobConfig.
+	StrategyConfig *HyperParameterTuningJobStrategyConfig `type:"structure"`
+
 	// Specifies whether to use early stopping for training jobs launched by the
-	// hyperparameter tuning job. This can be one of the following values (the default
-	// value is OFF):
+	// hyperparameter tuning job. Because the Hyperband strategy has its own advanced
+	// internal early stopping mechanism, TrainingJobEarlyStoppingType must be OFF
+	// to use Hyperband. This parameter can take on one of the following values
+	// (the default value is OFF):
 	//
 	// OFF
 	//
@@ -59190,9 +62778,9 @@ type HyperParameterTuningJobConfig struct {
 	//
 	// AUTO
 	//
-	// Amazon SageMaker stops training jobs launched by the hyperparameter tuning
-	// job when they are unlikely to perform better than previously completed training
-	// jobs. For more information, see Stop Training Jobs Early (https://docs.aws.amazon.com/sagemaker/latest/dg/automatic-model-tuning-early-stopping.html).
+	// SageMaker stops training jobs launched by the hyperparameter tuning job when
+	// they are unlikely to perform better than previously completed training jobs.
+	// For more information, see Stop Training Jobs Early (https://docs.aws.amazon.com/sagemaker/latest/dg/automatic-model-tuning-early-stopping.html).
 	TrainingJobEarlyStoppingType *string `type:"string" enum:"TrainingJobEarlyStoppingType"`
 
 	// The tuning job's completion criteria.
@@ -59241,6 +62829,11 @@ func (s *HyperParameterTuningJobConfig) Validate() error {
 			invalidParams.AddNested("ResourceLimits", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.StrategyConfig != nil {
+		if err := s.StrategyConfig.Validate(); err != nil {
+			invalidParams.AddNested("StrategyConfig", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.TuningJobCompletionCriteria != nil {
 		if err := s.TuningJobCompletionCriteria.Validate(); err != nil {
 			invalidParams.AddNested("TuningJobCompletionCriteria", err.(request.ErrInvalidParams))
@@ -59274,6 +62867,12 @@ func (s *HyperParameterTuningJobConfig) SetResourceLimits(v *ResourceLimits) *Hy
 // SetStrategy sets the Strategy field's value.
 func (s *HyperParameterTuningJobConfig) SetStrategy(v string) *HyperParameterTuningJobConfig {
 	s.Strategy = &v
+	return s
+}
+
+// SetStrategyConfig sets the StrategyConfig field's value.
+func (s *HyperParameterTuningJobConfig) SetStrategyConfig(v *HyperParameterTuningJobStrategyConfig) *HyperParameterTuningJobConfig {
+	s.StrategyConfig = v
 	return s
 }
 
@@ -59356,6 +62955,246 @@ func (s *HyperParameterTuningJobObjective) SetType(v string) *HyperParameterTuni
 	return s
 }
 
+// An entity returned by the SearchRecord (https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_SearchRecord.html)
+// API containing the properties of a hyperparameter tuning job.
+type HyperParameterTuningJobSearchEntity struct {
+	_ struct{} `type:"structure"`
+
+	// The container for the summary information about a training job.
+	BestTrainingJob *HyperParameterTrainingJobSummary `type:"structure"`
+
+	// The time that a hyperparameter tuning job was created.
+	CreationTime *time.Time `type:"timestamp"`
+
+	// The error that was created when a hyperparameter tuning job failed.
+	FailureReason *string `type:"string"`
+
+	// The time that a hyperparameter tuning job ended.
+	HyperParameterTuningEndTime *time.Time `type:"timestamp"`
+
+	// The Amazon Resource Name (ARN) of a hyperparameter tuning job.
+	HyperParameterTuningJobArn *string `type:"string"`
+
+	// Configures a hyperparameter tuning job.
+	HyperParameterTuningJobConfig *HyperParameterTuningJobConfig `type:"structure"`
+
+	// The name of a hyperparameter tuning job.
+	HyperParameterTuningJobName *string `min:"1" type:"string"`
+
+	// The status of a hyperparameter tuning job.
+	HyperParameterTuningJobStatus *string `type:"string" enum:"HyperParameterTuningJobStatus"`
+
+	// The time that a hyperparameter tuning job was last modified.
+	LastModifiedTime *time.Time `type:"timestamp"`
+
+	// Specifies the number of training jobs that this hyperparameter tuning job
+	// launched, categorized by the status of their objective metric. The objective
+	// metric status shows whether the final objective metric for the training job
+	// has been evaluated by the tuning job and used in the hyperparameter tuning
+	// process.
+	ObjectiveStatusCounters *ObjectiveStatusCounters `type:"structure"`
+
+	// The container for the summary information about a training job.
+	OverallBestTrainingJob *HyperParameterTrainingJobSummary `type:"structure"`
+
+	// The tags associated with a hyperparameter tuning job. For more information
+	// see Tagging Amazon Web Services resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html).
+	Tags []*Tag `type:"list"`
+
+	// Defines the training jobs launched by a hyperparameter tuning job.
+	TrainingJobDefinition *HyperParameterTrainingJobDefinition `type:"structure"`
+
+	// The job definitions included in a hyperparameter tuning job.
+	TrainingJobDefinitions []*HyperParameterTrainingJobDefinition `min:"1" type:"list"`
+
+	// The numbers of training jobs launched by a hyperparameter tuning job, categorized
+	// by status.
+	TrainingJobStatusCounters *TrainingJobStatusCounters `type:"structure"`
+
+	// Specifies the configuration for a hyperparameter tuning job that uses one
+	// or more previous hyperparameter tuning jobs as a starting point. The results
+	// of previous tuning jobs are used to inform which combinations of hyperparameters
+	// to search over in the new tuning job.
+	//
+	// All training jobs launched by the new hyperparameter tuning job are evaluated
+	// by using the objective metric, and the training job that performs the best
+	// is compared to the best training jobs from the parent tuning jobs. From these,
+	// the training job that performs the best as measured by the objective metric
+	// is returned as the overall best training job.
+	//
+	// All training jobs launched by parent hyperparameter tuning jobs and the new
+	// hyperparameter tuning jobs count against the limit of training jobs for the
+	// tuning job.
+	WarmStartConfig *HyperParameterTuningJobWarmStartConfig `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HyperParameterTuningJobSearchEntity) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HyperParameterTuningJobSearchEntity) GoString() string {
+	return s.String()
+}
+
+// SetBestTrainingJob sets the BestTrainingJob field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetBestTrainingJob(v *HyperParameterTrainingJobSummary) *HyperParameterTuningJobSearchEntity {
+	s.BestTrainingJob = v
+	return s
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetCreationTime(v time.Time) *HyperParameterTuningJobSearchEntity {
+	s.CreationTime = &v
+	return s
+}
+
+// SetFailureReason sets the FailureReason field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetFailureReason(v string) *HyperParameterTuningJobSearchEntity {
+	s.FailureReason = &v
+	return s
+}
+
+// SetHyperParameterTuningEndTime sets the HyperParameterTuningEndTime field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetHyperParameterTuningEndTime(v time.Time) *HyperParameterTuningJobSearchEntity {
+	s.HyperParameterTuningEndTime = &v
+	return s
+}
+
+// SetHyperParameterTuningJobArn sets the HyperParameterTuningJobArn field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetHyperParameterTuningJobArn(v string) *HyperParameterTuningJobSearchEntity {
+	s.HyperParameterTuningJobArn = &v
+	return s
+}
+
+// SetHyperParameterTuningJobConfig sets the HyperParameterTuningJobConfig field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetHyperParameterTuningJobConfig(v *HyperParameterTuningJobConfig) *HyperParameterTuningJobSearchEntity {
+	s.HyperParameterTuningJobConfig = v
+	return s
+}
+
+// SetHyperParameterTuningJobName sets the HyperParameterTuningJobName field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetHyperParameterTuningJobName(v string) *HyperParameterTuningJobSearchEntity {
+	s.HyperParameterTuningJobName = &v
+	return s
+}
+
+// SetHyperParameterTuningJobStatus sets the HyperParameterTuningJobStatus field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetHyperParameterTuningJobStatus(v string) *HyperParameterTuningJobSearchEntity {
+	s.HyperParameterTuningJobStatus = &v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetLastModifiedTime(v time.Time) *HyperParameterTuningJobSearchEntity {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetObjectiveStatusCounters sets the ObjectiveStatusCounters field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetObjectiveStatusCounters(v *ObjectiveStatusCounters) *HyperParameterTuningJobSearchEntity {
+	s.ObjectiveStatusCounters = v
+	return s
+}
+
+// SetOverallBestTrainingJob sets the OverallBestTrainingJob field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetOverallBestTrainingJob(v *HyperParameterTrainingJobSummary) *HyperParameterTuningJobSearchEntity {
+	s.OverallBestTrainingJob = v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetTags(v []*Tag) *HyperParameterTuningJobSearchEntity {
+	s.Tags = v
+	return s
+}
+
+// SetTrainingJobDefinition sets the TrainingJobDefinition field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetTrainingJobDefinition(v *HyperParameterTrainingJobDefinition) *HyperParameterTuningJobSearchEntity {
+	s.TrainingJobDefinition = v
+	return s
+}
+
+// SetTrainingJobDefinitions sets the TrainingJobDefinitions field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetTrainingJobDefinitions(v []*HyperParameterTrainingJobDefinition) *HyperParameterTuningJobSearchEntity {
+	s.TrainingJobDefinitions = v
+	return s
+}
+
+// SetTrainingJobStatusCounters sets the TrainingJobStatusCounters field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetTrainingJobStatusCounters(v *TrainingJobStatusCounters) *HyperParameterTuningJobSearchEntity {
+	s.TrainingJobStatusCounters = v
+	return s
+}
+
+// SetWarmStartConfig sets the WarmStartConfig field's value.
+func (s *HyperParameterTuningJobSearchEntity) SetWarmStartConfig(v *HyperParameterTuningJobWarmStartConfig) *HyperParameterTuningJobSearchEntity {
+	s.WarmStartConfig = v
+	return s
+}
+
+// The configuration for a training job launched by a hyperparameter tuning
+// job. Choose Bayesian for Bayesian optimization, and Random for random search
+// optimization. For more advanced use cases, use Hyperband, which evaluates
+// objective metrics for training jobs after every epoch. For more information
+// about strategies, see How Hyperparameter Tuning Works (https://docs.aws.amazon.com/sagemaker/latest/dg/automatic-model-tuning-how-it-works.html).
+type HyperParameterTuningJobStrategyConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The configuration for the object that specifies the Hyperband strategy. This
+	// parameter is only supported for the Hyperband selection for Strategy within
+	// the HyperParameterTuningJobConfig API.
+	HyperbandStrategyConfig *HyperbandStrategyConfig `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HyperParameterTuningJobStrategyConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HyperParameterTuningJobStrategyConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HyperParameterTuningJobStrategyConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "HyperParameterTuningJobStrategyConfig"}
+	if s.HyperbandStrategyConfig != nil {
+		if err := s.HyperbandStrategyConfig.Validate(); err != nil {
+			invalidParams.AddNested("HyperbandStrategyConfig", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetHyperbandStrategyConfig sets the HyperbandStrategyConfig field's value.
+func (s *HyperParameterTuningJobStrategyConfig) SetHyperbandStrategyConfig(v *HyperbandStrategyConfig) *HyperParameterTuningJobStrategyConfig {
+	s.HyperbandStrategyConfig = v
+	return s
+}
+
 // Provides summary information about a hyperparameter tuning job.
 type HyperParameterTuningJobSummary struct {
 	_ struct{} `type:"structure"`
@@ -59397,8 +63236,7 @@ type HyperParameterTuningJobSummary struct {
 	ResourceLimits *ResourceLimits `type:"structure"`
 
 	// Specifies the search strategy hyperparameter tuning uses to choose which
-	// hyperparameters to use for each iteration. Currently, the only valid value
-	// is Bayesian.
+	// hyperparameters to evaluate at each iteration.
 	//
 	// Strategy is a required field
 	Strategy *string `type:"string" required:"true" enum:"HyperParameterTuningJobStrategyType"`
@@ -59603,6 +63441,245 @@ func (s *HyperParameterTuningJobWarmStartConfig) SetParentHyperParameterTuningJo
 // SetWarmStartType sets the WarmStartType field's value.
 func (s *HyperParameterTuningJobWarmStartConfig) SetWarmStartType(v string) *HyperParameterTuningJobWarmStartConfig {
 	s.WarmStartType = &v
+	return s
+}
+
+// The configuration of resources, including compute instances and storage volumes
+// for use in training jobs launched by hyperparameter tuning jobs. Specify
+// one or more instance type and count and the allocation strategy for instance
+// selection.
+//
+// HyperParameterTuningResourceConfig supports all of the capabilities of ResourceConfig
+// with added functionality for flexible instance management.
+type HyperParameterTuningResourceConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The strategy that determines the order of preference for resources specified
+	// in InstanceConfigs used in hyperparameter optimization.
+	AllocationStrategy *string `type:"string" enum:"HyperParameterTuningAllocationStrategy"`
+
+	// A list containing the configuration(s) for one or more resources for processing
+	// hyperparameter jobs. These resources include compute instances and storage
+	// volumes to use in model training jobs launched by hyperparameter tuning jobs.
+	// The AllocationStrategy controls the order in which multiple configurations
+	// provided in InstanceConfigs are used.
+	//
+	// If you only want to use a single instance configuration inside the HyperParameterTuningResourceConfig
+	// API, do not provide a value for InstanceConfigs. Instead, use InstanceType,
+	// VolumeSizeInGB and InstanceCount. If you use InstanceConfigs, do not provide
+	// values for InstanceType, VolumeSizeInGB or InstanceCount.
+	InstanceConfigs []*HyperParameterTuningInstanceConfig `min:"1" type:"list"`
+
+	// The number of compute instances of type InstanceType to use. For distributed
+	// training (https://docs.aws.amazon.com/sagemaker/latest/dg/data-parallel-use-api.html),
+	// select a value greater than 1.
+	InstanceCount *int64 `type:"integer"`
+
+	// The instance type used to run hyperparameter optimization tuning jobs. See
+	// descriptions of instance types (https://docs.aws.amazon.com/notebooks-available-instance-types.html)
+	// for more information.
+	InstanceType *string `type:"string" enum:"TrainingInstanceType"`
+
+	// A key used by Amazon Web Services Key Management Service to encrypt data
+	// on the storage volume attached to the compute instances used to run the training
+	// job. You can use either of the following formats to specify a key.
+	//
+	// KMS Key ID:
+	//
+	// "1234abcd-12ab-34cd-56ef-1234567890ab"
+	//
+	// Amazon Resource Name (ARN) of a KMS key:
+	//
+	// "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+	//
+	// Some instances use local storage, which use a hardware module to encrypt
+	// (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ssd-instance-store.html)
+	// storage volumes. If you choose one of these instance types, you cannot request
+	// a VolumeKmsKeyId. For a list of instance types that use local storage, see
+	// instance store volumes (http://aws.amazon.com/releasenotes/host-instance-storage-volumes-table/).
+	// For more information about Amazon Web Services Key Management Service, see
+	// KMS encryption (https://docs.aws.amazon.com/sagemaker/latest/dg/sms-security-kms-permissions.html)
+	// for more information.
+	VolumeKmsKeyId *string `type:"string"`
+
+	// The volume size in GB for the storage volume to be used in processing hyperparameter
+	// optimization jobs (optional). These volumes store model artifacts, incremental
+	// states and optionally, scratch space for training algorithms. Do not provide
+	// a value for this parameter if a value for InstanceConfigs is also specified.
+	//
+	// Some instance types have a fixed total local storage size. If you select
+	// one of these instances for training, VolumeSizeInGB cannot be greater than
+	// this total size. For a list of instance types with local instance storage
+	// and their sizes, see instance store volumes (http://aws.amazon.com/releasenotes/host-instance-storage-volumes-table/).
+	//
+	// SageMaker supports only the General Purpose SSD (gp2) (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html)
+	// storage volume type.
+	VolumeSizeInGB *int64 `type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HyperParameterTuningResourceConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HyperParameterTuningResourceConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HyperParameterTuningResourceConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "HyperParameterTuningResourceConfig"}
+	if s.InstanceConfigs != nil && len(s.InstanceConfigs) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("InstanceConfigs", 1))
+	}
+	if s.InstanceConfigs != nil {
+		for i, v := range s.InstanceConfigs {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "InstanceConfigs", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAllocationStrategy sets the AllocationStrategy field's value.
+func (s *HyperParameterTuningResourceConfig) SetAllocationStrategy(v string) *HyperParameterTuningResourceConfig {
+	s.AllocationStrategy = &v
+	return s
+}
+
+// SetInstanceConfigs sets the InstanceConfigs field's value.
+func (s *HyperParameterTuningResourceConfig) SetInstanceConfigs(v []*HyperParameterTuningInstanceConfig) *HyperParameterTuningResourceConfig {
+	s.InstanceConfigs = v
+	return s
+}
+
+// SetInstanceCount sets the InstanceCount field's value.
+func (s *HyperParameterTuningResourceConfig) SetInstanceCount(v int64) *HyperParameterTuningResourceConfig {
+	s.InstanceCount = &v
+	return s
+}
+
+// SetInstanceType sets the InstanceType field's value.
+func (s *HyperParameterTuningResourceConfig) SetInstanceType(v string) *HyperParameterTuningResourceConfig {
+	s.InstanceType = &v
+	return s
+}
+
+// SetVolumeKmsKeyId sets the VolumeKmsKeyId field's value.
+func (s *HyperParameterTuningResourceConfig) SetVolumeKmsKeyId(v string) *HyperParameterTuningResourceConfig {
+	s.VolumeKmsKeyId = &v
+	return s
+}
+
+// SetVolumeSizeInGB sets the VolumeSizeInGB field's value.
+func (s *HyperParameterTuningResourceConfig) SetVolumeSizeInGB(v int64) *HyperParameterTuningResourceConfig {
+	s.VolumeSizeInGB = &v
+	return s
+}
+
+// The configuration for Hyperband, a multi-fidelity based hyperparameter tuning
+// strategy. Hyperband uses the final and intermediate results of a training
+// job to dynamically allocate resources to utilized hyperparameter configurations
+// while automatically stopping under-performing configurations. This parameter
+// should be provided only if Hyperband is selected as the StrategyConfig under
+// the HyperParameterTuningJobConfig API.
+type HyperbandStrategyConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of resources (such as epochs) that can be used by a training
+	// job launched by a hyperparameter tuning job. Once a job reaches the MaxResource
+	// value, it is stopped. If a value for MaxResource is not provided, and Hyperband
+	// is selected as the hyperparameter tuning strategy, HyperbandTrainingJ attempts
+	// to infer MaxResource from the following keys (if present) in StaticsHyperParameters
+	// (https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_HyperParameterTrainingJobDefinition.html#sagemaker-Type-HyperParameterTrainingJobDefinition-StaticHyperParameters):
+	//
+	//    * epochs
+	//
+	//    * numepochs
+	//
+	//    * n-epochs
+	//
+	//    * n_epochs
+	//
+	//    * num_epochs
+	//
+	// If HyperbandStrategyConfig is unable to infer a value for MaxResource, it
+	// generates a validation error. The maximum value is 20,000 epochs. All metrics
+	// that correspond to an objective metric are used to derive early stopping
+	// decisions (https://docs.aws.amazon.com/sagemaker/latest/dg/automatic-model-tuning-early-stopping.html).
+	// For distributive (https://docs.aws.amazon.com/sagemaker/latest/dg/distributed-training.html)
+	// training jobs, ensure that duplicate metrics are not printed in the logs
+	// across the individual nodes in a training job. If multiple nodes are publishing
+	// duplicate or incorrect metrics, training jobs may make an incorrect stopping
+	// decision and stop the job prematurely.
+	MaxResource *int64 `min:"1" type:"integer"`
+
+	// The minimum number of resources (such as epochs) that can be used by a training
+	// job launched by a hyperparameter tuning job. If the value for MinResource
+	// has not been reached, the training job will not be stopped by Hyperband.
+	MinResource *int64 `min:"1" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HyperbandStrategyConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HyperbandStrategyConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HyperbandStrategyConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "HyperbandStrategyConfig"}
+	if s.MaxResource != nil && *s.MaxResource < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResource", 1))
+	}
+	if s.MinResource != nil && *s.MinResource < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MinResource", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResource sets the MaxResource field's value.
+func (s *HyperbandStrategyConfig) SetMaxResource(v int64) *HyperbandStrategyConfig {
+	s.MaxResource = &v
+	return s
+}
+
+// SetMinResource sets the MinResource field's value.
+func (s *HyperbandStrategyConfig) SetMinResource(v int64) *HyperbandStrategyConfig {
+	s.MinResource = &v
 	return s
 }
 
@@ -60140,7 +64217,7 @@ type InferenceSpecification struct {
 	//
 	// This parameter is required for unversioned models, and optional for versioned
 	// models.
-	SupportedRealtimeInferenceInstanceTypes []*string `type:"list"`
+	SupportedRealtimeInferenceInstanceTypes []*string `type:"list" enum:"ProductionVariantInstanceType"`
 
 	// The supported MIME types for the output data.
 	//
@@ -60152,7 +64229,7 @@ type InferenceSpecification struct {
 	//
 	// This parameter is required for unversioned models, and optional for versioned
 	// models.
-	SupportedTransformInstanceTypes []*string `min:"1" type:"list"`
+	SupportedTransformInstanceTypes []*string `min:"1" type:"list" enum:"TransformInstanceType"`
 }
 
 // String returns the string representation.
@@ -60440,6 +64517,136 @@ func (s *InputConfig) SetS3Uri(v string) *InputConfig {
 	return s
 }
 
+// Defines an instance group for heterogeneous cluster training. When requesting
+// a training job using the CreateTrainingJob (https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateTrainingJob.html)
+// API, you can configure multiple instance groups .
+type InstanceGroup struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the number of instances of the instance group.
+	//
+	// InstanceCount is a required field
+	InstanceCount *int64 `type:"integer" required:"true"`
+
+	// Specifies the name of the instance group.
+	//
+	// InstanceGroupName is a required field
+	InstanceGroupName *string `min:"1" type:"string" required:"true"`
+
+	// Specifies the instance type of the instance group.
+	//
+	// InstanceType is a required field
+	InstanceType *string `type:"string" required:"true" enum:"TrainingInstanceType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InstanceGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InstanceGroup) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InstanceGroup) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InstanceGroup"}
+	if s.InstanceCount == nil {
+		invalidParams.Add(request.NewErrParamRequired("InstanceCount"))
+	}
+	if s.InstanceGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("InstanceGroupName"))
+	}
+	if s.InstanceGroupName != nil && len(*s.InstanceGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("InstanceGroupName", 1))
+	}
+	if s.InstanceType == nil {
+		invalidParams.Add(request.NewErrParamRequired("InstanceType"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetInstanceCount sets the InstanceCount field's value.
+func (s *InstanceGroup) SetInstanceCount(v int64) *InstanceGroup {
+	s.InstanceCount = &v
+	return s
+}
+
+// SetInstanceGroupName sets the InstanceGroupName field's value.
+func (s *InstanceGroup) SetInstanceGroupName(v string) *InstanceGroup {
+	s.InstanceGroupName = &v
+	return s
+}
+
+// SetInstanceType sets the InstanceType field's value.
+func (s *InstanceGroup) SetInstanceType(v string) *InstanceGroup {
+	s.InstanceType = &v
+	return s
+}
+
+// Information on the IMDS configuration of the notebook instance
+type InstanceMetadataServiceConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the minimum IMDS version that the notebook instance supports. When
+	// passed as part of CreateNotebookInstance, if no value is selected, then it
+	// defaults to IMDSv1. This means that both IMDSv1 and IMDSv2 are supported.
+	// If passed as part of UpdateNotebookInstance, there is no default.
+	//
+	// MinimumInstanceMetadataServiceVersion is a required field
+	MinimumInstanceMetadataServiceVersion *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InstanceMetadataServiceConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InstanceMetadataServiceConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InstanceMetadataServiceConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InstanceMetadataServiceConfiguration"}
+	if s.MinimumInstanceMetadataServiceVersion == nil {
+		invalidParams.Add(request.NewErrParamRequired("MinimumInstanceMetadataServiceVersion"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMinimumInstanceMetadataServiceVersion sets the MinimumInstanceMetadataServiceVersion field's value.
+func (s *InstanceMetadataServiceConfiguration) SetMinimumInstanceMetadataServiceVersion(v string) *InstanceMetadataServiceConfiguration {
+	s.MinimumInstanceMetadataServiceVersion = &v
+	return s
+}
+
 // For a hyperparameter of the integer type, specifies the range that a hyperparameter
 // tuning job searches.
 type IntegerParameterRange struct {
@@ -60467,7 +64674,7 @@ type IntegerParameterRange struct {
 	//
 	// Auto
 	//
-	// Amazon SageMaker hyperparameter tuning chooses the best scale for the hyperparameter.
+	// SageMaker hyperparameter tuning chooses the best scale for the hyperparameter.
 	//
 	// Linear
 	//
@@ -60611,11 +64818,16 @@ type JupyterServerAppSettings struct {
 	_ struct{} `type:"structure"`
 
 	// The default instance type and the Amazon Resource Name (ARN) of the default
-	// SageMaker image used by the JupyterServer app.
+	// SageMaker image used by the JupyterServer app. If you use the LifecycleConfigArns
+	// parameter, then this parameter is also required.
 	DefaultResourceSpec *ResourceSpec `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the Lifecycle Configurations attached to
-	// the JupyterServerApp.
+	// the JupyterServerApp. If you use this parameter, the DefaultResourceSpec
+	// parameter is also required.
+	//
+	// To remove a Lifecycle Config, you must set LifecycleConfigArns to an empty
+	// list.
 	LifecycleConfigArns []*string `type:"list"`
 }
 
@@ -60659,10 +64871,18 @@ type KernelGatewayAppSettings struct {
 
 	// The default instance type and the Amazon Resource Name (ARN) of the default
 	// SageMaker image used by the KernelGateway app.
+	//
+	// The Amazon SageMaker Studio UI does not use the default instance type value
+	// set here. The default instance type set here is used when Apps are created
+	// using the Amazon Web Services Command Line Interface or Amazon Web Services
+	// CloudFormation and the instance type parameter value is not passed.
 	DefaultResourceSpec *ResourceSpec `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the Lifecycle Configurations attached to
 	// the the user profile or domain.
+	//
+	// To remove a Lifecycle Config, you must set LifecycleConfigArns to an empty
+	// list.
 	LifecycleConfigArns []*string `type:"list"`
 }
 
@@ -61023,6 +65243,11 @@ func (s *LabelingJobAlgorithmsConfig) Validate() error {
 	if s.LabelingJobAlgorithmSpecificationArn == nil {
 		invalidParams.Add(request.NewErrParamRequired("LabelingJobAlgorithmSpecificationArn"))
 	}
+	if s.LabelingJobResourceConfig != nil {
+		if err := s.LabelingJobResourceConfig.Validate(); err != nil {
+			invalidParams.AddNested("LabelingJobResourceConfig", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -61054,9 +65279,9 @@ type LabelingJobDataAttributes struct {
 	_ struct{} `type:"structure"`
 
 	// Declares that your content is free of personally identifiable information
-	// or adult content. Amazon SageMaker may restrict the Amazon Mechanical Turk
-	// workers that can view your task based on this information.
-	ContentClassifiers []*string `type:"list"`
+	// or adult content. SageMaker may restrict the Amazon Mechanical Turk workers
+	// that can view your task based on this information.
+	ContentClassifiers []*string `type:"list" enum:"ContentClassifier"`
 }
 
 // String returns the string representation.
@@ -61305,8 +65530,8 @@ func (s *LabelingJobInputConfig) SetDataSource(v *LabelingJobDataSource) *Labeli
 type LabelingJobOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Resource Name (ARN) for the most recent Amazon SageMaker model
-	// trained as part of automated data labeling.
+	// The Amazon Resource Name (ARN) for the most recent SageMaker model trained
+	// as part of automated data labeling.
 	FinalActiveLearningModelArn *string `min:"20" type:"string"`
 
 	// The Amazon S3 bucket location of the manifest file for labeled data.
@@ -61456,6 +65681,13 @@ type LabelingJobResourceConfig struct {
 	//
 	//    * Amazon Resource Name (ARN) of a KMS Key "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 	VolumeKmsKeyId *string `type:"string"`
+
+	// Specifies a VPC that your training jobs and hosted models have access to.
+	// Control access to and from your training and model containers by configuring
+	// the VPC. For more information, see Protect Endpoints by Using an Amazon Virtual
+	// Private Cloud (https://docs.aws.amazon.com/sagemaker/latest/dg/host-vpc.html)
+	// and Protect Training Jobs by Using an Amazon Virtual Private Cloud (https://docs.aws.amazon.com/sagemaker/latest/dg/train-vpc.html).
+	VpcConfig *VpcConfig `type:"structure"`
 }
 
 // String returns the string representation.
@@ -61476,9 +65708,30 @@ func (s LabelingJobResourceConfig) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *LabelingJobResourceConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "LabelingJobResourceConfig"}
+	if s.VpcConfig != nil {
+		if err := s.VpcConfig.Validate(); err != nil {
+			invalidParams.AddNested("VpcConfig", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetVolumeKmsKeyId sets the VolumeKmsKeyId field's value.
 func (s *LabelingJobResourceConfig) SetVolumeKmsKeyId(v string) *LabelingJobResourceConfig {
 	s.VolumeKmsKeyId = &v
+	return s
+}
+
+// SetVpcConfig sets the VpcConfig field's value.
+func (s *LabelingJobResourceConfig) SetVpcConfig(v *VpcConfig) *LabelingJobResourceConfig {
+	s.VpcConfig = v
 	return s
 }
 
@@ -61849,6 +66102,49 @@ func (s *LambdaStepMetadata) SetOutputParameters(v []*OutputParameter) *LambdaSt
 	return s
 }
 
+// A value that indicates whether the update was successful.
+type LastUpdateStatus struct {
+	_ struct{} `type:"structure"`
+
+	// If the update wasn't successful, indicates the reason why it failed.
+	FailureReason *string `type:"string"`
+
+	// A value that indicates whether the update was made successful.
+	//
+	// Status is a required field
+	Status *string `type:"string" required:"true" enum:"LastUpdateStatusValue"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LastUpdateStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LastUpdateStatus) GoString() string {
+	return s.String()
+}
+
+// SetFailureReason sets the FailureReason field's value.
+func (s *LastUpdateStatus) SetFailureReason(v string) *LastUpdateStatus {
+	s.FailureReason = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *LastUpdateStatus) SetStatus(v string) *LastUpdateStatus {
+	s.Status = &v
+	return s
+}
+
 // Lists a summary of the properties of a lineage group. A lineage group provides
 // a group of shareable lineage entity resources.
 type LineageGroupSummary struct {
@@ -62176,8 +66472,8 @@ type ListAlgorithmsOutput struct {
 	// AlgorithmSummaryList is a required field
 	AlgorithmSummaryList []*AlgorithmSummary `type:"list" required:"true"`
 
-	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
-	// the next set of algorithms, use it in the subsequent request.
+	// If the response is truncated, SageMaker returns this token. To retrieve the
+	// next set of algorithms, use it in the subsequent request.
 	NextToken *string `type:"string"`
 }
 
@@ -64190,6 +68486,162 @@ func (s *ListDomainsOutput) SetNextToken(v string) *ListDomainsOutput {
 	return s
 }
 
+type ListEdgeDeploymentPlansInput struct {
+	_ struct{} `type:"structure"`
+
+	// Selects edge deployment plans created after this time.
+	CreationTimeAfter *time.Time `type:"timestamp"`
+
+	// Selects edge deployment plans created before this time.
+	CreationTimeBefore *time.Time `type:"timestamp"`
+
+	// Selects edge deployment plans with a device fleet name containing this name.
+	DeviceFleetNameContains *string `type:"string"`
+
+	// Selects edge deployment plans that were last updated after this time.
+	LastModifiedTimeAfter *time.Time `type:"timestamp"`
+
+	// Selects edge deployment plans that were last updated before this time.
+	LastModifiedTimeBefore *time.Time `type:"timestamp"`
+
+	// The maximum number of results to select (50 by default).
+	MaxResults *int64 `type:"integer"`
+
+	// Selects edge deployment plans with names containing this name.
+	NameContains *string `type:"string"`
+
+	// The response from the last list when returning a list large enough to need
+	// tokening.
+	NextToken *string `type:"string"`
+
+	// The column by which to sort the edge deployment plans. Can be one of NAME,
+	// DEVICEFLEETNAME, CREATIONTIME, LASTMODIFIEDTIME.
+	SortBy *string `type:"string" enum:"ListEdgeDeploymentPlansSortBy"`
+
+	// The direction of the sorting (ascending or descending).
+	SortOrder *string `type:"string" enum:"SortOrder"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListEdgeDeploymentPlansInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListEdgeDeploymentPlansInput) GoString() string {
+	return s.String()
+}
+
+// SetCreationTimeAfter sets the CreationTimeAfter field's value.
+func (s *ListEdgeDeploymentPlansInput) SetCreationTimeAfter(v time.Time) *ListEdgeDeploymentPlansInput {
+	s.CreationTimeAfter = &v
+	return s
+}
+
+// SetCreationTimeBefore sets the CreationTimeBefore field's value.
+func (s *ListEdgeDeploymentPlansInput) SetCreationTimeBefore(v time.Time) *ListEdgeDeploymentPlansInput {
+	s.CreationTimeBefore = &v
+	return s
+}
+
+// SetDeviceFleetNameContains sets the DeviceFleetNameContains field's value.
+func (s *ListEdgeDeploymentPlansInput) SetDeviceFleetNameContains(v string) *ListEdgeDeploymentPlansInput {
+	s.DeviceFleetNameContains = &v
+	return s
+}
+
+// SetLastModifiedTimeAfter sets the LastModifiedTimeAfter field's value.
+func (s *ListEdgeDeploymentPlansInput) SetLastModifiedTimeAfter(v time.Time) *ListEdgeDeploymentPlansInput {
+	s.LastModifiedTimeAfter = &v
+	return s
+}
+
+// SetLastModifiedTimeBefore sets the LastModifiedTimeBefore field's value.
+func (s *ListEdgeDeploymentPlansInput) SetLastModifiedTimeBefore(v time.Time) *ListEdgeDeploymentPlansInput {
+	s.LastModifiedTimeBefore = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListEdgeDeploymentPlansInput) SetMaxResults(v int64) *ListEdgeDeploymentPlansInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNameContains sets the NameContains field's value.
+func (s *ListEdgeDeploymentPlansInput) SetNameContains(v string) *ListEdgeDeploymentPlansInput {
+	s.NameContains = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListEdgeDeploymentPlansInput) SetNextToken(v string) *ListEdgeDeploymentPlansInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetSortBy sets the SortBy field's value.
+func (s *ListEdgeDeploymentPlansInput) SetSortBy(v string) *ListEdgeDeploymentPlansInput {
+	s.SortBy = &v
+	return s
+}
+
+// SetSortOrder sets the SortOrder field's value.
+func (s *ListEdgeDeploymentPlansInput) SetSortOrder(v string) *ListEdgeDeploymentPlansInput {
+	s.SortOrder = &v
+	return s
+}
+
+type ListEdgeDeploymentPlansOutput struct {
+	_ struct{} `type:"structure"`
+
+	// List of summaries of edge deployment plans.
+	//
+	// EdgeDeploymentPlanSummaries is a required field
+	EdgeDeploymentPlanSummaries []*EdgeDeploymentPlanSummary `type:"list" required:"true"`
+
+	// The token to use when calling the next page of results.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListEdgeDeploymentPlansOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListEdgeDeploymentPlansOutput) GoString() string {
+	return s.String()
+}
+
+// SetEdgeDeploymentPlanSummaries sets the EdgeDeploymentPlanSummaries field's value.
+func (s *ListEdgeDeploymentPlansOutput) SetEdgeDeploymentPlanSummaries(v []*EdgeDeploymentPlanSummary) *ListEdgeDeploymentPlansOutput {
+	s.EdgeDeploymentPlanSummaries = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListEdgeDeploymentPlansOutput) SetNextToken(v string) *ListEdgeDeploymentPlansOutput {
+	s.NextToken = &v
+	return s
+}
+
 type ListEdgePackagingJobsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -64465,8 +68917,8 @@ type ListEndpointConfigsOutput struct {
 	// EndpointConfigs is a required field
 	EndpointConfigs []*EndpointConfigSummary `type:"list" required:"true"`
 
-	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
-	// the next set of endpoint configurations, use it in the subsequent request
+	// If the response is truncated, SageMaker returns this token. To retrieve the
+	// next set of endpoint configurations, use it in the subsequent request
 	NextToken *string `type:"string"`
 }
 
@@ -64641,8 +69093,8 @@ type ListEndpointsOutput struct {
 	// Endpoints is a required field
 	Endpoints []*EndpointSummary `type:"list" required:"true"`
 
-	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
-	// the next set of training jobs, use it in the subsequent request.
+	// If the response is truncated, SageMaker returns this token. To retrieve the
+	// next set of training jobs, use it in the subsequent request.
 	NextToken *string `type:"string"`
 }
 
@@ -66031,8 +70483,8 @@ type ListLabelingJobsForWorkteamOutput struct {
 	// LabelingJobSummaryList is a required field
 	LabelingJobSummaryList []*LabelingJobForWorkteamSummary `type:"list" required:"true"`
 
-	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
-	// the next set of labeling jobs, use it in the subsequent request.
+	// If the response is truncated, SageMaker returns this token. To retrieve the
+	// next set of labeling jobs, use it in the subsequent request.
 	NextToken *string `type:"string"`
 }
 
@@ -66204,8 +70656,8 @@ type ListLabelingJobsOutput struct {
 	// An array of LabelingJobSummary objects, each describing a labeling job.
 	LabelingJobSummaryList []*LabelingJobSummary `type:"list"`
 
-	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
-	// the next set of labeling jobs, use it in the subsequent request.
+	// If the response is truncated, SageMaker returns this token. To retrieve the
+	// next set of labeling jobs, use it in the subsequent request.
 	NextToken *string `type:"string"`
 }
 
@@ -67093,8 +71545,8 @@ type ListModelPackagesOutput struct {
 	// ModelPackageSummaryList is a required field
 	ModelPackageSummaryList []*ModelPackageSummary `type:"list" required:"true"`
 
-	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
-	// the next set of model packages, use it in the subsequent request.
+	// If the response is truncated, SageMaker returns this token. To retrieve the
+	// next set of model packages, use it in the subsequent request.
 	NextToken *string `type:"string"`
 }
 
@@ -67395,8 +71847,8 @@ type ListModelsOutput struct {
 	// Models is a required field
 	Models []*ModelSummary `type:"list" required:"true"`
 
-	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
-	// the next set of models, use it in the subsequent request.
+	// If the response is truncated, SageMaker returns this token. To retrieve the
+	// next set of models, use it in the subsequent request.
 	NextToken *string `type:"string"`
 }
 
@@ -67989,8 +72441,8 @@ func (s *ListNotebookInstanceLifecycleConfigsInput) SetSortOrder(v string) *List
 type ListNotebookInstanceLifecycleConfigsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// If the response is truncated, Amazon SageMaker returns this token. To get
-	// the next set of lifecycle configurations, use it in the next request.
+	// If the response is truncated, SageMaker returns this token. To get the next
+	// set of lifecycle configurations, use it in the next request.
 	NextToken *string `type:"string"`
 
 	// An array of NotebookInstanceLifecycleConfiguration objects, each listing
@@ -68204,8 +72656,8 @@ type ListNotebookInstancesOutput struct {
 	_ struct{} `type:"structure"`
 
 	// If the response to the previous ListNotebookInstances request was truncated,
-	// Amazon SageMaker returns this token. To retrieve the next set of notebook
-	// instances, use the token in the next request.
+	// SageMaker returns this token. To retrieve the next set of notebook instances,
+	// use the token in the next request.
 	NextToken *string `type:"string"`
 
 	// An array of NotebookInstanceSummary objects, one for each notebook instance.
@@ -69094,6 +73546,142 @@ func (s *ListProjectsOutput) SetProjectSummaryList(v []*ProjectSummary) *ListPro
 	return s
 }
 
+type ListStageDevicesInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the edge deployment plan.
+	//
+	// EdgeDeploymentPlanName is a required field
+	EdgeDeploymentPlanName *string `min:"1" type:"string" required:"true"`
+
+	// Toggle for excluding devices deployed in other stages.
+	ExcludeDevicesDeployedInOtherStage *bool `type:"boolean"`
+
+	// The maximum number of requests to select.
+	MaxResults *int64 `type:"integer"`
+
+	// The response from the last list when returning a list large enough to neeed
+	// tokening.
+	NextToken *string `type:"string"`
+
+	// The name of the stage in the deployment.
+	//
+	// StageName is a required field
+	StageName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListStageDevicesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListStageDevicesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListStageDevicesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListStageDevicesInput"}
+	if s.EdgeDeploymentPlanName == nil {
+		invalidParams.Add(request.NewErrParamRequired("EdgeDeploymentPlanName"))
+	}
+	if s.EdgeDeploymentPlanName != nil && len(*s.EdgeDeploymentPlanName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EdgeDeploymentPlanName", 1))
+	}
+	if s.StageName == nil {
+		invalidParams.Add(request.NewErrParamRequired("StageName"))
+	}
+	if s.StageName != nil && len(*s.StageName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StageName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEdgeDeploymentPlanName sets the EdgeDeploymentPlanName field's value.
+func (s *ListStageDevicesInput) SetEdgeDeploymentPlanName(v string) *ListStageDevicesInput {
+	s.EdgeDeploymentPlanName = &v
+	return s
+}
+
+// SetExcludeDevicesDeployedInOtherStage sets the ExcludeDevicesDeployedInOtherStage field's value.
+func (s *ListStageDevicesInput) SetExcludeDevicesDeployedInOtherStage(v bool) *ListStageDevicesInput {
+	s.ExcludeDevicesDeployedInOtherStage = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListStageDevicesInput) SetMaxResults(v int64) *ListStageDevicesInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListStageDevicesInput) SetNextToken(v string) *ListStageDevicesInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetStageName sets the StageName field's value.
+func (s *ListStageDevicesInput) SetStageName(v string) *ListStageDevicesInput {
+	s.StageName = &v
+	return s
+}
+
+type ListStageDevicesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// List of summaries of devices allocated to the stage.
+	//
+	// DeviceDeploymentSummaries is a required field
+	DeviceDeploymentSummaries []*DeviceDeploymentSummary `type:"list" required:"true"`
+
+	// The token to use when calling the next page of results.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListStageDevicesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListStageDevicesOutput) GoString() string {
+	return s.String()
+}
+
+// SetDeviceDeploymentSummaries sets the DeviceDeploymentSummaries field's value.
+func (s *ListStageDevicesOutput) SetDeviceDeploymentSummaries(v []*DeviceDeploymentSummary) *ListStageDevicesOutput {
+	s.DeviceDeploymentSummaries = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListStageDevicesOutput) SetNextToken(v string) *ListStageDevicesOutput {
+	s.NextToken = &v
+	return s
+}
+
 type ListStudioLifecycleConfigsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -69385,7 +73973,7 @@ type ListTagsInput struct {
 	// Maximum number of tags to return.
 	MaxResults *int64 `min:"50" type:"integer"`
 
-	// If the response to the previous ListTags request is truncated, Amazon SageMaker
+	// If the response to the previous ListTags request is truncated, SageMaker
 	// returns this token. To retrieve the next set of tags, use it in the subsequent
 	// request.
 	NextToken *string `type:"string"`
@@ -69451,8 +74039,8 @@ func (s *ListTagsInput) SetResourceArn(v string) *ListTagsInput {
 type ListTagsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// If response is truncated, Amazon SageMaker includes a token in the response.
-	// You can use this token in your subsequent request to fetch next set of tokens.
+	// If response is truncated, SageMaker includes a token in the response. You
+	// can use this token in your subsequent request to fetch next set of tokens.
 	NextToken *string `type:"string"`
 
 	// An array of Tag objects, each with a tag key and a value.
@@ -69675,6 +74263,9 @@ type ListTrainingJobsInput struct {
 
 	// A filter that retrieves only training jobs with a specific status.
 	StatusEquals *string `type:"string" enum:"TrainingJobStatus"`
+
+	// A filter that retrieves only training jobs with a specific warm pool status.
+	WarmPoolStatusEquals *string `type:"string" enum:"WarmPoolResourceStatus"`
 }
 
 // String returns the string representation.
@@ -69768,11 +74359,17 @@ func (s *ListTrainingJobsInput) SetStatusEquals(v string) *ListTrainingJobsInput
 	return s
 }
 
+// SetWarmPoolStatusEquals sets the WarmPoolStatusEquals field's value.
+func (s *ListTrainingJobsInput) SetWarmPoolStatusEquals(v string) *ListTrainingJobsInput {
+	s.WarmPoolStatusEquals = &v
+	return s
+}
+
 type ListTrainingJobsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
-	// the next set of training jobs, use it in the subsequent request.
+	// If the response is truncated, SageMaker returns this token. To retrieve the
+	// next set of training jobs, use it in the subsequent request.
 	NextToken *string `type:"string"`
 
 	// An array of TrainingJobSummary objects, each listing a training job.
@@ -70879,6 +75476,12 @@ type MetricDatum struct {
 	// The dataset split from which the AutoML job produced the metric.
 	Set *string `type:"string" enum:"MetricSetSource"`
 
+	// The name of the standard metric.
+	//
+	// For definitions of the standard metrics, see Autopilot candidate metrics
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/autopilot-model-support-validation.html#autopilot-metrics).
+	StandardMetricName *string `type:"string" enum:"AutoMLMetricExtendedEnum"`
+
 	// The value of the metric.
 	Value *float64 `type:"float"`
 }
@@ -70913,6 +75516,12 @@ func (s *MetricDatum) SetSet(v string) *MetricDatum {
 	return s
 }
 
+// SetStandardMetricName sets the StandardMetricName field's value.
+func (s *MetricDatum) SetStandardMetricName(v string) *MetricDatum {
+	s.StandardMetricName = &v
+	return s
+}
+
 // SetValue sets the Value field's value.
 func (s *MetricDatum) SetValue(v float64) *MetricDatum {
 	s.Value = &v
@@ -70920,7 +75529,7 @@ func (s *MetricDatum) SetValue(v float64) *MetricDatum {
 }
 
 // Specifies a metric that the training algorithm writes to stderr or stdout.
-// Amazon SageMakerhyperparameter tuning captures all defined metrics. You specify
+// SageMakerhyperparameter tuning captures all defined metrics. You specify
 // one metric that a hyperparameter tuning job uses as its objective metric
 // to choose the best training job.
 type MetricDefinition struct {
@@ -70991,14 +75600,20 @@ func (s *MetricDefinition) SetRegex(v string) *MetricDefinition {
 	return s
 }
 
+// Details about the metrics source.
 type MetricsSource struct {
 	_ struct{} `type:"structure"`
 
+	// The hash key used for the metrics source.
 	ContentDigest *string `type:"string"`
 
+	// The metric source content type.
+	//
 	// ContentType is a required field
 	ContentType *string `type:"string" required:"true"`
 
+	// The S3 URI for the metrics source.
+	//
 	// S3Uri is a required field
 	S3Uri *string `type:"string" required:"true"`
 }
@@ -71100,7 +75715,7 @@ type ModelBiasAppSpecification struct {
 	_ struct{} `type:"structure"`
 
 	// JSON formatted S3 file that defines bias parameters. For more information
-	// on this JSON configuration file, see Configure bias parameters (https://docs.aws.amazon.com/sagemaker/latest/json-bias-parameter-config.html).
+	// on this JSON configuration file, see Configure bias parameters (https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-config-json-monitor-bias-parameters.html).
 	//
 	// ConfigUri is a required field
 	ConfigUri *string `type:"string" required:"true"`
@@ -71291,10 +75906,12 @@ func (s *ModelBiasJobInput) SetGroundTruthS3Input(v *MonitoringGroundTruthS3Inpu
 type ModelClientConfig struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of retries when invocation requests are failing.
+	// The maximum number of retries when invocation requests are failing. The default
+	// value is 3.
 	InvocationsMaxRetries *int64 `type:"integer"`
 
-	// The timeout value in seconds for an invocation request.
+	// The timeout value in seconds for an invocation request. The default value
+	// is 600.
 	InvocationsTimeoutInSeconds *int64 `min:"1" type:"integer"`
 }
 
@@ -71567,7 +76184,7 @@ type ModelExplainabilityAppSpecification struct {
 
 	// JSON formatted S3 file that defines explainability parameters. For more information
 	// on this JSON configuration file, see Configure model explainability parameters
-	// (https://docs.aws.amazon.com/sagemaker/latest/json-model-explainability-parameter-config.html).
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-config-json-monitor-model-explainability-parameters.html).
 	//
 	// ConfigUri is a required field
 	ConfigUri *string `type:"string" required:"true"`
@@ -72222,8 +76839,8 @@ type ModelPackage struct {
 	// learning tasks include object detection and image classification.
 	Task *string `type:"string"`
 
-	// Specifies batch transform jobs that Amazon SageMaker runs to validate your
-	// model package.
+	// Specifies batch transform jobs that SageMaker runs to validate your model
+	// package.
 	ValidationSpecification *ModelPackageValidationSpecification `type:"structure"`
 }
 
@@ -72423,8 +77040,8 @@ type ModelPackageContainerDefinition struct {
 	// is stored.
 	//
 	// If you are using your own custom algorithm instead of an algorithm provided
-	// by Amazon SageMaker, the inference code must meet Amazon SageMaker requirements.
-	// Amazon SageMaker supports both registry/repository[:tag] and registry/repository[@digest]
+	// by SageMaker, the inference code must meet SageMaker requirements. SageMaker
+	// supports both registry/repository[:tag] and registry/repository[@digest]
 	// image path formats. For more information, see Using Your Own Algorithms with
 	// Amazon SageMaker (https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html).
 	//
@@ -73012,13 +77629,13 @@ func (s *ModelPackageValidationProfile) SetTransformJobDefinition(v *TransformJo
 	return s
 }
 
-// Specifies batch transform jobs that Amazon SageMaker runs to validate your
-// model package.
+// Specifies batch transform jobs that SageMaker runs to validate your model
+// package.
 type ModelPackageValidationSpecification struct {
 	_ struct{} `type:"structure"`
 
 	// An array of ModelPackageValidationProfile objects, each of which specifies
-	// a batch transform job that Amazon SageMaker runs to validate your model package.
+	// a batch transform job that SageMaker runs to validate your model package.
 	//
 	// ValidationProfiles is a required field
 	ValidationProfiles []*ModelPackageValidationProfile `min:"1" type:"list" required:"true"`
@@ -75072,10 +79689,10 @@ func (s *NeoVpcConfig) SetSubnets(v []*string) *NeoVpcConfig {
 // For example, to filter on a training job's InputDataConfig property with
 // a specific channel name and S3Uri prefix, define the following filters:
 //
-//    * '{Name:"InputDataConfig.ChannelName", "Operator":"Equals", "Value":"train"}',
+//   - '{Name:"InputDataConfig.ChannelName", "Operator":"Equals", "Value":"train"}',
 //
-//    * '{Name:"InputDataConfig.DataSource.S3DataSource.S3Uri", "Operator":"Contains",
-//    "Value":"mybucket/catdata"}'
+//   - '{Name:"InputDataConfig.DataSource.S3DataSource.S3Uri", "Operator":"Contains",
+//     "Value":"mybucket/catdata"}'
 type NestedFilters struct {
 	_ struct{} `type:"structure"`
 
@@ -75354,7 +79971,7 @@ func (s *NotebookInstanceLifecycleHook) SetContent(v string) *NotebookInstanceLi
 	return s
 }
 
-// Provides summary information for an Amazon SageMaker notebook instance.
+// Provides summary information for an SageMaker notebook instance.
 type NotebookInstanceSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -75364,8 +79981,7 @@ type NotebookInstanceSummary struct {
 	// (https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html) or
 	// in any other Git repository. These repositories are cloned at the same level
 	// as the default repository of your notebook instance. For more information,
-	// see Associating Git Repositories with Amazon SageMaker Notebook Instances
-	// (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
+	// see Associating Git Repositories with SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
 	AdditionalCodeRepositories []*string `type:"list"`
 
 	// A timestamp that shows when the notebook instance was created.
@@ -75377,7 +79993,7 @@ type NotebookInstanceSummary struct {
 	// (https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html) or
 	// in any other Git repository. When you open a notebook instance, it opens
 	// in the directory that contains this repository. For more information, see
-	// Associating Git Repositories with Amazon SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
+	// Associating Git Repositories with SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
 	DefaultCodeRepository *string `min:"1" type:"string"`
 
 	// The type of ML compute instance that the notebook instance is running on.
@@ -75406,7 +80022,7 @@ type NotebookInstanceSummary struct {
 	// The status of the notebook instance.
 	NotebookInstanceStatus *string `type:"string" enum:"NotebookInstanceStatus"`
 
-	// The URL that you use to connect to the Jupyter instance running in your notebook
+	// The URL that you use to connect to the Jupyter notebook running in your notebook
 	// instance.
 	Url *string `type:"string"`
 }
@@ -76308,9 +80924,8 @@ type OutputDataConfig struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Web Services Key Management Service (Amazon Web Services KMS)
-	// key that Amazon SageMaker uses to encrypt the model artifacts at rest using
-	// Amazon S3 server-side encryption. The KmsKeyId can be any of the following
-	// formats:
+	// key that SageMaker uses to encrypt the model artifacts at rest using Amazon
+	// S3 server-side encryption. The KmsKeyId can be any of the following formats:
 	//
 	//    * // KMS Key ID "1234abcd-12ab-34cd-56ef-1234567890ab"
 	//
@@ -76320,14 +80935,14 @@ type OutputDataConfig struct {
 	//
 	//    * // Amazon Resource Name (ARN) of a KMS Key Alias "arn:aws:kms:us-west-2:111122223333:alias/ExampleAlias"
 	//
-	// If you use a KMS key ID or an alias of your KMS key, the Amazon SageMaker
-	// execution role must include permissions to call kms:Encrypt. If you don't
-	// provide a KMS key ID, Amazon SageMaker uses the default KMS key for Amazon
-	// S3 for your role's account. Amazon SageMaker uses server-side encryption
-	// with KMS-managed keys for OutputDataConfig. If you use a bucket policy with
-	// an s3:PutObject permission that only allows objects with server-side encryption,
-	// set the condition key of s3:x-amz-server-side-encryption to "aws:kms". For
-	// more information, see KMS-Managed Encryption Keys (https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html)
+	// If you use a KMS key ID or an alias of your KMS key, the SageMaker execution
+	// role must include permissions to call kms:Encrypt. If you don't provide a
+	// KMS key ID, SageMaker uses the default KMS key for Amazon S3 for your role's
+	// account. SageMaker uses server-side encryption with KMS-managed keys for
+	// OutputDataConfig. If you use a bucket policy with an s3:PutObject permission
+	// that only allows objects with server-side encryption, set the condition key
+	// of s3:x-amz-server-side-encryption to "aws:kms". For more information, see
+	// KMS-Managed Encryption Keys (https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html)
 	// in the Amazon Simple Storage Service Developer Guide.
 	//
 	// The KMS key policy must grant permission to the IAM role that you specify
@@ -76337,8 +80952,8 @@ type OutputDataConfig struct {
 	// in the Amazon Web Services Key Management Service Developer Guide.
 	KmsKeyId *string `type:"string"`
 
-	// Identifies the S3 path where you want Amazon SageMaker to store the model
-	// artifacts. For example, s3://bucket-name/key-name-prefix.
+	// Identifies the S3 path where you want SageMaker to store the model artifacts.
+	// For example, s3://bucket-name/key-name-prefix.
 	//
 	// S3OutputPath is a required field
 	S3OutputPath *string `type:"string" required:"true"`
@@ -76651,9 +81266,10 @@ func (s *ParameterRange) SetIntegerParameterRangeSpecification(v *IntegerParamet
 // performance as measured by the objective metric of the hyperparameter tuning
 // job.
 //
-// You can specify a maximum of 20 hyperparameters that a hyperparameter tuning
-// job can search over. Every possible value of a categorical parameter range
-// counts against this limit.
+// The maximum number of items specified for Array Members refers to the maximum
+// number of hyperparameters for each range and also the maximum for the hyperparameter
+// tuning job itself. That is, the sum of the number of hyperparameters for
+// all the ranges can't exceed the maximum number specified.
 type ParameterRanges struct {
 	_ struct{} `type:"structure"`
 
@@ -76905,9 +81521,6 @@ type PendingProductionVariantSummary struct {
 	CurrentInstanceCount *int64 `type:"integer"`
 
 	// The serverless configuration for the endpoint.
-	//
-	// Serverless Inference is in preview release for Amazon SageMaker and is subject
-	// to change. We do not recommend using this feature in production environments.
 	CurrentServerlessConfig *ProductionVariantServerlessConfig `type:"structure"`
 
 	// The weight associated with the variant.
@@ -76924,9 +81537,6 @@ type PendingProductionVariantSummary struct {
 
 	// The serverless configuration requested for this deployment, as specified
 	// in the endpoint configuration for the endpoint.
-	//
-	// Serverless Inference is in preview release for Amazon SageMaker and is subject
-	// to change. We do not recommend using this feature in production environments.
 	DesiredServerlessConfig *ProductionVariantServerlessConfig `type:"structure"`
 
 	// The requested weight for the variant in this deployment, as specified in
@@ -79070,8 +83680,8 @@ func (s *ProcessingStoppingCondition) SetMaxRuntimeInSeconds(v int64) *Processin
 }
 
 // Identifies a model that you want to host and the resources chosen to deploy
-// for hosting it. If you are deploying multiple models, tell Amazon SageMaker
-// how to distribute traffic among the models by specifying variant weights.
+// for hosting it. If you are deploying multiple models, tell SageMaker how
+// to distribute traffic among the models by specifying variant weights.
 type ProductionVariant struct {
 	_ struct{} `type:"structure"`
 
@@ -79079,6 +83689,11 @@ type ProductionVariant struct {
 	// variant. EI instances provide on-demand GPU computing for inference. For
 	// more information, see Using Elastic Inference in Amazon SageMaker (https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html).
 	AcceleratorType *string `type:"string" enum:"ProductionVariantAcceleratorType"`
+
+	// The timeout value, in seconds, for your inference container to pass health
+	// check by SageMaker Hosting. For more information about health check, see
+	// How Your Container Should Respond to Health Check (Ping) Requests (https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-inference-code.html#your-algorithms-inference-algo-ping-requests).
+	ContainerStartupHealthCheckTimeoutInSeconds *int64 `min:"60" type:"integer"`
 
 	// Specifies configuration for a core dump from the model container when the
 	// process crashes.
@@ -79096,6 +83711,11 @@ type ProductionVariant struct {
 	// The ML compute instance type.
 	InstanceType *string `type:"string" enum:"ProductionVariantInstanceType"`
 
+	// The timeout value, in seconds, to download and extract the model that you
+	// want to host from Amazon S3 to the individual inference instance associated
+	// with this production variant.
+	ModelDataDownloadTimeoutInSeconds *int64 `min:"60" type:"integer"`
+
 	// The name of the model that you want to host. This is the name that you specified
 	// when creating the model.
 	//
@@ -79104,15 +83724,17 @@ type ProductionVariant struct {
 
 	// The serverless configuration for an endpoint. Specifies a serverless endpoint
 	// configuration instead of an instance-based endpoint configuration.
-	//
-	// Serverless Inference is in preview release for Amazon SageMaker and is subject
-	// to change. We do not recommend using this feature in production environments.
 	ServerlessConfig *ProductionVariantServerlessConfig `type:"structure"`
 
 	// The name of the production variant.
 	//
 	// VariantName is a required field
 	VariantName *string `type:"string" required:"true"`
+
+	// The size, in GB, of the ML storage volume attached to individual inference
+	// instance associated with the production variant. Currenly only Amazon EBS
+	// gp2 storage volumes are supported.
+	VolumeSizeInGB *int64 `min:"1" type:"integer"`
 }
 
 // String returns the string representation.
@@ -79136,14 +83758,23 @@ func (s ProductionVariant) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *ProductionVariant) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ProductionVariant"}
+	if s.ContainerStartupHealthCheckTimeoutInSeconds != nil && *s.ContainerStartupHealthCheckTimeoutInSeconds < 60 {
+		invalidParams.Add(request.NewErrParamMinValue("ContainerStartupHealthCheckTimeoutInSeconds", 60))
+	}
 	if s.InitialInstanceCount != nil && *s.InitialInstanceCount < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("InitialInstanceCount", 1))
+	}
+	if s.ModelDataDownloadTimeoutInSeconds != nil && *s.ModelDataDownloadTimeoutInSeconds < 60 {
+		invalidParams.Add(request.NewErrParamMinValue("ModelDataDownloadTimeoutInSeconds", 60))
 	}
 	if s.ModelName == nil {
 		invalidParams.Add(request.NewErrParamRequired("ModelName"))
 	}
 	if s.VariantName == nil {
 		invalidParams.Add(request.NewErrParamRequired("VariantName"))
+	}
+	if s.VolumeSizeInGB != nil && *s.VolumeSizeInGB < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("VolumeSizeInGB", 1))
 	}
 	if s.CoreDumpConfig != nil {
 		if err := s.CoreDumpConfig.Validate(); err != nil {
@@ -79165,6 +83796,12 @@ func (s *ProductionVariant) Validate() error {
 // SetAcceleratorType sets the AcceleratorType field's value.
 func (s *ProductionVariant) SetAcceleratorType(v string) *ProductionVariant {
 	s.AcceleratorType = &v
+	return s
+}
+
+// SetContainerStartupHealthCheckTimeoutInSeconds sets the ContainerStartupHealthCheckTimeoutInSeconds field's value.
+func (s *ProductionVariant) SetContainerStartupHealthCheckTimeoutInSeconds(v int64) *ProductionVariant {
+	s.ContainerStartupHealthCheckTimeoutInSeconds = &v
 	return s
 }
 
@@ -79192,6 +83829,12 @@ func (s *ProductionVariant) SetInstanceType(v string) *ProductionVariant {
 	return s
 }
 
+// SetModelDataDownloadTimeoutInSeconds sets the ModelDataDownloadTimeoutInSeconds field's value.
+func (s *ProductionVariant) SetModelDataDownloadTimeoutInSeconds(v int64) *ProductionVariant {
+	s.ModelDataDownloadTimeoutInSeconds = &v
+	return s
+}
+
 // SetModelName sets the ModelName field's value.
 func (s *ProductionVariant) SetModelName(v string) *ProductionVariant {
 	s.ModelName = &v
@@ -79210,6 +83853,12 @@ func (s *ProductionVariant) SetVariantName(v string) *ProductionVariant {
 	return s
 }
 
+// SetVolumeSizeInGB sets the VolumeSizeInGB field's value.
+func (s *ProductionVariant) SetVolumeSizeInGB(v int64) *ProductionVariant {
+	s.VolumeSizeInGB = &v
+	return s
+}
+
 // Specifies configuration for a core dump from the model container when the
 // process crashes.
 type ProductionVariantCoreDumpConfig struct {
@@ -79221,9 +83870,8 @@ type ProductionVariantCoreDumpConfig struct {
 	DestinationS3Uri *string `type:"string" required:"true"`
 
 	// The Amazon Web Services Key Management Service (Amazon Web Services KMS)
-	// key that Amazon SageMaker uses to encrypt the core dump data at rest using
-	// Amazon S3 server-side encryption. The KmsKeyId can be any of the following
-	// formats:
+	// key that SageMaker uses to encrypt the core dump data at rest using Amazon
+	// S3 server-side encryption. The KmsKeyId can be any of the following formats:
 	//
 	//    * // KMS Key ID "1234abcd-12ab-34cd-56ef-1234567890ab"
 	//
@@ -79233,14 +83881,14 @@ type ProductionVariantCoreDumpConfig struct {
 	//
 	//    * // Amazon Resource Name (ARN) of a KMS Key Alias "arn:aws:kms:us-west-2:111122223333:alias/ExampleAlias"
 	//
-	// If you use a KMS key ID or an alias of your KMS key, the Amazon SageMaker
-	// execution role must include permissions to call kms:Encrypt. If you don't
-	// provide a KMS key ID, Amazon SageMaker uses the default KMS key for Amazon
-	// S3 for your role's account. Amazon SageMaker uses server-side encryption
-	// with KMS-managed keys for OutputDataConfig. If you use a bucket policy with
-	// an s3:PutObject permission that only allows objects with server-side encryption,
-	// set the condition key of s3:x-amz-server-side-encryption to "aws:kms". For
-	// more information, see KMS-Managed Encryption Keys (https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html)
+	// If you use a KMS key ID or an alias of your KMS key, the SageMaker execution
+	// role must include permissions to call kms:Encrypt. If you don't provide a
+	// KMS key ID, SageMaker uses the default KMS key for Amazon S3 for your role's
+	// account. SageMaker uses server-side encryption with KMS-managed keys for
+	// OutputDataConfig. If you use a bucket policy with an s3:PutObject permission
+	// that only allows objects with server-side encryption, set the condition key
+	// of s3:x-amz-server-side-encryption to "aws:kms". For more information, see
+	// KMS-Managed Encryption Keys (https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html)
 	// in the Amazon Simple Storage Service Developer Guide.
 	//
 	// The KMS key policy must grant permission to the IAM role that you specify
@@ -79293,10 +83941,6 @@ func (s *ProductionVariantCoreDumpConfig) SetKmsKeyId(v string) *ProductionVaria
 	return s
 }
 
-//
-// Serverless Inference is in preview release for Amazon SageMaker and is subject
-// to change. We do not recommend using this feature in production environments.
-//
 // Specifies the serverless configuration for an endpoint variant.
 type ProductionVariantServerlessConfig struct {
 	_ struct{} `type:"structure"`
@@ -79441,9 +84085,6 @@ type ProductionVariantSummary struct {
 	CurrentInstanceCount *int64 `type:"integer"`
 
 	// The serverless configuration for the endpoint.
-	//
-	// Serverless Inference is in preview release for Amazon SageMaker and is subject
-	// to change. We do not recommend using this feature in production environments.
 	CurrentServerlessConfig *ProductionVariantServerlessConfig `type:"structure"`
 
 	// The weight associated with the variant.
@@ -79458,9 +84099,6 @@ type ProductionVariantSummary struct {
 	DesiredInstanceCount *int64 `type:"integer"`
 
 	// The serverless configuration requested for the endpoint update.
-	//
-	// Serverless Inference is in preview release for Amazon SageMaker and is subject
-	// to change. We do not recommend using this feature in production environments.
 	DesiredServerlessConfig *ProductionVariantServerlessConfig `type:"structure"`
 
 	// The requested weight, as specified in the UpdateEndpointWeightsAndCapacities
@@ -80236,204 +84874,204 @@ func (s *ProvisioningParameter) SetValue(v string) *ProvisioningParameter {
 // dollars and should be based on the complexity of the task; the longer it
 // takes in your initial testing, the more you should offer.
 //
-//    * 0.036
+//   - 0.036
 //
-//    * 0.048
+//   - 0.048
 //
-//    * 0.060
+//   - 0.060
 //
-//    * 0.072
+//   - 0.072
 //
-//    * 0.120
+//   - 0.120
 //
-//    * 0.240
+//   - 0.240
 //
-//    * 0.360
+//   - 0.360
 //
-//    * 0.480
+//   - 0.480
 //
-//    * 0.600
+//   - 0.600
 //
-//    * 0.720
+//   - 0.720
 //
-//    * 0.840
+//   - 0.840
 //
-//    * 0.960
+//   - 0.960
 //
-//    * 1.080
+//   - 1.080
 //
-//    * 1.200
+//   - 1.200
 //
 // Use one of the following prices for image classification, text classification,
 // and custom tasks. Prices are in US dollars.
 //
-//    * 0.012
+//   - 0.012
 //
-//    * 0.024
+//   - 0.024
 //
-//    * 0.036
+//   - 0.036
 //
-//    * 0.048
+//   - 0.048
 //
-//    * 0.060
+//   - 0.060
 //
-//    * 0.072
+//   - 0.072
 //
-//    * 0.120
+//   - 0.120
 //
-//    * 0.240
+//   - 0.240
 //
-//    * 0.360
+//   - 0.360
 //
-//    * 0.480
+//   - 0.480
 //
-//    * 0.600
+//   - 0.600
 //
-//    * 0.720
+//   - 0.720
 //
-//    * 0.840
+//   - 0.840
 //
-//    * 0.960
+//   - 0.960
 //
-//    * 1.080
+//   - 1.080
 //
-//    * 1.200
+//   - 1.200
 //
 // Use one of the following prices for semantic segmentation tasks. Prices are
 // in US dollars.
 //
-//    * 0.840
+//   - 0.840
 //
-//    * 0.960
+//   - 0.960
 //
-//    * 1.080
+//   - 1.080
 //
-//    * 1.200
+//   - 1.200
 //
 // Use one of the following prices for Textract AnalyzeDocument Important Form
 // Key Amazon Augmented AI review tasks. Prices are in US dollars.
 //
-//    * 2.400
+//   - 2.400
 //
-//    * 2.280
+//   - 2.280
 //
-//    * 2.160
+//   - 2.160
 //
-//    * 2.040
+//   - 2.040
 //
-//    * 1.920
+//   - 1.920
 //
-//    * 1.800
+//   - 1.800
 //
-//    * 1.680
+//   - 1.680
 //
-//    * 1.560
+//   - 1.560
 //
-//    * 1.440
+//   - 1.440
 //
-//    * 1.320
+//   - 1.320
 //
-//    * 1.200
+//   - 1.200
 //
-//    * 1.080
+//   - 1.080
 //
-//    * 0.960
+//   - 0.960
 //
-//    * 0.840
+//   - 0.840
 //
-//    * 0.720
+//   - 0.720
 //
-//    * 0.600
+//   - 0.600
 //
-//    * 0.480
+//   - 0.480
 //
-//    * 0.360
+//   - 0.360
 //
-//    * 0.240
+//   - 0.240
 //
-//    * 0.120
+//   - 0.120
 //
-//    * 0.072
+//   - 0.072
 //
-//    * 0.060
+//   - 0.060
 //
-//    * 0.048
+//   - 0.048
 //
-//    * 0.036
+//   - 0.036
 //
-//    * 0.024
+//   - 0.024
 //
-//    * 0.012
+//   - 0.012
 //
 // Use one of the following prices for Rekognition DetectModerationLabels Amazon
 // Augmented AI review tasks. Prices are in US dollars.
 //
-//    * 1.200
+//   - 1.200
 //
-//    * 1.080
+//   - 1.080
 //
-//    * 0.960
+//   - 0.960
 //
-//    * 0.840
+//   - 0.840
 //
-//    * 0.720
+//   - 0.720
 //
-//    * 0.600
+//   - 0.600
 //
-//    * 0.480
+//   - 0.480
 //
-//    * 0.360
+//   - 0.360
 //
-//    * 0.240
+//   - 0.240
 //
-//    * 0.120
+//   - 0.120
 //
-//    * 0.072
+//   - 0.072
 //
-//    * 0.060
+//   - 0.060
 //
-//    * 0.048
+//   - 0.048
 //
-//    * 0.036
+//   - 0.036
 //
-//    * 0.024
+//   - 0.024
 //
-//    * 0.012
+//   - 0.012
 //
 // Use one of the following prices for Amazon Augmented AI custom human review
 // tasks. Prices are in US dollars.
 //
-//    * 1.200
+//   - 1.200
 //
-//    * 1.080
+//   - 1.080
 //
-//    * 0.960
+//   - 0.960
 //
-//    * 0.840
+//   - 0.840
 //
-//    * 0.720
+//   - 0.720
 //
-//    * 0.600
+//   - 0.600
 //
-//    * 0.480
+//   - 0.480
 //
-//    * 0.360
+//   - 0.360
 //
-//    * 0.240
+//   - 0.240
 //
-//    * 0.120
+//   - 0.120
 //
-//    * 0.072
+//   - 0.072
 //
-//    * 0.060
+//   - 0.060
 //
-//    * 0.048
+//   - 0.048
 //
-//    * 0.036
+//   - 0.036
 //
-//    * 0.024
+//   - 0.024
 //
-//    * 0.012
+//   - 0.012
 type PublicWorkforceTaskPrice struct {
 	_ struct{} `type:"structure"`
 
@@ -80701,7 +85339,7 @@ type QueryFilters struct {
 
 	// Filter the lineage entities connected to the StartArn(s) by the type of the
 	// lineage entity.
-	LineageTypes []*string `type:"list"`
+	LineageTypes []*string `type:"list" enum:"LineageType"`
 
 	// Filter the lineage entities connected to the StartArn(s) after the last modified
 	// date.
@@ -80712,8 +85350,8 @@ type QueryFilters struct {
 	ModifiedBefore *time.Time `type:"timestamp"`
 
 	// Filter the lineage entities connected to the StartArn(s) by a set if property
-	// key value pairs. If multiple pairs are provided, an entity will be included
-	// in the results if it matches any of the provided pairs.
+	// key value pairs. If multiple pairs are provided, an entity is included in
+	// the results if it matches any of the provided pairs.
 	Properties map[string]*string `type:"map"`
 
 	// Filter the lineage entities connected to the StartArn by type. For example:
@@ -80784,8 +85422,8 @@ func (s *QueryFilters) SetTypes(v []*string) *QueryFilters {
 type QueryLineageInput struct {
 	_ struct{} `type:"structure"`
 
-	// Associations between lineage entities are directed. This parameter determines
-	// the direction from the StartArn(s) the query will look.
+	// Associations between lineage entities have a direction. This parameter determines
+	// the direction from the StartArn(s) that the query traverses.
 	Direction *string `type:"string" enum:"Direction"`
 
 	// A set of filtering parameters that allow you to specify which entities should
@@ -80803,15 +85441,15 @@ type QueryLineageInput struct {
 	//    * ModifiedAfter - Filter entities modified after this date.
 	Filters *QueryFilters `type:"structure"`
 
-	// Setting this value to True will retrieve not only the entities of interest
-	// but also the Associations (https://docs.aws.amazon.com/sagemaker/latest/dg/lineage-tracking-entities.html)
+	// Setting this value to True retrieves not only the entities of interest but
+	// also the Associations (https://docs.aws.amazon.com/sagemaker/latest/dg/lineage-tracking-entities.html)
 	// and lineage entities on the path. Set to False to only return lineage entities
 	// that match your query.
 	IncludeEdges *bool `type:"boolean"`
 
-	// The maximum depth in lineage relationships from the StartArns that will be
-	// traversed. Depth is a measure of the number of Associations from the StartArn
-	// entity to the matched results.
+	// The maximum depth in lineage relationships from the StartArns that are traversed.
+	// Depth is a measure of the number of Associations from the StartArn entity
+	// to the matched results.
 	MaxDepth *int64 `type:"integer"`
 
 	// Limits the number of vertices in the results. Use the NextToken in a response
@@ -80824,9 +85462,7 @@ type QueryLineageInput struct {
 
 	// A list of resource Amazon Resource Name (ARN) that represent the starting
 	// point for your lineage query.
-	//
-	// StartArns is a required field
-	StartArns []*string `min:"1" type:"list" required:"true"`
+	StartArns []*string `type:"list"`
 }
 
 // String returns the string representation.
@@ -80845,22 +85481,6 @@ func (s QueryLineageInput) String() string {
 // value will be replaced with "sensitive".
 func (s QueryLineageInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *QueryLineageInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "QueryLineageInput"}
-	if s.StartArns == nil {
-		invalidParams.Add(request.NewErrParamRequired("StartArns"))
-	}
-	if s.StartArns != nil && len(s.StartArns) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("StartArns", 1))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // SetDirection sets the Direction field's value.
@@ -80958,6 +85578,14 @@ func (s *QueryLineageOutput) SetVertices(v []*Vertex) *QueryLineageOutput {
 // A collection of settings that apply to an RSessionGateway app.
 type RSessionAppSettings struct {
 	_ struct{} `type:"structure"`
+
+	// A list of custom SageMaker images that are configured to run as a RSession
+	// app.
+	CustomImages []*CustomImage `type:"list"`
+
+	// Specifies the ARN's of a SageMaker image and SageMaker image version, and
+	// the instance type that the version runs on.
+	DefaultResourceSpec *ResourceSpec `type:"structure"`
 }
 
 // String returns the string representation.
@@ -80976,6 +85604,38 @@ func (s RSessionAppSettings) String() string {
 // value will be replaced with "sensitive".
 func (s RSessionAppSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RSessionAppSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RSessionAppSettings"}
+	if s.CustomImages != nil {
+		for i, v := range s.CustomImages {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "CustomImages", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCustomImages sets the CustomImages field's value.
+func (s *RSessionAppSettings) SetCustomImages(v []*CustomImage) *RSessionAppSettings {
+	s.CustomImages = v
+	return s
+}
+
+// SetDefaultResourceSpec sets the DefaultResourceSpec field's value.
+func (s *RSessionAppSettings) SetDefaultResourceSpec(v *ResourceSpec) *RSessionAppSettings {
+	s.DefaultResourceSpec = v
+	return s
 }
 
 // A collection of settings that configure user interaction with the RStudioServerPro
@@ -81163,9 +85823,150 @@ func (s *RStudioServerProDomainSettingsForUpdate) SetDomainExecutionRoleArn(v st
 	return s
 }
 
+// Provides information about the output configuration for the compiled model.
+type RecommendationJobCompiledOutputConfig struct {
+	_ struct{} `type:"structure"`
+
+	// Identifies the Amazon S3 bucket where you want SageMaker to store the compiled
+	// model artifacts.
+	S3OutputUri *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RecommendationJobCompiledOutputConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RecommendationJobCompiledOutputConfig) GoString() string {
+	return s.String()
+}
+
+// SetS3OutputUri sets the S3OutputUri field's value.
+func (s *RecommendationJobCompiledOutputConfig) SetS3OutputUri(v string) *RecommendationJobCompiledOutputConfig {
+	s.S3OutputUri = &v
+	return s
+}
+
+// Specifies mandatory fields for running an Inference Recommender job directly
+// in the CreateInferenceRecommendationsJob (https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateInferenceRecommendationsJob.html)
+// API. The fields specified in ContainerConfig override the corresponding fields
+// in the model package. Use ContainerConfig if you want to specify these fields
+// for the recommendation job but don't want to edit them in your model package.
+type RecommendationJobContainerConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The machine learning domain of the model and its components.
+	//
+	// Valid Values: COMPUTER_VISION | NATURAL_LANGUAGE_PROCESSING | MACHINE_LEARNING
+	Domain *string `type:"string"`
+
+	// The machine learning framework of the container image.
+	//
+	// Valid Values: TENSORFLOW | PYTORCH | XGBOOST | SAGEMAKER-SCIKIT-LEARN
+	Framework *string `type:"string"`
+
+	// The framework version of the container image.
+	FrameworkVersion *string `type:"string"`
+
+	// The name of a pre-trained machine learning model benchmarked by Amazon SageMaker
+	// Inference Recommender that matches your model.
+	//
+	// Valid Values: efficientnetb7 | unet | xgboost | faster-rcnn-resnet101 | nasnetlarge
+	// | vgg16 | inception-v3 | mask-rcnn | sagemaker-scikit-learn | densenet201-gluon
+	// | resnet18v2-gluon | xception | densenet201 | yolov4 | resnet152 | bert-base-cased
+	// | xceptionV1-keras | resnet50 | retinanet
+	NearestModelName *string `type:"string"`
+
+	// Specifies the SamplePayloadUrl and all other sample payload-related fields.
+	PayloadConfig *RecommendationJobPayloadConfig `type:"structure"`
+
+	// A list of the instance types that are used to generate inferences in real-time.
+	SupportedInstanceTypes []*string `type:"list"`
+
+	// The machine learning task that the model accomplishes.
+	//
+	// Valid Values: IMAGE_CLASSIFICATION | OBJECT_DETECTION | TEXT_GENERATION |
+	// IMAGE_SEGMENTATION | FILL_MASK | CLASSIFICATION | REGRESSION | OTHER
+	Task *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RecommendationJobContainerConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RecommendationJobContainerConfig) GoString() string {
+	return s.String()
+}
+
+// SetDomain sets the Domain field's value.
+func (s *RecommendationJobContainerConfig) SetDomain(v string) *RecommendationJobContainerConfig {
+	s.Domain = &v
+	return s
+}
+
+// SetFramework sets the Framework field's value.
+func (s *RecommendationJobContainerConfig) SetFramework(v string) *RecommendationJobContainerConfig {
+	s.Framework = &v
+	return s
+}
+
+// SetFrameworkVersion sets the FrameworkVersion field's value.
+func (s *RecommendationJobContainerConfig) SetFrameworkVersion(v string) *RecommendationJobContainerConfig {
+	s.FrameworkVersion = &v
+	return s
+}
+
+// SetNearestModelName sets the NearestModelName field's value.
+func (s *RecommendationJobContainerConfig) SetNearestModelName(v string) *RecommendationJobContainerConfig {
+	s.NearestModelName = &v
+	return s
+}
+
+// SetPayloadConfig sets the PayloadConfig field's value.
+func (s *RecommendationJobContainerConfig) SetPayloadConfig(v *RecommendationJobPayloadConfig) *RecommendationJobContainerConfig {
+	s.PayloadConfig = v
+	return s
+}
+
+// SetSupportedInstanceTypes sets the SupportedInstanceTypes field's value.
+func (s *RecommendationJobContainerConfig) SetSupportedInstanceTypes(v []*string) *RecommendationJobContainerConfig {
+	s.SupportedInstanceTypes = v
+	return s
+}
+
+// SetTask sets the Task field's value.
+func (s *RecommendationJobContainerConfig) SetTask(v string) *RecommendationJobContainerConfig {
+	s.Task = &v
+	return s
+}
+
 // The input configuration of the recommendation job.
 type RecommendationJobInputConfig struct {
 	_ struct{} `type:"structure"`
+
+	// Specifies mandatory fields for running an Inference Recommender job. The
+	// fields specified in ContainerConfig override the corresponding fields in
+	// the model package.
+	ContainerConfig *RecommendationJobContainerConfig `type:"structure"`
 
 	// Specifies the endpoint configuration to use for a job.
 	EndpointConfigurations []*EndpointInputConfiguration `min:"1" type:"list"`
@@ -81183,6 +85984,32 @@ type RecommendationJobInputConfig struct {
 
 	// Specifies the traffic pattern of the job.
 	TrafficPattern *TrafficPattern `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of a Amazon Web Services Key Management Service
+	// (Amazon Web Services KMS) key that Amazon SageMaker uses to encrypt data
+	// on the storage volume attached to the ML compute instance that hosts the
+	// endpoint. This key will be passed to SageMaker Hosting for endpoint creation.
+	//
+	// The SageMaker execution role must have kms:CreateGrant permission in order
+	// to encrypt data on the storage volume of the endpoints created for inference
+	// recommendation. The inference recommendation job will fail asynchronously
+	// during endpoint configuration creation if the role passed does not have kms:CreateGrant
+	// permission.
+	//
+	// The KmsKeyId can be any of the following formats:
+	//
+	//    * // KMS Key ID "1234abcd-12ab-34cd-56ef-1234567890ab"
+	//
+	//    * // Amazon Resource Name (ARN) of a KMS Key "arn:aws:kms:<region>:<account>:key/<key-id-12ab-34cd-56ef-1234567890ab>"
+	//
+	//    * // KMS Key Alias "alias/ExampleAlias"
+	//
+	//    * // Amazon Resource Name (ARN) of a KMS Key Alias "arn:aws:kms:<region>:<account>:alias/<ExampleAlias>"
+	//
+	// For more information about key identifiers, see Key identifiers (KeyID) (https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id-key-id)
+	// in the Amazon Web Services Key Management Service (Amazon Web Services KMS)
+	// documentation.
+	VolumeKmsKeyId *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -81245,6 +86072,12 @@ func (s *RecommendationJobInputConfig) Validate() error {
 	return nil
 }
 
+// SetContainerConfig sets the ContainerConfig field's value.
+func (s *RecommendationJobInputConfig) SetContainerConfig(v *RecommendationJobContainerConfig) *RecommendationJobInputConfig {
+	s.ContainerConfig = v
+	return s
+}
+
 // SetEndpointConfigurations sets the EndpointConfigurations field's value.
 func (s *RecommendationJobInputConfig) SetEndpointConfigurations(v []*EndpointInputConfiguration) *RecommendationJobInputConfig {
 	s.EndpointConfigurations = v
@@ -81272,6 +86105,113 @@ func (s *RecommendationJobInputConfig) SetResourceLimit(v *RecommendationJobReso
 // SetTrafficPattern sets the TrafficPattern field's value.
 func (s *RecommendationJobInputConfig) SetTrafficPattern(v *TrafficPattern) *RecommendationJobInputConfig {
 	s.TrafficPattern = v
+	return s
+}
+
+// SetVolumeKmsKeyId sets the VolumeKmsKeyId field's value.
+func (s *RecommendationJobInputConfig) SetVolumeKmsKeyId(v string) *RecommendationJobInputConfig {
+	s.VolumeKmsKeyId = &v
+	return s
+}
+
+// Provides information about the output configuration for the compiled model.
+type RecommendationJobOutputConfig struct {
+	_ struct{} `type:"structure"`
+
+	// Provides information about the output configuration for the compiled model.
+	CompiledOutputConfig *RecommendationJobCompiledOutputConfig `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of a Amazon Web Services Key Management Service
+	// (Amazon Web Services KMS) key that Amazon SageMaker uses to encrypt your
+	// output artifacts with Amazon S3 server-side encryption. The SageMaker execution
+	// role must have kms:GenerateDataKey permission.
+	//
+	// The KmsKeyId can be any of the following formats:
+	//
+	//    * // KMS Key ID "1234abcd-12ab-34cd-56ef-1234567890ab"
+	//
+	//    * // Amazon Resource Name (ARN) of a KMS Key "arn:aws:kms:<region>:<account>:key/<key-id-12ab-34cd-56ef-1234567890ab>"
+	//
+	//    * // KMS Key Alias "alias/ExampleAlias"
+	//
+	//    * // Amazon Resource Name (ARN) of a KMS Key Alias "arn:aws:kms:<region>:<account>:alias/<ExampleAlias>"
+	//
+	// For more information about key identifiers, see Key identifiers (KeyID) (https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id-key-id)
+	// in the Amazon Web Services Key Management Service (Amazon Web Services KMS)
+	// documentation.
+	KmsKeyId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RecommendationJobOutputConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RecommendationJobOutputConfig) GoString() string {
+	return s.String()
+}
+
+// SetCompiledOutputConfig sets the CompiledOutputConfig field's value.
+func (s *RecommendationJobOutputConfig) SetCompiledOutputConfig(v *RecommendationJobCompiledOutputConfig) *RecommendationJobOutputConfig {
+	s.CompiledOutputConfig = v
+	return s
+}
+
+// SetKmsKeyId sets the KmsKeyId field's value.
+func (s *RecommendationJobOutputConfig) SetKmsKeyId(v string) *RecommendationJobOutputConfig {
+	s.KmsKeyId = &v
+	return s
+}
+
+// The configuration for the payload for a recommendation job.
+type RecommendationJobPayloadConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Simple Storage Service (Amazon S3) path where the sample payload
+	// is stored. This path must point to a single gzip compressed tar archive (.tar.gz
+	// suffix).
+	SamplePayloadUrl *string `type:"string"`
+
+	// The supported MIME types for the input data.
+	SupportedContentTypes []*string `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RecommendationJobPayloadConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RecommendationJobPayloadConfig) GoString() string {
+	return s.String()
+}
+
+// SetSamplePayloadUrl sets the SamplePayloadUrl field's value.
+func (s *RecommendationJobPayloadConfig) SetSamplePayloadUrl(v string) *RecommendationJobPayloadConfig {
+	s.SamplePayloadUrl = &v
+	return s
+}
+
+// SetSupportedContentTypes sets the SupportedContentTypes field's value.
+func (s *RecommendationJobPayloadConfig) SetSupportedContentTypes(v []*string) *RecommendationJobPayloadConfig {
+	s.SupportedContentTypes = v
 	return s
 }
 
@@ -82125,18 +87065,21 @@ type ResourceConfig struct {
 
 	// The number of ML compute instances to use. For distributed training, provide
 	// a value greater than 1.
-	//
-	// InstanceCount is a required field
-	InstanceCount *int64 `min:"1" type:"integer" required:"true"`
+	InstanceCount *int64 `type:"integer"`
+
+	// The configuration of a heterogeneous cluster in JSON format.
+	InstanceGroups []*InstanceGroup `type:"list"`
 
 	// The ML compute instance type.
-	//
-	// InstanceType is a required field
-	InstanceType *string `type:"string" required:"true" enum:"TrainingInstanceType"`
+	InstanceType *string `type:"string" enum:"TrainingInstanceType"`
 
-	// The Amazon Web Services KMS key that Amazon SageMaker uses to encrypt data
-	// on the storage volume attached to the ML compute instance(s) that run the
-	// training job.
+	// The duration of time in seconds to retain configured resources in a warm
+	// pool for subsequent training jobs.
+	KeepAlivePeriodInSeconds *int64 `type:"integer"`
+
+	// The Amazon Web Services KMS key that SageMaker uses to encrypt data on the
+	// storage volume attached to the ML compute instance(s) that run the training
+	// job.
 	//
 	// Certain Nitro-based instances include local storage, dependent on the instance
 	// type. Local storage volumes are encrypted using a hardware module on the
@@ -82163,19 +87106,25 @@ type ResourceConfig struct {
 	// want to store the training data in the ML storage volume, choose File as
 	// the TrainingInputMode in the algorithm specification.
 	//
-	// You must specify sufficient ML storage for your scenario.
+	// When using an ML instance with NVMe SSD volumes (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ssd-instance-store.html#nvme-ssd-volumes),
+	// SageMaker doesn't provision Amazon EBS General Purpose SSD (gp2) storage.
+	// Available storage is fixed to the NVMe-type instance's storage capacity.
+	// SageMaker configures storage paths for training datasets, checkpoints, model
+	// artifacts, and outputs to use the entire capacity of the instance storage.
+	// For example, ML instance families with the NVMe-type instance storage include
+	// ml.p4d, ml.g4dn, and ml.g5.
 	//
-	// Amazon SageMaker supports only the General Purpose SSD (gp2) ML storage volume
-	// type.
+	// When using an ML instance with the EBS-only storage option and without instance
+	// storage, you must define the size of EBS volume through VolumeSizeInGB in
+	// the ResourceConfig API. For example, ML instance families that use EBS volumes
+	// include ml.c5 and ml.p2.
 	//
-	// Certain Nitro-based instances include local storage with a fixed total size,
-	// dependent on the instance type. When using these instances for training,
-	// Amazon SageMaker mounts the local instance storage instead of Amazon EBS
-	// gp2 storage. You can't request a VolumeSizeInGB greater than the total size
-	// of the local instance storage.
+	// To look up instance types and their instance storage types and volumes, see
+	// Amazon EC2 Instance Types (http://aws.amazon.com/ec2/instance-types/).
 	//
-	// For a list of instance types that support local instance storage, including
-	// the total size per instance type, see Instance Store Volumes (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html#instance-store-volumes).
+	// To find the default local paths defined by the SageMaker training platform,
+	// see Amazon SageMaker Training Storage Folders for Training Datasets, Checkpoints,
+	// Model Artifacts, and Outputs (https://docs.aws.amazon.com/sagemaker/latest/dg/model-train-storage.html).
 	//
 	// VolumeSizeInGB is a required field
 	VolumeSizeInGB *int64 `min:"1" type:"integer" required:"true"`
@@ -82202,20 +87151,21 @@ func (s ResourceConfig) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *ResourceConfig) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ResourceConfig"}
-	if s.InstanceCount == nil {
-		invalidParams.Add(request.NewErrParamRequired("InstanceCount"))
-	}
-	if s.InstanceCount != nil && *s.InstanceCount < 1 {
-		invalidParams.Add(request.NewErrParamMinValue("InstanceCount", 1))
-	}
-	if s.InstanceType == nil {
-		invalidParams.Add(request.NewErrParamRequired("InstanceType"))
-	}
 	if s.VolumeSizeInGB == nil {
 		invalidParams.Add(request.NewErrParamRequired("VolumeSizeInGB"))
 	}
 	if s.VolumeSizeInGB != nil && *s.VolumeSizeInGB < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("VolumeSizeInGB", 1))
+	}
+	if s.InstanceGroups != nil {
+		for i, v := range s.InstanceGroups {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "InstanceGroups", i), err.(request.ErrInvalidParams))
+			}
+		}
 	}
 
 	if invalidParams.Len() > 0 {
@@ -82230,9 +87180,21 @@ func (s *ResourceConfig) SetInstanceCount(v int64) *ResourceConfig {
 	return s
 }
 
+// SetInstanceGroups sets the InstanceGroups field's value.
+func (s *ResourceConfig) SetInstanceGroups(v []*InstanceGroup) *ResourceConfig {
+	s.InstanceGroups = v
+	return s
+}
+
 // SetInstanceType sets the InstanceType field's value.
 func (s *ResourceConfig) SetInstanceType(v string) *ResourceConfig {
 	s.InstanceType = &v
+	return s
+}
+
+// SetKeepAlivePeriodInSeconds sets the KeepAlivePeriodInSeconds field's value.
+func (s *ResourceConfig) SetKeepAlivePeriodInSeconds(v int64) *ResourceConfig {
+	s.KeepAlivePeriodInSeconds = &v
 	return s
 }
 
@@ -82245,6 +87207,54 @@ func (s *ResourceConfig) SetVolumeKmsKeyId(v string) *ResourceConfig {
 // SetVolumeSizeInGB sets the VolumeSizeInGB field's value.
 func (s *ResourceConfig) SetVolumeSizeInGB(v int64) *ResourceConfig {
 	s.VolumeSizeInGB = &v
+	return s
+}
+
+// The ResourceConfig to update KeepAlivePeriodInSeconds. Other fields in the
+// ResourceConfig cannot be updated.
+type ResourceConfigForUpdate struct {
+	_ struct{} `type:"structure"`
+
+	// The KeepAlivePeriodInSeconds value specified in the ResourceConfig to update.
+	//
+	// KeepAlivePeriodInSeconds is a required field
+	KeepAlivePeriodInSeconds *int64 `type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ResourceConfigForUpdate) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ResourceConfigForUpdate) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ResourceConfigForUpdate) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ResourceConfigForUpdate"}
+	if s.KeepAlivePeriodInSeconds == nil {
+		invalidParams.Add(request.NewErrParamRequired("KeepAlivePeriodInSeconds"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetKeepAlivePeriodInSeconds sets the KeepAlivePeriodInSeconds field's value.
+func (s *ResourceConfigForUpdate) SetKeepAlivePeriodInSeconds(v int64) *ResourceConfigForUpdate {
+	s.KeepAlivePeriodInSeconds = &v
 	return s
 }
 
@@ -82312,8 +87322,8 @@ func (s *ResourceInUse) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// You have exceeded an Amazon SageMaker resource limit. For example, you might
-// have too many training jobs created.
+// You have exceeded an SageMaker resource limit. For example, you might have
+// too many training jobs created.
 type ResourceLimitExceeded struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -82517,6 +87527,11 @@ type ResourceSpec struct {
 	_ struct{} `type:"structure"`
 
 	// The instance type that the image version runs on.
+	//
+	// JupyterServer apps only support the system value.
+	//
+	// For KernelGateway apps, the system value is translated to ml.t3.medium. KernelGateway
+	// apps also support all other values for available instance types.
 	InstanceType *string `type:"string" enum:"AppInstanceType"`
 
 	// The Amazon Resource Name (ARN) of the Lifecycle Configuration attached to
@@ -82775,14 +87790,17 @@ type S3DataSource struct {
 	// augmented manifest file.
 	AttributeNames []*string `type:"list"`
 
-	// If you want Amazon SageMaker to replicate the entire dataset on each ML compute
+	// A list of names of instance groups that get data from the S3 data source.
+	InstanceGroupNames []*string `type:"list"`
+
+	// If you want SageMaker to replicate the entire dataset on each ML compute
 	// instance that is launched for model training, specify FullyReplicated.
 	//
-	// If you want Amazon SageMaker to replicate a subset of data on each ML compute
-	// instance that is launched for model training, specify ShardedByS3Key. If
-	// there are n ML compute instances launched for a training job, each instance
-	// gets approximately 1/n of the number of S3 objects. In this case, model training
-	// on each machine uses only the subset of training data.
+	// If you want SageMaker to replicate a subset of data on each ML compute instance
+	// that is launched for model training, specify ShardedByS3Key. If there are
+	// n ML compute instances launched for a training job, each instance gets approximately
+	// 1/n of the number of S3 objects. In this case, model training on each machine
+	// uses only the subset of training data.
 	//
 	// Don't choose more ML compute instances for training than available S3 objects.
 	// If you do, some nodes won't get any data and you will pay for nodes that
@@ -82795,12 +87813,12 @@ type S3DataSource struct {
 	// copies 1/n of the number of objects.
 	S3DataDistributionType *string `type:"string" enum:"S3DataDistribution"`
 
-	// If you choose S3Prefix, S3Uri identifies a key name prefix. Amazon SageMaker
-	// uses all objects that match the specified key name prefix for model training.
+	// If you choose S3Prefix, S3Uri identifies a key name prefix. SageMaker uses
+	// all objects that match the specified key name prefix for model training.
 	//
 	// If you choose ManifestFile, S3Uri identifies an object that is a manifest
-	// file containing a list of object keys that you want Amazon SageMaker to use
-	// for model training.
+	// file containing a list of object keys that you want SageMaker to use for
+	// model training.
 	//
 	// If you choose AugmentedManifestFile, S3Uri identifies an object that is an
 	// augmented manifest file in JSON lines format. This file contains the data
@@ -82828,7 +87846,7 @@ type S3DataSource struct {
 	//    s3://customer_bucket/some/prefix/relative/path/custdata-2 ... s3://customer_bucket/some/prefix/relative/path/custdata-N
 	//    The complete set of S3Uri in this manifest is the input data for the channel
 	//    for this data source. The object that each S3Uri points to must be readable
-	//    by the IAM role that Amazon SageMaker uses to perform tasks on your behalf.
+	//    by the IAM role that SageMaker uses to perform tasks on your behalf.
 	//
 	// S3Uri is a required field
 	S3Uri *string `type:"string" required:"true"`
@@ -82871,6 +87889,12 @@ func (s *S3DataSource) Validate() error {
 // SetAttributeNames sets the AttributeNames field's value.
 func (s *S3DataSource) SetAttributeNames(v []*string) *S3DataSource {
 	s.AttributeNames = v
+	return s
+}
+
+// SetInstanceGroupNames sets the InstanceGroupNames field's value.
+func (s *S3DataSource) SetInstanceGroupNames(v []*string) *S3DataSource {
+	s.InstanceGroupNames = v
 	return s
 }
 
@@ -83053,17 +88077,17 @@ func (s *ScheduleConfig) SetScheduleExpression(v string) *ScheduleConfig {
 //
 // A SearchExpression contains the following components:
 //
-//    * A list of Filter objects. Each filter defines a simple Boolean expression
-//    comprised of a resource property name, Boolean operator, and value.
+//   - A list of Filter objects. Each filter defines a simple Boolean expression
+//     comprised of a resource property name, Boolean operator, and value.
 //
-//    * A list of NestedFilter objects. Each nested filter defines a list of
-//    Boolean expressions using a list of resource properties. A nested filter
-//    is satisfied if a single object in the list satisfies all Boolean expressions.
+//   - A list of NestedFilter objects. Each nested filter defines a list of
+//     Boolean expressions using a list of resource properties. A nested filter
+//     is satisfied if a single object in the list satisfies all Boolean expressions.
 //
-//    * A list of SearchExpression objects. A search expression object can be
-//    nested in a list of search expression objects.
+//   - A list of SearchExpression objects. A search expression object can be
+//     nested in a list of search expression objects.
 //
-//    * A Boolean operator: And or Or.
+//   - A Boolean operator: And or Or.
 type SearchExpression struct {
 	_ struct{} `type:"structure"`
 
@@ -83343,6 +88367,12 @@ type SearchRecord struct {
 	// In principle, a Feature Group is composed of features and values per features.
 	FeatureGroup *FeatureGroup `type:"structure"`
 
+	// The feature metadata used to search through the features.
+	FeatureMetadata *FeatureMetadata `type:"structure"`
+
+	// The properties of a hyperparameter tuning job.
+	HyperParameterTuningJob *HyperParameterTuningJobSearchEntity `type:"structure"`
+
 	// A versioned model that can be deployed for SageMaker inference.
 	ModelPackage *ModelPackage `type:"structure"`
 
@@ -83404,6 +88434,18 @@ func (s *SearchRecord) SetFeatureGroup(v *FeatureGroup) *SearchRecord {
 	return s
 }
 
+// SetFeatureMetadata sets the FeatureMetadata field's value.
+func (s *SearchRecord) SetFeatureMetadata(v *FeatureMetadata) *SearchRecord {
+	s.FeatureMetadata = v
+	return s
+}
+
+// SetHyperParameterTuningJob sets the HyperParameterTuningJob field's value.
+func (s *SearchRecord) SetHyperParameterTuningJob(v *HyperParameterTuningJobSearchEntity) *SearchRecord {
+	s.HyperParameterTuningJob = v
+	return s
+}
+
 // SetModelPackage sets the ModelPackage field's value.
 func (s *SearchRecord) SetModelPackage(v *ModelPackage) *SearchRecord {
 	s.ModelPackage = v
@@ -83456,7 +88498,7 @@ func (s *SearchRecord) SetTrialComponent(v *TrialComponent) *SearchRecord {
 // It provides additional details about a status that the training job has transitioned
 // through. A training job can be in one of several states, for example, starting,
 // downloading, training, or uploading. Within each state, there are a number
-// of intermediate states. For example, within the starting state, Amazon SageMaker
+// of intermediate states. For example, within the starting state, SageMaker
 // could be starting the training job or launching the ML instances. These transitional
 // states are referred to as the job's secondary status.
 type SecondaryStatusTransition struct {
@@ -83523,8 +88565,8 @@ type SecondaryStatusTransition struct {
 
 	// A detailed description of the progress within a secondary status.
 	//
-	// Amazon SageMaker provides secondary statuses and status messages that apply
-	// to each of them:
+	// SageMaker provides secondary statuses and status messages that apply to each
+	// of them:
 	//
 	// Starting
 	//
@@ -84156,14 +89198,14 @@ func (s *ShuffleConfig) SetSeed(v int64) *ShuffleConfig {
 }
 
 // Specifies an algorithm that was used to create the model package. The algorithm
-// must be either an algorithm resource in your Amazon SageMaker account or
-// an algorithm in Amazon Web Services Marketplace that you are subscribed to.
+// must be either an algorithm resource in your SageMaker account or an algorithm
+// in Amazon Web Services Marketplace that you are subscribed to.
 type SourceAlgorithm struct {
 	_ struct{} `type:"structure"`
 
 	// The name of an algorithm that was used to create the model package. The algorithm
-	// must be either an algorithm resource in your Amazon SageMaker account or
-	// an algorithm in Amazon Web Services Marketplace that you are subscribed to.
+	// must be either an algorithm resource in your SageMaker account or an algorithm
+	// in Amazon Web Services Marketplace that you are subscribed to.
 	//
 	// AlgorithmName is a required field
 	AlgorithmName *string `min:"1" type:"string" required:"true"`
@@ -84337,6 +89379,94 @@ func (s *SourceIpConfig) Validate() error {
 func (s *SourceIpConfig) SetCidrs(v []*string) *SourceIpConfig {
 	s.Cidrs = v
 	return s
+}
+
+type StartEdgeDeploymentStageInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the edge deployment plan to start.
+	//
+	// EdgeDeploymentPlanName is a required field
+	EdgeDeploymentPlanName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the stage to start.
+	//
+	// StageName is a required field
+	StageName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartEdgeDeploymentStageInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartEdgeDeploymentStageInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StartEdgeDeploymentStageInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StartEdgeDeploymentStageInput"}
+	if s.EdgeDeploymentPlanName == nil {
+		invalidParams.Add(request.NewErrParamRequired("EdgeDeploymentPlanName"))
+	}
+	if s.EdgeDeploymentPlanName != nil && len(*s.EdgeDeploymentPlanName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EdgeDeploymentPlanName", 1))
+	}
+	if s.StageName == nil {
+		invalidParams.Add(request.NewErrParamRequired("StageName"))
+	}
+	if s.StageName != nil && len(*s.StageName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StageName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEdgeDeploymentPlanName sets the EdgeDeploymentPlanName field's value.
+func (s *StartEdgeDeploymentStageInput) SetEdgeDeploymentPlanName(v string) *StartEdgeDeploymentStageInput {
+	s.EdgeDeploymentPlanName = &v
+	return s
+}
+
+// SetStageName sets the StageName field's value.
+func (s *StartEdgeDeploymentStageInput) SetStageName(v string) *StartEdgeDeploymentStageInput {
+	s.StageName = &v
+	return s
+}
+
+type StartEdgeDeploymentStageOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartEdgeDeploymentStageOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartEdgeDeploymentStageOutput) GoString() string {
+	return s.String()
 }
 
 type StartMonitoringScheduleInput struct {
@@ -84765,6 +89895,94 @@ func (s StopCompilationJobOutput) String() string {
 // be included in the string output. The member name will be present, but the
 // value will be replaced with "sensitive".
 func (s StopCompilationJobOutput) GoString() string {
+	return s.String()
+}
+
+type StopEdgeDeploymentStageInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the edge deployment plan to stop.
+	//
+	// EdgeDeploymentPlanName is a required field
+	EdgeDeploymentPlanName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the stage to stop.
+	//
+	// StageName is a required field
+	StageName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StopEdgeDeploymentStageInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StopEdgeDeploymentStageInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StopEdgeDeploymentStageInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StopEdgeDeploymentStageInput"}
+	if s.EdgeDeploymentPlanName == nil {
+		invalidParams.Add(request.NewErrParamRequired("EdgeDeploymentPlanName"))
+	}
+	if s.EdgeDeploymentPlanName != nil && len(*s.EdgeDeploymentPlanName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EdgeDeploymentPlanName", 1))
+	}
+	if s.StageName == nil {
+		invalidParams.Add(request.NewErrParamRequired("StageName"))
+	}
+	if s.StageName != nil && len(*s.StageName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StageName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEdgeDeploymentPlanName sets the EdgeDeploymentPlanName field's value.
+func (s *StopEdgeDeploymentStageInput) SetEdgeDeploymentPlanName(v string) *StopEdgeDeploymentStageInput {
+	s.EdgeDeploymentPlanName = &v
+	return s
+}
+
+// SetStageName sets the StageName field's value.
+func (s *StopEdgeDeploymentStageInput) SetStageName(v string) *StopEdgeDeploymentStageInput {
+	s.StageName = &v
+	return s
+}
+
+type StopEdgeDeploymentStageOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StopEdgeDeploymentStageOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StopEdgeDeploymentStageOutput) GoString() string {
 	return s.String()
 }
 
@@ -85496,20 +90714,19 @@ func (s StopTransformJobOutput) GoString() string {
 
 // Specifies a limit to how long a model training job or model compilation job
 // can run. It also specifies how long a managed spot training job has to complete.
-// When the job reaches the time limit, Amazon SageMaker ends the training or
-// compilation job. Use this API to cap model training costs.
+// When the job reaches the time limit, SageMaker ends the training or compilation
+// job. Use this API to cap model training costs.
 //
-// To stop a training job, Amazon SageMaker sends the algorithm the SIGTERM
-// signal, which delays job termination for 120 seconds. Algorithms can use
-// this 120-second window to save the model artifacts, so the results of training
-// are not lost.
+// To stop a training job, SageMaker sends the algorithm the SIGTERM signal,
+// which delays job termination for 120 seconds. Algorithms can use this 120-second
+// window to save the model artifacts, so the results of training are not lost.
 //
-// The training algorithms provided by Amazon SageMaker automatically save the
-// intermediate results of a model training job when possible. This attempt
-// to save artifacts is only a best effort case as model might not be in a state
-// from which it can be saved. For example, if training has just started, the
-// model might not be ready to save. When saved, this intermediate data is a
-// valid model artifact. You can use it to create a model with CreateModel.
+// The training algorithms provided by SageMaker automatically save the intermediate
+// results of a model training job when possible. This attempt to save artifacts
+// is only a best effort case as model might not be in a state from which it
+// can be saved. For example, if training has just started, the model might
+// not be ready to save. When saved, this intermediate data is a valid model
+// artifact. You can use it to create a model with CreateModel.
 //
 // The Neural Topic Model (NTM) currently does not support saving intermediate
 // model artifacts. When training NTMs, make sure that the maximum runtime is
@@ -85518,24 +90735,27 @@ type StoppingCondition struct {
 	_ struct{} `type:"structure"`
 
 	// The maximum length of time, in seconds, that a training or compilation job
-	// can run.
+	// can run before it is stopped.
 	//
-	// For compilation jobs, if the job does not complete during this time, you
-	// will receive a TimeOut error. We recommend starting with 900 seconds and
-	// increase as necessary based on your model.
+	// For compilation jobs, if the job does not complete during this time, a TimeOut
+	// error is generated. We recommend starting with 900 seconds and increasing
+	// as necessary based on your model.
 	//
-	// For all other jobs, if the job does not complete during this time, Amazon
-	// SageMaker ends the job. When RetryStrategy is specified in the job request,
-	// MaxRuntimeInSeconds specifies the maximum time for all of the attempts in
-	// total, not each individual attempt. The default value is 1 day. The maximum
-	// value is 28 days.
+	// For all other jobs, if the job does not complete during this time, SageMaker
+	// ends the job. When RetryStrategy is specified in the job request, MaxRuntimeInSeconds
+	// specifies the maximum time for all of the attempts in total, not each individual
+	// attempt. The default value is 1 day. The maximum value is 28 days.
+	//
+	// The maximum time that a TrainingJob can run in total, including any time
+	// spent publishing metrics or archiving and uploading models after it has been
+	// stopped, is 30 days.
 	MaxRuntimeInSeconds *int64 `min:"1" type:"integer"`
 
 	// The maximum length of time, in seconds, that a managed Spot training job
 	// has to complete. It is the amount of time spent waiting for Spot capacity
 	// plus the amount of time the job can run. It must be equal to or greater than
-	// MaxRuntimeInSeconds. If the job does not complete during this time, Amazon
-	// SageMaker ends the job.
+	// MaxRuntimeInSeconds. If the job does not complete during this time, SageMaker
+	// ends the job.
 	//
 	// When RetryStrategy is specified in the job request, MaxWaitTimeInSeconds
 	// specifies the maximum time for all of the attempts in total, not each individual
@@ -86037,6 +91257,68 @@ func (s *TensorBoardOutputConfig) SetS3OutputPath(v string) *TensorBoardOutputCo
 	return s
 }
 
+// Time series forecast settings for the SageMaker Canvas app.
+type TimeSeriesForecastingSettings struct {
+	_ struct{} `type:"structure"`
+
+	// The IAM role that Canvas passes to Amazon Forecast for time series forecasting.
+	// By default, Canvas uses the execution role specified in the UserProfile that
+	// launches the Canvas app. If an execution role is not specified in the UserProfile,
+	// Canvas uses the execution role specified in the Domain that owns the UserProfile.
+	// To allow time series forecasting, this IAM role should have the AmazonSageMakerCanvasForecastAccess
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/security-iam-awsmanpol-canvas.html#security-iam-awsmanpol-AmazonSageMakerCanvasForecastAccess)
+	// policy attached and forecast.amazonaws.com added in the trust relationship
+	// as a service principal.
+	AmazonForecastRoleArn *string `min:"20" type:"string"`
+
+	// Describes whether time series forecasting is enabled or disabled in the Canvas
+	// app.
+	Status *string `type:"string" enum:"FeatureStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TimeSeriesForecastingSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TimeSeriesForecastingSettings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TimeSeriesForecastingSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TimeSeriesForecastingSettings"}
+	if s.AmazonForecastRoleArn != nil && len(*s.AmazonForecastRoleArn) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("AmazonForecastRoleArn", 20))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAmazonForecastRoleArn sets the AmazonForecastRoleArn field's value.
+func (s *TimeSeriesForecastingSettings) SetAmazonForecastRoleArn(v string) *TimeSeriesForecastingSettings {
+	s.AmazonForecastRoleArn = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *TimeSeriesForecastingSettings) SetStatus(v string) *TimeSeriesForecastingSettings {
+	s.Status = &v
+	return s
+}
+
 // Defines the traffic pattern of the load test.
 type TrafficPattern struct {
 	_ struct{} `type:"structure"`
@@ -86289,7 +91571,7 @@ type TrainingJob struct {
 	ModelArtifacts *ModelArtifacts `type:"structure"`
 
 	// The S3 path where model artifacts that you configured when creating the job
-	// are stored. Amazon SageMaker creates subfolders for model artifacts.
+	// are stored. SageMaker creates subfolders for model artifacts.
 	OutputDataConfig *OutputDataConfig `type:"structure"`
 
 	// Resources, including ML compute instances and ML storage volumes, that are
@@ -86307,8 +91589,8 @@ type TrainingJob struct {
 	// information about the secondary status of the training job, see StatusMessage
 	// under SecondaryStatusTransition.
 	//
-	// Amazon SageMaker provides primary statuses and secondary statuses that apply
-	// to each of them:
+	// SageMaker provides primary statuses and secondary statuses that apply to
+	// each of them:
 	//
 	// InProgress
 	//
@@ -86360,12 +91642,12 @@ type TrainingJob struct {
 
 	// Specifies a limit to how long a model training job can run. It also specifies
 	// how long a managed Spot training job has to complete. When the job reaches
-	// the time limit, Amazon SageMaker ends the training job. Use this API to cap
-	// model training costs.
+	// the time limit, SageMaker ends the training job. Use this API to cap model
+	// training costs.
 	//
-	// To stop a job, Amazon SageMaker sends the algorithm the SIGTERM signal, which
-	// delays job termination for 120 seconds. Algorithms can use this 120-second
-	// window to save the model artifacts, so the results of training are not lost.
+	// To stop a job, SageMaker sends the algorithm the SIGTERM signal, which delays
+	// job termination for 120 seconds. Algorithms can use this 120-second window
+	// to save the model artifacts, so the results of training are not lost.
 	StoppingCondition *StoppingCondition `type:"structure"`
 
 	// An array of key-value pairs. You can use tags to categorize your Amazon Web
@@ -86380,7 +91662,7 @@ type TrainingJob struct {
 	// Indicates the time when the training job ends on training instances. You
 	// are billed for the time interval between the value of TrainingStartTime and
 	// this time. For successful jobs and stopped jobs, this is the time after model
-	// artifacts are uploaded. For failed jobs, this is the time when Amazon SageMaker
+	// artifacts are uploaded. For failed jobs, this is the time when SageMaker
 	// detects a job failure.
 	TrainingEndTime *time.Time `type:"timestamp"`
 
@@ -86681,8 +91963,8 @@ type TrainingJobDefinition struct {
 	// InputDataConfig is a required field
 	InputDataConfig []*Channel `min:"1" type:"list" required:"true"`
 
-	// the path to the S3 bucket where you want to store model artifacts. Amazon
-	// SageMaker creates subfolders for the artifacts.
+	// the path to the S3 bucket where you want to store model artifacts. SageMaker
+	// creates subfolders for the artifacts.
 	//
 	// OutputDataConfig is a required field
 	OutputDataConfig *OutputDataConfig `type:"structure" required:"true"`
@@ -86695,12 +91977,12 @@ type TrainingJobDefinition struct {
 
 	// Specifies a limit to how long a model training job can run. It also specifies
 	// how long a managed Spot training job has to complete. When the job reaches
-	// the time limit, Amazon SageMaker ends the training job. Use this API to cap
-	// model training costs.
+	// the time limit, SageMaker ends the training job. Use this API to cap model
+	// training costs.
 	//
-	// To stop a job, Amazon SageMaker sends the algorithm the SIGTERM signal, which
-	// delays job termination for 120 seconds. Algorithms can use this 120-second
-	// window to save the model artifacts.
+	// To stop a job, SageMaker sends the algorithm the SIGTERM signal, which delays
+	// job termination for 120 seconds. Algorithms can use this 120-second window
+	// to save the model artifacts.
 	//
 	// StoppingCondition is a required field
 	StoppingCondition *StoppingCondition `type:"structure" required:"true"`
@@ -86991,6 +92273,9 @@ type TrainingJobSummary struct {
 	//
 	// TrainingJobStatus is a required field
 	TrainingJobStatus *string `type:"string" required:"true" enum:"TrainingJobStatus"`
+
+	// The status of the warm pool associated with the training job.
+	WarmPoolStatus *WarmPoolStatus `type:"structure"`
 }
 
 // String returns the string representation.
@@ -87047,6 +92332,12 @@ func (s *TrainingJobSummary) SetTrainingJobStatus(v string) *TrainingJobSummary 
 	return s
 }
 
+// SetWarmPoolStatus sets the WarmPoolStatus field's value.
+func (s *TrainingJobSummary) SetWarmPoolStatus(v *WarmPoolStatus) *TrainingJobSummary {
+	s.WarmPoolStatus = v
+	return s
+}
+
 // Defines how the algorithm is used for a training job.
 type TrainingSpecification struct {
 	_ struct{} `type:"structure"`
@@ -87063,7 +92354,7 @@ type TrainingSpecification struct {
 	// A list of the instance types that this algorithm can use for training.
 	//
 	// SupportedTrainingInstanceTypes is a required field
-	SupportedTrainingInstanceTypes []*string `type:"list" required:"true"`
+	SupportedTrainingInstanceTypes []*string `type:"list" required:"true" enum:"TrainingInstanceType"`
 
 	// A list of the metrics that the algorithm emits that can be used as the objective
 	// metric in a hyperparameter tuning job.
@@ -87946,8 +93237,9 @@ type TransformOutput struct {
 	// in the Amazon Simple Storage Service Developer Guide.
 	//
 	// The KMS key policy must grant permission to the IAM role that you specify
-	// in your CreateModel request. For more information, see Using Key Policies
-	// in Amazon Web Services KMS (http://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html)
+	// in your CreateModel (https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateModel.html)
+	// request. For more information, see Using Key Policies in Amazon Web Services
+	// KMS (https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html)
 	// in the Amazon Web Services Key Management Service Developer Guide.
 	KmsKeyId *string `type:"string"`
 
@@ -90561,7 +95853,7 @@ type UpdateEndpointWeightsAndCapacitiesInput struct {
 	// DesiredWeightsAndCapacities is a required field
 	DesiredWeightsAndCapacities []*DesiredWeightAndCapacity `min:"1" type:"list" required:"true"`
 
-	// The name of an existing Amazon SageMaker endpoint.
+	// The name of an existing SageMaker endpoint.
 	//
 	// EndpointName is a required field
 	EndpointName *string `type:"string" required:"true"`
@@ -90759,6 +96051,239 @@ func (s UpdateExperimentOutput) GoString() string {
 func (s *UpdateExperimentOutput) SetExperimentArn(v string) *UpdateExperimentOutput {
 	s.ExperimentArn = &v
 	return s
+}
+
+type UpdateFeatureGroupInput struct {
+	_ struct{} `type:"structure"`
+
+	// Updates the feature group. Updating a feature group is an asynchronous operation.
+	// When you get an HTTP 200 response, you've made a valid request. It takes
+	// some time after you've made a valid request for Feature Store to update the
+	// feature group.
+	FeatureAdditions []*FeatureDefinition `min:"1" type:"list"`
+
+	// The name of the feature group that you're updating.
+	//
+	// FeatureGroupName is a required field
+	FeatureGroupName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFeatureGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFeatureGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateFeatureGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateFeatureGroupInput"}
+	if s.FeatureAdditions != nil && len(s.FeatureAdditions) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FeatureAdditions", 1))
+	}
+	if s.FeatureGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("FeatureGroupName"))
+	}
+	if s.FeatureGroupName != nil && len(*s.FeatureGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FeatureGroupName", 1))
+	}
+	if s.FeatureAdditions != nil {
+		for i, v := range s.FeatureAdditions {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "FeatureAdditions", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFeatureAdditions sets the FeatureAdditions field's value.
+func (s *UpdateFeatureGroupInput) SetFeatureAdditions(v []*FeatureDefinition) *UpdateFeatureGroupInput {
+	s.FeatureAdditions = v
+	return s
+}
+
+// SetFeatureGroupName sets the FeatureGroupName field's value.
+func (s *UpdateFeatureGroupInput) SetFeatureGroupName(v string) *UpdateFeatureGroupInput {
+	s.FeatureGroupName = &v
+	return s
+}
+
+type UpdateFeatureGroupOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Number (ARN) of the feature group that you're updating.
+	//
+	// FeatureGroupArn is a required field
+	FeatureGroupArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFeatureGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFeatureGroupOutput) GoString() string {
+	return s.String()
+}
+
+// SetFeatureGroupArn sets the FeatureGroupArn field's value.
+func (s *UpdateFeatureGroupOutput) SetFeatureGroupArn(v string) *UpdateFeatureGroupOutput {
+	s.FeatureGroupArn = &v
+	return s
+}
+
+type UpdateFeatureMetadataInput struct {
+	_ struct{} `type:"structure"`
+
+	// A description that you can write to better describe the feature.
+	Description *string `type:"string"`
+
+	// The name of the feature group containing the feature that you're updating.
+	//
+	// FeatureGroupName is a required field
+	FeatureGroupName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the feature that you're updating.
+	//
+	// FeatureName is a required field
+	FeatureName *string `min:"1" type:"string" required:"true"`
+
+	// A list of key-value pairs that you can add to better describe the feature.
+	ParameterAdditions []*FeatureParameter `type:"list"`
+
+	// A list of parameter keys that you can specify to remove parameters that describe
+	// your feature.
+	ParameterRemovals []*string `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFeatureMetadataInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFeatureMetadataInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateFeatureMetadataInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateFeatureMetadataInput"}
+	if s.FeatureGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("FeatureGroupName"))
+	}
+	if s.FeatureGroupName != nil && len(*s.FeatureGroupName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FeatureGroupName", 1))
+	}
+	if s.FeatureName == nil {
+		invalidParams.Add(request.NewErrParamRequired("FeatureName"))
+	}
+	if s.FeatureName != nil && len(*s.FeatureName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FeatureName", 1))
+	}
+	if s.ParameterAdditions != nil {
+		for i, v := range s.ParameterAdditions {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "ParameterAdditions", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDescription sets the Description field's value.
+func (s *UpdateFeatureMetadataInput) SetDescription(v string) *UpdateFeatureMetadataInput {
+	s.Description = &v
+	return s
+}
+
+// SetFeatureGroupName sets the FeatureGroupName field's value.
+func (s *UpdateFeatureMetadataInput) SetFeatureGroupName(v string) *UpdateFeatureMetadataInput {
+	s.FeatureGroupName = &v
+	return s
+}
+
+// SetFeatureName sets the FeatureName field's value.
+func (s *UpdateFeatureMetadataInput) SetFeatureName(v string) *UpdateFeatureMetadataInput {
+	s.FeatureName = &v
+	return s
+}
+
+// SetParameterAdditions sets the ParameterAdditions field's value.
+func (s *UpdateFeatureMetadataInput) SetParameterAdditions(v []*FeatureParameter) *UpdateFeatureMetadataInput {
+	s.ParameterAdditions = v
+	return s
+}
+
+// SetParameterRemovals sets the ParameterRemovals field's value.
+func (s *UpdateFeatureMetadataInput) SetParameterRemovals(v []*string) *UpdateFeatureMetadataInput {
+	s.ParameterRemovals = v
+	return s
+}
+
+type UpdateFeatureMetadataOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFeatureMetadataOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateFeatureMetadataOutput) GoString() string {
+	return s.String()
 }
 
 type UpdateImageInput struct {
@@ -91145,7 +96670,7 @@ type UpdateNotebookInstanceInput struct {
 	// notebook instance. Currently only one EI instance type can be associated
 	// with a notebook instance. For more information, see Using Elastic Inference
 	// in Amazon SageMaker (https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html).
-	AcceleratorTypes []*string `type:"list"`
+	AcceleratorTypes []*string `type:"list" enum:"NotebookInstanceAcceleratorType"`
 
 	// An array of up to three Git repositories to associate with the notebook instance.
 	// These can be either the names of Git repositories stored as resources in
@@ -91153,8 +96678,7 @@ type UpdateNotebookInstanceInput struct {
 	// (https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html) or
 	// in any other Git repository. These repositories are cloned at the same level
 	// as the default repository of your notebook instance. For more information,
-	// see Associating Git Repositories with Amazon SageMaker Notebook Instances
-	// (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
+	// see Associating Git Repositories with SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
 	AdditionalCodeRepositories []*string `type:"list"`
 
 	// The Git repository to associate with the notebook instance as its default
@@ -91163,7 +96687,7 @@ type UpdateNotebookInstanceInput struct {
 	// Services CodeCommit (https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html)
 	// or in any other Git repository. When you open a notebook instance, it opens
 	// in the directory that contains this repository. For more information, see
-	// Associating Git Repositories with Amazon SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
+	// Associating Git Repositories with SageMaker Notebook Instances (https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-git-repo.html).
 	DefaultCodeRepository *string `min:"1" type:"string"`
 
 	// A list of the Elastic Inference (EI) instance types to remove from this notebook
@@ -91190,6 +96714,9 @@ type UpdateNotebookInstanceInput struct {
 	// instance when you call this method, it does not throw an error.
 	DisassociateLifecycleConfig *bool `type:"boolean"`
 
+	// Information on the IMDS configuration of the notebook instance
+	InstanceMetadataServiceConfiguration *InstanceMetadataServiceConfiguration `type:"structure"`
+
 	// The Amazon ML compute instance type.
 	InstanceType *string `type:"string" enum:"InstanceType"`
 
@@ -91203,12 +96730,12 @@ type UpdateNotebookInstanceInput struct {
 	// NotebookInstanceName is a required field
 	NotebookInstanceName *string `type:"string" required:"true"`
 
-	// The Amazon Resource Name (ARN) of the IAM role that Amazon SageMaker can
-	// assume to access the notebook instance. For more information, see Amazon
-	// SageMaker Roles (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
+	// The Amazon Resource Name (ARN) of the IAM role that SageMaker can assume
+	// to access the notebook instance. For more information, see SageMaker Roles
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
 	//
-	// To be able to pass this role to Amazon SageMaker, the caller of this API
-	// must have the iam:PassRole permission.
+	// To be able to pass this role to SageMaker, the caller of this API must have
+	// the iam:PassRole permission.
 	RoleArn *string `min:"20" type:"string"`
 
 	// Whether root access is enabled or disabled for users of the notebook instance.
@@ -91219,7 +96746,7 @@ type UpdateNotebookInstanceInput struct {
 	RootAccess *string `type:"string" enum:"RootAccess"`
 
 	// The size, in GB, of the ML storage volume to attach to the notebook instance.
-	// The default value is 5 GB. ML storage volumes are encrypted, so Amazon SageMaker
+	// The default value is 5 GB. ML storage volumes are encrypted, so SageMaker
 	// can't determine the amount of available free space on the volume. Because
 	// of this, you can increase the volume size when you update a notebook instance,
 	// but you can't decrease the volume size. If you want to decrease the size
@@ -91260,6 +96787,11 @@ func (s *UpdateNotebookInstanceInput) Validate() error {
 	}
 	if s.VolumeSizeInGB != nil && *s.VolumeSizeInGB < 5 {
 		invalidParams.Add(request.NewErrParamMinValue("VolumeSizeInGB", 5))
+	}
+	if s.InstanceMetadataServiceConfiguration != nil {
+		if err := s.InstanceMetadataServiceConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("InstanceMetadataServiceConfiguration", err.(request.ErrInvalidParams))
+		}
 	}
 
 	if invalidParams.Len() > 0 {
@@ -91307,6 +96839,12 @@ func (s *UpdateNotebookInstanceInput) SetDisassociateDefaultCodeRepository(v boo
 // SetDisassociateLifecycleConfig sets the DisassociateLifecycleConfig field's value.
 func (s *UpdateNotebookInstanceInput) SetDisassociateLifecycleConfig(v bool) *UpdateNotebookInstanceInput {
 	s.DisassociateLifecycleConfig = &v
+	return s
+}
+
+// SetInstanceMetadataServiceConfiguration sets the InstanceMetadataServiceConfiguration field's value.
+func (s *UpdateNotebookInstanceInput) SetInstanceMetadataServiceConfiguration(v *InstanceMetadataServiceConfiguration) *UpdateNotebookInstanceInput {
+	s.InstanceMetadataServiceConfiguration = v
 	return s
 }
 
@@ -91764,7 +97302,10 @@ type UpdateProjectInput struct {
 	// An array of key-value pairs. You can use tags to categorize your Amazon Web
 	// Services resources in different ways, for example, by purpose, owner, or
 	// environment. For more information, see Tagging Amazon Web Services Resources
-	// (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html).
+	// (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html). In addition,
+	// the project must have tag update constraints set in order to include this
+	// parameter in the request. For more information, see Amazon Web Services Service
+	// Catalog Tag Update Constraints (https://docs.aws.amazon.com/servicecatalog/latest/adminguide/constraints-resourceupdate.html).
 	Tags []*Tag `type:"list"`
 }
 
@@ -91885,6 +97426,9 @@ type UpdateTrainingJobInput struct {
 	// metrics.
 	ProfilerRuleConfigurations []*ProfilerRuleConfiguration `type:"list"`
 
+	// The training job ResourceConfig to update warm pool retention length.
+	ResourceConfig *ResourceConfigForUpdate `type:"structure"`
+
 	// The name of a training job to update the Debugger profiling configuration.
 	//
 	// TrainingJobName is a required field
@@ -91928,6 +97472,11 @@ func (s *UpdateTrainingJobInput) Validate() error {
 			}
 		}
 	}
+	if s.ResourceConfig != nil {
+		if err := s.ResourceConfig.Validate(); err != nil {
+			invalidParams.AddNested("ResourceConfig", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -91944,6 +97493,12 @@ func (s *UpdateTrainingJobInput) SetProfilerConfig(v *ProfilerConfigForUpdate) *
 // SetProfilerRuleConfigurations sets the ProfilerRuleConfigurations field's value.
 func (s *UpdateTrainingJobInput) SetProfilerRuleConfigurations(v []*ProfilerRuleConfiguration) *UpdateTrainingJobInput {
 	s.ProfilerRuleConfigurations = v
+	return s
+}
+
+// SetResourceConfig sets the ResourceConfig field's value.
+func (s *UpdateTrainingJobInput) SetResourceConfig(v *ResourceConfigForUpdate) *UpdateTrainingJobInput {
+	s.ResourceConfig = v
 	return s
 }
 
@@ -92396,6 +97951,9 @@ type UpdateWorkforceInput struct {
 	//
 	// WorkforceName is a required field
 	WorkforceName *string `min:"1" type:"string" required:"true"`
+
+	// Use this parameter to update your VPC configuration for a workforce.
+	WorkforceVpcConfig *WorkforceVpcConfigRequest `type:"structure"`
 }
 
 // String returns the string representation.
@@ -92435,6 +97993,11 @@ func (s *UpdateWorkforceInput) Validate() error {
 			invalidParams.AddNested("SourceIpConfig", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.WorkforceVpcConfig != nil {
+		if err := s.WorkforceVpcConfig.Validate(); err != nil {
+			invalidParams.AddNested("WorkforceVpcConfig", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -92457,6 +98020,12 @@ func (s *UpdateWorkforceInput) SetSourceIpConfig(v *SourceIpConfig) *UpdateWorkf
 // SetWorkforceName sets the WorkforceName field's value.
 func (s *UpdateWorkforceInput) SetWorkforceName(v string) *UpdateWorkforceInput {
 	s.WorkforceName = &v
+	return s
+}
+
+// SetWorkforceVpcConfig sets the WorkforceVpcConfig field's value.
+func (s *UpdateWorkforceInput) SetWorkforceVpcConfig(v *WorkforceVpcConfigRequest) *UpdateWorkforceInput {
+	s.WorkforceVpcConfig = v
 	return s
 }
 
@@ -92771,6 +98340,9 @@ func (s *UserProfileDetails) SetUserProfileName(v string) *UserProfileDetails {
 type UserSettings struct {
 	_ struct{} `type:"structure"`
 
+	// The Canvas app settings.
+	CanvasAppSettings *CanvasAppSettings `type:"structure"`
+
 	// The execution role for the user.
 	ExecutionRole *string `min:"20" type:"string"`
 
@@ -92830,9 +98402,19 @@ func (s *UserSettings) Validate() error {
 	if s.ExecutionRole != nil && len(*s.ExecutionRole) < 20 {
 		invalidParams.Add(request.NewErrParamMinLen("ExecutionRole", 20))
 	}
+	if s.CanvasAppSettings != nil {
+		if err := s.CanvasAppSettings.Validate(); err != nil {
+			invalidParams.AddNested("CanvasAppSettings", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.KernelGatewayAppSettings != nil {
 		if err := s.KernelGatewayAppSettings.Validate(); err != nil {
 			invalidParams.AddNested("KernelGatewayAppSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.RSessionAppSettings != nil {
+		if err := s.RSessionAppSettings.Validate(); err != nil {
+			invalidParams.AddNested("RSessionAppSettings", err.(request.ErrInvalidParams))
 		}
 	}
 
@@ -92840,6 +98422,12 @@ func (s *UserSettings) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetCanvasAppSettings sets the CanvasAppSettings field's value.
+func (s *UserSettings) SetCanvasAppSettings(v *CanvasAppSettings) *UserSettings {
+	s.CanvasAppSettings = v
+	return s
 }
 
 // SetExecutionRole sets the ExecutionRole field's value.
@@ -93074,6 +98662,75 @@ func (s *VpcConfig) SetSubnets(v []*string) *VpcConfig {
 	return s
 }
 
+// Status and billing information about the warm pool.
+type WarmPoolStatus struct {
+	_ struct{} `type:"structure"`
+
+	// The billable time in seconds used by the warm pool. Billable time refers
+	// to the absolute wall-clock time.
+	//
+	// Multiply ResourceRetainedBillableTimeInSeconds by the number of instances
+	// (InstanceCount) in your training cluster to get the total compute time SageMaker
+	// bills you if you run warm pool training. The formula is as follows: ResourceRetainedBillableTimeInSeconds
+	// * InstanceCount.
+	ResourceRetainedBillableTimeInSeconds *int64 `type:"integer"`
+
+	// The name of the matching training job that reused the warm pool.
+	ReusedByJob *string `min:"1" type:"string"`
+
+	// The status of the warm pool.
+	//
+	//    * InUse: The warm pool is in use for the training job.
+	//
+	//    * Available: The warm pool is available to reuse for a matching training
+	//    job.
+	//
+	//    * Reused: The warm pool moved to a matching training job for reuse.
+	//
+	//    * Terminated: The warm pool is no longer available. Warm pools are unavailable
+	//    if they are terminated by a user, terminated for a patch update, or terminated
+	//    for exceeding the specified KeepAlivePeriodInSeconds.
+	//
+	// Status is a required field
+	Status *string `type:"string" required:"true" enum:"WarmPoolResourceStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s WarmPoolStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s WarmPoolStatus) GoString() string {
+	return s.String()
+}
+
+// SetResourceRetainedBillableTimeInSeconds sets the ResourceRetainedBillableTimeInSeconds field's value.
+func (s *WarmPoolStatus) SetResourceRetainedBillableTimeInSeconds(v int64) *WarmPoolStatus {
+	s.ResourceRetainedBillableTimeInSeconds = &v
+	return s
+}
+
+// SetReusedByJob sets the ReusedByJob field's value.
+func (s *WarmPoolStatus) SetReusedByJob(v string) *WarmPoolStatus {
+	s.ReusedByJob = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *WarmPoolStatus) SetStatus(v string) *WarmPoolStatus {
+	s.Status = &v
+	return s
+}
+
 // A single private workforce, which is automatically created when you create
 // your first private work team. You can create one private work force in each
 // Amazon Web Services Region. By default, any workforce-related API operation
@@ -93090,6 +98747,9 @@ type Workforce struct {
 	// The date that the workforce is created.
 	CreateDate *time.Time `type:"timestamp"`
 
+	// The reason your workforce failed.
+	FailureReason *string `min:"1" type:"string"`
+
 	// The most recent date that was used to successfully add one or more IP address
 	// ranges (CIDRs (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html))
 	// to a private workforce's allow list.
@@ -93103,6 +98763,9 @@ type Workforce struct {
 	// to specific IP addresses.
 	SourceIpConfig *SourceIpConfig `type:"structure"`
 
+	// The status of your workforce.
+	Status *string `type:"string" enum:"WorkforceStatus"`
+
 	// The subdomain for your OIDC Identity Provider.
 	SubDomain *string `type:"string"`
 
@@ -93115,6 +98778,9 @@ type Workforce struct {
 	//
 	// WorkforceName is a required field
 	WorkforceName *string `min:"1" type:"string" required:"true"`
+
+	// The configuration of a VPC workforce.
+	WorkforceVpcConfig *WorkforceVpcConfigResponse `type:"structure"`
 }
 
 // String returns the string representation.
@@ -93147,6 +98813,12 @@ func (s *Workforce) SetCreateDate(v time.Time) *Workforce {
 	return s
 }
 
+// SetFailureReason sets the FailureReason field's value.
+func (s *Workforce) SetFailureReason(v string) *Workforce {
+	s.FailureReason = &v
+	return s
+}
+
 // SetLastUpdatedDate sets the LastUpdatedDate field's value.
 func (s *Workforce) SetLastUpdatedDate(v time.Time) *Workforce {
 	s.LastUpdatedDate = &v
@@ -93165,6 +98837,12 @@ func (s *Workforce) SetSourceIpConfig(v *SourceIpConfig) *Workforce {
 	return s
 }
 
+// SetStatus sets the Status field's value.
+func (s *Workforce) SetStatus(v string) *Workforce {
+	s.Status = &v
+	return s
+}
+
 // SetSubDomain sets the SubDomain field's value.
 func (s *Workforce) SetSubDomain(v string) *Workforce {
 	s.SubDomain = &v
@@ -93180,6 +98858,147 @@ func (s *Workforce) SetWorkforceArn(v string) *Workforce {
 // SetWorkforceName sets the WorkforceName field's value.
 func (s *Workforce) SetWorkforceName(v string) *Workforce {
 	s.WorkforceName = &v
+	return s
+}
+
+// SetWorkforceVpcConfig sets the WorkforceVpcConfig field's value.
+func (s *Workforce) SetWorkforceVpcConfig(v *WorkforceVpcConfigResponse) *Workforce {
+	s.WorkforceVpcConfig = v
+	return s
+}
+
+// The VPC object you use to create or update a workforce.
+type WorkforceVpcConfigRequest struct {
+	_ struct{} `type:"structure"`
+
+	// The VPC security group IDs, in the form sg-xxxxxxxx. The security groups
+	// must be for the same VPC as specified in the subnet.
+	SecurityGroupIds []*string `min:"1" type:"list"`
+
+	// The ID of the subnets in the VPC that you want to connect.
+	Subnets []*string `min:"1" type:"list"`
+
+	// The ID of the VPC that the workforce uses for communication.
+	VpcId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s WorkforceVpcConfigRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s WorkforceVpcConfigRequest) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *WorkforceVpcConfigRequest) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "WorkforceVpcConfigRequest"}
+	if s.SecurityGroupIds != nil && len(s.SecurityGroupIds) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SecurityGroupIds", 1))
+	}
+	if s.Subnets != nil && len(s.Subnets) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Subnets", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetSecurityGroupIds sets the SecurityGroupIds field's value.
+func (s *WorkforceVpcConfigRequest) SetSecurityGroupIds(v []*string) *WorkforceVpcConfigRequest {
+	s.SecurityGroupIds = v
+	return s
+}
+
+// SetSubnets sets the Subnets field's value.
+func (s *WorkforceVpcConfigRequest) SetSubnets(v []*string) *WorkforceVpcConfigRequest {
+	s.Subnets = v
+	return s
+}
+
+// SetVpcId sets the VpcId field's value.
+func (s *WorkforceVpcConfigRequest) SetVpcId(v string) *WorkforceVpcConfigRequest {
+	s.VpcId = &v
+	return s
+}
+
+// A VpcConfig object that specifies the VPC that you want your workforce to
+// connect to.
+type WorkforceVpcConfigResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The VPC security group IDs, in the form sg-xxxxxxxx. The security groups
+	// must be for the same VPC as specified in the subnet.
+	//
+	// SecurityGroupIds is a required field
+	SecurityGroupIds []*string `min:"1" type:"list" required:"true"`
+
+	// The ID of the subnets in the VPC that you want to connect.
+	//
+	// Subnets is a required field
+	Subnets []*string `min:"1" type:"list" required:"true"`
+
+	// The IDs for the VPC service endpoints of your VPC workforce when it is created
+	// and updated.
+	VpcEndpointId *string `min:"1" type:"string"`
+
+	// The ID of the VPC that the workforce uses for communication.
+	//
+	// VpcId is a required field
+	VpcId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s WorkforceVpcConfigResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s WorkforceVpcConfigResponse) GoString() string {
+	return s.String()
+}
+
+// SetSecurityGroupIds sets the SecurityGroupIds field's value.
+func (s *WorkforceVpcConfigResponse) SetSecurityGroupIds(v []*string) *WorkforceVpcConfigResponse {
+	s.SecurityGroupIds = v
+	return s
+}
+
+// SetSubnets sets the Subnets field's value.
+func (s *WorkforceVpcConfigResponse) SetSubnets(v []*string) *WorkforceVpcConfigResponse {
+	s.Subnets = v
+	return s
+}
+
+// SetVpcEndpointId sets the VpcEndpointId field's value.
+func (s *WorkforceVpcConfigResponse) SetVpcEndpointId(v string) *WorkforceVpcConfigResponse {
+	s.VpcEndpointId = &v
+	return s
+}
+
+// SetVpcId sets the VpcId field's value.
+func (s *WorkforceVpcConfigResponse) SetVpcId(v string) *WorkforceVpcConfigResponse {
+	s.VpcId = &v
 	return s
 }
 
@@ -93554,6 +99373,30 @@ const (
 
 	// AppInstanceTypeMlR524xlarge is a AppInstanceType enum value
 	AppInstanceTypeMlR524xlarge = "ml.r5.24xlarge"
+
+	// AppInstanceTypeMlG5Xlarge is a AppInstanceType enum value
+	AppInstanceTypeMlG5Xlarge = "ml.g5.xlarge"
+
+	// AppInstanceTypeMlG52xlarge is a AppInstanceType enum value
+	AppInstanceTypeMlG52xlarge = "ml.g5.2xlarge"
+
+	// AppInstanceTypeMlG54xlarge is a AppInstanceType enum value
+	AppInstanceTypeMlG54xlarge = "ml.g5.4xlarge"
+
+	// AppInstanceTypeMlG58xlarge is a AppInstanceType enum value
+	AppInstanceTypeMlG58xlarge = "ml.g5.8xlarge"
+
+	// AppInstanceTypeMlG516xlarge is a AppInstanceType enum value
+	AppInstanceTypeMlG516xlarge = "ml.g5.16xlarge"
+
+	// AppInstanceTypeMlG512xlarge is a AppInstanceType enum value
+	AppInstanceTypeMlG512xlarge = "ml.g5.12xlarge"
+
+	// AppInstanceTypeMlG524xlarge is a AppInstanceType enum value
+	AppInstanceTypeMlG524xlarge = "ml.g5.24xlarge"
+
+	// AppInstanceTypeMlG548xlarge is a AppInstanceType enum value
+	AppInstanceTypeMlG548xlarge = "ml.g5.48xlarge"
 )
 
 // AppInstanceType_Values returns all elements of the AppInstanceType enum
@@ -93608,6 +99451,14 @@ func AppInstanceType_Values() []string {
 		AppInstanceTypeMlR512xlarge,
 		AppInstanceTypeMlR516xlarge,
 		AppInstanceTypeMlR524xlarge,
+		AppInstanceTypeMlG5Xlarge,
+		AppInstanceTypeMlG52xlarge,
+		AppInstanceTypeMlG54xlarge,
+		AppInstanceTypeMlG58xlarge,
+		AppInstanceTypeMlG516xlarge,
+		AppInstanceTypeMlG512xlarge,
+		AppInstanceTypeMlG524xlarge,
+		AppInstanceTypeMlG548xlarge,
 	}
 }
 
@@ -93842,6 +99693,22 @@ func AuthMode_Values() []string {
 }
 
 const (
+	// AutoMLChannelTypeTraining is a AutoMLChannelType enum value
+	AutoMLChannelTypeTraining = "training"
+
+	// AutoMLChannelTypeValidation is a AutoMLChannelType enum value
+	AutoMLChannelTypeValidation = "validation"
+)
+
+// AutoMLChannelType_Values returns all elements of the AutoMLChannelType enum
+func AutoMLChannelType_Values() []string {
+	return []string{
+		AutoMLChannelTypeTraining,
+		AutoMLChannelTypeValidation,
+	}
+}
+
+const (
 	// AutoMLJobObjectiveTypeMaximize is a AutoMLJobObjectiveType enum value
 	AutoMLJobObjectiveTypeMaximize = "Maximize"
 
@@ -93986,6 +99853,90 @@ func AutoMLMetricEnum_Values() []string {
 		AutoMLMetricEnumF1,
 		AutoMLMetricEnumF1macro,
 		AutoMLMetricEnumAuc,
+	}
+}
+
+const (
+	// AutoMLMetricExtendedEnumAccuracy is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumAccuracy = "Accuracy"
+
+	// AutoMLMetricExtendedEnumMse is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumMse = "MSE"
+
+	// AutoMLMetricExtendedEnumF1 is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumF1 = "F1"
+
+	// AutoMLMetricExtendedEnumF1macro is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumF1macro = "F1macro"
+
+	// AutoMLMetricExtendedEnumAuc is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumAuc = "AUC"
+
+	// AutoMLMetricExtendedEnumRmse is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumRmse = "RMSE"
+
+	// AutoMLMetricExtendedEnumMae is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumMae = "MAE"
+
+	// AutoMLMetricExtendedEnumR2 is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumR2 = "R2"
+
+	// AutoMLMetricExtendedEnumBalancedAccuracy is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumBalancedAccuracy = "BalancedAccuracy"
+
+	// AutoMLMetricExtendedEnumPrecision is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumPrecision = "Precision"
+
+	// AutoMLMetricExtendedEnumPrecisionMacro is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumPrecisionMacro = "PrecisionMacro"
+
+	// AutoMLMetricExtendedEnumRecall is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumRecall = "Recall"
+
+	// AutoMLMetricExtendedEnumRecallMacro is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumRecallMacro = "RecallMacro"
+
+	// AutoMLMetricExtendedEnumLogLoss is a AutoMLMetricExtendedEnum enum value
+	AutoMLMetricExtendedEnumLogLoss = "LogLoss"
+)
+
+// AutoMLMetricExtendedEnum_Values returns all elements of the AutoMLMetricExtendedEnum enum
+func AutoMLMetricExtendedEnum_Values() []string {
+	return []string{
+		AutoMLMetricExtendedEnumAccuracy,
+		AutoMLMetricExtendedEnumMse,
+		AutoMLMetricExtendedEnumF1,
+		AutoMLMetricExtendedEnumF1macro,
+		AutoMLMetricExtendedEnumAuc,
+		AutoMLMetricExtendedEnumRmse,
+		AutoMLMetricExtendedEnumMae,
+		AutoMLMetricExtendedEnumR2,
+		AutoMLMetricExtendedEnumBalancedAccuracy,
+		AutoMLMetricExtendedEnumPrecision,
+		AutoMLMetricExtendedEnumPrecisionMacro,
+		AutoMLMetricExtendedEnumRecall,
+		AutoMLMetricExtendedEnumRecallMacro,
+		AutoMLMetricExtendedEnumLogLoss,
+	}
+}
+
+const (
+	// AutoMLModeAuto is a AutoMLMode enum value
+	AutoMLModeAuto = "AUTO"
+
+	// AutoMLModeEnsembling is a AutoMLMode enum value
+	AutoMLModeEnsembling = "ENSEMBLING"
+
+	// AutoMLModeHyperparameterTuning is a AutoMLMode enum value
+	AutoMLModeHyperparameterTuning = "HYPERPARAMETER_TUNING"
+)
+
+// AutoMLMode_Values returns all elements of the AutoMLMode enum
+func AutoMLMode_Values() []string {
+	return []string{
+		AutoMLModeAuto,
+		AutoMLModeEnsembling,
+		AutoMLModeHyperparameterTuning,
 	}
 }
 
@@ -94206,6 +100157,294 @@ func CaptureStatus_Values() []string {
 }
 
 const (
+	// ClarifyFeatureTypeNumerical is a ClarifyFeatureType enum value
+	ClarifyFeatureTypeNumerical = "numerical"
+
+	// ClarifyFeatureTypeCategorical is a ClarifyFeatureType enum value
+	ClarifyFeatureTypeCategorical = "categorical"
+
+	// ClarifyFeatureTypeText is a ClarifyFeatureType enum value
+	ClarifyFeatureTypeText = "text"
+)
+
+// ClarifyFeatureType_Values returns all elements of the ClarifyFeatureType enum
+func ClarifyFeatureType_Values() []string {
+	return []string{
+		ClarifyFeatureTypeNumerical,
+		ClarifyFeatureTypeCategorical,
+		ClarifyFeatureTypeText,
+	}
+}
+
+const (
+	// ClarifyTextGranularityToken is a ClarifyTextGranularity enum value
+	ClarifyTextGranularityToken = "token"
+
+	// ClarifyTextGranularitySentence is a ClarifyTextGranularity enum value
+	ClarifyTextGranularitySentence = "sentence"
+
+	// ClarifyTextGranularityParagraph is a ClarifyTextGranularity enum value
+	ClarifyTextGranularityParagraph = "paragraph"
+)
+
+// ClarifyTextGranularity_Values returns all elements of the ClarifyTextGranularity enum
+func ClarifyTextGranularity_Values() []string {
+	return []string{
+		ClarifyTextGranularityToken,
+		ClarifyTextGranularitySentence,
+		ClarifyTextGranularityParagraph,
+	}
+}
+
+const (
+	// ClarifyTextLanguageAf is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageAf = "af"
+
+	// ClarifyTextLanguageSq is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageSq = "sq"
+
+	// ClarifyTextLanguageAr is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageAr = "ar"
+
+	// ClarifyTextLanguageHy is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageHy = "hy"
+
+	// ClarifyTextLanguageEu is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageEu = "eu"
+
+	// ClarifyTextLanguageBn is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageBn = "bn"
+
+	// ClarifyTextLanguageBg is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageBg = "bg"
+
+	// ClarifyTextLanguageCa is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageCa = "ca"
+
+	// ClarifyTextLanguageZh is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageZh = "zh"
+
+	// ClarifyTextLanguageHr is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageHr = "hr"
+
+	// ClarifyTextLanguageCs is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageCs = "cs"
+
+	// ClarifyTextLanguageDa is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageDa = "da"
+
+	// ClarifyTextLanguageNl is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageNl = "nl"
+
+	// ClarifyTextLanguageEn is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageEn = "en"
+
+	// ClarifyTextLanguageEt is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageEt = "et"
+
+	// ClarifyTextLanguageFi is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageFi = "fi"
+
+	// ClarifyTextLanguageFr is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageFr = "fr"
+
+	// ClarifyTextLanguageDe is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageDe = "de"
+
+	// ClarifyTextLanguageEl is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageEl = "el"
+
+	// ClarifyTextLanguageGu is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageGu = "gu"
+
+	// ClarifyTextLanguageHe is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageHe = "he"
+
+	// ClarifyTextLanguageHi is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageHi = "hi"
+
+	// ClarifyTextLanguageHu is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageHu = "hu"
+
+	// ClarifyTextLanguageIs is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageIs = "is"
+
+	// ClarifyTextLanguageId is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageId = "id"
+
+	// ClarifyTextLanguageGa is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageGa = "ga"
+
+	// ClarifyTextLanguageIt is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageIt = "it"
+
+	// ClarifyTextLanguageKn is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageKn = "kn"
+
+	// ClarifyTextLanguageKy is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageKy = "ky"
+
+	// ClarifyTextLanguageLv is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageLv = "lv"
+
+	// ClarifyTextLanguageLt is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageLt = "lt"
+
+	// ClarifyTextLanguageLb is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageLb = "lb"
+
+	// ClarifyTextLanguageMk is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageMk = "mk"
+
+	// ClarifyTextLanguageMl is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageMl = "ml"
+
+	// ClarifyTextLanguageMr is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageMr = "mr"
+
+	// ClarifyTextLanguageNe is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageNe = "ne"
+
+	// ClarifyTextLanguageNb is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageNb = "nb"
+
+	// ClarifyTextLanguageFa is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageFa = "fa"
+
+	// ClarifyTextLanguagePl is a ClarifyTextLanguage enum value
+	ClarifyTextLanguagePl = "pl"
+
+	// ClarifyTextLanguagePt is a ClarifyTextLanguage enum value
+	ClarifyTextLanguagePt = "pt"
+
+	// ClarifyTextLanguageRo is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageRo = "ro"
+
+	// ClarifyTextLanguageRu is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageRu = "ru"
+
+	// ClarifyTextLanguageSa is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageSa = "sa"
+
+	// ClarifyTextLanguageSr is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageSr = "sr"
+
+	// ClarifyTextLanguageTn is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageTn = "tn"
+
+	// ClarifyTextLanguageSi is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageSi = "si"
+
+	// ClarifyTextLanguageSk is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageSk = "sk"
+
+	// ClarifyTextLanguageSl is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageSl = "sl"
+
+	// ClarifyTextLanguageEs is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageEs = "es"
+
+	// ClarifyTextLanguageSv is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageSv = "sv"
+
+	// ClarifyTextLanguageTl is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageTl = "tl"
+
+	// ClarifyTextLanguageTa is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageTa = "ta"
+
+	// ClarifyTextLanguageTt is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageTt = "tt"
+
+	// ClarifyTextLanguageTe is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageTe = "te"
+
+	// ClarifyTextLanguageTr is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageTr = "tr"
+
+	// ClarifyTextLanguageUk is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageUk = "uk"
+
+	// ClarifyTextLanguageUr is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageUr = "ur"
+
+	// ClarifyTextLanguageYo is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageYo = "yo"
+
+	// ClarifyTextLanguageLij is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageLij = "lij"
+
+	// ClarifyTextLanguageXx is a ClarifyTextLanguage enum value
+	ClarifyTextLanguageXx = "xx"
+)
+
+// ClarifyTextLanguage_Values returns all elements of the ClarifyTextLanguage enum
+func ClarifyTextLanguage_Values() []string {
+	return []string{
+		ClarifyTextLanguageAf,
+		ClarifyTextLanguageSq,
+		ClarifyTextLanguageAr,
+		ClarifyTextLanguageHy,
+		ClarifyTextLanguageEu,
+		ClarifyTextLanguageBn,
+		ClarifyTextLanguageBg,
+		ClarifyTextLanguageCa,
+		ClarifyTextLanguageZh,
+		ClarifyTextLanguageHr,
+		ClarifyTextLanguageCs,
+		ClarifyTextLanguageDa,
+		ClarifyTextLanguageNl,
+		ClarifyTextLanguageEn,
+		ClarifyTextLanguageEt,
+		ClarifyTextLanguageFi,
+		ClarifyTextLanguageFr,
+		ClarifyTextLanguageDe,
+		ClarifyTextLanguageEl,
+		ClarifyTextLanguageGu,
+		ClarifyTextLanguageHe,
+		ClarifyTextLanguageHi,
+		ClarifyTextLanguageHu,
+		ClarifyTextLanguageIs,
+		ClarifyTextLanguageId,
+		ClarifyTextLanguageGa,
+		ClarifyTextLanguageIt,
+		ClarifyTextLanguageKn,
+		ClarifyTextLanguageKy,
+		ClarifyTextLanguageLv,
+		ClarifyTextLanguageLt,
+		ClarifyTextLanguageLb,
+		ClarifyTextLanguageMk,
+		ClarifyTextLanguageMl,
+		ClarifyTextLanguageMr,
+		ClarifyTextLanguageNe,
+		ClarifyTextLanguageNb,
+		ClarifyTextLanguageFa,
+		ClarifyTextLanguagePl,
+		ClarifyTextLanguagePt,
+		ClarifyTextLanguageRo,
+		ClarifyTextLanguageRu,
+		ClarifyTextLanguageSa,
+		ClarifyTextLanguageSr,
+		ClarifyTextLanguageTn,
+		ClarifyTextLanguageSi,
+		ClarifyTextLanguageSk,
+		ClarifyTextLanguageSl,
+		ClarifyTextLanguageEs,
+		ClarifyTextLanguageSv,
+		ClarifyTextLanguageTl,
+		ClarifyTextLanguageTa,
+		ClarifyTextLanguageTt,
+		ClarifyTextLanguageTe,
+		ClarifyTextLanguageTr,
+		ClarifyTextLanguageUk,
+		ClarifyTextLanguageUr,
+		ClarifyTextLanguageYo,
+		ClarifyTextLanguageLij,
+		ClarifyTextLanguageXx,
+	}
+}
+
+const (
 	// CodeRepositorySortByName is a CodeRepositorySortBy enum value
 	CodeRepositorySortByName = "Name"
 
@@ -94398,6 +100637,58 @@ func DetailedModelPackageStatus_Values() []string {
 		DetailedModelPackageStatusInProgress,
 		DetailedModelPackageStatusCompleted,
 		DetailedModelPackageStatusFailed,
+	}
+}
+
+const (
+	// DeviceDeploymentStatusReadytodeploy is a DeviceDeploymentStatus enum value
+	DeviceDeploymentStatusReadytodeploy = "READYTODEPLOY"
+
+	// DeviceDeploymentStatusInprogress is a DeviceDeploymentStatus enum value
+	DeviceDeploymentStatusInprogress = "INPROGRESS"
+
+	// DeviceDeploymentStatusDeployed is a DeviceDeploymentStatus enum value
+	DeviceDeploymentStatusDeployed = "DEPLOYED"
+
+	// DeviceDeploymentStatusFailed is a DeviceDeploymentStatus enum value
+	DeviceDeploymentStatusFailed = "FAILED"
+
+	// DeviceDeploymentStatusStopping is a DeviceDeploymentStatus enum value
+	DeviceDeploymentStatusStopping = "STOPPING"
+
+	// DeviceDeploymentStatusStopped is a DeviceDeploymentStatus enum value
+	DeviceDeploymentStatusStopped = "STOPPED"
+)
+
+// DeviceDeploymentStatus_Values returns all elements of the DeviceDeploymentStatus enum
+func DeviceDeploymentStatus_Values() []string {
+	return []string{
+		DeviceDeploymentStatusReadytodeploy,
+		DeviceDeploymentStatusInprogress,
+		DeviceDeploymentStatusDeployed,
+		DeviceDeploymentStatusFailed,
+		DeviceDeploymentStatusStopping,
+		DeviceDeploymentStatusStopped,
+	}
+}
+
+const (
+	// DeviceSubsetTypePercentage is a DeviceSubsetType enum value
+	DeviceSubsetTypePercentage = "PERCENTAGE"
+
+	// DeviceSubsetTypeSelection is a DeviceSubsetType enum value
+	DeviceSubsetTypeSelection = "SELECTION"
+
+	// DeviceSubsetTypeNamecontains is a DeviceSubsetType enum value
+	DeviceSubsetTypeNamecontains = "NAMECONTAINS"
+)
+
+// DeviceSubsetType_Values returns all elements of the DeviceSubsetType enum
+func DeviceSubsetType_Values() []string {
+	return []string{
+		DeviceSubsetTypePercentage,
+		DeviceSubsetTypeSelection,
+		DeviceSubsetTypeNamecontains,
 	}
 }
 
@@ -94610,6 +100901,22 @@ func EndpointStatus_Values() []string {
 }
 
 const (
+	// ExecutionRoleIdentityConfigUserProfileName is a ExecutionRoleIdentityConfig enum value
+	ExecutionRoleIdentityConfigUserProfileName = "USER_PROFILE_NAME"
+
+	// ExecutionRoleIdentityConfigDisabled is a ExecutionRoleIdentityConfig enum value
+	ExecutionRoleIdentityConfigDisabled = "DISABLED"
+)
+
+// ExecutionRoleIdentityConfig_Values returns all elements of the ExecutionRoleIdentityConfig enum
+func ExecutionRoleIdentityConfig_Values() []string {
+	return []string{
+		ExecutionRoleIdentityConfigUserProfileName,
+		ExecutionRoleIdentityConfigDisabled,
+	}
+}
+
+const (
 	// ExecutionStatusPending is a ExecutionStatus enum value
 	ExecutionStatusPending = "Pending"
 
@@ -94642,6 +100949,22 @@ func ExecutionStatus_Values() []string {
 		ExecutionStatusFailed,
 		ExecutionStatusStopping,
 		ExecutionStatusStopped,
+	}
+}
+
+const (
+	// FailureHandlingPolicyRollbackOnFailure is a FailureHandlingPolicy enum value
+	FailureHandlingPolicyRollbackOnFailure = "ROLLBACK_ON_FAILURE"
+
+	// FailureHandlingPolicyDoNothing is a FailureHandlingPolicy enum value
+	FailureHandlingPolicyDoNothing = "DO_NOTHING"
+)
+
+// FailureHandlingPolicy_Values returns all elements of the FailureHandlingPolicy enum
+func FailureHandlingPolicy_Values() []string {
+	return []string{
+		FailureHandlingPolicyRollbackOnFailure,
+		FailureHandlingPolicyDoNothing,
 	}
 }
 
@@ -94710,6 +101033,22 @@ func FeatureGroupStatus_Values() []string {
 		FeatureGroupStatusCreateFailed,
 		FeatureGroupStatusDeleting,
 		FeatureGroupStatusDeleteFailed,
+	}
+}
+
+const (
+	// FeatureStatusEnabled is a FeatureStatus enum value
+	FeatureStatusEnabled = "ENABLED"
+
+	// FeatureStatusDisabled is a FeatureStatus enum value
+	FeatureStatusDisabled = "DISABLED"
+)
+
+// FeatureStatus_Values returns all elements of the FeatureStatus enum
+func FeatureStatus_Values() []string {
+	return []string{
+		FeatureStatusEnabled,
+		FeatureStatusDisabled,
 	}
 }
 
@@ -94874,6 +101213,18 @@ func HyperParameterScalingType_Values() []string {
 }
 
 const (
+	// HyperParameterTuningAllocationStrategyPrioritized is a HyperParameterTuningAllocationStrategy enum value
+	HyperParameterTuningAllocationStrategyPrioritized = "Prioritized"
+)
+
+// HyperParameterTuningAllocationStrategy_Values returns all elements of the HyperParameterTuningAllocationStrategy enum
+func HyperParameterTuningAllocationStrategy_Values() []string {
+	return []string{
+		HyperParameterTuningAllocationStrategyPrioritized,
+	}
+}
+
+const (
 	// HyperParameterTuningJobObjectiveTypeMaximize is a HyperParameterTuningJobObjectiveType enum value
 	HyperParameterTuningJobObjectiveTypeMaximize = "Maximize"
 
@@ -94945,6 +101296,9 @@ const (
 
 	// HyperParameterTuningJobStrategyTypeRandom is a HyperParameterTuningJobStrategyType enum value
 	HyperParameterTuningJobStrategyTypeRandom = "Random"
+
+	// HyperParameterTuningJobStrategyTypeHyperband is a HyperParameterTuningJobStrategyType enum value
+	HyperParameterTuningJobStrategyTypeHyperband = "Hyperband"
 )
 
 // HyperParameterTuningJobStrategyType_Values returns all elements of the HyperParameterTuningJobStrategyType enum
@@ -94952,6 +101306,7 @@ func HyperParameterTuningJobStrategyType_Values() []string {
 	return []string{
 		HyperParameterTuningJobStrategyTypeBayesian,
 		HyperParameterTuningJobStrategyTypeRandom,
+		HyperParameterTuningJobStrategyTypeHyperband,
 	}
 }
 
@@ -95322,6 +101677,30 @@ const (
 
 	// InstanceTypeMlR524xlarge is a InstanceType enum value
 	InstanceTypeMlR524xlarge = "ml.r5.24xlarge"
+
+	// InstanceTypeMlG5Xlarge is a InstanceType enum value
+	InstanceTypeMlG5Xlarge = "ml.g5.xlarge"
+
+	// InstanceTypeMlG52xlarge is a InstanceType enum value
+	InstanceTypeMlG52xlarge = "ml.g5.2xlarge"
+
+	// InstanceTypeMlG54xlarge is a InstanceType enum value
+	InstanceTypeMlG54xlarge = "ml.g5.4xlarge"
+
+	// InstanceTypeMlG58xlarge is a InstanceType enum value
+	InstanceTypeMlG58xlarge = "ml.g5.8xlarge"
+
+	// InstanceTypeMlG516xlarge is a InstanceType enum value
+	InstanceTypeMlG516xlarge = "ml.g5.16xlarge"
+
+	// InstanceTypeMlG512xlarge is a InstanceType enum value
+	InstanceTypeMlG512xlarge = "ml.g5.12xlarge"
+
+	// InstanceTypeMlG524xlarge is a InstanceType enum value
+	InstanceTypeMlG524xlarge = "ml.g5.24xlarge"
+
+	// InstanceTypeMlG548xlarge is a InstanceType enum value
+	InstanceTypeMlG548xlarge = "ml.g5.48xlarge"
 )
 
 // InstanceType_Values returns all elements of the InstanceType enum
@@ -95388,6 +101767,14 @@ func InstanceType_Values() []string {
 		InstanceTypeMlR512xlarge,
 		InstanceTypeMlR516xlarge,
 		InstanceTypeMlR524xlarge,
+		InstanceTypeMlG5Xlarge,
+		InstanceTypeMlG52xlarge,
+		InstanceTypeMlG54xlarge,
+		InstanceTypeMlG58xlarge,
+		InstanceTypeMlG516xlarge,
+		InstanceTypeMlG512xlarge,
+		InstanceTypeMlG524xlarge,
+		InstanceTypeMlG548xlarge,
 	}
 }
 
@@ -95436,6 +101823,26 @@ func LabelingJobStatus_Values() []string {
 		LabelingJobStatusFailed,
 		LabelingJobStatusStopping,
 		LabelingJobStatusStopped,
+	}
+}
+
+const (
+	// LastUpdateStatusValueSuccessful is a LastUpdateStatusValue enum value
+	LastUpdateStatusValueSuccessful = "Successful"
+
+	// LastUpdateStatusValueFailed is a LastUpdateStatusValue enum value
+	LastUpdateStatusValueFailed = "Failed"
+
+	// LastUpdateStatusValueInProgress is a LastUpdateStatusValue enum value
+	LastUpdateStatusValueInProgress = "InProgress"
+)
+
+// LastUpdateStatusValue_Values returns all elements of the LastUpdateStatusValue enum
+func LastUpdateStatusValue_Values() []string {
+	return []string{
+		LastUpdateStatusValueSuccessful,
+		LastUpdateStatusValueFailed,
+		LastUpdateStatusValueInProgress,
 	}
 }
 
@@ -95500,6 +101907,30 @@ func ListDeviceFleetsSortBy_Values() []string {
 		ListDeviceFleetsSortByName,
 		ListDeviceFleetsSortByCreationTime,
 		ListDeviceFleetsSortByLastModifiedTime,
+	}
+}
+
+const (
+	// ListEdgeDeploymentPlansSortByName is a ListEdgeDeploymentPlansSortBy enum value
+	ListEdgeDeploymentPlansSortByName = "NAME"
+
+	// ListEdgeDeploymentPlansSortByDeviceFleetName is a ListEdgeDeploymentPlansSortBy enum value
+	ListEdgeDeploymentPlansSortByDeviceFleetName = "DEVICE_FLEET_NAME"
+
+	// ListEdgeDeploymentPlansSortByCreationTime is a ListEdgeDeploymentPlansSortBy enum value
+	ListEdgeDeploymentPlansSortByCreationTime = "CREATION_TIME"
+
+	// ListEdgeDeploymentPlansSortByLastModifiedTime is a ListEdgeDeploymentPlansSortBy enum value
+	ListEdgeDeploymentPlansSortByLastModifiedTime = "LAST_MODIFIED_TIME"
+)
+
+// ListEdgeDeploymentPlansSortBy_Values returns all elements of the ListEdgeDeploymentPlansSortBy enum
+func ListEdgeDeploymentPlansSortBy_Values() []string {
+	return []string{
+		ListEdgeDeploymentPlansSortByName,
+		ListEdgeDeploymentPlansSortByDeviceFleetName,
+		ListEdgeDeploymentPlansSortByCreationTime,
+		ListEdgeDeploymentPlansSortByLastModifiedTime,
 	}
 }
 
@@ -96769,6 +103200,60 @@ const (
 
 	// ProductionVariantInstanceTypeMlInf124xlarge is a ProductionVariantInstanceType enum value
 	ProductionVariantInstanceTypeMlInf124xlarge = "ml.inf1.24xlarge"
+
+	// ProductionVariantInstanceTypeMlC6iLarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlC6iLarge = "ml.c6i.large"
+
+	// ProductionVariantInstanceTypeMlC6iXlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlC6iXlarge = "ml.c6i.xlarge"
+
+	// ProductionVariantInstanceTypeMlC6i2xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlC6i2xlarge = "ml.c6i.2xlarge"
+
+	// ProductionVariantInstanceTypeMlC6i4xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlC6i4xlarge = "ml.c6i.4xlarge"
+
+	// ProductionVariantInstanceTypeMlC6i8xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlC6i8xlarge = "ml.c6i.8xlarge"
+
+	// ProductionVariantInstanceTypeMlC6i12xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlC6i12xlarge = "ml.c6i.12xlarge"
+
+	// ProductionVariantInstanceTypeMlC6i16xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlC6i16xlarge = "ml.c6i.16xlarge"
+
+	// ProductionVariantInstanceTypeMlC6i24xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlC6i24xlarge = "ml.c6i.24xlarge"
+
+	// ProductionVariantInstanceTypeMlC6i32xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlC6i32xlarge = "ml.c6i.32xlarge"
+
+	// ProductionVariantInstanceTypeMlG5Xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlG5Xlarge = "ml.g5.xlarge"
+
+	// ProductionVariantInstanceTypeMlG52xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlG52xlarge = "ml.g5.2xlarge"
+
+	// ProductionVariantInstanceTypeMlG54xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlG54xlarge = "ml.g5.4xlarge"
+
+	// ProductionVariantInstanceTypeMlG58xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlG58xlarge = "ml.g5.8xlarge"
+
+	// ProductionVariantInstanceTypeMlG512xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlG512xlarge = "ml.g5.12xlarge"
+
+	// ProductionVariantInstanceTypeMlG516xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlG516xlarge = "ml.g5.16xlarge"
+
+	// ProductionVariantInstanceTypeMlG524xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlG524xlarge = "ml.g5.24xlarge"
+
+	// ProductionVariantInstanceTypeMlG548xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlG548xlarge = "ml.g5.48xlarge"
+
+	// ProductionVariantInstanceTypeMlP4d24xlarge is a ProductionVariantInstanceType enum value
+	ProductionVariantInstanceTypeMlP4d24xlarge = "ml.p4d.24xlarge"
 )
 
 // ProductionVariantInstanceType_Values returns all elements of the ProductionVariantInstanceType enum
@@ -96840,6 +103325,24 @@ func ProductionVariantInstanceType_Values() []string {
 		ProductionVariantInstanceTypeMlInf12xlarge,
 		ProductionVariantInstanceTypeMlInf16xlarge,
 		ProductionVariantInstanceTypeMlInf124xlarge,
+		ProductionVariantInstanceTypeMlC6iLarge,
+		ProductionVariantInstanceTypeMlC6iXlarge,
+		ProductionVariantInstanceTypeMlC6i2xlarge,
+		ProductionVariantInstanceTypeMlC6i4xlarge,
+		ProductionVariantInstanceTypeMlC6i8xlarge,
+		ProductionVariantInstanceTypeMlC6i12xlarge,
+		ProductionVariantInstanceTypeMlC6i16xlarge,
+		ProductionVariantInstanceTypeMlC6i24xlarge,
+		ProductionVariantInstanceTypeMlC6i32xlarge,
+		ProductionVariantInstanceTypeMlG5Xlarge,
+		ProductionVariantInstanceTypeMlG52xlarge,
+		ProductionVariantInstanceTypeMlG54xlarge,
+		ProductionVariantInstanceTypeMlG58xlarge,
+		ProductionVariantInstanceTypeMlG512xlarge,
+		ProductionVariantInstanceTypeMlG516xlarge,
+		ProductionVariantInstanceTypeMlG524xlarge,
+		ProductionVariantInstanceTypeMlG548xlarge,
+		ProductionVariantInstanceTypeMlP4d24xlarge,
 	}
 }
 
@@ -97130,6 +103633,12 @@ const (
 
 	// ResourceTypeProject is a ResourceType enum value
 	ResourceTypeProject = "Project"
+
+	// ResourceTypeFeatureMetadata is a ResourceType enum value
+	ResourceTypeFeatureMetadata = "FeatureMetadata"
+
+	// ResourceTypeHyperParameterTuningJob is a ResourceType enum value
+	ResourceTypeHyperParameterTuningJob = "HyperParameterTuningJob"
 )
 
 // ResourceType_Values returns all elements of the ResourceType enum
@@ -97146,6 +103655,8 @@ func ResourceType_Values() []string {
 		ResourceTypePipelineExecution,
 		ResourceTypeFeatureGroup,
 		ResourceTypeProject,
+		ResourceTypeFeatureMetadata,
+		ResourceTypeHyperParameterTuningJob,
 	}
 }
 
@@ -97606,6 +104117,46 @@ func SplitType_Values() []string {
 }
 
 const (
+	// StageStatusCreating is a StageStatus enum value
+	StageStatusCreating = "CREATING"
+
+	// StageStatusReadytodeploy is a StageStatus enum value
+	StageStatusReadytodeploy = "READYTODEPLOY"
+
+	// StageStatusStarting is a StageStatus enum value
+	StageStatusStarting = "STARTING"
+
+	// StageStatusInprogress is a StageStatus enum value
+	StageStatusInprogress = "INPROGRESS"
+
+	// StageStatusDeployed is a StageStatus enum value
+	StageStatusDeployed = "DEPLOYED"
+
+	// StageStatusFailed is a StageStatus enum value
+	StageStatusFailed = "FAILED"
+
+	// StageStatusStopping is a StageStatus enum value
+	StageStatusStopping = "STOPPING"
+
+	// StageStatusStopped is a StageStatus enum value
+	StageStatusStopped = "STOPPED"
+)
+
+// StageStatus_Values returns all elements of the StageStatus enum
+func StageStatus_Values() []string {
+	return []string{
+		StageStatusCreating,
+		StageStatusReadytodeploy,
+		StageStatusStarting,
+		StageStatusInprogress,
+		StageStatusDeployed,
+		StageStatusFailed,
+		StageStatusStopping,
+		StageStatusStopped,
+	}
+}
+
+const (
 	// StepStatusStarting is a StepStatus enum value
 	StepStatusStarting = "Starting"
 
@@ -97912,12 +104463,12 @@ func TrafficType_Values() []string {
 // The training input mode that the algorithm supports. For more information
 // about input modes, see Algorithms (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
 //
-// Pipe mode
+// # Pipe mode
 //
 // If an algorithm supports Pipe mode, Amazon SageMaker streams data directly
 // from Amazon S3 to the container.
 //
-// File mode
+// # File mode
 //
 // If an algorithm supports File mode, SageMaker downloads the training data
 // from S3 to the provisioned ML storage volume, and mounts the directory to
@@ -97935,7 +104486,7 @@ func TrafficType_Values() []string {
 // is also skewed when one host in a training cluster is overloaded, thus becoming
 // a bottleneck in training.
 //
-// FastFile mode
+// # FastFile mode
 //
 // If an algorithm supports FastFile mode, SageMaker streams data directly from
 // S3 to the container with no code changes, and provides file system access
@@ -98518,5 +105069,57 @@ func VariantStatus_Values() []string {
 		VariantStatusDeleting,
 		VariantStatusActivatingTraffic,
 		VariantStatusBaking,
+	}
+}
+
+const (
+	// WarmPoolResourceStatusAvailable is a WarmPoolResourceStatus enum value
+	WarmPoolResourceStatusAvailable = "Available"
+
+	// WarmPoolResourceStatusTerminated is a WarmPoolResourceStatus enum value
+	WarmPoolResourceStatusTerminated = "Terminated"
+
+	// WarmPoolResourceStatusReused is a WarmPoolResourceStatus enum value
+	WarmPoolResourceStatusReused = "Reused"
+
+	// WarmPoolResourceStatusInUse is a WarmPoolResourceStatus enum value
+	WarmPoolResourceStatusInUse = "InUse"
+)
+
+// WarmPoolResourceStatus_Values returns all elements of the WarmPoolResourceStatus enum
+func WarmPoolResourceStatus_Values() []string {
+	return []string{
+		WarmPoolResourceStatusAvailable,
+		WarmPoolResourceStatusTerminated,
+		WarmPoolResourceStatusReused,
+		WarmPoolResourceStatusInUse,
+	}
+}
+
+const (
+	// WorkforceStatusInitializing is a WorkforceStatus enum value
+	WorkforceStatusInitializing = "Initializing"
+
+	// WorkforceStatusUpdating is a WorkforceStatus enum value
+	WorkforceStatusUpdating = "Updating"
+
+	// WorkforceStatusDeleting is a WorkforceStatus enum value
+	WorkforceStatusDeleting = "Deleting"
+
+	// WorkforceStatusFailed is a WorkforceStatus enum value
+	WorkforceStatusFailed = "Failed"
+
+	// WorkforceStatusActive is a WorkforceStatus enum value
+	WorkforceStatusActive = "Active"
+)
+
+// WorkforceStatus_Values returns all elements of the WorkforceStatus enum
+func WorkforceStatus_Values() []string {
+	return []string{
+		WorkforceStatusInitializing,
+		WorkforceStatusUpdating,
+		WorkforceStatusDeleting,
+		WorkforceStatusFailed,
+		WorkforceStatusActive,
 	}
 }

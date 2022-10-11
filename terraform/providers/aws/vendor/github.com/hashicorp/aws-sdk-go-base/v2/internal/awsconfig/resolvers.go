@@ -69,6 +69,36 @@ func DualStackEndpointStateString(state aws.DualStackEndpointState) string {
 }
 
 // Copied and renamed from https://github.com/aws/aws-sdk-go-v2/blob/main/feature/ec2/imds/internal/config/resolvers.go
+type EC2IMDSClientEnableStateResolver interface {
+	GetEC2IMDSClientEnableState() (imds.ClientEnableState, bool, error)
+}
+
+// Copied and renamed from https://github.com/aws/aws-sdk-go-v2/blob/main/feature/ec2/imds/internal/config/resolvers.go
+func ResolveEC2IMDSClientEnableState(sources []interface{}) (value imds.ClientEnableState, found bool, err error) {
+	for _, source := range sources {
+		if resolver, ok := source.(EC2IMDSClientEnableStateResolver); ok {
+			value, found, err = resolver.GetEC2IMDSClientEnableState()
+			if err != nil || found {
+				return value, found, err
+			}
+		}
+	}
+	return value, found, err
+}
+
+func EC2IMDSClientEnableStateString(state imds.ClientEnableState) string {
+	switch state {
+	case imds.ClientDefaultEnableState:
+		return "ClientDefaultEnableState"
+	case imds.ClientDisabled:
+		return "ClientDisabled"
+	case imds.ClientEnabled:
+		return "ClientEnabled"
+	}
+	return fmt.Sprintf("unknown imds.ClientEnableState (%d)", state)
+}
+
+// Copied and renamed from https://github.com/aws/aws-sdk-go-v2/blob/main/feature/ec2/imds/internal/config/resolvers.go
 type EC2IMDSEndpointResolver interface {
 	GetEC2IMDSEndpoint() (value string, found bool, err error)
 }
@@ -114,4 +144,22 @@ func EC2IMDSEndpointModeString(state imds.EndpointModeState) string {
 		return "EndpointModeStateIPv6"
 	}
 	return fmt.Sprintf("unknown imds.EndpointModeState (%d)", state)
+}
+
+// Copied and renamed from https://github.com/aws/aws-sdk-go-v2/blob/main/config/provider.go
+type RetryMaxAttemptsProvider interface {
+	GetRetryMaxAttempts(context.Context) (int, bool, error)
+}
+
+// Copied and renamed from https://github.com/aws/aws-sdk-go-v2/blob/main/config/provider.go
+func GetRetryMaxAttempts(ctx context.Context, sources []interface{}) (v int, found bool, err error) {
+	for _, c := range sources {
+		if p, ok := c.(RetryMaxAttemptsProvider); ok {
+			v, found, err = p.GetRetryMaxAttempts(ctx)
+			if err != nil || found {
+				break
+			}
+		}
+	}
+	return v, found, err
 }

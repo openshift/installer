@@ -18,7 +18,7 @@ type Resource struct {
 	OneOf                           []*PropertySubschema   `json:"oneOf,omitempty"`
 	PrimaryIdentifier               PropertyJsonPointers   `json:"primaryIdentifier,omitempty"`
 	Properties                      map[string]*Property   `json:"properties,omitempty"`
-	PropertyTransform               map[string]string      `json:"propertyTransform,omitempty"`
+	PropertyTransform               PropertyTransform      `json:"propertyTransform,omitempty"`
 	ReadOnlyProperties              PropertyJsonPointers   `json:"readOnlyProperties,omitempty"`
 	ReplacementStrategy             *string                `json:"replacementStrategy,omitempty"`
 	Required                        []string               `json:"required,omitempty"`

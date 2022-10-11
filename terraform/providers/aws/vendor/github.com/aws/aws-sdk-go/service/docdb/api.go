@@ -29,14 +29,13 @@ const opAddSourceIdentifierToSubscription = "AddSourceIdentifierToSubscription"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddSourceIdentifierToSubscriptionRequest method.
+//	req, resp := client.AddSourceIdentifierToSubscriptionRequest(params)
 //
-//    // Example sending a request using the AddSourceIdentifierToSubscriptionRequest method.
-//    req, resp := client.AddSourceIdentifierToSubscriptionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/AddSourceIdentifierToSubscription
 func (c *DocDB) AddSourceIdentifierToSubscriptionRequest(input *AddSourceIdentifierToSubscriptionInput) (req *request.Request, output *AddSourceIdentifierToSubscriptionOutput) {
@@ -67,11 +66,12 @@ func (c *DocDB) AddSourceIdentifierToSubscriptionRequest(input *AddSourceIdentif
 // API operation AddSourceIdentifierToSubscription for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeSubscriptionNotFoundFault "SubscriptionNotFound"
-//   The subscription name does not exist.
 //
-//   * ErrCodeSourceNotFoundFault "SourceNotFound"
-//   The requested source could not be found.
+//   - ErrCodeSubscriptionNotFoundFault "SubscriptionNotFound"
+//     The subscription name does not exist.
+//
+//   - ErrCodeSourceNotFoundFault "SourceNotFound"
+//     The requested source could not be found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/AddSourceIdentifierToSubscription
 func (c *DocDB) AddSourceIdentifierToSubscription(input *AddSourceIdentifierToSubscriptionInput) (*AddSourceIdentifierToSubscriptionOutput, error) {
@@ -111,14 +111,13 @@ const opAddTagsToResource = "AddTagsToResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddTagsToResourceRequest method.
+//	req, resp := client.AddTagsToResourceRequest(params)
 //
-//    // Example sending a request using the AddTagsToResourceRequest method.
-//    req, resp := client.AddTagsToResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/AddTagsToResource
 func (c *DocDB) AddTagsToResourceRequest(input *AddTagsToResourceInput) (req *request.Request, output *AddTagsToResourceOutput) {
@@ -153,14 +152,15 @@ func (c *DocDB) AddTagsToResourceRequest(input *AddTagsToResourceInput) (req *re
 // API operation AddTagsToResource for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
-//   DBInstanceIdentifier doesn't refer to an existing instance.
 //
-//   * ErrCodeDBSnapshotNotFoundFault "DBSnapshotNotFound"
-//   DBSnapshotIdentifier doesn't refer to an existing snapshot.
+//   - ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
+//     DBInstanceIdentifier doesn't refer to an existing instance.
 //
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
+//   - ErrCodeDBSnapshotNotFoundFault "DBSnapshotNotFound"
+//     DBSnapshotIdentifier doesn't refer to an existing snapshot.
+//
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/AddTagsToResource
 func (c *DocDB) AddTagsToResource(input *AddTagsToResourceInput) (*AddTagsToResourceOutput, error) {
@@ -200,14 +200,13 @@ const opApplyPendingMaintenanceAction = "ApplyPendingMaintenanceAction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ApplyPendingMaintenanceActionRequest method.
+//	req, resp := client.ApplyPendingMaintenanceActionRequest(params)
 //
-//    // Example sending a request using the ApplyPendingMaintenanceActionRequest method.
-//    req, resp := client.ApplyPendingMaintenanceActionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ApplyPendingMaintenanceAction
 func (c *DocDB) ApplyPendingMaintenanceActionRequest(input *ApplyPendingMaintenanceActionInput) (req *request.Request, output *ApplyPendingMaintenanceActionOutput) {
@@ -239,14 +238,15 @@ func (c *DocDB) ApplyPendingMaintenanceActionRequest(input *ApplyPendingMaintena
 // API operation ApplyPendingMaintenanceAction for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeResourceNotFoundFault "ResourceNotFoundFault"
-//   The specified resource ID was not found.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeResourceNotFoundFault "ResourceNotFoundFault"
+//     The specified resource ID was not found.
 //
-//   * ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
-//   The specified instance isn't in the available state.
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
+//
+//   - ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
+//     The specified instance isn't in the available state.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ApplyPendingMaintenanceAction
 func (c *DocDB) ApplyPendingMaintenanceAction(input *ApplyPendingMaintenanceActionInput) (*ApplyPendingMaintenanceActionOutput, error) {
@@ -286,14 +286,13 @@ const opCopyDBClusterParameterGroup = "CopyDBClusterParameterGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CopyDBClusterParameterGroupRequest method.
+//	req, resp := client.CopyDBClusterParameterGroupRequest(params)
 //
-//    // Example sending a request using the CopyDBClusterParameterGroupRequest method.
-//    req, resp := client.CopyDBClusterParameterGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CopyDBClusterParameterGroup
 func (c *DocDB) CopyDBClusterParameterGroupRequest(input *CopyDBClusterParameterGroupInput) (req *request.Request, output *CopyDBClusterParameterGroupOutput) {
@@ -324,14 +323,15 @@ func (c *DocDB) CopyDBClusterParameterGroupRequest(input *CopyDBClusterParameter
 // API operation CopyDBClusterParameterGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
-//   DBParameterGroupName doesn't refer to an existing parameter group.
 //
-//   * ErrCodeDBParameterGroupQuotaExceededFault "DBParameterGroupQuotaExceeded"
-//   This request would cause you to exceed the allowed number of parameter groups.
+//   - ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
+//     DBParameterGroupName doesn't refer to an existing parameter group.
 //
-//   * ErrCodeDBParameterGroupAlreadyExistsFault "DBParameterGroupAlreadyExists"
-//   A parameter group with the same name already exists.
+//   - ErrCodeDBParameterGroupQuotaExceededFault "DBParameterGroupQuotaExceeded"
+//     This request would cause you to exceed the allowed number of parameter groups.
+//
+//   - ErrCodeDBParameterGroupAlreadyExistsFault "DBParameterGroupAlreadyExists"
+//     A parameter group with the same name already exists.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CopyDBClusterParameterGroup
 func (c *DocDB) CopyDBClusterParameterGroup(input *CopyDBClusterParameterGroupInput) (*CopyDBClusterParameterGroupOutput, error) {
@@ -371,14 +371,13 @@ const opCopyDBClusterSnapshot = "CopyDBClusterSnapshot"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CopyDBClusterSnapshotRequest method.
+//	req, resp := client.CopyDBClusterSnapshotRequest(params)
 //
-//    // Example sending a request using the CopyDBClusterSnapshotRequest method.
-//    req, resp := client.CopyDBClusterSnapshotRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CopyDBClusterSnapshot
 func (c *DocDB) CopyDBClusterSnapshotRequest(input *CopyDBClusterSnapshotInput) (req *request.Request, output *CopyDBClusterSnapshotOutput) {
@@ -404,7 +403,7 @@ func (c *DocDB) CopyDBClusterSnapshotRequest(input *CopyDBClusterSnapshotInput) 
 // To copy a cluster snapshot from a shared manual cluster snapshot, SourceDBClusterSnapshotIdentifier
 // must be the Amazon Resource Name (ARN) of the shared cluster snapshot. You
 // can only copy a shared DB cluster snapshot, whether encrypted or not, in
-// the same Region.
+// the same Amazon Web Services Region.
 //
 // To cancel the copy operation after it is in progress, delete the target cluster
 // snapshot identified by TargetDBClusterSnapshotIdentifier while that cluster
@@ -418,23 +417,24 @@ func (c *DocDB) CopyDBClusterSnapshotRequest(input *CopyDBClusterSnapshotInput) 
 // API operation CopyDBClusterSnapshot for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterSnapshotAlreadyExistsFault "DBClusterSnapshotAlreadyExistsFault"
-//   You already have a cluster snapshot with the given identifier.
 //
-//   * ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
-//   DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
+//   - ErrCodeDBClusterSnapshotAlreadyExistsFault "DBClusterSnapshotAlreadyExistsFault"
+//     You already have a cluster snapshot with the given identifier.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
+//     DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
 //
-//   * ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
-//   The provided value isn't a valid cluster snapshot state.
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
 //
-//   * ErrCodeSnapshotQuotaExceededFault "SnapshotQuotaExceeded"
-//   The request would cause you to exceed the allowed number of snapshots.
+//   - ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
+//     The provided value isn't a valid cluster snapshot state.
 //
-//   * ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
-//   An error occurred when accessing an KMS key.
+//   - ErrCodeSnapshotQuotaExceededFault "SnapshotQuotaExceeded"
+//     The request would cause you to exceed the allowed number of snapshots.
+//
+//   - ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
+//     An error occurred when accessing an KMS key.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CopyDBClusterSnapshot
 func (c *DocDB) CopyDBClusterSnapshot(input *CopyDBClusterSnapshotInput) (*CopyDBClusterSnapshotOutput, error) {
@@ -474,14 +474,13 @@ const opCreateDBCluster = "CreateDBCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDBClusterRequest method.
+//	req, resp := client.CreateDBClusterRequest(params)
 //
-//    // Example sending a request using the CreateDBClusterRequest method.
-//    req, resp := client.CreateDBClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateDBCluster
 func (c *DocDB) CreateDBClusterRequest(input *CreateDBClusterInput) (req *request.Request, output *CreateDBClusterOutput) {
@@ -512,64 +511,65 @@ func (c *DocDB) CreateDBClusterRequest(input *CreateDBClusterInput) (req *reques
 // API operation CreateDBCluster for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterAlreadyExistsFault "DBClusterAlreadyExistsFault"
-//   You already have a cluster with the given identifier.
 //
-//   * ErrCodeInsufficientStorageClusterCapacityFault "InsufficientStorageClusterCapacity"
-//   There is not enough storage available for the current action. You might be
-//   able to resolve this error by updating your subnet group to use different
-//   Availability Zones that have more storage available.
+//   - ErrCodeDBClusterAlreadyExistsFault "DBClusterAlreadyExistsFault"
+//     You already have a cluster with the given identifier.
 //
-//   * ErrCodeDBClusterQuotaExceededFault "DBClusterQuotaExceededFault"
-//   The cluster can't be created because you have reached the maximum allowed
-//   quota of clusters.
+//   - ErrCodeInsufficientStorageClusterCapacityFault "InsufficientStorageClusterCapacity"
+//     There is not enough storage available for the current action. You might be
+//     able to resolve this error by updating your subnet group to use different
+//     Availability Zones that have more storage available.
 //
-//   * ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
-//   The request would cause you to exceed the allowed amount of storage available
-//   across all instances.
+//   - ErrCodeDBClusterQuotaExceededFault "DBClusterQuotaExceededFault"
+//     The cluster can't be created because you have reached the maximum allowed
+//     quota of clusters.
 //
-//   * ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
-//   DBSubnetGroupName doesn't refer to an existing subnet group.
+//   - ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
+//     The request would cause you to exceed the allowed amount of storage available
+//     across all instances.
 //
-//   * ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
-//   The subnet group doesn't cover all Availability Zones after it is created
-//   because of changes that were made.
+//   - ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
+//     DBSubnetGroupName doesn't refer to an existing subnet group.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
+//     The subnet group doesn't cover all Availability Zones after it is created
+//     because of changes that were made.
 //
-//   * ErrCodeInvalidDBSubnetGroupStateFault "InvalidDBSubnetGroupStateFault"
-//   The subnet group can't be deleted because it's in use.
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
 //
-//   * ErrCodeInvalidSubnet "InvalidSubnet"
-//   The requested subnet is not valid, or multiple subnets were requested that
-//   are not all in a common virtual private cloud (VPC).
+//   - ErrCodeInvalidDBSubnetGroupStateFault "InvalidDBSubnetGroupStateFault"
+//     The subnet group can't be deleted because it's in use.
 //
-//   * ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
-//   The specified instance isn't in the available state.
+//   - ErrCodeInvalidSubnet "InvalidSubnet"
+//     The requested subnet is not valid, or multiple subnets were requested that
+//     are not all in a common virtual private cloud (VPC).
 //
-//   * ErrCodeDBClusterParameterGroupNotFoundFault "DBClusterParameterGroupNotFound"
-//   DBClusterParameterGroupName doesn't refer to an existing cluster parameter
-//   group.
+//   - ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
+//     The specified instance isn't in the available state.
 //
-//   * ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
-//   An error occurred when accessing an KMS key.
+//   - ErrCodeDBClusterParameterGroupNotFoundFault "DBClusterParameterGroupNotFound"
+//     DBClusterParameterGroupName doesn't refer to an existing cluster parameter
+//     group.
 //
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
+//   - ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
+//     An error occurred when accessing an KMS key.
 //
-//   * ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
-//   DBInstanceIdentifier doesn't refer to an existing instance.
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs "DBSubnetGroupDoesNotCoverEnoughAZs"
-//   Subnets in the subnet group should cover at least two Availability Zones
-//   unless there is only one Availability Zone.
+//   - ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
+//     DBInstanceIdentifier doesn't refer to an existing instance.
 //
-//   * ErrCodeGlobalClusterNotFoundFault "GlobalClusterNotFoundFault"
-//   The GlobalClusterIdentifier doesn't refer to an existing global cluster.
+//   - ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs "DBSubnetGroupDoesNotCoverEnoughAZs"
+//     Subnets in the subnet group should cover at least two Availability Zones
+//     unless there is only one Availability Zone.
 //
-//   * ErrCodeInvalidGlobalClusterStateFault "InvalidGlobalClusterStateFault"
-//   The requested operation can't be performed while the cluster is in this state.
+//   - ErrCodeGlobalClusterNotFoundFault "GlobalClusterNotFoundFault"
+//     The GlobalClusterIdentifier doesn't refer to an existing global cluster.
+//
+//   - ErrCodeInvalidGlobalClusterStateFault "InvalidGlobalClusterStateFault"
+//     The requested operation can't be performed while the cluster is in this state.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateDBCluster
 func (c *DocDB) CreateDBCluster(input *CreateDBClusterInput) (*CreateDBClusterOutput, error) {
@@ -609,14 +609,13 @@ const opCreateDBClusterParameterGroup = "CreateDBClusterParameterGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDBClusterParameterGroupRequest method.
+//	req, resp := client.CreateDBClusterParameterGroupRequest(params)
 //
-//    // Example sending a request using the CreateDBClusterParameterGroupRequest method.
-//    req, resp := client.CreateDBClusterParameterGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateDBClusterParameterGroup
 func (c *DocDB) CreateDBClusterParameterGroupRequest(input *CreateDBClusterParameterGroupInput) (req *request.Request, output *CreateDBClusterParameterGroupOutput) {
@@ -662,11 +661,12 @@ func (c *DocDB) CreateDBClusterParameterGroupRequest(input *CreateDBClusterParam
 // API operation CreateDBClusterParameterGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBParameterGroupQuotaExceededFault "DBParameterGroupQuotaExceeded"
-//   This request would cause you to exceed the allowed number of parameter groups.
 //
-//   * ErrCodeDBParameterGroupAlreadyExistsFault "DBParameterGroupAlreadyExists"
-//   A parameter group with the same name already exists.
+//   - ErrCodeDBParameterGroupQuotaExceededFault "DBParameterGroupQuotaExceeded"
+//     This request would cause you to exceed the allowed number of parameter groups.
+//
+//   - ErrCodeDBParameterGroupAlreadyExistsFault "DBParameterGroupAlreadyExists"
+//     A parameter group with the same name already exists.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateDBClusterParameterGroup
 func (c *DocDB) CreateDBClusterParameterGroup(input *CreateDBClusterParameterGroupInput) (*CreateDBClusterParameterGroupOutput, error) {
@@ -706,14 +706,13 @@ const opCreateDBClusterSnapshot = "CreateDBClusterSnapshot"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDBClusterSnapshotRequest method.
+//	req, resp := client.CreateDBClusterSnapshotRequest(params)
 //
-//    // Example sending a request using the CreateDBClusterSnapshotRequest method.
-//    req, resp := client.CreateDBClusterSnapshotRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateDBClusterSnapshot
 func (c *DocDB) CreateDBClusterSnapshotRequest(input *CreateDBClusterSnapshotInput) (req *request.Request, output *CreateDBClusterSnapshotOutput) {
@@ -744,20 +743,21 @@ func (c *DocDB) CreateDBClusterSnapshotRequest(input *CreateDBClusterSnapshotInp
 // API operation CreateDBClusterSnapshot for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterSnapshotAlreadyExistsFault "DBClusterSnapshotAlreadyExistsFault"
-//   You already have a cluster snapshot with the given identifier.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeDBClusterSnapshotAlreadyExistsFault "DBClusterSnapshotAlreadyExistsFault"
+//     You already have a cluster snapshot with the given identifier.
 //
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
 //
-//   * ErrCodeSnapshotQuotaExceededFault "SnapshotQuotaExceeded"
-//   The request would cause you to exceed the allowed number of snapshots.
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
-//   The provided value isn't a valid cluster snapshot state.
+//   - ErrCodeSnapshotQuotaExceededFault "SnapshotQuotaExceeded"
+//     The request would cause you to exceed the allowed number of snapshots.
+//
+//   - ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
+//     The provided value isn't a valid cluster snapshot state.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateDBClusterSnapshot
 func (c *DocDB) CreateDBClusterSnapshot(input *CreateDBClusterSnapshotInput) (*CreateDBClusterSnapshotOutput, error) {
@@ -797,14 +797,13 @@ const opCreateDBInstance = "CreateDBInstance"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDBInstanceRequest method.
+//	req, resp := client.CreateDBInstanceRequest(params)
 //
-//    // Example sending a request using the CreateDBInstanceRequest method.
-//    req, resp := client.CreateDBInstanceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateDBInstance
 func (c *DocDB) CreateDBInstanceRequest(input *CreateDBInstanceInput) (req *request.Request, output *CreateDBInstanceOutput) {
@@ -835,59 +834,60 @@ func (c *DocDB) CreateDBInstanceRequest(input *CreateDBInstanceInput) (req *requ
 // API operation CreateDBInstance for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBInstanceAlreadyExistsFault "DBInstanceAlreadyExists"
-//   You already have a instance with the given identifier.
 //
-//   * ErrCodeInsufficientDBInstanceCapacityFault "InsufficientDBInstanceCapacity"
-//   The specified instance class isn't available in the specified Availability
-//   Zone.
+//   - ErrCodeDBInstanceAlreadyExistsFault "DBInstanceAlreadyExists"
+//     You already have a instance with the given identifier.
 //
-//   * ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
-//   DBParameterGroupName doesn't refer to an existing parameter group.
+//   - ErrCodeInsufficientDBInstanceCapacityFault "InsufficientDBInstanceCapacity"
+//     The specified instance class isn't available in the specified Availability
+//     Zone.
 //
-//   * ErrCodeDBSecurityGroupNotFoundFault "DBSecurityGroupNotFound"
-//   DBSecurityGroupName doesn't refer to an existing security group.
+//   - ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
+//     DBParameterGroupName doesn't refer to an existing parameter group.
 //
-//   * ErrCodeInstanceQuotaExceededFault "InstanceQuotaExceeded"
-//   The request would cause you to exceed the allowed number of instances.
+//   - ErrCodeDBSecurityGroupNotFoundFault "DBSecurityGroupNotFound"
+//     DBSecurityGroupName doesn't refer to an existing security group.
 //
-//   * ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
-//   The request would cause you to exceed the allowed amount of storage available
-//   across all instances.
+//   - ErrCodeInstanceQuotaExceededFault "InstanceQuotaExceeded"
+//     The request would cause you to exceed the allowed number of instances.
 //
-//   * ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
-//   DBSubnetGroupName doesn't refer to an existing subnet group.
+//   - ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
+//     The request would cause you to exceed the allowed amount of storage available
+//     across all instances.
 //
-//   * ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs "DBSubnetGroupDoesNotCoverEnoughAZs"
-//   Subnets in the subnet group should cover at least two Availability Zones
-//   unless there is only one Availability Zone.
+//   - ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
+//     DBSubnetGroupName doesn't refer to an existing subnet group.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs "DBSubnetGroupDoesNotCoverEnoughAZs"
+//     Subnets in the subnet group should cover at least two Availability Zones
+//     unless there is only one Availability Zone.
 //
-//   * ErrCodeInvalidSubnet "InvalidSubnet"
-//   The requested subnet is not valid, or multiple subnets were requested that
-//   are not all in a common virtual private cloud (VPC).
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
 //
-//   * ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
-//   The subnet group doesn't cover all Availability Zones after it is created
-//   because of changes that were made.
+//   - ErrCodeInvalidSubnet "InvalidSubnet"
+//     The requested subnet is not valid, or multiple subnets were requested that
+//     are not all in a common virtual private cloud (VPC).
 //
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
+//   - ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
+//     The subnet group doesn't cover all Availability Zones after it is created
+//     because of changes that were made.
 //
-//   * ErrCodeStorageTypeNotSupportedFault "StorageTypeNotSupported"
-//   Storage of the specified StorageType can't be associated with the DB instance.
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeAuthorizationNotFoundFault "AuthorizationNotFound"
-//   The specified CIDR IP or Amazon EC2 security group isn't authorized for the
-//   specified security group.
+//   - ErrCodeStorageTypeNotSupportedFault "StorageTypeNotSupported"
+//     Storage of the specified StorageType can't be associated with the DB instance.
 //
-//   Amazon DocumentDB also might not be authorized to perform necessary actions
-//   on your behalf using IAM.
+//   - ErrCodeAuthorizationNotFoundFault "AuthorizationNotFound"
+//     The specified CIDR IP or Amazon EC2 security group isn't authorized for the
+//     specified security group.
 //
-//   * ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
-//   An error occurred when accessing an KMS key.
+//     Amazon DocumentDB also might not be authorized to perform necessary actions
+//     on your behalf using IAM.
+//
+//   - ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
+//     An error occurred when accessing an KMS key.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateDBInstance
 func (c *DocDB) CreateDBInstance(input *CreateDBInstanceInput) (*CreateDBInstanceOutput, error) {
@@ -927,14 +927,13 @@ const opCreateDBSubnetGroup = "CreateDBSubnetGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateDBSubnetGroupRequest method.
+//	req, resp := client.CreateDBSubnetGroupRequest(params)
 //
-//    // Example sending a request using the CreateDBSubnetGroupRequest method.
-//    req, resp := client.CreateDBSubnetGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateDBSubnetGroup
 func (c *DocDB) CreateDBSubnetGroupRequest(input *CreateDBSubnetGroupInput) (req *request.Request, output *CreateDBSubnetGroupOutput) {
@@ -956,7 +955,7 @@ func (c *DocDB) CreateDBSubnetGroupRequest(input *CreateDBSubnetGroupInput) (req
 // CreateDBSubnetGroup API operation for Amazon DocumentDB with MongoDB compatibility.
 //
 // Creates a new subnet group. subnet groups must contain at least one subnet
-// in at least two Availability Zones in the Region.
+// in at least two Availability Zones in the Amazon Web Services Region.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -966,23 +965,24 @@ func (c *DocDB) CreateDBSubnetGroupRequest(input *CreateDBSubnetGroupInput) (req
 // API operation CreateDBSubnetGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBSubnetGroupAlreadyExistsFault "DBSubnetGroupAlreadyExists"
-//   DBSubnetGroupName is already being used by an existing subnet group.
 //
-//   * ErrCodeDBSubnetGroupQuotaExceededFault "DBSubnetGroupQuotaExceeded"
-//   The request would cause you to exceed the allowed number of subnet groups.
+//   - ErrCodeDBSubnetGroupAlreadyExistsFault "DBSubnetGroupAlreadyExists"
+//     DBSubnetGroupName is already being used by an existing subnet group.
 //
-//   * ErrCodeDBSubnetQuotaExceededFault "DBSubnetQuotaExceededFault"
-//   The request would cause you to exceed the allowed number of subnets in a
-//   subnet group.
+//   - ErrCodeDBSubnetGroupQuotaExceededFault "DBSubnetGroupQuotaExceeded"
+//     The request would cause you to exceed the allowed number of subnet groups.
 //
-//   * ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs "DBSubnetGroupDoesNotCoverEnoughAZs"
-//   Subnets in the subnet group should cover at least two Availability Zones
-//   unless there is only one Availability Zone.
+//   - ErrCodeDBSubnetQuotaExceededFault "DBSubnetQuotaExceededFault"
+//     The request would cause you to exceed the allowed number of subnets in a
+//     subnet group.
 //
-//   * ErrCodeInvalidSubnet "InvalidSubnet"
-//   The requested subnet is not valid, or multiple subnets were requested that
-//   are not all in a common virtual private cloud (VPC).
+//   - ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs "DBSubnetGroupDoesNotCoverEnoughAZs"
+//     Subnets in the subnet group should cover at least two Availability Zones
+//     unless there is only one Availability Zone.
+//
+//   - ErrCodeInvalidSubnet "InvalidSubnet"
+//     The requested subnet is not valid, or multiple subnets were requested that
+//     are not all in a common virtual private cloud (VPC).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateDBSubnetGroup
 func (c *DocDB) CreateDBSubnetGroup(input *CreateDBSubnetGroupInput) (*CreateDBSubnetGroupOutput, error) {
@@ -1022,14 +1022,13 @@ const opCreateEventSubscription = "CreateEventSubscription"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateEventSubscriptionRequest method.
+//	req, resp := client.CreateEventSubscriptionRequest(params)
 //
-//    // Example sending a request using the CreateEventSubscriptionRequest method.
-//    req, resp := client.CreateEventSubscriptionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateEventSubscription
 func (c *DocDB) CreateEventSubscriptionRequest(input *CreateEventSubscriptionInput) (req *request.Request, output *CreateEventSubscriptionOutput) {
@@ -1079,27 +1078,28 @@ func (c *DocDB) CreateEventSubscriptionRequest(input *CreateEventSubscriptionInp
 // API operation CreateEventSubscription for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeEventSubscriptionQuotaExceededFault "EventSubscriptionQuotaExceeded"
-//   You have reached the maximum number of event subscriptions.
 //
-//   * ErrCodeSubscriptionAlreadyExistFault "SubscriptionAlreadyExist"
-//   The provided subscription name already exists.
+//   - ErrCodeEventSubscriptionQuotaExceededFault "EventSubscriptionQuotaExceeded"
+//     You have reached the maximum number of event subscriptions.
 //
-//   * ErrCodeSNSInvalidTopicFault "SNSInvalidTopic"
-//   Amazon SNS has responded that there is a problem with the specified topic.
+//   - ErrCodeSubscriptionAlreadyExistFault "SubscriptionAlreadyExist"
+//     The provided subscription name already exists.
 //
-//   * ErrCodeSNSNoAuthorizationFault "SNSNoAuthorization"
-//   You do not have permission to publish to the SNS topic Amazon Resource Name
-//   (ARN).
+//   - ErrCodeSNSInvalidTopicFault "SNSInvalidTopic"
+//     Amazon SNS has responded that there is a problem with the specified topic.
 //
-//   * ErrCodeSNSTopicArnNotFoundFault "SNSTopicArnNotFound"
-//   The SNS topic Amazon Resource Name (ARN) does not exist.
+//   - ErrCodeSNSNoAuthorizationFault "SNSNoAuthorization"
+//     You do not have permission to publish to the SNS topic Amazon Resource Name
+//     (ARN).
 //
-//   * ErrCodeSubscriptionCategoryNotFoundFault "SubscriptionCategoryNotFound"
-//   The provided category does not exist.
+//   - ErrCodeSNSTopicArnNotFoundFault "SNSTopicArnNotFound"
+//     The SNS topic Amazon Resource Name (ARN) does not exist.
 //
-//   * ErrCodeSourceNotFoundFault "SourceNotFound"
-//   The requested source could not be found.
+//   - ErrCodeSubscriptionCategoryNotFoundFault "SubscriptionCategoryNotFound"
+//     The provided category does not exist.
+//
+//   - ErrCodeSourceNotFoundFault "SourceNotFound"
+//     The requested source could not be found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateEventSubscription
 func (c *DocDB) CreateEventSubscription(input *CreateEventSubscriptionInput) (*CreateEventSubscriptionOutput, error) {
@@ -1139,14 +1139,13 @@ const opCreateGlobalCluster = "CreateGlobalCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateGlobalClusterRequest method.
+//	req, resp := client.CreateGlobalClusterRequest(params)
 //
-//    // Example sending a request using the CreateGlobalClusterRequest method.
-//    req, resp := client.CreateGlobalClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateGlobalCluster
 func (c *DocDB) CreateGlobalClusterRequest(input *CreateGlobalClusterInput) (req *request.Request, output *CreateGlobalClusterOutput) {
@@ -1168,11 +1167,11 @@ func (c *DocDB) CreateGlobalClusterRequest(input *CreateGlobalClusterInput) (req
 // CreateGlobalCluster API operation for Amazon DocumentDB with MongoDB compatibility.
 //
 // Creates an Amazon DocumentDB global cluster that can span multiple multiple
-// Regions. The global cluster contains one primary cluster with read-write
-// capability, and up-to give read-only secondary clusters. Global clusters
-// uses storage-based fast replication across regions with latencies less than
-// one second, using dedicated infrastructure with no impact to your workload’s
-// performance.
+// Amazon Web Services Regions. The global cluster contains one primary cluster
+// with read-write capability, and up-to give read-only secondary clusters.
+// Global clusters uses storage-based fast replication across regions with latencies
+// less than one second, using dedicated infrastructure with no impact to your
+// workload’s performance.
 //
 // You can create a global cluster that is initially empty, and then add a primary
 // and a secondary to it. Or you can specify an existing cluster during the
@@ -1188,19 +1187,20 @@ func (c *DocDB) CreateGlobalClusterRequest(input *CreateGlobalClusterInput) (req
 // API operation CreateGlobalCluster for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeGlobalClusterAlreadyExistsFault "GlobalClusterAlreadyExistsFault"
-//   The GlobalClusterIdentifier already exists. Choose a new global cluster identifier
-//   (unique name) to create a new global cluster.
 //
-//   * ErrCodeGlobalClusterQuotaExceededFault "GlobalClusterQuotaExceededFault"
-//   The number of global clusters for this account is already at the maximum
-//   allowed.
+//   - ErrCodeGlobalClusterAlreadyExistsFault "GlobalClusterAlreadyExistsFault"
+//     The GlobalClusterIdentifier already exists. Choose a new global cluster identifier
+//     (unique name) to create a new global cluster.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeGlobalClusterQuotaExceededFault "GlobalClusterQuotaExceededFault"
+//     The number of global clusters for this account is already at the maximum
+//     allowed.
 //
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
+//
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/CreateGlobalCluster
 func (c *DocDB) CreateGlobalCluster(input *CreateGlobalClusterInput) (*CreateGlobalClusterOutput, error) {
@@ -1240,14 +1240,13 @@ const opDeleteDBCluster = "DeleteDBCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDBClusterRequest method.
+//	req, resp := client.DeleteDBClusterRequest(params)
 //
-//    // Example sending a request using the DeleteDBClusterRequest method.
-//    req, resp := client.DeleteDBClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteDBCluster
 func (c *DocDB) DeleteDBClusterRequest(input *DeleteDBClusterInput) (req *request.Request, output *DeleteDBClusterOutput) {
@@ -1280,20 +1279,21 @@ func (c *DocDB) DeleteDBClusterRequest(input *DeleteDBClusterInput) (req *reques
 // API operation DeleteDBCluster for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeDBClusterSnapshotAlreadyExistsFault "DBClusterSnapshotAlreadyExistsFault"
-//   You already have a cluster snapshot with the given identifier.
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
 //
-//   * ErrCodeSnapshotQuotaExceededFault "SnapshotQuotaExceeded"
-//   The request would cause you to exceed the allowed number of snapshots.
+//   - ErrCodeDBClusterSnapshotAlreadyExistsFault "DBClusterSnapshotAlreadyExistsFault"
+//     You already have a cluster snapshot with the given identifier.
 //
-//   * ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
-//   The provided value isn't a valid cluster snapshot state.
+//   - ErrCodeSnapshotQuotaExceededFault "SnapshotQuotaExceeded"
+//     The request would cause you to exceed the allowed number of snapshots.
+//
+//   - ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
+//     The provided value isn't a valid cluster snapshot state.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteDBCluster
 func (c *DocDB) DeleteDBCluster(input *DeleteDBClusterInput) (*DeleteDBClusterOutput, error) {
@@ -1333,14 +1333,13 @@ const opDeleteDBClusterParameterGroup = "DeleteDBClusterParameterGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDBClusterParameterGroupRequest method.
+//	req, resp := client.DeleteDBClusterParameterGroupRequest(params)
 //
-//    // Example sending a request using the DeleteDBClusterParameterGroupRequest method.
-//    req, resp := client.DeleteDBClusterParameterGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteDBClusterParameterGroup
 func (c *DocDB) DeleteDBClusterParameterGroupRequest(input *DeleteDBClusterParameterGroupInput) (req *request.Request, output *DeleteDBClusterParameterGroupOutput) {
@@ -1373,13 +1372,14 @@ func (c *DocDB) DeleteDBClusterParameterGroupRequest(input *DeleteDBClusterParam
 // API operation DeleteDBClusterParameterGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidDBParameterGroupStateFault "InvalidDBParameterGroupState"
-//   The parameter group is in use, or it is in a state that is not valid. If
-//   you are trying to delete the parameter group, you can't delete it when the
-//   parameter group is in this state.
 //
-//   * ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
-//   DBParameterGroupName doesn't refer to an existing parameter group.
+//   - ErrCodeInvalidDBParameterGroupStateFault "InvalidDBParameterGroupState"
+//     The parameter group is in use, or it is in a state that is not valid. If
+//     you are trying to delete the parameter group, you can't delete it when the
+//     parameter group is in this state.
+//
+//   - ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
+//     DBParameterGroupName doesn't refer to an existing parameter group.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteDBClusterParameterGroup
 func (c *DocDB) DeleteDBClusterParameterGroup(input *DeleteDBClusterParameterGroupInput) (*DeleteDBClusterParameterGroupOutput, error) {
@@ -1419,14 +1419,13 @@ const opDeleteDBClusterSnapshot = "DeleteDBClusterSnapshot"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDBClusterSnapshotRequest method.
+//	req, resp := client.DeleteDBClusterSnapshotRequest(params)
 //
-//    // Example sending a request using the DeleteDBClusterSnapshotRequest method.
-//    req, resp := client.DeleteDBClusterSnapshotRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteDBClusterSnapshot
 func (c *DocDB) DeleteDBClusterSnapshotRequest(input *DeleteDBClusterSnapshotInput) (req *request.Request, output *DeleteDBClusterSnapshotOutput) {
@@ -1460,11 +1459,12 @@ func (c *DocDB) DeleteDBClusterSnapshotRequest(input *DeleteDBClusterSnapshotInp
 // API operation DeleteDBClusterSnapshot for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
-//   The provided value isn't a valid cluster snapshot state.
 //
-//   * ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
-//   DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
+//   - ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
+//     The provided value isn't a valid cluster snapshot state.
+//
+//   - ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
+//     DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteDBClusterSnapshot
 func (c *DocDB) DeleteDBClusterSnapshot(input *DeleteDBClusterSnapshotInput) (*DeleteDBClusterSnapshotOutput, error) {
@@ -1504,14 +1504,13 @@ const opDeleteDBInstance = "DeleteDBInstance"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDBInstanceRequest method.
+//	req, resp := client.DeleteDBInstanceRequest(params)
 //
-//    // Example sending a request using the DeleteDBInstanceRequest method.
-//    req, resp := client.DeleteDBInstanceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteDBInstance
 func (c *DocDB) DeleteDBInstanceRequest(input *DeleteDBInstanceInput) (req *request.Request, output *DeleteDBInstanceOutput) {
@@ -1542,20 +1541,21 @@ func (c *DocDB) DeleteDBInstanceRequest(input *DeleteDBInstanceInput) (req *requ
 // API operation DeleteDBInstance for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
-//   DBInstanceIdentifier doesn't refer to an existing instance.
 //
-//   * ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
-//   The specified instance isn't in the available state.
+//   - ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
+//     DBInstanceIdentifier doesn't refer to an existing instance.
 //
-//   * ErrCodeDBSnapshotAlreadyExistsFault "DBSnapshotAlreadyExists"
-//   DBSnapshotIdentifier is already being used by an existing snapshot.
+//   - ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
+//     The specified instance isn't in the available state.
 //
-//   * ErrCodeSnapshotQuotaExceededFault "SnapshotQuotaExceeded"
-//   The request would cause you to exceed the allowed number of snapshots.
+//   - ErrCodeDBSnapshotAlreadyExistsFault "DBSnapshotAlreadyExists"
+//     DBSnapshotIdentifier is already being used by an existing snapshot.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeSnapshotQuotaExceededFault "SnapshotQuotaExceeded"
+//     The request would cause you to exceed the allowed number of snapshots.
+//
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteDBInstance
 func (c *DocDB) DeleteDBInstance(input *DeleteDBInstanceInput) (*DeleteDBInstanceOutput, error) {
@@ -1595,14 +1595,13 @@ const opDeleteDBSubnetGroup = "DeleteDBSubnetGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteDBSubnetGroupRequest method.
+//	req, resp := client.DeleteDBSubnetGroupRequest(params)
 //
-//    // Example sending a request using the DeleteDBSubnetGroupRequest method.
-//    req, resp := client.DeleteDBSubnetGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteDBSubnetGroup
 func (c *DocDB) DeleteDBSubnetGroupRequest(input *DeleteDBSubnetGroupInput) (req *request.Request, output *DeleteDBSubnetGroupOutput) {
@@ -1636,14 +1635,15 @@ func (c *DocDB) DeleteDBSubnetGroupRequest(input *DeleteDBSubnetGroupInput) (req
 // API operation DeleteDBSubnetGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidDBSubnetGroupStateFault "InvalidDBSubnetGroupStateFault"
-//   The subnet group can't be deleted because it's in use.
 //
-//   * ErrCodeInvalidDBSubnetStateFault "InvalidDBSubnetStateFault"
-//   The subnet isn't in the available state.
+//   - ErrCodeInvalidDBSubnetGroupStateFault "InvalidDBSubnetGroupStateFault"
+//     The subnet group can't be deleted because it's in use.
 //
-//   * ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
-//   DBSubnetGroupName doesn't refer to an existing subnet group.
+//   - ErrCodeInvalidDBSubnetStateFault "InvalidDBSubnetStateFault"
+//     The subnet isn't in the available state.
+//
+//   - ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
+//     DBSubnetGroupName doesn't refer to an existing subnet group.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteDBSubnetGroup
 func (c *DocDB) DeleteDBSubnetGroup(input *DeleteDBSubnetGroupInput) (*DeleteDBSubnetGroupOutput, error) {
@@ -1683,14 +1683,13 @@ const opDeleteEventSubscription = "DeleteEventSubscription"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteEventSubscriptionRequest method.
+//	req, resp := client.DeleteEventSubscriptionRequest(params)
 //
-//    // Example sending a request using the DeleteEventSubscriptionRequest method.
-//    req, resp := client.DeleteEventSubscriptionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteEventSubscription
 func (c *DocDB) DeleteEventSubscriptionRequest(input *DeleteEventSubscriptionInput) (req *request.Request, output *DeleteEventSubscriptionOutput) {
@@ -1721,12 +1720,13 @@ func (c *DocDB) DeleteEventSubscriptionRequest(input *DeleteEventSubscriptionInp
 // API operation DeleteEventSubscription for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeSubscriptionNotFoundFault "SubscriptionNotFound"
-//   The subscription name does not exist.
 //
-//   * ErrCodeInvalidEventSubscriptionStateFault "InvalidEventSubscriptionState"
-//   Someone else might be modifying a subscription. Wait a few seconds, and try
-//   again.
+//   - ErrCodeSubscriptionNotFoundFault "SubscriptionNotFound"
+//     The subscription name does not exist.
+//
+//   - ErrCodeInvalidEventSubscriptionStateFault "InvalidEventSubscriptionState"
+//     Someone else might be modifying a subscription. Wait a few seconds, and try
+//     again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteEventSubscription
 func (c *DocDB) DeleteEventSubscription(input *DeleteEventSubscriptionInput) (*DeleteEventSubscriptionOutput, error) {
@@ -1766,14 +1766,13 @@ const opDeleteGlobalCluster = "DeleteGlobalCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteGlobalClusterRequest method.
+//	req, resp := client.DeleteGlobalClusterRequest(params)
 //
-//    // Example sending a request using the DeleteGlobalClusterRequest method.
-//    req, resp := client.DeleteGlobalClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteGlobalCluster
 func (c *DocDB) DeleteGlobalClusterRequest(input *DeleteGlobalClusterInput) (req *request.Request, output *DeleteGlobalClusterOutput) {
@@ -1807,11 +1806,12 @@ func (c *DocDB) DeleteGlobalClusterRequest(input *DeleteGlobalClusterInput) (req
 // API operation DeleteGlobalCluster for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeGlobalClusterNotFoundFault "GlobalClusterNotFoundFault"
-//   The GlobalClusterIdentifier doesn't refer to an existing global cluster.
 //
-//   * ErrCodeInvalidGlobalClusterStateFault "InvalidGlobalClusterStateFault"
-//   The requested operation can't be performed while the cluster is in this state.
+//   - ErrCodeGlobalClusterNotFoundFault "GlobalClusterNotFoundFault"
+//     The GlobalClusterIdentifier doesn't refer to an existing global cluster.
+//
+//   - ErrCodeInvalidGlobalClusterStateFault "InvalidGlobalClusterStateFault"
+//     The requested operation can't be performed while the cluster is in this state.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DeleteGlobalCluster
 func (c *DocDB) DeleteGlobalCluster(input *DeleteGlobalClusterInput) (*DeleteGlobalClusterOutput, error) {
@@ -1851,14 +1851,13 @@ const opDescribeCertificates = "DescribeCertificates"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeCertificatesRequest method.
+//	req, resp := client.DescribeCertificatesRequest(params)
 //
-//    // Example sending a request using the DescribeCertificatesRequest method.
-//    req, resp := client.DescribeCertificatesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeCertificates
 func (c *DocDB) DescribeCertificatesRequest(input *DescribeCertificatesInput) (req *request.Request, output *DescribeCertificatesOutput) {
@@ -1886,7 +1885,7 @@ func (c *DocDB) DescribeCertificatesRequest(input *DescribeCertificatesInput) (r
 // DescribeCertificates API operation for Amazon DocumentDB with MongoDB compatibility.
 //
 // Returns a list of certificate authority (CA) certificates provided by Amazon
-// DocumentDB for this account.
+// DocumentDB for this Amazon Web Services account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1896,8 +1895,8 @@ func (c *DocDB) DescribeCertificatesRequest(input *DescribeCertificatesInput) (r
 // API operation DescribeCertificates for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCertificateNotFoundFault "CertificateNotFound"
-//   CertificateIdentifier doesn't refer to an existing certificate.
+//   - ErrCodeCertificateNotFoundFault "CertificateNotFound"
+//     CertificateIdentifier doesn't refer to an existing certificate.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeCertificates
 func (c *DocDB) DescribeCertificates(input *DescribeCertificatesInput) (*DescribeCertificatesOutput, error) {
@@ -1929,15 +1928,14 @@ func (c *DocDB) DescribeCertificatesWithContext(ctx aws.Context, input *Describe
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeCertificates operation.
-//    pageNum := 0
-//    err := client.DescribeCertificatesPages(params,
-//        func(page *docdb.DescribeCertificatesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeCertificates operation.
+//	pageNum := 0
+//	err := client.DescribeCertificatesPages(params,
+//	    func(page *docdb.DescribeCertificatesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeCertificatesPages(input *DescribeCertificatesInput, fn func(*DescribeCertificatesOutput, bool) bool) error {
 	return c.DescribeCertificatesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1989,14 +1987,13 @@ const opDescribeDBClusterParameterGroups = "DescribeDBClusterParameterGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDBClusterParameterGroupsRequest method.
+//	req, resp := client.DescribeDBClusterParameterGroupsRequest(params)
 //
-//    // Example sending a request using the DescribeDBClusterParameterGroupsRequest method.
-//    req, resp := client.DescribeDBClusterParameterGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBClusterParameterGroups
 func (c *DocDB) DescribeDBClusterParameterGroupsRequest(input *DescribeDBClusterParameterGroupsInput) (req *request.Request, output *DescribeDBClusterParameterGroupsOutput) {
@@ -2035,8 +2032,8 @@ func (c *DocDB) DescribeDBClusterParameterGroupsRequest(input *DescribeDBCluster
 // API operation DescribeDBClusterParameterGroups for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
-//   DBParameterGroupName doesn't refer to an existing parameter group.
+//   - ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
+//     DBParameterGroupName doesn't refer to an existing parameter group.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBClusterParameterGroups
 func (c *DocDB) DescribeDBClusterParameterGroups(input *DescribeDBClusterParameterGroupsInput) (*DescribeDBClusterParameterGroupsOutput, error) {
@@ -2068,15 +2065,14 @@ func (c *DocDB) DescribeDBClusterParameterGroupsWithContext(ctx aws.Context, inp
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeDBClusterParameterGroups operation.
-//    pageNum := 0
-//    err := client.DescribeDBClusterParameterGroupsPages(params,
-//        func(page *docdb.DescribeDBClusterParameterGroupsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeDBClusterParameterGroups operation.
+//	pageNum := 0
+//	err := client.DescribeDBClusterParameterGroupsPages(params,
+//	    func(page *docdb.DescribeDBClusterParameterGroupsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeDBClusterParameterGroupsPages(input *DescribeDBClusterParameterGroupsInput, fn func(*DescribeDBClusterParameterGroupsOutput, bool) bool) error {
 	return c.DescribeDBClusterParameterGroupsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2128,14 +2124,13 @@ const opDescribeDBClusterParameters = "DescribeDBClusterParameters"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDBClusterParametersRequest method.
+//	req, resp := client.DescribeDBClusterParametersRequest(params)
 //
-//    // Example sending a request using the DescribeDBClusterParametersRequest method.
-//    req, resp := client.DescribeDBClusterParametersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBClusterParameters
 func (c *DocDB) DescribeDBClusterParametersRequest(input *DescribeDBClusterParametersInput) (req *request.Request, output *DescribeDBClusterParametersOutput) {
@@ -2172,8 +2167,8 @@ func (c *DocDB) DescribeDBClusterParametersRequest(input *DescribeDBClusterParam
 // API operation DescribeDBClusterParameters for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
-//   DBParameterGroupName doesn't refer to an existing parameter group.
+//   - ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
+//     DBParameterGroupName doesn't refer to an existing parameter group.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBClusterParameters
 func (c *DocDB) DescribeDBClusterParameters(input *DescribeDBClusterParametersInput) (*DescribeDBClusterParametersOutput, error) {
@@ -2205,15 +2200,14 @@ func (c *DocDB) DescribeDBClusterParametersWithContext(ctx aws.Context, input *D
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeDBClusterParameters operation.
-//    pageNum := 0
-//    err := client.DescribeDBClusterParametersPages(params,
-//        func(page *docdb.DescribeDBClusterParametersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeDBClusterParameters operation.
+//	pageNum := 0
+//	err := client.DescribeDBClusterParametersPages(params,
+//	    func(page *docdb.DescribeDBClusterParametersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeDBClusterParametersPages(input *DescribeDBClusterParametersInput, fn func(*DescribeDBClusterParametersOutput, bool) bool) error {
 	return c.DescribeDBClusterParametersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2265,14 +2259,13 @@ const opDescribeDBClusterSnapshotAttributes = "DescribeDBClusterSnapshotAttribut
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDBClusterSnapshotAttributesRequest method.
+//	req, resp := client.DescribeDBClusterSnapshotAttributesRequest(params)
 //
-//    // Example sending a request using the DescribeDBClusterSnapshotAttributesRequest method.
-//    req, resp := client.DescribeDBClusterSnapshotAttributesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBClusterSnapshotAttributes
 func (c *DocDB) DescribeDBClusterSnapshotAttributesRequest(input *DescribeDBClusterSnapshotAttributesInput) (req *request.Request, output *DescribeDBClusterSnapshotAttributesOutput) {
@@ -2296,11 +2289,12 @@ func (c *DocDB) DescribeDBClusterSnapshotAttributesRequest(input *DescribeDBClus
 // Returns a list of cluster snapshot attribute names and values for a manual
 // DB cluster snapshot.
 //
-// When you share snapshots with other accounts, DescribeDBClusterSnapshotAttributes
-// returns the restore attribute and a list of IDs for the accounts that are
-// authorized to copy or restore the manual cluster snapshot. If all is included
-// in the list of values for the restore attribute, then the manual cluster
-// snapshot is public and can be copied or restored by all accounts.
+// When you share snapshots with other Amazon Web Services accounts, DescribeDBClusterSnapshotAttributes
+// returns the restore attribute and a list of IDs for the Amazon Web Services
+// accounts that are authorized to copy or restore the manual cluster snapshot.
+// If all is included in the list of values for the restore attribute, then
+// the manual cluster snapshot is public and can be copied or restored by all
+// Amazon Web Services accounts.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2310,8 +2304,8 @@ func (c *DocDB) DescribeDBClusterSnapshotAttributesRequest(input *DescribeDBClus
 // API operation DescribeDBClusterSnapshotAttributes for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
-//   DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
+//   - ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
+//     DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBClusterSnapshotAttributes
 func (c *DocDB) DescribeDBClusterSnapshotAttributes(input *DescribeDBClusterSnapshotAttributesInput) (*DescribeDBClusterSnapshotAttributesOutput, error) {
@@ -2351,14 +2345,13 @@ const opDescribeDBClusterSnapshots = "DescribeDBClusterSnapshots"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDBClusterSnapshotsRequest method.
+//	req, resp := client.DescribeDBClusterSnapshotsRequest(params)
 //
-//    // Example sending a request using the DescribeDBClusterSnapshotsRequest method.
-//    req, resp := client.DescribeDBClusterSnapshotsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBClusterSnapshots
 func (c *DocDB) DescribeDBClusterSnapshotsRequest(input *DescribeDBClusterSnapshotsInput) (req *request.Request, output *DescribeDBClusterSnapshotsOutput) {
@@ -2396,8 +2389,8 @@ func (c *DocDB) DescribeDBClusterSnapshotsRequest(input *DescribeDBClusterSnapsh
 // API operation DescribeDBClusterSnapshots for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
-//   DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
+//   - ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
+//     DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBClusterSnapshots
 func (c *DocDB) DescribeDBClusterSnapshots(input *DescribeDBClusterSnapshotsInput) (*DescribeDBClusterSnapshotsOutput, error) {
@@ -2429,15 +2422,14 @@ func (c *DocDB) DescribeDBClusterSnapshotsWithContext(ctx aws.Context, input *De
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeDBClusterSnapshots operation.
-//    pageNum := 0
-//    err := client.DescribeDBClusterSnapshotsPages(params,
-//        func(page *docdb.DescribeDBClusterSnapshotsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeDBClusterSnapshots operation.
+//	pageNum := 0
+//	err := client.DescribeDBClusterSnapshotsPages(params,
+//	    func(page *docdb.DescribeDBClusterSnapshotsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeDBClusterSnapshotsPages(input *DescribeDBClusterSnapshotsInput, fn func(*DescribeDBClusterSnapshotsOutput, bool) bool) error {
 	return c.DescribeDBClusterSnapshotsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2489,14 +2481,13 @@ const opDescribeDBClusters = "DescribeDBClusters"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDBClustersRequest method.
+//	req, resp := client.DescribeDBClustersRequest(params)
 //
-//    // Example sending a request using the DescribeDBClustersRequest method.
-//    req, resp := client.DescribeDBClustersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBClusters
 func (c *DocDB) DescribeDBClustersRequest(input *DescribeDBClustersInput) (req *request.Request, output *DescribeDBClustersOutput) {
@@ -2537,8 +2528,8 @@ func (c *DocDB) DescribeDBClustersRequest(input *DescribeDBClustersInput) (req *
 // API operation DescribeDBClusters for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBClusters
 func (c *DocDB) DescribeDBClusters(input *DescribeDBClustersInput) (*DescribeDBClustersOutput, error) {
@@ -2570,15 +2561,14 @@ func (c *DocDB) DescribeDBClustersWithContext(ctx aws.Context, input *DescribeDB
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeDBClusters operation.
-//    pageNum := 0
-//    err := client.DescribeDBClustersPages(params,
-//        func(page *docdb.DescribeDBClustersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeDBClusters operation.
+//	pageNum := 0
+//	err := client.DescribeDBClustersPages(params,
+//	    func(page *docdb.DescribeDBClustersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeDBClustersPages(input *DescribeDBClustersInput, fn func(*DescribeDBClustersOutput, bool) bool) error {
 	return c.DescribeDBClustersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2630,14 +2620,13 @@ const opDescribeDBEngineVersions = "DescribeDBEngineVersions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDBEngineVersionsRequest method.
+//	req, resp := client.DescribeDBEngineVersionsRequest(params)
 //
-//    // Example sending a request using the DescribeDBEngineVersionsRequest method.
-//    req, resp := client.DescribeDBEngineVersionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBEngineVersions
 func (c *DocDB) DescribeDBEngineVersionsRequest(input *DescribeDBEngineVersionsInput) (req *request.Request, output *DescribeDBEngineVersionsOutput) {
@@ -2702,15 +2691,14 @@ func (c *DocDB) DescribeDBEngineVersionsWithContext(ctx aws.Context, input *Desc
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeDBEngineVersions operation.
-//    pageNum := 0
-//    err := client.DescribeDBEngineVersionsPages(params,
-//        func(page *docdb.DescribeDBEngineVersionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeDBEngineVersions operation.
+//	pageNum := 0
+//	err := client.DescribeDBEngineVersionsPages(params,
+//	    func(page *docdb.DescribeDBEngineVersionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeDBEngineVersionsPages(input *DescribeDBEngineVersionsInput, fn func(*DescribeDBEngineVersionsOutput, bool) bool) error {
 	return c.DescribeDBEngineVersionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2762,14 +2750,13 @@ const opDescribeDBInstances = "DescribeDBInstances"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDBInstancesRequest method.
+//	req, resp := client.DescribeDBInstancesRequest(params)
 //
-//    // Example sending a request using the DescribeDBInstancesRequest method.
-//    req, resp := client.DescribeDBInstancesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBInstances
 func (c *DocDB) DescribeDBInstancesRequest(input *DescribeDBInstancesInput) (req *request.Request, output *DescribeDBInstancesOutput) {
@@ -2807,8 +2794,8 @@ func (c *DocDB) DescribeDBInstancesRequest(input *DescribeDBInstancesInput) (req
 // API operation DescribeDBInstances for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
-//   DBInstanceIdentifier doesn't refer to an existing instance.
+//   - ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
+//     DBInstanceIdentifier doesn't refer to an existing instance.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBInstances
 func (c *DocDB) DescribeDBInstances(input *DescribeDBInstancesInput) (*DescribeDBInstancesOutput, error) {
@@ -2840,15 +2827,14 @@ func (c *DocDB) DescribeDBInstancesWithContext(ctx aws.Context, input *DescribeD
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeDBInstances operation.
-//    pageNum := 0
-//    err := client.DescribeDBInstancesPages(params,
-//        func(page *docdb.DescribeDBInstancesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeDBInstances operation.
+//	pageNum := 0
+//	err := client.DescribeDBInstancesPages(params,
+//	    func(page *docdb.DescribeDBInstancesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeDBInstancesPages(input *DescribeDBInstancesInput, fn func(*DescribeDBInstancesOutput, bool) bool) error {
 	return c.DescribeDBInstancesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2900,14 +2886,13 @@ const opDescribeDBSubnetGroups = "DescribeDBSubnetGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeDBSubnetGroupsRequest method.
+//	req, resp := client.DescribeDBSubnetGroupsRequest(params)
 //
-//    // Example sending a request using the DescribeDBSubnetGroupsRequest method.
-//    req, resp := client.DescribeDBSubnetGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBSubnetGroups
 func (c *DocDB) DescribeDBSubnetGroupsRequest(input *DescribeDBSubnetGroupsInput) (req *request.Request, output *DescribeDBSubnetGroupsOutput) {
@@ -2945,8 +2930,8 @@ func (c *DocDB) DescribeDBSubnetGroupsRequest(input *DescribeDBSubnetGroupsInput
 // API operation DescribeDBSubnetGroups for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
-//   DBSubnetGroupName doesn't refer to an existing subnet group.
+//   - ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
+//     DBSubnetGroupName doesn't refer to an existing subnet group.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeDBSubnetGroups
 func (c *DocDB) DescribeDBSubnetGroups(input *DescribeDBSubnetGroupsInput) (*DescribeDBSubnetGroupsOutput, error) {
@@ -2978,15 +2963,14 @@ func (c *DocDB) DescribeDBSubnetGroupsWithContext(ctx aws.Context, input *Descri
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeDBSubnetGroups operation.
-//    pageNum := 0
-//    err := client.DescribeDBSubnetGroupsPages(params,
-//        func(page *docdb.DescribeDBSubnetGroupsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeDBSubnetGroups operation.
+//	pageNum := 0
+//	err := client.DescribeDBSubnetGroupsPages(params,
+//	    func(page *docdb.DescribeDBSubnetGroupsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeDBSubnetGroupsPages(input *DescribeDBSubnetGroupsInput, fn func(*DescribeDBSubnetGroupsOutput, bool) bool) error {
 	return c.DescribeDBSubnetGroupsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3038,14 +3022,13 @@ const opDescribeEngineDefaultClusterParameters = "DescribeEngineDefaultClusterPa
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeEngineDefaultClusterParametersRequest method.
+//	req, resp := client.DescribeEngineDefaultClusterParametersRequest(params)
 //
-//    // Example sending a request using the DescribeEngineDefaultClusterParametersRequest method.
-//    req, resp := client.DescribeEngineDefaultClusterParametersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeEngineDefaultClusterParameters
 func (c *DocDB) DescribeEngineDefaultClusterParametersRequest(input *DescribeEngineDefaultClusterParametersInput) (req *request.Request, output *DescribeEngineDefaultClusterParametersOutput) {
@@ -3113,14 +3096,13 @@ const opDescribeEventCategories = "DescribeEventCategories"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeEventCategoriesRequest method.
+//	req, resp := client.DescribeEventCategoriesRequest(params)
 //
-//    // Example sending a request using the DescribeEventCategoriesRequest method.
-//    req, resp := client.DescribeEventCategoriesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeEventCategories
 func (c *DocDB) DescribeEventCategoriesRequest(input *DescribeEventCategoriesInput) (req *request.Request, output *DescribeEventCategoriesOutput) {
@@ -3188,14 +3170,13 @@ const opDescribeEventSubscriptions = "DescribeEventSubscriptions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeEventSubscriptionsRequest method.
+//	req, resp := client.DescribeEventSubscriptionsRequest(params)
 //
-//    // Example sending a request using the DescribeEventSubscriptionsRequest method.
-//    req, resp := client.DescribeEventSubscriptionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeEventSubscriptions
 func (c *DocDB) DescribeEventSubscriptionsRequest(input *DescribeEventSubscriptionsInput) (req *request.Request, output *DescribeEventSubscriptionsOutput) {
@@ -3236,8 +3217,8 @@ func (c *DocDB) DescribeEventSubscriptionsRequest(input *DescribeEventSubscripti
 // API operation DescribeEventSubscriptions for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeSubscriptionNotFoundFault "SubscriptionNotFound"
-//   The subscription name does not exist.
+//   - ErrCodeSubscriptionNotFoundFault "SubscriptionNotFound"
+//     The subscription name does not exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeEventSubscriptions
 func (c *DocDB) DescribeEventSubscriptions(input *DescribeEventSubscriptionsInput) (*DescribeEventSubscriptionsOutput, error) {
@@ -3269,15 +3250,14 @@ func (c *DocDB) DescribeEventSubscriptionsWithContext(ctx aws.Context, input *De
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeEventSubscriptions operation.
-//    pageNum := 0
-//    err := client.DescribeEventSubscriptionsPages(params,
-//        func(page *docdb.DescribeEventSubscriptionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeEventSubscriptions operation.
+//	pageNum := 0
+//	err := client.DescribeEventSubscriptionsPages(params,
+//	    func(page *docdb.DescribeEventSubscriptionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeEventSubscriptionsPages(input *DescribeEventSubscriptionsInput, fn func(*DescribeEventSubscriptionsOutput, bool) bool) error {
 	return c.DescribeEventSubscriptionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3329,14 +3309,13 @@ const opDescribeEvents = "DescribeEvents"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeEventsRequest method.
+//	req, resp := client.DescribeEventsRequest(params)
 //
-//    // Example sending a request using the DescribeEventsRequest method.
-//    req, resp := client.DescribeEventsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeEvents
 func (c *DocDB) DescribeEventsRequest(input *DescribeEventsInput) (req *request.Request, output *DescribeEventsOutput) {
@@ -3404,15 +3383,14 @@ func (c *DocDB) DescribeEventsWithContext(ctx aws.Context, input *DescribeEvents
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeEvents operation.
-//    pageNum := 0
-//    err := client.DescribeEventsPages(params,
-//        func(page *docdb.DescribeEventsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeEvents operation.
+//	pageNum := 0
+//	err := client.DescribeEventsPages(params,
+//	    func(page *docdb.DescribeEventsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeEventsPages(input *DescribeEventsInput, fn func(*DescribeEventsOutput, bool) bool) error {
 	return c.DescribeEventsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3464,14 +3442,13 @@ const opDescribeGlobalClusters = "DescribeGlobalClusters"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeGlobalClustersRequest method.
+//	req, resp := client.DescribeGlobalClustersRequest(params)
 //
-//    // Example sending a request using the DescribeGlobalClustersRequest method.
-//    req, resp := client.DescribeGlobalClustersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeGlobalClusters
 func (c *DocDB) DescribeGlobalClustersRequest(input *DescribeGlobalClustersInput) (req *request.Request, output *DescribeGlobalClustersOutput) {
@@ -3511,8 +3488,8 @@ func (c *DocDB) DescribeGlobalClustersRequest(input *DescribeGlobalClustersInput
 // API operation DescribeGlobalClusters for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeGlobalClusterNotFoundFault "GlobalClusterNotFoundFault"
-//   The GlobalClusterIdentifier doesn't refer to an existing global cluster.
+//   - ErrCodeGlobalClusterNotFoundFault "GlobalClusterNotFoundFault"
+//     The GlobalClusterIdentifier doesn't refer to an existing global cluster.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeGlobalClusters
 func (c *DocDB) DescribeGlobalClusters(input *DescribeGlobalClustersInput) (*DescribeGlobalClustersOutput, error) {
@@ -3544,15 +3521,14 @@ func (c *DocDB) DescribeGlobalClustersWithContext(ctx aws.Context, input *Descri
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeGlobalClusters operation.
-//    pageNum := 0
-//    err := client.DescribeGlobalClustersPages(params,
-//        func(page *docdb.DescribeGlobalClustersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeGlobalClusters operation.
+//	pageNum := 0
+//	err := client.DescribeGlobalClustersPages(params,
+//	    func(page *docdb.DescribeGlobalClustersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeGlobalClustersPages(input *DescribeGlobalClustersInput, fn func(*DescribeGlobalClustersOutput, bool) bool) error {
 	return c.DescribeGlobalClustersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3604,14 +3580,13 @@ const opDescribeOrderableDBInstanceOptions = "DescribeOrderableDBInstanceOptions
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeOrderableDBInstanceOptionsRequest method.
+//	req, resp := client.DescribeOrderableDBInstanceOptionsRequest(params)
 //
-//    // Example sending a request using the DescribeOrderableDBInstanceOptionsRequest method.
-//    req, resp := client.DescribeOrderableDBInstanceOptionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribeOrderableDBInstanceOptions
 func (c *DocDB) DescribeOrderableDBInstanceOptionsRequest(input *DescribeOrderableDBInstanceOptionsInput) (req *request.Request, output *DescribeOrderableDBInstanceOptionsOutput) {
@@ -3676,15 +3651,14 @@ func (c *DocDB) DescribeOrderableDBInstanceOptionsWithContext(ctx aws.Context, i
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeOrderableDBInstanceOptions operation.
-//    pageNum := 0
-//    err := client.DescribeOrderableDBInstanceOptionsPages(params,
-//        func(page *docdb.DescribeOrderableDBInstanceOptionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeOrderableDBInstanceOptions operation.
+//	pageNum := 0
+//	err := client.DescribeOrderableDBInstanceOptionsPages(params,
+//	    func(page *docdb.DescribeOrderableDBInstanceOptionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribeOrderableDBInstanceOptionsPages(input *DescribeOrderableDBInstanceOptionsInput, fn func(*DescribeOrderableDBInstanceOptionsOutput, bool) bool) error {
 	return c.DescribeOrderableDBInstanceOptionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3736,14 +3710,13 @@ const opDescribePendingMaintenanceActions = "DescribePendingMaintenanceActions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribePendingMaintenanceActionsRequest method.
+//	req, resp := client.DescribePendingMaintenanceActionsRequest(params)
 //
-//    // Example sending a request using the DescribePendingMaintenanceActionsRequest method.
-//    req, resp := client.DescribePendingMaintenanceActionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribePendingMaintenanceActions
 func (c *DocDB) DescribePendingMaintenanceActionsRequest(input *DescribePendingMaintenanceActionsInput) (req *request.Request, output *DescribePendingMaintenanceActionsOutput) {
@@ -3781,8 +3754,8 @@ func (c *DocDB) DescribePendingMaintenanceActionsRequest(input *DescribePendingM
 // API operation DescribePendingMaintenanceActions for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeResourceNotFoundFault "ResourceNotFoundFault"
-//   The specified resource ID was not found.
+//   - ErrCodeResourceNotFoundFault "ResourceNotFoundFault"
+//     The specified resource ID was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/DescribePendingMaintenanceActions
 func (c *DocDB) DescribePendingMaintenanceActions(input *DescribePendingMaintenanceActionsInput) (*DescribePendingMaintenanceActionsOutput, error) {
@@ -3814,15 +3787,14 @@ func (c *DocDB) DescribePendingMaintenanceActionsWithContext(ctx aws.Context, in
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribePendingMaintenanceActions operation.
-//    pageNum := 0
-//    err := client.DescribePendingMaintenanceActionsPages(params,
-//        func(page *docdb.DescribePendingMaintenanceActionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribePendingMaintenanceActions operation.
+//	pageNum := 0
+//	err := client.DescribePendingMaintenanceActionsPages(params,
+//	    func(page *docdb.DescribePendingMaintenanceActionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *DocDB) DescribePendingMaintenanceActionsPages(input *DescribePendingMaintenanceActionsInput, fn func(*DescribePendingMaintenanceActionsOutput, bool) bool) error {
 	return c.DescribePendingMaintenanceActionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3874,14 +3846,13 @@ const opFailoverDBCluster = "FailoverDBCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the FailoverDBClusterRequest method.
+//	req, resp := client.FailoverDBClusterRequest(params)
 //
-//    // Example sending a request using the FailoverDBClusterRequest method.
-//    req, resp := client.FailoverDBClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/FailoverDBCluster
 func (c *DocDB) FailoverDBClusterRequest(input *FailoverDBClusterInput) (req *request.Request, output *FailoverDBClusterOutput) {
@@ -3919,14 +3890,15 @@ func (c *DocDB) FailoverDBClusterRequest(input *FailoverDBClusterInput) (req *re
 // API operation FailoverDBCluster for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
-//   The specified instance isn't in the available state.
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
+//
+//   - ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
+//     The specified instance isn't in the available state.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/FailoverDBCluster
 func (c *DocDB) FailoverDBCluster(input *FailoverDBClusterInput) (*FailoverDBClusterOutput, error) {
@@ -3966,14 +3938,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ListTagsForResource
 func (c *DocDB) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -4004,14 +3975,15 @@ func (c *DocDB) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
-//   DBInstanceIdentifier doesn't refer to an existing instance.
 //
-//   * ErrCodeDBSnapshotNotFoundFault "DBSnapshotNotFound"
-//   DBSnapshotIdentifier doesn't refer to an existing snapshot.
+//   - ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
+//     DBInstanceIdentifier doesn't refer to an existing instance.
 //
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
+//   - ErrCodeDBSnapshotNotFoundFault "DBSnapshotNotFound"
+//     DBSnapshotIdentifier doesn't refer to an existing snapshot.
+//
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ListTagsForResource
 func (c *DocDB) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -4051,14 +4023,13 @@ const opModifyDBCluster = "ModifyDBCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ModifyDBClusterRequest method.
+//	req, resp := client.ModifyDBClusterRequest(params)
 //
-//    // Example sending a request using the ModifyDBClusterRequest method.
-//    req, resp := client.ModifyDBClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyDBCluster
 func (c *DocDB) ModifyDBClusterRequest(input *ModifyDBClusterInput) (req *request.Request, output *ModifyDBClusterOutput) {
@@ -4091,42 +4062,43 @@ func (c *DocDB) ModifyDBClusterRequest(input *ModifyDBClusterInput) (req *reques
 // API operation ModifyDBCluster for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
-//   The request would cause you to exceed the allowed amount of storage available
-//   across all instances.
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
 //
-//   * ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
-//   DBSubnetGroupName doesn't refer to an existing subnet group.
+//   - ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
+//     The request would cause you to exceed the allowed amount of storage available
+//     across all instances.
 //
-//   * ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
-//   The subnet group doesn't cover all Availability Zones after it is created
-//   because of changes that were made.
+//   - ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
+//     DBSubnetGroupName doesn't refer to an existing subnet group.
 //
-//   * ErrCodeInvalidDBSubnetGroupStateFault "InvalidDBSubnetGroupStateFault"
-//   The subnet group can't be deleted because it's in use.
+//   - ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
+//     The subnet group doesn't cover all Availability Zones after it is created
+//     because of changes that were made.
 //
-//   * ErrCodeInvalidSubnet "InvalidSubnet"
-//   The requested subnet is not valid, or multiple subnets were requested that
-//   are not all in a common virtual private cloud (VPC).
+//   - ErrCodeInvalidDBSubnetGroupStateFault "InvalidDBSubnetGroupStateFault"
+//     The subnet group can't be deleted because it's in use.
 //
-//   * ErrCodeDBClusterParameterGroupNotFoundFault "DBClusterParameterGroupNotFound"
-//   DBClusterParameterGroupName doesn't refer to an existing cluster parameter
-//   group.
+//   - ErrCodeInvalidSubnet "InvalidSubnet"
+//     The requested subnet is not valid, or multiple subnets were requested that
+//     are not all in a common virtual private cloud (VPC).
 //
-//   * ErrCodeInvalidDBSecurityGroupStateFault "InvalidDBSecurityGroupState"
-//   The state of the security group doesn't allow deletion.
+//   - ErrCodeDBClusterParameterGroupNotFoundFault "DBClusterParameterGroupNotFound"
+//     DBClusterParameterGroupName doesn't refer to an existing cluster parameter
+//     group.
 //
-//   * ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
-//   The specified instance isn't in the available state.
+//   - ErrCodeInvalidDBSecurityGroupStateFault "InvalidDBSecurityGroupState"
+//     The state of the security group doesn't allow deletion.
 //
-//   * ErrCodeDBClusterAlreadyExistsFault "DBClusterAlreadyExistsFault"
-//   You already have a cluster with the given identifier.
+//   - ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
+//     The specified instance isn't in the available state.
+//
+//   - ErrCodeDBClusterAlreadyExistsFault "DBClusterAlreadyExistsFault"
+//     You already have a cluster with the given identifier.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyDBCluster
 func (c *DocDB) ModifyDBCluster(input *ModifyDBClusterInput) (*ModifyDBClusterOutput, error) {
@@ -4166,14 +4138,13 @@ const opModifyDBClusterParameterGroup = "ModifyDBClusterParameterGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ModifyDBClusterParameterGroupRequest method.
+//	req, resp := client.ModifyDBClusterParameterGroupRequest(params)
 //
-//    // Example sending a request using the ModifyDBClusterParameterGroupRequest method.
-//    req, resp := client.ModifyDBClusterParameterGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyDBClusterParameterGroup
 func (c *DocDB) ModifyDBClusterParameterGroupRequest(input *ModifyDBClusterParameterGroupInput) (req *request.Request, output *ModifyDBClusterParameterGroupOutput) {
@@ -4218,13 +4189,14 @@ func (c *DocDB) ModifyDBClusterParameterGroupRequest(input *ModifyDBClusterParam
 // API operation ModifyDBClusterParameterGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
-//   DBParameterGroupName doesn't refer to an existing parameter group.
 //
-//   * ErrCodeInvalidDBParameterGroupStateFault "InvalidDBParameterGroupState"
-//   The parameter group is in use, or it is in a state that is not valid. If
-//   you are trying to delete the parameter group, you can't delete it when the
-//   parameter group is in this state.
+//   - ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
+//     DBParameterGroupName doesn't refer to an existing parameter group.
+//
+//   - ErrCodeInvalidDBParameterGroupStateFault "InvalidDBParameterGroupState"
+//     The parameter group is in use, or it is in a state that is not valid. If
+//     you are trying to delete the parameter group, you can't delete it when the
+//     parameter group is in this state.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyDBClusterParameterGroup
 func (c *DocDB) ModifyDBClusterParameterGroup(input *ModifyDBClusterParameterGroupInput) (*ModifyDBClusterParameterGroupOutput, error) {
@@ -4264,14 +4236,13 @@ const opModifyDBClusterSnapshotAttribute = "ModifyDBClusterSnapshotAttribute"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ModifyDBClusterSnapshotAttributeRequest method.
+//	req, resp := client.ModifyDBClusterSnapshotAttributeRequest(params)
 //
-//    // Example sending a request using the ModifyDBClusterSnapshotAttributeRequest method.
-//    req, resp := client.ModifyDBClusterSnapshotAttributeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyDBClusterSnapshotAttribute
 func (c *DocDB) ModifyDBClusterSnapshotAttributeRequest(input *ModifyDBClusterSnapshotAttributeInput) (req *request.Request, output *ModifyDBClusterSnapshotAttributeOutput) {
@@ -4295,16 +4266,17 @@ func (c *DocDB) ModifyDBClusterSnapshotAttributeRequest(input *ModifyDBClusterSn
 // Adds an attribute and values to, or removes an attribute and values from,
 // a manual cluster snapshot.
 //
-// To share a manual cluster snapshot with other accounts, specify restore as
-// the AttributeName, and use the ValuesToAdd parameter to add a list of IDs
-// of the accounts that are authorized to restore the manual cluster snapshot.
-// Use the value all to make the manual cluster snapshot public, which means
-// that it can be copied or restored by all accounts. Do not add the all value
-// for any manual cluster snapshots that contain private information that you
-// don't want available to all accounts. If a manual cluster snapshot is encrypted,
-// it can be shared, but only by specifying a list of authorized account IDs
-// for the ValuesToAdd parameter. You can't use all as a value for that parameter
-// in this case.
+// To share a manual cluster snapshot with other Amazon Web Services accounts,
+// specify restore as the AttributeName, and use the ValuesToAdd parameter to
+// add a list of IDs of the Amazon Web Services accounts that are authorized
+// to restore the manual cluster snapshot. Use the value all to make the manual
+// cluster snapshot public, which means that it can be copied or restored by
+// all Amazon Web Services accounts. Do not add the all value for any manual
+// cluster snapshots that contain private information that you don't want available
+// to all Amazon Web Services accounts. If a manual cluster snapshot is encrypted,
+// it can be shared, but only by specifying a list of authorized Amazon Web
+// Services account IDs for the ValuesToAdd parameter. You can't use all as
+// a value for that parameter in this case.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4314,15 +4286,16 @@ func (c *DocDB) ModifyDBClusterSnapshotAttributeRequest(input *ModifyDBClusterSn
 // API operation ModifyDBClusterSnapshotAttribute for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
-//   DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
 //
-//   * ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
-//   The provided value isn't a valid cluster snapshot state.
+//   - ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
+//     DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
 //
-//   * ErrCodeSharedSnapshotQuotaExceededFault "SharedSnapshotQuotaExceeded"
-//   You have exceeded the maximum number of accounts that you can share a manual
-//   DB snapshot with.
+//   - ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
+//     The provided value isn't a valid cluster snapshot state.
+//
+//   - ErrCodeSharedSnapshotQuotaExceededFault "SharedSnapshotQuotaExceeded"
+//     You have exceeded the maximum number of accounts that you can share a manual
+//     DB snapshot with.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyDBClusterSnapshotAttribute
 func (c *DocDB) ModifyDBClusterSnapshotAttribute(input *ModifyDBClusterSnapshotAttributeInput) (*ModifyDBClusterSnapshotAttributeOutput, error) {
@@ -4362,14 +4335,13 @@ const opModifyDBInstance = "ModifyDBInstance"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ModifyDBInstanceRequest method.
+//	req, resp := client.ModifyDBInstanceRequest(params)
 //
-//    // Example sending a request using the ModifyDBInstanceRequest method.
-//    req, resp := client.ModifyDBInstanceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyDBInstance
 func (c *DocDB) ModifyDBInstanceRequest(input *ModifyDBInstanceInput) (req *request.Request, output *ModifyDBInstanceOutput) {
@@ -4401,51 +4373,52 @@ func (c *DocDB) ModifyDBInstanceRequest(input *ModifyDBInstanceInput) (req *requ
 // API operation ModifyDBInstance for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
-//   The specified instance isn't in the available state.
 //
-//   * ErrCodeInvalidDBSecurityGroupStateFault "InvalidDBSecurityGroupState"
-//   The state of the security group doesn't allow deletion.
+//   - ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
+//     The specified instance isn't in the available state.
 //
-//   * ErrCodeDBInstanceAlreadyExistsFault "DBInstanceAlreadyExists"
-//   You already have a instance with the given identifier.
+//   - ErrCodeInvalidDBSecurityGroupStateFault "InvalidDBSecurityGroupState"
+//     The state of the security group doesn't allow deletion.
 //
-//   * ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
-//   DBInstanceIdentifier doesn't refer to an existing instance.
+//   - ErrCodeDBInstanceAlreadyExistsFault "DBInstanceAlreadyExists"
+//     You already have a instance with the given identifier.
 //
-//   * ErrCodeDBSecurityGroupNotFoundFault "DBSecurityGroupNotFound"
-//   DBSecurityGroupName doesn't refer to an existing security group.
+//   - ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
+//     DBInstanceIdentifier doesn't refer to an existing instance.
 //
-//   * ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
-//   DBParameterGroupName doesn't refer to an existing parameter group.
+//   - ErrCodeDBSecurityGroupNotFoundFault "DBSecurityGroupNotFound"
+//     DBSecurityGroupName doesn't refer to an existing security group.
 //
-//   * ErrCodeInsufficientDBInstanceCapacityFault "InsufficientDBInstanceCapacity"
-//   The specified instance class isn't available in the specified Availability
-//   Zone.
+//   - ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
+//     DBParameterGroupName doesn't refer to an existing parameter group.
 //
-//   * ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
-//   The request would cause you to exceed the allowed amount of storage available
-//   across all instances.
+//   - ErrCodeInsufficientDBInstanceCapacityFault "InsufficientDBInstanceCapacity"
+//     The specified instance class isn't available in the specified Availability
+//     Zone.
 //
-//   * ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
-//   The subnet group doesn't cover all Availability Zones after it is created
-//   because of changes that were made.
+//   - ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
+//     The request would cause you to exceed the allowed amount of storage available
+//     across all instances.
 //
-//   * ErrCodeDBUpgradeDependencyFailureFault "DBUpgradeDependencyFailure"
-//   The upgrade failed because a resource that the depends on can't be modified.
+//   - ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
+//     The subnet group doesn't cover all Availability Zones after it is created
+//     because of changes that were made.
 //
-//   * ErrCodeStorageTypeNotSupportedFault "StorageTypeNotSupported"
-//   Storage of the specified StorageType can't be associated with the DB instance.
+//   - ErrCodeDBUpgradeDependencyFailureFault "DBUpgradeDependencyFailure"
+//     The upgrade failed because a resource that the depends on can't be modified.
 //
-//   * ErrCodeAuthorizationNotFoundFault "AuthorizationNotFound"
-//   The specified CIDR IP or Amazon EC2 security group isn't authorized for the
-//   specified security group.
+//   - ErrCodeStorageTypeNotSupportedFault "StorageTypeNotSupported"
+//     Storage of the specified StorageType can't be associated with the DB instance.
 //
-//   Amazon DocumentDB also might not be authorized to perform necessary actions
-//   on your behalf using IAM.
+//   - ErrCodeAuthorizationNotFoundFault "AuthorizationNotFound"
+//     The specified CIDR IP or Amazon EC2 security group isn't authorized for the
+//     specified security group.
 //
-//   * ErrCodeCertificateNotFoundFault "CertificateNotFound"
-//   CertificateIdentifier doesn't refer to an existing certificate.
+//     Amazon DocumentDB also might not be authorized to perform necessary actions
+//     on your behalf using IAM.
+//
+//   - ErrCodeCertificateNotFoundFault "CertificateNotFound"
+//     CertificateIdentifier doesn't refer to an existing certificate.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyDBInstance
 func (c *DocDB) ModifyDBInstance(input *ModifyDBInstanceInput) (*ModifyDBInstanceOutput, error) {
@@ -4485,14 +4458,13 @@ const opModifyDBSubnetGroup = "ModifyDBSubnetGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ModifyDBSubnetGroupRequest method.
+//	req, resp := client.ModifyDBSubnetGroupRequest(params)
 //
-//    // Example sending a request using the ModifyDBSubnetGroupRequest method.
-//    req, resp := client.ModifyDBSubnetGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyDBSubnetGroup
 func (c *DocDB) ModifyDBSubnetGroupRequest(input *ModifyDBSubnetGroupInput) (req *request.Request, output *ModifyDBSubnetGroupOutput) {
@@ -4514,7 +4486,7 @@ func (c *DocDB) ModifyDBSubnetGroupRequest(input *ModifyDBSubnetGroupInput) (req
 // ModifyDBSubnetGroup API operation for Amazon DocumentDB with MongoDB compatibility.
 //
 // Modifies an existing subnet group. subnet groups must contain at least one
-// subnet in at least two Availability Zones in the Region.
+// subnet in at least two Availability Zones in the Amazon Web Services Region.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4524,23 +4496,24 @@ func (c *DocDB) ModifyDBSubnetGroupRequest(input *ModifyDBSubnetGroupInput) (req
 // API operation ModifyDBSubnetGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
-//   DBSubnetGroupName doesn't refer to an existing subnet group.
 //
-//   * ErrCodeDBSubnetQuotaExceededFault "DBSubnetQuotaExceededFault"
-//   The request would cause you to exceed the allowed number of subnets in a
-//   subnet group.
+//   - ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
+//     DBSubnetGroupName doesn't refer to an existing subnet group.
 //
-//   * ErrCodeSubnetAlreadyInUse "SubnetAlreadyInUse"
-//   The subnet is already in use in the Availability Zone.
+//   - ErrCodeDBSubnetQuotaExceededFault "DBSubnetQuotaExceededFault"
+//     The request would cause you to exceed the allowed number of subnets in a
+//     subnet group.
 //
-//   * ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs "DBSubnetGroupDoesNotCoverEnoughAZs"
-//   Subnets in the subnet group should cover at least two Availability Zones
-//   unless there is only one Availability Zone.
+//   - ErrCodeSubnetAlreadyInUse "SubnetAlreadyInUse"
+//     The subnet is already in use in the Availability Zone.
 //
-//   * ErrCodeInvalidSubnet "InvalidSubnet"
-//   The requested subnet is not valid, or multiple subnets were requested that
-//   are not all in a common virtual private cloud (VPC).
+//   - ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs "DBSubnetGroupDoesNotCoverEnoughAZs"
+//     Subnets in the subnet group should cover at least two Availability Zones
+//     unless there is only one Availability Zone.
+//
+//   - ErrCodeInvalidSubnet "InvalidSubnet"
+//     The requested subnet is not valid, or multiple subnets were requested that
+//     are not all in a common virtual private cloud (VPC).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyDBSubnetGroup
 func (c *DocDB) ModifyDBSubnetGroup(input *ModifyDBSubnetGroupInput) (*ModifyDBSubnetGroupOutput, error) {
@@ -4580,14 +4553,13 @@ const opModifyEventSubscription = "ModifyEventSubscription"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ModifyEventSubscriptionRequest method.
+//	req, resp := client.ModifyEventSubscriptionRequest(params)
 //
-//    // Example sending a request using the ModifyEventSubscriptionRequest method.
-//    req, resp := client.ModifyEventSubscriptionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyEventSubscription
 func (c *DocDB) ModifyEventSubscriptionRequest(input *ModifyEventSubscriptionInput) (req *request.Request, output *ModifyEventSubscriptionOutput) {
@@ -4618,24 +4590,25 @@ func (c *DocDB) ModifyEventSubscriptionRequest(input *ModifyEventSubscriptionInp
 // API operation ModifyEventSubscription for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeEventSubscriptionQuotaExceededFault "EventSubscriptionQuotaExceeded"
-//   You have reached the maximum number of event subscriptions.
 //
-//   * ErrCodeSubscriptionNotFoundFault "SubscriptionNotFound"
-//   The subscription name does not exist.
+//   - ErrCodeEventSubscriptionQuotaExceededFault "EventSubscriptionQuotaExceeded"
+//     You have reached the maximum number of event subscriptions.
 //
-//   * ErrCodeSNSInvalidTopicFault "SNSInvalidTopic"
-//   Amazon SNS has responded that there is a problem with the specified topic.
+//   - ErrCodeSubscriptionNotFoundFault "SubscriptionNotFound"
+//     The subscription name does not exist.
 //
-//   * ErrCodeSNSNoAuthorizationFault "SNSNoAuthorization"
-//   You do not have permission to publish to the SNS topic Amazon Resource Name
-//   (ARN).
+//   - ErrCodeSNSInvalidTopicFault "SNSInvalidTopic"
+//     Amazon SNS has responded that there is a problem with the specified topic.
 //
-//   * ErrCodeSNSTopicArnNotFoundFault "SNSTopicArnNotFound"
-//   The SNS topic Amazon Resource Name (ARN) does not exist.
+//   - ErrCodeSNSNoAuthorizationFault "SNSNoAuthorization"
+//     You do not have permission to publish to the SNS topic Amazon Resource Name
+//     (ARN).
 //
-//   * ErrCodeSubscriptionCategoryNotFoundFault "SubscriptionCategoryNotFound"
-//   The provided category does not exist.
+//   - ErrCodeSNSTopicArnNotFoundFault "SNSTopicArnNotFound"
+//     The SNS topic Amazon Resource Name (ARN) does not exist.
+//
+//   - ErrCodeSubscriptionCategoryNotFoundFault "SubscriptionCategoryNotFound"
+//     The provided category does not exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyEventSubscription
 func (c *DocDB) ModifyEventSubscription(input *ModifyEventSubscriptionInput) (*ModifyEventSubscriptionOutput, error) {
@@ -4675,14 +4648,13 @@ const opModifyGlobalCluster = "ModifyGlobalCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ModifyGlobalClusterRequest method.
+//	req, resp := client.ModifyGlobalClusterRequest(params)
 //
-//    // Example sending a request using the ModifyGlobalClusterRequest method.
-//    req, resp := client.ModifyGlobalClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyGlobalCluster
 func (c *DocDB) ModifyGlobalClusterRequest(input *ModifyGlobalClusterInput) (req *request.Request, output *ModifyGlobalClusterOutput) {
@@ -4718,11 +4690,12 @@ func (c *DocDB) ModifyGlobalClusterRequest(input *ModifyGlobalClusterInput) (req
 // API operation ModifyGlobalCluster for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeGlobalClusterNotFoundFault "GlobalClusterNotFoundFault"
-//   The GlobalClusterIdentifier doesn't refer to an existing global cluster.
 //
-//   * ErrCodeInvalidGlobalClusterStateFault "InvalidGlobalClusterStateFault"
-//   The requested operation can't be performed while the cluster is in this state.
+//   - ErrCodeGlobalClusterNotFoundFault "GlobalClusterNotFoundFault"
+//     The GlobalClusterIdentifier doesn't refer to an existing global cluster.
+//
+//   - ErrCodeInvalidGlobalClusterStateFault "InvalidGlobalClusterStateFault"
+//     The requested operation can't be performed while the cluster is in this state.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ModifyGlobalCluster
 func (c *DocDB) ModifyGlobalCluster(input *ModifyGlobalClusterInput) (*ModifyGlobalClusterOutput, error) {
@@ -4762,14 +4735,13 @@ const opRebootDBInstance = "RebootDBInstance"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RebootDBInstanceRequest method.
+//	req, resp := client.RebootDBInstanceRequest(params)
 //
-//    // Example sending a request using the RebootDBInstanceRequest method.
-//    req, resp := client.RebootDBInstanceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RebootDBInstance
 func (c *DocDB) RebootDBInstanceRequest(input *RebootDBInstanceInput) (req *request.Request, output *RebootDBInstanceOutput) {
@@ -4807,11 +4779,12 @@ func (c *DocDB) RebootDBInstanceRequest(input *RebootDBInstanceInput) (req *requ
 // API operation RebootDBInstance for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
-//   The specified instance isn't in the available state.
 //
-//   * ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
-//   DBInstanceIdentifier doesn't refer to an existing instance.
+//   - ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
+//     The specified instance isn't in the available state.
+//
+//   - ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
+//     DBInstanceIdentifier doesn't refer to an existing instance.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RebootDBInstance
 func (c *DocDB) RebootDBInstance(input *RebootDBInstanceInput) (*RebootDBInstanceOutput, error) {
@@ -4851,14 +4824,13 @@ const opRemoveFromGlobalCluster = "RemoveFromGlobalCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RemoveFromGlobalClusterRequest method.
+//	req, resp := client.RemoveFromGlobalClusterRequest(params)
 //
-//    // Example sending a request using the RemoveFromGlobalClusterRequest method.
-//    req, resp := client.RemoveFromGlobalClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RemoveFromGlobalCluster
 func (c *DocDB) RemoveFromGlobalClusterRequest(input *RemoveFromGlobalClusterInput) (req *request.Request, output *RemoveFromGlobalClusterOutput) {
@@ -4893,14 +4865,15 @@ func (c *DocDB) RemoveFromGlobalClusterRequest(input *RemoveFromGlobalClusterInp
 // API operation RemoveFromGlobalCluster for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeGlobalClusterNotFoundFault "GlobalClusterNotFoundFault"
-//   The GlobalClusterIdentifier doesn't refer to an existing global cluster.
 //
-//   * ErrCodeInvalidGlobalClusterStateFault "InvalidGlobalClusterStateFault"
-//   The requested operation can't be performed while the cluster is in this state.
+//   - ErrCodeGlobalClusterNotFoundFault "GlobalClusterNotFoundFault"
+//     The GlobalClusterIdentifier doesn't refer to an existing global cluster.
 //
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
+//   - ErrCodeInvalidGlobalClusterStateFault "InvalidGlobalClusterStateFault"
+//     The requested operation can't be performed while the cluster is in this state.
+//
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RemoveFromGlobalCluster
 func (c *DocDB) RemoveFromGlobalCluster(input *RemoveFromGlobalClusterInput) (*RemoveFromGlobalClusterOutput, error) {
@@ -4940,14 +4913,13 @@ const opRemoveSourceIdentifierFromSubscription = "RemoveSourceIdentifierFromSubs
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RemoveSourceIdentifierFromSubscriptionRequest method.
+//	req, resp := client.RemoveSourceIdentifierFromSubscriptionRequest(params)
 //
-//    // Example sending a request using the RemoveSourceIdentifierFromSubscriptionRequest method.
-//    req, resp := client.RemoveSourceIdentifierFromSubscriptionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RemoveSourceIdentifierFromSubscription
 func (c *DocDB) RemoveSourceIdentifierFromSubscriptionRequest(input *RemoveSourceIdentifierFromSubscriptionInput) (req *request.Request, output *RemoveSourceIdentifierFromSubscriptionOutput) {
@@ -4979,11 +4951,12 @@ func (c *DocDB) RemoveSourceIdentifierFromSubscriptionRequest(input *RemoveSourc
 // API operation RemoveSourceIdentifierFromSubscription for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeSubscriptionNotFoundFault "SubscriptionNotFound"
-//   The subscription name does not exist.
 //
-//   * ErrCodeSourceNotFoundFault "SourceNotFound"
-//   The requested source could not be found.
+//   - ErrCodeSubscriptionNotFoundFault "SubscriptionNotFound"
+//     The subscription name does not exist.
+//
+//   - ErrCodeSourceNotFoundFault "SourceNotFound"
+//     The requested source could not be found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RemoveSourceIdentifierFromSubscription
 func (c *DocDB) RemoveSourceIdentifierFromSubscription(input *RemoveSourceIdentifierFromSubscriptionInput) (*RemoveSourceIdentifierFromSubscriptionOutput, error) {
@@ -5023,14 +4996,13 @@ const opRemoveTagsFromResource = "RemoveTagsFromResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RemoveTagsFromResourceRequest method.
+//	req, resp := client.RemoveTagsFromResourceRequest(params)
 //
-//    // Example sending a request using the RemoveTagsFromResourceRequest method.
-//    req, resp := client.RemoveTagsFromResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RemoveTagsFromResource
 func (c *DocDB) RemoveTagsFromResourceRequest(input *RemoveTagsFromResourceInput) (req *request.Request, output *RemoveTagsFromResourceOutput) {
@@ -5062,14 +5034,15 @@ func (c *DocDB) RemoveTagsFromResourceRequest(input *RemoveTagsFromResourceInput
 // API operation RemoveTagsFromResource for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
-//   DBInstanceIdentifier doesn't refer to an existing instance.
 //
-//   * ErrCodeDBSnapshotNotFoundFault "DBSnapshotNotFound"
-//   DBSnapshotIdentifier doesn't refer to an existing snapshot.
+//   - ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
+//     DBInstanceIdentifier doesn't refer to an existing instance.
 //
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
+//   - ErrCodeDBSnapshotNotFoundFault "DBSnapshotNotFound"
+//     DBSnapshotIdentifier doesn't refer to an existing snapshot.
+//
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RemoveTagsFromResource
 func (c *DocDB) RemoveTagsFromResource(input *RemoveTagsFromResourceInput) (*RemoveTagsFromResourceOutput, error) {
@@ -5109,14 +5082,13 @@ const opResetDBClusterParameterGroup = "ResetDBClusterParameterGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ResetDBClusterParameterGroupRequest method.
+//	req, resp := client.ResetDBClusterParameterGroupRequest(params)
 //
-//    // Example sending a request using the ResetDBClusterParameterGroupRequest method.
-//    req, resp := client.ResetDBClusterParameterGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ResetDBClusterParameterGroup
 func (c *DocDB) ResetDBClusterParameterGroupRequest(input *ResetDBClusterParameterGroupInput) (req *request.Request, output *ResetDBClusterParameterGroupOutput) {
@@ -5154,13 +5126,14 @@ func (c *DocDB) ResetDBClusterParameterGroupRequest(input *ResetDBClusterParamet
 // API operation ResetDBClusterParameterGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidDBParameterGroupStateFault "InvalidDBParameterGroupState"
-//   The parameter group is in use, or it is in a state that is not valid. If
-//   you are trying to delete the parameter group, you can't delete it when the
-//   parameter group is in this state.
 //
-//   * ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
-//   DBParameterGroupName doesn't refer to an existing parameter group.
+//   - ErrCodeInvalidDBParameterGroupStateFault "InvalidDBParameterGroupState"
+//     The parameter group is in use, or it is in a state that is not valid. If
+//     you are trying to delete the parameter group, you can't delete it when the
+//     parameter group is in this state.
+//
+//   - ErrCodeDBParameterGroupNotFoundFault "DBParameterGroupNotFound"
+//     DBParameterGroupName doesn't refer to an existing parameter group.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/ResetDBClusterParameterGroup
 func (c *DocDB) ResetDBClusterParameterGroup(input *ResetDBClusterParameterGroupInput) (*ResetDBClusterParameterGroupOutput, error) {
@@ -5200,14 +5173,13 @@ const opRestoreDBClusterFromSnapshot = "RestoreDBClusterFromSnapshot"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RestoreDBClusterFromSnapshotRequest method.
+//	req, resp := client.RestoreDBClusterFromSnapshotRequest(params)
 //
-//    // Example sending a request using the RestoreDBClusterFromSnapshotRequest method.
-//    req, resp := client.RestoreDBClusterFromSnapshotRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RestoreDBClusterFromSnapshot
 func (c *DocDB) RestoreDBClusterFromSnapshotRequest(input *RestoreDBClusterFromSnapshotInput) (req *request.Request, output *RestoreDBClusterFromSnapshotOutput) {
@@ -5246,61 +5218,62 @@ func (c *DocDB) RestoreDBClusterFromSnapshotRequest(input *RestoreDBClusterFromS
 // API operation RestoreDBClusterFromSnapshot for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterAlreadyExistsFault "DBClusterAlreadyExistsFault"
-//   You already have a cluster with the given identifier.
 //
-//   * ErrCodeDBClusterQuotaExceededFault "DBClusterQuotaExceededFault"
-//   The cluster can't be created because you have reached the maximum allowed
-//   quota of clusters.
+//   - ErrCodeDBClusterAlreadyExistsFault "DBClusterAlreadyExistsFault"
+//     You already have a cluster with the given identifier.
 //
-//   * ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
-//   The request would cause you to exceed the allowed amount of storage available
-//   across all instances.
+//   - ErrCodeDBClusterQuotaExceededFault "DBClusterQuotaExceededFault"
+//     The cluster can't be created because you have reached the maximum allowed
+//     quota of clusters.
 //
-//   * ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
-//   DBSubnetGroupName doesn't refer to an existing subnet group.
+//   - ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
+//     The request would cause you to exceed the allowed amount of storage available
+//     across all instances.
 //
-//   * ErrCodeDBSnapshotNotFoundFault "DBSnapshotNotFound"
-//   DBSnapshotIdentifier doesn't refer to an existing snapshot.
+//   - ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
+//     DBSubnetGroupName doesn't refer to an existing subnet group.
 //
-//   * ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
-//   DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
+//   - ErrCodeDBSnapshotNotFoundFault "DBSnapshotNotFound"
+//     DBSnapshotIdentifier doesn't refer to an existing snapshot.
 //
-//   * ErrCodeInsufficientDBClusterCapacityFault "InsufficientDBClusterCapacityFault"
-//   The cluster doesn't have enough capacity for the current operation.
+//   - ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
+//     DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
 //
-//   * ErrCodeInsufficientStorageClusterCapacityFault "InsufficientStorageClusterCapacity"
-//   There is not enough storage available for the current action. You might be
-//   able to resolve this error by updating your subnet group to use different
-//   Availability Zones that have more storage available.
+//   - ErrCodeInsufficientDBClusterCapacityFault "InsufficientDBClusterCapacityFault"
+//     The cluster doesn't have enough capacity for the current operation.
 //
-//   * ErrCodeInvalidDBSnapshotStateFault "InvalidDBSnapshotState"
-//   The state of the snapshot doesn't allow deletion.
+//   - ErrCodeInsufficientStorageClusterCapacityFault "InsufficientStorageClusterCapacity"
+//     There is not enough storage available for the current action. You might be
+//     able to resolve this error by updating your subnet group to use different
+//     Availability Zones that have more storage available.
 //
-//   * ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
-//   The provided value isn't a valid cluster snapshot state.
+//   - ErrCodeInvalidDBSnapshotStateFault "InvalidDBSnapshotState"
+//     The state of the snapshot doesn't allow deletion.
 //
-//   * ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
-//   The request would cause you to exceed the allowed amount of storage available
-//   across all instances.
+//   - ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
+//     The provided value isn't a valid cluster snapshot state.
 //
-//   * ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
-//   The subnet group doesn't cover all Availability Zones after it is created
-//   because of changes that were made.
+//   - ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
+//     The request would cause you to exceed the allowed amount of storage available
+//     across all instances.
 //
-//   * ErrCodeInvalidRestoreFault "InvalidRestoreFault"
-//   You cannot restore from a virtual private cloud (VPC) backup to a non-VPC
-//   DB instance.
+//   - ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
+//     The subnet group doesn't cover all Availability Zones after it is created
+//     because of changes that were made.
 //
-//   * ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
-//   DBSubnetGroupName doesn't refer to an existing subnet group.
+//   - ErrCodeInvalidRestoreFault "InvalidRestoreFault"
+//     You cannot restore from a virtual private cloud (VPC) backup to a non-VPC
+//     DB instance.
 //
-//   * ErrCodeInvalidSubnet "InvalidSubnet"
-//   The requested subnet is not valid, or multiple subnets were requested that
-//   are not all in a common virtual private cloud (VPC).
+//   - ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
+//     DBSubnetGroupName doesn't refer to an existing subnet group.
 //
-//   * ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
-//   An error occurred when accessing an KMS key.
+//   - ErrCodeInvalidSubnet "InvalidSubnet"
+//     The requested subnet is not valid, or multiple subnets were requested that
+//     are not all in a common virtual private cloud (VPC).
+//
+//   - ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
+//     An error occurred when accessing an KMS key.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RestoreDBClusterFromSnapshot
 func (c *DocDB) RestoreDBClusterFromSnapshot(input *RestoreDBClusterFromSnapshotInput) (*RestoreDBClusterFromSnapshotOutput, error) {
@@ -5340,14 +5313,13 @@ const opRestoreDBClusterToPointInTime = "RestoreDBClusterToPointInTime"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RestoreDBClusterToPointInTimeRequest method.
+//	req, resp := client.RestoreDBClusterToPointInTimeRequest(params)
 //
-//    // Example sending a request using the RestoreDBClusterToPointInTimeRequest method.
-//    req, resp := client.RestoreDBClusterToPointInTimeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RestoreDBClusterToPointInTime
 func (c *DocDB) RestoreDBClusterToPointInTimeRequest(input *RestoreDBClusterToPointInTimeInput) (req *request.Request, output *RestoreDBClusterToPointInTimeOutput) {
@@ -5382,57 +5354,58 @@ func (c *DocDB) RestoreDBClusterToPointInTimeRequest(input *RestoreDBClusterToPo
 // API operation RestoreDBClusterToPointInTime for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterAlreadyExistsFault "DBClusterAlreadyExistsFault"
-//   You already have a cluster with the given identifier.
 //
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
+//   - ErrCodeDBClusterAlreadyExistsFault "DBClusterAlreadyExistsFault"
+//     You already have a cluster with the given identifier.
 //
-//   * ErrCodeDBClusterQuotaExceededFault "DBClusterQuotaExceededFault"
-//   The cluster can't be created because you have reached the maximum allowed
-//   quota of clusters.
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
-//   DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
+//   - ErrCodeDBClusterQuotaExceededFault "DBClusterQuotaExceededFault"
+//     The cluster can't be created because you have reached the maximum allowed
+//     quota of clusters.
 //
-//   * ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
-//   DBSubnetGroupName doesn't refer to an existing subnet group.
+//   - ErrCodeDBClusterSnapshotNotFoundFault "DBClusterSnapshotNotFoundFault"
+//     DBClusterSnapshotIdentifier doesn't refer to an existing cluster snapshot.
 //
-//   * ErrCodeInsufficientDBClusterCapacityFault "InsufficientDBClusterCapacityFault"
-//   The cluster doesn't have enough capacity for the current operation.
+//   - ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
+//     DBSubnetGroupName doesn't refer to an existing subnet group.
 //
-//   * ErrCodeInsufficientStorageClusterCapacityFault "InsufficientStorageClusterCapacity"
-//   There is not enough storage available for the current action. You might be
-//   able to resolve this error by updating your subnet group to use different
-//   Availability Zones that have more storage available.
+//   - ErrCodeInsufficientDBClusterCapacityFault "InsufficientDBClusterCapacityFault"
+//     The cluster doesn't have enough capacity for the current operation.
 //
-//   * ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
-//   The provided value isn't a valid cluster snapshot state.
+//   - ErrCodeInsufficientStorageClusterCapacityFault "InsufficientStorageClusterCapacity"
+//     There is not enough storage available for the current action. You might be
+//     able to resolve this error by updating your subnet group to use different
+//     Availability Zones that have more storage available.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeInvalidDBClusterSnapshotStateFault "InvalidDBClusterSnapshotStateFault"
+//     The provided value isn't a valid cluster snapshot state.
 //
-//   * ErrCodeInvalidDBSnapshotStateFault "InvalidDBSnapshotState"
-//   The state of the snapshot doesn't allow deletion.
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
 //
-//   * ErrCodeInvalidRestoreFault "InvalidRestoreFault"
-//   You cannot restore from a virtual private cloud (VPC) backup to a non-VPC
-//   DB instance.
+//   - ErrCodeInvalidDBSnapshotStateFault "InvalidDBSnapshotState"
+//     The state of the snapshot doesn't allow deletion.
 //
-//   * ErrCodeInvalidSubnet "InvalidSubnet"
-//   The requested subnet is not valid, or multiple subnets were requested that
-//   are not all in a common virtual private cloud (VPC).
+//   - ErrCodeInvalidRestoreFault "InvalidRestoreFault"
+//     You cannot restore from a virtual private cloud (VPC) backup to a non-VPC
+//     DB instance.
 //
-//   * ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
-//   The subnet group doesn't cover all Availability Zones after it is created
-//   because of changes that were made.
+//   - ErrCodeInvalidSubnet "InvalidSubnet"
+//     The requested subnet is not valid, or multiple subnets were requested that
+//     are not all in a common virtual private cloud (VPC).
 //
-//   * ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
-//   An error occurred when accessing an KMS key.
+//   - ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
+//     The subnet group doesn't cover all Availability Zones after it is created
+//     because of changes that were made.
 //
-//   * ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
-//   The request would cause you to exceed the allowed amount of storage available
-//   across all instances.
+//   - ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
+//     An error occurred when accessing an KMS key.
+//
+//   - ErrCodeStorageQuotaExceededFault "StorageQuotaExceeded"
+//     The request would cause you to exceed the allowed amount of storage available
+//     across all instances.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/RestoreDBClusterToPointInTime
 func (c *DocDB) RestoreDBClusterToPointInTime(input *RestoreDBClusterToPointInTimeInput) (*RestoreDBClusterToPointInTimeOutput, error) {
@@ -5472,14 +5445,13 @@ const opStartDBCluster = "StartDBCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartDBClusterRequest method.
+//	req, resp := client.StartDBClusterRequest(params)
 //
-//    // Example sending a request using the StartDBClusterRequest method.
-//    req, resp := client.StartDBClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/StartDBCluster
 func (c *DocDB) StartDBClusterRequest(input *StartDBClusterInput) (req *request.Request, output *StartDBClusterOutput) {
@@ -5512,14 +5484,15 @@ func (c *DocDB) StartDBClusterRequest(input *StartDBClusterInput) (req *request.
 // API operation StartDBCluster for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
-//   The specified instance isn't in the available state.
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
+//
+//   - ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
+//     The specified instance isn't in the available state.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/StartDBCluster
 func (c *DocDB) StartDBCluster(input *StartDBClusterInput) (*StartDBClusterOutput, error) {
@@ -5559,14 +5532,13 @@ const opStopDBCluster = "StopDBCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopDBClusterRequest method.
+//	req, resp := client.StopDBClusterRequest(params)
 //
-//    // Example sending a request using the StopDBClusterRequest method.
-//    req, resp := client.StopDBClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/StopDBCluster
 func (c *DocDB) StopDBClusterRequest(input *StopDBClusterInput) (req *request.Request, output *StopDBClusterOutput) {
@@ -5599,14 +5571,15 @@ func (c *DocDB) StopDBClusterRequest(input *StopDBClusterInput) (req *request.Re
 // API operation StopDBCluster for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
-//   DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
-//   The cluster isn't in a valid state.
+//   - ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//     DBClusterIdentifier doesn't refer to an existing cluster.
 //
-//   * ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
-//   The specified instance isn't in the available state.
+//   - ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//     The cluster isn't in a valid state.
+//
+//   - ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
+//     The specified instance isn't in the available state.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/docdb-2014-10-31/StopDBCluster
 func (c *DocDB) StopDBCluster(input *StopDBClusterInput) (*StopDBClusterOutput, error) {
@@ -5968,7 +5941,7 @@ func (s *AvailabilityZone) SetName(v string) *AvailabilityZone {
 	return s
 }
 
-// A certificate authority (CA) certificate for an account.
+// A certificate authority (CA) certificate for an Amazon Web Services account.
 type Certificate struct {
 	_ struct{} `type:"structure"`
 
@@ -6112,12 +6085,13 @@ type CopyDBClusterParameterGroupInput struct {
 	//
 	//    * Must specify a valid cluster parameter group.
 	//
-	//    * If the source cluster parameter group is in the same Region as the copy,
-	//    specify a valid parameter group identifier; for example, my-db-cluster-param-group,
-	//    or a valid ARN.
+	//    * If the source cluster parameter group is in the same Amazon Web Services
+	//    Region as the copy, specify a valid parameter group identifier; for example,
+	//    my-db-cluster-param-group, or a valid ARN.
 	//
-	//    * If the source parameter group is in a different Region than the copy,
-	//    specify a valid cluster parameter group ARN; for example, arn:aws:rds:us-east-1:123456789012:sample-cluster:sample-parameter-group.
+	//    * If the source parameter group is in a different Amazon Web Services
+	//    Region than the copy, specify a valid cluster parameter group ARN; for
+	//    example, arn:aws:rds:us-east-1:123456789012:sample-cluster:sample-parameter-group.
 	//
 	// SourceDBClusterParameterGroupIdentifier is a required field
 	SourceDBClusterParameterGroupIdentifier *string `type:"string" required:"true"`
@@ -6255,47 +6229,50 @@ type CopyDBClusterSnapshotInput struct {
 	// Resource Name (ARN), KMS key identifier, or the KMS key alias for the KMS
 	// encryption key.
 	//
-	// If you copy an encrypted cluster snapshot from your account, you can specify
-	// a value for KmsKeyId to encrypt the copy with a new KMS encryption key. If
-	// you don't specify a value for KmsKeyId, then the copy of the cluster snapshot
-	// is encrypted with the same KMS key as the source cluster snapshot.
+	// If you copy an encrypted cluster snapshot from your Amazon Web Services account,
+	// you can specify a value for KmsKeyId to encrypt the copy with a new KMS encryption
+	// key. If you don't specify a value for KmsKeyId, then the copy of the cluster
+	// snapshot is encrypted with the same KMS key as the source cluster snapshot.
 	//
-	// If you copy an encrypted cluster snapshot that is shared from another account,
-	// then you must specify a value for KmsKeyId.
+	// If you copy an encrypted cluster snapshot that is shared from another Amazon
+	// Web Services account, then you must specify a value for KmsKeyId.
 	//
-	// To copy an encrypted cluster snapshot to another Region, set KmsKeyId to
-	// the KMS key ID that you want to use to encrypt the copy of the cluster snapshot
-	// in the destination Region. KMS encryption keys are specific to the Region
-	// that they are created in, and you can't use encryption keys from one Region
-	// in another Region.
+	// To copy an encrypted cluster snapshot to another Amazon Web Services Region,
+	// set KmsKeyId to the KMS key ID that you want to use to encrypt the copy of
+	// the cluster snapshot in the destination Region. KMS encryption keys are specific
+	// to the Amazon Web Services Region that they are created in, and you can't
+	// use encryption keys from one Amazon Web Services Region in another Amazon
+	// Web Services Region.
 	//
 	// If you copy an unencrypted cluster snapshot and specify a value for the KmsKeyId
 	// parameter, an error is returned.
 	KmsKeyId *string `type:"string"`
 
 	// The URL that contains a Signature Version 4 signed request for theCopyDBClusterSnapshot
-	// API action in the Region that contains the source cluster snapshot to copy.
-	// You must use the PreSignedUrl parameter when copying a cluster snapshot from
-	// another Region.
+	// API action in the Amazon Web Services Region that contains the source cluster
+	// snapshot to copy. You must use the PreSignedUrl parameter when copying a
+	// cluster snapshot from another Amazon Web Services Region.
 	//
 	// If you are using an Amazon Web Services SDK tool or the CLI, you can specify
 	// SourceRegion (or --source-region for the CLI) instead of specifying PreSignedUrl
 	// manually. Specifying SourceRegion autogenerates a pre-signed URL that is
-	// a valid request for the operation that can be executed in the source Region.
+	// a valid request for the operation that can be executed in the source Amazon
+	// Web Services Region.
 	//
 	// The presigned URL must be a valid request for the CopyDBClusterSnapshot API
-	// action that can be executed in the source Region that contains the cluster
-	// snapshot to be copied. The presigned URL request must contain the following
-	// parameter values:
+	// action that can be executed in the source Amazon Web Services Region that
+	// contains the cluster snapshot to be copied. The presigned URL request must
+	// contain the following parameter values:
 	//
 	//    * SourceRegion - The ID of the region that contains the snapshot to be
 	//    copied.
 	//
 	//    * SourceDBClusterSnapshotIdentifier - The identifier for the the encrypted
 	//    cluster snapshot to be copied. This identifier must be in the Amazon Resource
-	//    Name (ARN) format for the source Region. For example, if you are copying
-	//    an encrypted cluster snapshot from the us-east-1 Region, then your SourceDBClusterSnapshotIdentifier
-	//    looks something like the following: arn:aws:rds:us-east-1:12345678012:sample-cluster:sample-cluster-snapshot.
+	//    Name (ARN) format for the source Amazon Web Services Region. For example,
+	//    if you are copying an encrypted cluster snapshot from the us-east-1 Amazon
+	//    Web Services Region, then your SourceDBClusterSnapshotIdentifier looks
+	//    something like the following: arn:aws:rds:us-east-1:12345678012:sample-cluster:sample-cluster-snapshot.
 	//
 	//    * TargetDBClusterSnapshotIdentifier - The identifier for the new cluster
 	//    snapshot to be created. This parameter isn't case sensitive.
@@ -6308,11 +6285,11 @@ type CopyDBClusterSnapshotInput struct {
 	//
 	//    * Must specify a valid system snapshot in the available state.
 	//
-	//    * If the source snapshot is in the same Region as the copy, specify a
-	//    valid snapshot identifier.
+	//    * If the source snapshot is in the same Amazon Web Services Region as
+	//    the copy, specify a valid snapshot identifier.
 	//
-	//    * If the source snapshot is in a different Region than the copy, specify
-	//    a valid cluster snapshot ARN.
+	//    * If the source snapshot is in a different Amazon Web Services Region
+	//    than the copy, specify a valid cluster snapshot ARN.
 	//
 	// Example: my-cluster-snapshot1
 	//
@@ -6535,17 +6512,18 @@ type CreateDBClusterInput struct {
 	// The KMS key identifier for an encrypted cluster.
 	//
 	// The KMS key identifier is the Amazon Resource Name (ARN) for the KMS encryption
-	// key. If you are creating a cluster using the same account that owns the KMS
-	// encryption key that is used to encrypt the new cluster, you can use the KMS
-	// key alias instead of the ARN for the KMS encryption key.
+	// key. If you are creating a cluster using the same Amazon Web Services account
+	// that owns the KMS encryption key that is used to encrypt the new cluster,
+	// you can use the KMS key alias instead of the ARN for the KMS encryption key.
 	//
 	// If an encryption key is not specified in KmsKeyId:
 	//
 	//    * If the StorageEncrypted parameter is true, Amazon DocumentDB uses your
 	//    default encryption key.
 	//
-	// KMS creates the default encryption key for your account. Your account has
-	// a different default encryption key for each Regions.
+	// KMS creates the default encryption key for your Amazon Web Services account.
+	// Your Amazon Web Services account has a different default encryption key for
+	// each Amazon Web Services Regions.
 	KmsKeyId *string `type:"string"`
 
 	// The password for the master database user. This password can contain any
@@ -6576,7 +6554,7 @@ type CreateDBClusterInput struct {
 	// backups are enabled using the BackupRetentionPeriod parameter.
 	//
 	// The default is a 30-minute window selected at random from an 8-hour block
-	// of time for each Region.
+	// of time for each Amazon Web Services Region.
 	//
 	// Constraints:
 	//
@@ -6595,7 +6573,8 @@ type CreateDBClusterInput struct {
 	// Format: ddd:hh24:mi-ddd:hh24:mi
 	//
 	// The default is a 30-minute window selected at random from an 8-hour block
-	// of time for each Region, occurring on a random day of the week.
+	// of time for each Amazon Web Services Region, occurring on a random day of
+	// the week.
 	//
 	// Valid days: Mon, Tue, Wed, Thu, Fri, Sat, Sun
 	//
@@ -7069,10 +7048,15 @@ type CreateDBInstanceInput struct {
 
 	// The Amazon EC2 Availability Zone that the instance is created in.
 	//
-	// Default: A random, system-chosen Availability Zone in the endpoint's Region.
+	// Default: A random, system-chosen Availability Zone in the endpoint's Amazon
+	// Web Services Region.
 	//
 	// Example: us-east-1d
 	AvailabilityZone *string `type:"string"`
+
+	// A value that indicates whether to copy tags from the DB instance to snapshots
+	// of the DB instance. By default, tags are not copied.
+	CopyTagsToSnapshot *bool `type:"boolean"`
 
 	// The identifier of the cluster that the instance will belong to.
 	//
@@ -7099,6 +7083,10 @@ type CreateDBInstanceInput struct {
 	// DBInstanceIdentifier is a required field
 	DBInstanceIdentifier *string `type:"string" required:"true"`
 
+	// A value that indicates whether to enable Performance Insights for the DB
+	// Instance. For more information, see Using Amazon Performance Insights (https://docs.aws.amazon.com/documentdb/latest/developerguide/performance-insights.html).
+	EnablePerformanceInsights *bool `type:"boolean"`
+
 	// The name of the database engine to be used for this instance.
 	//
 	// Valid value: docdb
@@ -7106,13 +7094,25 @@ type CreateDBInstanceInput struct {
 	// Engine is a required field
 	Engine *string `type:"string" required:"true"`
 
+	// The KMS key identifier for encryption of Performance Insights data.
+	//
+	// The KMS key identifier is the key ARN, key ID, alias ARN, or alias name for
+	// the KMS key.
+	//
+	// If you do not specify a value for PerformanceInsightsKMSKeyId, then Amazon
+	// DocumentDB uses your default KMS key. There is a default KMS key for your
+	// Amazon Web Services account. Your Amazon Web Services account has a different
+	// default KMS key for each Amazon Web Services region.
+	PerformanceInsightsKMSKeyId *string `type:"string"`
+
 	// The time range each week during which system maintenance can occur, in Universal
 	// Coordinated Time (UTC).
 	//
 	// Format: ddd:hh24:mi-ddd:hh24:mi
 	//
 	// The default is a 30-minute window selected at random from an 8-hour block
-	// of time for each Region, occurring on a random day of the week.
+	// of time for each Amazon Web Services Region, occurring on a random day of
+	// the week.
 	//
 	// Valid days: Mon, Tue, Wed, Thu, Fri, Sat, Sun
 	//
@@ -7185,6 +7185,12 @@ func (s *CreateDBInstanceInput) SetAvailabilityZone(v string) *CreateDBInstanceI
 	return s
 }
 
+// SetCopyTagsToSnapshot sets the CopyTagsToSnapshot field's value.
+func (s *CreateDBInstanceInput) SetCopyTagsToSnapshot(v bool) *CreateDBInstanceInput {
+	s.CopyTagsToSnapshot = &v
+	return s
+}
+
 // SetDBClusterIdentifier sets the DBClusterIdentifier field's value.
 func (s *CreateDBInstanceInput) SetDBClusterIdentifier(v string) *CreateDBInstanceInput {
 	s.DBClusterIdentifier = &v
@@ -7203,9 +7209,21 @@ func (s *CreateDBInstanceInput) SetDBInstanceIdentifier(v string) *CreateDBInsta
 	return s
 }
 
+// SetEnablePerformanceInsights sets the EnablePerformanceInsights field's value.
+func (s *CreateDBInstanceInput) SetEnablePerformanceInsights(v bool) *CreateDBInstanceInput {
+	s.EnablePerformanceInsights = &v
+	return s
+}
+
 // SetEngine sets the Engine field's value.
 func (s *CreateDBInstanceInput) SetEngine(v string) *CreateDBInstanceInput {
 	s.Engine = &v
+	return s
+}
+
+// SetPerformanceInsightsKMSKeyId sets the PerformanceInsightsKMSKeyId field's value.
+func (s *CreateDBInstanceInput) SetPerformanceInsightsKMSKeyId(v string) *CreateDBInstanceInput {
+	s.PerformanceInsightsKMSKeyId = &v
 	return s
 }
 
@@ -7697,6 +7715,9 @@ type DBCluster struct {
 	// Specifies the number of days for which automatic snapshots are retained.
 	BackupRetentionPeriod *int64 `type:"integer"`
 
+	// Identifies the clone group to which the DB cluster is associated.
+	CloneGroupId *string `type:"string"`
+
 	// Specifies the time when the cluster was created, in Universal Coordinated
 	// Time (UTC).
 	ClusterCreateTime *time.Time `type:"timestamp"`
@@ -7718,9 +7739,9 @@ type DBCluster struct {
 	// including the name, description, and subnets in the subnet group.
 	DBSubnetGroup *string `type:"string"`
 
-	// The Region-unique, immutable identifier for the cluster. This identifier
-	// is found in CloudTrail log entries whenever the KMS key for the cluster is
-	// accessed.
+	// The Amazon Web Services Region-unique, immutable identifier for the cluster.
+	// This identifier is found in CloudTrail log entries whenever the KMS key for
+	// the cluster is accessed.
 	DbClusterResourceId *string `type:"string"`
 
 	// Specifies whether this cluster can be deleted. If DeletionProtection is enabled,
@@ -7841,6 +7862,12 @@ func (s *DBCluster) SetAvailabilityZones(v []*string) *DBCluster {
 // SetBackupRetentionPeriod sets the BackupRetentionPeriod field's value.
 func (s *DBCluster) SetBackupRetentionPeriod(v int64) *DBCluster {
 	s.BackupRetentionPeriod = &v
+	return s
+}
+
+// SetCloneGroupId sets the CloneGroupId field's value.
+func (s *DBCluster) SetCloneGroupId(v string) *DBCluster {
+	s.CloneGroupId = &v
 	return s
 }
 
@@ -8372,23 +8399,24 @@ func (s *DBClusterSnapshot) SetVpcId(v string) *DBClusterSnapshot {
 
 // Contains the name and values of a manual cluster snapshot attribute.
 //
-// Manual cluster snapshot attributes are used to authorize other accounts to
-// restore a manual cluster snapshot.
+// Manual cluster snapshot attributes are used to authorize other Amazon Web
+// Services accounts to restore a manual cluster snapshot.
 type DBClusterSnapshotAttribute struct {
 	_ struct{} `type:"structure"`
 
 	// The name of the manual cluster snapshot attribute.
 	//
-	// The attribute named restore refers to the list of accounts that have permission
-	// to copy or restore the manual cluster snapshot.
+	// The attribute named restore refers to the list of Amazon Web Services accounts
+	// that have permission to copy or restore the manual cluster snapshot.
 	AttributeName *string `type:"string"`
 
 	// The values for the manual cluster snapshot attribute.
 	//
 	// If the AttributeName field is set to restore, then this element returns a
-	// list of IDs of the accounts that are authorized to copy or restore the manual
-	// cluster snapshot. If a value of all is in the list, then the manual cluster
-	// snapshot is public and available for any account to copy or restore.
+	// list of IDs of the Amazon Web Services accounts that are authorized to copy
+	// or restore the manual cluster snapshot. If a value of all is in the list,
+	// then the manual cluster snapshot is public and available for any Amazon Web
+	// Services account to copy or restore.
 	AttributeValues []*string `locationNameList:"AttributeValue" type:"list"`
 }
 
@@ -8581,6 +8609,10 @@ type DBInstance struct {
 	// The identifier of the CA certificate for this DB instance.
 	CACertificateIdentifier *string `type:"string"`
 
+	// A value that indicates whether to copy tags from the DB instance to snapshots
+	// of the DB instance. By default, tags are not copied.
+	CopyTagsToSnapshot *bool `type:"boolean"`
+
 	// Contains the name of the cluster that the instance is a member of if the
 	// instance is a member of a cluster.
 	DBClusterIdentifier *string `type:"string"`
@@ -8602,9 +8634,9 @@ type DBInstance struct {
 	// including the name, description, and subnets in the subnet group.
 	DBSubnetGroup *DBSubnetGroup `type:"structure"`
 
-	// The Region-unique, immutable identifier for the instance. This identifier
-	// is found in CloudTrail log entries whenever the KMS key for the instance
-	// is accessed.
+	// The Amazon Web Services Region-unique, immutable identifier for the instance.
+	// This identifier is found in CloudTrail log entries whenever the KMS key for
+	// the instance is accessed.
 	DbiResourceId *string `type:"string"`
 
 	// A list of log types that this instance is configured to export to CloudWatch
@@ -8702,6 +8734,12 @@ func (s *DBInstance) SetBackupRetentionPeriod(v int64) *DBInstance {
 // SetCACertificateIdentifier sets the CACertificateIdentifier field's value.
 func (s *DBInstance) SetCACertificateIdentifier(v string) *DBInstance {
 	s.CACertificateIdentifier = &v
+	return s
+}
+
+// SetCopyTagsToSnapshot sets the CopyTagsToSnapshot field's value.
+func (s *DBInstance) SetCopyTagsToSnapshot(v bool) *DBInstance {
+	s.CopyTagsToSnapshot = &v
 	return s
 }
 
@@ -9674,7 +9712,7 @@ func (s *DescribeCertificatesInput) SetMaxRecords(v int64) *DescribeCertificates
 type DescribeCertificatesOutput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of certificates for this account.
+	// A list of certificates for this Amazon Web Services account.
 	Certificates []*Certificate `locationNameList:"Certificate" type:"list"`
 
 	// An optional pagination token provided if the number of records retrieved
@@ -10106,12 +10144,13 @@ type DescribeDBClusterSnapshotsInput struct {
 	Filters []*Filter `locationNameList:"Filter" type:"list"`
 
 	// Set to true to include manual cluster snapshots that are public and can be
-	// copied or restored by any account, and otherwise false. The default is false.
+	// copied or restored by any Amazon Web Services account, and otherwise false.
+	// The default is false.
 	IncludePublic *bool `type:"boolean"`
 
-	// Set to true to include shared manual cluster snapshots from other accounts
-	// that this account has been given permission to copy or restore, and otherwise
-	// false. The default is false.
+	// Set to true to include shared manual cluster snapshots from other Amazon
+	// Web Services accounts that this Amazon Web Services account has been given
+	// permission to copy or restore, and otherwise false. The default is false.
 	IncludeShared *bool `type:"boolean"`
 
 	// An optional pagination token provided by a previous request. If this parameter
@@ -10132,13 +10171,13 @@ type DescribeDBClusterSnapshotsInput struct {
 	// following values:
 	//
 	//    * automated - Return all cluster snapshots that Amazon DocumentDB has
-	//    automatically created for your account.
+	//    automatically created for your Amazon Web Services account.
 	//
 	//    * manual - Return all cluster snapshots that you have manually created
-	//    for your account.
+	//    for your Amazon Web Services account.
 	//
 	//    * shared - Return all manual cluster snapshots that have been shared to
-	//    your account.
+	//    your Amazon Web Services account.
 	//
 	//    * public - Return all cluster snapshots that have been marked as public.
 	//
@@ -12404,9 +12443,9 @@ type GlobalCluster struct {
 	// Currently limited to one item.
 	GlobalClusterMembers []*GlobalClusterMember `locationNameList:"GlobalClusterMember" type:"list"`
 
-	// The Region-unique, immutable identifier for the global database cluster.
-	// This identifier is found in AWS CloudTrail log entries whenever the AWS KMS
-	// customer master key (CMK) for the cluster is accessed.
+	// The Amazon Web Services Region-unique, immutable identifier for the global
+	// database cluster. This identifier is found in AWS CloudTrail log entries
+	// whenever the AWS KMS customer master key (CMK) for the cluster is accessed.
 	GlobalClusterResourceId *string `type:"string"`
 
 	// Specifies the current state of this global cluster.
@@ -12737,7 +12776,7 @@ type ModifyDBClusterInput struct {
 	// backups are enabled, using the BackupRetentionPeriod parameter.
 	//
 	// The default is a 30-minute window selected at random from an 8-hour block
-	// of time for each Region.
+	// of time for each Amazon Web Services Region.
 	//
 	// Constraints:
 	//
@@ -12756,7 +12795,8 @@ type ModifyDBClusterInput struct {
 	// Format: ddd:hh24:mi-ddd:hh24:mi
 	//
 	// The default is a 30-minute window selected at random from an 8-hour block
-	// of time for each Region, occurring on a random day of the week.
+	// of time for each Amazon Web Services Region, occurring on a random day of
+	// the week.
 	//
 	// Valid days: Mon, Tue, Wed, Thu, Fri, Sat, Sun
 	//
@@ -13017,8 +13057,8 @@ type ModifyDBClusterSnapshotAttributeInput struct {
 
 	// The name of the cluster snapshot attribute to modify.
 	//
-	// To manage authorization for other accounts to copy or restore a manual cluster
-	// snapshot, set this value to restore.
+	// To manage authorization for other Amazon Web Services accounts to copy or
+	// restore a manual cluster snapshot, set this value to restore.
 	//
 	// AttributeName is a required field
 	AttributeName *string `type:"string" required:"true"`
@@ -13031,22 +13071,24 @@ type ModifyDBClusterSnapshotAttributeInput struct {
 	// A list of cluster snapshot attributes to add to the attribute specified by
 	// AttributeName.
 	//
-	// To authorize other accounts to copy or restore a manual cluster snapshot,
-	// set this list to include one or more account IDs. To make the manual cluster
-	// snapshot restorable by any account, set it to all. Do not add the all value
-	// for any manual cluster snapshots that contain private information that you
-	// don't want to be available to all accounts.
+	// To authorize other Amazon Web Services accounts to copy or restore a manual
+	// cluster snapshot, set this list to include one or more Amazon Web Services
+	// account IDs. To make the manual cluster snapshot restorable by any Amazon
+	// Web Services account, set it to all. Do not add the all value for any manual
+	// cluster snapshots that contain private information that you don't want to
+	// be available to all Amazon Web Services accounts.
 	ValuesToAdd []*string `locationNameList:"AttributeValue" type:"list"`
 
 	// A list of cluster snapshot attributes to remove from the attribute specified
 	// by AttributeName.
 	//
-	// To remove authorization for other accounts to copy or restore a manual cluster
-	// snapshot, set this list to include one or more account identifiers. To remove
-	// authorization for any account to copy or restore the cluster snapshot, set
-	// it to all . If you specify all, an account whose account ID is explicitly
-	// added to the restore attribute can still copy or restore a manual cluster
-	// snapshot.
+	// To remove authorization for other Amazon Web Services accounts to copy or
+	// restore a manual cluster snapshot, set this list to include one or more Amazon
+	// Web Services account identifiers. To remove authorization for any Amazon
+	// Web Services account to copy or restore the cluster snapshot, set it to all
+	// . If you specify all, an Amazon Web Services account whose account ID is
+	// explicitly added to the restore attribute can still copy or restore a manual
+	// cluster snapshot.
 	ValuesToRemove []*string `locationNameList:"AttributeValue" type:"list"`
 }
 
@@ -13162,8 +13204,12 @@ type ModifyDBInstanceInput struct {
 	// Indicates the certificate that needs to be associated with the instance.
 	CACertificateIdentifier *string `type:"string"`
 
+	// A value that indicates whether to copy all tags from the DB instance to snapshots
+	// of the DB instance. By default, tags are not copied.
+	CopyTagsToSnapshot *bool `type:"boolean"`
+
 	// The new compute and memory capacity of the instance; for example, db.r5.large.
-	// Not all instance classes are available in all Regions.
+	// Not all instance classes are available in all Amazon Web Services Regions.
 	//
 	// If you modify the instance class, an outage occurs during the change. The
 	// change is applied during the next maintenance window, unless ApplyImmediately
@@ -13181,6 +13227,10 @@ type ModifyDBInstanceInput struct {
 	// DBInstanceIdentifier is a required field
 	DBInstanceIdentifier *string `type:"string" required:"true"`
 
+	// A value that indicates whether to enable Performance Insights for the DB
+	// Instance. For more information, see Using Amazon Performance Insights (https://docs.aws.amazon.com/documentdb/latest/developerguide/performance-insights.html).
+	EnablePerformanceInsights *bool `type:"boolean"`
+
 	// The new instance identifier for the instance when renaming an instance. When
 	// you change the instance identifier, an instance reboot occurs immediately
 	// if you set Apply Immediately to true. It occurs during the next maintenance
@@ -13197,6 +13247,17 @@ type ModifyDBInstanceInput struct {
 	//
 	// Example: mydbinstance
 	NewDBInstanceIdentifier *string `type:"string"`
+
+	// The KMS key identifier for encryption of Performance Insights data.
+	//
+	// The KMS key identifier is the key ARN, key ID, alias ARN, or alias name for
+	// the KMS key.
+	//
+	// If you do not specify a value for PerformanceInsightsKMSKeyId, then Amazon
+	// DocumentDB uses your default KMS key. There is a default KMS key for your
+	// Amazon Web Services account. Your Amazon Web Services account has a different
+	// default KMS key for each Amazon Web Services region.
+	PerformanceInsightsKMSKeyId *string `type:"string"`
 
 	// The weekly time range (in UTC) during which system maintenance can occur,
 	// which might result in an outage. Changing this parameter doesn't result in
@@ -13275,6 +13336,12 @@ func (s *ModifyDBInstanceInput) SetCACertificateIdentifier(v string) *ModifyDBIn
 	return s
 }
 
+// SetCopyTagsToSnapshot sets the CopyTagsToSnapshot field's value.
+func (s *ModifyDBInstanceInput) SetCopyTagsToSnapshot(v bool) *ModifyDBInstanceInput {
+	s.CopyTagsToSnapshot = &v
+	return s
+}
+
 // SetDBInstanceClass sets the DBInstanceClass field's value.
 func (s *ModifyDBInstanceInput) SetDBInstanceClass(v string) *ModifyDBInstanceInput {
 	s.DBInstanceClass = &v
@@ -13287,9 +13354,21 @@ func (s *ModifyDBInstanceInput) SetDBInstanceIdentifier(v string) *ModifyDBInsta
 	return s
 }
 
+// SetEnablePerformanceInsights sets the EnablePerformanceInsights field's value.
+func (s *ModifyDBInstanceInput) SetEnablePerformanceInsights(v bool) *ModifyDBInstanceInput {
+	s.EnablePerformanceInsights = &v
+	return s
+}
+
 // SetNewDBInstanceIdentifier sets the NewDBInstanceIdentifier field's value.
 func (s *ModifyDBInstanceInput) SetNewDBInstanceIdentifier(v string) *ModifyDBInstanceInput {
 	s.NewDBInstanceIdentifier = &v
+	return s
+}
+
+// SetPerformanceInsightsKMSKeyId sets the PerformanceInsightsKMSKeyId field's value.
+func (s *ModifyDBInstanceInput) SetPerformanceInsightsKMSKeyId(v string) *ModifyDBInstanceInput {
+	s.PerformanceInsightsKMSKeyId = &v
 	return s
 }
 
@@ -14735,9 +14814,9 @@ type RestoreDBClusterFromSnapshotInput struct {
 	// DB snapshot or cluster snapshot.
 	//
 	// The KMS key identifier is the Amazon Resource Name (ARN) for the KMS encryption
-	// key. If you are restoring a cluster with the same account that owns the KMS
-	// encryption key used to encrypt the new cluster, then you can use the KMS
-	// key alias instead of the ARN for the KMS encryption key.
+	// key. If you are restoring a cluster with the same Amazon Web Services account
+	// that owns the KMS encryption key used to encrypt the new cluster, then you
+	// can use the KMS key alias instead of the ARN for the KMS encryption key.
 	//
 	// If you do not specify a value for the KmsKeyId parameter, then the following
 	// occurs:
@@ -14955,9 +15034,9 @@ type RestoreDBClusterToPointInTimeInput struct {
 	// encrypted cluster.
 	//
 	// The KMS key identifier is the Amazon Resource Name (ARN) for the KMS encryption
-	// key. If you are restoring a cluster with the same account that owns the KMS
-	// encryption key used to encrypt the new cluster, then you can use the KMS
-	// key alias instead of the ARN for the KMS encryption key.
+	// key. If you are restoring a cluster with the same Amazon Web Services account
+	// that owns the KMS encryption key used to encrypt the new cluster, then you
+	// can use the KMS key alias instead of the ARN for the KMS encryption key.
 	//
 	// You can restore to a new cluster and encrypt the new cluster with an KMS
 	// key that is different from the KMS key used to encrypt the source cluster.
@@ -14999,6 +15078,19 @@ type RestoreDBClusterToPointInTimeInput struct {
 	//
 	// Example: 2015-03-07T23:45:00Z
 	RestoreToTime *time.Time `type:"timestamp"`
+
+	// The type of restore to be performed. You can specify one of the following
+	// values:
+	//
+	//    * full-copy - The new DB cluster is restored as a full copy of the source
+	//    DB cluster.
+	//
+	//    * copy-on-write - The new DB cluster is restored as a clone of the source
+	//    DB cluster.
+	//
+	// If you don't specify a RestoreType value, then the new DB cluster is restored
+	// as a full copy of the source DB cluster.
+	RestoreType *string `type:"string"`
 
 	// The identifier of the source cluster from which to restore.
 	//
@@ -15097,6 +15189,12 @@ func (s *RestoreDBClusterToPointInTimeInput) SetPort(v int64) *RestoreDBClusterT
 // SetRestoreToTime sets the RestoreToTime field's value.
 func (s *RestoreDBClusterToPointInTimeInput) SetRestoreToTime(v time.Time) *RestoreDBClusterToPointInTimeInput {
 	s.RestoreToTime = &v
+	return s
+}
+
+// SetRestoreType sets the RestoreType field's value.
+func (s *RestoreDBClusterToPointInTimeInput) SetRestoreType(v string) *RestoreDBClusterToPointInTimeInput {
+	s.RestoreType = &v
 	return s
 }
 

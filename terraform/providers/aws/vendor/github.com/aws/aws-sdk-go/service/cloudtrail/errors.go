@@ -26,6 +26,26 @@ const (
 	// and Prepare For Creating a Trail For Your Organization (https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-an-organizational-trail-prepare.html).
 	ErrCodeAccessNotEnabledException = "CloudTrailAccessNotEnabledException"
 
+	// ErrCodeAccountHasOngoingImportException for service response error code
+	// "AccountHasOngoingImportException".
+	//
+	// This exception is thrown when you start a new import and a previous import
+	// is still in progress.
+	ErrCodeAccountHasOngoingImportException = "AccountHasOngoingImportException"
+
+	// ErrCodeChannelARNInvalidException for service response error code
+	// "ChannelARNInvalidException".
+	//
+	// The specified channel ARN is not valid or does not map to a channel in your
+	// account.
+	ErrCodeChannelARNInvalidException = "ChannelARNInvalidException"
+
+	// ErrCodeChannelNotFoundException for service response error code
+	// "ChannelNotFoundException".
+	//
+	// The specified channel was not found.
+	ErrCodeChannelNotFoundException = "ChannelNotFoundException"
+
 	// ErrCodeCloudTrailInvalidClientTokenIdException for service response error code
 	// "CloudTrailInvalidClientTokenIdException".
 	//
@@ -45,9 +65,9 @@ const (
 	// "ConflictException".
 	//
 	// This exception is thrown when the specified resource is not ready for an
-	// operation. This can occur when you try to run an operation on a trail before
-	// CloudTrail has time to fully load the trail. If this exception occurs, wait
-	// a few minutes, and then try the operation again.
+	// operation. This can occur when you try to run an operation on a resource
+	// before CloudTrail has time to fully load the resource. If this exception
+	// occurs, wait a few minutes, and then try the operation again.
 	ErrCodeConflictException = "ConflictException"
 
 	// ErrCodeEventDataStoreARNInvalidException for service response error code
@@ -62,6 +82,13 @@ const (
 	//
 	// An event data store with that name already exists.
 	ErrCodeEventDataStoreAlreadyExistsException = "EventDataStoreAlreadyExistsException"
+
+	// ErrCodeEventDataStoreHasOngoingImportException for service response error code
+	// "EventDataStoreHasOngoingImportException".
+	//
+	// This exception is thrown when you try to update or delete an event data store
+	// that currently has an import in progress.
+	ErrCodeEventDataStoreHasOngoingImportException = "EventDataStoreHasOngoingImportException"
 
 	// ErrCodeEventDataStoreMaxLimitExceededException for service response error code
 	// "EventDataStoreMaxLimitExceededException".
@@ -82,17 +109,23 @@ const (
 	// enabled for it.
 	ErrCodeEventDataStoreTerminationProtectedException = "EventDataStoreTerminationProtectedException"
 
+	// ErrCodeImportNotFoundException for service response error code
+	// "ImportNotFoundException".
+	//
+	// The specified import was not found.
+	ErrCodeImportNotFoundException = "ImportNotFoundException"
+
 	// ErrCodeInactiveEventDataStoreException for service response error code
 	// "InactiveEventDataStoreException".
 	//
-	// The event data store against which you ran your query is inactive.
+	// The event data store is inactive.
 	ErrCodeInactiveEventDataStoreException = "InactiveEventDataStoreException"
 
 	// ErrCodeInactiveQueryException for service response error code
 	// "InactiveQueryException".
 	//
 	// The specified query cannot be canceled because it is in the FINISHED, FAILED,
-	// or CANCELLED state.
+	// TIMED_OUT, or CANCELLED state.
 	ErrCodeInactiveQueryException = "InactiveQueryException"
 
 	// ErrCodeInsightNotEnabledException for service response error code
@@ -106,9 +139,8 @@ const (
 	// "InsufficientDependencyServiceAccessPermissionException".
 	//
 	// This exception is thrown when the IAM user or role that is used to create
-	// the organization trail is lacking one or more required permissions for creating
-	// an organization trail in a required service. For more information, see Prepare
-	// For Creating a Trail For Your Organization (https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-an-organizational-trail-prepare.html).
+	// the organization resource lacks one or more required permissions for creating
+	// an organization resource in a required service.
 	ErrCodeInsufficientDependencyServiceAccessPermissionException = "InsufficientDependencyServiceAccessPermissionException"
 
 	// ErrCodeInsufficientEncryptionPolicyException for service response error code
@@ -146,7 +178,8 @@ const (
 	// ErrCodeInvalidDateRangeException for service response error code
 	// "InvalidDateRangeException".
 	//
-	// A date range for the query was specified that is not valid. For more information
+	// A date range for the query was specified that is not valid. Be sure that
+	// the start time is chronologically before the end time. For more information
 	// about writing a query, see Create or edit a query (https://docs.aws.amazon.com/awscloudtrail/latest/userguide/query-create-edit-query.html)
 	// in the CloudTrail User Guide.
 	ErrCodeInvalidDateRangeException = "InvalidDateRangeException"
@@ -157,6 +190,13 @@ const (
 	// Occurs if an event category that is not valid is specified as a value of
 	// EventCategory.
 	ErrCodeInvalidEventCategoryException = "InvalidEventCategoryException"
+
+	// ErrCodeInvalidEventDataStoreCategoryException for service response error code
+	// "InvalidEventDataStoreCategoryException".
+	//
+	// This exception is thrown when the event data store category is not valid
+	// for the import.
+	ErrCodeInvalidEventDataStoreCategoryException = "InvalidEventDataStoreCategoryException"
 
 	// ErrCodeInvalidEventDataStoreStatusException for service response error code
 	// "InvalidEventDataStoreStatusException".
@@ -199,6 +239,13 @@ const (
 	// This exception is thrown when an operation is called on a trail from a region
 	// other than the region in which the trail was created.
 	ErrCodeInvalidHomeRegionException = "InvalidHomeRegionException"
+
+	// ErrCodeInvalidImportSourceException for service response error code
+	// "InvalidImportSourceException".
+	//
+	// This exception is thrown when the provided source S3 bucket is not valid
+	// for import.
+	ErrCodeInvalidImportSourceException = "InvalidImportSourceException"
 
 	// ErrCodeInvalidInsightSelectorsException for service response error code
 	// "InvalidInsightSelectorsException".
@@ -356,9 +403,10 @@ const (
 	// "NotOrganizationMasterAccountException".
 	//
 	// This exception is thrown when the Amazon Web Services account making the
-	// request to create or update an organization trail is not the management account
-	// for an organization in Organizations. For more information, see Prepare For
-	// Creating a Trail For Your Organization (https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-an-organizational-trail-prepare.html).
+	// request to create or update an organization trail or event data store is
+	// not the management account for an organization in Organizations. For more
+	// information, see Prepare For Creating a Trail For Your Organization (https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-an-organizational-trail-prepare.html)
+	// or Create an event data store (https://docs.aws.amazon.com/awscloudtrail/latest/userguide/query-event-data-store.html).
 	ErrCodeNotOrganizationMasterAccountException = "NotOrganizationMasterAccountException"
 
 	// ErrCodeOperationNotPermittedException for service response error code
@@ -372,8 +420,7 @@ const (
 	//
 	// This exception is thrown when Organizations is not configured to support
 	// all features. All features must be enabled in Organizations to support creating
-	// an organization trail. For more information, see Prepare For Creating a Trail
-	// For Your Organization (https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-an-organizational-trail-prepare.html).
+	// an organization trail or event data store.
 	ErrCodeOrganizationNotInAllFeaturesModeException = "OrganizationNotInAllFeaturesModeException"
 
 	// ErrCodeOrganizationsNotInUseException for service response error code
@@ -444,14 +491,19 @@ const (
 var exceptionFromCode = map[string]func(protocol.ResponseMetadata) error{
 	"CloudTrailARNInvalidException":                          newErrorARNInvalidException,
 	"CloudTrailAccessNotEnabledException":                    newErrorAccessNotEnabledException,
+	"AccountHasOngoingImportException":                       newErrorAccountHasOngoingImportException,
+	"ChannelARNInvalidException":                             newErrorChannelARNInvalidException,
+	"ChannelNotFoundException":                               newErrorChannelNotFoundException,
 	"CloudTrailInvalidClientTokenIdException":                newErrorCloudTrailInvalidClientTokenIdException,
 	"CloudWatchLogsDeliveryUnavailableException":             newErrorCloudWatchLogsDeliveryUnavailableException,
 	"ConflictException":                                      newErrorConflictException,
 	"EventDataStoreARNInvalidException":                      newErrorEventDataStoreARNInvalidException,
 	"EventDataStoreAlreadyExistsException":                   newErrorEventDataStoreAlreadyExistsException,
+	"EventDataStoreHasOngoingImportException":                newErrorEventDataStoreHasOngoingImportException,
 	"EventDataStoreMaxLimitExceededException":                newErrorEventDataStoreMaxLimitExceededException,
 	"EventDataStoreNotFoundException":                        newErrorEventDataStoreNotFoundException,
 	"EventDataStoreTerminationProtectedException":            newErrorEventDataStoreTerminationProtectedException,
+	"ImportNotFoundException":                                newErrorImportNotFoundException,
 	"InactiveEventDataStoreException":                        newErrorInactiveEventDataStoreException,
 	"InactiveQueryException":                                 newErrorInactiveQueryException,
 	"InsightNotEnabledException":                             newErrorInsightNotEnabledException,
@@ -463,9 +515,11 @@ var exceptionFromCode = map[string]func(protocol.ResponseMetadata) error{
 	"InvalidCloudWatchLogsRoleArnException":                  newErrorInvalidCloudWatchLogsRoleArnException,
 	"InvalidDateRangeException":                              newErrorInvalidDateRangeException,
 	"InvalidEventCategoryException":                          newErrorInvalidEventCategoryException,
+	"InvalidEventDataStoreCategoryException":                 newErrorInvalidEventDataStoreCategoryException,
 	"InvalidEventDataStoreStatusException":                   newErrorInvalidEventDataStoreStatusException,
 	"InvalidEventSelectorsException":                         newErrorInvalidEventSelectorsException,
 	"InvalidHomeRegionException":                             newErrorInvalidHomeRegionException,
+	"InvalidImportSourceException":                           newErrorInvalidImportSourceException,
 	"InvalidInsightSelectorsException":                       newErrorInvalidInsightSelectorsException,
 	"InvalidKmsKeyIdException":                               newErrorInvalidKmsKeyIdException,
 	"InvalidLookupAttributesException":                       newErrorInvalidLookupAttributesException,

@@ -28,14 +28,13 @@ const opConfigureLogs = "ConfigureLogs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ConfigureLogsRequest method.
+//	req, resp := client.ConfigureLogsRequest(params)
 //
-//    // Example sending a request using the ConfigureLogsRequest method.
-//    req, resp := client.ConfigureLogsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/ConfigureLogs
 func (c *MediaPackage) ConfigureLogsRequest(input *ConfigureLogsInput) (req *request.Request, output *ConfigureLogsOutput) {
@@ -56,7 +55,7 @@ func (c *MediaPackage) ConfigureLogsRequest(input *ConfigureLogsInput) (req *req
 
 // ConfigureLogs API operation for AWS Elemental MediaPackage.
 //
-// Changes the Channel's properities to configure log subscription
+// # Changes the Channel's properities to configure log subscription
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -66,17 +65,18 @@ func (c *MediaPackage) ConfigureLogsRequest(input *ConfigureLogsInput) (req *req
 // API operation ConfigureLogs for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/ConfigureLogs
 func (c *MediaPackage) ConfigureLogs(input *ConfigureLogsInput) (*ConfigureLogsOutput, error) {
@@ -116,14 +116,13 @@ const opCreateChannel = "CreateChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateChannelRequest method.
+//	req, resp := client.CreateChannelRequest(params)
 //
-//    // Example sending a request using the CreateChannelRequest method.
-//    req, resp := client.CreateChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/CreateChannel
 func (c *MediaPackage) CreateChannelRequest(input *CreateChannelInput) (req *request.Request, output *CreateChannelOutput) {
@@ -154,17 +153,18 @@ func (c *MediaPackage) CreateChannelRequest(input *CreateChannelInput) (req *req
 // API operation CreateChannel for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/CreateChannel
 func (c *MediaPackage) CreateChannel(input *CreateChannelInput) (*CreateChannelOutput, error) {
@@ -204,14 +204,13 @@ const opCreateHarvestJob = "CreateHarvestJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateHarvestJobRequest method.
+//	req, resp := client.CreateHarvestJobRequest(params)
 //
-//    // Example sending a request using the CreateHarvestJobRequest method.
-//    req, resp := client.CreateHarvestJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/CreateHarvestJob
 func (c *MediaPackage) CreateHarvestJobRequest(input *CreateHarvestJobInput) (req *request.Request, output *CreateHarvestJobOutput) {
@@ -242,17 +241,18 @@ func (c *MediaPackage) CreateHarvestJobRequest(input *CreateHarvestJobInput) (re
 // API operation CreateHarvestJob for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/CreateHarvestJob
 func (c *MediaPackage) CreateHarvestJob(input *CreateHarvestJobInput) (*CreateHarvestJobOutput, error) {
@@ -292,14 +292,13 @@ const opCreateOriginEndpoint = "CreateOriginEndpoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateOriginEndpointRequest method.
+//	req, resp := client.CreateOriginEndpointRequest(params)
 //
-//    // Example sending a request using the CreateOriginEndpointRequest method.
-//    req, resp := client.CreateOriginEndpointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/CreateOriginEndpoint
 func (c *MediaPackage) CreateOriginEndpointRequest(input *CreateOriginEndpointInput) (req *request.Request, output *CreateOriginEndpointOutput) {
@@ -330,17 +329,18 @@ func (c *MediaPackage) CreateOriginEndpointRequest(input *CreateOriginEndpointIn
 // API operation CreateOriginEndpoint for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/CreateOriginEndpoint
 func (c *MediaPackage) CreateOriginEndpoint(input *CreateOriginEndpointInput) (*CreateOriginEndpointOutput, error) {
@@ -380,14 +380,13 @@ const opDeleteChannel = "DeleteChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteChannelRequest method.
+//	req, resp := client.DeleteChannelRequest(params)
 //
-//    // Example sending a request using the DeleteChannelRequest method.
-//    req, resp := client.DeleteChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/DeleteChannel
 func (c *MediaPackage) DeleteChannelRequest(input *DeleteChannelInput) (req *request.Request, output *DeleteChannelOutput) {
@@ -419,17 +418,18 @@ func (c *MediaPackage) DeleteChannelRequest(input *DeleteChannelInput) (req *req
 // API operation DeleteChannel for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/DeleteChannel
 func (c *MediaPackage) DeleteChannel(input *DeleteChannelInput) (*DeleteChannelOutput, error) {
@@ -469,14 +469,13 @@ const opDeleteOriginEndpoint = "DeleteOriginEndpoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteOriginEndpointRequest method.
+//	req, resp := client.DeleteOriginEndpointRequest(params)
 //
-//    // Example sending a request using the DeleteOriginEndpointRequest method.
-//    req, resp := client.DeleteOriginEndpointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/DeleteOriginEndpoint
 func (c *MediaPackage) DeleteOriginEndpointRequest(input *DeleteOriginEndpointInput) (req *request.Request, output *DeleteOriginEndpointOutput) {
@@ -508,17 +507,18 @@ func (c *MediaPackage) DeleteOriginEndpointRequest(input *DeleteOriginEndpointIn
 // API operation DeleteOriginEndpoint for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/DeleteOriginEndpoint
 func (c *MediaPackage) DeleteOriginEndpoint(input *DeleteOriginEndpointInput) (*DeleteOriginEndpointOutput, error) {
@@ -558,14 +558,13 @@ const opDescribeChannel = "DescribeChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeChannelRequest method.
+//	req, resp := client.DescribeChannelRequest(params)
 //
-//    // Example sending a request using the DescribeChannelRequest method.
-//    req, resp := client.DescribeChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/DescribeChannel
 func (c *MediaPackage) DescribeChannelRequest(input *DescribeChannelInput) (req *request.Request, output *DescribeChannelOutput) {
@@ -596,17 +595,18 @@ func (c *MediaPackage) DescribeChannelRequest(input *DescribeChannelInput) (req 
 // API operation DescribeChannel for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/DescribeChannel
 func (c *MediaPackage) DescribeChannel(input *DescribeChannelInput) (*DescribeChannelOutput, error) {
@@ -646,14 +646,13 @@ const opDescribeHarvestJob = "DescribeHarvestJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeHarvestJobRequest method.
+//	req, resp := client.DescribeHarvestJobRequest(params)
 //
-//    // Example sending a request using the DescribeHarvestJobRequest method.
-//    req, resp := client.DescribeHarvestJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/DescribeHarvestJob
 func (c *MediaPackage) DescribeHarvestJobRequest(input *DescribeHarvestJobInput) (req *request.Request, output *DescribeHarvestJobOutput) {
@@ -684,17 +683,18 @@ func (c *MediaPackage) DescribeHarvestJobRequest(input *DescribeHarvestJobInput)
 // API operation DescribeHarvestJob for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/DescribeHarvestJob
 func (c *MediaPackage) DescribeHarvestJob(input *DescribeHarvestJobInput) (*DescribeHarvestJobOutput, error) {
@@ -734,14 +734,13 @@ const opDescribeOriginEndpoint = "DescribeOriginEndpoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeOriginEndpointRequest method.
+//	req, resp := client.DescribeOriginEndpointRequest(params)
 //
-//    // Example sending a request using the DescribeOriginEndpointRequest method.
-//    req, resp := client.DescribeOriginEndpointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/DescribeOriginEndpoint
 func (c *MediaPackage) DescribeOriginEndpointRequest(input *DescribeOriginEndpointInput) (req *request.Request, output *DescribeOriginEndpointOutput) {
@@ -772,17 +771,18 @@ func (c *MediaPackage) DescribeOriginEndpointRequest(input *DescribeOriginEndpoi
 // API operation DescribeOriginEndpoint for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/DescribeOriginEndpoint
 func (c *MediaPackage) DescribeOriginEndpoint(input *DescribeOriginEndpointInput) (*DescribeOriginEndpointOutput, error) {
@@ -822,14 +822,13 @@ const opListChannels = "ListChannels"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListChannelsRequest method.
+//	req, resp := client.ListChannelsRequest(params)
 //
-//    // Example sending a request using the ListChannelsRequest method.
-//    req, resp := client.ListChannelsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/ListChannels
 func (c *MediaPackage) ListChannelsRequest(input *ListChannelsInput) (req *request.Request, output *ListChannelsOutput) {
@@ -866,17 +865,18 @@ func (c *MediaPackage) ListChannelsRequest(input *ListChannelsInput) (req *reque
 // API operation ListChannels for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/ListChannels
 func (c *MediaPackage) ListChannels(input *ListChannelsInput) (*ListChannelsOutput, error) {
@@ -908,15 +908,14 @@ func (c *MediaPackage) ListChannelsWithContext(ctx aws.Context, input *ListChann
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListChannels operation.
-//    pageNum := 0
-//    err := client.ListChannelsPages(params,
-//        func(page *mediapackage.ListChannelsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListChannels operation.
+//	pageNum := 0
+//	err := client.ListChannelsPages(params,
+//	    func(page *mediapackage.ListChannelsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaPackage) ListChannelsPages(input *ListChannelsInput, fn func(*ListChannelsOutput, bool) bool) error {
 	return c.ListChannelsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -968,14 +967,13 @@ const opListHarvestJobs = "ListHarvestJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListHarvestJobsRequest method.
+//	req, resp := client.ListHarvestJobsRequest(params)
 //
-//    // Example sending a request using the ListHarvestJobsRequest method.
-//    req, resp := client.ListHarvestJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/ListHarvestJobs
 func (c *MediaPackage) ListHarvestJobsRequest(input *ListHarvestJobsInput) (req *request.Request, output *ListHarvestJobsOutput) {
@@ -1012,17 +1010,18 @@ func (c *MediaPackage) ListHarvestJobsRequest(input *ListHarvestJobsInput) (req 
 // API operation ListHarvestJobs for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/ListHarvestJobs
 func (c *MediaPackage) ListHarvestJobs(input *ListHarvestJobsInput) (*ListHarvestJobsOutput, error) {
@@ -1054,15 +1053,14 @@ func (c *MediaPackage) ListHarvestJobsWithContext(ctx aws.Context, input *ListHa
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListHarvestJobs operation.
-//    pageNum := 0
-//    err := client.ListHarvestJobsPages(params,
-//        func(page *mediapackage.ListHarvestJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListHarvestJobs operation.
+//	pageNum := 0
+//	err := client.ListHarvestJobsPages(params,
+//	    func(page *mediapackage.ListHarvestJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaPackage) ListHarvestJobsPages(input *ListHarvestJobsInput, fn func(*ListHarvestJobsOutput, bool) bool) error {
 	return c.ListHarvestJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1114,14 +1112,13 @@ const opListOriginEndpoints = "ListOriginEndpoints"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListOriginEndpointsRequest method.
+//	req, resp := client.ListOriginEndpointsRequest(params)
 //
-//    // Example sending a request using the ListOriginEndpointsRequest method.
-//    req, resp := client.ListOriginEndpointsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/ListOriginEndpoints
 func (c *MediaPackage) ListOriginEndpointsRequest(input *ListOriginEndpointsInput) (req *request.Request, output *ListOriginEndpointsOutput) {
@@ -1158,17 +1155,18 @@ func (c *MediaPackage) ListOriginEndpointsRequest(input *ListOriginEndpointsInpu
 // API operation ListOriginEndpoints for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/ListOriginEndpoints
 func (c *MediaPackage) ListOriginEndpoints(input *ListOriginEndpointsInput) (*ListOriginEndpointsOutput, error) {
@@ -1200,15 +1198,14 @@ func (c *MediaPackage) ListOriginEndpointsWithContext(ctx aws.Context, input *Li
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListOriginEndpoints operation.
-//    pageNum := 0
-//    err := client.ListOriginEndpointsPages(params,
-//        func(page *mediapackage.ListOriginEndpointsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListOriginEndpoints operation.
+//	pageNum := 0
+//	err := client.ListOriginEndpointsPages(params,
+//	    func(page *mediapackage.ListOriginEndpointsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaPackage) ListOriginEndpointsPages(input *ListOriginEndpointsInput, fn func(*ListOriginEndpointsOutput, bool) bool) error {
 	return c.ListOriginEndpointsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1260,14 +1257,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/ListTagsForResource
 func (c *MediaPackage) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -1332,14 +1328,13 @@ const opRotateChannelCredentials = "RotateChannelCredentials"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RotateChannelCredentialsRequest method.
+//	req, resp := client.RotateChannelCredentialsRequest(params)
 //
-//    // Example sending a request using the RotateChannelCredentialsRequest method.
-//    req, resp := client.RotateChannelCredentialsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/RotateChannelCredentials
 //
@@ -1376,17 +1371,18 @@ func (c *MediaPackage) RotateChannelCredentialsRequest(input *RotateChannelCrede
 // API operation RotateChannelCredentials for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/RotateChannelCredentials
 //
@@ -1430,14 +1426,13 @@ const opRotateIngestEndpointCredentials = "RotateIngestEndpointCredentials"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RotateIngestEndpointCredentialsRequest method.
+//	req, resp := client.RotateIngestEndpointCredentialsRequest(params)
 //
-//    // Example sending a request using the RotateIngestEndpointCredentialsRequest method.
-//    req, resp := client.RotateIngestEndpointCredentialsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/RotateIngestEndpointCredentials
 func (c *MediaPackage) RotateIngestEndpointCredentialsRequest(input *RotateIngestEndpointCredentialsInput) (req *request.Request, output *RotateIngestEndpointCredentialsOutput) {
@@ -1469,17 +1464,18 @@ func (c *MediaPackage) RotateIngestEndpointCredentialsRequest(input *RotateInges
 // API operation RotateIngestEndpointCredentials for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/RotateIngestEndpointCredentials
 func (c *MediaPackage) RotateIngestEndpointCredentials(input *RotateIngestEndpointCredentialsInput) (*RotateIngestEndpointCredentialsOutput, error) {
@@ -1519,14 +1515,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/TagResource
 func (c *MediaPackage) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -1592,14 +1587,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/UntagResource
 func (c *MediaPackage) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -1665,14 +1659,13 @@ const opUpdateChannel = "UpdateChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateChannelRequest method.
+//	req, resp := client.UpdateChannelRequest(params)
 //
-//    // Example sending a request using the UpdateChannelRequest method.
-//    req, resp := client.UpdateChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/UpdateChannel
 func (c *MediaPackage) UpdateChannelRequest(input *UpdateChannelInput) (req *request.Request, output *UpdateChannelOutput) {
@@ -1703,17 +1696,18 @@ func (c *MediaPackage) UpdateChannelRequest(input *UpdateChannelInput) (req *req
 // API operation UpdateChannel for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/UpdateChannel
 func (c *MediaPackage) UpdateChannel(input *UpdateChannelInput) (*UpdateChannelOutput, error) {
@@ -1753,14 +1747,13 @@ const opUpdateOriginEndpoint = "UpdateOriginEndpoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateOriginEndpointRequest method.
+//	req, resp := client.UpdateOriginEndpointRequest(params)
 //
-//    // Example sending a request using the UpdateOriginEndpointRequest method.
-//    req, resp := client.UpdateOriginEndpointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/UpdateOriginEndpoint
 func (c *MediaPackage) UpdateOriginEndpointRequest(input *UpdateOriginEndpointInput) (req *request.Request, output *UpdateOriginEndpointOutput) {
@@ -1791,17 +1784,18 @@ func (c *MediaPackage) UpdateOriginEndpointRequest(input *UpdateOriginEndpointIn
 // API operation UpdateOriginEndpoint for usage and error information.
 //
 // Returned Error Types:
-//   * UnprocessableEntityException
 //
-//   * InternalServerErrorException
+//   - UnprocessableEntityException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * ServiceUnavailableException
+//   - NotFoundException
 //
-//   * TooManyRequestsException
+//   - ServiceUnavailableException
+//
+//   - TooManyRequestsException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediapackage-2017-10-12/UpdateOriginEndpoint
 func (c *MediaPackage) UpdateOriginEndpoint(input *UpdateOriginEndpointInput) (*UpdateOriginEndpointOutput, error) {
@@ -1984,6 +1978,9 @@ type CmafEncryption struct {
 	// a value, then MediaPackage creates the constant initialization vector (IV).
 	ConstantInitializationVector *string `locationName:"constantInitializationVector" type:"string"`
 
+	// The encryption method to use.
+	EncryptionMethod *string `locationName:"encryptionMethod" type:"string" enum:"CmafEncryptionMethod"`
+
 	// Time (in seconds) between each encryption key rotation.
 	KeyRotationIntervalSeconds *int64 `locationName:"keyRotationIntervalSeconds" type:"integer"`
 
@@ -2033,6 +2030,12 @@ func (s *CmafEncryption) Validate() error {
 // SetConstantInitializationVector sets the ConstantInitializationVector field's value.
 func (s *CmafEncryption) SetConstantInitializationVector(v string) *CmafEncryption {
 	s.ConstantInitializationVector = &v
+	return s
+}
+
+// SetEncryptionMethod sets the EncryptionMethod field's value.
+func (s *CmafEncryption) SetEncryptionMethod(v string) *CmafEncryption {
+	s.EncryptionMethod = &v
 	return s
 }
 
@@ -3107,7 +3110,7 @@ type DashPackage struct {
 	// A list of SCTE-35 message types that are treated as ad markers in the output.
 	// If empty, noad markers are output. Specify multiple items to create ad markers
 	// for all of the includedmessage types.
-	AdTriggers []*string `locationName:"adTriggers" type:"list"`
+	AdTriggers []*string `locationName:"adTriggers" type:"list" enum:"__AdTriggersElement"`
 
 	// This setting allows the delivery restriction flags on SCTE-35 segmentation
 	// descriptors todetermine whether a message signals an ad. Choosing "NONE"
@@ -3123,6 +3126,9 @@ type DashPackage struct {
 
 	// A Dynamic Adaptive Streaming over HTTP (DASH) encryption configuration.
 	Encryption *DashEncryption `locationName:"encryption" type:"structure"`
+
+	// When enabled, an I-Frame only stream will be included in the output.
+	IncludeIframeOnlyStream *bool `locationName:"includeIframeOnlyStream" type:"boolean"`
 
 	// Determines the position of some tags in the Media Presentation Description
 	// (MPD). When set to FULL, elements like SegmentTemplate and ContentProtection
@@ -3146,10 +3152,11 @@ type DashPackage struct {
 	// into multiple periods. If empty, the content will notbe partitioned into
 	// more than one period. If the list contains "ADS", new periods will be created
 	// wherethe Channel source contains SCTE-35 ad markers.
-	PeriodTriggers []*string `locationName:"periodTriggers" type:"list"`
+	PeriodTriggers []*string `locationName:"periodTriggers" type:"list" enum:"__PeriodTriggersElement"`
 
 	// The Dynamic Adaptive Streaming over HTTP (DASH) profile type. When set to
-	// "HBBTV_1_5", HbbTV 1.5 compliant output is enabled.
+	// "HBBTV_1_5", HbbTV 1.5 compliant output is enabled. When set to "DVB-DASH_2014",
+	// DVB-DASH 2014 compliant output is enabled.
 	Profile *string `locationName:"profile" type:"string" enum:"Profile"`
 
 	// Duration (in seconds) of each segment. Actual segments will berounded to
@@ -3175,7 +3182,7 @@ type DashPackage struct {
 	UtcTiming *string `locationName:"utcTiming" type:"string" enum:"UtcTiming"`
 
 	// Specifies the value attribute of the UTCTiming field when utcTiming is set
-	// to HTTP-ISO or HTTP-HEAD
+	// to HTTP-ISO, HTTP-HEAD or HTTP-XSDATE
 	UtcTimingUri *string `locationName:"utcTimingUri" type:"string"`
 }
 
@@ -3227,6 +3234,12 @@ func (s *DashPackage) SetAdsOnDeliveryRestrictions(v string) *DashPackage {
 // SetEncryption sets the Encryption field's value.
 func (s *DashPackage) SetEncryption(v *DashEncryption) *DashPackage {
 	s.Encryption = v
+	return s
+}
+
+// SetIncludeIframeOnlyStream sets the IncludeIframeOnlyStream field's value.
+func (s *DashPackage) SetIncludeIframeOnlyStream(v bool) *DashPackage {
+	s.IncludeIframeOnlyStream = &v
 	return s
 }
 
@@ -4441,7 +4454,7 @@ type HlsManifestCreateOrUpdateParameters struct {
 	// A list of SCTE-35 message types that are treated as ad markers in the output.
 	// If empty, noad markers are output. Specify multiple items to create ad markers
 	// for all of the includedmessage types.
-	AdTriggers []*string `locationName:"adTriggers" type:"list"`
+	AdTriggers []*string `locationName:"adTriggers" type:"list" enum:"__AdTriggersElement"`
 
 	// This setting allows the delivery restriction flags on SCTE-35 segmentation
 	// descriptors todetermine whether a message signals an ad. Choosing "NONE"
@@ -4589,7 +4602,7 @@ type HlsPackage struct {
 	// A list of SCTE-35 message types that are treated as ad markers in the output.
 	// If empty, noad markers are output. Specify multiple items to create ad markers
 	// for all of the includedmessage types.
-	AdTriggers []*string `locationName:"adTriggers" type:"list"`
+	AdTriggers []*string `locationName:"adTriggers" type:"list" enum:"__AdTriggersElement"`
 
 	// This setting allows the delivery restriction flags on SCTE-35 segmentation
 	// descriptors todetermine whether a message signals an ad. Choosing "NONE"
@@ -7024,6 +7037,23 @@ func AdsOnDeliveryRestrictions_Values() []string {
 	}
 }
 
+// The encryption method to use.
+const (
+	// CmafEncryptionMethodSampleAes is a CmafEncryptionMethod enum value
+	CmafEncryptionMethodSampleAes = "SAMPLE_AES"
+
+	// CmafEncryptionMethodAesCtr is a CmafEncryptionMethod enum value
+	CmafEncryptionMethodAesCtr = "AES_CTR"
+)
+
+// CmafEncryptionMethod_Values returns all elements of the CmafEncryptionMethod enum
+func CmafEncryptionMethod_Values() []string {
+	return []string{
+		CmafEncryptionMethodSampleAes,
+		CmafEncryptionMethodAesCtr,
+	}
+}
+
 const (
 	// EncryptionMethodAes128 is a EncryptionMethod enum value
 	EncryptionMethodAes128 = "AES_128"
@@ -7095,24 +7125,76 @@ func PlaylistType_Values() []string {
 const (
 	// PresetSpeke20AudioPresetAudio1 is a PresetSpeke20Audio enum value
 	PresetSpeke20AudioPresetAudio1 = "PRESET-AUDIO-1"
+
+	// PresetSpeke20AudioPresetAudio2 is a PresetSpeke20Audio enum value
+	PresetSpeke20AudioPresetAudio2 = "PRESET-AUDIO-2"
+
+	// PresetSpeke20AudioPresetAudio3 is a PresetSpeke20Audio enum value
+	PresetSpeke20AudioPresetAudio3 = "PRESET-AUDIO-3"
+
+	// PresetSpeke20AudioShared is a PresetSpeke20Audio enum value
+	PresetSpeke20AudioShared = "SHARED"
+
+	// PresetSpeke20AudioUnencrypted is a PresetSpeke20Audio enum value
+	PresetSpeke20AudioUnencrypted = "UNENCRYPTED"
 )
 
 // PresetSpeke20Audio_Values returns all elements of the PresetSpeke20Audio enum
 func PresetSpeke20Audio_Values() []string {
 	return []string{
 		PresetSpeke20AudioPresetAudio1,
+		PresetSpeke20AudioPresetAudio2,
+		PresetSpeke20AudioPresetAudio3,
+		PresetSpeke20AudioShared,
+		PresetSpeke20AudioUnencrypted,
 	}
 }
 
 const (
 	// PresetSpeke20VideoPresetVideo1 is a PresetSpeke20Video enum value
 	PresetSpeke20VideoPresetVideo1 = "PRESET-VIDEO-1"
+
+	// PresetSpeke20VideoPresetVideo2 is a PresetSpeke20Video enum value
+	PresetSpeke20VideoPresetVideo2 = "PRESET-VIDEO-2"
+
+	// PresetSpeke20VideoPresetVideo3 is a PresetSpeke20Video enum value
+	PresetSpeke20VideoPresetVideo3 = "PRESET-VIDEO-3"
+
+	// PresetSpeke20VideoPresetVideo4 is a PresetSpeke20Video enum value
+	PresetSpeke20VideoPresetVideo4 = "PRESET-VIDEO-4"
+
+	// PresetSpeke20VideoPresetVideo5 is a PresetSpeke20Video enum value
+	PresetSpeke20VideoPresetVideo5 = "PRESET-VIDEO-5"
+
+	// PresetSpeke20VideoPresetVideo6 is a PresetSpeke20Video enum value
+	PresetSpeke20VideoPresetVideo6 = "PRESET-VIDEO-6"
+
+	// PresetSpeke20VideoPresetVideo7 is a PresetSpeke20Video enum value
+	PresetSpeke20VideoPresetVideo7 = "PRESET-VIDEO-7"
+
+	// PresetSpeke20VideoPresetVideo8 is a PresetSpeke20Video enum value
+	PresetSpeke20VideoPresetVideo8 = "PRESET-VIDEO-8"
+
+	// PresetSpeke20VideoShared is a PresetSpeke20Video enum value
+	PresetSpeke20VideoShared = "SHARED"
+
+	// PresetSpeke20VideoUnencrypted is a PresetSpeke20Video enum value
+	PresetSpeke20VideoUnencrypted = "UNENCRYPTED"
 )
 
 // PresetSpeke20Video_Values returns all elements of the PresetSpeke20Video enum
 func PresetSpeke20Video_Values() []string {
 	return []string{
 		PresetSpeke20VideoPresetVideo1,
+		PresetSpeke20VideoPresetVideo2,
+		PresetSpeke20VideoPresetVideo3,
+		PresetSpeke20VideoPresetVideo4,
+		PresetSpeke20VideoPresetVideo5,
+		PresetSpeke20VideoPresetVideo6,
+		PresetSpeke20VideoPresetVideo7,
+		PresetSpeke20VideoPresetVideo8,
+		PresetSpeke20VideoShared,
+		PresetSpeke20VideoUnencrypted,
 	}
 }
 
@@ -7125,6 +7207,9 @@ const (
 
 	// ProfileHybridcast is a Profile enum value
 	ProfileHybridcast = "HYBRIDCAST"
+
+	// ProfileDvbDash2014 is a Profile enum value
+	ProfileDvbDash2014 = "DVB_DASH_2014"
 )
 
 // Profile_Values returns all elements of the Profile enum
@@ -7133,6 +7218,7 @@ func Profile_Values() []string {
 		ProfileNone,
 		ProfileHbbtv15,
 		ProfileHybridcast,
+		ProfileDvbDash2014,
 	}
 }
 
@@ -7205,6 +7291,9 @@ const (
 
 	// UtcTimingHttpIso is a UtcTiming enum value
 	UtcTimingHttpIso = "HTTP-ISO"
+
+	// UtcTimingHttpXsdate is a UtcTiming enum value
+	UtcTimingHttpXsdate = "HTTP-XSDATE"
 )
 
 // UtcTiming_Values returns all elements of the UtcTiming enum
@@ -7213,6 +7302,7 @@ func UtcTiming_Values() []string {
 		UtcTimingNone,
 		UtcTimingHttpHead,
 		UtcTimingHttpIso,
+		UtcTimingHttpXsdate,
 	}
 }
 

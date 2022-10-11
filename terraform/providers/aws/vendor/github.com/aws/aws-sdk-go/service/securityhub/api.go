@@ -29,14 +29,13 @@ const opAcceptAdministratorInvitation = "AcceptAdministratorInvitation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AcceptAdministratorInvitationRequest method.
+//	req, resp := client.AcceptAdministratorInvitationRequest(params)
 //
-//    // Example sending a request using the AcceptAdministratorInvitationRequest method.
-//    req, resp := client.AcceptAdministratorInvitationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/AcceptAdministratorInvitation
 func (c *SecurityHub) AcceptAdministratorInvitationRequest(input *AcceptAdministratorInvitationInput) (req *request.Request, output *AcceptAdministratorInvitationOutput) {
@@ -75,25 +74,26 @@ func (c *SecurityHub) AcceptAdministratorInvitationRequest(input *AcceptAdminist
 // API operation AcceptAdministratorInvitation for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
+//
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/AcceptAdministratorInvitation
 func (c *SecurityHub) AcceptAdministratorInvitation(input *AcceptAdministratorInvitationInput) (*AcceptAdministratorInvitationOutput, error) {
@@ -133,14 +133,13 @@ const opAcceptInvitation = "AcceptInvitation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AcceptInvitationRequest method.
+//	req, resp := client.AcceptInvitationRequest(params)
 //
-//    // Example sending a request using the AcceptInvitationRequest method.
-//    req, resp := client.AcceptInvitationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/AcceptInvitation
 //
@@ -193,25 +192,26 @@ func (c *SecurityHub) AcceptInvitationRequest(input *AcceptInvitationInput) (req
 // API operation AcceptInvitation for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
+//
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/AcceptInvitation
 //
@@ -255,14 +255,13 @@ const opBatchDisableStandards = "BatchDisableStandards"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchDisableStandardsRequest method.
+//	req, resp := client.BatchDisableStandardsRequest(params)
 //
-//    // Example sending a request using the BatchDisableStandardsRequest method.
-//    req, resp := client.BatchDisableStandardsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/BatchDisableStandards
 func (c *SecurityHub) BatchDisableStandardsRequest(input *BatchDisableStandardsInput) (req *request.Request, output *BatchDisableStandardsOutput) {
@@ -296,22 +295,23 @@ func (c *SecurityHub) BatchDisableStandardsRequest(input *BatchDisableStandardsI
 // API operation BatchDisableStandards for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/BatchDisableStandards
 func (c *SecurityHub) BatchDisableStandards(input *BatchDisableStandardsInput) (*BatchDisableStandardsOutput, error) {
@@ -351,14 +351,13 @@ const opBatchEnableStandards = "BatchEnableStandards"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchEnableStandardsRequest method.
+//	req, resp := client.BatchEnableStandardsRequest(params)
 //
-//    // Example sending a request using the BatchEnableStandardsRequest method.
-//    req, resp := client.BatchEnableStandardsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/BatchEnableStandards
 func (c *SecurityHub) BatchEnableStandardsRequest(input *BatchEnableStandardsInput) (req *request.Request, output *BatchEnableStandardsOutput) {
@@ -393,22 +392,23 @@ func (c *SecurityHub) BatchEnableStandardsRequest(input *BatchEnableStandardsInp
 // API operation BatchEnableStandards for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/BatchEnableStandards
 func (c *SecurityHub) BatchEnableStandards(input *BatchEnableStandardsInput) (*BatchEnableStandardsOutput, error) {
@@ -448,14 +448,13 @@ const opBatchImportFindings = "BatchImportFindings"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchImportFindingsRequest method.
+//	req, resp := client.BatchImportFindingsRequest(params)
 //
-//    // Example sending a request using the BatchImportFindingsRequest method.
-//    req, resp := client.BatchImportFindingsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/BatchImportFindings
 func (c *SecurityHub) BatchImportFindingsRequest(input *BatchImportFindingsInput) (req *request.Request, output *BatchImportFindingsOutput) {
@@ -482,12 +481,17 @@ func (c *SecurityHub) BatchImportFindingsRequest(input *BatchImportFindingsInput
 //
 // BatchImportFindings must be called by one of the following:
 //
-//    * The account that is associated with the findings. The identifier of
-//    the associated account is the value of the AwsAccountId attribute for
-//    the finding.
+//   - The Amazon Web Services account that is associated with a finding if
+//     you are using the default product ARN (https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-custom-providers.html#securityhub-custom-providers-bfi-reqs)
+//     or are a partner sending findings from within a customer's Amazon Web
+//     Services account. In these cases, the identifier of the account that you
+//     are calling BatchImportFindings from needs to be the same as the AwsAccountId
+//     attribute for the finding.
 //
-//    * An account that is allow-listed for an official Security Hub partner
-//    integration.
+//   - An Amazon Web Services account that Security Hub has allow-listed for
+//     an official partner integration. In this case, you can call BatchImportFindings
+//     from the allow-listed account and send findings from different customer
+//     accounts in the same batch.
 //
 // The maximum allowed size for a finding is 240 Kb. An error is returned for
 // any finding larger than 240 Kb.
@@ -496,26 +500,26 @@ func (c *SecurityHub) BatchImportFindingsRequest(input *BatchImportFindingsInput
 // the following finding fields and objects, which Security Hub customers use
 // to manage their investigation workflow.
 //
-//    * Note
+//   - Note
 //
-//    * UserDefinedFields
+//   - UserDefinedFields
 //
-//    * VerificationState
+//   - VerificationState
 //
-//    * Workflow
+//   - Workflow
 //
 // Finding providers also should not use BatchImportFindings to update the following
 // attributes.
 //
-//    * Confidence
+//   - Confidence
 //
-//    * Criticality
+//   - Criticality
 //
-//    * RelatedFindings
+//   - RelatedFindings
 //
-//    * Severity
+//   - Severity
 //
-//    * Types
+//   - Types
 //
 // Instead, finding providers use FindingProviderFields to provide values for
 // these attributes.
@@ -528,22 +532,23 @@ func (c *SecurityHub) BatchImportFindingsRequest(input *BatchImportFindingsInput
 // API operation BatchImportFindings for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/BatchImportFindings
 func (c *SecurityHub) BatchImportFindings(input *BatchImportFindingsInput) (*BatchImportFindingsOutput, error) {
@@ -583,14 +588,13 @@ const opBatchUpdateFindings = "BatchUpdateFindings"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchUpdateFindingsRequest method.
+//	req, resp := client.BatchUpdateFindingsRequest(params)
 //
-//    // Example sending a request using the BatchUpdateFindingsRequest method.
-//    req, resp := client.BatchUpdateFindingsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/BatchUpdateFindings
 func (c *SecurityHub) BatchUpdateFindingsRequest(input *BatchUpdateFindingsInput) (req *request.Request, output *BatchUpdateFindingsOutput) {
@@ -622,23 +626,23 @@ func (c *SecurityHub) BatchUpdateFindingsRequest(input *BatchUpdateFindingsInput
 // Administrator and member accounts can use BatchUpdateFindings to update the
 // following finding fields and objects.
 //
-//    * Confidence
+//   - Confidence
 //
-//    * Criticality
+//   - Criticality
 //
-//    * Note
+//   - Note
 //
-//    * RelatedFindings
+//   - RelatedFindings
 //
-//    * Severity
+//   - Severity
 //
-//    * Types
+//   - Types
 //
-//    * UserDefinedFields
+//   - UserDefinedFields
 //
-//    * VerificationState
+//   - VerificationState
 //
-//    * Workflow
+//   - Workflow
 //
 // You can configure IAM policies to restrict access to fields and field values.
 // For example, you might not want member accounts to be able to suppress findings
@@ -654,22 +658,23 @@ func (c *SecurityHub) BatchUpdateFindingsRequest(input *BatchUpdateFindingsInput
 // API operation BatchUpdateFindings for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/BatchUpdateFindings
 func (c *SecurityHub) BatchUpdateFindings(input *BatchUpdateFindingsInput) (*BatchUpdateFindingsOutput, error) {
@@ -709,14 +714,13 @@ const opCreateActionTarget = "CreateActionTarget"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateActionTargetRequest method.
+//	req, resp := client.CreateActionTargetRequest(params)
 //
-//    // Example sending a request using the CreateActionTargetRequest method.
-//    req, resp := client.CreateActionTargetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/CreateActionTarget
 func (c *SecurityHub) CreateActionTargetRequest(input *CreateActionTargetInput) (req *request.Request, output *CreateActionTargetOutput) {
@@ -750,25 +754,26 @@ func (c *SecurityHub) CreateActionTargetRequest(input *CreateActionTargetInput) 
 // API operation CreateActionTarget for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceConflictException
-//   The resource specified in the request conflicts with an existing resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceConflictException
+//     The resource specified in the request conflicts with an existing resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/CreateActionTarget
 func (c *SecurityHub) CreateActionTarget(input *CreateActionTargetInput) (*CreateActionTargetOutput, error) {
@@ -808,14 +813,13 @@ const opCreateFindingAggregator = "CreateFindingAggregator"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateFindingAggregatorRequest method.
+//	req, resp := client.CreateFindingAggregatorRequest(params)
 //
-//    // Example sending a request using the CreateFindingAggregatorRequest method.
-//    req, resp := client.CreateFindingAggregatorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/CreateFindingAggregator
 func (c *SecurityHub) CreateFindingAggregatorRequest(input *CreateFindingAggregatorInput) (req *request.Request, output *CreateFindingAggregatorOutput) {
@@ -839,8 +843,8 @@ func (c *SecurityHub) CreateFindingAggregatorRequest(input *CreateFindingAggrega
 // Used to enable finding aggregation. Must be called from the aggregation Region.
 //
 // For more details about cross-Region replication, see Configuring finding
-// aggregation (securityhub/latest/userguide/finding-aggregation.html) in the
-// Security Hub User Guide.
+// aggregation (https://docs.aws.amazon.com/securityhub/latest/userguide/finding-aggregation.html)
+// in the Security Hub User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -850,25 +854,26 @@ func (c *SecurityHub) CreateFindingAggregatorRequest(input *CreateFindingAggrega
 // API operation CreateFindingAggregator for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * AccessDeniedException
-//   You don't have permission to perform the action specified in the request.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - AccessDeniedException
+//     You don't have permission to perform the action specified in the request.
+//
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/CreateFindingAggregator
 func (c *SecurityHub) CreateFindingAggregator(input *CreateFindingAggregatorInput) (*CreateFindingAggregatorOutput, error) {
@@ -908,14 +913,13 @@ const opCreateInsight = "CreateInsight"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateInsightRequest method.
+//	req, resp := client.CreateInsightRequest(params)
 //
-//    // Example sending a request using the CreateInsightRequest method.
-//    req, resp := client.CreateInsightRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/CreateInsight
 func (c *SecurityHub) CreateInsightRequest(input *CreateInsightInput) (req *request.Request, output *CreateInsightOutput) {
@@ -949,25 +953,26 @@ func (c *SecurityHub) CreateInsightRequest(input *CreateInsightInput) (req *requ
 // API operation CreateInsight for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * ResourceConflictException
-//   The resource specified in the request conflicts with an existing resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - ResourceConflictException
+//     The resource specified in the request conflicts with an existing resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/CreateInsight
 func (c *SecurityHub) CreateInsight(input *CreateInsightInput) (*CreateInsightOutput, error) {
@@ -1007,14 +1012,13 @@ const opCreateMembers = "CreateMembers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateMembersRequest method.
+//	req, resp := client.CreateMembersRequest(params)
 //
-//    // Example sending a request using the CreateMembersRequest method.
-//    req, resp := client.CreateMembersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/CreateMembers
 func (c *SecurityHub) CreateMembersRequest(input *CreateMembersInput) (req *request.Request, output *CreateMembersOutput) {
@@ -1045,10 +1049,10 @@ func (c *SecurityHub) CreateMembersRequest(input *CreateMembersInput) (req *requ
 // For accounts that are managed using Organizations, CreateMembers is only
 // used in the following cases:
 //
-//    * Security Hub is not configured to automatically add new organization
-//    accounts.
+//   - Security Hub is not configured to automatically add new organization
+//     accounts.
 //
-//    * The account was disassociated or deleted in Security Hub.
+//   - The account was disassociated or deleted in Security Hub.
 //
 // This action can only be used by an account that has Security Hub enabled.
 // To enable Security Hub, you can use the EnableSecurityHub operation.
@@ -1061,15 +1065,15 @@ func (c *SecurityHub) CreateMembersRequest(input *CreateMembersInput) (req *requ
 // Accounts that are managed using Organizations do not receive an invitation.
 // They automatically become a member account in Security Hub.
 //
-//    * If the organization account does not have Security Hub enabled, then
-//    Security Hub and the default standards are automatically enabled. Note
-//    that Security Hub cannot be enabled automatically for the organization
-//    management account. The organization management account must enable Security
-//    Hub before the administrator account enables it as a member account.
+//   - If the organization account does not have Security Hub enabled, then
+//     Security Hub and the default standards are automatically enabled. Note
+//     that Security Hub cannot be enabled automatically for the organization
+//     management account. The organization management account must enable Security
+//     Hub before the administrator account enables it as a member account.
 //
-//    * For organization accounts that already have Security Hub enabled, Security
-//    Hub does not make any other changes to those accounts. It does not change
-//    their enabled standards or controls.
+//   - For organization accounts that already have Security Hub enabled, Security
+//     Hub does not make any other changes to those accounts. It does not change
+//     their enabled standards or controls.
 //
 // A permissions policy is added that permits the administrator account to view
 // the findings generated in the member account.
@@ -1085,25 +1089,26 @@ func (c *SecurityHub) CreateMembersRequest(input *CreateMembersInput) (req *requ
 // API operation CreateMembers for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * ResourceConflictException
-//   The resource specified in the request conflicts with an existing resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - ResourceConflictException
+//     The resource specified in the request conflicts with an existing resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/CreateMembers
 func (c *SecurityHub) CreateMembers(input *CreateMembersInput) (*CreateMembersOutput, error) {
@@ -1143,14 +1148,13 @@ const opDeclineInvitations = "DeclineInvitations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeclineInvitationsRequest method.
+//	req, resp := client.DeclineInvitationsRequest(params)
 //
-//    // Example sending a request using the DeclineInvitationsRequest method.
-//    req, resp := client.DeclineInvitationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeclineInvitations
 func (c *SecurityHub) DeclineInvitationsRequest(input *DeclineInvitationsInput) (req *request.Request, output *DeclineInvitationsOutput) {
@@ -1184,20 +1188,21 @@ func (c *SecurityHub) DeclineInvitationsRequest(input *DeclineInvitationsInput) 
 // API operation DeclineInvitations for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeclineInvitations
 func (c *SecurityHub) DeclineInvitations(input *DeclineInvitationsInput) (*DeclineInvitationsOutput, error) {
@@ -1237,14 +1242,13 @@ const opDeleteActionTarget = "DeleteActionTarget"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteActionTargetRequest method.
+//	req, resp := client.DeleteActionTargetRequest(params)
 //
-//    // Example sending a request using the DeleteActionTargetRequest method.
-//    req, resp := client.DeleteActionTargetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeleteActionTarget
 func (c *SecurityHub) DeleteActionTargetRequest(input *DeleteActionTargetInput) (req *request.Request, output *DeleteActionTargetOutput) {
@@ -1278,20 +1282,21 @@ func (c *SecurityHub) DeleteActionTargetRequest(input *DeleteActionTargetInput) 
 // API operation DeleteActionTarget for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeleteActionTarget
 func (c *SecurityHub) DeleteActionTarget(input *DeleteActionTargetInput) (*DeleteActionTargetOutput, error) {
@@ -1331,14 +1336,13 @@ const opDeleteFindingAggregator = "DeleteFindingAggregator"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteFindingAggregatorRequest method.
+//	req, resp := client.DeleteFindingAggregatorRequest(params)
 //
-//    // Example sending a request using the DeleteFindingAggregatorRequest method.
-//    req, resp := client.DeleteFindingAggregatorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeleteFindingAggregator
 func (c *SecurityHub) DeleteFindingAggregatorRequest(input *DeleteFindingAggregatorInput) (req *request.Request, output *DeleteFindingAggregatorOutput) {
@@ -1375,28 +1379,29 @@ func (c *SecurityHub) DeleteFindingAggregatorRequest(input *DeleteFindingAggrega
 // API operation DeleteFindingAggregator for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * AccessDeniedException
-//   You don't have permission to perform the action specified in the request.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - AccessDeniedException
+//     You don't have permission to perform the action specified in the request.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeleteFindingAggregator
 func (c *SecurityHub) DeleteFindingAggregator(input *DeleteFindingAggregatorInput) (*DeleteFindingAggregatorOutput, error) {
@@ -1436,14 +1441,13 @@ const opDeleteInsight = "DeleteInsight"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteInsightRequest method.
+//	req, resp := client.DeleteInsightRequest(params)
 //
-//    // Example sending a request using the DeleteInsightRequest method.
-//    req, resp := client.DeleteInsightRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeleteInsight
 func (c *SecurityHub) DeleteInsightRequest(input *DeleteInsightInput) (req *request.Request, output *DeleteInsightOutput) {
@@ -1474,25 +1478,26 @@ func (c *SecurityHub) DeleteInsightRequest(input *DeleteInsightInput) (req *requ
 // API operation DeleteInsight for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeleteInsight
 func (c *SecurityHub) DeleteInsight(input *DeleteInsightInput) (*DeleteInsightOutput, error) {
@@ -1532,14 +1537,13 @@ const opDeleteInvitations = "DeleteInvitations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteInvitationsRequest method.
+//	req, resp := client.DeleteInvitationsRequest(params)
 //
-//    // Example sending a request using the DeleteInvitationsRequest method.
-//    req, resp := client.DeleteInvitationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeleteInvitations
 func (c *SecurityHub) DeleteInvitationsRequest(input *DeleteInvitationsInput) (req *request.Request, output *DeleteInvitationsOutput) {
@@ -1574,25 +1578,26 @@ func (c *SecurityHub) DeleteInvitationsRequest(input *DeleteInvitationsInput) (r
 // API operation DeleteInvitations for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
+//
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeleteInvitations
 func (c *SecurityHub) DeleteInvitations(input *DeleteInvitationsInput) (*DeleteInvitationsOutput, error) {
@@ -1632,14 +1637,13 @@ const opDeleteMembers = "DeleteMembers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteMembersRequest method.
+//	req, resp := client.DeleteMembersRequest(params)
 //
-//    // Example sending a request using the DeleteMembersRequest method.
-//    req, resp := client.DeleteMembersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeleteMembers
 func (c *SecurityHub) DeleteMembersRequest(input *DeleteMembersInput) (req *request.Request, output *DeleteMembersOutput) {
@@ -1673,25 +1677,26 @@ func (c *SecurityHub) DeleteMembersRequest(input *DeleteMembersInput) (req *requ
 // API operation DeleteMembers for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DeleteMembers
 func (c *SecurityHub) DeleteMembers(input *DeleteMembersInput) (*DeleteMembersOutput, error) {
@@ -1731,14 +1736,13 @@ const opDescribeActionTargets = "DescribeActionTargets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeActionTargetsRequest method.
+//	req, resp := client.DescribeActionTargetsRequest(params)
 //
-//    // Example sending a request using the DescribeActionTargetsRequest method.
-//    req, resp := client.DescribeActionTargetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeActionTargets
 func (c *SecurityHub) DescribeActionTargetsRequest(input *DescribeActionTargetsInput) (req *request.Request, output *DescribeActionTargetsOutput) {
@@ -1775,20 +1779,21 @@ func (c *SecurityHub) DescribeActionTargetsRequest(input *DescribeActionTargetsI
 // API operation DescribeActionTargets for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeActionTargets
 func (c *SecurityHub) DescribeActionTargets(input *DescribeActionTargetsInput) (*DescribeActionTargetsOutput, error) {
@@ -1820,15 +1825,14 @@ func (c *SecurityHub) DescribeActionTargetsWithContext(ctx aws.Context, input *D
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeActionTargets operation.
-//    pageNum := 0
-//    err := client.DescribeActionTargetsPages(params,
-//        func(page *securityhub.DescribeActionTargetsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeActionTargets operation.
+//	pageNum := 0
+//	err := client.DescribeActionTargetsPages(params,
+//	    func(page *securityhub.DescribeActionTargetsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) DescribeActionTargetsPages(input *DescribeActionTargetsInput, fn func(*DescribeActionTargetsOutput, bool) bool) error {
 	return c.DescribeActionTargetsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1880,14 +1884,13 @@ const opDescribeHub = "DescribeHub"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeHubRequest method.
+//	req, resp := client.DescribeHubRequest(params)
 //
-//    // Example sending a request using the DescribeHubRequest method.
-//    req, resp := client.DescribeHubRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeHub
 func (c *SecurityHub) DescribeHubRequest(input *DescribeHubInput) (req *request.Request, output *DescribeHubOutput) {
@@ -1919,25 +1922,26 @@ func (c *SecurityHub) DescribeHubRequest(input *DescribeHubInput) (req *request.
 // API operation DescribeHub for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeHub
 func (c *SecurityHub) DescribeHub(input *DescribeHubInput) (*DescribeHubOutput, error) {
@@ -1977,14 +1981,13 @@ const opDescribeOrganizationConfiguration = "DescribeOrganizationConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeOrganizationConfigurationRequest method.
+//	req, resp := client.DescribeOrganizationConfigurationRequest(params)
 //
-//    // Example sending a request using the DescribeOrganizationConfigurationRequest method.
-//    req, resp := client.DescribeOrganizationConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeOrganizationConfiguration
 func (c *SecurityHub) DescribeOrganizationConfigurationRequest(input *DescribeOrganizationConfigurationInput) (req *request.Request, output *DescribeOrganizationConfigurationOutput) {
@@ -2016,22 +2019,23 @@ func (c *SecurityHub) DescribeOrganizationConfigurationRequest(input *DescribeOr
 // API operation DescribeOrganizationConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeOrganizationConfiguration
 func (c *SecurityHub) DescribeOrganizationConfiguration(input *DescribeOrganizationConfigurationInput) (*DescribeOrganizationConfigurationOutput, error) {
@@ -2071,14 +2075,13 @@ const opDescribeProducts = "DescribeProducts"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeProductsRequest method.
+//	req, resp := client.DescribeProductsRequest(params)
 //
-//    // Example sending a request using the DescribeProductsRequest method.
-//    req, resp := client.DescribeProductsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeProducts
 func (c *SecurityHub) DescribeProductsRequest(input *DescribeProductsInput) (req *request.Request, output *DescribeProductsOutput) {
@@ -2121,22 +2124,23 @@ func (c *SecurityHub) DescribeProductsRequest(input *DescribeProductsInput) (req
 // API operation DescribeProducts for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeProducts
 func (c *SecurityHub) DescribeProducts(input *DescribeProductsInput) (*DescribeProductsOutput, error) {
@@ -2168,15 +2172,14 @@ func (c *SecurityHub) DescribeProductsWithContext(ctx aws.Context, input *Descri
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeProducts operation.
-//    pageNum := 0
-//    err := client.DescribeProductsPages(params,
-//        func(page *securityhub.DescribeProductsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeProducts operation.
+//	pageNum := 0
+//	err := client.DescribeProductsPages(params,
+//	    func(page *securityhub.DescribeProductsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) DescribeProductsPages(input *DescribeProductsInput, fn func(*DescribeProductsOutput, bool) bool) error {
 	return c.DescribeProductsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2228,14 +2231,13 @@ const opDescribeStandards = "DescribeStandards"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStandardsRequest method.
+//	req, resp := client.DescribeStandardsRequest(params)
 //
-//    // Example sending a request using the DescribeStandardsRequest method.
-//    req, resp := client.DescribeStandardsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeStandards
 func (c *SecurityHub) DescribeStandardsRequest(input *DescribeStandardsInput) (req *request.Request, output *DescribeStandardsOutput) {
@@ -2275,17 +2277,18 @@ func (c *SecurityHub) DescribeStandardsRequest(input *DescribeStandardsInput) (r
 // API operation DescribeStandards for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
+//
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeStandards
 func (c *SecurityHub) DescribeStandards(input *DescribeStandardsInput) (*DescribeStandardsOutput, error) {
@@ -2317,15 +2320,14 @@ func (c *SecurityHub) DescribeStandardsWithContext(ctx aws.Context, input *Descr
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeStandards operation.
-//    pageNum := 0
-//    err := client.DescribeStandardsPages(params,
-//        func(page *securityhub.DescribeStandardsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeStandards operation.
+//	pageNum := 0
+//	err := client.DescribeStandardsPages(params,
+//	    func(page *securityhub.DescribeStandardsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) DescribeStandardsPages(input *DescribeStandardsInput, fn func(*DescribeStandardsOutput, bool) bool) error {
 	return c.DescribeStandardsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2377,14 +2379,13 @@ const opDescribeStandardsControls = "DescribeStandardsControls"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStandardsControlsRequest method.
+//	req, resp := client.DescribeStandardsControlsRequest(params)
 //
-//    // Example sending a request using the DescribeStandardsControlsRequest method.
-//    req, resp := client.DescribeStandardsControlsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeStandardsControls
 func (c *SecurityHub) DescribeStandardsControlsRequest(input *DescribeStandardsControlsInput) (req *request.Request, output *DescribeStandardsControlsOutput) {
@@ -2424,20 +2425,21 @@ func (c *SecurityHub) DescribeStandardsControlsRequest(input *DescribeStandardsC
 // API operation DescribeStandardsControls for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DescribeStandardsControls
 func (c *SecurityHub) DescribeStandardsControls(input *DescribeStandardsControlsInput) (*DescribeStandardsControlsOutput, error) {
@@ -2469,15 +2471,14 @@ func (c *SecurityHub) DescribeStandardsControlsWithContext(ctx aws.Context, inpu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeStandardsControls operation.
-//    pageNum := 0
-//    err := client.DescribeStandardsControlsPages(params,
-//        func(page *securityhub.DescribeStandardsControlsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeStandardsControls operation.
+//	pageNum := 0
+//	err := client.DescribeStandardsControlsPages(params,
+//	    func(page *securityhub.DescribeStandardsControlsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) DescribeStandardsControlsPages(input *DescribeStandardsControlsInput, fn func(*DescribeStandardsControlsOutput, bool) bool) error {
 	return c.DescribeStandardsControlsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2529,14 +2530,13 @@ const opDisableImportFindingsForProduct = "DisableImportFindingsForProduct"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisableImportFindingsForProductRequest method.
+//	req, resp := client.DisableImportFindingsForProductRequest(params)
 //
-//    // Example sending a request using the DisableImportFindingsForProductRequest method.
-//    req, resp := client.DisableImportFindingsForProductRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisableImportFindingsForProduct
 func (c *SecurityHub) DisableImportFindingsForProductRequest(input *DisableImportFindingsForProductInput) (req *request.Request, output *DisableImportFindingsForProductOutput) {
@@ -2570,25 +2570,26 @@ func (c *SecurityHub) DisableImportFindingsForProductRequest(input *DisableImpor
 // API operation DisableImportFindingsForProduct for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisableImportFindingsForProduct
 func (c *SecurityHub) DisableImportFindingsForProduct(input *DisableImportFindingsForProductInput) (*DisableImportFindingsForProductOutput, error) {
@@ -2628,14 +2629,13 @@ const opDisableOrganizationAdminAccount = "DisableOrganizationAdminAccount"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisableOrganizationAdminAccountRequest method.
+//	req, resp := client.DisableOrganizationAdminAccountRequest(params)
 //
-//    // Example sending a request using the DisableOrganizationAdminAccountRequest method.
-//    req, resp := client.DisableOrganizationAdminAccountRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisableOrganizationAdminAccount
 func (c *SecurityHub) DisableOrganizationAdminAccountRequest(input *DisableOrganizationAdminAccountInput) (req *request.Request, output *DisableOrganizationAdminAccountOutput) {
@@ -2668,22 +2668,23 @@ func (c *SecurityHub) DisableOrganizationAdminAccountRequest(input *DisableOrgan
 // API operation DisableOrganizationAdminAccount for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisableOrganizationAdminAccount
 func (c *SecurityHub) DisableOrganizationAdminAccount(input *DisableOrganizationAdminAccountInput) (*DisableOrganizationAdminAccountOutput, error) {
@@ -2723,14 +2724,13 @@ const opDisableSecurityHub = "DisableSecurityHub"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisableSecurityHubRequest method.
+//	req, resp := client.DisableSecurityHubRequest(params)
 //
-//    // Example sending a request using the DisableSecurityHubRequest method.
-//    req, resp := client.DisableSecurityHubRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisableSecurityHub
 func (c *SecurityHub) DisableSecurityHubRequest(input *DisableSecurityHubInput) (req *request.Request, output *DisableSecurityHubOutput) {
@@ -2775,21 +2775,22 @@ func (c *SecurityHub) DisableSecurityHubRequest(input *DisableSecurityHubInput) 
 // API operation DisableSecurityHub for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisableSecurityHub
 func (c *SecurityHub) DisableSecurityHub(input *DisableSecurityHubInput) (*DisableSecurityHubOutput, error) {
@@ -2829,14 +2830,13 @@ const opDisassociateFromAdministratorAccount = "DisassociateFromAdministratorAcc
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateFromAdministratorAccountRequest method.
+//	req, resp := client.DisassociateFromAdministratorAccountRequest(params)
 //
-//    // Example sending a request using the DisassociateFromAdministratorAccountRequest method.
-//    req, resp := client.DisassociateFromAdministratorAccountRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisassociateFromAdministratorAccount
 func (c *SecurityHub) DisassociateFromAdministratorAccountRequest(input *DisassociateFromAdministratorAccountInput) (req *request.Request, output *DisassociateFromAdministratorAccountOutput) {
@@ -2873,25 +2873,26 @@ func (c *SecurityHub) DisassociateFromAdministratorAccountRequest(input *Disasso
 // API operation DisassociateFromAdministratorAccount for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisassociateFromAdministratorAccount
 func (c *SecurityHub) DisassociateFromAdministratorAccount(input *DisassociateFromAdministratorAccountInput) (*DisassociateFromAdministratorAccountOutput, error) {
@@ -2931,14 +2932,13 @@ const opDisassociateFromMasterAccount = "DisassociateFromMasterAccount"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateFromMasterAccountRequest method.
+//	req, resp := client.DisassociateFromMasterAccountRequest(params)
 //
-//    // Example sending a request using the DisassociateFromMasterAccountRequest method.
-//    req, resp := client.DisassociateFromMasterAccountRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisassociateFromMasterAccount
 //
@@ -2989,25 +2989,26 @@ func (c *SecurityHub) DisassociateFromMasterAccountRequest(input *DisassociateFr
 // API operation DisassociateFromMasterAccount for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisassociateFromMasterAccount
 //
@@ -3051,14 +3052,13 @@ const opDisassociateMembers = "DisassociateMembers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateMembersRequest method.
+//	req, resp := client.DisassociateMembersRequest(params)
 //
-//    // Example sending a request using the DisassociateMembersRequest method.
-//    req, resp := client.DisassociateMembersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisassociateMembers
 func (c *SecurityHub) DisassociateMembersRequest(input *DisassociateMembersInput) (req *request.Request, output *DisassociateMembersOutput) {
@@ -3094,25 +3094,26 @@ func (c *SecurityHub) DisassociateMembersRequest(input *DisassociateMembersInput
 // API operation DisassociateMembers for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/DisassociateMembers
 func (c *SecurityHub) DisassociateMembers(input *DisassociateMembersInput) (*DisassociateMembersOutput, error) {
@@ -3152,14 +3153,13 @@ const opEnableImportFindingsForProduct = "EnableImportFindingsForProduct"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the EnableImportFindingsForProductRequest method.
+//	req, resp := client.EnableImportFindingsForProductRequest(params)
 //
-//    // Example sending a request using the EnableImportFindingsForProductRequest method.
-//    req, resp := client.EnableImportFindingsForProductRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/EnableImportFindingsForProduct
 func (c *SecurityHub) EnableImportFindingsForProductRequest(input *EnableImportFindingsForProductInput) (req *request.Request, output *EnableImportFindingsForProductOutput) {
@@ -3194,25 +3194,26 @@ func (c *SecurityHub) EnableImportFindingsForProductRequest(input *EnableImportF
 // API operation EnableImportFindingsForProduct for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * ResourceConflictException
-//   The resource specified in the request conflicts with an existing resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - ResourceConflictException
+//     The resource specified in the request conflicts with an existing resource.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/EnableImportFindingsForProduct
 func (c *SecurityHub) EnableImportFindingsForProduct(input *EnableImportFindingsForProductInput) (*EnableImportFindingsForProductOutput, error) {
@@ -3252,14 +3253,13 @@ const opEnableOrganizationAdminAccount = "EnableOrganizationAdminAccount"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the EnableOrganizationAdminAccountRequest method.
+//	req, resp := client.EnableOrganizationAdminAccountRequest(params)
 //
-//    // Example sending a request using the EnableOrganizationAdminAccountRequest method.
-//    req, resp := client.EnableOrganizationAdminAccountRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/EnableOrganizationAdminAccount
 func (c *SecurityHub) EnableOrganizationAdminAccountRequest(input *EnableOrganizationAdminAccountInput) (req *request.Request, output *EnableOrganizationAdminAccountOutput) {
@@ -3292,22 +3292,23 @@ func (c *SecurityHub) EnableOrganizationAdminAccountRequest(input *EnableOrganiz
 // API operation EnableOrganizationAdminAccount for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/EnableOrganizationAdminAccount
 func (c *SecurityHub) EnableOrganizationAdminAccount(input *EnableOrganizationAdminAccountInput) (*EnableOrganizationAdminAccountOutput, error) {
@@ -3347,14 +3348,13 @@ const opEnableSecurityHub = "EnableSecurityHub"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the EnableSecurityHubRequest method.
+//	req, resp := client.EnableSecurityHubRequest(params)
 //
-//    // Example sending a request using the EnableSecurityHubRequest method.
-//    req, resp := client.EnableSecurityHubRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/EnableSecurityHub
 func (c *SecurityHub) EnableSecurityHubRequest(input *EnableSecurityHubInput) (req *request.Request, output *EnableSecurityHubOutput) {
@@ -3386,9 +3386,9 @@ func (c *SecurityHub) EnableSecurityHubRequest(input *EnableSecurityHubInput) (r
 // When you use the EnableSecurityHub operation to enable Security Hub, you
 // also automatically enable the following standards.
 //
-//    * CIS Amazon Web Services Foundations
+//   - CIS Amazon Web Services Foundations
 //
-//    * Amazon Web Services Foundational Security Best Practices
+//   - Amazon Web Services Foundational Security Best Practices
 //
 // You do not enable the Payment Card Industry Data Security Standard (PCI DSS)
 // standard.
@@ -3410,24 +3410,25 @@ func (c *SecurityHub) EnableSecurityHubRequest(input *EnableSecurityHubInput) (r
 // API operation EnableSecurityHub for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * ResourceConflictException
-//   The resource specified in the request conflicts with an existing resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * AccessDeniedException
-//   You don't have permission to perform the action specified in the request.
+//   - ResourceConflictException
+//     The resource specified in the request conflicts with an existing resource.
+//
+//   - AccessDeniedException
+//     You don't have permission to perform the action specified in the request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/EnableSecurityHub
 func (c *SecurityHub) EnableSecurityHub(input *EnableSecurityHubInput) (*EnableSecurityHubOutput, error) {
@@ -3467,14 +3468,13 @@ const opGetAdministratorAccount = "GetAdministratorAccount"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetAdministratorAccountRequest method.
+//	req, resp := client.GetAdministratorAccountRequest(params)
 //
-//    // Example sending a request using the GetAdministratorAccountRequest method.
-//    req, resp := client.GetAdministratorAccountRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetAdministratorAccount
 func (c *SecurityHub) GetAdministratorAccountRequest(input *GetAdministratorAccountInput) (req *request.Request, output *GetAdministratorAccountOutput) {
@@ -3509,25 +3509,26 @@ func (c *SecurityHub) GetAdministratorAccountRequest(input *GetAdministratorAcco
 // API operation GetAdministratorAccount for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetAdministratorAccount
 func (c *SecurityHub) GetAdministratorAccount(input *GetAdministratorAccountInput) (*GetAdministratorAccountOutput, error) {
@@ -3567,14 +3568,13 @@ const opGetEnabledStandards = "GetEnabledStandards"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetEnabledStandardsRequest method.
+//	req, resp := client.GetEnabledStandardsRequest(params)
 //
-//    // Example sending a request using the GetEnabledStandardsRequest method.
-//    req, resp := client.GetEnabledStandardsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetEnabledStandards
 func (c *SecurityHub) GetEnabledStandardsRequest(input *GetEnabledStandardsInput) (req *request.Request, output *GetEnabledStandardsOutput) {
@@ -3611,22 +3611,23 @@ func (c *SecurityHub) GetEnabledStandardsRequest(input *GetEnabledStandardsInput
 // API operation GetEnabledStandards for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetEnabledStandards
 func (c *SecurityHub) GetEnabledStandards(input *GetEnabledStandardsInput) (*GetEnabledStandardsOutput, error) {
@@ -3658,15 +3659,14 @@ func (c *SecurityHub) GetEnabledStandardsWithContext(ctx aws.Context, input *Get
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a GetEnabledStandards operation.
-//    pageNum := 0
-//    err := client.GetEnabledStandardsPages(params,
-//        func(page *securityhub.GetEnabledStandardsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a GetEnabledStandards operation.
+//	pageNum := 0
+//	err := client.GetEnabledStandardsPages(params,
+//	    func(page *securityhub.GetEnabledStandardsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) GetEnabledStandardsPages(input *GetEnabledStandardsInput, fn func(*GetEnabledStandardsOutput, bool) bool) error {
 	return c.GetEnabledStandardsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3718,14 +3718,13 @@ const opGetFindingAggregator = "GetFindingAggregator"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetFindingAggregatorRequest method.
+//	req, resp := client.GetFindingAggregatorRequest(params)
 //
-//    // Example sending a request using the GetFindingAggregatorRequest method.
-//    req, resp := client.GetFindingAggregatorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetFindingAggregator
 func (c *SecurityHub) GetFindingAggregatorRequest(input *GetFindingAggregatorInput) (req *request.Request, output *GetFindingAggregatorOutput) {
@@ -3756,28 +3755,29 @@ func (c *SecurityHub) GetFindingAggregatorRequest(input *GetFindingAggregatorInp
 // API operation GetFindingAggregator for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * AccessDeniedException
-//   You don't have permission to perform the action specified in the request.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - AccessDeniedException
+//     You don't have permission to perform the action specified in the request.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetFindingAggregator
 func (c *SecurityHub) GetFindingAggregator(input *GetFindingAggregatorInput) (*GetFindingAggregatorOutput, error) {
@@ -3817,14 +3817,13 @@ const opGetFindings = "GetFindings"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetFindingsRequest method.
+//	req, resp := client.GetFindingsRequest(params)
 //
-//    // Example sending a request using the GetFindingsRequest method.
-//    req, resp := client.GetFindingsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetFindings
 func (c *SecurityHub) GetFindingsRequest(input *GetFindingsInput) (req *request.Request, output *GetFindingsOutput) {
@@ -3865,22 +3864,23 @@ func (c *SecurityHub) GetFindingsRequest(input *GetFindingsInput) (req *request.
 // API operation GetFindings for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetFindings
 func (c *SecurityHub) GetFindings(input *GetFindingsInput) (*GetFindingsOutput, error) {
@@ -3912,15 +3912,14 @@ func (c *SecurityHub) GetFindingsWithContext(ctx aws.Context, input *GetFindings
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a GetFindings operation.
-//    pageNum := 0
-//    err := client.GetFindingsPages(params,
-//        func(page *securityhub.GetFindingsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a GetFindings operation.
+//	pageNum := 0
+//	err := client.GetFindingsPages(params,
+//	    func(page *securityhub.GetFindingsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) GetFindingsPages(input *GetFindingsInput, fn func(*GetFindingsOutput, bool) bool) error {
 	return c.GetFindingsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3972,14 +3971,13 @@ const opGetInsightResults = "GetInsightResults"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetInsightResultsRequest method.
+//	req, resp := client.GetInsightResultsRequest(params)
 //
-//    // Example sending a request using the GetInsightResultsRequest method.
-//    req, resp := client.GetInsightResultsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetInsightResults
 func (c *SecurityHub) GetInsightResultsRequest(input *GetInsightResultsInput) (req *request.Request, output *GetInsightResultsOutput) {
@@ -4010,25 +4008,26 @@ func (c *SecurityHub) GetInsightResultsRequest(input *GetInsightResultsInput) (r
 // API operation GetInsightResults for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetInsightResults
 func (c *SecurityHub) GetInsightResults(input *GetInsightResultsInput) (*GetInsightResultsOutput, error) {
@@ -4068,14 +4067,13 @@ const opGetInsights = "GetInsights"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetInsightsRequest method.
+//	req, resp := client.GetInsightsRequest(params)
 //
-//    // Example sending a request using the GetInsightsRequest method.
-//    req, resp := client.GetInsightsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetInsights
 func (c *SecurityHub) GetInsightsRequest(input *GetInsightsInput) (req *request.Request, output *GetInsightsOutput) {
@@ -4112,25 +4110,26 @@ func (c *SecurityHub) GetInsightsRequest(input *GetInsightsInput) (req *request.
 // API operation GetInsights for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetInsights
 func (c *SecurityHub) GetInsights(input *GetInsightsInput) (*GetInsightsOutput, error) {
@@ -4162,15 +4161,14 @@ func (c *SecurityHub) GetInsightsWithContext(ctx aws.Context, input *GetInsights
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a GetInsights operation.
-//    pageNum := 0
-//    err := client.GetInsightsPages(params,
-//        func(page *securityhub.GetInsightsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a GetInsights operation.
+//	pageNum := 0
+//	err := client.GetInsightsPages(params,
+//	    func(page *securityhub.GetInsightsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) GetInsightsPages(input *GetInsightsInput, fn func(*GetInsightsOutput, bool) bool) error {
 	return c.GetInsightsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4222,14 +4220,13 @@ const opGetInvitationsCount = "GetInvitationsCount"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetInvitationsCountRequest method.
+//	req, resp := client.GetInvitationsCountRequest(params)
 //
-//    // Example sending a request using the GetInvitationsCountRequest method.
-//    req, resp := client.GetInvitationsCountRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetInvitationsCount
 func (c *SecurityHub) GetInvitationsCountRequest(input *GetInvitationsCountInput) (req *request.Request, output *GetInvitationsCountOutput) {
@@ -4261,22 +4258,23 @@ func (c *SecurityHub) GetInvitationsCountRequest(input *GetInvitationsCountInput
 // API operation GetInvitationsCount for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetInvitationsCount
 func (c *SecurityHub) GetInvitationsCount(input *GetInvitationsCountInput) (*GetInvitationsCountOutput, error) {
@@ -4316,14 +4314,13 @@ const opGetMasterAccount = "GetMasterAccount"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetMasterAccountRequest method.
+//	req, resp := client.GetMasterAccountRequest(params)
 //
-//    // Example sending a request using the GetMasterAccountRequest method.
-//    req, resp := client.GetMasterAccountRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetMasterAccount
 //
@@ -4371,25 +4368,26 @@ func (c *SecurityHub) GetMasterAccountRequest(input *GetMasterAccountInput) (req
 // API operation GetMasterAccount for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetMasterAccount
 //
@@ -4433,14 +4431,13 @@ const opGetMembers = "GetMembers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetMembersRequest method.
+//	req, resp := client.GetMembersRequest(params)
 //
-//    // Example sending a request using the GetMembersRequest method.
-//    req, resp := client.GetMembersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetMembers
 func (c *SecurityHub) GetMembersRequest(input *GetMembersInput) (req *request.Request, output *GetMembersOutput) {
@@ -4479,25 +4476,26 @@ func (c *SecurityHub) GetMembersRequest(input *GetMembersInput) (req *request.Re
 // API operation GetMembers for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/GetMembers
 func (c *SecurityHub) GetMembers(input *GetMembersInput) (*GetMembersOutput, error) {
@@ -4537,14 +4535,13 @@ const opInviteMembers = "InviteMembers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the InviteMembersRequest method.
+//	req, resp := client.InviteMembersRequest(params)
 //
-//    // Example sending a request using the InviteMembersRequest method.
-//    req, resp := client.InviteMembersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/InviteMembers
 func (c *SecurityHub) InviteMembersRequest(input *InviteMembersInput) (req *request.Request, output *InviteMembersOutput) {
@@ -4586,25 +4583,26 @@ func (c *SecurityHub) InviteMembersRequest(input *InviteMembersInput) (req *requ
 // API operation InviteMembers for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/InviteMembers
 func (c *SecurityHub) InviteMembers(input *InviteMembersInput) (*InviteMembersOutput, error) {
@@ -4644,14 +4642,13 @@ const opListEnabledProductsForImport = "ListEnabledProductsForImport"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListEnabledProductsForImportRequest method.
+//	req, resp := client.ListEnabledProductsForImportRequest(params)
 //
-//    // Example sending a request using the ListEnabledProductsForImportRequest method.
-//    req, resp := client.ListEnabledProductsForImportRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListEnabledProductsForImport
 func (c *SecurityHub) ListEnabledProductsForImportRequest(input *ListEnabledProductsForImportInput) (req *request.Request, output *ListEnabledProductsForImportOutput) {
@@ -4689,18 +4686,19 @@ func (c *SecurityHub) ListEnabledProductsForImportRequest(input *ListEnabledProd
 // API operation ListEnabledProductsForImport for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListEnabledProductsForImport
 func (c *SecurityHub) ListEnabledProductsForImport(input *ListEnabledProductsForImportInput) (*ListEnabledProductsForImportOutput, error) {
@@ -4732,15 +4730,14 @@ func (c *SecurityHub) ListEnabledProductsForImportWithContext(ctx aws.Context, i
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListEnabledProductsForImport operation.
-//    pageNum := 0
-//    err := client.ListEnabledProductsForImportPages(params,
-//        func(page *securityhub.ListEnabledProductsForImportOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListEnabledProductsForImport operation.
+//	pageNum := 0
+//	err := client.ListEnabledProductsForImportPages(params,
+//	    func(page *securityhub.ListEnabledProductsForImportOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) ListEnabledProductsForImportPages(input *ListEnabledProductsForImportInput, fn func(*ListEnabledProductsForImportOutput, bool) bool) error {
 	return c.ListEnabledProductsForImportPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4792,14 +4789,13 @@ const opListFindingAggregators = "ListFindingAggregators"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListFindingAggregatorsRequest method.
+//	req, resp := client.ListFindingAggregatorsRequest(params)
 //
-//    // Example sending a request using the ListFindingAggregatorsRequest method.
-//    req, resp := client.ListFindingAggregatorsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListFindingAggregators
 func (c *SecurityHub) ListFindingAggregatorsRequest(input *ListFindingAggregatorsInput) (req *request.Request, output *ListFindingAggregatorsOutput) {
@@ -4837,25 +4833,26 @@ func (c *SecurityHub) ListFindingAggregatorsRequest(input *ListFindingAggregator
 // API operation ListFindingAggregators for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * AccessDeniedException
-//   You don't have permission to perform the action specified in the request.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - AccessDeniedException
+//     You don't have permission to perform the action specified in the request.
+//
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListFindingAggregators
 func (c *SecurityHub) ListFindingAggregators(input *ListFindingAggregatorsInput) (*ListFindingAggregatorsOutput, error) {
@@ -4887,15 +4884,14 @@ func (c *SecurityHub) ListFindingAggregatorsWithContext(ctx aws.Context, input *
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListFindingAggregators operation.
-//    pageNum := 0
-//    err := client.ListFindingAggregatorsPages(params,
-//        func(page *securityhub.ListFindingAggregatorsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListFindingAggregators operation.
+//	pageNum := 0
+//	err := client.ListFindingAggregatorsPages(params,
+//	    func(page *securityhub.ListFindingAggregatorsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) ListFindingAggregatorsPages(input *ListFindingAggregatorsInput, fn func(*ListFindingAggregatorsOutput, bool) bool) error {
 	return c.ListFindingAggregatorsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4947,14 +4943,13 @@ const opListInvitations = "ListInvitations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListInvitationsRequest method.
+//	req, resp := client.ListInvitationsRequest(params)
 //
-//    // Example sending a request using the ListInvitationsRequest method.
-//    req, resp := client.ListInvitationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListInvitations
 func (c *SecurityHub) ListInvitationsRequest(input *ListInvitationsInput) (req *request.Request, output *ListInvitationsOutput) {
@@ -4996,22 +4991,23 @@ func (c *SecurityHub) ListInvitationsRequest(input *ListInvitationsInput) (req *
 // API operation ListInvitations for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListInvitations
 func (c *SecurityHub) ListInvitations(input *ListInvitationsInput) (*ListInvitationsOutput, error) {
@@ -5043,15 +5039,14 @@ func (c *SecurityHub) ListInvitationsWithContext(ctx aws.Context, input *ListInv
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListInvitations operation.
-//    pageNum := 0
-//    err := client.ListInvitationsPages(params,
-//        func(page *securityhub.ListInvitationsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListInvitations operation.
+//	pageNum := 0
+//	err := client.ListInvitationsPages(params,
+//	    func(page *securityhub.ListInvitationsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) ListInvitationsPages(input *ListInvitationsInput, fn func(*ListInvitationsOutput, bool) bool) error {
 	return c.ListInvitationsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5103,14 +5098,13 @@ const opListMembers = "ListMembers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListMembersRequest method.
+//	req, resp := client.ListMembersRequest(params)
 //
-//    // Example sending a request using the ListMembersRequest method.
-//    req, resp := client.ListMembersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListMembers
 func (c *SecurityHub) ListMembersRequest(input *ListMembersInput) (req *request.Request, output *ListMembersOutput) {
@@ -5151,22 +5145,23 @@ func (c *SecurityHub) ListMembersRequest(input *ListMembersInput) (req *request.
 // API operation ListMembers for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListMembers
 func (c *SecurityHub) ListMembers(input *ListMembersInput) (*ListMembersOutput, error) {
@@ -5198,15 +5193,14 @@ func (c *SecurityHub) ListMembersWithContext(ctx aws.Context, input *ListMembers
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListMembers operation.
-//    pageNum := 0
-//    err := client.ListMembersPages(params,
-//        func(page *securityhub.ListMembersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListMembers operation.
+//	pageNum := 0
+//	err := client.ListMembersPages(params,
+//	    func(page *securityhub.ListMembersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) ListMembersPages(input *ListMembersInput, fn func(*ListMembersOutput, bool) bool) error {
 	return c.ListMembersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5258,14 +5252,13 @@ const opListOrganizationAdminAccounts = "ListOrganizationAdminAccounts"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListOrganizationAdminAccountsRequest method.
+//	req, resp := client.ListOrganizationAdminAccountsRequest(params)
 //
-//    // Example sending a request using the ListOrganizationAdminAccountsRequest method.
-//    req, resp := client.ListOrganizationAdminAccountsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListOrganizationAdminAccounts
 func (c *SecurityHub) ListOrganizationAdminAccountsRequest(input *ListOrganizationAdminAccountsInput) (req *request.Request, output *ListOrganizationAdminAccountsOutput) {
@@ -5303,22 +5296,23 @@ func (c *SecurityHub) ListOrganizationAdminAccountsRequest(input *ListOrganizati
 // API operation ListOrganizationAdminAccounts for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListOrganizationAdminAccounts
 func (c *SecurityHub) ListOrganizationAdminAccounts(input *ListOrganizationAdminAccountsInput) (*ListOrganizationAdminAccountsOutput, error) {
@@ -5350,15 +5344,14 @@ func (c *SecurityHub) ListOrganizationAdminAccountsWithContext(ctx aws.Context, 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListOrganizationAdminAccounts operation.
-//    pageNum := 0
-//    err := client.ListOrganizationAdminAccountsPages(params,
-//        func(page *securityhub.ListOrganizationAdminAccountsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListOrganizationAdminAccounts operation.
+//	pageNum := 0
+//	err := client.ListOrganizationAdminAccountsPages(params,
+//	    func(page *securityhub.ListOrganizationAdminAccountsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *SecurityHub) ListOrganizationAdminAccountsPages(input *ListOrganizationAdminAccountsInput, fn func(*ListOrganizationAdminAccountsOutput, bool) bool) error {
 	return c.ListOrganizationAdminAccountsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5410,14 +5403,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListTagsForResource
 func (c *SecurityHub) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -5448,15 +5440,16 @@ func (c *SecurityHub) ListTagsForResourceRequest(input *ListTagsForResourceInput
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/ListTagsForResource
 func (c *SecurityHub) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -5496,14 +5489,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/TagResource
 func (c *SecurityHub) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -5535,15 +5527,16 @@ func (c *SecurityHub) TagResourceRequest(input *TagResourceInput) (req *request.
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/TagResource
 func (c *SecurityHub) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -5583,14 +5576,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UntagResource
 func (c *SecurityHub) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -5622,15 +5614,16 @@ func (c *SecurityHub) UntagResourceRequest(input *UntagResourceInput) (req *requ
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UntagResource
 func (c *SecurityHub) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -5670,14 +5663,13 @@ const opUpdateActionTarget = "UpdateActionTarget"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateActionTargetRequest method.
+//	req, resp := client.UpdateActionTargetRequest(params)
 //
-//    // Example sending a request using the UpdateActionTargetRequest method.
-//    req, resp := client.UpdateActionTargetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateActionTarget
 func (c *SecurityHub) UpdateActionTargetRequest(input *UpdateActionTargetInput) (req *request.Request, output *UpdateActionTargetOutput) {
@@ -5709,23 +5701,24 @@ func (c *SecurityHub) UpdateActionTargetRequest(input *UpdateActionTargetInput) 
 // API operation UpdateActionTarget for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateActionTarget
 func (c *SecurityHub) UpdateActionTarget(input *UpdateActionTargetInput) (*UpdateActionTargetOutput, error) {
@@ -5765,14 +5758,13 @@ const opUpdateFindingAggregator = "UpdateFindingAggregator"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateFindingAggregatorRequest method.
+//	req, resp := client.UpdateFindingAggregatorRequest(params)
 //
-//    // Example sending a request using the UpdateFindingAggregatorRequest method.
-//    req, resp := client.UpdateFindingAggregatorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateFindingAggregator
 func (c *SecurityHub) UpdateFindingAggregatorRequest(input *UpdateFindingAggregatorInput) (req *request.Request, output *UpdateFindingAggregatorOutput) {
@@ -5807,28 +5799,29 @@ func (c *SecurityHub) UpdateFindingAggregatorRequest(input *UpdateFindingAggrega
 // API operation UpdateFindingAggregator for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * AccessDeniedException
-//   You don't have permission to perform the action specified in the request.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - AccessDeniedException
+//     You don't have permission to perform the action specified in the request.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateFindingAggregator
 func (c *SecurityHub) UpdateFindingAggregator(input *UpdateFindingAggregatorInput) (*UpdateFindingAggregatorOutput, error) {
@@ -5868,14 +5861,13 @@ const opUpdateFindings = "UpdateFindings"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateFindingsRequest method.
+//	req, resp := client.UpdateFindingsRequest(params)
 //
-//    // Example sending a request using the UpdateFindingsRequest method.
-//    req, resp := client.UpdateFindingsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateFindings
 func (c *SecurityHub) UpdateFindingsRequest(input *UpdateFindingsInput) (req *request.Request, output *UpdateFindingsOutput) {
@@ -5911,25 +5903,26 @@ func (c *SecurityHub) UpdateFindingsRequest(input *UpdateFindingsInput) (req *re
 // API operation UpdateFindings for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateFindings
 func (c *SecurityHub) UpdateFindings(input *UpdateFindingsInput) (*UpdateFindingsOutput, error) {
@@ -5969,14 +5962,13 @@ const opUpdateInsight = "UpdateInsight"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateInsightRequest method.
+//	req, resp := client.UpdateInsightRequest(params)
 //
-//    // Example sending a request using the UpdateInsightRequest method.
-//    req, resp := client.UpdateInsightRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateInsight
 func (c *SecurityHub) UpdateInsightRequest(input *UpdateInsightInput) (req *request.Request, output *UpdateInsightOutput) {
@@ -6008,25 +6000,26 @@ func (c *SecurityHub) UpdateInsightRequest(input *UpdateInsightInput) (req *requ
 // API operation UpdateInsight for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateInsight
 func (c *SecurityHub) UpdateInsight(input *UpdateInsightInput) (*UpdateInsightOutput, error) {
@@ -6066,14 +6059,13 @@ const opUpdateOrganizationConfiguration = "UpdateOrganizationConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateOrganizationConfigurationRequest method.
+//	req, resp := client.UpdateOrganizationConfigurationRequest(params)
 //
-//    // Example sending a request using the UpdateOrganizationConfigurationRequest method.
-//    req, resp := client.UpdateOrganizationConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateOrganizationConfiguration
 func (c *SecurityHub) UpdateOrganizationConfigurationRequest(input *UpdateOrganizationConfigurationInput) (req *request.Request, output *UpdateOrganizationConfigurationOutput) {
@@ -6106,22 +6098,23 @@ func (c *SecurityHub) UpdateOrganizationConfigurationRequest(input *UpdateOrgani
 // API operation UpdateOrganizationConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateOrganizationConfiguration
 func (c *SecurityHub) UpdateOrganizationConfiguration(input *UpdateOrganizationConfigurationInput) (*UpdateOrganizationConfigurationOutput, error) {
@@ -6161,14 +6154,13 @@ const opUpdateSecurityHubConfiguration = "UpdateSecurityHubConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSecurityHubConfigurationRequest method.
+//	req, resp := client.UpdateSecurityHubConfigurationRequest(params)
 //
-//    // Example sending a request using the UpdateSecurityHubConfigurationRequest method.
-//    req, resp := client.UpdateSecurityHubConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateSecurityHubConfiguration
 func (c *SecurityHub) UpdateSecurityHubConfigurationRequest(input *UpdateSecurityHubConfigurationInput) (req *request.Request, output *UpdateSecurityHubConfigurationOutput) {
@@ -6200,25 +6192,26 @@ func (c *SecurityHub) UpdateSecurityHubConfigurationRequest(input *UpdateSecurit
 // API operation UpdateSecurityHubConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * LimitExceededException
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account or throttling limits. The error code
-//   describes the limit exceeded.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - LimitExceededException
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account or throttling limits. The error code
+//     describes the limit exceeded.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateSecurityHubConfiguration
 func (c *SecurityHub) UpdateSecurityHubConfiguration(input *UpdateSecurityHubConfigurationInput) (*UpdateSecurityHubConfigurationOutput, error) {
@@ -6258,14 +6251,13 @@ const opUpdateStandardsControl = "UpdateStandardsControl"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateStandardsControlRequest method.
+//	req, resp := client.UpdateStandardsControlRequest(params)
 //
-//    // Example sending a request using the UpdateStandardsControlRequest method.
-//    req, resp := client.UpdateStandardsControlRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateStandardsControl
 func (c *SecurityHub) UpdateStandardsControlRequest(input *UpdateStandardsControlInput) (req *request.Request, output *UpdateStandardsControlOutput) {
@@ -6298,20 +6290,21 @@ func (c *SecurityHub) UpdateStandardsControlRequest(input *UpdateStandardsContro
 // API operation UpdateStandardsControl for usage and error information.
 //
 // Returned Error Types:
-//   * InternalException
-//   Internal server error.
 //
-//   * InvalidInputException
-//   The request was rejected because you supplied an invalid or out-of-range
-//   value for an input parameter.
+//   - InternalException
+//     Internal server error.
 //
-//   * InvalidAccessException
-//   There is an issue with the account used to make the request. Either Security
-//   Hub is not enabled for the account, or the account does not have permission
-//   to perform this action.
+//   - InvalidInputException
+//     The request was rejected because you supplied an invalid or out-of-range
+//     value for an input parameter.
 //
-//   * ResourceNotFoundException
-//   The request was rejected because we can't find the specified resource.
+//   - InvalidAccessException
+//     There is an issue with the account used to make the request. Either Security
+//     Hub is not enabled for the account, or the account does not have permission
+//     to perform this action.
+//
+//   - ResourceNotFoundException
+//     The request was rejected because we can't find the specified resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/securityhub-2018-10-26/UpdateStandardsControl
 func (c *SecurityHub) UpdateStandardsControl(input *UpdateStandardsControlInput) (*UpdateStandardsControlOutput, error) {
@@ -6626,13 +6619,13 @@ func (s *AccountDetails) SetEmail(v string) *AccountDetails {
 // Provides details about one of the following actions that affects or that
 // was taken on a resource:
 //
-//    * A remote IP address issued an Amazon Web Services API call
+//   - A remote IP address issued an Amazon Web Services API call
 //
-//    * A DNS request was received
+//   - A DNS request was received
 //
-//    * A remote IP address attempted to connect to an EC2 instance
+//   - A remote IP address attempted to connect to an EC2 instance
 //
-//    * A remote IP address attempted a port probe on an EC2 instance
+//   - A remote IP address attempted a port probe on an EC2 instance
 type Action struct {
 	_ struct{} `type:"structure"`
 
@@ -8216,6 +8209,9 @@ type AwsAutoScalingAutoScalingGroupDetails struct {
 	// The list of Availability Zones for the automatic scaling group.
 	AvailabilityZones []*AwsAutoScalingAutoScalingGroupAvailabilityZonesListDetails `type:"list"`
 
+	// Indicates whether capacity rebalancing is enabled.
+	CapacityRebalance *bool `type:"boolean"`
+
 	// Indicates when the auto scaling group was created.
 	//
 	// Uses the date-time format specified in RFC 3339 section 5.6, Internet Date/Time
@@ -8227,11 +8223,14 @@ type AwsAutoScalingAutoScalingGroupDetails struct {
 	// it checks the health status of an EC2 instance that has come into service.
 	HealthCheckGracePeriod *int64 `type:"integer"`
 
-	// The service to use for the health checks.
+	// The service to use for the health checks. Valid values are EC2 or ELB.
 	HealthCheckType *string `type:"string"`
 
 	// The name of the launch configuration.
 	LaunchConfigurationName *string `type:"string"`
+
+	// The launch template to use.
+	LaunchTemplate *AwsAutoScalingAutoScalingGroupLaunchTemplateLaunchTemplateSpecification `type:"structure"`
 
 	// The list of load balancers associated with the group.
 	LoadBalancerNames []*string `type:"list"`
@@ -8264,6 +8263,12 @@ func (s *AwsAutoScalingAutoScalingGroupDetails) SetAvailabilityZones(v []*AwsAut
 	return s
 }
 
+// SetCapacityRebalance sets the CapacityRebalance field's value.
+func (s *AwsAutoScalingAutoScalingGroupDetails) SetCapacityRebalance(v bool) *AwsAutoScalingAutoScalingGroupDetails {
+	s.CapacityRebalance = &v
+	return s
+}
+
 // SetCreatedTime sets the CreatedTime field's value.
 func (s *AwsAutoScalingAutoScalingGroupDetails) SetCreatedTime(v string) *AwsAutoScalingAutoScalingGroupDetails {
 	s.CreatedTime = &v
@@ -8288,6 +8293,12 @@ func (s *AwsAutoScalingAutoScalingGroupDetails) SetLaunchConfigurationName(v str
 	return s
 }
 
+// SetLaunchTemplate sets the LaunchTemplate field's value.
+func (s *AwsAutoScalingAutoScalingGroupDetails) SetLaunchTemplate(v *AwsAutoScalingAutoScalingGroupLaunchTemplateLaunchTemplateSpecification) *AwsAutoScalingAutoScalingGroupDetails {
+	s.LaunchTemplate = v
+	return s
+}
+
 // SetLoadBalancerNames sets the LoadBalancerNames field's value.
 func (s *AwsAutoScalingAutoScalingGroupDetails) SetLoadBalancerNames(v []*string) *AwsAutoScalingAutoScalingGroupDetails {
 	s.LoadBalancerNames = v
@@ -8297,6 +8308,59 @@ func (s *AwsAutoScalingAutoScalingGroupDetails) SetLoadBalancerNames(v []*string
 // SetMixedInstancesPolicy sets the MixedInstancesPolicy field's value.
 func (s *AwsAutoScalingAutoScalingGroupDetails) SetMixedInstancesPolicy(v *AwsAutoScalingAutoScalingGroupMixedInstancesPolicyDetails) *AwsAutoScalingAutoScalingGroupDetails {
 	s.MixedInstancesPolicy = v
+	return s
+}
+
+// Details about the launch template to use.
+type AwsAutoScalingAutoScalingGroupLaunchTemplateLaunchTemplateSpecification struct {
+	_ struct{} `type:"structure"`
+
+	// The identifier of the launch template. You must specify either LaunchTemplateId
+	// or LaunchTemplateName.
+	LaunchTemplateId *string `type:"string"`
+
+	// The name of the launch template. You must specify either LaunchTemplateId
+	// or LaunchTemplateName.
+	LaunchTemplateName *string `type:"string"`
+
+	// Identifies the version of the launch template. You can specify a version
+	// identifier, or use the values $Latest or $Default.
+	Version *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsAutoScalingAutoScalingGroupLaunchTemplateLaunchTemplateSpecification) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsAutoScalingAutoScalingGroupLaunchTemplateLaunchTemplateSpecification) GoString() string {
+	return s.String()
+}
+
+// SetLaunchTemplateId sets the LaunchTemplateId field's value.
+func (s *AwsAutoScalingAutoScalingGroupLaunchTemplateLaunchTemplateSpecification) SetLaunchTemplateId(v string) *AwsAutoScalingAutoScalingGroupLaunchTemplateLaunchTemplateSpecification {
+	s.LaunchTemplateId = &v
+	return s
+}
+
+// SetLaunchTemplateName sets the LaunchTemplateName field's value.
+func (s *AwsAutoScalingAutoScalingGroupLaunchTemplateLaunchTemplateSpecification) SetLaunchTemplateName(v string) *AwsAutoScalingAutoScalingGroupLaunchTemplateLaunchTemplateSpecification {
+	s.LaunchTemplateName = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *AwsAutoScalingAutoScalingGroupLaunchTemplateLaunchTemplateSpecification) SetVersion(v string) *AwsAutoScalingAutoScalingGroupLaunchTemplateLaunchTemplateSpecification {
+	s.Version = &v
 	return s
 }
 
@@ -8349,7 +8413,8 @@ func (s *AwsAutoScalingAutoScalingGroupMixedInstancesPolicyDetails) SetLaunchTem
 type AwsAutoScalingAutoScalingGroupMixedInstancesPolicyInstancesDistributionDetails struct {
 	_ struct{} `type:"structure"`
 
-	// How to allocate instance types to fulfill On-Demand capacity.
+	// How to allocate instance types to fulfill On-Demand capacity. The valid value
+	// is prioritized.
 	OnDemandAllocationStrategy *string `type:"string"`
 
 	// The minimum amount of the Auto Scaling group's capacity that must be fulfilled
@@ -8360,7 +8425,14 @@ type AwsAutoScalingAutoScalingGroupMixedInstancesPolicyInstancesDistributionDeta
 	// beyond OnDemandBaseCapacity.
 	OnDemandPercentageAboveBaseCapacity *int64 `type:"integer"`
 
-	// How to allocate instances across Spot Instance pools.
+	// How to allocate instances across Spot Instance pools. Valid values are as
+	// follows:
+	//
+	//    * lowest-price
+	//
+	//    * capacity-optimized
+	//
+	//    * capacity-optimized-prioritized
 	SpotAllocationStrategy *string `type:"string"`
 
 	// The number of Spot Instance pools across which to allocate your Spot Instances.
@@ -8428,7 +8500,7 @@ func (s *AwsAutoScalingAutoScalingGroupMixedInstancesPolicyInstancesDistribution
 type AwsAutoScalingAutoScalingGroupMixedInstancesPolicyLaunchTemplateDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The launch template to use.
+	// The launch template to use for a mixed instances policy.
 	LaunchTemplateSpecification *AwsAutoScalingAutoScalingGroupMixedInstancesPolicyLaunchTemplateLaunchTemplateSpecification `type:"structure"`
 
 	// Property values to use to override the values in the launch template.
@@ -8465,7 +8537,7 @@ func (s *AwsAutoScalingAutoScalingGroupMixedInstancesPolicyLaunchTemplateDetails
 	return s
 }
 
-// Details about the launch template to use.
+// Details about the launch template to use for a mixed instances policy.
 type AwsAutoScalingAutoScalingGroupMixedInstancesPolicyLaunchTemplateLaunchTemplateSpecification struct {
 	_ struct{} `type:"structure"`
 
@@ -8666,7 +8738,19 @@ type AwsAutoScalingLaunchConfigurationBlockDeviceMappingsEbsDetails struct {
 	// the snapshot.
 	VolumeSize *int64 `type:"integer"`
 
-	// The volume type.
+	// The volume type. Valid values are as follows:
+	//
+	//    * gp2
+	//
+	//    * gp3
+	//
+	//    * io1
+	//
+	//    * sc1
+	//
+	//    * st1
+	//
+	//    * standard
 	VolumeType *string `type:"string"`
 }
 
@@ -9017,6 +9101,892 @@ func (s *AwsAutoScalingLaunchConfigurationMetadataOptions) SetHttpTokens(v strin
 	return s
 }
 
+// Provides a list of backup options for each resource type.
+type AwsBackupBackupPlanAdvancedBackupSettingsDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the backup option for a selected resource. This option is only
+	// available for Windows Volume Shadow Copy Service (VSS) backup jobs. Valid
+	// values are as follows:
+	//
+	//    * Set to WindowsVSS: enabled to enable the WindowsVSS backup option and
+	//    create a Windows VSS backup.
+	//
+	//    * Set to WindowsVSS: disabled to create a regular backup. The WindowsVSS
+	//    option is not enabled by default.
+	BackupOptions map[string]*string `type:"map"`
+
+	// The name of a resource type. The only supported resource type is Amazon EC2
+	// instances with Windows VSS.
+	//
+	// The only valid value is EC2.
+	ResourceType *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanAdvancedBackupSettingsDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanAdvancedBackupSettingsDetails) GoString() string {
+	return s.String()
+}
+
+// SetBackupOptions sets the BackupOptions field's value.
+func (s *AwsBackupBackupPlanAdvancedBackupSettingsDetails) SetBackupOptions(v map[string]*string) *AwsBackupBackupPlanAdvancedBackupSettingsDetails {
+	s.BackupOptions = v
+	return s
+}
+
+// SetResourceType sets the ResourceType field's value.
+func (s *AwsBackupBackupPlanAdvancedBackupSettingsDetails) SetResourceType(v string) *AwsBackupBackupPlanAdvancedBackupSettingsDetails {
+	s.ResourceType = &v
+	return s
+}
+
+// Provides details about an Backup backup plan and an array of BackupRule objects,
+// each of which specifies a backup rule.
+type AwsBackupBackupPlanBackupPlanDetails struct {
+	_ struct{} `type:"structure"`
+
+	// A list of backup options for each resource type.
+	AdvancedBackupSettings []*AwsBackupBackupPlanAdvancedBackupSettingsDetails `type:"list"`
+
+	// The display name of a backup plan.
+	BackupPlanName *string `type:"string"`
+
+	// An array of BackupRule objects, each of which specifies a scheduled task
+	// that is used to back up a selection of resources.
+	BackupPlanRule []*AwsBackupBackupPlanRuleDetails `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanBackupPlanDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanBackupPlanDetails) GoString() string {
+	return s.String()
+}
+
+// SetAdvancedBackupSettings sets the AdvancedBackupSettings field's value.
+func (s *AwsBackupBackupPlanBackupPlanDetails) SetAdvancedBackupSettings(v []*AwsBackupBackupPlanAdvancedBackupSettingsDetails) *AwsBackupBackupPlanBackupPlanDetails {
+	s.AdvancedBackupSettings = v
+	return s
+}
+
+// SetBackupPlanName sets the BackupPlanName field's value.
+func (s *AwsBackupBackupPlanBackupPlanDetails) SetBackupPlanName(v string) *AwsBackupBackupPlanBackupPlanDetails {
+	s.BackupPlanName = &v
+	return s
+}
+
+// SetBackupPlanRule sets the BackupPlanRule field's value.
+func (s *AwsBackupBackupPlanBackupPlanDetails) SetBackupPlanRule(v []*AwsBackupBackupPlanRuleDetails) *AwsBackupBackupPlanBackupPlanDetails {
+	s.BackupPlanRule = v
+	return s
+}
+
+// Provides details about an Backup backup plan and an array of BackupRule objects,
+// each of which specifies a backup rule.
+type AwsBackupBackupPlanDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Uniquely identifies the backup plan to be associated with the selection of
+	// resources.
+	BackupPlan *AwsBackupBackupPlanBackupPlanDetails `type:"structure"`
+
+	// An Amazon Resource Name (ARN) that uniquely identifies the backup plan.
+	BackupPlanArn *string `type:"string"`
+
+	// A unique ID for the backup plan.
+	BackupPlanId *string `type:"string"`
+
+	// Unique, randomly generated, Unicode, UTF-8 encoded strings. Version IDs cannot
+	// be edited.
+	VersionId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanDetails) GoString() string {
+	return s.String()
+}
+
+// SetBackupPlan sets the BackupPlan field's value.
+func (s *AwsBackupBackupPlanDetails) SetBackupPlan(v *AwsBackupBackupPlanBackupPlanDetails) *AwsBackupBackupPlanDetails {
+	s.BackupPlan = v
+	return s
+}
+
+// SetBackupPlanArn sets the BackupPlanArn field's value.
+func (s *AwsBackupBackupPlanDetails) SetBackupPlanArn(v string) *AwsBackupBackupPlanDetails {
+	s.BackupPlanArn = &v
+	return s
+}
+
+// SetBackupPlanId sets the BackupPlanId field's value.
+func (s *AwsBackupBackupPlanDetails) SetBackupPlanId(v string) *AwsBackupBackupPlanDetails {
+	s.BackupPlanId = &v
+	return s
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *AwsBackupBackupPlanDetails) SetVersionId(v string) *AwsBackupBackupPlanDetails {
+	s.VersionId = &v
+	return s
+}
+
+// Provides lifecycle details for the backup plan. A lifecycle defines when
+// a backup is transitioned to cold storage and when it expires.
+type AwsBackupBackupPlanLifecycleDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the number of days after creation that a recovery point is deleted.
+	// Must be greater than 90 days plus MoveToColdStorageAfterDays.
+	DeleteAfterDays *int64 `type:"long"`
+
+	// Specifies the number of days after creation that a recovery point is moved
+	// to cold storage.
+	MoveToColdStorageAfterDays *int64 `type:"long"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanLifecycleDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanLifecycleDetails) GoString() string {
+	return s.String()
+}
+
+// SetDeleteAfterDays sets the DeleteAfterDays field's value.
+func (s *AwsBackupBackupPlanLifecycleDetails) SetDeleteAfterDays(v int64) *AwsBackupBackupPlanLifecycleDetails {
+	s.DeleteAfterDays = &v
+	return s
+}
+
+// SetMoveToColdStorageAfterDays sets the MoveToColdStorageAfterDays field's value.
+func (s *AwsBackupBackupPlanLifecycleDetails) SetMoveToColdStorageAfterDays(v int64) *AwsBackupBackupPlanLifecycleDetails {
+	s.MoveToColdStorageAfterDays = &v
+	return s
+}
+
+// An array of CopyAction objects, which contains the details of the copy operation.
+type AwsBackupBackupPlanRuleCopyActionsDetails struct {
+	_ struct{} `type:"structure"`
+
+	// An Amazon Resource Name (ARN) that uniquely identifies the destination backup
+	// vault for the copied backup.
+	DestinationBackupVaultArn *string `type:"string"`
+
+	// Defines when a protected resource is transitioned to cold storage and when
+	// it expires. Backup transitions and expires backups automatically according
+	// to the lifecycle that you define. If you do not specify a lifecycle, Backup
+	// applies the lifecycle policy of the source backup to the destination backup.
+	//
+	// Backups transitioned to cold storage must be stored in cold storage for a
+	// minimum of 90 days.
+	Lifecycle *AwsBackupBackupPlanLifecycleDetails `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanRuleCopyActionsDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanRuleCopyActionsDetails) GoString() string {
+	return s.String()
+}
+
+// SetDestinationBackupVaultArn sets the DestinationBackupVaultArn field's value.
+func (s *AwsBackupBackupPlanRuleCopyActionsDetails) SetDestinationBackupVaultArn(v string) *AwsBackupBackupPlanRuleCopyActionsDetails {
+	s.DestinationBackupVaultArn = &v
+	return s
+}
+
+// SetLifecycle sets the Lifecycle field's value.
+func (s *AwsBackupBackupPlanRuleCopyActionsDetails) SetLifecycle(v *AwsBackupBackupPlanLifecycleDetails) *AwsBackupBackupPlanRuleCopyActionsDetails {
+	s.Lifecycle = v
+	return s
+}
+
+// Provides details about an array of BackupRule objects, each of which specifies
+// a scheduled task that is used to back up a selection of resources.
+type AwsBackupBackupPlanRuleDetails struct {
+	_ struct{} `type:"structure"`
+
+	// A value in minutes after a backup job is successfully started before it must
+	// be completed, or it is canceled by Backup.
+	CompletionWindowMinutes *int64 `type:"long"`
+
+	// An array of CopyAction objects, which contains the details of the copy operation.
+	CopyActions []*AwsBackupBackupPlanRuleCopyActionsDetails `type:"list"`
+
+	// Specifies whether Backup creates continuous backups capable of point-in-time
+	// restore (PITR).
+	EnableContinuousBackup *bool `type:"boolean"`
+
+	// Defines when a protected resource is transitioned to cold storage and when
+	// it expires. Backup transitions and expires backups automatically according
+	// to the lifecycle that you define. If you do not specify a lifecycle, Backup
+	// applies the lifecycle policy of the source backup to the destination backup.
+	//
+	// Backups transitioned to cold storage must be stored in cold storage for a
+	// minimum of 90 days.
+	Lifecycle *AwsBackupBackupPlanLifecycleDetails `type:"structure"`
+
+	// Uniquely identifies a rule that is used to schedule the backup of a selection
+	// of resources.
+	RuleId *string `type:"string"`
+
+	// A display name for a backup rule. Must contain 1 to 50 alphanumeric or '-_.'
+	// characters.
+	RuleName *string `type:"string"`
+
+	// A cron expression in UTC specifying when Backup initiates a backup job.
+	ScheduleExpression *string `type:"string"`
+
+	// A value in minutes after a backup is scheduled before a job will be canceled
+	// if it doesn't start successfully.
+	StartWindowMinutes *int64 `type:"long"`
+
+	// The name of a logical container where backups are stored. Backup vaults are
+	// identified by names that are unique to the Amazon Web Services account used
+	// to create them and the Amazon Web Services Region where they are created.
+	// They consist of letters, numbers, and hyphens.
+	TargetBackupVault *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanRuleDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupPlanRuleDetails) GoString() string {
+	return s.String()
+}
+
+// SetCompletionWindowMinutes sets the CompletionWindowMinutes field's value.
+func (s *AwsBackupBackupPlanRuleDetails) SetCompletionWindowMinutes(v int64) *AwsBackupBackupPlanRuleDetails {
+	s.CompletionWindowMinutes = &v
+	return s
+}
+
+// SetCopyActions sets the CopyActions field's value.
+func (s *AwsBackupBackupPlanRuleDetails) SetCopyActions(v []*AwsBackupBackupPlanRuleCopyActionsDetails) *AwsBackupBackupPlanRuleDetails {
+	s.CopyActions = v
+	return s
+}
+
+// SetEnableContinuousBackup sets the EnableContinuousBackup field's value.
+func (s *AwsBackupBackupPlanRuleDetails) SetEnableContinuousBackup(v bool) *AwsBackupBackupPlanRuleDetails {
+	s.EnableContinuousBackup = &v
+	return s
+}
+
+// SetLifecycle sets the Lifecycle field's value.
+func (s *AwsBackupBackupPlanRuleDetails) SetLifecycle(v *AwsBackupBackupPlanLifecycleDetails) *AwsBackupBackupPlanRuleDetails {
+	s.Lifecycle = v
+	return s
+}
+
+// SetRuleId sets the RuleId field's value.
+func (s *AwsBackupBackupPlanRuleDetails) SetRuleId(v string) *AwsBackupBackupPlanRuleDetails {
+	s.RuleId = &v
+	return s
+}
+
+// SetRuleName sets the RuleName field's value.
+func (s *AwsBackupBackupPlanRuleDetails) SetRuleName(v string) *AwsBackupBackupPlanRuleDetails {
+	s.RuleName = &v
+	return s
+}
+
+// SetScheduleExpression sets the ScheduleExpression field's value.
+func (s *AwsBackupBackupPlanRuleDetails) SetScheduleExpression(v string) *AwsBackupBackupPlanRuleDetails {
+	s.ScheduleExpression = &v
+	return s
+}
+
+// SetStartWindowMinutes sets the StartWindowMinutes field's value.
+func (s *AwsBackupBackupPlanRuleDetails) SetStartWindowMinutes(v int64) *AwsBackupBackupPlanRuleDetails {
+	s.StartWindowMinutes = &v
+	return s
+}
+
+// SetTargetBackupVault sets the TargetBackupVault field's value.
+func (s *AwsBackupBackupPlanRuleDetails) SetTargetBackupVault(v string) *AwsBackupBackupPlanRuleDetails {
+	s.TargetBackupVault = &v
+	return s
+}
+
+// Provides details about an Backup backup vault. In Backup, a backup vault
+// is a container that stores and organizes your backups.
+type AwsBackupBackupVaultDetails struct {
+	_ struct{} `type:"structure"`
+
+	// A resource-based policy that is used to manage access permissions on the
+	// target backup vault.
+	AccessPolicy *string `type:"string"`
+
+	// An Amazon Resource Name (ARN) that uniquely identifies a backup vault.
+	BackupVaultArn *string `type:"string"`
+
+	// The name of a logical container where backups are stored. Backup vaults are
+	// identified by names that are unique to the Amazon Web Services account used
+	// to create them and the Amazon Web Services Region where they are created.
+	// They consist of lowercase letters, numbers, and hyphens.
+	BackupVaultName *string `type:"string"`
+
+	// The unique ARN associated with the server-side encryption key. You can specify
+	// a key to encrypt your backups from services that support full Backup management.
+	// If you do not specify a key, Backup creates an KMS key for you by default.
+	EncryptionKeyArn *string `type:"string"`
+
+	// The Amazon SNS event notifications for the specified backup vault.
+	Notifications *AwsBackupBackupVaultNotificationsDetails `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupVaultDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupVaultDetails) GoString() string {
+	return s.String()
+}
+
+// SetAccessPolicy sets the AccessPolicy field's value.
+func (s *AwsBackupBackupVaultDetails) SetAccessPolicy(v string) *AwsBackupBackupVaultDetails {
+	s.AccessPolicy = &v
+	return s
+}
+
+// SetBackupVaultArn sets the BackupVaultArn field's value.
+func (s *AwsBackupBackupVaultDetails) SetBackupVaultArn(v string) *AwsBackupBackupVaultDetails {
+	s.BackupVaultArn = &v
+	return s
+}
+
+// SetBackupVaultName sets the BackupVaultName field's value.
+func (s *AwsBackupBackupVaultDetails) SetBackupVaultName(v string) *AwsBackupBackupVaultDetails {
+	s.BackupVaultName = &v
+	return s
+}
+
+// SetEncryptionKeyArn sets the EncryptionKeyArn field's value.
+func (s *AwsBackupBackupVaultDetails) SetEncryptionKeyArn(v string) *AwsBackupBackupVaultDetails {
+	s.EncryptionKeyArn = &v
+	return s
+}
+
+// SetNotifications sets the Notifications field's value.
+func (s *AwsBackupBackupVaultDetails) SetNotifications(v *AwsBackupBackupVaultNotificationsDetails) *AwsBackupBackupVaultDetails {
+	s.Notifications = v
+	return s
+}
+
+// Provides details about the Amazon SNS event notifications for the specified
+// backup vault.
+type AwsBackupBackupVaultNotificationsDetails struct {
+	_ struct{} `type:"structure"`
+
+	// An array of events that indicate the status of jobs to back up resources
+	// to the backup vault. The following events are supported:
+	//
+	//    * BACKUP_JOB_STARTED | BACKUP_JOB_COMPLETED
+	//
+	//    * COPY_JOB_STARTED | COPY_JOB_SUCCESSFUL | COPY_JOB_FAILED
+	//
+	//    * RESTORE_JOB_STARTED | RESTORE_JOB_COMPLETED | RECOVERY_POINT_MODIFIED
+	//
+	//    * S3_BACKUP_OBJECT_FAILED | S3_RESTORE_OBJECT_FAILED
+	BackupVaultEvents []*string `type:"list"`
+
+	// An ARN that uniquely identifies the Amazon SNS topic for a backup vault’s
+	// events.
+	SnsTopicArn *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupVaultNotificationsDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupBackupVaultNotificationsDetails) GoString() string {
+	return s.String()
+}
+
+// SetBackupVaultEvents sets the BackupVaultEvents field's value.
+func (s *AwsBackupBackupVaultNotificationsDetails) SetBackupVaultEvents(v []*string) *AwsBackupBackupVaultNotificationsDetails {
+	s.BackupVaultEvents = v
+	return s
+}
+
+// SetSnsTopicArn sets the SnsTopicArn field's value.
+func (s *AwsBackupBackupVaultNotificationsDetails) SetSnsTopicArn(v string) *AwsBackupBackupVaultNotificationsDetails {
+	s.SnsTopicArn = &v
+	return s
+}
+
+// Specifies how long in days before a recovery point transitions to cold storage
+// or is deleted.
+type AwsBackupRecoveryPointCalculatedLifecycleDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the number of days after creation that a recovery point is deleted.
+	// Must be greater than 90 days plus MoveToColdStorageAfterDays.
+	DeleteAt *string `type:"string"`
+
+	// Specifies the number of days after creation that a recovery point is moved
+	// to cold storage.
+	MoveToColdStorageAt *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupRecoveryPointCalculatedLifecycleDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupRecoveryPointCalculatedLifecycleDetails) GoString() string {
+	return s.String()
+}
+
+// SetDeleteAt sets the DeleteAt field's value.
+func (s *AwsBackupRecoveryPointCalculatedLifecycleDetails) SetDeleteAt(v string) *AwsBackupRecoveryPointCalculatedLifecycleDetails {
+	s.DeleteAt = &v
+	return s
+}
+
+// SetMoveToColdStorageAt sets the MoveToColdStorageAt field's value.
+func (s *AwsBackupRecoveryPointCalculatedLifecycleDetails) SetMoveToColdStorageAt(v string) *AwsBackupRecoveryPointCalculatedLifecycleDetails {
+	s.MoveToColdStorageAt = &v
+	return s
+}
+
+// Contains information about the backup plan and rule that Backup used to initiate
+// the recovery point backup.
+type AwsBackupRecoveryPointCreatedByDetails struct {
+	_ struct{} `type:"structure"`
+
+	// An Amazon Resource Name (ARN) that uniquely identifies a backup plan.
+	BackupPlanArn *string `type:"string"`
+
+	// Uniquely identifies a backup plan.
+	BackupPlanId *string `type:"string"`
+
+	// Unique, randomly generated, Unicode, UTF-8 encoded strings that are at most
+	// 1,024 bytes long. Version IDs cannot be edited.
+	BackupPlanVersion *string `type:"string"`
+
+	// Uniquely identifies a rule used to schedule the backup of a selection of
+	// resources.
+	BackupRuleId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupRecoveryPointCreatedByDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupRecoveryPointCreatedByDetails) GoString() string {
+	return s.String()
+}
+
+// SetBackupPlanArn sets the BackupPlanArn field's value.
+func (s *AwsBackupRecoveryPointCreatedByDetails) SetBackupPlanArn(v string) *AwsBackupRecoveryPointCreatedByDetails {
+	s.BackupPlanArn = &v
+	return s
+}
+
+// SetBackupPlanId sets the BackupPlanId field's value.
+func (s *AwsBackupRecoveryPointCreatedByDetails) SetBackupPlanId(v string) *AwsBackupRecoveryPointCreatedByDetails {
+	s.BackupPlanId = &v
+	return s
+}
+
+// SetBackupPlanVersion sets the BackupPlanVersion field's value.
+func (s *AwsBackupRecoveryPointCreatedByDetails) SetBackupPlanVersion(v string) *AwsBackupRecoveryPointCreatedByDetails {
+	s.BackupPlanVersion = &v
+	return s
+}
+
+// SetBackupRuleId sets the BackupRuleId field's value.
+func (s *AwsBackupRecoveryPointCreatedByDetails) SetBackupRuleId(v string) *AwsBackupRecoveryPointCreatedByDetails {
+	s.BackupRuleId = &v
+	return s
+}
+
+// Contains detailed information about the recovery points stored in an Backup
+// backup vault. A backup, or recovery point, represents the content of a resource
+// at a specified time.
+type AwsBackupRecoveryPointDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The size, in bytes, of a backup.
+	BackupSizeInBytes *int64 `type:"long"`
+
+	// An Amazon Resource Name (ARN) that uniquely identifies a backup vault.
+	BackupVaultArn *string `type:"string"`
+
+	// The name of a logical container where backups are stored. Backup vaults are
+	// identified by names that are unique to the Amazon Web Services account used
+	// to create them and the Amazon Web Services Region where they are created.
+	// They consist of lowercase letters, numbers, and hyphens.
+	BackupVaultName *string `type:"string"`
+
+	// A CalculatedLifecycle object containing DeleteAt and MoveToColdStorageAt
+	// timestamps.
+	CalculatedLifecycle *AwsBackupRecoveryPointCalculatedLifecycleDetails `type:"structure"`
+
+	// The date and time that a job to create a recovery point is completed, in
+	// Unix format and UTC. The value of CompletionDate is accurate to milliseconds.
+	// For example, the value 1516925490.087 represents Friday, January 26, 2018
+	// 12:11:30.087 AM.
+	CompletionDate *string `type:"string"`
+
+	// Contains identifying information about the creation of a recovery point,
+	// including the BackupPlanArn, BackupPlanId, BackupPlanVersion, and BackupRuleId
+	// of the backup plan that is used to create it.
+	CreatedBy *AwsBackupRecoveryPointCreatedByDetails `type:"structure"`
+
+	// The date and time a recovery point is created, in Unix format and UTC. The
+	// value of CreationDate is accurate to milliseconds. For example, the value
+	// 1516925490.087 represents Friday, January 26, 2018 12:11:30.087 AM.
+	CreationDate *string `type:"string"`
+
+	// The ARN for the server-side encryption key that is used to protect your backups.
+	EncryptionKeyArn *string `type:"string"`
+
+	// Specifies the IAM role ARN used to create the target recovery point
+	IamRoleArn *string `type:"string"`
+
+	// A Boolean value that is returned as TRUE if the specified recovery point
+	// is encrypted, or FALSE if the recovery point is not encrypted.
+	IsEncrypted *bool `type:"boolean"`
+
+	// The date and time that a recovery point was last restored, in Unix format
+	// and UTC. The value of LastRestoreTime is accurate to milliseconds. For example,
+	// the value 1516925490.087 represents Friday, January 26, 2018 12:11:30.087
+	// AM.
+	LastRestoreTime *string `type:"string"`
+
+	// The lifecycle defines when a protected resource is transitioned to cold storage
+	// and when it expires. Backup transitions and expires backups automatically
+	// according to the lifecycle that you define
+	Lifecycle *AwsBackupRecoveryPointLifecycleDetails `type:"structure"`
+
+	// An ARN that uniquely identifies a recovery point.
+	RecoveryPointArn *string `type:"string"`
+
+	// An ARN that uniquely identifies a resource. The format of the ARN depends
+	// on the resource type.
+	ResourceArn *string `type:"string"`
+
+	// The type of Amazon Web Services resource saved as a recovery point, such
+	// as an Amazon EBS volume or an Amazon RDS database.
+	ResourceType *string `type:"string"`
+
+	// The ARN for the backup vault where the recovery point was originally copied
+	// from. If the recovery point is restored to the same account, this value will
+	// be null.
+	SourceBackupVaultArn *string `type:"string"`
+
+	// A status code specifying the state of the recovery point. Valid values are
+	// as follows:
+	//
+	//    * COMPLETED
+	//
+	//    * DELETING
+	//
+	//    * EXPIRED
+	//
+	//    * PARTIAL
+	Status *string `type:"string"`
+
+	// A message explaining the reason of the recovery point deletion failure.
+	StatusMessage *string `type:"string"`
+
+	// Specifies the storage class of the recovery point. Valid values are as follows:
+	//
+	//    * COLD
+	//
+	//    * DELETED
+	//
+	//    * WARM
+	StorageClass *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupRecoveryPointDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupRecoveryPointDetails) GoString() string {
+	return s.String()
+}
+
+// SetBackupSizeInBytes sets the BackupSizeInBytes field's value.
+func (s *AwsBackupRecoveryPointDetails) SetBackupSizeInBytes(v int64) *AwsBackupRecoveryPointDetails {
+	s.BackupSizeInBytes = &v
+	return s
+}
+
+// SetBackupVaultArn sets the BackupVaultArn field's value.
+func (s *AwsBackupRecoveryPointDetails) SetBackupVaultArn(v string) *AwsBackupRecoveryPointDetails {
+	s.BackupVaultArn = &v
+	return s
+}
+
+// SetBackupVaultName sets the BackupVaultName field's value.
+func (s *AwsBackupRecoveryPointDetails) SetBackupVaultName(v string) *AwsBackupRecoveryPointDetails {
+	s.BackupVaultName = &v
+	return s
+}
+
+// SetCalculatedLifecycle sets the CalculatedLifecycle field's value.
+func (s *AwsBackupRecoveryPointDetails) SetCalculatedLifecycle(v *AwsBackupRecoveryPointCalculatedLifecycleDetails) *AwsBackupRecoveryPointDetails {
+	s.CalculatedLifecycle = v
+	return s
+}
+
+// SetCompletionDate sets the CompletionDate field's value.
+func (s *AwsBackupRecoveryPointDetails) SetCompletionDate(v string) *AwsBackupRecoveryPointDetails {
+	s.CompletionDate = &v
+	return s
+}
+
+// SetCreatedBy sets the CreatedBy field's value.
+func (s *AwsBackupRecoveryPointDetails) SetCreatedBy(v *AwsBackupRecoveryPointCreatedByDetails) *AwsBackupRecoveryPointDetails {
+	s.CreatedBy = v
+	return s
+}
+
+// SetCreationDate sets the CreationDate field's value.
+func (s *AwsBackupRecoveryPointDetails) SetCreationDate(v string) *AwsBackupRecoveryPointDetails {
+	s.CreationDate = &v
+	return s
+}
+
+// SetEncryptionKeyArn sets the EncryptionKeyArn field's value.
+func (s *AwsBackupRecoveryPointDetails) SetEncryptionKeyArn(v string) *AwsBackupRecoveryPointDetails {
+	s.EncryptionKeyArn = &v
+	return s
+}
+
+// SetIamRoleArn sets the IamRoleArn field's value.
+func (s *AwsBackupRecoveryPointDetails) SetIamRoleArn(v string) *AwsBackupRecoveryPointDetails {
+	s.IamRoleArn = &v
+	return s
+}
+
+// SetIsEncrypted sets the IsEncrypted field's value.
+func (s *AwsBackupRecoveryPointDetails) SetIsEncrypted(v bool) *AwsBackupRecoveryPointDetails {
+	s.IsEncrypted = &v
+	return s
+}
+
+// SetLastRestoreTime sets the LastRestoreTime field's value.
+func (s *AwsBackupRecoveryPointDetails) SetLastRestoreTime(v string) *AwsBackupRecoveryPointDetails {
+	s.LastRestoreTime = &v
+	return s
+}
+
+// SetLifecycle sets the Lifecycle field's value.
+func (s *AwsBackupRecoveryPointDetails) SetLifecycle(v *AwsBackupRecoveryPointLifecycleDetails) *AwsBackupRecoveryPointDetails {
+	s.Lifecycle = v
+	return s
+}
+
+// SetRecoveryPointArn sets the RecoveryPointArn field's value.
+func (s *AwsBackupRecoveryPointDetails) SetRecoveryPointArn(v string) *AwsBackupRecoveryPointDetails {
+	s.RecoveryPointArn = &v
+	return s
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *AwsBackupRecoveryPointDetails) SetResourceArn(v string) *AwsBackupRecoveryPointDetails {
+	s.ResourceArn = &v
+	return s
+}
+
+// SetResourceType sets the ResourceType field's value.
+func (s *AwsBackupRecoveryPointDetails) SetResourceType(v string) *AwsBackupRecoveryPointDetails {
+	s.ResourceType = &v
+	return s
+}
+
+// SetSourceBackupVaultArn sets the SourceBackupVaultArn field's value.
+func (s *AwsBackupRecoveryPointDetails) SetSourceBackupVaultArn(v string) *AwsBackupRecoveryPointDetails {
+	s.SourceBackupVaultArn = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *AwsBackupRecoveryPointDetails) SetStatus(v string) *AwsBackupRecoveryPointDetails {
+	s.Status = &v
+	return s
+}
+
+// SetStatusMessage sets the StatusMessage field's value.
+func (s *AwsBackupRecoveryPointDetails) SetStatusMessage(v string) *AwsBackupRecoveryPointDetails {
+	s.StatusMessage = &v
+	return s
+}
+
+// SetStorageClass sets the StorageClass field's value.
+func (s *AwsBackupRecoveryPointDetails) SetStorageClass(v string) *AwsBackupRecoveryPointDetails {
+	s.StorageClass = &v
+	return s
+}
+
+// Contains an array of Transition objects specifying how long in days before
+// a recovery point transitions to cold storage or is deleted.
+type AwsBackupRecoveryPointLifecycleDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the number of days after creation that a recovery point is deleted.
+	// Must be greater than 90 days plus MoveToColdStorageAfterDays.
+	DeleteAfterDays *int64 `type:"long"`
+
+	// Specifies the number of days after creation that a recovery point is moved
+	// to cold storage.
+	MoveToColdStorageAfterDays *int64 `type:"long"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupRecoveryPointLifecycleDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsBackupRecoveryPointLifecycleDetails) GoString() string {
+	return s.String()
+}
+
+// SetDeleteAfterDays sets the DeleteAfterDays field's value.
+func (s *AwsBackupRecoveryPointLifecycleDetails) SetDeleteAfterDays(v int64) *AwsBackupRecoveryPointLifecycleDetails {
+	s.DeleteAfterDays = &v
+	return s
+}
+
+// SetMoveToColdStorageAfterDays sets the MoveToColdStorageAfterDays field's value.
+func (s *AwsBackupRecoveryPointLifecycleDetails) SetMoveToColdStorageAfterDays(v int64) *AwsBackupRecoveryPointLifecycleDetails {
+	s.MoveToColdStorageAfterDays = &v
+	return s
+}
+
 // Provides details about an Certificate Manager certificate.
 type AwsCertificateManagerCertificateDetails struct {
 	_ struct{} `type:"structure"`
@@ -9305,11 +10275,11 @@ func (s *AwsCertificateManagerCertificateDetails) SetType(v string) *AwsCertific
 
 // Contains information about one of the following:
 //
-//    * The initial validation of each domain name that occurs as a result of
-//    the RequestCertificate request
+//   - The initial validation of each domain name that occurs as a result of
+//     the RequestCertificate request
 //
-//    * The validation of each domain name in the certificate, as it pertains
-//    to Certificate Manager managed renewal
+//   - The validation of each domain name in the certificate, as it pertains
+//     to Certificate Manager managed renewal
 type AwsCertificateManagerCertificateDomainValidationOption struct {
 	_ struct{} `type:"structure"`
 
@@ -9512,7 +10482,8 @@ type AwsCertificateManagerCertificateRenewalSummary struct {
 	// Valid values: PENDING_AUTO_RENEWAL | PENDING_VALIDATION | SUCCESS | FAILED
 	RenewalStatus *string `type:"string"`
 
-	// The reason that a renewal request was unsuccessful.
+	// The reason that a renewal request was unsuccessful. This attribute is used
+	// only when RenewalStatus is FAILED.
 	//
 	// Valid values: NO_AVAILABLE_CONTACTS | ADDITIONAL_VERIFICATION_REQUIRED |
 	// DOMAIN_NOT_ALLOWED | INVALID_PUBLIC_DOMAIN | DOMAIN_VALIDATION_DENIED | CAA_ERROR
@@ -9622,6 +10593,254 @@ func (s *AwsCertificateManagerCertificateResourceRecord) SetValue(v string) *Aws
 	return s
 }
 
+// Nests a stack as a resource in a top-level template. Nested stacks are stacks
+// created as resources for another stack.
+type AwsCloudFormationStackDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The capabilities allowed in the stack.
+	Capabilities []*string `type:"list"`
+
+	// The time at which the stack was created.
+	CreationTime *string `type:"string"`
+
+	// A user-defined description associated with the stack.
+	Description *string `type:"string"`
+
+	// Boolean to enable or disable rollback on stack creation failures.
+	DisableRollback *bool `type:"boolean"`
+
+	// Information about whether a stack's actual configuration differs, or has
+	// drifted, from its expected configuration, as defined in the stack template
+	// and any values specified as template parameters.
+	DriftInformation *AwsCloudFormationStackDriftInformationDetails `type:"structure"`
+
+	// Whether termination protection is enabled for the stack.
+	EnableTerminationProtection *bool `type:"boolean"`
+
+	// The time the nested stack was last updated. This field will only be returned
+	// if the stack has been updated at least once.
+	LastUpdatedTime *string `type:"string"`
+
+	// The Amazon Resource Names (ARNs) of the Amazon SNS topic to which stack-related
+	// events are published.
+	NotificationArns []*string `type:"list"`
+
+	// A list of output structures.
+	Outputs []*AwsCloudFormationStackOutputsDetails `type:"list"`
+
+	// The ARN of an IAM role that's associated with the stack.
+	RoleArn *string `type:"string"`
+
+	// Unique identifier of the stack.
+	StackId *string `type:"string"`
+
+	// The name associated with the stack.
+	StackName *string `type:"string"`
+
+	// Current status of the stack.
+	StackStatus *string `type:"string"`
+
+	// Success or failure message associated with the stack status.
+	StackStatusReason *string `type:"string"`
+
+	// The length of time, in minutes, that CloudFormation waits for the nested
+	// stack to reach the CREATE_COMPLETE state.
+	TimeoutInMinutes *int64 `type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudFormationStackDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudFormationStackDetails) GoString() string {
+	return s.String()
+}
+
+// SetCapabilities sets the Capabilities field's value.
+func (s *AwsCloudFormationStackDetails) SetCapabilities(v []*string) *AwsCloudFormationStackDetails {
+	s.Capabilities = v
+	return s
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *AwsCloudFormationStackDetails) SetCreationTime(v string) *AwsCloudFormationStackDetails {
+	s.CreationTime = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *AwsCloudFormationStackDetails) SetDescription(v string) *AwsCloudFormationStackDetails {
+	s.Description = &v
+	return s
+}
+
+// SetDisableRollback sets the DisableRollback field's value.
+func (s *AwsCloudFormationStackDetails) SetDisableRollback(v bool) *AwsCloudFormationStackDetails {
+	s.DisableRollback = &v
+	return s
+}
+
+// SetDriftInformation sets the DriftInformation field's value.
+func (s *AwsCloudFormationStackDetails) SetDriftInformation(v *AwsCloudFormationStackDriftInformationDetails) *AwsCloudFormationStackDetails {
+	s.DriftInformation = v
+	return s
+}
+
+// SetEnableTerminationProtection sets the EnableTerminationProtection field's value.
+func (s *AwsCloudFormationStackDetails) SetEnableTerminationProtection(v bool) *AwsCloudFormationStackDetails {
+	s.EnableTerminationProtection = &v
+	return s
+}
+
+// SetLastUpdatedTime sets the LastUpdatedTime field's value.
+func (s *AwsCloudFormationStackDetails) SetLastUpdatedTime(v string) *AwsCloudFormationStackDetails {
+	s.LastUpdatedTime = &v
+	return s
+}
+
+// SetNotificationArns sets the NotificationArns field's value.
+func (s *AwsCloudFormationStackDetails) SetNotificationArns(v []*string) *AwsCloudFormationStackDetails {
+	s.NotificationArns = v
+	return s
+}
+
+// SetOutputs sets the Outputs field's value.
+func (s *AwsCloudFormationStackDetails) SetOutputs(v []*AwsCloudFormationStackOutputsDetails) *AwsCloudFormationStackDetails {
+	s.Outputs = v
+	return s
+}
+
+// SetRoleArn sets the RoleArn field's value.
+func (s *AwsCloudFormationStackDetails) SetRoleArn(v string) *AwsCloudFormationStackDetails {
+	s.RoleArn = &v
+	return s
+}
+
+// SetStackId sets the StackId field's value.
+func (s *AwsCloudFormationStackDetails) SetStackId(v string) *AwsCloudFormationStackDetails {
+	s.StackId = &v
+	return s
+}
+
+// SetStackName sets the StackName field's value.
+func (s *AwsCloudFormationStackDetails) SetStackName(v string) *AwsCloudFormationStackDetails {
+	s.StackName = &v
+	return s
+}
+
+// SetStackStatus sets the StackStatus field's value.
+func (s *AwsCloudFormationStackDetails) SetStackStatus(v string) *AwsCloudFormationStackDetails {
+	s.StackStatus = &v
+	return s
+}
+
+// SetStackStatusReason sets the StackStatusReason field's value.
+func (s *AwsCloudFormationStackDetails) SetStackStatusReason(v string) *AwsCloudFormationStackDetails {
+	s.StackStatusReason = &v
+	return s
+}
+
+// SetTimeoutInMinutes sets the TimeoutInMinutes field's value.
+func (s *AwsCloudFormationStackDetails) SetTimeoutInMinutes(v int64) *AwsCloudFormationStackDetails {
+	s.TimeoutInMinutes = &v
+	return s
+}
+
+// Provides information about the stack's conformity to its expected template
+// configuration.
+type AwsCloudFormationStackDriftInformationDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Status of the stack's actual configuration compared to its expected template
+	// configuration.
+	StackDriftStatus *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudFormationStackDriftInformationDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudFormationStackDriftInformationDetails) GoString() string {
+	return s.String()
+}
+
+// SetStackDriftStatus sets the StackDriftStatus field's value.
+func (s *AwsCloudFormationStackDriftInformationDetails) SetStackDriftStatus(v string) *AwsCloudFormationStackDriftInformationDetails {
+	s.StackDriftStatus = &v
+	return s
+}
+
+// Provides information about the CloudFormation stack output.
+type AwsCloudFormationStackOutputsDetails struct {
+	_ struct{} `type:"structure"`
+
+	// A user-defined description associated with the output.
+	Description *string `type:"string"`
+
+	// The key associated with the output.
+	OutputKey *string `type:"string"`
+
+	// The value associated with the output.
+	OutputValue *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudFormationStackOutputsDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudFormationStackOutputsDetails) GoString() string {
+	return s.String()
+}
+
+// SetDescription sets the Description field's value.
+func (s *AwsCloudFormationStackOutputsDetails) SetDescription(v string) *AwsCloudFormationStackOutputsDetails {
+	s.Description = &v
+	return s
+}
+
+// SetOutputKey sets the OutputKey field's value.
+func (s *AwsCloudFormationStackOutputsDetails) SetOutputKey(v string) *AwsCloudFormationStackOutputsDetails {
+	s.OutputKey = &v
+	return s
+}
+
+// SetOutputValue sets the OutputValue field's value.
+func (s *AwsCloudFormationStackOutputsDetails) SetOutputValue(v string) *AwsCloudFormationStackOutputsDetails {
+	s.OutputValue = &v
+	return s
+}
+
 // Information about a cache behavior for the distribution.
 type AwsCloudFrontDistributionCacheBehavior struct {
 	_ struct{} `type:"structure"`
@@ -9664,7 +10883,7 @@ func (s *AwsCloudFrontDistributionCacheBehavior) SetViewerProtocolPolicy(v strin
 	return s
 }
 
-// Provides information about caching for the distribution.
+// Provides information about caching for the CloudFront distribution.
 type AwsCloudFrontDistributionCacheBehaviors struct {
 	_ struct{} `type:"structure"`
 
@@ -9696,7 +10915,8 @@ func (s *AwsCloudFrontDistributionCacheBehaviors) SetItems(v []*AwsCloudFrontDis
 	return s
 }
 
-// Contains information about the default cache configuration for the distribution.
+// Contains information about the default cache configuration for the CloudFront
+// distribution.
 type AwsCloudFrontDistributionDefaultCacheBehavior struct {
 	_ struct{} `type:"structure"`
 
@@ -9738,7 +10958,7 @@ func (s *AwsCloudFrontDistributionDefaultCacheBehavior) SetViewerProtocolPolicy(
 	return s
 }
 
-// A distribution configuration.
+// A CloudFront distribution configuration.
 type AwsCloudFrontDistributionDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -9877,7 +11097,8 @@ func (s *AwsCloudFrontDistributionDetails) SetWebAclId(v string) *AwsCloudFrontD
 	return s
 }
 
-// A complex type that controls whether access logs are written for the distribution.
+// A complex type that controls whether access logs are written for the CloudFront
+// distribution.
 type AwsCloudFrontDistributionLogging struct {
 	_ struct{} `type:"structure"`
 
@@ -9937,7 +11158,91 @@ func (s *AwsCloudFrontDistributionLogging) SetPrefix(v string) *AwsCloudFrontDis
 	return s
 }
 
-// Information about an origin group for the distribution.
+// A custom origin. A custom origin is any origin that is not an Amazon S3 bucket,
+// with one exception. An Amazon S3 bucket that is configured with static website
+// hosting (https://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html)
+// is a custom origin.
+type AwsCloudFrontDistributionOriginCustomOriginConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The HTTP port that CloudFront uses to connect to the origin.
+	HttpPort *int64 `type:"integer"`
+
+	// The HTTPS port that CloudFront uses to connect to the origin.
+	HttpsPort *int64 `type:"integer"`
+
+	// Specifies how long, in seconds, CloudFront persists its connection to the
+	// origin.
+	OriginKeepaliveTimeout *int64 `type:"integer"`
+
+	// Specifies the protocol (HTTP or HTTPS) that CloudFront uses to connect to
+	// the origin.
+	OriginProtocolPolicy *string `type:"string"`
+
+	// Specifies how long, in seconds, CloudFront waits for a response from the
+	// origin.
+	OriginReadTimeout *int64 `type:"integer"`
+
+	// Specifies the minimum SSL/TLS protocol that CloudFront uses when connecting
+	// to your origin over HTTPS.
+	OriginSslProtocols *AwsCloudFrontDistributionOriginSslProtocols `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudFrontDistributionOriginCustomOriginConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudFrontDistributionOriginCustomOriginConfig) GoString() string {
+	return s.String()
+}
+
+// SetHttpPort sets the HttpPort field's value.
+func (s *AwsCloudFrontDistributionOriginCustomOriginConfig) SetHttpPort(v int64) *AwsCloudFrontDistributionOriginCustomOriginConfig {
+	s.HttpPort = &v
+	return s
+}
+
+// SetHttpsPort sets the HttpsPort field's value.
+func (s *AwsCloudFrontDistributionOriginCustomOriginConfig) SetHttpsPort(v int64) *AwsCloudFrontDistributionOriginCustomOriginConfig {
+	s.HttpsPort = &v
+	return s
+}
+
+// SetOriginKeepaliveTimeout sets the OriginKeepaliveTimeout field's value.
+func (s *AwsCloudFrontDistributionOriginCustomOriginConfig) SetOriginKeepaliveTimeout(v int64) *AwsCloudFrontDistributionOriginCustomOriginConfig {
+	s.OriginKeepaliveTimeout = &v
+	return s
+}
+
+// SetOriginProtocolPolicy sets the OriginProtocolPolicy field's value.
+func (s *AwsCloudFrontDistributionOriginCustomOriginConfig) SetOriginProtocolPolicy(v string) *AwsCloudFrontDistributionOriginCustomOriginConfig {
+	s.OriginProtocolPolicy = &v
+	return s
+}
+
+// SetOriginReadTimeout sets the OriginReadTimeout field's value.
+func (s *AwsCloudFrontDistributionOriginCustomOriginConfig) SetOriginReadTimeout(v int64) *AwsCloudFrontDistributionOriginCustomOriginConfig {
+	s.OriginReadTimeout = &v
+	return s
+}
+
+// SetOriginSslProtocols sets the OriginSslProtocols field's value.
+func (s *AwsCloudFrontDistributionOriginCustomOriginConfig) SetOriginSslProtocols(v *AwsCloudFrontDistributionOriginSslProtocols) *AwsCloudFrontDistributionOriginCustomOriginConfig {
+	s.OriginSslProtocols = v
+	return s
+}
+
+// Information about an origin group for the CloudFront distribution.
 type AwsCloudFrontDistributionOriginGroup struct {
 	_ struct{} `type:"structure"`
 
@@ -10042,7 +11347,8 @@ func (s *AwsCloudFrontDistributionOriginGroupFailoverStatusCodes) SetQuantity(v 
 	return s
 }
 
-// Provides information about origin groups that are associated with the distribution.
+// Provides information about origin groups that are associated with the CloudFront
+// distribution.
 type AwsCloudFrontDistributionOriginGroups struct {
 	_ struct{} `type:"structure"`
 
@@ -10074,11 +11380,17 @@ func (s *AwsCloudFrontDistributionOriginGroups) SetItems(v []*AwsCloudFrontDistr
 	return s
 }
 
-// A complex type that describes the S3 bucket, HTTP server (for example, a
-// web server), AWS Elemental MediaStore, or other server from which CloudFront
+// A complex type that describes the Amazon S3 bucket, HTTP server (for example,
+// a web server), AWS Elemental MediaStore, or other server from which CloudFront
 // gets your files.
 type AwsCloudFrontDistributionOriginItem struct {
 	_ struct{} `type:"structure"`
+
+	// An origin that is not an Amazon S3 bucket, with one exception. If the Amazon
+	// S3 bucket is configured with static website hosting, use this attribute.
+	// If the Amazon S3 bucket is not configured with static website hosting, use
+	// the S3OriginConfig type instead.
+	CustomOriginConfig *AwsCloudFrontDistributionOriginCustomOriginConfig `type:"structure"`
 
 	// Amazon S3 origins: The DNS name of the S3 bucket from which you want CloudFront
 	// to get objects for this origin.
@@ -10114,6 +11426,12 @@ func (s AwsCloudFrontDistributionOriginItem) GoString() string {
 	return s.String()
 }
 
+// SetCustomOriginConfig sets the CustomOriginConfig field's value.
+func (s *AwsCloudFrontDistributionOriginItem) SetCustomOriginConfig(v *AwsCloudFrontDistributionOriginCustomOriginConfig) *AwsCloudFrontDistributionOriginItem {
+	s.CustomOriginConfig = v
+	return s
+}
+
 // SetDomainName sets the DomainName field's value.
 func (s *AwsCloudFrontDistributionOriginItem) SetDomainName(v string) *AwsCloudFrontDistributionOriginItem {
 	s.DomainName = &v
@@ -10138,8 +11456,8 @@ func (s *AwsCloudFrontDistributionOriginItem) SetS3OriginConfig(v *AwsCloudFront
 	return s
 }
 
-// Information about an origin that is an S3 bucket that is not configured with
-// static website hosting.
+// Information about an origin that is an Amazon S3 bucket that is not configured
+// with static website hosting.
 type AwsCloudFrontDistributionOriginS3OriginConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -10171,8 +11489,51 @@ func (s *AwsCloudFrontDistributionOriginS3OriginConfig) SetOriginAccessIdentity(
 	return s
 }
 
+// A complex type that contains information about the SSL/TLS protocols that
+// CloudFront can use when establishing an HTTPS connection with your origin.
+type AwsCloudFrontDistributionOriginSslProtocols struct {
+	_ struct{} `type:"structure"`
+
+	// A list that contains allowed SSL/TLS protocols for this distribution.
+	Items []*string `type:"list"`
+
+	// The number of SSL/TLS protocols that you want to allow CloudFront to use
+	// when establishing an HTTPS connection with this origin.
+	Quantity *int64 `type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudFrontDistributionOriginSslProtocols) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudFrontDistributionOriginSslProtocols) GoString() string {
+	return s.String()
+}
+
+// SetItems sets the Items field's value.
+func (s *AwsCloudFrontDistributionOriginSslProtocols) SetItems(v []*string) *AwsCloudFrontDistributionOriginSslProtocols {
+	s.Items = v
+	return s
+}
+
+// SetQuantity sets the Quantity field's value.
+func (s *AwsCloudFrontDistributionOriginSslProtocols) SetQuantity(v int64) *AwsCloudFrontDistributionOriginSslProtocols {
+	s.Quantity = &v
+	return s
+}
+
 // A complex type that contains information about origins and origin groups
-// for this distribution.
+// for this CloudFront distribution.
 type AwsCloudFrontDistributionOrigins struct {
 	_ struct{} `type:"structure"`
 
@@ -10204,8 +11565,8 @@ func (s *AwsCloudFrontDistributionOrigins) SetItems(v []*AwsCloudFrontDistributi
 	return s
 }
 
-// Provides information about the TLS/SSL configuration that the distribution
-// uses to communicate with viewers.
+// Provides information about the TLS/SSL configuration that the CloudFront
+// distribution uses to communicate with viewers.
 type AwsCloudFrontDistributionViewerCertificate struct {
 	_ struct{} `type:"structure"`
 
@@ -10463,6 +11824,291 @@ func (s *AwsCloudTrailTrailDetails) SetTrailArn(v string) *AwsCloudTrailTrailDet
 	return s
 }
 
+// Specifies an alarm and associates it with the specified metric or metric
+// math expression.
+type AwsCloudWatchAlarmDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates whether actions should be executed during any changes to the alarm
+	// state.
+	ActionsEnabled *bool `type:"boolean"`
+
+	// The list of actions, specified as Amazon Resource Names (ARNs) to execute
+	// when this alarm transitions into an ALARM state from any other state.
+	AlarmActions []*string `type:"list"`
+
+	// The ARN of the alarm.
+	AlarmArn *string `type:"string"`
+
+	// The time stamp of the last update to the alarm configuration.
+	AlarmConfigurationUpdatedTimestamp *string `type:"string"`
+
+	// The description of the alarm.
+	AlarmDescription *string `type:"string"`
+
+	// The name of the alarm. If you don't specify a name, CloudFront generates
+	// a unique physical ID and uses that ID for the alarm name.
+	AlarmName *string `type:"string"`
+
+	// The arithmetic operation to use when comparing the specified statistic and
+	// threshold. The specified statistic value is used as the first operand.
+	ComparisonOperator *string `type:"string"`
+
+	// The number of datapoints that must be breaching to trigger the alarm.
+	DatapointsToAlarm *int64 `type:"integer"`
+
+	// The dimensions for the metric associated with the alarm.
+	Dimensions []*AwsCloudWatchAlarmDimensionsDetails `type:"list"`
+
+	// Used only for alarms based on percentiles. If ignore, the alarm state does
+	// not change during periods with too few data points to be statistically significant.
+	// If evaluate or this parameter is not used, the alarm is always evaluated
+	// and possibly changes state no matter how many data points are available.
+	EvaluateLowSampleCountPercentile *string `type:"string"`
+
+	// The number of periods over which data is compared to the specified threshold.
+	EvaluationPeriods *int64 `type:"integer"`
+
+	// The percentile statistic for the metric associated with the alarm.
+	ExtendedStatistic *string `type:"string"`
+
+	// The actions to execute when this alarm transitions to the INSUFFICIENT_DATA
+	// state from any other state. Each action is specified as an ARN.
+	InsufficientDataActions []*string `type:"list"`
+
+	// The name of the metric associated with the alarm. This is required for an
+	// alarm based on a metric. For an alarm based on a math expression, you use
+	// Metrics instead and you can't specify MetricName.
+	MetricName *string `type:"string"`
+
+	// The namespace of the metric associated with the alarm. This is required for
+	// an alarm based on a metric. For an alarm based on a math expression, you
+	// can't specify Namespace and you use Metrics instead.
+	Namespace *string `type:"string"`
+
+	// The actions to execute when this alarm transitions to the OK state from any
+	// other state. Each action is specified as an ARN.
+	OkActions []*string `type:"list"`
+
+	// The period, in seconds, over which the statistic is applied. This is required
+	// for an alarm based on a metric.
+	Period *int64 `type:"integer"`
+
+	// The statistic for the metric associated with the alarm, other than percentile.
+	// For percentile statistics, use ExtendedStatistic.
+	//
+	// For an alarm based on a metric, you must specify either Statistic or ExtendedStatistic
+	// but not both.
+	//
+	// For an alarm based on a math expression, you can't specify Statistic. Instead,
+	// you use Metrics.
+	Statistic *string `type:"string"`
+
+	// The value to compare with the specified statistic.
+	Threshold *float64 `type:"double"`
+
+	// n an alarm based on an anomaly detection model, this is the ID of the ANOMALY_DETECTION_BAND
+	// function used as the threshold for the alarm.
+	ThresholdMetricId *string `type:"string"`
+
+	// Sets how this alarm is to handle missing data points.
+	TreatMissingData *string `type:"string"`
+
+	// The unit of the metric associated with the alarm.
+	Unit *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudWatchAlarmDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudWatchAlarmDetails) GoString() string {
+	return s.String()
+}
+
+// SetActionsEnabled sets the ActionsEnabled field's value.
+func (s *AwsCloudWatchAlarmDetails) SetActionsEnabled(v bool) *AwsCloudWatchAlarmDetails {
+	s.ActionsEnabled = &v
+	return s
+}
+
+// SetAlarmActions sets the AlarmActions field's value.
+func (s *AwsCloudWatchAlarmDetails) SetAlarmActions(v []*string) *AwsCloudWatchAlarmDetails {
+	s.AlarmActions = v
+	return s
+}
+
+// SetAlarmArn sets the AlarmArn field's value.
+func (s *AwsCloudWatchAlarmDetails) SetAlarmArn(v string) *AwsCloudWatchAlarmDetails {
+	s.AlarmArn = &v
+	return s
+}
+
+// SetAlarmConfigurationUpdatedTimestamp sets the AlarmConfigurationUpdatedTimestamp field's value.
+func (s *AwsCloudWatchAlarmDetails) SetAlarmConfigurationUpdatedTimestamp(v string) *AwsCloudWatchAlarmDetails {
+	s.AlarmConfigurationUpdatedTimestamp = &v
+	return s
+}
+
+// SetAlarmDescription sets the AlarmDescription field's value.
+func (s *AwsCloudWatchAlarmDetails) SetAlarmDescription(v string) *AwsCloudWatchAlarmDetails {
+	s.AlarmDescription = &v
+	return s
+}
+
+// SetAlarmName sets the AlarmName field's value.
+func (s *AwsCloudWatchAlarmDetails) SetAlarmName(v string) *AwsCloudWatchAlarmDetails {
+	s.AlarmName = &v
+	return s
+}
+
+// SetComparisonOperator sets the ComparisonOperator field's value.
+func (s *AwsCloudWatchAlarmDetails) SetComparisonOperator(v string) *AwsCloudWatchAlarmDetails {
+	s.ComparisonOperator = &v
+	return s
+}
+
+// SetDatapointsToAlarm sets the DatapointsToAlarm field's value.
+func (s *AwsCloudWatchAlarmDetails) SetDatapointsToAlarm(v int64) *AwsCloudWatchAlarmDetails {
+	s.DatapointsToAlarm = &v
+	return s
+}
+
+// SetDimensions sets the Dimensions field's value.
+func (s *AwsCloudWatchAlarmDetails) SetDimensions(v []*AwsCloudWatchAlarmDimensionsDetails) *AwsCloudWatchAlarmDetails {
+	s.Dimensions = v
+	return s
+}
+
+// SetEvaluateLowSampleCountPercentile sets the EvaluateLowSampleCountPercentile field's value.
+func (s *AwsCloudWatchAlarmDetails) SetEvaluateLowSampleCountPercentile(v string) *AwsCloudWatchAlarmDetails {
+	s.EvaluateLowSampleCountPercentile = &v
+	return s
+}
+
+// SetEvaluationPeriods sets the EvaluationPeriods field's value.
+func (s *AwsCloudWatchAlarmDetails) SetEvaluationPeriods(v int64) *AwsCloudWatchAlarmDetails {
+	s.EvaluationPeriods = &v
+	return s
+}
+
+// SetExtendedStatistic sets the ExtendedStatistic field's value.
+func (s *AwsCloudWatchAlarmDetails) SetExtendedStatistic(v string) *AwsCloudWatchAlarmDetails {
+	s.ExtendedStatistic = &v
+	return s
+}
+
+// SetInsufficientDataActions sets the InsufficientDataActions field's value.
+func (s *AwsCloudWatchAlarmDetails) SetInsufficientDataActions(v []*string) *AwsCloudWatchAlarmDetails {
+	s.InsufficientDataActions = v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *AwsCloudWatchAlarmDetails) SetMetricName(v string) *AwsCloudWatchAlarmDetails {
+	s.MetricName = &v
+	return s
+}
+
+// SetNamespace sets the Namespace field's value.
+func (s *AwsCloudWatchAlarmDetails) SetNamespace(v string) *AwsCloudWatchAlarmDetails {
+	s.Namespace = &v
+	return s
+}
+
+// SetOkActions sets the OkActions field's value.
+func (s *AwsCloudWatchAlarmDetails) SetOkActions(v []*string) *AwsCloudWatchAlarmDetails {
+	s.OkActions = v
+	return s
+}
+
+// SetPeriod sets the Period field's value.
+func (s *AwsCloudWatchAlarmDetails) SetPeriod(v int64) *AwsCloudWatchAlarmDetails {
+	s.Period = &v
+	return s
+}
+
+// SetStatistic sets the Statistic field's value.
+func (s *AwsCloudWatchAlarmDetails) SetStatistic(v string) *AwsCloudWatchAlarmDetails {
+	s.Statistic = &v
+	return s
+}
+
+// SetThreshold sets the Threshold field's value.
+func (s *AwsCloudWatchAlarmDetails) SetThreshold(v float64) *AwsCloudWatchAlarmDetails {
+	s.Threshold = &v
+	return s
+}
+
+// SetThresholdMetricId sets the ThresholdMetricId field's value.
+func (s *AwsCloudWatchAlarmDetails) SetThresholdMetricId(v string) *AwsCloudWatchAlarmDetails {
+	s.ThresholdMetricId = &v
+	return s
+}
+
+// SetTreatMissingData sets the TreatMissingData field's value.
+func (s *AwsCloudWatchAlarmDetails) SetTreatMissingData(v string) *AwsCloudWatchAlarmDetails {
+	s.TreatMissingData = &v
+	return s
+}
+
+// SetUnit sets the Unit field's value.
+func (s *AwsCloudWatchAlarmDetails) SetUnit(v string) *AwsCloudWatchAlarmDetails {
+	s.Unit = &v
+	return s
+}
+
+// Details about the dimensions for the metric associated with the alarm.
+type AwsCloudWatchAlarmDimensionsDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The name of a dimension.
+	Name *string `type:"string"`
+
+	// The value of a dimension.
+	Value *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudWatchAlarmDimensionsDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsCloudWatchAlarmDimensionsDetails) GoString() string {
+	return s.String()
+}
+
+// SetName sets the Name field's value.
+func (s *AwsCloudWatchAlarmDimensionsDetails) SetName(v string) *AwsCloudWatchAlarmDimensionsDetails {
+	s.Name = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *AwsCloudWatchAlarmDimensionsDetails) SetValue(v string) *AwsCloudWatchAlarmDimensionsDetails {
+	s.Value = &v
+	return s
+}
+
 // Information about the build artifacts for the CodeBuild project.
 type AwsCodeBuildProjectArtifactsDetails struct {
 	_ struct{} `type:"structure"`
@@ -10594,6 +12240,9 @@ type AwsCodeBuildProjectDetails struct {
 	// The name of the build project.
 	Name *string `type:"string"`
 
+	// Information about the secondary artifacts for the CodeBuild project.
+	SecondaryArtifacts []*AwsCodeBuildProjectArtifactsDetails `type:"list"`
+
 	// The ARN of the IAM role that enables CodeBuild to interact with dependent
 	// Amazon Web Services services on behalf of the Amazon Web Services account.
 	ServiceRole *string `type:"string"`
@@ -10650,6 +12299,12 @@ func (s *AwsCodeBuildProjectDetails) SetLogsConfig(v *AwsCodeBuildProjectLogsCon
 // SetName sets the Name field's value.
 func (s *AwsCodeBuildProjectDetails) SetName(v string) *AwsCodeBuildProjectDetails {
 	s.Name = &v
+	return s
+}
+
+// SetSecondaryArtifacts sets the SecondaryArtifacts field's value.
+func (s *AwsCodeBuildProjectDetails) SetSecondaryArtifacts(v []*AwsCodeBuildProjectArtifactsDetails) *AwsCodeBuildProjectDetails {
+	s.SecondaryArtifacts = v
 	return s
 }
 
@@ -11394,7 +13049,21 @@ type AwsDynamoDbTableDetails struct {
 	// The total size of the table in bytes.
 	TableSizeBytes *int64 `type:"long"`
 
-	// The current status of the table.
+	// The current status of the table. Valid values are as follows:
+	//
+	//    * ACTIVE
+	//
+	//    * ARCHIVED
+	//
+	//    * ARCHIVING
+	//
+	//    * CREATING
+	//
+	//    * DELETING
+	//
+	//    * INACCESSIBLE_ENCRYPTION_CREDENTIALS
+	//
+	//    * UPDATING
 	TableStatus *string `type:"string"`
 }
 
@@ -11547,6 +13216,14 @@ type AwsDynamoDbTableGlobalSecondaryIndex struct {
 	IndexSizeBytes *int64 `type:"long"`
 
 	// The current status of the index.
+	//
+	//    * ACTIVE
+	//
+	//    * CREATING
+	//
+	//    * DELETING
+	//
+	//    * UPDATING
 	IndexStatus *string `type:"string"`
 
 	// The number of items in the index.
@@ -11642,7 +13319,8 @@ type AwsDynamoDbTableKeySchema struct {
 	// The name of the key schema attribute.
 	AttributeName *string `type:"string"`
 
-	// The type of key used for the key schema attribute.
+	// The type of key used for the key schema attribute. Valid values are HASH
+	// or RANGE.
 	KeyType *string `type:"string"`
 }
 
@@ -11746,7 +13424,14 @@ type AwsDynamoDbTableProjection struct {
 	// provide the attribute name.
 	NonKeyAttributes []*string `type:"list"`
 
-	// The types of attributes that are projected into the index.
+	// The types of attributes that are projected into the index. Valid values are
+	// as follows:
+	//
+	//    * ALL
+	//
+	//    * INCLUDE
+	//
+	//    * KEYS_ONLY
 	ProjectionType *string `type:"string"`
 }
 
@@ -11909,7 +13594,17 @@ type AwsDynamoDbTableReplica struct {
 	// The name of the Region where the replica is located.
 	RegionName *string `type:"string"`
 
-	// The current status of the replica.
+	// The current status of the replica. Valid values are as follows:
+	//
+	//    * ACTIVE
+	//
+	//    * CREATING
+	//
+	//    * CREATION_FAILED
+	//
+	//    * DELETING
+	//
+	//    * UPDATING
 	ReplicaStatus *string `type:"string"`
 
 	// Detailed information about the replica status.
@@ -12298,7 +13993,7 @@ func (s *AwsEc2EipDetails) SetPublicIpv4Pool(v string) *AwsEc2EipDetails {
 	return s
 }
 
-// The details of an EC2 instance.
+// The details of an Amazon EC2 instance.
 type AwsEc2InstanceDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -12324,6 +14019,9 @@ type AwsEc2InstanceDetails struct {
 	// contain spaces. For example, 2020-03-22T13:22:13.933Z.
 	LaunchedAt *string `type:"string"`
 
+	// Details about the metadata options for the Amazon EC2 instance.
+	MetadataOptions *AwsEc2InstanceMetadataOptions `type:"structure"`
+
 	// The identifiers of the network interfaces for the EC2 instance. The details
 	// for each network interface are in a corresponding AwsEc2NetworkInterfacesDetails
 	// object.
@@ -12334,6 +14032,10 @@ type AwsEc2InstanceDetails struct {
 
 	// The instance type of the instance.
 	Type *string `type:"string"`
+
+	// The virtualization type of the Amazon Machine Image (AMI) required to launch
+	// the instance.
+	VirtualizationType *string `type:"string"`
 
 	// The identifier of the VPC that the instance was launched in.
 	VpcId *string `type:"string"`
@@ -12393,6 +14095,12 @@ func (s *AwsEc2InstanceDetails) SetLaunchedAt(v string) *AwsEc2InstanceDetails {
 	return s
 }
 
+// SetMetadataOptions sets the MetadataOptions field's value.
+func (s *AwsEc2InstanceDetails) SetMetadataOptions(v *AwsEc2InstanceMetadataOptions) *AwsEc2InstanceDetails {
+	s.MetadataOptions = v
+	return s
+}
+
 // SetNetworkInterfaces sets the NetworkInterfaces field's value.
 func (s *AwsEc2InstanceDetails) SetNetworkInterfaces(v []*AwsEc2InstanceNetworkInterfacesDetails) *AwsEc2InstanceDetails {
 	s.NetworkInterfaces = v
@@ -12411,13 +14119,88 @@ func (s *AwsEc2InstanceDetails) SetType(v string) *AwsEc2InstanceDetails {
 	return s
 }
 
+// SetVirtualizationType sets the VirtualizationType field's value.
+func (s *AwsEc2InstanceDetails) SetVirtualizationType(v string) *AwsEc2InstanceDetails {
+	s.VirtualizationType = &v
+	return s
+}
+
 // SetVpcId sets the VpcId field's value.
 func (s *AwsEc2InstanceDetails) SetVpcId(v string) *AwsEc2InstanceDetails {
 	s.VpcId = &v
 	return s
 }
 
-// Identifies a network interface for the EC2 instance.
+// Metadata options that allow you to configure and secure the Amazon EC2 instance.
+type AwsEc2InstanceMetadataOptions struct {
+	_ struct{} `type:"structure"`
+
+	// Enables or disables the HTTP metadata endpoint on the instance.
+	HttpEndpoint *string `type:"string"`
+
+	// Enables or disables the IPv6 endpoint for the instance metadata service.
+	HttpProtocolIpv6 *string `type:"string"`
+
+	// The desired HTTP PUT response hop limit for instance metadata requests. The
+	// larger the number, the further instance metadata requests can travel.
+	HttpPutResponseHopLimit *int64 `type:"integer"`
+
+	// The state of token usage for your instance metadata requests.
+	HttpTokens *string `type:"string"`
+
+	// Specifies whether to allow access to instance tags from the instance metadata.
+	InstanceMetadataTags *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEc2InstanceMetadataOptions) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEc2InstanceMetadataOptions) GoString() string {
+	return s.String()
+}
+
+// SetHttpEndpoint sets the HttpEndpoint field's value.
+func (s *AwsEc2InstanceMetadataOptions) SetHttpEndpoint(v string) *AwsEc2InstanceMetadataOptions {
+	s.HttpEndpoint = &v
+	return s
+}
+
+// SetHttpProtocolIpv6 sets the HttpProtocolIpv6 field's value.
+func (s *AwsEc2InstanceMetadataOptions) SetHttpProtocolIpv6(v string) *AwsEc2InstanceMetadataOptions {
+	s.HttpProtocolIpv6 = &v
+	return s
+}
+
+// SetHttpPutResponseHopLimit sets the HttpPutResponseHopLimit field's value.
+func (s *AwsEc2InstanceMetadataOptions) SetHttpPutResponseHopLimit(v int64) *AwsEc2InstanceMetadataOptions {
+	s.HttpPutResponseHopLimit = &v
+	return s
+}
+
+// SetHttpTokens sets the HttpTokens field's value.
+func (s *AwsEc2InstanceMetadataOptions) SetHttpTokens(v string) *AwsEc2InstanceMetadataOptions {
+	s.HttpTokens = &v
+	return s
+}
+
+// SetInstanceMetadataTags sets the InstanceMetadataTags field's value.
+func (s *AwsEc2InstanceMetadataOptions) SetInstanceMetadataTags(v string) *AwsEc2InstanceMetadataOptions {
+	s.InstanceMetadataTags = &v
+	return s
+}
+
+// Identifies a network interface for the Amazon EC2 instance.
 type AwsEc2InstanceNetworkInterfacesDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -12500,7 +14283,7 @@ func (s *AwsEc2NetworkAclAssociation) SetSubnetId(v string) *AwsEc2NetworkAclAss
 	return s
 }
 
-// Contains details about an EC2 network access control list (ACL).
+// Contains details about an Amazon EC2 network access control list (ACL).
 type AwsEc2NetworkAclDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -12979,7 +14762,7 @@ func (s *AwsEc2NetworkInterfaceSecurityGroup) SetGroupName(v string) *AwsEc2Netw
 	return s
 }
 
-// Details about an EC2 security group.
+// Details about an Amazon EC2 security group.
 type AwsEc2SecurityGroupDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -13380,7 +15163,7 @@ type AwsEc2SubnetDetails struct {
 	// The identifier of the Amazon Web Services account that owns the subnet.
 	OwnerId *string `type:"string"`
 
-	// The current state of the subnet.
+	// The current state of the subnet. Valid values are available or pending.
 	State *string `type:"string"`
 
 	// The ARN of the subnet.
@@ -13489,6 +15272,140 @@ func (s *AwsEc2SubnetDetails) SetVpcId(v string) *AwsEc2SubnetDetails {
 	return s
 }
 
+// Information about an Amazon Web Services Amazon EC2 Transit Gateway that
+// interconnects virtual private clouds (VPCs) and on-premises networks.
+type AwsEc2TransitGatewayDetails struct {
+	_ struct{} `type:"structure"`
+
+	// A private Autonomous System Number (ASN) for the Amazon side of a BGP session.
+	AmazonSideAsn *int64 `type:"integer"`
+
+	// The ID of the default association route table.
+	AssociationDefaultRouteTableId *string `type:"string"`
+
+	// Turn on or turn off automatic acceptance of attachment requests.
+	AutoAcceptSharedAttachments *string `type:"string"`
+
+	// Turn on or turn off automatic association with the default association route
+	// table.
+	DefaultRouteTableAssociation *string `type:"string"`
+
+	// Turn on or turn off automatic propagation of routes to the default propagation
+	// route table.
+	DefaultRouteTablePropagation *string `type:"string"`
+
+	// The description of the transit gateway.
+	Description *string `type:"string"`
+
+	// Turn on or turn off DNS support.
+	DnsSupport *string `type:"string"`
+
+	// The ID of the transit gateway.
+	Id *string `type:"string"`
+
+	// Indicates whether multicast is supported on the transit gateway.
+	MulticastSupport *string `type:"string"`
+
+	// The ID of the default propagation route table.
+	PropagationDefaultRouteTableId *string `type:"string"`
+
+	// The transit gateway Classless Inter-Domain Routing (CIDR) blocks.
+	TransitGatewayCidrBlocks []*string `type:"list"`
+
+	// Turn on or turn off Equal Cost Multipath Protocol (ECMP) support.
+	VpnEcmpSupport *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEc2TransitGatewayDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEc2TransitGatewayDetails) GoString() string {
+	return s.String()
+}
+
+// SetAmazonSideAsn sets the AmazonSideAsn field's value.
+func (s *AwsEc2TransitGatewayDetails) SetAmazonSideAsn(v int64) *AwsEc2TransitGatewayDetails {
+	s.AmazonSideAsn = &v
+	return s
+}
+
+// SetAssociationDefaultRouteTableId sets the AssociationDefaultRouteTableId field's value.
+func (s *AwsEc2TransitGatewayDetails) SetAssociationDefaultRouteTableId(v string) *AwsEc2TransitGatewayDetails {
+	s.AssociationDefaultRouteTableId = &v
+	return s
+}
+
+// SetAutoAcceptSharedAttachments sets the AutoAcceptSharedAttachments field's value.
+func (s *AwsEc2TransitGatewayDetails) SetAutoAcceptSharedAttachments(v string) *AwsEc2TransitGatewayDetails {
+	s.AutoAcceptSharedAttachments = &v
+	return s
+}
+
+// SetDefaultRouteTableAssociation sets the DefaultRouteTableAssociation field's value.
+func (s *AwsEc2TransitGatewayDetails) SetDefaultRouteTableAssociation(v string) *AwsEc2TransitGatewayDetails {
+	s.DefaultRouteTableAssociation = &v
+	return s
+}
+
+// SetDefaultRouteTablePropagation sets the DefaultRouteTablePropagation field's value.
+func (s *AwsEc2TransitGatewayDetails) SetDefaultRouteTablePropagation(v string) *AwsEc2TransitGatewayDetails {
+	s.DefaultRouteTablePropagation = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *AwsEc2TransitGatewayDetails) SetDescription(v string) *AwsEc2TransitGatewayDetails {
+	s.Description = &v
+	return s
+}
+
+// SetDnsSupport sets the DnsSupport field's value.
+func (s *AwsEc2TransitGatewayDetails) SetDnsSupport(v string) *AwsEc2TransitGatewayDetails {
+	s.DnsSupport = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *AwsEc2TransitGatewayDetails) SetId(v string) *AwsEc2TransitGatewayDetails {
+	s.Id = &v
+	return s
+}
+
+// SetMulticastSupport sets the MulticastSupport field's value.
+func (s *AwsEc2TransitGatewayDetails) SetMulticastSupport(v string) *AwsEc2TransitGatewayDetails {
+	s.MulticastSupport = &v
+	return s
+}
+
+// SetPropagationDefaultRouteTableId sets the PropagationDefaultRouteTableId field's value.
+func (s *AwsEc2TransitGatewayDetails) SetPropagationDefaultRouteTableId(v string) *AwsEc2TransitGatewayDetails {
+	s.PropagationDefaultRouteTableId = &v
+	return s
+}
+
+// SetTransitGatewayCidrBlocks sets the TransitGatewayCidrBlocks field's value.
+func (s *AwsEc2TransitGatewayDetails) SetTransitGatewayCidrBlocks(v []*string) *AwsEc2TransitGatewayDetails {
+	s.TransitGatewayCidrBlocks = v
+	return s
+}
+
+// SetVpnEcmpSupport sets the VpnEcmpSupport field's value.
+func (s *AwsEc2TransitGatewayDetails) SetVpnEcmpSupport(v string) *AwsEc2TransitGatewayDetails {
+	s.VpnEcmpSupport = &v
+	return s
+}
+
 // An attachment to an Amazon EC2 volume.
 type AwsEc2VolumeAttachment struct {
 	_ struct{} `type:"structure"`
@@ -13502,7 +15419,17 @@ type AwsEc2VolumeAttachment struct {
 	// The identifier of the EC2 instance.
 	InstanceId *string `type:"string"`
 
-	// The attachment state of the volume.
+	// The attachment state of the volume. Valid values are as follows:
+	//
+	//    * attaching
+	//
+	//    * attached
+	//
+	//    * busy
+	//
+	//    * detaching
+	//
+	//    * detached
 	Status *string `type:"string"`
 }
 
@@ -13562,7 +15489,10 @@ type AwsEc2VolumeDetails struct {
 	// contain spaces. For example, 2020-03-22T13:22:13.933Z.
 	CreateTime *string `type:"string"`
 
-	// Whether the volume is encrypted.
+	// The device name for the volume that is attached to the instance.
+	DeviceName *string `type:"string"`
+
+	// Specifies whether the volume is encrypted.
 	Encrypted *bool `type:"boolean"`
 
 	// The ARN of the KMS key that was used to protect the volume encryption key
@@ -13575,8 +15505,29 @@ type AwsEc2VolumeDetails struct {
 	// The snapshot from which the volume was created.
 	SnapshotId *string `type:"string"`
 
-	// The volume state.
+	// The volume state. Valid values are as follows:
+	//
+	//    * available
+	//
+	//    * creating
+	//
+	//    * deleted
+	//
+	//    * deleting
+	//
+	//    * error
+	//
+	//    * in-use
 	Status *string `type:"string"`
+
+	// The ID of the volume.
+	VolumeId *string `type:"string"`
+
+	// Indicates whether the volume was scanned or skipped.
+	VolumeScanStatus *string `type:"string"`
+
+	// The volume type.
+	VolumeType *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -13606,6 +15557,12 @@ func (s *AwsEc2VolumeDetails) SetAttachments(v []*AwsEc2VolumeAttachment) *AwsEc
 // SetCreateTime sets the CreateTime field's value.
 func (s *AwsEc2VolumeDetails) SetCreateTime(v string) *AwsEc2VolumeDetails {
 	s.CreateTime = &v
+	return s
+}
+
+// SetDeviceName sets the DeviceName field's value.
+func (s *AwsEc2VolumeDetails) SetDeviceName(v string) *AwsEc2VolumeDetails {
+	s.DeviceName = &v
 	return s
 }
 
@@ -13639,6 +15596,24 @@ func (s *AwsEc2VolumeDetails) SetStatus(v string) *AwsEc2VolumeDetails {
 	return s
 }
 
+// SetVolumeId sets the VolumeId field's value.
+func (s *AwsEc2VolumeDetails) SetVolumeId(v string) *AwsEc2VolumeDetails {
+	s.VolumeId = &v
+	return s
+}
+
+// SetVolumeScanStatus sets the VolumeScanStatus field's value.
+func (s *AwsEc2VolumeDetails) SetVolumeScanStatus(v string) *AwsEc2VolumeDetails {
+	s.VolumeScanStatus = &v
+	return s
+}
+
+// SetVolumeType sets the VolumeType field's value.
+func (s *AwsEc2VolumeDetails) SetVolumeType(v string) *AwsEc2VolumeDetails {
+	s.VolumeType = &v
+	return s
+}
+
 // Details about an EC2 VPC.
 type AwsEc2VpcDetails struct {
 	_ struct{} `type:"structure"`
@@ -13654,7 +15629,7 @@ type AwsEc2VpcDetails struct {
 	// Information about the IPv6 CIDR blocks associated with the VPC.
 	Ipv6CidrBlockAssociationSet []*Ipv6CidrBlockAssociation `type:"list"`
 
-	// The current state of the VPC.
+	// The current state of the VPC. Valid values are available or pending.
 	State *string `type:"string"`
 }
 
@@ -13732,7 +15707,17 @@ type AwsEc2VpcEndpointServiceDetails struct {
 	// The name of the service.
 	ServiceName *string `type:"string"`
 
-	// The current state of the service.
+	// The current state of the service. Valid values are as follows:
+	//
+	//    * Available
+	//
+	//    * Deleted
+	//
+	//    * Deleting
+	//
+	//    * Failed
+	//
+	//    * Pending
 	ServiceState *string `type:"string"`
 
 	// The types for the service.
@@ -13855,6 +15840,203 @@ func (s *AwsEc2VpcEndpointServiceServiceTypeDetails) SetServiceType(v string) *A
 	return s
 }
 
+// Provides information about a VPC peering connection between two VPCs: a requester
+// VPC that you own and an accepter VPC with which to create the connection.
+type AwsEc2VpcPeeringConnectionDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the accepter VPC.
+	AccepterVpcInfo *AwsEc2VpcPeeringConnectionVpcInfoDetails `type:"structure"`
+
+	// The time at which an unaccepted VPC peering connection will expire.
+	ExpirationTime *string `type:"string"`
+
+	// Information about the requester VPC.
+	RequesterVpcInfo *AwsEc2VpcPeeringConnectionVpcInfoDetails `type:"structure"`
+
+	// The status of the VPC peering connection.
+	Status *AwsEc2VpcPeeringConnectionStatusDetails `type:"structure"`
+
+	// The ID of the VPC peering connection.
+	VpcPeeringConnectionId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEc2VpcPeeringConnectionDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEc2VpcPeeringConnectionDetails) GoString() string {
+	return s.String()
+}
+
+// SetAccepterVpcInfo sets the AccepterVpcInfo field's value.
+func (s *AwsEc2VpcPeeringConnectionDetails) SetAccepterVpcInfo(v *AwsEc2VpcPeeringConnectionVpcInfoDetails) *AwsEc2VpcPeeringConnectionDetails {
+	s.AccepterVpcInfo = v
+	return s
+}
+
+// SetExpirationTime sets the ExpirationTime field's value.
+func (s *AwsEc2VpcPeeringConnectionDetails) SetExpirationTime(v string) *AwsEc2VpcPeeringConnectionDetails {
+	s.ExpirationTime = &v
+	return s
+}
+
+// SetRequesterVpcInfo sets the RequesterVpcInfo field's value.
+func (s *AwsEc2VpcPeeringConnectionDetails) SetRequesterVpcInfo(v *AwsEc2VpcPeeringConnectionVpcInfoDetails) *AwsEc2VpcPeeringConnectionDetails {
+	s.RequesterVpcInfo = v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *AwsEc2VpcPeeringConnectionDetails) SetStatus(v *AwsEc2VpcPeeringConnectionStatusDetails) *AwsEc2VpcPeeringConnectionDetails {
+	s.Status = v
+	return s
+}
+
+// SetVpcPeeringConnectionId sets the VpcPeeringConnectionId field's value.
+func (s *AwsEc2VpcPeeringConnectionDetails) SetVpcPeeringConnectionId(v string) *AwsEc2VpcPeeringConnectionDetails {
+	s.VpcPeeringConnectionId = &v
+	return s
+}
+
+// Details about the status of the VPC peering connection.
+type AwsEc2VpcPeeringConnectionStatusDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The status of the VPC peering connection.
+	Code *string `type:"string"`
+
+	// A message that provides more information about the status, if applicable.
+	Message *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEc2VpcPeeringConnectionStatusDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEc2VpcPeeringConnectionStatusDetails) GoString() string {
+	return s.String()
+}
+
+// SetCode sets the Code field's value.
+func (s *AwsEc2VpcPeeringConnectionStatusDetails) SetCode(v string) *AwsEc2VpcPeeringConnectionStatusDetails {
+	s.Code = &v
+	return s
+}
+
+// SetMessage sets the Message field's value.
+func (s *AwsEc2VpcPeeringConnectionStatusDetails) SetMessage(v string) *AwsEc2VpcPeeringConnectionStatusDetails {
+	s.Message = &v
+	return s
+}
+
+// Describes a VPC in a VPC peering connection.
+type AwsEc2VpcPeeringConnectionVpcInfoDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The IPv4 CIDR block for the VPC.
+	CidrBlock *string `type:"string"`
+
+	// Information about the IPv4 CIDR blocks for the VPC.
+	CidrBlockSet []*VpcInfoCidrBlockSetDetails `type:"list"`
+
+	// The IPv6 CIDR block for the VPC.
+	Ipv6CidrBlockSet []*VpcInfoIpv6CidrBlockSetDetails `type:"list"`
+
+	// The ID of the Amazon Web Services account that owns the VPC.
+	OwnerId *string `type:"string"`
+
+	// Information about the VPC peering connection options for the accepter or
+	// requester VPC.
+	PeeringOptions *VpcInfoPeeringOptionsDetails `type:"structure"`
+
+	// The Amazon Web Services Region in which the VPC is located.
+	Region *string `type:"string"`
+
+	// The ID of the VPC.
+	VpcId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEc2VpcPeeringConnectionVpcInfoDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEc2VpcPeeringConnectionVpcInfoDetails) GoString() string {
+	return s.String()
+}
+
+// SetCidrBlock sets the CidrBlock field's value.
+func (s *AwsEc2VpcPeeringConnectionVpcInfoDetails) SetCidrBlock(v string) *AwsEc2VpcPeeringConnectionVpcInfoDetails {
+	s.CidrBlock = &v
+	return s
+}
+
+// SetCidrBlockSet sets the CidrBlockSet field's value.
+func (s *AwsEc2VpcPeeringConnectionVpcInfoDetails) SetCidrBlockSet(v []*VpcInfoCidrBlockSetDetails) *AwsEc2VpcPeeringConnectionVpcInfoDetails {
+	s.CidrBlockSet = v
+	return s
+}
+
+// SetIpv6CidrBlockSet sets the Ipv6CidrBlockSet field's value.
+func (s *AwsEc2VpcPeeringConnectionVpcInfoDetails) SetIpv6CidrBlockSet(v []*VpcInfoIpv6CidrBlockSetDetails) *AwsEc2VpcPeeringConnectionVpcInfoDetails {
+	s.Ipv6CidrBlockSet = v
+	return s
+}
+
+// SetOwnerId sets the OwnerId field's value.
+func (s *AwsEc2VpcPeeringConnectionVpcInfoDetails) SetOwnerId(v string) *AwsEc2VpcPeeringConnectionVpcInfoDetails {
+	s.OwnerId = &v
+	return s
+}
+
+// SetPeeringOptions sets the PeeringOptions field's value.
+func (s *AwsEc2VpcPeeringConnectionVpcInfoDetails) SetPeeringOptions(v *VpcInfoPeeringOptionsDetails) *AwsEc2VpcPeeringConnectionVpcInfoDetails {
+	s.PeeringOptions = v
+	return s
+}
+
+// SetRegion sets the Region field's value.
+func (s *AwsEc2VpcPeeringConnectionVpcInfoDetails) SetRegion(v string) *AwsEc2VpcPeeringConnectionVpcInfoDetails {
+	s.Region = &v
+	return s
+}
+
+// SetVpcId sets the VpcId field's value.
+func (s *AwsEc2VpcPeeringConnectionVpcInfoDetails) SetVpcId(v string) *AwsEc2VpcPeeringConnectionVpcInfoDetails {
+	s.VpcId = &v
+	return s
+}
+
 // Details about an Amazon EC2 VPN connection.
 type AwsEc2VpnConnectionDetails struct {
 	_ struct{} `type:"structure"`
@@ -13877,7 +16059,15 @@ type AwsEc2VpnConnectionDetails struct {
 	// The static routes that are associated with the VPN connection.
 	Routes []*AwsEc2VpnConnectionRoutesDetails `type:"list"`
 
-	// The current state of the VPN connection.
+	// The current state of the VPN connection. Valid values are as follows:
+	//
+	//    * available
+	//
+	//    * deleted
+	//
+	//    * deleting
+	//
+	//    * pending
 	State *string `type:"string"`
 
 	// The identifier of the transit gateway that is associated with the VPN connection.
@@ -14257,7 +16447,7 @@ type AwsEc2VpnConnectionVgwTelemetryDetails struct {
 	// interface.
 	OutsideIpAddress *string `type:"string"`
 
-	// The status of the VPN tunnel.
+	// The status of the VPN tunnel. Valid values are DOWN or UP.
 	Status *string `type:"string"`
 
 	// If an error occurs, a description of the error.
@@ -14322,7 +16512,13 @@ func (s *AwsEc2VpnConnectionVgwTelemetryDetails) SetStatusMessage(v string) *Aws
 type AwsEcrContainerImageDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The architecture of the image.
+	// The architecture of the image. Valid values are as follows:
+	//
+	//    * arm64
+	//
+	//    * i386
+	//
+	//    * x86_64
 	Architecture *string `type:"string"`
 
 	// The sha256 digest of the image manifest.
@@ -14410,7 +16606,8 @@ type AwsEcrRepositoryDetails struct {
 	// The image scanning configuration for a repository.
 	ImageScanningConfiguration *AwsEcrRepositoryImageScanningConfigurationDetails `type:"structure"`
 
-	// The tag mutability setting for the repository.
+	// The tag mutability setting for the repository. Valid values are IMMUTABLE
+	// or MUTABLE.
 	ImageTagMutability *string `type:"string"`
 
 	// Information about the lifecycle policy for the repository.
@@ -14555,10 +16752,10 @@ func (s *AwsEcrRepositoryLifecyclePolicyDetails) SetRegistryId(v string) *AwsEcr
 type AwsEcsClusterClusterSettingsDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the setting.
+	// The name of the setting. The valid value is containerInsights.
 	Name *string `type:"string"`
 
-	// The value of the setting.
+	// The value of the setting. Valid values are disabled or enabled.
 	Value *string `type:"string"`
 }
 
@@ -14797,12 +16994,23 @@ func (s *AwsEcsClusterDefaultCapacityProviderStrategyDetails) SetWeight(v int64)
 	return s
 }
 
-// provides details about an ECS cluster.
+// Provides details about an Amazon ECS cluster.
 type AwsEcsClusterDetails struct {
 	_ struct{} `type:"structure"`
 
+	// The number of services that are running on the cluster in an ACTIVE state.
+	// You can view these services with the Amazon ECS ListServices (https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ListServices.html)
+	// API operation.
+	ActiveServicesCount *int64 `type:"integer"`
+
 	// The short name of one or more capacity providers to associate with the cluster.
 	CapacityProviders []*string `type:"list"`
+
+	// The Amazon Resource Name (ARN) that identifies the cluster.
+	ClusterArn *string `type:"string"`
+
+	// A name that you use to identify your cluster.
+	ClusterName *string `type:"string"`
 
 	// The setting to use to create the cluster. Specifically used to configure
 	// whether to enable CloudWatch Container Insights for the cluster.
@@ -14815,6 +17023,16 @@ type AwsEcsClusterDetails struct {
 	// provider strategy is used when services or tasks are run without a specified
 	// launch type or capacity provider strategy.
 	DefaultCapacityProviderStrategy []*AwsEcsClusterDefaultCapacityProviderStrategyDetails `type:"list"`
+
+	// The number of container instances registered into the cluster. This includes
+	// container instances in both ACTIVE and DRAINING status.
+	RegisteredContainerInstancesCount *int64 `type:"integer"`
+
+	// The number of tasks in the cluster that are in the RUNNING state.
+	RunningTasksCount *int64 `type:"integer"`
+
+	// The status of the cluster.
+	Status *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -14835,9 +17053,27 @@ func (s AwsEcsClusterDetails) GoString() string {
 	return s.String()
 }
 
+// SetActiveServicesCount sets the ActiveServicesCount field's value.
+func (s *AwsEcsClusterDetails) SetActiveServicesCount(v int64) *AwsEcsClusterDetails {
+	s.ActiveServicesCount = &v
+	return s
+}
+
 // SetCapacityProviders sets the CapacityProviders field's value.
 func (s *AwsEcsClusterDetails) SetCapacityProviders(v []*string) *AwsEcsClusterDetails {
 	s.CapacityProviders = v
+	return s
+}
+
+// SetClusterArn sets the ClusterArn field's value.
+func (s *AwsEcsClusterDetails) SetClusterArn(v string) *AwsEcsClusterDetails {
+	s.ClusterArn = &v
+	return s
+}
+
+// SetClusterName sets the ClusterName field's value.
+func (s *AwsEcsClusterDetails) SetClusterName(v string) *AwsEcsClusterDetails {
+	s.ClusterName = &v
 	return s
 }
 
@@ -14856,6 +17092,84 @@ func (s *AwsEcsClusterDetails) SetConfiguration(v *AwsEcsClusterConfigurationDet
 // SetDefaultCapacityProviderStrategy sets the DefaultCapacityProviderStrategy field's value.
 func (s *AwsEcsClusterDetails) SetDefaultCapacityProviderStrategy(v []*AwsEcsClusterDefaultCapacityProviderStrategyDetails) *AwsEcsClusterDetails {
 	s.DefaultCapacityProviderStrategy = v
+	return s
+}
+
+// SetRegisteredContainerInstancesCount sets the RegisteredContainerInstancesCount field's value.
+func (s *AwsEcsClusterDetails) SetRegisteredContainerInstancesCount(v int64) *AwsEcsClusterDetails {
+	s.RegisteredContainerInstancesCount = &v
+	return s
+}
+
+// SetRunningTasksCount sets the RunningTasksCount field's value.
+func (s *AwsEcsClusterDetails) SetRunningTasksCount(v int64) *AwsEcsClusterDetails {
+	s.RunningTasksCount = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *AwsEcsClusterDetails) SetStatus(v string) *AwsEcsClusterDetails {
+	s.Status = &v
+	return s
+}
+
+// Provides information about an Amazon ECS container.
+type AwsEcsContainerDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The image used for the container.
+	Image *string `type:"string"`
+
+	// The mount points for data volumes in your container.
+	MountPoints []*AwsMountPoint `type:"list"`
+
+	// The name of the container.
+	Name *string `type:"string"`
+
+	// When this parameter is true, the container is given elevated privileges on
+	// the host container instance (similar to the root user).
+	Privileged *bool `type:"boolean"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEcsContainerDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEcsContainerDetails) GoString() string {
+	return s.String()
+}
+
+// SetImage sets the Image field's value.
+func (s *AwsEcsContainerDetails) SetImage(v string) *AwsEcsContainerDetails {
+	s.Image = &v
+	return s
+}
+
+// SetMountPoints sets the MountPoints field's value.
+func (s *AwsEcsContainerDetails) SetMountPoints(v []*AwsMountPoint) *AwsEcsContainerDetails {
+	s.MountPoints = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AwsEcsContainerDetails) SetName(v string) *AwsEcsContainerDetails {
+	s.Name = &v
+	return s
+}
+
+// SetPrivileged sets the Privileged field's value.
+func (s *AwsEcsContainerDetails) SetPrivileged(v bool) *AwsEcsContainerDetails {
+	s.Privileged = &v
 	return s
 }
 
@@ -15675,6 +17989,15 @@ type AwsEcsTaskDefinitionContainerDefinitionsDependsOnDetails struct {
 
 	// The dependency condition of the dependent container. Indicates the required
 	// status of the dependent container before the current container can start.
+	// Valid values are as follows:
+	//
+	//    * COMPLETE
+	//
+	//    * HEALTHY
+	//
+	//    * SUCCESS
+	//
+	//    * START
 	Condition *string `type:"string"`
 
 	// The name of the dependent container.
@@ -16159,7 +18482,7 @@ func (s *AwsEcsTaskDefinitionContainerDefinitionsEnvironmentDetails) SetValue(v 
 type AwsEcsTaskDefinitionContainerDefinitionsEnvironmentFilesDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The type of environment file.
+	// The type of environment file. The valid value is s3.
 	Type *string `type:"string"`
 
 	// The ARN of the S3 object that contains the environment variable file.
@@ -16254,7 +18577,7 @@ type AwsEcsTaskDefinitionContainerDefinitionsFirelensConfigurationDetails struct
 	//    * config-file-value. The value is either an S3 ARN or a file path.
 	Options map[string]*string `type:"map"`
 
-	// The log router to use.
+	// The log router to use. Valid values are fluentbit or fluentd.
 	Type *string `type:"string"`
 }
 
@@ -16367,11 +18690,29 @@ type AwsEcsTaskDefinitionContainerDefinitionsLinuxParametersCapabilitiesDetails 
 	_ struct{} `type:"structure"`
 
 	// The Linux capabilities for the container that are added to the default configuration
-	// provided by Docker.
+	// provided by Docker. Valid values are as follows:
+	//
+	// Valid values: "ALL" | "AUDIT_CONTROL" |"AUDIT_WRITE" | "BLOCK_SUSPEND" |
+	// "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "IPC_LOCK"
+	// | "IPC_OWNER" | "KILL" | "LEASE" | "LINUX_IMMUTABLE" | "MAC_ADMIN" |"MAC_OVERRIDE"
+	// | "MKNOD" | "NET_ADMIN" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_RAW"
+	// | "SETFCAP" | "SETGID" | "SETPCAP" | "SETUID" | "SYS_ADMIN" | "SYS_BOOT"
+	// | "SYS_CHROOT" | "SYS_MODULE" | "SYS_NICE" | "SYS_PACCT" | "SYS_PTRACE" |
+	// "SYS_RAWIO" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "SYSLOG" |
+	// "WAKE_ALARM"
 	Add []*string `type:"list"`
 
 	// The Linux capabilities for the container that are dropped from the default
 	// configuration provided by Docker.
+	//
+	// Valid values: "ALL" | "AUDIT_CONTROL" |"AUDIT_WRITE" | "BLOCK_SUSPEND" |
+	// "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "IPC_LOCK"
+	// | "IPC_OWNER" | "KILL" | "LEASE" | "LINUX_IMMUTABLE" | "MAC_ADMIN" |"MAC_OVERRIDE"
+	// | "MKNOD" | "NET_ADMIN" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_RAW"
+	// | "SETFCAP" | "SETGID" | "SETPCAP" | "SETUID" | "SYS_ADMIN" | "SYS_BOOT"
+	// | "SYS_CHROOT" | "SYS_MODULE" | "SYS_NICE" | "SYS_PACCT" | "SYS_PTRACE" |
+	// "SYS_RAWIO" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "SYSLOG" |
+	// "WAKE_ALARM"
 	Drop []*string `type:"list"`
 }
 
@@ -16555,6 +18896,13 @@ type AwsEcsTaskDefinitionContainerDefinitionsLinuxParametersTmpfsDetails struct 
 	ContainerPath *string `type:"string"`
 
 	// The list of tmpfs volume mount options.
+	//
+	// Valid values: "defaults" | "ro" | "rw" | "suid" | "nosuid" | "dev" | "nodev"
+	// |"exec" | "noexec" | "sync" | "async" | "dirsync" | "remount" | "mand" |
+	// "nomand" | "atime" | "noatime" | "diratime" | "nodiratime" | "bind" | "rbind"
+	// | "unbindable" | "runbindable" | "private" | "rprivate" | "shared" | "rshared"
+	// | "slave" | "rslave" | "relatime" | "norelatime" | "strictatime" | "nostrictatime"
+	// |"mode" | "uid" | "gid" | "nr_inodes" |"nr_blocks" | "mpol"
 	MountOptions []*string `type:"list"`
 
 	// The maximum size (in MiB) of the tmpfs volume.
@@ -16602,6 +18950,34 @@ type AwsEcsTaskDefinitionContainerDefinitionsLogConfigurationDetails struct {
 	_ struct{} `type:"structure"`
 
 	// The log driver to use for the container.
+	//
+	// Valid values on Fargate are as follows:
+	//
+	//    * awsfirelens
+	//
+	//    * awslogs
+	//
+	//    * splunk
+	//
+	// Valid values on Amazon EC2 are as follows:
+	//
+	//    * awsfirelens
+	//
+	//    * awslogs
+	//
+	//    * fluentd
+	//
+	//    * gelf
+	//
+	//    * journald
+	//
+	//    * json-file
+	//
+	//    * logentries
+	//
+	//    * splunk
+	//
+	//    * syslog
 	LogDriver *string `type:"string"`
 
 	// The configuration options to send to the log driver. Requires version 1.19
@@ -16830,7 +19206,7 @@ func (s *AwsEcsTaskDefinitionContainerDefinitionsRepositoryCredentialsDetails) S
 type AwsEcsTaskDefinitionContainerDefinitionsResourceRequirementsDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The type of resource to assign to a container.
+	// The type of resource to assign to a container. Valid values are GPU or InferenceAccelerator.
 	Type *string `type:"string"`
 
 	// The value for the specified resource type.
@@ -16964,7 +19340,37 @@ type AwsEcsTaskDefinitionContainerDefinitionsUlimitsDetails struct {
 	// The hard limit for the ulimit type.
 	HardLimit *int64 `type:"integer"`
 
-	// The type of the ulimit.
+	// The type of the ulimit. Valid values are as follows:
+	//
+	//    * core
+	//
+	//    * cpu
+	//
+	//    * data
+	//
+	//    * fsize
+	//
+	//    * locks
+	//
+	//    * memlock
+	//
+	//    * msgqueue
+	//
+	//    * nice
+	//
+	//    * nofile
+	//
+	//    * nproc
+	//
+	//    * rss
+	//
+	//    * rtprio
+	//
+	//    * rttime
+	//
+	//    * sigpending
+	//
+	//    * stack
 	Name *string `type:"string"`
 
 	// The soft limit for the ulimit type.
@@ -17049,7 +19455,7 @@ func (s *AwsEcsTaskDefinitionContainerDefinitionsVolumesFromDetails) SetSourceCo
 	return s
 }
 
-// details about a task definition. A task definition describes the container
+// Details about a task definition. A task definition describes the container
 // and volume definitions of an Amazon Elastic Container Service task.
 type AwsEcsTaskDefinitionDetails struct {
 	_ struct{} `type:"structure"`
@@ -17057,7 +19463,17 @@ type AwsEcsTaskDefinitionDetails struct {
 	// The container definitions that describe the containers that make up the task.
 	ContainerDefinitions []*AwsEcsTaskDefinitionContainerDefinitionsDetails `type:"list"`
 
-	// The number of CPU units used by the task.
+	// The number of CPU units used by the task.Valid values are as follows:
+	//
+	//    * 256 (.25 vCPU)
+	//
+	//    * 512 (.5 vCPU)
+	//
+	//    * 1024 (1 vCPU)
+	//
+	//    * 2048 (2 vCPU)
+	//
+	//    * 4096 (4 vCPU)
 	Cpu *string `type:"string"`
 
 	// The ARN of the task execution role that grants the container agent permission
@@ -17070,16 +19486,39 @@ type AwsEcsTaskDefinitionDetails struct {
 	// The Elastic Inference accelerators to use for the containers in the task.
 	InferenceAccelerators []*AwsEcsTaskDefinitionInferenceAcceleratorsDetails `type:"list"`
 
-	// The IPC resource namespace to use for the containers in the task.
+	// The inter-process communication (IPC) resource namespace to use for the containers
+	// in the task. Valid values are as follows:
+	//
+	//    * host
+	//
+	//    * none
+	//
+	//    * task
 	IpcMode *string `type:"string"`
 
 	// The amount (in MiB) of memory used by the task.
+	//
+	// For tasks that are hosted on Amazon EC2, you can provide a task-level memory
+	// value or a container-level memory value. For tasks that are hosted on Fargate,
+	// you must use one of the specified values (https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size)
+	// in the Amazon Elastic Container Service Developer Guide , which determines
+	// your range of supported values for the Cpu and Memory parameters.
 	Memory *string `type:"string"`
 
-	// The Docker networking mode to use for the containers in the task.
+	// The Docker networking mode to use for the containers in the task. Valid values
+	// are as follows:
+	//
+	//    * awsvpc
+	//
+	//    * bridge
+	//
+	//    * host
+	//
+	//    * none
 	NetworkMode *string `type:"string"`
 
-	// The process namespace to use for the containers in the task.
+	// The process namespace to use for the containers in the task. Valid values
+	// are host or task.
 	PidMode *string `type:"string"`
 
 	// The placement constraint objects to use for tasks.
@@ -17456,7 +19895,7 @@ type AwsEcsTaskDefinitionVolumesDockerVolumeConfigurationDetails struct {
 	// The scope for the Docker volume that determines its lifecycle. Docker volumes
 	// that are scoped to a task are provisioned automatically when the task starts
 	// and destroyed when the task stops. Docker volumes that are shared persist
-	// after the task stops.
+	// after the task stops. Valid values are shared or task.
 	Scope *string `type:"string"`
 }
 
@@ -17653,6 +20092,424 @@ func (s *AwsEcsTaskDefinitionVolumesHostDetails) SetSourcePath(v string) *AwsEcs
 	return s
 }
 
+// Provides details about a task in a cluster.
+type AwsEcsTaskDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the cluster that hosts the task.
+	ClusterArn *string `type:"string"`
+
+	// The containers that are associated with the task.
+	Containers []*AwsEcsContainerDetails `type:"list"`
+
+	// The Unix timestamp for the time when the task was created. More specifically,
+	// it's for the time when the task entered the PENDING state.
+	CreatedAt *string `type:"string"`
+
+	// The name of the task group that's associated with the task.
+	Group *string `type:"string"`
+
+	// The Unix timestamp for the time when the task started. More specifically,
+	// it's for the time when the task transitioned from the PENDING state to the
+	// RUNNING state.
+	StartedAt *string `type:"string"`
+
+	// The tag specified when a task is started. If an Amazon ECS service started
+	// the task, the startedBy parameter contains the deployment ID of that service.
+	StartedBy *string `type:"string"`
+
+	// The ARN of the task definition that creates the task.
+	TaskDefinitionArn *string `type:"string"`
+
+	// The version counter for the task.
+	Version *string `type:"string"`
+
+	// Details about the data volume that is used in a task definition.
+	Volumes []*AwsEcsTaskVolumeDetails `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEcsTaskDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEcsTaskDetails) GoString() string {
+	return s.String()
+}
+
+// SetClusterArn sets the ClusterArn field's value.
+func (s *AwsEcsTaskDetails) SetClusterArn(v string) *AwsEcsTaskDetails {
+	s.ClusterArn = &v
+	return s
+}
+
+// SetContainers sets the Containers field's value.
+func (s *AwsEcsTaskDetails) SetContainers(v []*AwsEcsContainerDetails) *AwsEcsTaskDetails {
+	s.Containers = v
+	return s
+}
+
+// SetCreatedAt sets the CreatedAt field's value.
+func (s *AwsEcsTaskDetails) SetCreatedAt(v string) *AwsEcsTaskDetails {
+	s.CreatedAt = &v
+	return s
+}
+
+// SetGroup sets the Group field's value.
+func (s *AwsEcsTaskDetails) SetGroup(v string) *AwsEcsTaskDetails {
+	s.Group = &v
+	return s
+}
+
+// SetStartedAt sets the StartedAt field's value.
+func (s *AwsEcsTaskDetails) SetStartedAt(v string) *AwsEcsTaskDetails {
+	s.StartedAt = &v
+	return s
+}
+
+// SetStartedBy sets the StartedBy field's value.
+func (s *AwsEcsTaskDetails) SetStartedBy(v string) *AwsEcsTaskDetails {
+	s.StartedBy = &v
+	return s
+}
+
+// SetTaskDefinitionArn sets the TaskDefinitionArn field's value.
+func (s *AwsEcsTaskDetails) SetTaskDefinitionArn(v string) *AwsEcsTaskDetails {
+	s.TaskDefinitionArn = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *AwsEcsTaskDetails) SetVersion(v string) *AwsEcsTaskDetails {
+	s.Version = &v
+	return s
+}
+
+// SetVolumes sets the Volumes field's value.
+func (s *AwsEcsTaskDetails) SetVolumes(v []*AwsEcsTaskVolumeDetails) *AwsEcsTaskDetails {
+	s.Volumes = v
+	return s
+}
+
+// Provides information about a data volume that's used in a task definition.
+type AwsEcsTaskVolumeDetails struct {
+	_ struct{} `type:"structure"`
+
+	// This parameter is specified when you use bind mount host volumes. The contents
+	// of the host parameter determine whether your bind mount host volume persists
+	// on the host container instance and where it's stored.
+	Host *AwsEcsTaskVolumeHostDetails `type:"structure"`
+
+	// The name of the volume. Up to 255 letters (uppercase and lowercase), numbers,
+	// underscores, and hyphens are allowed. This name is referenced in the sourceVolume
+	// parameter of container definition mountPoints.
+	Name *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEcsTaskVolumeDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEcsTaskVolumeDetails) GoString() string {
+	return s.String()
+}
+
+// SetHost sets the Host field's value.
+func (s *AwsEcsTaskVolumeDetails) SetHost(v *AwsEcsTaskVolumeHostDetails) *AwsEcsTaskVolumeDetails {
+	s.Host = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AwsEcsTaskVolumeDetails) SetName(v string) *AwsEcsTaskVolumeDetails {
+	s.Name = &v
+	return s
+}
+
+// Provides details on a container instance bind mount host volume.
+type AwsEcsTaskVolumeHostDetails struct {
+	_ struct{} `type:"structure"`
+
+	// When the host parameter is used, specify a sourcePath to declare the path
+	// on the host container instance that's presented to the container.
+	SourcePath *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEcsTaskVolumeHostDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEcsTaskVolumeHostDetails) GoString() string {
+	return s.String()
+}
+
+// SetSourcePath sets the SourcePath field's value.
+func (s *AwsEcsTaskVolumeHostDetails) SetSourcePath(v string) *AwsEcsTaskVolumeHostDetails {
+	s.SourcePath = &v
+	return s
+}
+
+// Provides information about an Amazon EFS access point.
+type AwsEfsAccessPointDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the Amazon EFS access point.
+	AccessPointId *string `type:"string"`
+
+	// The Amazon Resource Name (ARN) of the Amazon EFS access point.
+	Arn *string `type:"string"`
+
+	// The opaque string specified in the request to ensure idempotent creation.
+	ClientToken *string `type:"string"`
+
+	// The ID of the Amazon EFS file system that the access point applies to.
+	FileSystemId *string `type:"string"`
+
+	// The full POSIX identity, including the user ID, group ID, and secondary group
+	// IDs on the access point, that is used for all file operations by NFS clients
+	// using the access point.
+	PosixUser *AwsEfsAccessPointPosixUserDetails `type:"structure"`
+
+	// The directory on the Amazon EFS file system that the access point exposes
+	// as the root directory to NFS clients using the access point.
+	RootDirectory *AwsEfsAccessPointRootDirectoryDetails `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEfsAccessPointDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEfsAccessPointDetails) GoString() string {
+	return s.String()
+}
+
+// SetAccessPointId sets the AccessPointId field's value.
+func (s *AwsEfsAccessPointDetails) SetAccessPointId(v string) *AwsEfsAccessPointDetails {
+	s.AccessPointId = &v
+	return s
+}
+
+// SetArn sets the Arn field's value.
+func (s *AwsEfsAccessPointDetails) SetArn(v string) *AwsEfsAccessPointDetails {
+	s.Arn = &v
+	return s
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *AwsEfsAccessPointDetails) SetClientToken(v string) *AwsEfsAccessPointDetails {
+	s.ClientToken = &v
+	return s
+}
+
+// SetFileSystemId sets the FileSystemId field's value.
+func (s *AwsEfsAccessPointDetails) SetFileSystemId(v string) *AwsEfsAccessPointDetails {
+	s.FileSystemId = &v
+	return s
+}
+
+// SetPosixUser sets the PosixUser field's value.
+func (s *AwsEfsAccessPointDetails) SetPosixUser(v *AwsEfsAccessPointPosixUserDetails) *AwsEfsAccessPointDetails {
+	s.PosixUser = v
+	return s
+}
+
+// SetRootDirectory sets the RootDirectory field's value.
+func (s *AwsEfsAccessPointDetails) SetRootDirectory(v *AwsEfsAccessPointRootDirectoryDetails) *AwsEfsAccessPointDetails {
+	s.RootDirectory = v
+	return s
+}
+
+// Provides details for all file system operations using this Amazon EFS access
+// point.
+type AwsEfsAccessPointPosixUserDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The POSIX group ID used for all file system operations using this access
+	// point.
+	Gid *string `type:"string"`
+
+	// Secondary POSIX group IDs used for all file system operations using this
+	// access point.
+	SecondaryGids []*string `type:"list"`
+
+	// The POSIX user ID used for all file system operations using this access point.
+	Uid *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEfsAccessPointPosixUserDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEfsAccessPointPosixUserDetails) GoString() string {
+	return s.String()
+}
+
+// SetGid sets the Gid field's value.
+func (s *AwsEfsAccessPointPosixUserDetails) SetGid(v string) *AwsEfsAccessPointPosixUserDetails {
+	s.Gid = &v
+	return s
+}
+
+// SetSecondaryGids sets the SecondaryGids field's value.
+func (s *AwsEfsAccessPointPosixUserDetails) SetSecondaryGids(v []*string) *AwsEfsAccessPointPosixUserDetails {
+	s.SecondaryGids = v
+	return s
+}
+
+// SetUid sets the Uid field's value.
+func (s *AwsEfsAccessPointPosixUserDetails) SetUid(v string) *AwsEfsAccessPointPosixUserDetails {
+	s.Uid = &v
+	return s
+}
+
+// Provides information about the settings that Amazon EFS uses to create the
+// root directory when a client connects to an access point.
+type AwsEfsAccessPointRootDirectoryCreationInfoDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the POSIX group ID to apply to the root directory.
+	OwnerGid *string `type:"string"`
+
+	// Specifies the POSIX user ID to apply to the root directory.
+	OwnerUid *string `type:"string"`
+
+	// Specifies the POSIX permissions to apply to the root directory, in the format
+	// of an octal number representing the file's mode bits.
+	Permissions *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEfsAccessPointRootDirectoryCreationInfoDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEfsAccessPointRootDirectoryCreationInfoDetails) GoString() string {
+	return s.String()
+}
+
+// SetOwnerGid sets the OwnerGid field's value.
+func (s *AwsEfsAccessPointRootDirectoryCreationInfoDetails) SetOwnerGid(v string) *AwsEfsAccessPointRootDirectoryCreationInfoDetails {
+	s.OwnerGid = &v
+	return s
+}
+
+// SetOwnerUid sets the OwnerUid field's value.
+func (s *AwsEfsAccessPointRootDirectoryCreationInfoDetails) SetOwnerUid(v string) *AwsEfsAccessPointRootDirectoryCreationInfoDetails {
+	s.OwnerUid = &v
+	return s
+}
+
+// SetPermissions sets the Permissions field's value.
+func (s *AwsEfsAccessPointRootDirectoryCreationInfoDetails) SetPermissions(v string) *AwsEfsAccessPointRootDirectoryCreationInfoDetails {
+	s.Permissions = &v
+	return s
+}
+
+// Provides information about the directory on the Amazon EFS file system that
+// the access point exposes as the root directory to NFS clients using the access
+// point.
+type AwsEfsAccessPointRootDirectoryDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the POSIX IDs and permissions to apply to the access point's root
+	// directory.
+	CreationInfo *AwsEfsAccessPointRootDirectoryCreationInfoDetails `type:"structure"`
+
+	// Specifies the path on the Amazon EFS file system to expose as the root directory
+	// to NFS clients using the access point to access the EFS file system. A path
+	// can have up to four subdirectories. If the specified path does not exist,
+	// you are required to provide CreationInfo.
+	Path *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEfsAccessPointRootDirectoryDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsEfsAccessPointRootDirectoryDetails) GoString() string {
+	return s.String()
+}
+
+// SetCreationInfo sets the CreationInfo field's value.
+func (s *AwsEfsAccessPointRootDirectoryDetails) SetCreationInfo(v *AwsEfsAccessPointRootDirectoryCreationInfoDetails) *AwsEfsAccessPointRootDirectoryDetails {
+	s.CreationInfo = v
+	return s
+}
+
+// SetPath sets the Path field's value.
+func (s *AwsEfsAccessPointRootDirectoryDetails) SetPath(v string) *AwsEfsAccessPointRootDirectoryDetails {
+	s.Path = &v
+	return s
+}
+
 // Provides details about an Amazon EKS cluster.
 type AwsEksClusterDetails struct {
 	_ struct{} `type:"structure"`
@@ -17663,7 +20520,19 @@ type AwsEksClusterDetails struct {
 	// The certificate authority data for the cluster.
 	CertificateAuthorityData *string `type:"string"`
 
-	// The status of the cluster.
+	// The status of the cluster. Valid values are as follows:
+	//
+	//    * ACTIVE
+	//
+	//    * CREATING
+	//
+	//    * DELETING
+	//
+	//    * FAILED
+	//
+	//    * PENDING
+	//
+	//    * UPDATING
 	ClusterStatus *string `type:"string"`
 
 	// The endpoint for the Amazon EKS API server.
@@ -17765,7 +20634,17 @@ type AwsEksClusterLoggingClusterLoggingDetails struct {
 	// Whether the logging types that are listed in Types are enabled.
 	Enabled *bool `type:"boolean"`
 
-	// A list of logging types.
+	// A list of logging types. Valid values are as follows:
+	//
+	//    * api
+	//
+	//    * audit
+	//
+	//    * authenticator
+	//
+	//    * controllerManager
+	//
+	//    * scheduler
 	Types []*string `type:"list"`
 }
 
@@ -17918,7 +20797,23 @@ type AwsElasticBeanstalkEnvironmentDetails struct {
 	// The name of the solution stack that is deployed with the environment.
 	SolutionStackName *string `type:"string"`
 
-	// The current operational status of the environment.
+	// The current operational status of the environment. Valid values are as follows:
+	//
+	//    * Aborting
+	//
+	//    * Launching
+	//
+	//    * LinkingFrom
+	//
+	//    * LinkingTo
+	//
+	//    * Ready
+	//
+	//    * Terminated
+	//
+	//    * Terminating
+	//
+	//    * Updating
 	Status *string `type:"string"`
 
 	// The tier of the environment.
@@ -18147,10 +21042,10 @@ func (s *AwsElasticBeanstalkEnvironmentOptionSetting) SetValue(v string) *AwsEla
 type AwsElasticBeanstalkEnvironmentTier struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the environment tier.
+	// The name of the environment tier. Valid values are WebServer or Worker.
 	Name *string `type:"string"`
 
-	// The type of environment tier.
+	// The type of environment tier. Valid values are Standard or SQS/HTTP.
 	Type *string `type:"string"`
 
 	// The version of the environment tier.
@@ -18408,14 +21303,22 @@ type AwsElasticsearchDomainElasticsearchClusterConfigDetails struct {
 	DedicatedMasterEnabled *bool `type:"boolean"`
 
 	// The hardware configuration of the computer that hosts the dedicated master
-	// node. For example, m3.medium.elasticsearch. If this attribute is specified,
+	// node. A sample value is m3.medium.elasticsearch. If this attribute is specified,
 	// then DedicatedMasterEnabled must be true.
+	//
+	// For a list of valid values, see Supported instance types in Amazon OpenSearch
+	// Service (https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html)
+	// in the Amazon OpenSearch Service Developer Guide.
 	DedicatedMasterType *string `type:"string"`
 
 	// The number of data nodes to use in the Elasticsearch domain.
 	InstanceCount *int64 `type:"integer"`
 
 	// The instance type for your data nodes. For example, m3.medium.elasticsearch.
+	//
+	// For a list of valid values, see Supported instance types in Amazon OpenSearch
+	// Service (https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html)
+	// in the Amazon OpenSearch Service Developer Guide.
 	InstanceType *string `type:"string"`
 
 	// Configuration options for zone awareness. Provided if ZoneAwarenessEnabled
@@ -18710,7 +21613,17 @@ type AwsElasticsearchDomainServiceSoftwareOptions struct {
 	// Whether a service software update is available for the domain.
 	UpdateAvailable *bool `type:"boolean"`
 
-	// The status of the service software update.
+	// The status of the service software update. Valid values are as follows:
+	//
+	//    * COMPLETED
+	//
+	//    * ELIGIBLE
+	//
+	//    * IN_PROGRESS
+	//
+	//    * NOT_ELIGIBLE
+	//
+	//    * PENDING_UPDATE
 	UpdateStatus *string `type:"string"`
 }
 
@@ -18983,6 +21896,47 @@ func (s *AwsElbLoadBalancerAccessLog) SetS3BucketPrefix(v string) *AwsElbLoadBal
 	return s
 }
 
+// Provides information about additional attributes for the load balancer.
+type AwsElbLoadBalancerAdditionalAttribute struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the attribute.
+	Key *string `type:"string"`
+
+	// The value of the attribute.
+	Value *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsElbLoadBalancerAdditionalAttribute) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsElbLoadBalancerAdditionalAttribute) GoString() string {
+	return s.String()
+}
+
+// SetKey sets the Key field's value.
+func (s *AwsElbLoadBalancerAdditionalAttribute) SetKey(v string) *AwsElbLoadBalancerAdditionalAttribute {
+	s.Key = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *AwsElbLoadBalancerAdditionalAttribute) SetValue(v string) *AwsElbLoadBalancerAdditionalAttribute {
+	s.Value = &v
+	return s
+}
+
 // Contains attributes for the load balancer.
 type AwsElbLoadBalancerAttributes struct {
 	_ struct{} `type:"structure"`
@@ -18992,6 +21946,9 @@ type AwsElbLoadBalancerAttributes struct {
 	// If the access log is enabled, the load balancer captures detailed information
 	// about all requests. It delivers the information to a specified S3 bucket.
 	AccessLog *AwsElbLoadBalancerAccessLog `type:"structure"`
+
+	// Any additional attributes for a load balancer.
+	AdditionalAttributes []*AwsElbLoadBalancerAdditionalAttribute `type:"list"`
 
 	// Information about the connection draining configuration for the load balancer.
 	//
@@ -19035,6 +21992,12 @@ func (s AwsElbLoadBalancerAttributes) GoString() string {
 // SetAccessLog sets the AccessLog field's value.
 func (s *AwsElbLoadBalancerAttributes) SetAccessLog(v *AwsElbLoadBalancerAccessLog) *AwsElbLoadBalancerAttributes {
 	s.AccessLog = v
+	return s
+}
+
+// SetAdditionalAttributes sets the AdditionalAttributes field's value.
+func (s *AwsElbLoadBalancerAttributes) SetAdditionalAttributes(v []*AwsElbLoadBalancerAdditionalAttribute) *AwsElbLoadBalancerAttributes {
+	s.AdditionalAttributes = v
 	return s
 }
 
@@ -21037,6 +24000,120 @@ func (s *AwsIamUserPolicy) SetPolicyName(v string) *AwsIamUserPolicy {
 	return s
 }
 
+// Provides information about an Amazon Kinesis data stream.
+type AwsKinesisStreamDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the Kinesis data stream.
+	Arn *string `type:"string"`
+
+	// The name of the Kinesis stream. If you don't specify a name, CloudFront generates
+	// a unique physical ID and uses that ID for the stream name.
+	Name *string `type:"string"`
+
+	// The number of hours for the data records that are stored in shards to remain
+	// accessible.
+	RetentionPeriodHours *int64 `type:"integer"`
+
+	// The number of shards that the stream uses.
+	ShardCount *int64 `type:"integer"`
+
+	// When specified, enables or updates server-side encryption using an KMS key
+	// for a specified stream. Removing this property from your stack template and
+	// updating your stack disables encryption.
+	StreamEncryption *AwsKinesisStreamStreamEncryptionDetails `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsKinesisStreamDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsKinesisStreamDetails) GoString() string {
+	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *AwsKinesisStreamDetails) SetArn(v string) *AwsKinesisStreamDetails {
+	s.Arn = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AwsKinesisStreamDetails) SetName(v string) *AwsKinesisStreamDetails {
+	s.Name = &v
+	return s
+}
+
+// SetRetentionPeriodHours sets the RetentionPeriodHours field's value.
+func (s *AwsKinesisStreamDetails) SetRetentionPeriodHours(v int64) *AwsKinesisStreamDetails {
+	s.RetentionPeriodHours = &v
+	return s
+}
+
+// SetShardCount sets the ShardCount field's value.
+func (s *AwsKinesisStreamDetails) SetShardCount(v int64) *AwsKinesisStreamDetails {
+	s.ShardCount = &v
+	return s
+}
+
+// SetStreamEncryption sets the StreamEncryption field's value.
+func (s *AwsKinesisStreamDetails) SetStreamEncryption(v *AwsKinesisStreamStreamEncryptionDetails) *AwsKinesisStreamDetails {
+	s.StreamEncryption = v
+	return s
+}
+
+// Provides information about stream encryption.
+type AwsKinesisStreamStreamEncryptionDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The encryption type to use.
+	EncryptionType *string `type:"string"`
+
+	// The globally unique identifier for the customer-managed KMS key to use for
+	// encryption.
+	KeyId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsKinesisStreamStreamEncryptionDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsKinesisStreamStreamEncryptionDetails) GoString() string {
+	return s.String()
+}
+
+// SetEncryptionType sets the EncryptionType field's value.
+func (s *AwsKinesisStreamStreamEncryptionDetails) SetEncryptionType(v string) *AwsKinesisStreamStreamEncryptionDetails {
+	s.EncryptionType = &v
+	return s
+}
+
+// SetKeyId sets the KeyId field's value.
+func (s *AwsKinesisStreamStreamEncryptionDetails) SetKeyId(v string) *AwsKinesisStreamStreamEncryptionDetails {
+	s.KeyId = &v
+	return s
+}
+
 // Contains metadata about an KMS key.
 type AwsKmsKeyDetails struct {
 	_ struct{} `type:"structure"`
@@ -21052,7 +24129,7 @@ type AwsKmsKeyDetails struct {
 	// contain spaces. For example, 2020-03-22T13:22:13.933Z.
 	CreationDate *float64 `type:"double"`
 
-	// A description of the key.
+	// A description of the KMS key.
 	Description *string `type:"string"`
 
 	// The globally unique identifier for the KMS key.
@@ -21065,7 +24142,17 @@ type AwsKmsKeyDetails struct {
 	// Whether the key has key rotation enabled.
 	KeyRotationStatus *bool `type:"boolean"`
 
-	// The state of the KMS key.
+	// The state of the KMS key. Valid values are as follows:
+	//
+	//    * Disabled
+	//
+	//    * Enabled
+	//
+	//    * PendingDeletion
+	//
+	//    * PendingImport
+	//
+	//    * Unavailable
 	KeyState *string `type:"string"`
 
 	// The source of the KMS key material.
@@ -21694,6 +24781,48 @@ func (s *AwsLambdaLayerVersionDetails) SetVersion(v int64) *AwsLambdaLayerVersio
 	return s
 }
 
+// Details for a volume mount point that's used in a container definition.
+type AwsMountPoint struct {
+	_ struct{} `type:"structure"`
+
+	// The path on the container to mount the host volume at.
+	ContainerPath *string `type:"string"`
+
+	// The name of the volume to mount. Must be a volume name referenced in the
+	// name parameter of task definition volume.
+	SourceVolume *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsMountPoint) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsMountPoint) GoString() string {
+	return s.String()
+}
+
+// SetContainerPath sets the ContainerPath field's value.
+func (s *AwsMountPoint) SetContainerPath(v string) *AwsMountPoint {
+	s.ContainerPath = &v
+	return s
+}
+
+// SetSourceVolume sets the SourceVolume field's value.
+func (s *AwsMountPoint) SetSourceVolume(v string) *AwsMountPoint {
+	s.SourceVolume = &v
+	return s
+}
+
 // Details about an Network Firewall firewall.
 type AwsNetworkFirewallFirewallDetails struct {
 	_ struct{} `type:"structure"`
@@ -22002,6 +25131,56 @@ func (s *AwsNetworkFirewallRuleGroupDetails) SetType(v string) *AwsNetworkFirewa
 	return s
 }
 
+// Provides information about domain access control options.
+type AwsOpenSearchServiceDomainAdvancedSecurityOptionsDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Enables fine-grained access control.
+	Enabled *bool `type:"boolean"`
+
+	// Enables the internal user database.
+	InternalUserDatabaseEnabled *bool `type:"boolean"`
+
+	// Specifies information about the master user of the domain.
+	MasterUserOptions *AwsOpenSearchServiceDomainMasterUserOptionsDetails `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsOpenSearchServiceDomainAdvancedSecurityOptionsDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsOpenSearchServiceDomainAdvancedSecurityOptionsDetails) GoString() string {
+	return s.String()
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *AwsOpenSearchServiceDomainAdvancedSecurityOptionsDetails) SetEnabled(v bool) *AwsOpenSearchServiceDomainAdvancedSecurityOptionsDetails {
+	s.Enabled = &v
+	return s
+}
+
+// SetInternalUserDatabaseEnabled sets the InternalUserDatabaseEnabled field's value.
+func (s *AwsOpenSearchServiceDomainAdvancedSecurityOptionsDetails) SetInternalUserDatabaseEnabled(v bool) *AwsOpenSearchServiceDomainAdvancedSecurityOptionsDetails {
+	s.InternalUserDatabaseEnabled = &v
+	return s
+}
+
+// SetMasterUserOptions sets the MasterUserOptions field's value.
+func (s *AwsOpenSearchServiceDomainAdvancedSecurityOptionsDetails) SetMasterUserOptions(v *AwsOpenSearchServiceDomainMasterUserOptionsDetails) *AwsOpenSearchServiceDomainAdvancedSecurityOptionsDetails {
+	s.MasterUserOptions = v
+	return s
+}
+
 // Details about the configuration of an OpenSearch cluster.
 type AwsOpenSearchServiceDomainClusterConfigDetails struct {
 	_ struct{} `type:"structure"`
@@ -22025,6 +25204,10 @@ type AwsOpenSearchServiceDomainClusterConfigDetails struct {
 	InstanceCount *int64 `type:"integer"`
 
 	// The instance type for your data nodes.
+	//
+	// For a list of valid values, see Supported instance types in Amazon OpenSearch
+	// Service (https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html)
+	// in the Amazon OpenSearch Service Developer Guide.
 	InstanceType *string `type:"string"`
 
 	// The number of UltraWarm instances.
@@ -22130,7 +25313,7 @@ type AwsOpenSearchServiceDomainClusterConfigZoneAwarenessConfigDetails struct {
 	_ struct{} `type:"structure"`
 
 	// The number of Availability Zones that the domain uses. Valid values are 2
-	// and 3. The default is 2.
+	// or 3. The default is 2.
 	AvailabilityZoneCount *int64 `type:"integer"`
 }
 
@@ -22165,6 +25348,9 @@ type AwsOpenSearchServiceDomainDetails struct {
 	// IAM policy document that specifies the access policies for the OpenSearch
 	// Service domain.
 	AccessPolicies *string `type:"string"`
+
+	// Specifies options for fine-grained access control.
+	AdvancedSecurityOptions *AwsOpenSearchServiceDomainAdvancedSecurityOptionsDetails `type:"structure"`
 
 	// The ARN of the OpenSearch Service domain.
 	Arn *string `type:"string"`
@@ -22230,6 +25416,12 @@ func (s AwsOpenSearchServiceDomainDetails) GoString() string {
 // SetAccessPolicies sets the AccessPolicies field's value.
 func (s *AwsOpenSearchServiceDomainDetails) SetAccessPolicies(v string) *AwsOpenSearchServiceDomainDetails {
 	s.AccessPolicies = &v
+	return s
+}
+
+// SetAdvancedSecurityOptions sets the AdvancedSecurityOptions field's value.
+func (s *AwsOpenSearchServiceDomainDetails) SetAdvancedSecurityOptions(v *AwsOpenSearchServiceDomainAdvancedSecurityOptionsDetails) *AwsOpenSearchServiceDomainDetails {
+	s.AdvancedSecurityOptions = v
 	return s
 }
 
@@ -22513,6 +25705,56 @@ func (s *AwsOpenSearchServiceDomainLogPublishingOptionsDetails) SetSearchSlowLog
 	return s
 }
 
+// Specifies information about the master user of the domain.
+type AwsOpenSearchServiceDomainMasterUserOptionsDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) for the master user.
+	MasterUserArn *string `type:"string"`
+
+	// The username for the master user.
+	MasterUserName *string `type:"string"`
+
+	// The password for the master user.
+	MasterUserPassword *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsOpenSearchServiceDomainMasterUserOptionsDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsOpenSearchServiceDomainMasterUserOptionsDetails) GoString() string {
+	return s.String()
+}
+
+// SetMasterUserArn sets the MasterUserArn field's value.
+func (s *AwsOpenSearchServiceDomainMasterUserOptionsDetails) SetMasterUserArn(v string) *AwsOpenSearchServiceDomainMasterUserOptionsDetails {
+	s.MasterUserArn = &v
+	return s
+}
+
+// SetMasterUserName sets the MasterUserName field's value.
+func (s *AwsOpenSearchServiceDomainMasterUserOptionsDetails) SetMasterUserName(v string) *AwsOpenSearchServiceDomainMasterUserOptionsDetails {
+	s.MasterUserName = &v
+	return s
+}
+
+// SetMasterUserPassword sets the MasterUserPassword field's value.
+func (s *AwsOpenSearchServiceDomainMasterUserOptionsDetails) SetMasterUserPassword(v string) *AwsOpenSearchServiceDomainMasterUserOptionsDetails {
+	s.MasterUserPassword = &v
+	return s
+}
+
 // Provides details about the configuration for node-to-node encryption.
 type AwsOpenSearchServiceDomainNodeToNodeEncryptionOptionsDetails struct {
 	_ struct{} `type:"structure"`
@@ -22572,7 +25814,17 @@ type AwsOpenSearchServiceDomainServiceSoftwareOptionsDetails struct {
 	// Whether a service software update is available for the domain.
 	UpdateAvailable *bool `type:"boolean"`
 
-	// The status of the service software update.
+	// The status of the service software update. Valid values are as follows:
+	//
+	//    * COMPLETED
+	//
+	//    * ELIGIBLE
+	//
+	//    * IN_PROGRESS
+	//
+	//    * NOT_ELIGIBLE
+	//
+	//    * PENDING_UPDATE
 	UpdateStatus *string `type:"string"`
 }
 
@@ -22692,7 +25944,14 @@ type AwsRdsDbClusterAssociatedRole struct {
 	// The ARN of the IAM role.
 	RoleArn *string `type:"string"`
 
-	// The status of the association between the IAM role and the DB cluster.
+	// The status of the association between the IAM role and the DB cluster. Valid
+	// values are as follows:
+	//
+	//    * ACTIVE
+	//
+	//    * INVALID
+	//
+	//    * PENDING
 	Status *string `type:"string"`
 }
 
@@ -22730,7 +25989,15 @@ func (s *AwsRdsDbClusterAssociatedRole) SetStatus(v string) *AwsRdsDbClusterAsso
 type AwsRdsDbClusterDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The status of the database activity stream.
+	// The status of the database activity stream. Valid values are as follows:
+	//
+	//    * started
+	//
+	//    * starting
+	//
+	//    * stopped
+	//
+	//    * stopping
 	ActivityStreamStatus *string `type:"string"`
 
 	// For all database engines except Aurora, specifies the allocated storage size
@@ -22803,10 +26070,27 @@ type AwsRdsDbClusterDetails struct {
 	// The connection endpoint for the primary instance of the DB cluster.
 	Endpoint *string `type:"string"`
 
-	// The name of the database engine to use for this DB cluster.
+	// The name of the database engine to use for this DB cluster. Valid values
+	// are as follows:
+	//
+	//    * aurora
+	//
+	//    * aurora-mysql
+	//
+	//    * aurora-postgresql
 	Engine *string `type:"string"`
 
-	// The database engine mode of the DB cluster.
+	// The database engine mode of the DB cluster.Valid values are as follows:
+	//
+	//    * global
+	//
+	//    * multimaster
+	//
+	//    * parallelquery
+	//
+	//    * provisioned
+	//
+	//    * serverless
 	EngineMode *string `type:"string"`
 
 	// The version number of the database engine to use.
@@ -24461,7 +27745,7 @@ func (s *AwsRdsDbPendingModifiedValues) SetStorageType(v string) *AwsRdsDbPendin
 type AwsRdsDbProcessorFeature struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the processor feature.
+	// The name of the processor feature. Valid values are coreCount or threadsPerCore.
 	Name *string `type:"string"`
 
 	// The value of the processor feature.
@@ -24498,6 +27782,193 @@ func (s *AwsRdsDbProcessorFeature) SetValue(v string) *AwsRdsDbProcessorFeature 
 	return s
 }
 
+// Provides information about an Amazon RDS DB security group.
+type AwsRdsDbSecurityGroupDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN for the DB security group.
+	DbSecurityGroupArn *string `type:"string"`
+
+	// Provides the description of the DB security group.
+	DbSecurityGroupDescription *string `type:"string"`
+
+	// Specifies the name of the DB security group.
+	DbSecurityGroupName *string `type:"string"`
+
+	// Contains a list of EC2 security groups.
+	Ec2SecurityGroups []*AwsRdsDbSecurityGroupEc2SecurityGroup `type:"list"`
+
+	// Contains a list of IP ranges.
+	IpRanges []*AwsRdsDbSecurityGroupIpRange `type:"list"`
+
+	// Provides the Amazon Web Services ID of the owner of a specific DB security
+	// group.
+	OwnerId *string `type:"string"`
+
+	// Provides VPC ID associated with the DB security group.
+	VpcId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsRdsDbSecurityGroupDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsRdsDbSecurityGroupDetails) GoString() string {
+	return s.String()
+}
+
+// SetDbSecurityGroupArn sets the DbSecurityGroupArn field's value.
+func (s *AwsRdsDbSecurityGroupDetails) SetDbSecurityGroupArn(v string) *AwsRdsDbSecurityGroupDetails {
+	s.DbSecurityGroupArn = &v
+	return s
+}
+
+// SetDbSecurityGroupDescription sets the DbSecurityGroupDescription field's value.
+func (s *AwsRdsDbSecurityGroupDetails) SetDbSecurityGroupDescription(v string) *AwsRdsDbSecurityGroupDetails {
+	s.DbSecurityGroupDescription = &v
+	return s
+}
+
+// SetDbSecurityGroupName sets the DbSecurityGroupName field's value.
+func (s *AwsRdsDbSecurityGroupDetails) SetDbSecurityGroupName(v string) *AwsRdsDbSecurityGroupDetails {
+	s.DbSecurityGroupName = &v
+	return s
+}
+
+// SetEc2SecurityGroups sets the Ec2SecurityGroups field's value.
+func (s *AwsRdsDbSecurityGroupDetails) SetEc2SecurityGroups(v []*AwsRdsDbSecurityGroupEc2SecurityGroup) *AwsRdsDbSecurityGroupDetails {
+	s.Ec2SecurityGroups = v
+	return s
+}
+
+// SetIpRanges sets the IpRanges field's value.
+func (s *AwsRdsDbSecurityGroupDetails) SetIpRanges(v []*AwsRdsDbSecurityGroupIpRange) *AwsRdsDbSecurityGroupDetails {
+	s.IpRanges = v
+	return s
+}
+
+// SetOwnerId sets the OwnerId field's value.
+func (s *AwsRdsDbSecurityGroupDetails) SetOwnerId(v string) *AwsRdsDbSecurityGroupDetails {
+	s.OwnerId = &v
+	return s
+}
+
+// SetVpcId sets the VpcId field's value.
+func (s *AwsRdsDbSecurityGroupDetails) SetVpcId(v string) *AwsRdsDbSecurityGroupDetails {
+	s.VpcId = &v
+	return s
+}
+
+// EC2 security group information for an RDS DB security group.
+type AwsRdsDbSecurityGroupEc2SecurityGroup struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the ID for the EC2 security group.
+	Ec2SecurityGroupId *string `type:"string"`
+
+	// Specifies the name of the EC2 security group.
+	Ec2SecurityGroupName *string `type:"string"`
+
+	// Provides the Amazon Web Services ID of the owner of the EC2 security group.
+	Ec2SecurityGroupOwnerId *string `type:"string"`
+
+	// Provides the status of the EC2 security group.
+	Status *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsRdsDbSecurityGroupEc2SecurityGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsRdsDbSecurityGroupEc2SecurityGroup) GoString() string {
+	return s.String()
+}
+
+// SetEc2SecurityGroupId sets the Ec2SecurityGroupId field's value.
+func (s *AwsRdsDbSecurityGroupEc2SecurityGroup) SetEc2SecurityGroupId(v string) *AwsRdsDbSecurityGroupEc2SecurityGroup {
+	s.Ec2SecurityGroupId = &v
+	return s
+}
+
+// SetEc2SecurityGroupName sets the Ec2SecurityGroupName field's value.
+func (s *AwsRdsDbSecurityGroupEc2SecurityGroup) SetEc2SecurityGroupName(v string) *AwsRdsDbSecurityGroupEc2SecurityGroup {
+	s.Ec2SecurityGroupName = &v
+	return s
+}
+
+// SetEc2SecurityGroupOwnerId sets the Ec2SecurityGroupOwnerId field's value.
+func (s *AwsRdsDbSecurityGroupEc2SecurityGroup) SetEc2SecurityGroupOwnerId(v string) *AwsRdsDbSecurityGroupEc2SecurityGroup {
+	s.Ec2SecurityGroupOwnerId = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *AwsRdsDbSecurityGroupEc2SecurityGroup) SetStatus(v string) *AwsRdsDbSecurityGroupEc2SecurityGroup {
+	s.Status = &v
+	return s
+}
+
+// IP range information for an RDS DB security group.
+type AwsRdsDbSecurityGroupIpRange struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the IP range.
+	CidrIp *string `type:"string"`
+
+	// Specifies the status of the IP range.
+	Status *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsRdsDbSecurityGroupIpRange) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsRdsDbSecurityGroupIpRange) GoString() string {
+	return s.String()
+}
+
+// SetCidrIp sets the CidrIp field's value.
+func (s *AwsRdsDbSecurityGroupIpRange) SetCidrIp(v string) *AwsRdsDbSecurityGroupIpRange {
+	s.CidrIp = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *AwsRdsDbSecurityGroupIpRange) SetStatus(v string) *AwsRdsDbSecurityGroupIpRange {
+	s.Status = &v
+	return s
+}
+
 // Provides details about an Amazon RDS DB cluster snapshot.
 type AwsRdsDbSnapshotDetails struct {
 	_ struct{} `type:"structure"`
@@ -24522,7 +27993,36 @@ type AwsRdsDbSnapshotDetails struct {
 	// Whether the DB snapshot is encrypted.
 	Encrypted *bool `type:"boolean"`
 
-	// The name of the database engine to use for this DB instance.
+	// The name of the database engine to use for this DB instance. Valid values
+	// are as follows:
+	//
+	//    * aurora
+	//
+	//    * aurora-mysql
+	//
+	//    * aurora-postgresql
+	//
+	//    * c
+	//
+	//    * mariadb
+	//
+	//    * mysql
+	//
+	//    * oracle-ee
+	//
+	//    * oracle-se
+	//
+	//    * oracle-se1
+	//
+	//    * oracle-se2
+	//
+	//    * sqlserver-ee
+	//
+	//    * sqlserver-ex
+	//
+	//    * sqlserver-se
+	//
+	//    * sqlserver-web
 	Engine *string `type:"string"`
 
 	// The version of the database engine.
@@ -24577,7 +28077,13 @@ type AwsRdsDbSnapshotDetails struct {
 	// The status of this DB snapshot.
 	Status *string `type:"string"`
 
-	// The storage type associated with the DB snapshot.
+	// The storage type associated with the DB snapshot. Valid values are as follows:
+	//
+	//    * gp2
+	//
+	//    * io1
+	//
+	//    * standard
 	StorageType *string `type:"string"`
 
 	// The ARN from the key store with which to associate the instance for TDE encryption.
@@ -25601,6 +29107,9 @@ type AwsRedshiftClusterDetails struct {
 	// the cluster.
 	KmsKeyId *string `type:"string"`
 
+	// Information about the logging status of the cluster.
+	LoggingStatus *AwsRedshiftClusterLoggingStatus `type:"structure"`
+
 	// The name of the maintenance track for the cluster.
 	MaintenanceTrackName *string `type:"string"`
 
@@ -25850,6 +29359,12 @@ func (s *AwsRedshiftClusterDetails) SetIamRoles(v []*AwsRedshiftClusterIamRole) 
 // SetKmsKeyId sets the KmsKeyId field's value.
 func (s *AwsRedshiftClusterDetails) SetKmsKeyId(v string) *AwsRedshiftClusterDetails {
 	s.KmsKeyId = &v
+	return s
+}
+
+// SetLoggingStatus sets the LoggingStatus field's value.
+func (s *AwsRedshiftClusterDetails) SetLoggingStatus(v *AwsRedshiftClusterLoggingStatus) *AwsRedshiftClusterDetails {
+	s.LoggingStatus = v
 	return s
 }
 
@@ -26131,6 +29646,91 @@ func (s *AwsRedshiftClusterIamRole) SetApplyStatus(v string) *AwsRedshiftCluster
 // SetIamRoleArn sets the IamRoleArn field's value.
 func (s *AwsRedshiftClusterIamRole) SetIamRoleArn(v string) *AwsRedshiftClusterIamRole {
 	s.IamRoleArn = &v
+	return s
+}
+
+// Provides information about the logging status of the cluster.
+type AwsRedshiftClusterLoggingStatus struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the S3 bucket where the log files are stored.
+	BucketName *string `type:"string"`
+
+	// The message indicating that the logs failed to be delivered.
+	LastFailureMessage *string `type:"string"`
+
+	// The last time when logs failed to be delivered.
+	//
+	// Uses the date-time format specified in RFC 3339 section 5.6, Internet Date/Time
+	// Format (https://tools.ietf.org/html/rfc3339#section-5.6). The value cannot
+	// contain spaces. For example, 2020-03-22T13:22:13.933Z.
+	LastFailureTime *string `type:"string"`
+
+	// The last time that logs were delivered successfully.
+	//
+	// Uses the date-time format specified in RFC 3339 section 5.6, Internet Date/Time
+	// Format (https://tools.ietf.org/html/rfc3339#section-5.6). The value cannot
+	// contain spaces. For example, 2020-03-22T13:22:13.933Z.
+	LastSuccessfulDeliveryTime *string `type:"string"`
+
+	// Indicates whether logging is enabled.
+	LoggingEnabled *bool `type:"boolean"`
+
+	// Provides the prefix applied to the log file names.
+	S3KeyPrefix *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsRedshiftClusterLoggingStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsRedshiftClusterLoggingStatus) GoString() string {
+	return s.String()
+}
+
+// SetBucketName sets the BucketName field's value.
+func (s *AwsRedshiftClusterLoggingStatus) SetBucketName(v string) *AwsRedshiftClusterLoggingStatus {
+	s.BucketName = &v
+	return s
+}
+
+// SetLastFailureMessage sets the LastFailureMessage field's value.
+func (s *AwsRedshiftClusterLoggingStatus) SetLastFailureMessage(v string) *AwsRedshiftClusterLoggingStatus {
+	s.LastFailureMessage = &v
+	return s
+}
+
+// SetLastFailureTime sets the LastFailureTime field's value.
+func (s *AwsRedshiftClusterLoggingStatus) SetLastFailureTime(v string) *AwsRedshiftClusterLoggingStatus {
+	s.LastFailureTime = &v
+	return s
+}
+
+// SetLastSuccessfulDeliveryTime sets the LastSuccessfulDeliveryTime field's value.
+func (s *AwsRedshiftClusterLoggingStatus) SetLastSuccessfulDeliveryTime(v string) *AwsRedshiftClusterLoggingStatus {
+	s.LastSuccessfulDeliveryTime = &v
+	return s
+}
+
+// SetLoggingEnabled sets the LoggingEnabled field's value.
+func (s *AwsRedshiftClusterLoggingStatus) SetLoggingEnabled(v bool) *AwsRedshiftClusterLoggingStatus {
+	s.LoggingEnabled = &v
+	return s
+}
+
+// SetS3KeyPrefix sets the S3KeyPrefix field's value.
+func (s *AwsRedshiftClusterLoggingStatus) SetS3KeyPrefix(v string) *AwsRedshiftClusterLoggingStatus {
+	s.S3KeyPrefix = &v
 	return s
 }
 
@@ -26747,7 +30347,8 @@ type AwsS3BucketBucketLifecycleConfigurationRulesFilterPredicateDetails struct {
 	// A tag filter.
 	Tag *AwsS3BucketBucketLifecycleConfigurationRulesFilterPredicateTagDetails `type:"structure"`
 
-	// Whether to use AND or OR to join the operands.
+	// Whether to use AND or OR to join the operands. Valid values are LifecycleAndOperator
+	// or LifecycleOrOperator.
 	Type *string `type:"string"`
 }
 
@@ -26803,7 +30404,7 @@ type AwsS3BucketBucketLifecycleConfigurationRulesFilterPredicateOperandsDetails 
 	// A tag that is assigned to matching objects.
 	Tag *AwsS3BucketBucketLifecycleConfigurationRulesFilterPredicateOperandsTagDetails `type:"structure"`
 
-	// The type of filter value.
+	// The type of filter value. Valid values are LifecyclePrefixPredicate or LifecycleTagPredicate.
 	Type *string `type:"string"`
 }
 
@@ -26985,7 +30586,17 @@ type AwsS3BucketBucketLifecycleConfigurationRulesTransitionsDetails struct {
 	// storage class. If you provide Days, you cannot provide Date.
 	Days *int64 `type:"integer"`
 
-	// The storage class to transition the object to.
+	// The storage class to transition the object to. Valid values are as follows:
+	//
+	//    * DEEP_ARCHIVE
+	//
+	//    * GLACIER
+	//
+	//    * INTELLIGENT_TIERING
+	//
+	//    * ONEZONE_IA
+	//
+	//    * STANDARD_IA
 	StorageClass *string `type:"string"`
 }
 
@@ -27034,7 +30645,7 @@ type AwsS3BucketBucketVersioningConfiguration struct {
 	// this attribute is not included.
 	IsMfaDeleteEnabled *bool `type:"boolean"`
 
-	// The versioning status of the S3 bucket.
+	// The versioning status of the S3 bucket. Valid values are Enabled or Suspended.
 	Status *string `type:"string"`
 }
 
@@ -27293,7 +30904,14 @@ type AwsS3BucketNotificationConfigurationDetail struct {
 	Filter *AwsS3BucketNotificationConfigurationFilter `type:"structure"`
 
 	// Indicates the type of notification. Notifications can be generated using
-	// Lambda functions, Amazon SQS queues or Amazon SNS topics.
+	// Lambda functions, Amazon SQS queues, or Amazon SNS topics, with corresponding
+	// valid values as follows:
+	//
+	//    * LambdaConfiguration
+	//
+	//    * QueueConfiguration
+	//
+	//    * TopicConfiguration
 	Type *string `type:"string"`
 }
 
@@ -27454,7 +31072,8 @@ type AwsS3BucketServerSideEncryptionByDefault struct {
 	// KMS key ID to use for the default encryption.
 	KMSMasterKeyID *string `type:"string"`
 
-	// Server-side encryption algorithm to use for the default encryption.
+	// Server-side encryption algorithm to use for the default encryption. Valid
+	// values are aws: kms or AES256.
 	SSEAlgorithm *string `type:"string"`
 }
 
@@ -27620,8 +31239,8 @@ type AwsS3BucketWebsiteConfigurationRedirectTo struct {
 	// The name of the host to redirect requests to.
 	Hostname *string `type:"string"`
 
-	// The protocol to use when redirecting requests. By default, uses the same
-	// protocol as the original request.
+	// The protocol to use when redirecting requests. By default, this field uses
+	// the same protocol as the original request. Valid values are http or https.
 	Protocol *string `type:"string"`
 }
 
@@ -28023,10 +31642,9 @@ func (s *AwsSecretsManagerSecretRotationRules) SetAutomaticallyAfterDays(v int64
 	return s
 }
 
-// Provides consistent format for the contents of the Security Hub-aggregated
-// findings. AwsSecurityFinding format enables you to share findings between
-// Amazon Web Services security services and third-party solutions, and security
-// standards checks.
+// Provides a consistent format for Security Hub findings. AwsSecurityFinding
+// format allows you to share findings between Amazon Web Services security
+// services and third-party solutions.
 //
 // A finding is a potential security issue generated either by Amazon Web Services
 // services or by the integrated third-party solutions and standards checks.
@@ -28044,16 +31662,11 @@ type AwsSecurityFinding struct {
 	// The name of the company for the product that generated the finding.
 	//
 	// Security Hub populates this attribute automatically for each finding. You
-	// cannot be updated using BatchImportFindings or BatchUpdateFindings. The exception
-	// to this is when you use a custom integration.
+	// cannot update this attribute with BatchImportFindings or BatchUpdateFindings.
+	// The exception to this is a custom integration.
 	//
-	// When you use the Security Hub console to filter findings by company name,
-	// you use this attribute.
-	//
-	// When you use the Security Hub API to filter findings by company name, you
-	// use the aws/securityhub/CompanyName attribute under ProductFields.
-	//
-	// Security Hub does not synchronize those two attributes.
+	// When you use the Security Hub console or API to filter findings by company
+	// name, you use this attribute.
 	CompanyName *string `type:"string"`
 
 	// This data type is exclusive to findings that are generated as the result
@@ -28162,16 +31775,11 @@ type AwsSecurityFinding struct {
 	// The name of the product that generated the finding.
 	//
 	// Security Hub populates this attribute automatically for each finding. You
-	// cannot update it using BatchImportFindings or BatchUpdateFindings. The exception
-	// to this is when you use a custom integration.
+	// cannot update this attribute with BatchImportFindings or BatchUpdateFindings.
+	// The exception to this is a custom integration.
 	//
-	// When you use the Security Hub console to filter findings by product name,
-	// you use this attribute.
-	//
-	// When you use the Security Hub API to filter findings by product name, you
-	// use the aws/securityhub/ProductName attribute under ProductFields.
-	//
-	// Security Hub does not synchronize those two attributes.
+	// When you use the Security Hub console or API to filter findings by product
+	// name, you use this attribute.
 	ProductName *string `type:"string"`
 
 	// The record state of a finding.
@@ -28212,6 +31820,10 @@ type AwsSecurityFinding struct {
 
 	// Threat intelligence details related to a finding.
 	ThreatIntelIndicators []*ThreatIntelIndicator `type:"list"`
+
+	// Details about the threat detected in a security finding and the file paths
+	// that were affected by the threat.
+	Threats []*Threat `type:"list"`
 
 	// A finding's title.
 	//
@@ -28563,6 +32175,12 @@ func (s *AwsSecurityFinding) SetThreatIntelIndicators(v []*ThreatIntelIndicator)
 	return s
 }
 
+// SetThreats sets the Threats field's value.
+func (s *AwsSecurityFinding) SetThreats(v []*Threat) *AwsSecurityFinding {
+	s.Threats = v
+	return s
+}
+
 // SetTitle sets the Title field's value.
 func (s *AwsSecurityFinding) SetTitle(v string) *AwsSecurityFinding {
 	s.Title = &v
@@ -28625,9 +32243,6 @@ type AwsSecurityFindingFilters struct {
 
 	// The name of the findings provider (company) that owns the solution (product)
 	// that generates findings.
-	//
-	// Note that this is a filter against the aws/securityhub/CompanyName field
-	// in ProductFields. It is not a filter for the top-level CompanyName field.
 	CompanyName []*StringFilter `type:"list"`
 
 	// Exclusive to findings that are generated as the result of a check run against
@@ -28796,9 +32411,6 @@ type AwsSecurityFindingFilters struct {
 	ProductFields []*MapFilter `type:"list"`
 
 	// The name of the solution (product) that generates findings.
-	//
-	// Note that this is a filter against the aws/securityhub/ProductName field
-	// in ProductFields. It is not a filter for the top-level ProductName field.
 	ProductName []*StringFilter `type:"list"`
 
 	// The recommendation of what to do about the issue described in a finding.
@@ -29642,9 +33254,30 @@ func (s *AwsSecurityFindingIdentifier) SetProductArn(v string) *AwsSecurityFindi
 	return s
 }
 
-// A wrapper type for the topic's ARN.
+// Provides information about an Amazon SNS topic to which notifications can
+// be published.
 type AwsSnsTopicDetails struct {
 	_ struct{} `type:"structure"`
+
+	// Indicates failed message delivery status for an Amazon SNS topic that is
+	// subscribed to a platform application endpoint.
+	ApplicationSuccessFeedbackRoleArn *string `type:"string"`
+
+	// Indicates failed message delivery status for an Amazon SNS topic that is
+	// subscribed to an Amazon Kinesis Data Firehose endpoint.
+	FirehoseFailureFeedbackRoleArn *string `type:"string"`
+
+	// Indicates successful message delivery status for an Amazon SNS topic that
+	// is subscribed to an Amazon Kinesis Data Firehose endpoint.
+	FirehoseSuccessFeedbackRoleArn *string `type:"string"`
+
+	// Indicates failed message delivery status for an Amazon SNS topic that is
+	// subscribed to an HTTP endpoint.
+	HttpFailureFeedbackRoleArn *string `type:"string"`
+
+	// Indicates successful message delivery status for an Amazon SNS topic that
+	// is subscribed to an HTTP endpoint.
+	HttpSuccessFeedbackRoleArn *string `type:"string"`
 
 	// The ID of an Amazon Web Services managed key for Amazon SNS or a customer
 	// managed key.
@@ -29653,11 +33286,19 @@ type AwsSnsTopicDetails struct {
 	// The subscription's owner.
 	Owner *string `type:"string"`
 
+	// Indicates failed message delivery status for an Amazon SNS topic that is
+	// subscribed to an Amazon SQS endpoint.
+	SqsFailureFeedbackRoleArn *string `type:"string"`
+
+	// Indicates successful message delivery status for an Amazon SNS topic that
+	// is subscribed to an Amazon SQS endpoint.
+	SqsSuccessFeedbackRoleArn *string `type:"string"`
+
 	// Subscription is an embedded property that describes the subscription endpoints
-	// of an SNS topic.
+	// of an Amazon SNS topic.
 	Subscription []*AwsSnsTopicSubscription `type:"list"`
 
-	// The name of the topic.
+	// The name of the Amazon SNS topic.
 	TopicName *string `type:"string"`
 }
 
@@ -29679,6 +33320,36 @@ func (s AwsSnsTopicDetails) GoString() string {
 	return s.String()
 }
 
+// SetApplicationSuccessFeedbackRoleArn sets the ApplicationSuccessFeedbackRoleArn field's value.
+func (s *AwsSnsTopicDetails) SetApplicationSuccessFeedbackRoleArn(v string) *AwsSnsTopicDetails {
+	s.ApplicationSuccessFeedbackRoleArn = &v
+	return s
+}
+
+// SetFirehoseFailureFeedbackRoleArn sets the FirehoseFailureFeedbackRoleArn field's value.
+func (s *AwsSnsTopicDetails) SetFirehoseFailureFeedbackRoleArn(v string) *AwsSnsTopicDetails {
+	s.FirehoseFailureFeedbackRoleArn = &v
+	return s
+}
+
+// SetFirehoseSuccessFeedbackRoleArn sets the FirehoseSuccessFeedbackRoleArn field's value.
+func (s *AwsSnsTopicDetails) SetFirehoseSuccessFeedbackRoleArn(v string) *AwsSnsTopicDetails {
+	s.FirehoseSuccessFeedbackRoleArn = &v
+	return s
+}
+
+// SetHttpFailureFeedbackRoleArn sets the HttpFailureFeedbackRoleArn field's value.
+func (s *AwsSnsTopicDetails) SetHttpFailureFeedbackRoleArn(v string) *AwsSnsTopicDetails {
+	s.HttpFailureFeedbackRoleArn = &v
+	return s
+}
+
+// SetHttpSuccessFeedbackRoleArn sets the HttpSuccessFeedbackRoleArn field's value.
+func (s *AwsSnsTopicDetails) SetHttpSuccessFeedbackRoleArn(v string) *AwsSnsTopicDetails {
+	s.HttpSuccessFeedbackRoleArn = &v
+	return s
+}
+
 // SetKmsMasterKeyId sets the KmsMasterKeyId field's value.
 func (s *AwsSnsTopicDetails) SetKmsMasterKeyId(v string) *AwsSnsTopicDetails {
 	s.KmsMasterKeyId = &v
@@ -29688,6 +33359,18 @@ func (s *AwsSnsTopicDetails) SetKmsMasterKeyId(v string) *AwsSnsTopicDetails {
 // SetOwner sets the Owner field's value.
 func (s *AwsSnsTopicDetails) SetOwner(v string) *AwsSnsTopicDetails {
 	s.Owner = &v
+	return s
+}
+
+// SetSqsFailureFeedbackRoleArn sets the SqsFailureFeedbackRoleArn field's value.
+func (s *AwsSnsTopicDetails) SetSqsFailureFeedbackRoleArn(v string) *AwsSnsTopicDetails {
+	s.SqsFailureFeedbackRoleArn = &v
+	return s
+}
+
+// SetSqsSuccessFeedbackRoleArn sets the SqsSuccessFeedbackRoleArn field's value.
+func (s *AwsSnsTopicDetails) SetSqsSuccessFeedbackRoleArn(v string) *AwsSnsTopicDetails {
+	s.SqsSuccessFeedbackRoleArn = &v
 	return s
 }
 
@@ -29859,7 +33542,19 @@ type AwsSsmComplianceSummary struct {
 	// UNSPECIFIED.
 	NonCompliantUnspecifiedCount *int64 `type:"integer"`
 
-	// The highest severity for the patches.
+	// The highest severity for the patches. Valid values are as follows:
+	//
+	//    * CRITICAL
+	//
+	//    * HIGH
+	//
+	//    * MEDIUM
+	//
+	//    * LOW
+	//
+	//    * INFORMATIONAL
+	//
+	//    * UNSPECIFIED
 	OverallSeverity *string `type:"string"`
 
 	// The identifier of the patch baseline. The patch baseline lists the patches
@@ -29871,9 +33566,7 @@ type AwsSsmComplianceSummary struct {
 	// compliance.
 	PatchGroup *string `type:"string"`
 
-	// The current patch compliance status.
-	//
-	// The possible status values are:
+	// The current patch compliance status. Valid values are as follows:
 	//
 	//    * COMPLIANT
 	//
@@ -30173,7 +33866,21 @@ type AwsWafRateBasedRuleMatchPredicate struct {
 	// those that match the predicate settings.
 	Negated *bool `type:"boolean"`
 
-	// The type of predicate.
+	// The type of predicate. Valid values are as follows:
+	//
+	//    * ByteMatch
+	//
+	//    * GeoMatch
+	//
+	//    * IPMatch
+	//
+	//    * RegexMatch
+	//
+	//    * SizeConstraint
+	//
+	//    * SqlInjectionMatch
+	//
+	//    * XssMatch
 	Type *string `type:"string"`
 }
 
@@ -30312,7 +34019,21 @@ type AwsWafRegionalRateBasedRuleMatchPredicate struct {
 	// those that match the predicate settings.
 	Negated *bool `type:"boolean"`
 
-	// The type of predicate.
+	// The type of predicate. Valid values are as follows:
+	//
+	//    * ByteMatch
+	//
+	//    * GeoMatch
+	//
+	//    * IPMatch
+	//
+	//    * RegexMatch
+	//
+	//    * SizeConstraint
+	//
+	//    * SqlInjectionMatch
+	//
+	//    * XssMatch
 	Type *string `type:"string"`
 }
 
@@ -30352,22 +34073,781 @@ func (s *AwsWafRegionalRateBasedRuleMatchPredicate) SetType(v string) *AwsWafReg
 	return s
 }
 
-// Details about an WAF WebACL.
+// Provides information about an WAF Regional rule. This rule identifies the
+// web requests that you want to allow, block, or count.
+type AwsWafRegionalRuleDetails struct {
+	_ struct{} `type:"structure"`
+
+	// A name for the metrics for the rule.
+	MetricName *string `type:"string"`
+
+	// A descriptive name for the rule.
+	Name *string `type:"string"`
+
+	// Specifies the ByteMatchSet, IPSet, SqlInjectionMatchSet, XssMatchSet, RegexMatchSet,
+	// GeoMatchSet, and SizeConstraintSet objects that you want to add to a rule
+	// and, for each object, indicates whether you want to negate the settings.
+	PredicateList []*AwsWafRegionalRulePredicateListDetails `type:"list"`
+
+	// The ID of the rule.
+	RuleId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalRuleDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalRuleDetails) GoString() string {
+	return s.String()
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *AwsWafRegionalRuleDetails) SetMetricName(v string) *AwsWafRegionalRuleDetails {
+	s.MetricName = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AwsWafRegionalRuleDetails) SetName(v string) *AwsWafRegionalRuleDetails {
+	s.Name = &v
+	return s
+}
+
+// SetPredicateList sets the PredicateList field's value.
+func (s *AwsWafRegionalRuleDetails) SetPredicateList(v []*AwsWafRegionalRulePredicateListDetails) *AwsWafRegionalRuleDetails {
+	s.PredicateList = v
+	return s
+}
+
+// SetRuleId sets the RuleId field's value.
+func (s *AwsWafRegionalRuleDetails) SetRuleId(v string) *AwsWafRegionalRuleDetails {
+	s.RuleId = &v
+	return s
+}
+
+// Provides information about an WAF Regional rule group. The rule group is
+// a collection of rules for inspecting and controlling web requests.
+type AwsWafRegionalRuleGroupDetails struct {
+	_ struct{} `type:"structure"`
+
+	// A name for the metrics for this rule group.
+	MetricName *string `type:"string"`
+
+	// The descriptive name of the rule group.
+	Name *string `type:"string"`
+
+	// The ID of the rule group.
+	RuleGroupId *string `type:"string"`
+
+	// Provides information about the rule statements used to identify the web requests
+	// that you want to allow, block, or count.
+	Rules []*AwsWafRegionalRuleGroupRulesDetails `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalRuleGroupDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalRuleGroupDetails) GoString() string {
+	return s.String()
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *AwsWafRegionalRuleGroupDetails) SetMetricName(v string) *AwsWafRegionalRuleGroupDetails {
+	s.MetricName = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AwsWafRegionalRuleGroupDetails) SetName(v string) *AwsWafRegionalRuleGroupDetails {
+	s.Name = &v
+	return s
+}
+
+// SetRuleGroupId sets the RuleGroupId field's value.
+func (s *AwsWafRegionalRuleGroupDetails) SetRuleGroupId(v string) *AwsWafRegionalRuleGroupDetails {
+	s.RuleGroupId = &v
+	return s
+}
+
+// SetRules sets the Rules field's value.
+func (s *AwsWafRegionalRuleGroupDetails) SetRules(v []*AwsWafRegionalRuleGroupRulesDetails) *AwsWafRegionalRuleGroupDetails {
+	s.Rules = v
+	return s
+}
+
+// Describes the action that WAF should take on a web request when it matches
+// the criteria defined in the rule.
+type AwsWafRegionalRuleGroupRulesActionDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the ByteMatchSet, IPSet, SqlInjectionMatchSet, XssMatchSet, RegexMatchSet,
+	// GeoMatchSet, and SizeConstraintSet objects that you want to add to a rule
+	// and, for each object, indicates whether you want to negate the settings.
+	Type *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalRuleGroupRulesActionDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalRuleGroupRulesActionDetails) GoString() string {
+	return s.String()
+}
+
+// SetType sets the Type field's value.
+func (s *AwsWafRegionalRuleGroupRulesActionDetails) SetType(v string) *AwsWafRegionalRuleGroupRulesActionDetails {
+	s.Type = &v
+	return s
+}
+
+// Provides information about the rules attached to a rule group
+type AwsWafRegionalRuleGroupRulesDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The action that WAF should take on a web request when it matches the criteria
+	// defined in the rule.
+	Action *AwsWafRegionalRuleGroupRulesActionDetails `type:"structure"`
+
+	// If you define more than one rule in a web ACL, WAF evaluates each request
+	// against the rules in order based on the value of Priority.
+	Priority *int64 `type:"integer"`
+
+	// The ID for a rule.
+	RuleId *string `type:"string"`
+
+	// The type of rule in the rule group.
+	Type *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalRuleGroupRulesDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalRuleGroupRulesDetails) GoString() string {
+	return s.String()
+}
+
+// SetAction sets the Action field's value.
+func (s *AwsWafRegionalRuleGroupRulesDetails) SetAction(v *AwsWafRegionalRuleGroupRulesActionDetails) *AwsWafRegionalRuleGroupRulesDetails {
+	s.Action = v
+	return s
+}
+
+// SetPriority sets the Priority field's value.
+func (s *AwsWafRegionalRuleGroupRulesDetails) SetPriority(v int64) *AwsWafRegionalRuleGroupRulesDetails {
+	s.Priority = &v
+	return s
+}
+
+// SetRuleId sets the RuleId field's value.
+func (s *AwsWafRegionalRuleGroupRulesDetails) SetRuleId(v string) *AwsWafRegionalRuleGroupRulesDetails {
+	s.RuleId = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *AwsWafRegionalRuleGroupRulesDetails) SetType(v string) *AwsWafRegionalRuleGroupRulesDetails {
+	s.Type = &v
+	return s
+}
+
+// Provides details about the ByteMatchSet, IPSet, SqlInjectionMatchSet, XssMatchSet,
+// RegexMatchSet, GeoMatchSet, and SizeConstraintSet objects that you want to
+// add to a rule and, for each object, indicates whether you want to negate
+// the settings.
+type AwsWafRegionalRulePredicateListDetails struct {
+	_ struct{} `type:"structure"`
+
+	// A unique identifier for a predicate in a rule, such as ByteMatchSetId or
+	// IPSetId.
+	DataId *string `type:"string"`
+
+	// Specifies if you want WAF to allow, block, or count requests based on the
+	// settings in the ByteMatchSet, IPSet, SqlInjectionMatchSet, XssMatchSet, RegexMatchSet,
+	// GeoMatchSet, or SizeConstraintSet.
+	Negated *bool `type:"boolean"`
+
+	// The type of predicate in a rule, such as ByteMatch or IPSet.
+	Type *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalRulePredicateListDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalRulePredicateListDetails) GoString() string {
+	return s.String()
+}
+
+// SetDataId sets the DataId field's value.
+func (s *AwsWafRegionalRulePredicateListDetails) SetDataId(v string) *AwsWafRegionalRulePredicateListDetails {
+	s.DataId = &v
+	return s
+}
+
+// SetNegated sets the Negated field's value.
+func (s *AwsWafRegionalRulePredicateListDetails) SetNegated(v bool) *AwsWafRegionalRulePredicateListDetails {
+	s.Negated = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *AwsWafRegionalRulePredicateListDetails) SetType(v string) *AwsWafRegionalRulePredicateListDetails {
+	s.Type = &v
+	return s
+}
+
+// Provides information about the web access control list (web ACL). The web
+// ACL contains the rules that identify the requests that you want to allow,
+// block, or count.
+type AwsWafRegionalWebAclDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The action to perform if none of the rules contained in the web ACL match.
+	DefaultAction *string `type:"string"`
+
+	// A name for the metrics for this web ACL.
+	MetricName *string `type:"string"`
+
+	// A descriptive name for the web ACL.
+	Name *string `type:"string"`
+
+	// An array that contains the action for each rule in a web ACL, the priority
+	// of the rule, and the ID of the rule.
+	RulesList []*AwsWafRegionalWebAclRulesListDetails `type:"list"`
+
+	// The ID of the web ACL.
+	WebAclId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalWebAclDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalWebAclDetails) GoString() string {
+	return s.String()
+}
+
+// SetDefaultAction sets the DefaultAction field's value.
+func (s *AwsWafRegionalWebAclDetails) SetDefaultAction(v string) *AwsWafRegionalWebAclDetails {
+	s.DefaultAction = &v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *AwsWafRegionalWebAclDetails) SetMetricName(v string) *AwsWafRegionalWebAclDetails {
+	s.MetricName = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AwsWafRegionalWebAclDetails) SetName(v string) *AwsWafRegionalWebAclDetails {
+	s.Name = &v
+	return s
+}
+
+// SetRulesList sets the RulesList field's value.
+func (s *AwsWafRegionalWebAclDetails) SetRulesList(v []*AwsWafRegionalWebAclRulesListDetails) *AwsWafRegionalWebAclDetails {
+	s.RulesList = v
+	return s
+}
+
+// SetWebAclId sets the WebAclId field's value.
+func (s *AwsWafRegionalWebAclDetails) SetWebAclId(v string) *AwsWafRegionalWebAclDetails {
+	s.WebAclId = &v
+	return s
+}
+
+// The action that WAF takes when a web request matches all conditions in the
+// rule, such as allow, block, or count the request.
+type AwsWafRegionalWebAclRulesListActionDetails struct {
+	_ struct{} `type:"structure"`
+
+	// For actions that are associated with a rule, the action that WAF takes when
+	// a web request matches all conditions in a rule.
+	Type *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalWebAclRulesListActionDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalWebAclRulesListActionDetails) GoString() string {
+	return s.String()
+}
+
+// SetType sets the Type field's value.
+func (s *AwsWafRegionalWebAclRulesListActionDetails) SetType(v string) *AwsWafRegionalWebAclRulesListActionDetails {
+	s.Type = &v
+	return s
+}
+
+// A combination of ByteMatchSet, IPSet, and/or SqlInjectionMatchSet objects
+// that identify the web requests that you want to allow, block, or count.
+type AwsWafRegionalWebAclRulesListDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The action that WAF takes when a web request matches all conditions in the
+	// rule, such as allow, block, or count the request.
+	Action *AwsWafRegionalWebAclRulesListActionDetails `type:"structure"`
+
+	// Overrides the rule evaluation result in the rule group.
+	OverrideAction *AwsWafRegionalWebAclRulesListOverrideActionDetails `type:"structure"`
+
+	// The order in which WAF evaluates the rules in a web ACL.
+	Priority *int64 `type:"integer"`
+
+	// The ID of an WAF Regional rule to associate with a web ACL.
+	RuleId *string `type:"string"`
+
+	// For actions that are associated with a rule, the action that WAF takes when
+	// a web request matches all conditions in a rule.
+	Type *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalWebAclRulesListDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalWebAclRulesListDetails) GoString() string {
+	return s.String()
+}
+
+// SetAction sets the Action field's value.
+func (s *AwsWafRegionalWebAclRulesListDetails) SetAction(v *AwsWafRegionalWebAclRulesListActionDetails) *AwsWafRegionalWebAclRulesListDetails {
+	s.Action = v
+	return s
+}
+
+// SetOverrideAction sets the OverrideAction field's value.
+func (s *AwsWafRegionalWebAclRulesListDetails) SetOverrideAction(v *AwsWafRegionalWebAclRulesListOverrideActionDetails) *AwsWafRegionalWebAclRulesListDetails {
+	s.OverrideAction = v
+	return s
+}
+
+// SetPriority sets the Priority field's value.
+func (s *AwsWafRegionalWebAclRulesListDetails) SetPriority(v int64) *AwsWafRegionalWebAclRulesListDetails {
+	s.Priority = &v
+	return s
+}
+
+// SetRuleId sets the RuleId field's value.
+func (s *AwsWafRegionalWebAclRulesListDetails) SetRuleId(v string) *AwsWafRegionalWebAclRulesListDetails {
+	s.RuleId = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *AwsWafRegionalWebAclRulesListDetails) SetType(v string) *AwsWafRegionalWebAclRulesListDetails {
+	s.Type = &v
+	return s
+}
+
+// Provides details about the action to use in the place of the action that
+// results from the rule group evaluation.
+type AwsWafRegionalWebAclRulesListOverrideActionDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Overrides the rule evaluation result in the rule group.
+	Type *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalWebAclRulesListOverrideActionDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRegionalWebAclRulesListOverrideActionDetails) GoString() string {
+	return s.String()
+}
+
+// SetType sets the Type field's value.
+func (s *AwsWafRegionalWebAclRulesListOverrideActionDetails) SetType(v string) *AwsWafRegionalWebAclRulesListOverrideActionDetails {
+	s.Type = &v
+	return s
+}
+
+// Provides information about a WAF rule. This rule specifies the web requests
+// that you want to allow, block, or count.
+type AwsWafRuleDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the metrics for this rule.
+	MetricName *string `type:"string"`
+
+	// A descriptive name for the rule.
+	Name *string `type:"string"`
+
+	// Specifies the ByteMatchSet, IPSet, SqlInjectionMatchSet, XssMatchSet, RegexMatchSet,
+	// GeoMatchSet, and SizeConstraintSet objects that you want to add to a rule
+	// and, for each object, indicates whether you want to negate the settings.
+	PredicateList []*AwsWafRulePredicateListDetails `type:"list"`
+
+	// The ID of the WAF rule.
+	RuleId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRuleDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRuleDetails) GoString() string {
+	return s.String()
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *AwsWafRuleDetails) SetMetricName(v string) *AwsWafRuleDetails {
+	s.MetricName = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AwsWafRuleDetails) SetName(v string) *AwsWafRuleDetails {
+	s.Name = &v
+	return s
+}
+
+// SetPredicateList sets the PredicateList field's value.
+func (s *AwsWafRuleDetails) SetPredicateList(v []*AwsWafRulePredicateListDetails) *AwsWafRuleDetails {
+	s.PredicateList = v
+	return s
+}
+
+// SetRuleId sets the RuleId field's value.
+func (s *AwsWafRuleDetails) SetRuleId(v string) *AwsWafRuleDetails {
+	s.RuleId = &v
+	return s
+}
+
+// Provides information about an WAF rule group. A rule group is a collection
+// of rules for inspecting and controlling web requests.
+type AwsWafRuleGroupDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the metrics for this rule group.
+	MetricName *string `type:"string"`
+
+	// The name of the rule group.
+	Name *string `type:"string"`
+
+	// The ID of the rule group.
+	RuleGroupId *string `type:"string"`
+
+	// Provides information about the rules attached to the rule group. These rules
+	// identify the web requests that you want to allow, block, or count.
+	Rules []*AwsWafRuleGroupRulesDetails `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRuleGroupDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRuleGroupDetails) GoString() string {
+	return s.String()
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *AwsWafRuleGroupDetails) SetMetricName(v string) *AwsWafRuleGroupDetails {
+	s.MetricName = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AwsWafRuleGroupDetails) SetName(v string) *AwsWafRuleGroupDetails {
+	s.Name = &v
+	return s
+}
+
+// SetRuleGroupId sets the RuleGroupId field's value.
+func (s *AwsWafRuleGroupDetails) SetRuleGroupId(v string) *AwsWafRuleGroupDetails {
+	s.RuleGroupId = &v
+	return s
+}
+
+// SetRules sets the Rules field's value.
+func (s *AwsWafRuleGroupDetails) SetRules(v []*AwsWafRuleGroupRulesDetails) *AwsWafRuleGroupDetails {
+	s.Rules = v
+	return s
+}
+
+// Provides information about what action WAF should take on a web request when
+// it matches the criteria defined in the rule.
+type AwsWafRuleGroupRulesActionDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The action that WAF should take on a web request when it matches the rule's
+	// statement.
+	Type *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRuleGroupRulesActionDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRuleGroupRulesActionDetails) GoString() string {
+	return s.String()
+}
+
+// SetType sets the Type field's value.
+func (s *AwsWafRuleGroupRulesActionDetails) SetType(v string) *AwsWafRuleGroupRulesActionDetails {
+	s.Type = &v
+	return s
+}
+
+// Provides information about the rules attached to the rule group. These rules
+// identify the web requests that you want to allow, block, or count.
+type AwsWafRuleGroupRulesDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Provides information about what action WAF should take on a web request when
+	// it matches the criteria defined in the rule.
+	Action *AwsWafRuleGroupRulesActionDetails `type:"structure"`
+
+	// If you define more than one rule in a web ACL, WAF evaluates each request
+	// against the rules in order based on the value of Priority.
+	Priority *int64 `type:"integer"`
+
+	// The rule ID for a rule.
+	RuleId *string `type:"string"`
+
+	// The type of rule.
+	Type *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRuleGroupRulesDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRuleGroupRulesDetails) GoString() string {
+	return s.String()
+}
+
+// SetAction sets the Action field's value.
+func (s *AwsWafRuleGroupRulesDetails) SetAction(v *AwsWafRuleGroupRulesActionDetails) *AwsWafRuleGroupRulesDetails {
+	s.Action = v
+	return s
+}
+
+// SetPriority sets the Priority field's value.
+func (s *AwsWafRuleGroupRulesDetails) SetPriority(v int64) *AwsWafRuleGroupRulesDetails {
+	s.Priority = &v
+	return s
+}
+
+// SetRuleId sets the RuleId field's value.
+func (s *AwsWafRuleGroupRulesDetails) SetRuleId(v string) *AwsWafRuleGroupRulesDetails {
+	s.RuleId = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *AwsWafRuleGroupRulesDetails) SetType(v string) *AwsWafRuleGroupRulesDetails {
+	s.Type = &v
+	return s
+}
+
+// Provides details about the ByteMatchSet, IPSet, SqlInjectionMatchSet, XssMatchSet,
+// RegexMatchSet, GeoMatchSet, and SizeConstraintSet objects that you want to
+// add to a rule and, for each object, indicates whether you want to negate
+// the settings.
+type AwsWafRulePredicateListDetails struct {
+	_ struct{} `type:"structure"`
+
+	// A unique identifier for a predicate in a rule, such as ByteMatchSetId or
+	// IPSetId.
+	DataId *string `type:"string"`
+
+	// Specifies if you want WAF to allow, block, or count requests based on the
+	// settings in the ByteMatchSet, IPSet, SqlInjectionMatchSet, XssMatchSet, RegexMatchSet,
+	// GeoMatchSet, or SizeConstraintSet.
+	Negated *bool `type:"boolean"`
+
+	// The type of predicate in a rule, such as ByteMatch or IPSet.
+	Type *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRulePredicateListDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AwsWafRulePredicateListDetails) GoString() string {
+	return s.String()
+}
+
+// SetDataId sets the DataId field's value.
+func (s *AwsWafRulePredicateListDetails) SetDataId(v string) *AwsWafRulePredicateListDetails {
+	s.DataId = &v
+	return s
+}
+
+// SetNegated sets the Negated field's value.
+func (s *AwsWafRulePredicateListDetails) SetNegated(v bool) *AwsWafRulePredicateListDetails {
+	s.Negated = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *AwsWafRulePredicateListDetails) SetType(v string) *AwsWafRulePredicateListDetails {
+	s.Type = &v
+	return s
+}
+
+// Provides information about an WAF web access control list (web ACL).
 type AwsWafWebAclDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The action to perform if none of the rules contained in the WebACL match.
+	// The action to perform if none of the rules contained in the web ACL match.
 	DefaultAction *string `type:"string"`
 
-	// A friendly name or description of the WebACL. You can't change the name of
-	// a WebACL after you create it.
+	// A friendly name or description of the web ACL. You can't change the name
+	// of a web ACL after you create it.
 	Name *string `type:"string"`
 
-	// An array that contains the action for each rule in a WebACL, the priority
+	// An array that contains the action for each rule in a web ACL, the priority
 	// of the rule, and the ID of the rule.
 	Rules []*AwsWafWebAclRule `type:"list"`
 
-	// A unique identifier for a WebACL.
+	// A unique identifier for a web ACL.
 	WebAclId *string `type:"string"`
 }
 
@@ -30413,7 +34893,7 @@ func (s *AwsWafWebAclDetails) SetWebAclId(v string) *AwsWafWebAclDetails {
 	return s
 }
 
-// Details for a rule in an WAF WebACL.
+// Details for a rule in an WAF web ACL.
 type AwsWafWebAclRule struct {
 	_ struct{} `type:"structure"`
 
@@ -30436,14 +34916,14 @@ type AwsWafWebAclRule struct {
 	// those requests are counted.
 	//
 	// ActivatedRule|OverrideAction applies only when updating or adding a RuleGroup
-	// to a WebACL. In this case you do not use ActivatedRule|Action. For all other
-	// update requests, ActivatedRule|Action is used instead of ActivatedRule|OverrideAction.
+	// to a web ACL. In this case you do not use ActivatedRule Action. For all other
+	// update requests, ActivatedRule Action is used instead of ActivatedRule OverrideAction.
 	OverrideAction *WafOverrideAction `type:"structure"`
 
-	// Specifies the order in which the rules in a WebACL are evaluated. Rules with
-	// a lower value for Priority are evaluated before rules with a higher value.
-	// The value must be a unique integer. If you add multiple rules to a WebACL,
-	// the values do not need to be consecutive.
+	// Specifies the order in which the rules in a web ACL are evaluated. Rules
+	// with a lower value for Priority are evaluated before rules with a higher
+	// value. The value must be a unique integer. If you add multiple rules to a
+	// web ACL, the values do not need to be consecutive.
 	Priority *int64 `type:"integer"`
 
 	// The identifier for a rule.
@@ -30519,12 +34999,14 @@ type AwsXrayEncryptionConfigDetails struct {
 	// is KMS.
 	KeyId *string `type:"string"`
 
-	// The current status of the encryption configuration. When Status is UPDATING,
-	// X-Ray might use both the old and new encryption.
+	// The current status of the encryption configuration. Valid values are ACTIVE
+	// or UPDATING.
+	//
+	// When Status is equal to UPDATING, X-Ray might use both the old and new encryption.
 	Status *string `type:"string"`
 
 	// The type of encryption. KMS indicates that the encryption uses KMS keys.
-	// NONE indicates to use the default encryption.
+	// NONE indicates the default encryption.
 	Type *string `type:"string"`
 }
 
@@ -31091,12 +35573,46 @@ func (s *BatchUpdateFindingsOutput) SetUnprocessedFindings(v []*BatchUpdateFindi
 type BatchUpdateFindingsUnprocessedFinding struct {
 	_ struct{} `type:"structure"`
 
-	// The code associated with the error.
+	// The code associated with the error. Possible values are:
+	//
+	//    * ConcurrentUpdateError - Another request attempted to update the finding
+	//    while this request was being processed. This error may also occur if you
+	//    call BatchUpdateFindings (https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_BatchUpdateFindings.html)
+	//    and BatchImportFindings (https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_BatchImportFindings.html)
+	//    at the same time.
+	//
+	//    * DuplicatedFindingIdentifier - The request included two or more findings
+	//    with the same FindingIdentifier.
+	//
+	//    * FindingNotFound - The FindingIdentifier included in the request did
+	//    not match an existing finding.
+	//
+	//    * FindingSizeExceeded - The finding size was greater than the permissible
+	//    value of 240 KB.
+	//
+	//    * InternalFailure - An internal service failure occurred when updating
+	//    the finding.
+	//
+	//    * InvalidInput - The finding update contained an invalid value that did
+	//    not satisfy the Amazon Web Services Security Finding Format (https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html)
+	//    syntax.
 	//
 	// ErrorCode is a required field
 	ErrorCode *string `type:"string" required:"true"`
 
-	// The message associated with the error.
+	// The message associated with the error. Possible values are:
+	//
+	//    * Concurrent finding updates detected
+	//
+	//    * Finding Identifier is duplicated
+	//
+	//    * Finding Not Found
+	//
+	//    * Finding size exceeded 240 KB
+	//
+	//    * Internal service failure
+	//
+	//    * Invalid Input
 	//
 	// ErrorMessage is a required field
 	ErrorMessage *string `type:"string" required:"true"`
@@ -31533,10 +36049,13 @@ func (s *Compliance) SetStatusReasons(v []*StatusReason) *Compliance {
 type ContainerDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier of the image related to a finding.
+	// The runtime of the container.
+	ContainerRuntime *string `type:"string"`
+
+	// The identifier of the container image related to a finding.
 	ImageId *string `type:"string"`
 
-	// The name of the image related to a finding.
+	// The name of the container image related to a finding.
 	ImageName *string `type:"string"`
 
 	// Indicates when the container started.
@@ -31548,6 +36067,13 @@ type ContainerDetails struct {
 
 	// The name of the container related to a finding.
 	Name *string `type:"string"`
+
+	// When this parameter is true, the container is given elevated privileges on
+	// the host container instance (similar to the root user).
+	Privileged *bool `type:"boolean"`
+
+	// Provides information about the mounting of a volume in a container.
+	VolumeMounts []*VolumeMount `type:"list"`
 }
 
 // String returns the string representation.
@@ -31566,6 +36092,12 @@ func (s ContainerDetails) String() string {
 // value will be replaced with "sensitive".
 func (s ContainerDetails) GoString() string {
 	return s.String()
+}
+
+// SetContainerRuntime sets the ContainerRuntime field's value.
+func (s *ContainerDetails) SetContainerRuntime(v string) *ContainerDetails {
+	s.ContainerRuntime = &v
+	return s
 }
 
 // SetImageId sets the ImageId field's value.
@@ -31589,6 +36121,18 @@ func (s *ContainerDetails) SetLaunchedAt(v string) *ContainerDetails {
 // SetName sets the Name field's value.
 func (s *ContainerDetails) SetName(v string) *ContainerDetails {
 	s.Name = &v
+	return s
+}
+
+// SetPrivileged sets the Privileged field's value.
+func (s *ContainerDetails) SetPrivileged(v bool) *ContainerDetails {
+	s.Privileged = &v
+	return s
+}
+
+// SetVolumeMounts sets the VolumeMounts field's value.
+func (s *ContainerDetails) SetVolumeMounts(v []*VolumeMount) *ContainerDetails {
+	s.VolumeMounts = v
 	return s
 }
 
@@ -33080,6 +37624,16 @@ type DescribeOrganizationConfigurationOutput struct {
 	// false, then new accounts are not added automatically.
 	AutoEnable *bool `type:"boolean"`
 
+	// Whether to automatically enable Security Hub default standards (https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-standards-enable-disable.html)
+	// for new member accounts in the organization.
+	//
+	// The default value of this parameter is equal to DEFAULT.
+	//
+	// If equal to DEFAULT, then Security Hub default standards are automatically
+	// enabled for new member accounts. If equal to NONE, then default standards
+	// are not automatically enabled for new member accounts.
+	AutoEnableStandards *string `type:"string" enum:"AutoEnableStandards"`
+
 	// Whether the maximum number of allowed member accounts are already associated
 	// with the Security Hub administrator account.
 	MemberAccountLimitReached *bool `type:"boolean"`
@@ -33106,6 +37660,12 @@ func (s DescribeOrganizationConfigurationOutput) GoString() string {
 // SetAutoEnable sets the AutoEnable field's value.
 func (s *DescribeOrganizationConfigurationOutput) SetAutoEnable(v bool) *DescribeOrganizationConfigurationOutput {
 	s.AutoEnable = &v
+	return s
+}
+
+// SetAutoEnableStandards sets the AutoEnableStandards field's value.
+func (s *DescribeOrganizationConfigurationOutput) SetAutoEnableStandards(v string) *DescribeOrganizationConfigurationOutput {
+	s.AutoEnableStandards = &v
 	return s
 }
 
@@ -34050,6 +38610,65 @@ func (s EnableSecurityHubOutput) String() string {
 // value will be replaced with "sensitive".
 func (s EnableSecurityHubOutput) GoString() string {
 	return s.String()
+}
+
+// Provides information about the file paths that were affected by the threat.
+type FilePaths struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the infected or suspicious file corresponding to the hash.
+	FileName *string `type:"string"`
+
+	// Path to the infected or suspicious file on the resource it was detected on.
+	FilePath *string `type:"string"`
+
+	// The hash value for the infected or suspicious file.
+	Hash *string `type:"string"`
+
+	// The Amazon Resource Name (ARN) of the resource on which the threat was detected.
+	ResourceId *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FilePaths) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FilePaths) GoString() string {
+	return s.String()
+}
+
+// SetFileName sets the FileName field's value.
+func (s *FilePaths) SetFileName(v string) *FilePaths {
+	s.FileName = &v
+	return s
+}
+
+// SetFilePath sets the FilePath field's value.
+func (s *FilePaths) SetFilePath(v string) *FilePaths {
+	s.FilePath = &v
+	return s
+}
+
+// SetHash sets the Hash field's value.
+func (s *FilePaths) SetHash(v string) *FilePaths {
+	s.Hash = &v
+	return s
+}
+
+// SetResourceId sets the ResourceId field's value.
+func (s *FilePaths) SetResourceId(v string) *FilePaths {
+	s.ResourceId = &v
+	return s
 }
 
 // A finding aggregator. A finding aggregator contains the configuration for
@@ -35959,7 +40578,19 @@ type Ipv6CidrBlockAssociation struct {
 	// The association ID for the IPv6 CIDR block.
 	AssociationId *string `type:"string"`
 
-	// Information about the state of the CIDR block.
+	// Information about the state of the CIDR block. Valid values are as follows:
+	//
+	//    * associating
+	//
+	//    * associated
+	//
+	//    * disassociating
+	//
+	//    * disassociated
+	//
+	//    * failed
+	//
+	//    * failing
 	CidrBlockState *string `type:"string"`
 
 	// The IPv6 CIDR block.
@@ -38120,7 +42751,7 @@ type Product struct {
 	//    * UPDATE_FINDINGS_IN_SECURITY_HUB - The integration does not send new
 	//    findings to Security Hub, but does make updates to the findings that it
 	//    receives from Security Hub.
-	IntegrationTypes []*string `type:"list"`
+	IntegrationTypes []*string `type:"list" enum:"IntegrationType"`
 
 	// For integrations with Amazon Web Services services, the Amazon Web Services
 	// Console URL from which to activate the service.
@@ -38674,14 +43305,32 @@ type ResourceDetails struct {
 	// Provides details about a launch configuration.
 	AwsAutoScalingLaunchConfiguration *AwsAutoScalingLaunchConfigurationDetails `type:"structure"`
 
+	// Provides details about an Backup backup plan.
+	AwsBackupBackupPlan *AwsBackupBackupPlanDetails `type:"structure"`
+
+	// Provides details about an Backup backup vault.
+	AwsBackupBackupVault *AwsBackupBackupVaultDetails `type:"structure"`
+
+	// Provides details about an Backup backup, or recovery point.
+	AwsBackupRecoveryPoint *AwsBackupRecoveryPointDetails `type:"structure"`
+
 	// Provides details about an Certificate Manager certificate.
 	AwsCertificateManagerCertificate *AwsCertificateManagerCertificateDetails `type:"structure"`
+
+	// Details about an CloudFormation stack. A stack is a collection of Amazon
+	// Web Services resources that you can manage as a single unit.
+	AwsCloudFormationStack *AwsCloudFormationStackDetails `type:"structure"`
 
 	// Details about a CloudFront distribution.
 	AwsCloudFrontDistribution *AwsCloudFrontDistributionDetails `type:"structure"`
 
 	// Provides details about a CloudTrail trail.
 	AwsCloudTrailTrail *AwsCloudTrailTrailDetails `type:"structure"`
+
+	// Details about an Amazon CloudWatch alarm. An alarm allows you to monitor
+	// and receive alerts about your Amazon Web Services resources and applications
+	// across multiple Regions.
+	AwsCloudWatchAlarm *AwsCloudWatchAlarmDetails `type:"structure"`
 
 	// Details for an CodeBuild project.
 	AwsCodeBuildProject *AwsCodeBuildProjectDetails `type:"structure"`
@@ -38707,16 +43356,25 @@ type ResourceDetails struct {
 	// Details about a subnet in Amazon EC2.
 	AwsEc2Subnet *AwsEc2SubnetDetails `type:"structure"`
 
-	// Details for an EC2 volume.
+	// Details about an Amazon EC2 transit gateway that interconnects your virtual
+	// private clouds (VPC) and on-premises networks.
+	AwsEc2TransitGateway *AwsEc2TransitGatewayDetails `type:"structure"`
+
+	// Details for an Amazon EC2 volume.
 	AwsEc2Volume *AwsEc2VolumeDetails `type:"structure"`
 
-	// Details for an EC2 VPC.
+	// Details for an Amazon EC2 VPC.
 	AwsEc2Vpc *AwsEc2VpcDetails `type:"structure"`
 
 	// Details about the service configuration for a VPC endpoint service.
 	AwsEc2VpcEndpointService *AwsEc2VpcEndpointServiceDetails `type:"structure"`
 
-	// Details about an EC2 VPN connection.
+	// Details about an Amazon EC2 VPC peering connection. A VPC peering connection
+	// is a networking connection between two VPCs that enables you to route traffic
+	// between them privately.
+	AwsEc2VpcPeeringConnection *AwsEc2VpcPeeringConnectionDetails `type:"structure"`
+
+	// Details about an Amazon EC2 VPN connection.
 	AwsEc2VpnConnection *AwsEc2VpnConnectionDetails `type:"structure"`
 
 	// Information about an Amazon ECR image.
@@ -38725,15 +43383,27 @@ type ResourceDetails struct {
 	// Information about an Amazon Elastic Container Registry repository.
 	AwsEcrRepository *AwsEcrRepositoryDetails `type:"structure"`
 
-	// Details about an ECS cluster.
+	// Details about an Amazon ECS cluster.
 	AwsEcsCluster *AwsEcsClusterDetails `type:"structure"`
+
+	// Provides information about a Docker container that's part of a task.
+	AwsEcsContainer *AwsEcsContainerDetails `type:"structure"`
 
 	// Details about a service within an ECS cluster.
 	AwsEcsService *AwsEcsServiceDetails `type:"structure"`
 
+	// Details about a task in a cluster.
+	AwsEcsTask *AwsEcsTaskDetails `type:"structure"`
+
 	// Details about a task definition. A task definition describes the container
 	// and volume definitions of an Amazon Elastic Container Service task.
 	AwsEcsTaskDefinition *AwsEcsTaskDefinitionDetails `type:"structure"`
+
+	// Details about an Amazon EFS access point. An access point is an application-specific
+	// view into an EFS file system that applies an operating system user and group,
+	// and a file system path, to any file system request made through the access
+	// point.
+	AwsEfsAccessPoint *AwsEfsAccessPointDetails `type:"structure"`
 
 	// Details about an Amazon EKS cluster.
 	AwsEksCluster *AwsEksClusterDetails `type:"structure"`
@@ -38765,6 +43435,9 @@ type ResourceDetails struct {
 	// Details about an IAM user.
 	AwsIamUser *AwsIamUserDetails `type:"structure"`
 
+	// Details about an Amazon Kinesis data stream.
+	AwsKinesisStream *AwsKinesisStreamDetails `type:"structure"`
+
 	// Details about an KMS key.
 	AwsKmsKey *AwsKmsKeyDetails `type:"structure"`
 
@@ -38794,6 +43467,9 @@ type ResourceDetails struct {
 
 	// Details about an Amazon RDS database instance.
 	AwsRdsDbInstance *AwsRdsDbInstanceDetails `type:"structure"`
+
+	// Details about an Amazon RDS DB security group.
+	AwsRdsDbSecurityGroup *AwsRdsDbSecurityGroupDetails `type:"structure"`
 
 	// Details about an Amazon RDS database snapshot.
 	AwsRdsDbSnapshot *AwsRdsDbSnapshotDetails `type:"structure"`
@@ -38832,7 +43508,22 @@ type ResourceDetails struct {
 	// Details about a rate-based rule for Regional resources.
 	AwsWafRegionalRateBasedRule *AwsWafRegionalRateBasedRuleDetails `type:"structure"`
 
-	// Details for an WAF WebACL.
+	// Details about an WAF rule for Regional resources.
+	AwsWafRegionalRule *AwsWafRegionalRuleDetails `type:"structure"`
+
+	// Details about an WAF rule group for Regional resources.
+	AwsWafRegionalRuleGroup *AwsWafRegionalRuleGroupDetails `type:"structure"`
+
+	// Details about an WAF web access control list (web ACL) for Regional resources.
+	AwsWafRegionalWebAcl *AwsWafRegionalWebAclDetails `type:"structure"`
+
+	// Details about an WAF rule for global resources.
+	AwsWafRule *AwsWafRuleDetails `type:"structure"`
+
+	// Details about an WAF rule group for global resources.
+	AwsWafRuleGroup *AwsWafRuleGroupDetails `type:"structure"`
+
+	// Details for an WAF web ACL.
 	AwsWafWebAcl *AwsWafWebAclDetails `type:"structure"`
 
 	// Information about the encryption configuration for X-Ray.
@@ -38923,9 +43614,33 @@ func (s *ResourceDetails) SetAwsAutoScalingLaunchConfiguration(v *AwsAutoScaling
 	return s
 }
 
+// SetAwsBackupBackupPlan sets the AwsBackupBackupPlan field's value.
+func (s *ResourceDetails) SetAwsBackupBackupPlan(v *AwsBackupBackupPlanDetails) *ResourceDetails {
+	s.AwsBackupBackupPlan = v
+	return s
+}
+
+// SetAwsBackupBackupVault sets the AwsBackupBackupVault field's value.
+func (s *ResourceDetails) SetAwsBackupBackupVault(v *AwsBackupBackupVaultDetails) *ResourceDetails {
+	s.AwsBackupBackupVault = v
+	return s
+}
+
+// SetAwsBackupRecoveryPoint sets the AwsBackupRecoveryPoint field's value.
+func (s *ResourceDetails) SetAwsBackupRecoveryPoint(v *AwsBackupRecoveryPointDetails) *ResourceDetails {
+	s.AwsBackupRecoveryPoint = v
+	return s
+}
+
 // SetAwsCertificateManagerCertificate sets the AwsCertificateManagerCertificate field's value.
 func (s *ResourceDetails) SetAwsCertificateManagerCertificate(v *AwsCertificateManagerCertificateDetails) *ResourceDetails {
 	s.AwsCertificateManagerCertificate = v
+	return s
+}
+
+// SetAwsCloudFormationStack sets the AwsCloudFormationStack field's value.
+func (s *ResourceDetails) SetAwsCloudFormationStack(v *AwsCloudFormationStackDetails) *ResourceDetails {
+	s.AwsCloudFormationStack = v
 	return s
 }
 
@@ -38938,6 +43653,12 @@ func (s *ResourceDetails) SetAwsCloudFrontDistribution(v *AwsCloudFrontDistribut
 // SetAwsCloudTrailTrail sets the AwsCloudTrailTrail field's value.
 func (s *ResourceDetails) SetAwsCloudTrailTrail(v *AwsCloudTrailTrailDetails) *ResourceDetails {
 	s.AwsCloudTrailTrail = v
+	return s
+}
+
+// SetAwsCloudWatchAlarm sets the AwsCloudWatchAlarm field's value.
+func (s *ResourceDetails) SetAwsCloudWatchAlarm(v *AwsCloudWatchAlarmDetails) *ResourceDetails {
+	s.AwsCloudWatchAlarm = v
 	return s
 }
 
@@ -38989,6 +43710,12 @@ func (s *ResourceDetails) SetAwsEc2Subnet(v *AwsEc2SubnetDetails) *ResourceDetai
 	return s
 }
 
+// SetAwsEc2TransitGateway sets the AwsEc2TransitGateway field's value.
+func (s *ResourceDetails) SetAwsEc2TransitGateway(v *AwsEc2TransitGatewayDetails) *ResourceDetails {
+	s.AwsEc2TransitGateway = v
+	return s
+}
+
 // SetAwsEc2Volume sets the AwsEc2Volume field's value.
 func (s *ResourceDetails) SetAwsEc2Volume(v *AwsEc2VolumeDetails) *ResourceDetails {
 	s.AwsEc2Volume = v
@@ -39004,6 +43731,12 @@ func (s *ResourceDetails) SetAwsEc2Vpc(v *AwsEc2VpcDetails) *ResourceDetails {
 // SetAwsEc2VpcEndpointService sets the AwsEc2VpcEndpointService field's value.
 func (s *ResourceDetails) SetAwsEc2VpcEndpointService(v *AwsEc2VpcEndpointServiceDetails) *ResourceDetails {
 	s.AwsEc2VpcEndpointService = v
+	return s
+}
+
+// SetAwsEc2VpcPeeringConnection sets the AwsEc2VpcPeeringConnection field's value.
+func (s *ResourceDetails) SetAwsEc2VpcPeeringConnection(v *AwsEc2VpcPeeringConnectionDetails) *ResourceDetails {
+	s.AwsEc2VpcPeeringConnection = v
 	return s
 }
 
@@ -39031,15 +43764,33 @@ func (s *ResourceDetails) SetAwsEcsCluster(v *AwsEcsClusterDetails) *ResourceDet
 	return s
 }
 
+// SetAwsEcsContainer sets the AwsEcsContainer field's value.
+func (s *ResourceDetails) SetAwsEcsContainer(v *AwsEcsContainerDetails) *ResourceDetails {
+	s.AwsEcsContainer = v
+	return s
+}
+
 // SetAwsEcsService sets the AwsEcsService field's value.
 func (s *ResourceDetails) SetAwsEcsService(v *AwsEcsServiceDetails) *ResourceDetails {
 	s.AwsEcsService = v
 	return s
 }
 
+// SetAwsEcsTask sets the AwsEcsTask field's value.
+func (s *ResourceDetails) SetAwsEcsTask(v *AwsEcsTaskDetails) *ResourceDetails {
+	s.AwsEcsTask = v
+	return s
+}
+
 // SetAwsEcsTaskDefinition sets the AwsEcsTaskDefinition field's value.
 func (s *ResourceDetails) SetAwsEcsTaskDefinition(v *AwsEcsTaskDefinitionDetails) *ResourceDetails {
 	s.AwsEcsTaskDefinition = v
+	return s
+}
+
+// SetAwsEfsAccessPoint sets the AwsEfsAccessPoint field's value.
+func (s *ResourceDetails) SetAwsEfsAccessPoint(v *AwsEfsAccessPointDetails) *ResourceDetails {
+	s.AwsEfsAccessPoint = v
 	return s
 }
 
@@ -39103,6 +43854,12 @@ func (s *ResourceDetails) SetAwsIamUser(v *AwsIamUserDetails) *ResourceDetails {
 	return s
 }
 
+// SetAwsKinesisStream sets the AwsKinesisStream field's value.
+func (s *ResourceDetails) SetAwsKinesisStream(v *AwsKinesisStreamDetails) *ResourceDetails {
+	s.AwsKinesisStream = v
+	return s
+}
+
 // SetAwsKmsKey sets the AwsKmsKey field's value.
 func (s *ResourceDetails) SetAwsKmsKey(v *AwsKmsKeyDetails) *ResourceDetails {
 	s.AwsKmsKey = v
@@ -39160,6 +43917,12 @@ func (s *ResourceDetails) SetAwsRdsDbClusterSnapshot(v *AwsRdsDbClusterSnapshotD
 // SetAwsRdsDbInstance sets the AwsRdsDbInstance field's value.
 func (s *ResourceDetails) SetAwsRdsDbInstance(v *AwsRdsDbInstanceDetails) *ResourceDetails {
 	s.AwsRdsDbInstance = v
+	return s
+}
+
+// SetAwsRdsDbSecurityGroup sets the AwsRdsDbSecurityGroup field's value.
+func (s *ResourceDetails) SetAwsRdsDbSecurityGroup(v *AwsRdsDbSecurityGroupDetails) *ResourceDetails {
+	s.AwsRdsDbSecurityGroup = v
 	return s
 }
 
@@ -39232,6 +43995,36 @@ func (s *ResourceDetails) SetAwsWafRateBasedRule(v *AwsWafRateBasedRuleDetails) 
 // SetAwsWafRegionalRateBasedRule sets the AwsWafRegionalRateBasedRule field's value.
 func (s *ResourceDetails) SetAwsWafRegionalRateBasedRule(v *AwsWafRegionalRateBasedRuleDetails) *ResourceDetails {
 	s.AwsWafRegionalRateBasedRule = v
+	return s
+}
+
+// SetAwsWafRegionalRule sets the AwsWafRegionalRule field's value.
+func (s *ResourceDetails) SetAwsWafRegionalRule(v *AwsWafRegionalRuleDetails) *ResourceDetails {
+	s.AwsWafRegionalRule = v
+	return s
+}
+
+// SetAwsWafRegionalRuleGroup sets the AwsWafRegionalRuleGroup field's value.
+func (s *ResourceDetails) SetAwsWafRegionalRuleGroup(v *AwsWafRegionalRuleGroupDetails) *ResourceDetails {
+	s.AwsWafRegionalRuleGroup = v
+	return s
+}
+
+// SetAwsWafRegionalWebAcl sets the AwsWafRegionalWebAcl field's value.
+func (s *ResourceDetails) SetAwsWafRegionalWebAcl(v *AwsWafRegionalWebAclDetails) *ResourceDetails {
+	s.AwsWafRegionalWebAcl = v
+	return s
+}
+
+// SetAwsWafRule sets the AwsWafRule field's value.
+func (s *ResourceDetails) SetAwsWafRule(v *AwsWafRuleDetails) *ResourceDetails {
+	s.AwsWafRule = v
+	return s
+}
+
+// SetAwsWafRuleGroup sets the AwsWafRuleGroup field's value.
+func (s *ResourceDetails) SetAwsWafRuleGroup(v *AwsWafRuleGroupDetails) *ResourceDetails {
+	s.AwsWafRuleGroup = v
 	return s
 }
 
@@ -40544,6 +45337,9 @@ type SoftwarePackage struct {
 	// The file system path to the package manager inventory file.
 	FilePath *string `type:"string"`
 
+	// The version of the software package in which the vulnerability has been resolved.
+	FixedInVersion *string `type:"string"`
+
 	// The name of the software package.
 	Name *string `type:"string"`
 
@@ -40552,6 +45348,10 @@ type SoftwarePackage struct {
 
 	// The release of the software package.
 	Release *string `type:"string"`
+
+	// Describes the actions a customer can take to resolve the vulnerability in
+	// the software package.
+	Remediation *string `type:"string"`
 
 	// The version of the software package.
 	Version *string `type:"string"`
@@ -40593,6 +45393,12 @@ func (s *SoftwarePackage) SetFilePath(v string) *SoftwarePackage {
 	return s
 }
 
+// SetFixedInVersion sets the FixedInVersion field's value.
+func (s *SoftwarePackage) SetFixedInVersion(v string) *SoftwarePackage {
+	s.FixedInVersion = &v
+	return s
+}
+
 // SetName sets the Name field's value.
 func (s *SoftwarePackage) SetName(v string) *SoftwarePackage {
 	s.Name = &v
@@ -40608,6 +45414,12 @@ func (s *SoftwarePackage) SetPackageManager(v string) *SoftwarePackage {
 // SetRelease sets the Release field's value.
 func (s *SoftwarePackage) SetRelease(v string) *SoftwarePackage {
 	s.Release = &v
+	return s
+}
+
+// SetRemediation sets the Remediation field's value.
+func (s *SoftwarePackage) SetRemediation(v string) *SoftwarePackage {
+	s.Remediation = &v
 	return s
 }
 
@@ -41363,6 +46175,66 @@ func (s TagResourceOutput) GoString() string {
 	return s.String()
 }
 
+// Provides information about the threat detected in a security finding and
+// the file paths that were affected by the threat.
+type Threat struct {
+	_ struct{} `type:"structure"`
+
+	// Provides information about the file paths that were affected by the threat.
+	FilePaths []*FilePaths `type:"list"`
+
+	// This total number of items in which the threat has been detected.
+	ItemCount *int64 `type:"integer"`
+
+	// The name of the threat.
+	Name *string `type:"string"`
+
+	// The severity of the threat.
+	Severity *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Threat) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Threat) GoString() string {
+	return s.String()
+}
+
+// SetFilePaths sets the FilePaths field's value.
+func (s *Threat) SetFilePaths(v []*FilePaths) *Threat {
+	s.FilePaths = v
+	return s
+}
+
+// SetItemCount sets the ItemCount field's value.
+func (s *Threat) SetItemCount(v int64) *Threat {
+	s.ItemCount = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *Threat) SetName(v string) *Threat {
+	s.Name = &v
+	return s
+}
+
+// SetSeverity sets the Severity field's value.
+func (s *Threat) SetSeverity(v string) *Threat {
+	s.Severity = &v
+	return s
+}
+
 // Details about the threat intelligence related to a finding.
 type ThreatIntelIndicator struct {
 	_ struct{} `type:"structure"`
@@ -41979,6 +46851,16 @@ type UpdateOrganizationConfigurationInput struct {
 	//
 	// AutoEnable is a required field
 	AutoEnable *bool `type:"boolean" required:"true"`
+
+	// Whether to automatically enable Security Hub default standards (https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-standards-enable-disable.html)
+	// for new member accounts in the organization.
+	//
+	// By default, this parameter is equal to DEFAULT, and new member accounts are
+	// automatically enabled with default Security Hub standards.
+	//
+	// To opt out of enabling default standards for new member accounts, set this
+	// parameter equal to NONE.
+	AutoEnableStandards *string `type:"string" enum:"AutoEnableStandards"`
 }
 
 // String returns the string representation.
@@ -42015,6 +46897,12 @@ func (s *UpdateOrganizationConfigurationInput) Validate() error {
 // SetAutoEnable sets the AutoEnable field's value.
 func (s *UpdateOrganizationConfigurationInput) SetAutoEnable(v bool) *UpdateOrganizationConfigurationInput {
 	s.AutoEnable = &v
+	return s
+}
+
+// SetAutoEnableStandards sets the AutoEnableStandards field's value.
+func (s *UpdateOrganizationConfigurationInput) SetAutoEnableStandards(v string) *UpdateOrganizationConfigurationInput {
+	s.AutoEnableStandards = &v
 	return s
 }
 
@@ -42187,12 +47075,184 @@ func (s UpdateStandardsControlOutput) GoString() string {
 	return s.String()
 }
 
+// Describes the mounting of a volume in a container.
+type VolumeMount struct {
+	_ struct{} `type:"structure"`
+
+	// The path in the container at which the volume should be mounted.
+	MountPath *string `type:"string"`
+
+	// The name of the volume.
+	Name *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s VolumeMount) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s VolumeMount) GoString() string {
+	return s.String()
+}
+
+// SetMountPath sets the MountPath field's value.
+func (s *VolumeMount) SetMountPath(v string) *VolumeMount {
+	s.MountPath = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *VolumeMount) SetName(v string) *VolumeMount {
+	s.Name = &v
+	return s
+}
+
+// Provides details about the IPv4 CIDR blocks for the VPC.
+type VpcInfoCidrBlockSetDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The IPv4 CIDR block for the VPC.
+	CidrBlock *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s VpcInfoCidrBlockSetDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s VpcInfoCidrBlockSetDetails) GoString() string {
+	return s.String()
+}
+
+// SetCidrBlock sets the CidrBlock field's value.
+func (s *VpcInfoCidrBlockSetDetails) SetCidrBlock(v string) *VpcInfoCidrBlockSetDetails {
+	s.CidrBlock = &v
+	return s
+}
+
+// Provides details about the IPv6 CIDR blocks for the VPC.
+type VpcInfoIpv6CidrBlockSetDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The IPv6 CIDR block for the VPC.
+	Ipv6CidrBlock *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s VpcInfoIpv6CidrBlockSetDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s VpcInfoIpv6CidrBlockSetDetails) GoString() string {
+	return s.String()
+}
+
+// SetIpv6CidrBlock sets the Ipv6CidrBlock field's value.
+func (s *VpcInfoIpv6CidrBlockSetDetails) SetIpv6CidrBlock(v string) *VpcInfoIpv6CidrBlockSetDetails {
+	s.Ipv6CidrBlock = &v
+	return s
+}
+
+// Provides information about the VPC peering connection options for the accepter
+// or requester VPC.
+type VpcInfoPeeringOptionsDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates whether a local VPC can resolve public DNS hostnames to private
+	// IP addresses when queried from instances in a peer VPC.
+	AllowDnsResolutionFromRemoteVpc *bool `type:"boolean"`
+
+	// Indicates whether a local ClassicLink connection can communicate with the
+	// peer VPC over the VPC peering connection.
+	AllowEgressFromLocalClassicLinkToRemoteVpc *bool `type:"boolean"`
+
+	// Indicates whether a local VPC can communicate with a ClassicLink connection
+	// in the peer VPC over the VPC peering connection.
+	AllowEgressFromLocalVpcToRemoteClassicLink *bool `type:"boolean"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s VpcInfoPeeringOptionsDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s VpcInfoPeeringOptionsDetails) GoString() string {
+	return s.String()
+}
+
+// SetAllowDnsResolutionFromRemoteVpc sets the AllowDnsResolutionFromRemoteVpc field's value.
+func (s *VpcInfoPeeringOptionsDetails) SetAllowDnsResolutionFromRemoteVpc(v bool) *VpcInfoPeeringOptionsDetails {
+	s.AllowDnsResolutionFromRemoteVpc = &v
+	return s
+}
+
+// SetAllowEgressFromLocalClassicLinkToRemoteVpc sets the AllowEgressFromLocalClassicLinkToRemoteVpc field's value.
+func (s *VpcInfoPeeringOptionsDetails) SetAllowEgressFromLocalClassicLinkToRemoteVpc(v bool) *VpcInfoPeeringOptionsDetails {
+	s.AllowEgressFromLocalClassicLinkToRemoteVpc = &v
+	return s
+}
+
+// SetAllowEgressFromLocalVpcToRemoteClassicLink sets the AllowEgressFromLocalVpcToRemoteClassicLink field's value.
+func (s *VpcInfoPeeringOptionsDetails) SetAllowEgressFromLocalVpcToRemoteClassicLink(v bool) *VpcInfoPeeringOptionsDetails {
+	s.AllowEgressFromLocalVpcToRemoteClassicLink = &v
+	return s
+}
+
 // A vulnerability associated with a finding.
 type Vulnerability struct {
 	_ struct{} `type:"structure"`
 
 	// CVSS scores from the advisory related to the vulnerability.
 	Cvss []*Cvss `type:"list"`
+
+	// Specifies if all vulnerable packages in a finding have a value for FixedInVersion
+	// and Remediation. This field is evaluated for each vulnerability Id based
+	// on the number of vulnerable packages that have a value for both FixedInVersion
+	// and Remediation. Valid values are as follows:
+	//
+	//    * YES if all vulnerable packages have a value for both FixedInVersion
+	//    and Remediation
+	//
+	//    * NO if no vulnerable packages have a value for FixedInVersion and Remediation
+	//
+	//    * PARTIAL otherwise
+	FixAvailable *string `type:"string" enum:"VulnerabilityFixAvailable"`
 
 	// The identifier of the vulnerability.
 	//
@@ -42251,6 +47311,12 @@ func (s *Vulnerability) Validate() error {
 // SetCvss sets the Cvss field's value.
 func (s *Vulnerability) SetCvss(v []*Cvss) *Vulnerability {
 	s.Cvss = v
+	return s
+}
+
+// SetFixAvailable sets the FixAvailable field's value.
+func (s *Vulnerability) SetFixAvailable(v string) *Vulnerability {
+	s.FixAvailable = &v
 	return s
 }
 
@@ -42392,7 +47458,7 @@ type WafAction struct {
 	//    * COUNT - WAF increments a counter of the requests that match all of the
 	//    conditions in the rule. WAF then continues to inspect the web request
 	//    based on the remaining rules in the web ACL. You can't specify COUNT for
-	//    the default action for a WebACL.
+	//    the default action for a web ACL.
 	Type *string `type:"string"`
 }
 
@@ -42603,6 +47669,22 @@ func AdminStatus_Values() []string {
 	return []string{
 		AdminStatusEnabled,
 		AdminStatusDisableInProgress,
+	}
+}
+
+const (
+	// AutoEnableStandardsNone is a AutoEnableStandards enum value
+	AutoEnableStandardsNone = "NONE"
+
+	// AutoEnableStandardsDefault is a AutoEnableStandards enum value
+	AutoEnableStandardsDefault = "DEFAULT"
+)
+
+// AutoEnableStandards_Values returns all elements of the AutoEnableStandards enum
+func AutoEnableStandards_Values() []string {
+	return []string{
+		AutoEnableStandardsNone,
+		AutoEnableStandardsDefault,
 	}
 }
 
@@ -43107,6 +48189,26 @@ func VerificationState_Values() []string {
 		VerificationStateTruePositive,
 		VerificationStateFalsePositive,
 		VerificationStateBenignPositive,
+	}
+}
+
+const (
+	// VulnerabilityFixAvailableYes is a VulnerabilityFixAvailable enum value
+	VulnerabilityFixAvailableYes = "YES"
+
+	// VulnerabilityFixAvailableNo is a VulnerabilityFixAvailable enum value
+	VulnerabilityFixAvailableNo = "NO"
+
+	// VulnerabilityFixAvailablePartial is a VulnerabilityFixAvailable enum value
+	VulnerabilityFixAvailablePartial = "PARTIAL"
+)
+
+// VulnerabilityFixAvailable_Values returns all elements of the VulnerabilityFixAvailable enum
+func VulnerabilityFixAvailable_Values() []string {
+	return []string{
+		VulnerabilityFixAvailableYes,
+		VulnerabilityFixAvailableNo,
+		VulnerabilityFixAvailablePartial,
 	}
 }
 
