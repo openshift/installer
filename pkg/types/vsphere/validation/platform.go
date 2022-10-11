@@ -88,7 +88,7 @@ func validateMultiZone(p *vsphere.Platform, fldPath *field.Path) field.ErrorList
 			if len(failureDomain.Topology.ResourcePool) == 0 {
 				p.FailureDomains[idx].Topology.ResourcePool = p.ResourcePool
 			}
-			if len(failureDomain.Topology.Networks) == 0 {
+			if len(failureDomain.Topology.Networks) == 0 && len(p.Network) > 0 {
 				p.FailureDomains[idx].Topology.Networks = []string{p.Network}
 			}
 			if len(failureDomain.Topology.Datastore) == 0 {
@@ -178,6 +178,10 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path) field.Erro
 
 		if len(failureDomain.Topology.Datastore) == 0 {
 			allErrs = append(allErrs, field.Required(topologyFld.Child("datastore"), "must specify a datastore"))
+		}
+
+		if len(failureDomain.Topology.Networks) == 0 {
+			allErrs = append(allErrs, field.Required(topologyFld.Child("networks"), "must specify a network"))
 		}
 
 		if len(failureDomain.Topology.ComputeCluster) == 0 {
