@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/agent/conversion"
+	"github.com/openshift/installer/pkg/validate"
 )
 
 var (
@@ -190,8 +191,12 @@ func (a *AgentConfig) validateHostInterfaces(hostPath *field.Path, host agent.Ho
 			continue
 		}
 
+		if err := validate.MAC(mac); err != nil {
+			allErrs = append(allErrs, field.Invalid(macAddressPath, mac, err.Error()))
+		}
+
 		if _, ok := macs[mac]; ok {
-			allErrs = append(allErrs, field.Invalid(macAddressPath, "duplicate MAC address found", mac))
+			allErrs = append(allErrs, field.Invalid(macAddressPath, mac, "duplicate MAC address found"))
 		}
 		macs[mac] = true
 	}
