@@ -4,6 +4,8 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/version"
+
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 )
 
 func getAgentClusterInstallName(ic *agent.OptionalInstallConfig) string {
@@ -20,6 +22,14 @@ func getInfraEnvName(ic *agent.OptionalInstallConfig) string {
 
 func getPullSecretName(ic *agent.OptionalInstallConfig) string {
 	return ic.ClusterName() + "-pull-secret"
+}
+
+func getProxy(ic *agent.OptionalInstallConfig) *aiv1beta1.Proxy {
+	return &aiv1beta1.Proxy{
+		HTTPProxy:  ic.Config.Proxy.HTTPProxy,
+		HTTPSProxy: ic.Config.Proxy.HTTPSProxy,
+		NoProxy:    ic.Config.Proxy.NoProxy,
+	}
 }
 
 func getObjectMetaNamespace(ic *agent.OptionalInstallConfig) string {
