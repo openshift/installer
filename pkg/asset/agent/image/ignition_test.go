@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	"github.com/vincent-petithory/dataurl"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/api/v1beta1"
@@ -67,7 +68,21 @@ func TestIgnition_getTemplateData(t *testing.T) {
 
 	releaseImageList, err := releaseImageList(clusterImageSet.Spec.ReleaseImage, "x86_64")
 	assert.NoError(t, err)
-	templateData := getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, agentClusterInstall, infraEnvID)
+
+	arch := "x86_64"
+	ov := "4.12"
+	isoURL := "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.12/412.86.202208101039-0/x86_64/rhcos-412.86.202208101039-0-live.x86_64.iso"
+	rootFSUrl := "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.12/412.86.202208101039-0/x86_64/rhcos-412.86.202208101039-0-live-rootfs.x86_64.img"
+	ver := "412.86.202208101039-0"
+	osImage := &models.OsImage{
+		CPUArchitecture:  &arch,
+		OpenshiftVersion: &ov,
+		URL:              &isoURL,
+		RootfsURL:        &rootFSUrl,
+		Version:          &ver,
+	}
+
+	templateData := getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, agentClusterInstall, infraEnvID, osImage)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, "http://"+nodeZeroIP+":8090/", templateData.ServiceBaseURL)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -82,6 +97,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, releaseImageMirror, templateData.ReleaseImageMirror)
 	assert.Equal(t, haveMirrorConfig, templateData.HaveMirrorConfig)
 	assert.Equal(t, infraEnvID, templateData.InfraEnvID)
+	assert.Equal(t, osImage, templateData.OSImage)
 }
 
 func TestIgnition_addStaticNetworkConfig(t *testing.T) {
@@ -301,6 +317,7 @@ func TestIgnition_Generate(t *testing.T) {
 		overrideDeps                          []asset.Asset
 		expectedError                         string
 		expectedFiles                         []string
+		expectedFileContent                   map[string]string
 		preNetworkManagerConfigServiceEnabled bool
 	}{
 		{
@@ -320,7 +337,39 @@ func TestIgnition_Generate(t *testing.T) {
 				},
 			},
 			expectedFiles: []string{
+				"/etc/issue",
+				"/etc/multipath.conf",
+				"/etc/containers/containers.conf",
+				"/etc/motd",
+				"/root/.docker/config.json",
+				"/root/assisted.te",
+				"/usr/local/bin/common.sh",
+				"/usr/local/bin/agent-gather",
+				"/usr/local/bin/extract-agent.sh",
+				"/usr/local/bin/get-container-images.sh",
+				"/usr/local/bin/set-hostname.sh",
+				"/usr/local/bin/start-agent.sh",
+				"/usr/local/bin/start-cluster-installation.sh",
+				"/usr/local/bin/wait-for-assisted-service.sh",
+				"/usr/local/bin/set-node-zero.sh",
+				"/usr/local/share/assisted-service/assisted-db.env",
+				"/usr/local/share/assisted-service/assisted-service.env",
+				"/usr/local/share/assisted-service/images.env",
+				"/usr/local/bin/bootstrap-service-record.sh",
+				"/usr/local/bin/release-image.sh",
+				"/usr/local/bin/release-image-download.sh",
+				"/etc/assisted/manifests/agent-config.yaml",
+				"/etc/assisted/network/host0/eth0.nmconnection",
+				"/etc/assisted/network/host0/mac_interface.ini",
+				"/usr/local/bin/pre-network-manager-config.sh",
+				"/opt/agent/tls/kubeadmin-password.hash",
 				"/etc/assisted/extra-manifests/test-configmap.yaml",
+			},
+			expectedFileContent: map[string]string{
+				"/usr/local/share/assisted-service/images.env": `ASSISTED_SERVICE_HOST=192.168.111.80:8090
+ASSISTED_SERVICE_SCHEME=http
+OS_IMAGES=\[\{"openshift_version":"was not built correctly","cpu_architecture":"x86_64","url":"https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-.*.x86_64.iso","rootfs_url":"https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-.*-rootfs.x86_64.img","version":".*"\}\]
+`,
 			},
 			preNetworkManagerConfigServiceEnabled: true,
 		},
@@ -390,6 +439,12 @@ func TestIgnition_Generate(t *testing.T) {
 					found := false
 					for _, i := range ignitionAsset.Config.Storage.Files {
 						if i.Node.Path == f {
+							if expectedData, ok := tc.expectedFileContent[i.Node.Path]; ok {
+								actualData, err := dataurl.DecodeString(*i.FileEmbedded1.Contents.Source)
+								assert.NoError(t, err)
+								assert.Regexp(t, expectedData, string(actualData.Data))
+							}
+
 							found = true
 							break
 						}

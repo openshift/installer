@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/url"
@@ -25,7 +26,9 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/agent"
+	"github.com/openshift/installer/pkg/version"
 	"github.com/pkg/errors"
 )
 
@@ -58,6 +61,7 @@ type agentTemplateData struct {
 	ReleaseImageMirror  string
 	HaveMirrorConfig    bool
 	InfraEnvID          string
+	OSImage             *models.OsImage
 }
 
 // Name returns the human-friendly name of the asset.
@@ -118,7 +122,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	logrus.Infof("The rendezvous host IP (node0 IP) is %s", nodeZeroIP)
 
 	// TODO: don't hard-code target arch
-	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, "x86_64")
+	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, archName)
 	if err != nil {
 		return err
 	}
@@ -132,6 +136,11 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	infraEnvID := uuid.New().String()
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
+	osImage, err := getOSImagesInfo(archName)
+	if err != nil {
+		return err
+	}
+
 	agentTemplateData := getTemplateData(
 		agentManifests.GetPullSecretData(),
 		nodeZeroIP,
@@ -140,7 +149,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		releaseImageMirror,
 		len(registriesConfig.MirrorConfig) > 0,
 		agentManifests.AgentClusterInstall,
-		infraEnvID)
+		infraEnvID,
+		osImage)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -227,7 +237,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 func getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage,
 	releaseImageMirror string, haveMirrorConfig bool,
 	agentClusterInstall *hiveext.AgentClusterInstall,
-	infraEnvID string) *agentTemplateData {
+	infraEnvID string,
+	osImage *models.OsImage) *agentTemplateData {
 	serviceBaseURL := url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -249,6 +260,7 @@ func getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage,
 		ReleaseImageMirror:  releaseImageMirror,
 		HaveMirrorConfig:    haveMirrorConfig,
 		InfraEnvID:          infraEnvID,
+		OSImage:             osImage,
 	}
 }
 
@@ -371,6 +383,48 @@ func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraM
 		extraFile := ignition.FileFromBytes(filepath.Join(extraManifestPath, filepath.Base(file.Filename)), user, mode, file.Data)
 		config.Storage.Files = append(config.Storage.Files, extraFile)
 	}
+}
+
+func getOSImagesInfo(cpuArch string) (*models.OsImage, error) {
+	st, err := rhcos.FetchCoreOSBuild(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	osImage := &models.OsImage{
+		CPUArchitecture: &cpuArch,
+	}
+
+	openshiftVersion, err := version.Version()
+	if err != nil {
+		return nil, err
+	}
+	osImage.OpenshiftVersion = &openshiftVersion
+
+	streamArch, err := st.GetArchitecture(cpuArch)
+	if err != nil {
+		return nil, err
+	}
+
+	artifacts, ok := streamArch.Artifacts["metal"]
+	if !ok {
+		return nil, fmt.Errorf("failed to retrieve coreos metal info for architecture %s", cpuArch)
+	}
+	osImage.Version = &artifacts.Release
+
+	isoFormat, ok := artifacts.Formats["iso"]
+	if !ok {
+		return nil, fmt.Errorf("failed to retrieve coreos ISO info for architecture %s", cpuArch)
+	}
+	osImage.URL = &isoFormat.Disk.Location
+
+	pxeFormat, ok := artifacts.Formats["pxe"]
+	if !ok {
+		return nil, fmt.Errorf("failed to retrieve coreos rootfs info for architecture %s", cpuArch)
+	}
+	osImage.RootfsURL = &pxeFormat.Rootfs.Location
+
+	return osImage, nil
 }
 
 // RetrieveRendezvousIP Returns the Rendezvous IP from either AgentConfig or NMStateConfig
