@@ -435,15 +435,32 @@ func validateRegion(client API, ic *types.InstallConfig, fieldPath *field.Path) 
 	return nil
 }
 
-// validateCredentialMode checks whether the credential mode is
+// ValidateCredentialMode checks whether the credential mode is
 // compatible with the authentication mode.
-func validateCredentialMode(client API, ic *types.InstallConfig) field.ErrorList {
-	allErrs := field.ErrorList{}
+func ValidateCredentialMode(client API, ic *types.InstallConfig) error {
 	creds := client.GetCredentials()
 
 	if creds.JSON == nil && ic.CredentialsMode != types.ManualCredentialsMode {
 		errMsg := "environmental authentication is only supported with Manual credentials mode"
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("credentialsMode"), errMsg))
+		return field.Forbidden(field.NewPath("credentialsMode"), errMsg)
+	}
+
+	return nil
+}
+
+func validateCredentialMode(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	creds := client.GetCredentials()
+	if creds.JSON == nil {
+		if ic.CredentialsMode == "" {
+			logrus.Warn("Currently using GCP Environmental Authentication. Please set credentialsMode to manual, or provide a service account json file.")
+		} else {
+			if ic.CredentialsMode != "" && ic.CredentialsMode != types.ManualCredentialsMode {
+				errMsg := "environmental authentication is only supported with Manual credentials mode"
+				return append(allErrs, field.Forbidden(field.NewPath("credentialsMode"), errMsg))
+			}
+		}
 	}
 
 	return allErrs

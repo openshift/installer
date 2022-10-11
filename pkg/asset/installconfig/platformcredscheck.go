@@ -62,9 +62,14 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 	case gcp.Name:
-		_, err = gcpconfig.GetSession(ctx)
+		client, err := gcpconfig.NewClient(context.TODO())
 		if err != nil {
-			return errors.Wrap(err, "creating GCP session")
+			return err
+		}
+
+		err = gcpconfig.ValidateCredentialMode(client, ic.Config)
+		if err != nil {
+			return errors.Wrap(err, "validating credentials")
 		}
 	case ibmcloud.Name:
 		_, err = ibmcloudconfig.NewClient()
