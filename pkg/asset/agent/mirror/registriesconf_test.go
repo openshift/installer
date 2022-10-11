@@ -22,7 +22,6 @@ func TestRegistriesConf_Generate(t *testing.T) {
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
-		expectedError  string
 		expectedConfig string
 	}{
 		{
@@ -53,7 +52,7 @@ func TestRegistriesConf_Generate(t *testing.T) {
 			expectedConfig: defaultRegistriesConf,
 		},
 		{
-			name: "invalid-image-content-sources",
+			name: "invalid-config-image-content-source-does-not-match-releaseImage",
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{
 					Supplied: true,
@@ -83,7 +82,7 @@ func TestRegistriesConf_Generate(t *testing.T) {
 					PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
 				},
 			},
-			expectedError: "The ImageContentSource configuration in install-config.yaml should have an entry matching the releaseImage registry.ci.openshift.org/ocp/release",
+			expectedConfig: "unqualified-search-registries = []\n\n[[registry]]\n  location = \"registry.ci.openshift.org/origin/release\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\"\n\n[[registry]]\n  location = \"quay.io/openshift-release-dev/ocp-v4.0-art-dev\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\"\n",
 		},
 		{
 			name: "valid-image-content-sources",
@@ -145,15 +144,11 @@ func TestRegistriesConf_Generate(t *testing.T) {
 			asset := &RegistriesConf{}
 			err := asset.Generate(parents)
 
-			if tc.expectedError != "" {
-				assert.EqualError(t, err, tc.expectedError)
-			} else {
-				assert.NoError(t, err)
+			assert.NoError(t, err)
 
-				files := asset.Files()
-				assert.Len(t, files, 1)
-				assert.Equal(t, tc.expectedConfig, string(files[0].Data))
-			}
+			files := asset.Files()
+			assert.Len(t, files, 1)
+			assert.Equal(t, tc.expectedConfig, string(files[0].Data))
 		})
 	}
 }
@@ -168,7 +163,7 @@ func TestRegistries_LoadedFromDisk(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "invalid-config-file",
+			name: "invalid-fields-in-config-file",
 			data: `
 [[registry]]
 wrongLocationkey = "registry.ci.openshift.org/origin/release" 
@@ -178,13 +173,12 @@ mirror-by-digest-only = false
 location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 
 [[registry]]
-location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+locations = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
 mirror-by-digest-only = false
 
 [[registry.mirror]]
 location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"`,
-			expectedFound: false,
-			expectedError: "mirror/registries.conf should have an entry matching the releaseImage registry.ci.openshift.org/origin/release. Found \"\"",
+			expectedFound: true,
 		},
 		{
 			name: "valid-config-file",
@@ -221,8 +215,8 @@ mirror-by-digest-only = false
 
 [[registry.mirror]]
 location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"`,
-			expectedFound: false,
-			expectedError: "mirror/registries.conf should have an entry matching the releaseImage registry.ci.openshift.org/origin/release",
+			expectedFound: true,
+			expectedError: "",
 		},
 		{
 			name:       "file-not-found",

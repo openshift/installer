@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -239,21 +240,22 @@ func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
 func (i *RegistriesConf) finish() error {
 
 	if string(i.File.Data) != defaultRegistriesConf {
-		return i.validateReleaseImageIsSameInRegistriesConf()
+		i.validateReleaseImageIsSameInRegistriesConf()
 	}
 
 	return nil
 }
 
-func (i *RegistriesConf) validateReleaseImageIsSameInRegistriesConf() error {
+func (i *RegistriesConf) validateReleaseImageIsSameInRegistriesConf() {
 
 	var found bool
 
 	for _, registry := range i.Config.Registries {
-		if !i.Generated && registry.Endpoint.Location == "" {
-			return errors.New(fmt.Sprintf("%s should have an entry matching the releaseImage %s. Found \"%s\"", RegistriesConfFilename, i.ReleaseImagePath, registry.Endpoint.Location))
+		source := registry.Endpoint.Location
+		if !i.Generated && source == "" {
+			logrus.Warnf(fmt.Sprintf("%s should have an entry matching the releaseImage %s. Found \"%s\"", RegistriesConfFilename, i.ReleaseImagePath, source))
 		}
-		if registry.Endpoint.Location == i.ReleaseImagePath {
+		if source == i.ReleaseImagePath {
 			found = true
 			break
 		}
@@ -261,9 +263,9 @@ func (i *RegistriesConf) validateReleaseImageIsSameInRegistriesConf() error {
 
 	if !found {
 		if i.Generated {
-			return errors.New(fmt.Sprintf("The ImageContentSource configuration in install-config.yaml should have an entry matching the releaseImage %s", i.ReleaseImagePath))
+			logrus.Warnf(fmt.Sprintf("The ImageContentSources configuration in install-config.yaml should have at-least one source field matching the releaseImage value %s", i.ReleaseImagePath))
+			return
 		}
-		return errors.New(fmt.Sprintf("%s should have an entry matching the releaseImage %s", RegistriesConfFilename, i.ReleaseImagePath))
+		logrus.Warnf(fmt.Sprintf("%s should have an entry matching the releaseImage %s", RegistriesConfFilename, i.ReleaseImagePath))
 	}
-	return nil
 }
