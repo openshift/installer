@@ -1370,8 +1370,45 @@ func (PowerVSServiceEndpoint) SwaggerDoc() map[string]string {
 	return map_PowerVSServiceEndpoint
 }
 
+var map_VSpherePlatformFailureDomainSpec = map[string]string{
+	"":         "VSpherePlatformFailureDomainSpec holds the region and zone failure domain and the vCenter topology of that failure domain.",
+	"name":     "name defines the arbitrary but unique name of a failure domain.",
+	"region":   "region defines the name of a region tag that will be attached to a vCenter datacenter. The tag category in vCenter must be named openshift-region.",
+	"zone":     "zone defines the name of a zone tag that will be attached to a vCenter cluster. The tag category in vCenter must be named openshift-zone.",
+	"server":   "server is the fully-qualified domain name or the IP address of the vCenter server.",
+	"topology": "Topology describes a given failure domain using vSphere constructs",
+}
+
+func (VSpherePlatformFailureDomainSpec) SwaggerDoc() map[string]string {
+	return map_VSpherePlatformFailureDomainSpec
+}
+
+var map_VSpherePlatformNodeNetworking = map[string]string{
+	"":         "VSpherePlatformNodeNetworking holds the external and internal node networking spec.",
+	"external": "external represents the network configuration of the node that is externally routable.",
+	"internal": "internal represents the network configuration of the node that is routable only within the cluster.",
+}
+
+func (VSpherePlatformNodeNetworking) SwaggerDoc() map[string]string {
+	return map_VSpherePlatformNodeNetworking
+}
+
+var map_VSpherePlatformNodeNetworkingSpec = map[string]string{
+	"":                         "VSpherePlatformNodeNetworkingSpec holds the network CIDR(s) and port group name for including and excluding IP ranges in the cloud provider. This would be used for example when multiple network adapters are attached to a guest to help determine which IP address the cloud config manager should use for the external and internal node networking.",
+	"networkSubnetCidr":        "networkSubnetCidr IP address on VirtualMachine's network interfaces included in the fields' CIDRs that will be used in respective status.addresses fields.",
+	"network":                  "network VirtualMachine's VM Network names that will be used to when searching for status.addresses fields. Note that if internal.networkSubnetCIDR and external.networkSubnetCIDR are not set, then the vNIC associated to this network must only have a single IP address assigned to it. The available networks (port groups) can be listed using `govc ls 'network/*'`",
+	"excludeNetworkSubnetCidr": "excludeNetworkSubnetCidr IP addresses in subnet ranges will be excluded when selecting the IP address from the VirtualMachine's VM for use in the status.addresses fields.",
+}
+
+func (VSpherePlatformNodeNetworkingSpec) SwaggerDoc() map[string]string {
+	return map_VSpherePlatformNodeNetworkingSpec
+}
+
 var map_VSpherePlatformSpec = map[string]string{
-	"": "VSpherePlatformSpec holds the desired state of the vSphere infrastructure provider. This only includes fields that can be modified in the cluster.",
+	"":               "VSpherePlatformSpec holds the desired state of the vSphere infrastructure provider. In the future the cloud provider operator, storage operator and machine operator will use these fields for configuration.",
+	"vcenters":       "vcenters holds the connection details for services to communicate with vCenter. Currently, only a single vCenter is supported.",
+	"failureDomains": "failureDomains contains the definition of region, zone and the vCenter topology. If this is omitted failure domains (regions and zones) will not be used.",
+	"nodeNetworking": "nodeNetworking contains the definition of internal and external network constraints for assigning the node's networking. If this field is omitted, networking defaults to the legacy address selection behavior which is to only support a single address and return the first one found.",
 }
 
 func (VSpherePlatformSpec) SwaggerDoc() map[string]string {
@@ -1389,6 +1426,31 @@ var map_VSpherePlatformStatus = map[string]string{
 
 func (VSpherePlatformStatus) SwaggerDoc() map[string]string {
 	return map_VSpherePlatformStatus
+}
+
+var map_VSpherePlatformTopology = map[string]string{
+	"":               "VSpherePlatformTopology holds the required and optional vCenter objects - datacenter, computeCluster, networks, datastore and resourcePool - to provision virtual machines.",
+	"datacenter":     "datacenter is the name of vCenter datacenter in which virtual machines will be located. The maximum length of the datacenter name is 80 characters.",
+	"computeCluster": "computeCluster the absolute path of the vCenter cluster in which virtual machine will be located. The absolute path is of the form /<datacenter>/host/<cluster>. The maximum length of the path is 2048 characters.",
+	"networks":       "networks is the list of port group network names within this failure domain. Currently, we only support a single interface per RHCOS virtual machine. The available networks (port groups) can be listed using `govc ls 'network/*'` The single interface should be the absolute path of the form /<datacenter>/network/<portgroup>.",
+	"datastore":      "datastore is the absolute path of the datastore in which the virtual machine is located. The absolute path is of the form /<datacenter>/datastore/<datastore> The maximum length of the path is 2048 characters.",
+	"resourcePool":   "resourcePool is the absolute path of the resource pool where virtual machines will be created. The absolute path is of the form /<datacenter>/host/<cluster>/Resources/<resourcepool>. The maximum length of the path is 2048 characters.",
+	"folder":         "folder is the absolute path of the folder where virtual machines are located. The absolute path is of the form /<datacenter>/vm/<folder>. The maximum length of the path is 2048 characters.",
+}
+
+func (VSpherePlatformTopology) SwaggerDoc() map[string]string {
+	return map_VSpherePlatformTopology
+}
+
+var map_VSpherePlatformVCenterSpec = map[string]string{
+	"":            "VSpherePlatformVCenterSpec stores the vCenter connection fields. This is used by the vSphere CCM.",
+	"server":      "server is the fully-qualified domain name or the IP address of the vCenter server.",
+	"port":        "port is the TCP port that will be used to communicate to the vCenter endpoint. When omitted, this means the user has no opinion and it is up to the platform to choose a sensible default, which is subject to change over time.",
+	"datacenters": "The vCenter Datacenters in which the RHCOS vm guests are located. This field will be used by the Cloud Controller Manager. Each datacenter listed here should be used within a topology.",
+}
+
+func (VSpherePlatformVCenterSpec) SwaggerDoc() map[string]string {
+	return map_VSpherePlatformVCenterSpec
 }
 
 var map_AWSIngressSpec = map[string]string{

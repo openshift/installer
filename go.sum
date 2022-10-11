@@ -1393,8 +1393,8 @@ github.com/opencontainers/selinux v1.5.2/go.mod h1:yTcKuYAh6R95iDpefGLQaPaRwJFwy
 github.com/opencontainers/selinux v1.6.0/go.mod h1:VVGKuOLlE7v4PJyT6h7mNWvq1rzqiriPsEqVhc+svHE=
 github.com/opencontainers/selinux v1.8.2/go.mod h1:MUIHuUEvKB1wtJjQdOyYRgOnLD2xAPP8dBsCoU0KuF8=
 github.com/openshift-online/ocm-sdk-go v0.1.205/go.mod h1:iOhkt/6nFp9v7hasdmGbYlR/YKeUoaZKq5ZBrtyKwKg=
-github.com/openshift/api v0.0.0-20220929023536-18c298295790 h1:3gFkW/KlKQ4jDtAA4axl5MKhluIi2mK+DKMDimIhgks=
-github.com/openshift/api v0.0.0-20220929023536-18c298295790/go.mod h1:HJAEIh4gLXPDdWxgCbvmJjzd9QIxyPZJtPU0u2W4vH4=
+github.com/openshift/api v0.0.0-20221004120407-c46852673d03 h1:e8oBXPs3eCJWIeEVw29l+GLvxdo3BPhdpkUd/FzPjeg=
+github.com/openshift/api v0.0.0-20221004120407-c46852673d03/go.mod h1:JRz+ZvTqu9u7t6suhhPTacbFl5K65Y6rJbNM7HjWA3g=
 github.com/openshift/assisted-image-service v0.0.0-20220307202600-054a1afa8d28 h1:TOB7zzhxIfUBJG0RXoU0LGRj3p9AzEKEVUaNJNKhFNA=
 github.com/openshift/assisted-image-service v0.0.0-20220307202600-054a1afa8d28/go.mod h1:bH4+AsmPy8mQQvtgedBm2Crs93TDWeXEMlIPrlEMpjA=
 github.com/openshift/assisted-service v1.0.10-0.20220223093655-7ada9949bf1d h1:n5eonnzsP0tD9EEF4uiu9D+ayTRamid11snRUc+BmfU=
@@ -2800,7 +2800,6 @@ k8s.io/code-generator v0.22.0/go.mod h1:eV77Y09IopzeXOJzndrDyCI88UBok2h6WxAlBwpx
 k8s.io/code-generator v0.22.1/go.mod h1:eV77Y09IopzeXOJzndrDyCI88UBok2h6WxAlBwpxa+o=
 k8s.io/code-generator v0.23.0/go.mod h1:vQvOhDXhuzqiVfM/YHp+dmg10WDZCchJVObc9MvowsE=
 k8s.io/code-generator v0.24.3/go.mod h1:dpVhs00hTuTdTY6jvVxvTFCk6gSMrtfRydbhZwHI15w=
-k8s.io/code-generator v0.25.0/go.mod h1:B6jZgI3DvDFAualltPitbYMQ74NjaCFxum3YeKZZ+3w=
 k8s.io/component-base v0.18.0-beta.2/go.mod h1:HVk5FpRnyzQ/MjBr9//e/yEBjTVa2qjGXCTuUzcD7ks=
 k8s.io/component-base v0.18.0-rc.1/go.mod h1:NNlRaxZEdLqTs2+6yXiU2SHl8gKsbcy19Ii+Sfq53RM=
 k8s.io/component-base v0.18.2/go.mod h1:kqLlMuhJNHQ9lz8Z7V5bxUUtjFZnrypArGl58gmDfUM=

@@ -245,7 +245,8 @@ replace k8s.io/client-go => k8s.io/client-go v0.25.0
 replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 
 // Override the OpenShift API version in hive
-replace github.com/openshift/api => github.com/openshift/api v0.0.0-20220929023536-18c298295790
+
+replace github.com/openshift/api => github.com/openshift/api v0.0.0-20221004120407-c46852673d03
 
 replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0
 
