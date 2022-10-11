@@ -33,7 +33,8 @@ function restart_kubelet {
 
 function approve_csr {
   echo "Approving csrs ..."
-  until [ "$(oc get nodes --selector='node-role.kubernetes.io/master' -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
+  # use [*] and not [0] in the jsonpath because the node resource may not have been created yet
+  until [ "$(oc get nodes --selector='node-role.kubernetes.io/master' -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
   do
     echo "Approving csrs ..."
     oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs --no-run-if-empty oc adm certificate approve &> /dev/null || true
