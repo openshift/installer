@@ -53,6 +53,7 @@ type clusterInstallStatusHistory struct {
 	ClusterConsoleRouteCreated                          bool
 	ClusterConsoleRouteURLCreated                       bool
 	ClusterInstallComplete                              bool
+	NotReadyTime                                        time.Time
 }
 
 // NewCluster initializes a Cluster object
@@ -156,6 +157,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 		if !czero.installHistory.RestAPISeen {
 			logrus.Debug("Agent Rest API Initialized")
 			czero.installHistory.RestAPISeen = true
+			czero.installHistory.NotReadyTime = time.Now()
 		}
 
 		// Lazy loading of the clusterID and clusterInfraEnvID
@@ -187,11 +189,15 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 		czero.PrintInstallStatus(clusterMetadata)
 
-		// If the status changes back to Ready from Installing it indicates an error
-		if *clusterMetadata.Status == models.ClusterStatusReady &&
-			czero.installHistory.RestAPIPreviousClusterStatus == models.ClusterStatusPreparingForInstallation {
-			return false, true, errors.New("failed to prepare cluster installation")
+		if *clusterMetadata.Status == models.ClusterStatusReady {
+			stuck, err := czero.IsClusterStuckInReady()
+			if stuck {
+				return false, true, err
+			}
+		} else {
+			czero.installHistory.NotReadyTime = time.Now()
 		}
+
 		czero.installHistory.RestAPIPreviousClusterStatus = *clusterMetadata.Status
 
 		// Update Install History object when we see these states
@@ -301,6 +307,26 @@ func (czero *Cluster) IsInstallComplete() (bool, error) {
 		czero.installHistory.ClusterConsoleRouteURLCreated {
 		czero.installHistory.ClusterInstallComplete = true
 		return true, nil
+	}
+
+	return false, nil
+}
+
+// IsClusterStuckInReady Determine if the cluster has stopped transitioning out of the Ready state
+func (czero *Cluster) IsClusterStuckInReady() (bool, error) {
+
+	// If the status changes back to Ready from Installing it indicates an error
+	if czero.installHistory.RestAPIPreviousClusterStatus == models.ClusterStatusPreparingForInstallation {
+		return true, errors.New("failed to prepare cluster installation")
+	}
+
+	// Check if stuck in Ready state
+	if czero.installHistory.RestAPIPreviousClusterStatus == models.ClusterStatusReady {
+		current := time.Now()
+		elapsed := current.Sub(czero.installHistory.NotReadyTime)
+		if elapsed > 1*time.Minute {
+			return true, errors.New("failed to progress after all hosts available")
+		}
 	}
 
 	return false, nil
