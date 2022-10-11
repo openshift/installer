@@ -234,8 +234,8 @@ installation to fail. As of 4.10, there is one credential request, for the `capi
 tech preview. Any credential requests from a feature gate can simply be removed before you create the credentials:
 
 ```shell
-$ grep "release.openshift.io/feature-gate" *
-0000_30_capi-operator_00_credentials-request.yaml:    release.openshift.io/feature-gate: TechPreviewNoUpgrade
+$ grep "release.openshift.io/feature-set" *
+0000_30_capi-operator_00_credentials-request.yaml:    release.openshift.io/feature-set: TechPreviewNoUpgrade
 $ rm 0000_30_capi-operator_00_credentials-request.yaml
 ```
 
