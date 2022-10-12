@@ -240,10 +240,27 @@ func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
 func (i *RegistriesConf) finish() error {
 
 	if string(i.File.Data) != defaultRegistriesConf {
-		i.validateReleaseImageIsSameInRegistriesConf()
+		// validateRegistriesConf is always true in case of Generate()
+		// because the marshalling results in correct keys.
+		// Only in case of Load(), if the string keys are incorrect
+		// then validateRegistriesConf returns false.
+		// If validateRegistriesConf returns true, then only
+		// validate the data for release image
+		if valid := i.validateRegistriesConf(); valid {
+			i.validateReleaseImageIsSameInRegistriesConf()
+		}
 	}
-
 	return nil
+}
+
+func (i *RegistriesConf) validateRegistriesConf() bool {
+	for _, registry := range i.Config.Registries {
+		if registry.Endpoint.Location == "" {
+			logrus.Warnf(fmt.Sprintf("Location key not found in %s", RegistriesConfFilename))
+			return false
+		}
+	}
+	return true
 }
 
 func (i *RegistriesConf) validateReleaseImageIsSameInRegistriesConf() {
@@ -252,9 +269,6 @@ func (i *RegistriesConf) validateReleaseImageIsSameInRegistriesConf() {
 
 	for _, registry := range i.Config.Registries {
 		source := registry.Endpoint.Location
-		if !i.Generated && source == "" {
-			logrus.Warnf(fmt.Sprintf("%s should have an entry matching the releaseImage %s. Found \"%s\"", RegistriesConfFilename, i.ReleaseImagePath, source))
-		}
 		if source == i.ReleaseImagePath {
 			found = true
 			break

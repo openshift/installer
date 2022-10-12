@@ -163,7 +163,7 @@ func TestRegistries_LoadedFromDisk(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "invalid-fields-in-config-file",
+			name: "location-key-not-found-in-config-file",
 			data: `
 [[registry]]
 wrongLocationkey = "registry.ci.openshift.org/origin/release" 
