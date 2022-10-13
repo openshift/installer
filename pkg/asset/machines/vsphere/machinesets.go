@@ -1,4 +1,4 @@
-//Package vsphere generates Machine objects for vsphere.package vsphere
+// Package vsphere generates Machine objects for vsphere.package vsphere
 package vsphere
 
 import (

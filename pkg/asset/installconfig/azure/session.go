@@ -24,7 +24,7 @@ var (
 	onceLoggers         = map[string]*sync.Once{}
 )
 
-//Session is an object representing session for subscription
+// Session is an object representing session for subscription
 type Session struct {
 	GraphAuthorizer autorest.Authorizer
 	Authorizer      autorest.Authorizer
@@ -32,7 +32,7 @@ type Session struct {
 	Environment     azureenv.Environment
 }
 
-//Credentials is the data type for credentials as understood by the azure sdk
+// Credentials is the data type for credentials as understood by the azure sdk
 type Credentials struct {
 	SubscriptionID            string `json:"subscriptionId,omitempty"`
 	ClientID                  string `json:"clientId,omitempty"`

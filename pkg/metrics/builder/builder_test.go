@@ -32,7 +32,7 @@ func getCollectorDescription(collector prometheus.Collector) string {
 	}
 }
 
-//TestNewMetricBuilder tests the Metric Builder initializer.
+// TestNewMetricBuilder tests the Metric Builder initializer.
 func TestMetricBuilder(t *testing.T) {
 	cases := []struct {
 		name                  string
@@ -109,7 +109,7 @@ func TestMetricBuilder(t *testing.T) {
 	}
 }
 
-//TestMetricBuilderCollector tests the PromCollector function.
+// TestMetricBuilderCollector tests the PromCollector function.
 func TestMetricBuilderCollector(t *testing.T) {
 	cases := []struct {
 		name                  string
@@ -192,7 +192,7 @@ func TestMetricBuilderCollector(t *testing.T) {
 	}
 }
 
-//TestNewMetricBuilder tests the Metric Builder initializer.
+// TestNewMetricBuilder tests the Metric Builder initializer.
 func TestNewMetricBuilder(t *testing.T) {
 	opts := MetricOpts{
 		Labels:     []string{"test1", "test2", "test3"},

@@ -71,7 +71,7 @@ func (a *AdminKubeConfigCABundle) Name() string {
 	return "Certificate (admin-kubeconfig-ca-bundle)"
 }
 
-//AdminKubeConfigClientCertKey is the asset that generates the key/cert pair for admin client to apiserver.
+// AdminKubeConfigClientCertKey is the asset that generates the key/cert pair for admin client to apiserver.
 type AdminKubeConfigClientCertKey struct {
 	SignedCertKey
 }

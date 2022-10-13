@@ -35,17 +35,17 @@ func Get(networkClient *gophercloud.ServiceClient) ([]extensions.Extension, erro
 // the Installer requirements.
 //
 // Network resource tagging is a bit complex with OpenStack:
-// - up until OpenStack Ocata / OSP 11, there were two extensions for
-//   tagging neutron resources, `tag` for network only and `tag-ext`
-//   for subnet, subnetpool, port, and router.
-// - OpenStack Pike / OSP 12 introduced the `standard-attr-tag`
-//   extension for trunk, policy, security_group, and floatingip.
-// - with OpenStack Rocky / OSP 14, everything went under the
-//   `standard-attr-tag` extension.
+//   - up until OpenStack Ocata / OSP 11, there were two extensions for
+//     tagging neutron resources, `tag` for network only and `tag-ext`
+//     for subnet, subnetpool, port, and router.
+//   - OpenStack Pike / OSP 12 introduced the `standard-attr-tag`
+//     extension for trunk, policy, security_group, and floatingip.
+//   - with OpenStack Rocky / OSP 14, everything went under the
+//     `standard-attr-tag` extension.
 //
 // We need to check that:
-// 1. `standard-attr-tag` extension is enabled
-// 2. `standard-attr-tag` covers all the necessary resources (from the
+//   1. `standard-attr-tag` extension is enabled
+//   2. `standard-attr-tag` covers all the necessary resources (from the
 //           extension description) or that the `tag` and `tag-ext`
 //           extensions are enabled as well
 func Validate(availableExtensions []extensions.Extension) error {

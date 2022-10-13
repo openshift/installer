@@ -1,4 +1,4 @@
-//Package nutanix generates Machine objects for nutanix.package nutanix
+// Package nutanix generates Machine objects for nutanix.package nutanix
 package nutanix
 
 import (

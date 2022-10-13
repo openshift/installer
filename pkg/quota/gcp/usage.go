@@ -52,7 +52,7 @@ func loadUsage(ctx context.Context, client *monitoring.MetricClient, project str
 // Based on https://cloud.google.com/monitoring/api/ref_v3/rest/v3/TimeSeries and definition of the points API
 // "The data points of this time series. When listing time series, points are returned in reverse time order.",
 // The latestRecord returns the first element of the points as the usage value. In case the points list is empty it
-/// returns 0 as the usage value.
+// returns 0 as the usage value.
 func latestRecord(ts *monitoringpb.TimeSeries) (record, error) {
 	service, ok := ts.GetResource().GetLabels()["service"]
 	if !ok {

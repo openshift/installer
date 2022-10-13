@@ -15,8 +15,9 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 )
 
-// StartSimulator starts an instance of the simulator which listens on 127.0.0.1. Call GetClient
-//                to retrieve a vim25.client which will connect to and trust this simulator
+// StartSimulator starts an instance of the simulator which listens on 127.0.0.1.
+// Call GetClient to retrieve a vim25.client which will connect to and trust this
+// simulator
 func StartSimulator() *simulator.Server {
 	model := simulator.VPX()
 	model.Folder = 1
