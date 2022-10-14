@@ -1,7 +1,6 @@
 [Unit]
 Description=Service that creates initial cluster and infraenv
-Wants=network-online.target
-Requires=assisted-service.service
+Wants=network-online.target assisted-service.service
 PartOf=assisted-service-pod.service
 After=network-online.target assisted-service.service
 ConditionPathExists=/etc/assisted-service/node0
