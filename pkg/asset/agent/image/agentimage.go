@@ -12,8 +12,6 @@ import (
 )
 
 const (
-	// TODO: Make this relative to the directory passed as --dir rather than
-	// the current working directory
 	agentISOFilename = "agent.iso"
 )
 
