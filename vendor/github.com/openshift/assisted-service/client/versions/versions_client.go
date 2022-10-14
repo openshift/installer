@@ -18,12 +18,6 @@ import (
 // API is the interface of the versions client
 type API interface {
 	/*
-	   ListComponentVersions List of component versions.*/
-	ListComponentVersions(ctx context.Context, params *ListComponentVersionsParams) (*ListComponentVersionsOK, error)
-	/*
-	   ListSupportedOpenshiftVersions Retrieves the list of OpenShift supported versions.*/
-	ListSupportedOpenshiftVersions(ctx context.Context, params *ListSupportedOpenshiftVersionsParams) (*ListSupportedOpenshiftVersionsOK, error)
-	/*
 	   V2ListComponentVersions List of component versions.*/
 	V2ListComponentVersions(ctx context.Context, params *V2ListComponentVersionsParams) (*V2ListComponentVersionsOK, error)
 	/*
@@ -47,56 +41,6 @@ type Client struct {
 	transport runtime.ClientTransport
 	formats   strfmt.Registry
 	authInfo  runtime.ClientAuthInfoWriter
-}
-
-/*
-ListComponentVersions List of component versions.
-*/
-func (a *Client) ListComponentVersions(ctx context.Context, params *ListComponentVersionsParams) (*ListComponentVersionsOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "ListComponentVersions",
-		Method:             "GET",
-		PathPattern:        "/v1/component_versions",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &ListComponentVersionsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*ListComponentVersionsOK), nil
-
-}
-
-/*
-ListSupportedOpenshiftVersions Retrieves the list of OpenShift supported versions.
-*/
-func (a *Client) ListSupportedOpenshiftVersions(ctx context.Context, params *ListSupportedOpenshiftVersionsParams) (*ListSupportedOpenshiftVersionsOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "ListSupportedOpenshiftVersions",
-		Method:             "GET",
-		PathPattern:        "/v1/openshift_versions",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &ListSupportedOpenshiftVersionsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*ListSupportedOpenshiftVersionsOK), nil
-
 }
 
 /*

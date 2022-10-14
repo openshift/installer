@@ -22,87 +22,15 @@ type API interface {
 	   BindHost Bind host to a cluster*/
 	BindHost(ctx context.Context, params *BindHostParams) (*BindHostOK, error)
 	/*
-	   CancelInstallation Cancels an ongoing installation.*/
-	CancelInstallation(ctx context.Context, params *CancelInstallationParams) (*CancelInstallationAccepted, error)
-	/*
-	   CompleteInstallation Agent API to mark a finalizing installation as complete.*/
-	CompleteInstallation(ctx context.Context, params *CompleteInstallationParams) (*CompleteInstallationAccepted, error)
-	/*
-	   DeregisterCluster Deletes an OpenShift cluster definition.*/
-	DeregisterCluster(ctx context.Context, params *DeregisterClusterParams) (*DeregisterClusterNoContent, error)
-	/*
-	   DeregisterHost Deregisters an OpenShift host.*/
-	DeregisterHost(ctx context.Context, params *DeregisterHostParams) (*DeregisterHostNoContent, error)
-	/*
 	   DeregisterInfraEnv Deletes an infra-env.*/
 	DeregisterInfraEnv(ctx context.Context, params *DeregisterInfraEnvParams) (*DeregisterInfraEnvNoContent, error)
-	/*
-	   DisableHost Disables a host for inclusion in the cluster.*/
-	DisableHost(ctx context.Context, params *DisableHostParams) (*DisableHostOK, error)
-	/*
-	   DownloadClusterFiles Downloads files relating to the installed/installing cluster.*/
-	DownloadClusterFiles(ctx context.Context, params *DownloadClusterFilesParams, writer io.Writer) (*DownloadClusterFilesOK, error)
-	/*
-	   DownloadClusterISO Downloads the OpenShift per-cluster Discovery ISO.*/
-	DownloadClusterISO(ctx context.Context, params *DownloadClusterISOParams, writer io.Writer) (*DownloadClusterISOOK, error)
-	/*
-	   DownloadClusterISOHeaders Downloads the OpenShift per-cluster Discovery ISO Headers only.*/
-	DownloadClusterISOHeaders(ctx context.Context, params *DownloadClusterISOHeadersParams) (*DownloadClusterISOHeadersOK, error)
-	/*
-	   DownloadClusterKubeconfig Downloads the kubeconfig file for this cluster.*/
-	DownloadClusterKubeconfig(ctx context.Context, params *DownloadClusterKubeconfigParams, writer io.Writer) (*DownloadClusterKubeconfigOK, error)
-	/*
-	   DownloadClusterLogs Download cluster logs.*/
-	DownloadClusterLogs(ctx context.Context, params *DownloadClusterLogsParams, writer io.Writer) (*DownloadClusterLogsOK, error)
-	/*
-	   DownloadHostIgnition Downloads the customized ignition file for this host, produces octet string*/
-	DownloadHostIgnition(ctx context.Context, params *DownloadHostIgnitionParams, writer io.Writer) (*DownloadHostIgnitionOK, error)
-	/*
-	   DownloadHostLogs Download host logs.*/
-	DownloadHostLogs(ctx context.Context, params *DownloadHostLogsParams, writer io.Writer) (*DownloadHostLogsOK, error)
 	/*
 	   DownloadMinimalInitrd Get the initial ramdisk for minimal ISO based installations.
 	*/
 	DownloadMinimalInitrd(ctx context.Context, params *DownloadMinimalInitrdParams, writer io.Writer) (*DownloadMinimalInitrdOK, *DownloadMinimalInitrdNoContent, error)
 	/*
-	   EnableHost Enables a host for inclusion in the cluster.*/
-	EnableHost(ctx context.Context, params *EnableHostParams) (*EnableHostOK, error)
-	/*
-	   GenerateClusterISO Creates a new OpenShift per-cluster Discovery ISO.*/
-	GenerateClusterISO(ctx context.Context, params *GenerateClusterISOParams) (*GenerateClusterISOCreated, error)
-	/*
-	   GetCluster Retrieves the details of the OpenShift cluster.*/
-	GetCluster(ctx context.Context, params *GetClusterParams) (*GetClusterOK, error)
-	/*
-	   GetClusterDefaultConfig Get the default values for various cluster properties.*/
-	GetClusterDefaultConfig(ctx context.Context, params *GetClusterDefaultConfigParams) (*GetClusterDefaultConfigOK, error)
-	/*
-	   GetClusterHostRequirements Get host requirements of a cluster.*/
-	GetClusterHostRequirements(ctx context.Context, params *GetClusterHostRequirementsParams) (*GetClusterHostRequirementsOK, error)
-	/*
-	   GetClusterInstallConfig Get the cluster's install config YAML.*/
-	GetClusterInstallConfig(ctx context.Context, params *GetClusterInstallConfigParams) (*GetClusterInstallConfigOK, error)
-	/*
 	   GetClusterSupportedPlatforms A list of platforms that this cluster can support in its current configuration.*/
 	GetClusterSupportedPlatforms(ctx context.Context, params *GetClusterSupportedPlatformsParams) (*GetClusterSupportedPlatformsOK, error)
-	/*
-	   GetCredentials Get the cluster admin credentials.*/
-	GetCredentials(ctx context.Context, params *GetCredentialsParams) (*GetCredentialsOK, error)
-	/*
-	   GetDiscoveryIgnition Get the discovery ignition for the cluster based on its attributes and overridden ignition value before generating the discovery ISO.
-	   Used to test the validity of the discovery ignition when it is being overridden.
-	   For downloading the generated discovery ignition use /clusters/$CLUSTER_ID/downloads/files?file_name=discovery.ign
-	*/
-	GetDiscoveryIgnition(ctx context.Context, params *GetDiscoveryIgnitionParams) (*GetDiscoveryIgnitionOK, error)
-	/*
-	   GetFreeAddresses Retrieves the free address list for a network.*/
-	GetFreeAddresses(ctx context.Context, params *GetFreeAddressesParams) (*GetFreeAddressesOK, error)
-	/*
-	   GetHost Retrieves the details of the OpenShift host.*/
-	GetHost(ctx context.Context, params *GetHostParams) (*GetHostOK, error)
-	/*
-	   GetHostIgnition Get the customized ignition file for this host as a string*/
-	GetHostIgnition(ctx context.Context, params *GetHostIgnitionParams) (*GetHostIgnitionOK, error)
 	/*
 	   GetInfraEnv Retrieves the details of the infra-env.*/
 	GetInfraEnv(ctx context.Context, params *GetInfraEnvParams) (*GetInfraEnvOK, error)
@@ -110,26 +38,11 @@ type API interface {
 	   GetInfraEnvDownloadURL Creates a new pre-signed image download URL for the infra-env.*/
 	GetInfraEnvDownloadURL(ctx context.Context, params *GetInfraEnvDownloadURLParams) (*GetInfraEnvDownloadURLOK, error)
 	/*
-	   GetPreflightRequirements Get preflight requirements for a cluster.*/
-	GetPreflightRequirements(ctx context.Context, params *GetPreflightRequirementsParams) (*GetPreflightRequirementsOK, error)
+	   GetInfraEnvPresignedFileURL Creates a new pre-signed download URL for the infra-env.*/
+	GetInfraEnvPresignedFileURL(ctx context.Context, params *GetInfraEnvPresignedFileURLParams) (*GetInfraEnvPresignedFileURLOK, error)
 	/*
-	   GetPresignedForClusterFiles Retrieves a pre-signed S3 URL for downloading cluster files.*/
-	GetPresignedForClusterFiles(ctx context.Context, params *GetPresignedForClusterFilesParams) (*GetPresignedForClusterFilesOK, error)
-	/*
-	   InstallCluster Installs the OpenShift cluster.*/
-	InstallCluster(ctx context.Context, params *InstallClusterParams) (*InstallClusterAccepted, error)
-	/*
-	   InstallHost install specific host for day2 cluster.*/
-	InstallHost(ctx context.Context, params *InstallHostParams) (*InstallHostAccepted, error)
-	/*
-	   InstallHosts Installs the OpenShift cluster.*/
-	InstallHosts(ctx context.Context, params *InstallHostsParams) (*InstallHostsAccepted, error)
-	/*
-	   ListClusters Retrieves the list of OpenShift clusters.*/
-	ListClusters(ctx context.Context, params *ListClustersParams) (*ListClustersOK, error)
-	/*
-	   ListHosts Retrieves the list of OpenShift hosts.*/
-	ListHosts(ctx context.Context, params *ListHostsParams) (*ListHostsOK, error)
+	   ListClusterHosts Get a list of cluster hosts according to supplied filters.*/
+	ListClusterHosts(ctx context.Context, params *ListClusterHostsParams) (*ListClusterHostsOK, error)
 	/*
 	   ListInfraEnvs Retrieves the list of infra-envs.*/
 	ListInfraEnvs(ctx context.Context, params *ListInfraEnvsParams) (*ListInfraEnvsOK, error)
@@ -137,64 +50,17 @@ type API interface {
 	   RegenerateInfraEnvSigningKey Regenerate InfraEnv token signing key.*/
 	RegenerateInfraEnvSigningKey(ctx context.Context, params *RegenerateInfraEnvSigningKeyParams) (*RegenerateInfraEnvSigningKeyNoContent, error)
 	/*
-	   RegisterAddHostsCluster Creates a new OpenShift cluster definition for adding nodes to and existing OCP cluster.*/
-	RegisterAddHostsCluster(ctx context.Context, params *RegisterAddHostsClusterParams) (*RegisterAddHostsClusterCreated, error)
-	/*
-	   RegisterCluster Creates a new OpenShift cluster definition.*/
-	RegisterCluster(ctx context.Context, params *RegisterClusterParams) (*RegisterClusterCreated, error)
-	/*
 	   RegisterInfraEnv Creates a new OpenShift Discovery ISO.*/
 	RegisterInfraEnv(ctx context.Context, params *RegisterInfraEnvParams) (*RegisterInfraEnvCreated, error)
 	/*
-	   ResetCluster Resets a failed installation.*/
-	ResetCluster(ctx context.Context, params *ResetClusterParams) (*ResetClusterAccepted, error)
-	/*
-	   ResetHost reset a failed host for day2 cluster.*/
-	ResetHost(ctx context.Context, params *ResetHostParams) (*ResetHostOK, error)
-	/*
-	   ResetHostValidation resets failed host validation
-
-	   Reset failed host validation.  It may be performed on any host validation with persistent validation result.*/
-	ResetHostValidation(ctx context.Context, params *ResetHostValidationParams) (*ResetHostValidationOK, error)
+	   TransformClusterToDay2 Transforming cluster to day2 and allowing adding hosts*/
+	TransformClusterToDay2(ctx context.Context, params *TransformClusterToDay2Params) (*TransformClusterToDay2Accepted, error)
 	/*
 	   UnbindHost Unbind host to a cluster*/
 	UnbindHost(ctx context.Context, params *UnbindHostParams) (*UnbindHostOK, error)
 	/*
-	   UpdateCluster Updates an OpenShift cluster definition.*/
-	UpdateCluster(ctx context.Context, params *UpdateClusterParams) (*UpdateClusterCreated, error)
-	/*
-	   UpdateClusterInstallConfig Override values in the install config.*/
-	UpdateClusterInstallConfig(ctx context.Context, params *UpdateClusterInstallConfigParams) (*UpdateClusterInstallConfigCreated, error)
-	/*
-	   UpdateClusterLogsProgress Update log collection state and progress.*/
-	UpdateClusterLogsProgress(ctx context.Context, params *UpdateClusterLogsProgressParams) (*UpdateClusterLogsProgressNoContent, error)
-	/*
-	   UpdateDiscoveryIgnition Override values in the discovery ignition config.*/
-	UpdateDiscoveryIgnition(ctx context.Context, params *UpdateDiscoveryIgnitionParams) (*UpdateDiscoveryIgnitionCreated, error)
-	/*
-	   UpdateHostIgnition Patch the ignition file for this host*/
-	UpdateHostIgnition(ctx context.Context, params *UpdateHostIgnitionParams) (*UpdateHostIgnitionCreated, error)
-	/*
-	   UpdateHostInstallProgress Update installation progress.*/
-	UpdateHostInstallProgress(ctx context.Context, params *UpdateHostInstallProgressParams) (*UpdateHostInstallProgressOK, error)
-	/*
-	   UpdateHostInstallerArgs Updates a host's installer arguments.*/
-	UpdateHostInstallerArgs(ctx context.Context, params *UpdateHostInstallerArgsParams) (*UpdateHostInstallerArgsCreated, error)
-	/*
-	   UpdateHostLogsProgress Update log collection state and progress.*/
-	UpdateHostLogsProgress(ctx context.Context, params *UpdateHostLogsProgressParams) (*UpdateHostLogsProgressNoContent, error)
-	/*
 	   UpdateInfraEnv Updates an infra-env.*/
 	UpdateInfraEnv(ctx context.Context, params *UpdateInfraEnvParams) (*UpdateInfraEnvCreated, error)
-	/*
-	   UploadClusterIngressCert Transfer the ingress certificate for the cluster.*/
-	UploadClusterIngressCert(ctx context.Context, params *UploadClusterIngressCertParams) (*UploadClusterIngressCertCreated, error)
-	/*
-	   UploadHostLogs Agent API to upload logs.*/
-	UploadHostLogs(ctx context.Context, params *UploadHostLogsParams) (*UploadHostLogsNoContent, error)
-	/*
-	   UploadLogs Agent API to upload logs.*/
-	UploadLogs(ctx context.Context, params *UploadLogsParams) (*UploadLogsNoContent, error)
 	/*
 	   V2CancelInstallation Cancels an ongoing installation.*/
 	V2CancelInstallation(ctx context.Context, params *V2CancelInstallationParams) (*V2CancelInstallationAccepted, error)
@@ -226,7 +92,7 @@ type API interface {
 	   V2UploadLogs Agent API to upload logs.*/
 	V2UploadLogs(ctx context.Context, params *V2UploadLogsParams) (*V2UploadLogsNoContent, error)
 	/*
-	   V2CompleteInstallation Agent API to mark a finalizing installation as complete.*/
+	   V2CompleteInstallation Agent API to mark a finalizing installation as complete and progress to 100%.*/
 	V2CompleteInstallation(ctx context.Context, params *V2CompleteInstallationParams) (*V2CompleteInstallationAccepted, error)
 	/*
 	   V2DeregisterCluster Deletes an OpenShift cluster definition.*/
@@ -366,106 +232,6 @@ func (a *Client) BindHost(ctx context.Context, params *BindHostParams) (*BindHos
 }
 
 /*
-CancelInstallation Cancels an ongoing installation.
-*/
-func (a *Client) CancelInstallation(ctx context.Context, params *CancelInstallationParams) (*CancelInstallationAccepted, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "CancelInstallation",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/actions/cancel",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &CancelInstallationReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*CancelInstallationAccepted), nil
-
-}
-
-/*
-CompleteInstallation Agent API to mark a finalizing installation as complete.
-*/
-func (a *Client) CompleteInstallation(ctx context.Context, params *CompleteInstallationParams) (*CompleteInstallationAccepted, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "CompleteInstallation",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/actions/complete_installation",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &CompleteInstallationReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*CompleteInstallationAccepted), nil
-
-}
-
-/*
-DeregisterCluster Deletes an OpenShift cluster definition.
-*/
-func (a *Client) DeregisterCluster(ctx context.Context, params *DeregisterClusterParams) (*DeregisterClusterNoContent, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DeregisterCluster",
-		Method:             "DELETE",
-		PathPattern:        "/v1/clusters/{cluster_id}",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DeregisterClusterReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DeregisterClusterNoContent), nil
-
-}
-
-/*
-DeregisterHost Deregisters an OpenShift host.
-*/
-func (a *Client) DeregisterHost(ctx context.Context, params *DeregisterHostParams) (*DeregisterHostNoContent, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DeregisterHost",
-		Method:             "DELETE",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DeregisterHostReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DeregisterHostNoContent), nil
-
-}
-
-/*
 DeregisterInfraEnv Deletes an infra-env.
 */
 func (a *Client) DeregisterInfraEnv(ctx context.Context, params *DeregisterInfraEnvParams) (*DeregisterInfraEnvNoContent, error) {
@@ -487,206 +253,6 @@ func (a *Client) DeregisterInfraEnv(ctx context.Context, params *DeregisterInfra
 		return nil, err
 	}
 	return result.(*DeregisterInfraEnvNoContent), nil
-
-}
-
-/*
-DisableHost Disables a host for inclusion in the cluster.
-*/
-func (a *Client) DisableHost(ctx context.Context, params *DisableHostParams) (*DisableHostOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DisableHost",
-		Method:             "DELETE",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/actions/enable",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DisableHostReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DisableHostOK), nil
-
-}
-
-/*
-DownloadClusterFiles Downloads files relating to the installed/installing cluster.
-*/
-func (a *Client) DownloadClusterFiles(ctx context.Context, params *DownloadClusterFilesParams, writer io.Writer) (*DownloadClusterFilesOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DownloadClusterFiles",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/downloads/files",
-		ProducesMediaTypes: []string{"application/octet-stream"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DownloadClusterFilesReader{formats: a.formats, writer: writer},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DownloadClusterFilesOK), nil
-
-}
-
-/*
-DownloadClusterISO Downloads the OpenShift per-cluster Discovery ISO.
-*/
-func (a *Client) DownloadClusterISO(ctx context.Context, params *DownloadClusterISOParams, writer io.Writer) (*DownloadClusterISOOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DownloadClusterISO",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/downloads/image",
-		ProducesMediaTypes: []string{"application/octet-stream"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DownloadClusterISOReader{formats: a.formats, writer: writer},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DownloadClusterISOOK), nil
-
-}
-
-/*
-DownloadClusterISOHeaders Downloads the OpenShift per-cluster Discovery ISO Headers only.
-*/
-func (a *Client) DownloadClusterISOHeaders(ctx context.Context, params *DownloadClusterISOHeadersParams) (*DownloadClusterISOHeadersOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DownloadClusterISOHeaders",
-		Method:             "HEAD",
-		PathPattern:        "/v1/clusters/{cluster_id}/downloads/image",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DownloadClusterISOHeadersReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DownloadClusterISOHeadersOK), nil
-
-}
-
-/*
-DownloadClusterKubeconfig Downloads the kubeconfig file for this cluster.
-*/
-func (a *Client) DownloadClusterKubeconfig(ctx context.Context, params *DownloadClusterKubeconfigParams, writer io.Writer) (*DownloadClusterKubeconfigOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DownloadClusterKubeconfig",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/downloads/kubeconfig",
-		ProducesMediaTypes: []string{"application/octet-stream"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DownloadClusterKubeconfigReader{formats: a.formats, writer: writer},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DownloadClusterKubeconfigOK), nil
-
-}
-
-/*
-DownloadClusterLogs Download cluster logs.
-*/
-func (a *Client) DownloadClusterLogs(ctx context.Context, params *DownloadClusterLogsParams, writer io.Writer) (*DownloadClusterLogsOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DownloadClusterLogs",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/logs",
-		ProducesMediaTypes: []string{"application/octet-stream"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DownloadClusterLogsReader{formats: a.formats, writer: writer},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DownloadClusterLogsOK), nil
-
-}
-
-/*
-DownloadHostIgnition Downloads the customized ignition file for this host, produces octet string
-*/
-func (a *Client) DownloadHostIgnition(ctx context.Context, params *DownloadHostIgnitionParams, writer io.Writer) (*DownloadHostIgnitionOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DownloadHostIgnition",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/downloads/ignition",
-		ProducesMediaTypes: []string{"application/octet-stream"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DownloadHostIgnitionReader{formats: a.formats, writer: writer},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DownloadHostIgnitionOK), nil
-
-}
-
-/*
-DownloadHostLogs Download host logs.
-*/
-func (a *Client) DownloadHostLogs(ctx context.Context, params *DownloadHostLogsParams, writer io.Writer) (*DownloadHostLogsOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DownloadHostLogs",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/logs",
-		ProducesMediaTypes: []string{"application/octet-stream"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DownloadHostLogsReader{formats: a.formats, writer: writer},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DownloadHostLogsOK), nil
 
 }
 
@@ -723,156 +289,6 @@ func (a *Client) DownloadMinimalInitrd(ctx context.Context, params *DownloadMini
 }
 
 /*
-EnableHost Enables a host for inclusion in the cluster.
-*/
-func (a *Client) EnableHost(ctx context.Context, params *EnableHostParams) (*EnableHostOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "EnableHost",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/actions/enable",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &EnableHostReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*EnableHostOK), nil
-
-}
-
-/*
-GenerateClusterISO Creates a new OpenShift per-cluster Discovery ISO.
-*/
-func (a *Client) GenerateClusterISO(ctx context.Context, params *GenerateClusterISOParams) (*GenerateClusterISOCreated, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GenerateClusterISO",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/downloads/image",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &GenerateClusterISOReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GenerateClusterISOCreated), nil
-
-}
-
-/*
-GetCluster Retrieves the details of the OpenShift cluster.
-*/
-func (a *Client) GetCluster(ctx context.Context, params *GetClusterParams) (*GetClusterOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetCluster",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &GetClusterReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetClusterOK), nil
-
-}
-
-/*
-GetClusterDefaultConfig Get the default values for various cluster properties.
-*/
-func (a *Client) GetClusterDefaultConfig(ctx context.Context, params *GetClusterDefaultConfigParams) (*GetClusterDefaultConfigOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetClusterDefaultConfig",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/default-config",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &GetClusterDefaultConfigReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetClusterDefaultConfigOK), nil
-
-}
-
-/*
-GetClusterHostRequirements Get host requirements of a cluster.
-*/
-func (a *Client) GetClusterHostRequirements(ctx context.Context, params *GetClusterHostRequirementsParams) (*GetClusterHostRequirementsOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetClusterHostRequirements",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/host-requirements",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &GetClusterHostRequirementsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetClusterHostRequirementsOK), nil
-
-}
-
-/*
-GetClusterInstallConfig Get the cluster's install config YAML.
-*/
-func (a *Client) GetClusterInstallConfig(ctx context.Context, params *GetClusterInstallConfigParams) (*GetClusterInstallConfigOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetClusterInstallConfig",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/install-config",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &GetClusterInstallConfigReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetClusterInstallConfigOK), nil
-
-}
-
-/*
 GetClusterSupportedPlatforms A list of platforms that this cluster can support in its current configuration.
 */
 func (a *Client) GetClusterSupportedPlatforms(ctx context.Context, params *GetClusterSupportedPlatformsParams) (*GetClusterSupportedPlatformsOK, error) {
@@ -894,134 +310,6 @@ func (a *Client) GetClusterSupportedPlatforms(ctx context.Context, params *GetCl
 		return nil, err
 	}
 	return result.(*GetClusterSupportedPlatformsOK), nil
-
-}
-
-/*
-GetCredentials Get the cluster admin credentials.
-*/
-func (a *Client) GetCredentials(ctx context.Context, params *GetCredentialsParams) (*GetCredentialsOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetCredentials",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/credentials",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &GetCredentialsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetCredentialsOK), nil
-
-}
-
-/*
-GetDiscoveryIgnition Get the discovery ignition for the cluster based on its attributes and overridden ignition value before generating the discovery ISO.
-Used to test the validity of the discovery ignition when it is being overridden.
-For downloading the generated discovery ignition use /clusters/$CLUSTER_ID/downloads/files?file_name=discovery.ign
-
-*/
-func (a *Client) GetDiscoveryIgnition(ctx context.Context, params *GetDiscoveryIgnitionParams) (*GetDiscoveryIgnitionOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetDiscoveryIgnition",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/discovery-ignition",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &GetDiscoveryIgnitionReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetDiscoveryIgnitionOK), nil
-
-}
-
-/*
-GetFreeAddresses Retrieves the free address list for a network.
-*/
-func (a *Client) GetFreeAddresses(ctx context.Context, params *GetFreeAddressesParams) (*GetFreeAddressesOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetFreeAddresses",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/free_addresses",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &GetFreeAddressesReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetFreeAddressesOK), nil
-
-}
-
-/*
-GetHost Retrieves the details of the OpenShift host.
-*/
-func (a *Client) GetHost(ctx context.Context, params *GetHostParams) (*GetHostOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetHost",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &GetHostReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetHostOK), nil
-
-}
-
-/*
-GetHostIgnition Get the customized ignition file for this host as a string
-*/
-func (a *Client) GetHostIgnition(ctx context.Context, params *GetHostIgnitionParams) (*GetHostIgnitionOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetHostIgnition",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/ignition",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &GetHostIgnitionReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetHostIgnitionOK), nil
 
 }
 
@@ -1076,19 +364,19 @@ func (a *Client) GetInfraEnvDownloadURL(ctx context.Context, params *GetInfraEnv
 }
 
 /*
-GetPreflightRequirements Get preflight requirements for a cluster.
+GetInfraEnvPresignedFileURL Creates a new pre-signed download URL for the infra-env.
 */
-func (a *Client) GetPreflightRequirements(ctx context.Context, params *GetPreflightRequirementsParams) (*GetPreflightRequirementsOK, error) {
+func (a *Client) GetInfraEnvPresignedFileURL(ctx context.Context, params *GetInfraEnvPresignedFileURLParams) (*GetInfraEnvPresignedFileURLOK, error) {
 
 	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetPreflightRequirements",
+		ID:                 "GetInfraEnvPresignedFileURL",
 		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/preflight-requirements",
+		PathPattern:        "/v2/infra-envs/{infra_env_id}/downloads/files-presigned",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetPreflightRequirementsReader{formats: a.formats},
+		Reader:             &GetInfraEnvPresignedFileURLReader{formats: a.formats},
 		AuthInfo:           a.authInfo,
 		Context:            ctx,
 		Client:             params.HTTPClient,
@@ -1096,24 +384,24 @@ func (a *Client) GetPreflightRequirements(ctx context.Context, params *GetPrefli
 	if err != nil {
 		return nil, err
 	}
-	return result.(*GetPreflightRequirementsOK), nil
+	return result.(*GetInfraEnvPresignedFileURLOK), nil
 
 }
 
 /*
-GetPresignedForClusterFiles Retrieves a pre-signed S3 URL for downloading cluster files.
+ListClusterHosts Get a list of cluster hosts according to supplied filters.
 */
-func (a *Client) GetPresignedForClusterFiles(ctx context.Context, params *GetPresignedForClusterFilesParams) (*GetPresignedForClusterFilesOK, error) {
+func (a *Client) ListClusterHosts(ctx context.Context, params *ListClusterHostsParams) (*ListClusterHostsOK, error) {
 
 	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetPresignedForClusterFiles",
+		ID:                 "ListClusterHosts",
 		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/downloads/files-presigned",
+		PathPattern:        "/v2/clusters/{cluster_id}/hosts",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetPresignedForClusterFilesReader{formats: a.formats},
+		Reader:             &ListClusterHostsReader{formats: a.formats},
 		AuthInfo:           a.authInfo,
 		Context:            ctx,
 		Client:             params.HTTPClient,
@@ -1121,132 +409,7 @@ func (a *Client) GetPresignedForClusterFiles(ctx context.Context, params *GetPre
 	if err != nil {
 		return nil, err
 	}
-	return result.(*GetPresignedForClusterFilesOK), nil
-
-}
-
-/*
-InstallCluster Installs the OpenShift cluster.
-*/
-func (a *Client) InstallCluster(ctx context.Context, params *InstallClusterParams) (*InstallClusterAccepted, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "InstallCluster",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/actions/install",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &InstallClusterReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*InstallClusterAccepted), nil
-
-}
-
-/*
-InstallHost install specific host for day2 cluster.
-*/
-func (a *Client) InstallHost(ctx context.Context, params *InstallHostParams) (*InstallHostAccepted, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "InstallHost",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/actions/install",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &InstallHostReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*InstallHostAccepted), nil
-
-}
-
-/*
-InstallHosts Installs the OpenShift cluster.
-*/
-func (a *Client) InstallHosts(ctx context.Context, params *InstallHostsParams) (*InstallHostsAccepted, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "InstallHosts",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/actions/install_hosts",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &InstallHostsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*InstallHostsAccepted), nil
-
-}
-
-/*
-ListClusters Retrieves the list of OpenShift clusters.
-*/
-func (a *Client) ListClusters(ctx context.Context, params *ListClustersParams) (*ListClustersOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "ListClusters",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &ListClustersReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*ListClustersOK), nil
-
-}
-
-/*
-ListHosts Retrieves the list of OpenShift hosts.
-*/
-func (a *Client) ListHosts(ctx context.Context, params *ListHostsParams) (*ListHostsOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "ListHosts",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &ListHostsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*ListHostsOK), nil
+	return result.(*ListClusterHostsOK), nil
 
 }
 
@@ -1301,56 +464,6 @@ func (a *Client) RegenerateInfraEnvSigningKey(ctx context.Context, params *Regen
 }
 
 /*
-RegisterAddHostsCluster Creates a new OpenShift cluster definition for adding nodes to and existing OCP cluster.
-*/
-func (a *Client) RegisterAddHostsCluster(ctx context.Context, params *RegisterAddHostsClusterParams) (*RegisterAddHostsClusterCreated, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "RegisterAddHostsCluster",
-		Method:             "POST",
-		PathPattern:        "/v1/add_hosts_clusters",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &RegisterAddHostsClusterReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*RegisterAddHostsClusterCreated), nil
-
-}
-
-/*
-RegisterCluster Creates a new OpenShift cluster definition.
-*/
-func (a *Client) RegisterCluster(ctx context.Context, params *RegisterClusterParams) (*RegisterClusterCreated, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "RegisterCluster",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &RegisterClusterReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*RegisterClusterCreated), nil
-
-}
-
-/*
 RegisterInfraEnv Creates a new OpenShift Discovery ISO.
 */
 func (a *Client) RegisterInfraEnv(ctx context.Context, params *RegisterInfraEnvParams) (*RegisterInfraEnvCreated, error) {
@@ -1376,19 +489,19 @@ func (a *Client) RegisterInfraEnv(ctx context.Context, params *RegisterInfraEnvP
 }
 
 /*
-ResetCluster Resets a failed installation.
+TransformClusterToDay2 Transforming cluster to day2 and allowing adding hosts
 */
-func (a *Client) ResetCluster(ctx context.Context, params *ResetClusterParams) (*ResetClusterAccepted, error) {
+func (a *Client) TransformClusterToDay2(ctx context.Context, params *TransformClusterToDay2Params) (*TransformClusterToDay2Accepted, error) {
 
 	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "ResetCluster",
+		ID:                 "TransformClusterToDay2",
 		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/actions/reset",
+		PathPattern:        "/v2/clusters/{cluster_id}/actions/allow-add-workers",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &ResetClusterReader{formats: a.formats},
+		Reader:             &TransformClusterToDay2Reader{formats: a.formats},
 		AuthInfo:           a.authInfo,
 		Context:            ctx,
 		Client:             params.HTTPClient,
@@ -1396,59 +509,7 @@ func (a *Client) ResetCluster(ctx context.Context, params *ResetClusterParams) (
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ResetClusterAccepted), nil
-
-}
-
-/*
-ResetHost reset a failed host for day2 cluster.
-*/
-func (a *Client) ResetHost(ctx context.Context, params *ResetHostParams) (*ResetHostOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "ResetHost",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/actions/reset",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &ResetHostReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*ResetHostOK), nil
-
-}
-
-/*
-ResetHostValidation resets failed host validation
-
-Reset failed host validation.  It may be performed on any host validation with persistent validation result.
-*/
-func (a *Client) ResetHostValidation(ctx context.Context, params *ResetHostValidationParams) (*ResetHostValidationOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "ResetHostValidation",
-		Method:             "PATCH",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/actions/reset-validation/{validation_id}",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &ResetHostValidationReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*ResetHostValidationOK), nil
+	return result.(*TransformClusterToDay2Accepted), nil
 
 }
 
@@ -1478,206 +539,6 @@ func (a *Client) UnbindHost(ctx context.Context, params *UnbindHostParams) (*Unb
 }
 
 /*
-UpdateCluster Updates an OpenShift cluster definition.
-*/
-func (a *Client) UpdateCluster(ctx context.Context, params *UpdateClusterParams) (*UpdateClusterCreated, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "UpdateCluster",
-		Method:             "PATCH",
-		PathPattern:        "/v1/clusters/{cluster_id}",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &UpdateClusterReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*UpdateClusterCreated), nil
-
-}
-
-/*
-UpdateClusterInstallConfig Override values in the install config.
-*/
-func (a *Client) UpdateClusterInstallConfig(ctx context.Context, params *UpdateClusterInstallConfigParams) (*UpdateClusterInstallConfigCreated, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "UpdateClusterInstallConfig",
-		Method:             "PATCH",
-		PathPattern:        "/v1/clusters/{cluster_id}/install-config",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &UpdateClusterInstallConfigReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*UpdateClusterInstallConfigCreated), nil
-
-}
-
-/*
-UpdateClusterLogsProgress Update log collection state and progress.
-*/
-func (a *Client) UpdateClusterLogsProgress(ctx context.Context, params *UpdateClusterLogsProgressParams) (*UpdateClusterLogsProgressNoContent, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "UpdateClusterLogsProgress",
-		Method:             "PUT",
-		PathPattern:        "/v1/clusters/{cluster_id}/logs_progress",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &UpdateClusterLogsProgressReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*UpdateClusterLogsProgressNoContent), nil
-
-}
-
-/*
-UpdateDiscoveryIgnition Override values in the discovery ignition config.
-*/
-func (a *Client) UpdateDiscoveryIgnition(ctx context.Context, params *UpdateDiscoveryIgnitionParams) (*UpdateDiscoveryIgnitionCreated, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "UpdateDiscoveryIgnition",
-		Method:             "PATCH",
-		PathPattern:        "/v1/clusters/{cluster_id}/discovery-ignition",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &UpdateDiscoveryIgnitionReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*UpdateDiscoveryIgnitionCreated), nil
-
-}
-
-/*
-UpdateHostIgnition Patch the ignition file for this host
-*/
-func (a *Client) UpdateHostIgnition(ctx context.Context, params *UpdateHostIgnitionParams) (*UpdateHostIgnitionCreated, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "UpdateHostIgnition",
-		Method:             "PATCH",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/ignition",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &UpdateHostIgnitionReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*UpdateHostIgnitionCreated), nil
-
-}
-
-/*
-UpdateHostInstallProgress Update installation progress.
-*/
-func (a *Client) UpdateHostInstallProgress(ctx context.Context, params *UpdateHostInstallProgressParams) (*UpdateHostInstallProgressOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "UpdateHostInstallProgress",
-		Method:             "PUT",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/progress",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &UpdateHostInstallProgressReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*UpdateHostInstallProgressOK), nil
-
-}
-
-/*
-UpdateHostInstallerArgs Updates a host's installer arguments.
-*/
-func (a *Client) UpdateHostInstallerArgs(ctx context.Context, params *UpdateHostInstallerArgsParams) (*UpdateHostInstallerArgsCreated, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "UpdateHostInstallerArgs",
-		Method:             "PATCH",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/installer-args",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &UpdateHostInstallerArgsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*UpdateHostInstallerArgsCreated), nil
-
-}
-
-/*
-UpdateHostLogsProgress Update log collection state and progress.
-*/
-func (a *Client) UpdateHostLogsProgress(ctx context.Context, params *UpdateHostLogsProgressParams) (*UpdateHostLogsProgressNoContent, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "UpdateHostLogsProgress",
-		Method:             "PUT",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/logs_progress",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &UpdateHostLogsProgressReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*UpdateHostLogsProgressNoContent), nil
-
-}
-
-/*
 UpdateInfraEnv Updates an infra-env.
 */
 func (a *Client) UpdateInfraEnv(ctx context.Context, params *UpdateInfraEnvParams) (*UpdateInfraEnvCreated, error) {
@@ -1699,81 +560,6 @@ func (a *Client) UpdateInfraEnv(ctx context.Context, params *UpdateInfraEnvParam
 		return nil, err
 	}
 	return result.(*UpdateInfraEnvCreated), nil
-
-}
-
-/*
-UploadClusterIngressCert Transfer the ingress certificate for the cluster.
-*/
-func (a *Client) UploadClusterIngressCert(ctx context.Context, params *UploadClusterIngressCertParams) (*UploadClusterIngressCertCreated, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "UploadClusterIngressCert",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/uploads/ingress-cert",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &UploadClusterIngressCertReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*UploadClusterIngressCertCreated), nil
-
-}
-
-/*
-UploadHostLogs Agent API to upload logs.
-*/
-func (a *Client) UploadHostLogs(ctx context.Context, params *UploadHostLogsParams) (*UploadHostLogsNoContent, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "UploadHostLogs",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/hosts/{host_id}/logs",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"multipart/form-data"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &UploadHostLogsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*UploadHostLogsNoContent), nil
-
-}
-
-/*
-UploadLogs Agent API to upload logs.
-*/
-func (a *Client) UploadLogs(ctx context.Context, params *UploadLogsParams) (*UploadLogsNoContent, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "UploadLogs",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/logs",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"multipart/form-data"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &UploadLogsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*UploadLogsNoContent), nil
 
 }
 
@@ -2028,7 +814,7 @@ func (a *Client) V2UploadLogs(ctx context.Context, params *V2UploadLogsParams) (
 }
 
 /*
-V2CompleteInstallation Agent API to mark a finalizing installation as complete.
+V2CompleteInstallation Agent API to mark a finalizing installation as complete and progress to 100%.
 */
 func (a *Client) V2CompleteInstallation(ctx context.Context, params *V2CompleteInstallationParams) (*V2CompleteInstallationAccepted, error) {
 

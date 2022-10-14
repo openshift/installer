@@ -14,12 +14,12 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// MachineNetwork IP address block for node IP blocks.
+// MachineNetwork A network that all hosts belonging to the cluster should have an interface with IP address in. The VIPs (if exist) belong to this network.
 //
 // swagger:model machine_network
 type MachineNetwork struct {
 
-	// The IP block address pool for machines within the cluster.
+	// The IP block address pool.
 	Cidr Subnet `json:"cidr,omitempty" gorm:"primaryKey"`
 
 	// The cluster that this network is associated with.

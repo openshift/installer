@@ -44,6 +44,9 @@ type ClusterProvisionSpec struct {
 
 	// PrevInfraID is the infra ID of the previous failed provision attempt.
 	PrevInfraID *string `json:"prevInfraID,omitempty"`
+
+	// PrevProvisionName is the name of the previous failed provision attempt.
+	PrevProvisionName *string `json:"prevProvisionName,omitempty"`
 }
 
 // ClusterProvisionStatus defines the observed state of ClusterProvision.
@@ -124,6 +127,7 @@ type ClusterProvision struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Spec   ClusterProvisionSpec   `json:"spec,omitempty"`
 	Status ClusterProvisionStatus `json:"status,omitempty"`
 }

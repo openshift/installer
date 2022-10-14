@@ -80,6 +80,12 @@ type V2ListClustersParams struct {
 	*/
 	OpenshiftClusterID *strfmt.UUID
 
+	/* Owner.
+
+	   If provided, returns only clusters that are owned by the specified user.
+	*/
+	Owner *string
+
 	/* WithHosts.
 
 	   Include hosts in the returned list.
@@ -186,6 +192,17 @@ func (o *V2ListClustersParams) SetOpenshiftClusterID(openshiftClusterID *strfmt.
 	o.OpenshiftClusterID = openshiftClusterID
 }
 
+// WithOwner adds the owner to the v2 list clusters params
+func (o *V2ListClustersParams) WithOwner(owner *string) *V2ListClustersParams {
+	o.SetOwner(owner)
+	return o
+}
+
+// SetOwner adds the owner to the v2 list clusters params
+func (o *V2ListClustersParams) SetOwner(owner *string) {
+	o.Owner = owner
+}
+
 // WithWithHosts adds the withHosts to the v2 list clusters params
 func (o *V2ListClustersParams) WithWithHosts(withHosts bool) *V2ListClustersParams {
 	o.SetWithHosts(withHosts)
@@ -236,6 +253,23 @@ func (o *V2ListClustersParams) WriteToRequest(r runtime.ClientRequest, reg strfm
 		if qOpenshiftClusterID != "" {
 
 			if err := r.SetQueryParam("openshift_cluster_id", qOpenshiftClusterID); err != nil {
+				return err
+			}
+		}
+	}
+
+	if o.Owner != nil {
+
+		// query param owner
+		var qrOwner string
+
+		if o.Owner != nil {
+			qrOwner = *o.Owner
+		}
+		qOwner := qrOwner
+		if qOwner != "" {
+
+			if err := r.SetQueryParam("owner", qOwner); err != nil {
 				return err
 			}
 		}

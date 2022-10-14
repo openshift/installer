@@ -7,6 +7,7 @@ import (
 	"github.com/openshift/hive/apis/hive/v1/aws"
 	"github.com/openshift/hive/apis/hive/v1/azure"
 	"github.com/openshift/hive/apis/hive/v1/gcp"
+	"github.com/openshift/hive/apis/hive/v1/ibmcloud"
 	"github.com/openshift/hive/apis/hive/v1/openstack"
 	"github.com/openshift/hive/apis/hive/v1/ovirt"
 	"github.com/openshift/hive/apis/hive/v1/vsphere"
@@ -80,6 +81,8 @@ type MachinePoolPlatform struct {
 	VSphere *vsphere.MachinePool `json:"vsphere,omitempty"`
 	// Ovirt is the configuration used when installing on oVirt.
 	Ovirt *ovirt.MachinePool `json:"ovirt,omitempty"`
+	// IBMCloud is the configuration used when installing on IBM Cloud.
+	IBMCloud *ibmcloud.MachinePool `json:"ibmcloud,omitempty"`
 }
 
 // MachinePoolStatus defines the observed state of MachinePool

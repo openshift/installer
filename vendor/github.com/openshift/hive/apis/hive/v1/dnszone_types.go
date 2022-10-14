@@ -1,9 +1,11 @@
 package v1
 
 import (
-	"github.com/openshift/hive/apis/hive/v1/aws"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/openshift/hive/apis/hive/v1/aws"
+	"github.com/openshift/hive/apis/hive/v1/azure"
 )
 
 const (
@@ -26,6 +28,12 @@ type DNSZoneSpec struct {
 	// parent domain.
 	// +optional
 	LinkToParentDomain bool `json:"linkToParentDomain,omitempty"`
+
+	// PreserveOnDelete allows the user to disconnect a DNSZone from Hive without deprovisioning it.
+	// This can also be used to abandon ongoing DNSZone deprovision.
+	// Typically set automatically due to PreserveOnDelete being set on a ClusterDeployment.
+	// +optional
+	PreserveOnDelete bool `json:"preserveOnDelete,omitempty"`
 
 	// AWS specifies AWS-specific cloud configuration
 	// +optional
@@ -91,6 +99,12 @@ type AzureDNSZoneSpec struct {
 
 	// ResourceGroupName specifies the Azure resource group in which the Hosted Zone should be created.
 	ResourceGroupName string `json:"resourceGroupName"`
+
+	// CloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK
+	// with the appropriate Azure API endpoints.
+	// If empty, the value is equal to "AzurePublicCloud".
+	// +optional
+	CloudName azure.CloudEnvironment `json:"cloudName,omitempty"`
 }
 
 // DNSZoneStatus defines the observed state of DNSZone
@@ -179,6 +193,12 @@ const (
 	// AuthenticationFailureCondition is true when credentials cannot be used to create a
 	// DNS zone because they fail authentication
 	AuthenticationFailureCondition DNSZoneConditionType = "AuthenticationFailure"
+	// APIOptInRequiredCondition is true when the user account used for managing DNS
+	// needs to enable the DNS apis.
+	APIOptInRequiredCondition DNSZoneConditionType = "APIOptInRequired"
+	// GenericDNSErrorsCondition is true when there's some DNS Zone related error that isn't related to
+	// authentication or credentials, and needs to be bubbled up to ClusterDeployment
+	GenericDNSErrorsCondition DNSZoneConditionType = "DNSError"
 )
 
 // +genclient

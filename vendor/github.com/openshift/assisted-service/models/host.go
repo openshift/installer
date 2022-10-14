@@ -23,7 +23,7 @@ import (
 // swagger:model host
 type Host struct {
 
-	// api vip connectivity
+	// Contains a serialized api_vip_connectivity_response
 	APIVipConnectivity string `json:"api_vip_connectivity,omitempty" gorm:"type:text"`
 
 	// bootstrap
@@ -52,6 +52,13 @@ type Host struct {
 
 	// Additional information about disks, formatted as JSON.
 	DisksInfo string `json:"disks_info,omitempty" gorm:"type:text"`
+
+	// A comma-separated list of disks that will be formatted once
+	// installation begins, unless otherwise set to be skipped by
+	// skip_formatting_disks. This means that this list also includes disks
+	// that appear in skip_formatting_disks. This property is managed by the
+	// service and cannot be modified by the user.
+	DisksToBeFormatted string `json:"disks_to_be_formatted,omitempty" gorm:"type:text"`
 
 	// The domain name resolution result.
 	DomainNameResolutions string `json:"domain_name_resolutions,omitempty" gorm:"type:text"`
@@ -119,6 +126,13 @@ type Host struct {
 	// machine config pool name
 	MachineConfigPoolName string `json:"machine_config_pool_name,omitempty"`
 
+	// media status
+	// Enum: [connected disconnected]
+	MediaStatus *string `json:"media_status,omitempty"`
+
+	// Json containing node's labels.
+	NodeLabels string `json:"node_labels,omitempty" gorm:"type:text"`
+
 	// The configured NTP sources on the host.
 	NtpSources string `json:"ntp_sources,omitempty" gorm:"type:text"`
 
@@ -128,11 +142,19 @@ type Host struct {
 	// progress stages
 	ProgressStages []HostStage `json:"progress_stages" gorm:"-"`
 
+	// The last time the host's agent tried to register in the service.
+	// Format: date-time
+	RegisteredAt strfmt.DateTime `json:"registered_at,omitempty" gorm:"type:timestamp with time zone"`
+
 	// requested hostname
 	RequestedHostname string `json:"requested_hostname,omitempty"`
 
 	// role
 	Role HostRole `json:"role,omitempty"`
+
+	// A comma-seperated list of host disks that the service will avoid
+	// formatting.
+	SkipFormattingDisks string `json:"skip_formatting_disks,omitempty" gorm:"type:text"`
 
 	// Time at which the current progress stage started.
 	// Format: date-time
@@ -144,7 +166,7 @@ type Host struct {
 
 	// status
 	// Required: true
-	// Enum: [discovering known disconnected insufficient disabled preparing-for-installation preparing-failed preparing-successful pending-for-input installing installing-in-progress installing-pending-user-action resetting-pending-user-action installed error resetting added-to-existing-cluster cancelled binding unbinding unbinding-pending-user-action known-unbound disconnected-unbound insufficient-unbound disabled-unbound discovering-unbound]
+	// Enum: [discovering known disconnected insufficient disabled preparing-for-installation preparing-failed preparing-successful pending-for-input installing installing-in-progress installing-pending-user-action resetting-pending-user-action installed error resetting added-to-existing-cluster cancelled binding unbinding unbinding-pending-user-action known-unbound disconnected-unbound insufficient-unbound disabled-unbound discovering-unbound reclaiming reclaiming-rebooting]
 	Status *string `json:"status"`
 
 	// status info
@@ -157,6 +179,12 @@ type Host struct {
 
 	// suggested role
 	SuggestedRole HostRole `json:"suggested_role,omitempty"`
+
+	// tang connectivity
+	TangConnectivity string `json:"tang_connectivity,omitempty" gorm:"type:text"`
+
+	// The time on the host as seconds since the Unix epoch.
+	Timestamp int64 `json:"timestamp,omitempty"`
 
 	// updated at
 	// Format: date-time
@@ -213,11 +241,19 @@ func (m *Host) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateMediaStatus(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateProgress(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validateProgressStages(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateRegisteredAt(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -413,6 +449,48 @@ func (m *Host) validateLogsStartedAt(formats strfmt.Registry) error {
 	return nil
 }
 
+var hostTypeMediaStatusPropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["connected","disconnected"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		hostTypeMediaStatusPropEnum = append(hostTypeMediaStatusPropEnum, v)
+	}
+}
+
+const (
+
+	// HostMediaStatusConnected captures enum value "connected"
+	HostMediaStatusConnected string = "connected"
+
+	// HostMediaStatusDisconnected captures enum value "disconnected"
+	HostMediaStatusDisconnected string = "disconnected"
+)
+
+// prop value enum
+func (m *Host) validateMediaStatusEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, hostTypeMediaStatusPropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Host) validateMediaStatus(formats strfmt.Registry) error {
+	if swag.IsZero(m.MediaStatus) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateMediaStatusEnum("media_status", "body", *m.MediaStatus); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *Host) validateProgress(formats strfmt.Registry) error {
 	if swag.IsZero(m.Progress) { // not required
 		return nil
@@ -448,6 +526,18 @@ func (m *Host) validateProgressStages(formats strfmt.Registry) error {
 			return err
 		}
 
+	}
+
+	return nil
+}
+
+func (m *Host) validateRegisteredAt(formats strfmt.Registry) error {
+	if swag.IsZero(m.RegisteredAt) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("registered_at", "body", "date-time", m.RegisteredAt.String(), formats); err != nil {
+		return err
 	}
 
 	return nil
@@ -498,7 +588,7 @@ var hostTypeStatusPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["discovering","known","disconnected","insufficient","disabled","preparing-for-installation","preparing-failed","preparing-successful","pending-for-input","installing","installing-in-progress","installing-pending-user-action","resetting-pending-user-action","installed","error","resetting","added-to-existing-cluster","cancelled","binding","unbinding","unbinding-pending-user-action","known-unbound","disconnected-unbound","insufficient-unbound","disabled-unbound","discovering-unbound"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["discovering","known","disconnected","insufficient","disabled","preparing-for-installation","preparing-failed","preparing-successful","pending-for-input","installing","installing-in-progress","installing-pending-user-action","resetting-pending-user-action","installed","error","resetting","added-to-existing-cluster","cancelled","binding","unbinding","unbinding-pending-user-action","known-unbound","disconnected-unbound","insufficient-unbound","disabled-unbound","discovering-unbound","reclaiming","reclaiming-rebooting"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -585,6 +675,12 @@ const (
 
 	// HostStatusDiscoveringUnbound captures enum value "discovering-unbound"
 	HostStatusDiscoveringUnbound string = "discovering-unbound"
+
+	// HostStatusReclaiming captures enum value "reclaiming"
+	HostStatusReclaiming string = "reclaiming"
+
+	// HostStatusReclaimingRebooting captures enum value "reclaiming-rebooting"
+	HostStatusReclaimingRebooting string = "reclaiming-rebooting"
 )
 
 // prop value enum

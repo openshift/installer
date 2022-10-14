@@ -14,7 +14,7 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// ClusterNetwork IP address block for pod IP blocks.
+// ClusterNetwork A network from which Pod IPs are allocated. This block must not overlap with existing physical networks. These IP addresses are used for the Pod network, and if you need to access the Pods from an external network, configure load balancers and routers to manage the traffic.
 //
 // swagger:model cluster_network
 type ClusterNetwork struct {
@@ -26,7 +26,7 @@ type ClusterNetwork struct {
 	// Format: uuid
 	ClusterID strfmt.UUID `json:"cluster_id,omitempty" gorm:"primaryKey"`
 
-	// The prefix size to allocate to each node from the CIDR. For example, 24 would allocate 2^8=256 adresses to each node.
+	// The subnet prefix length to assign to each individual node. For example if is set to 23, then each node is assigned a /23 subnet out of the given CIDR, which allows for 510 (2^(32 - 23) - 2) pod IPs addresses.
 	// Maximum: 128
 	// Minimum: 1
 	HostPrefix int64 `json:"host_prefix,omitempty"`

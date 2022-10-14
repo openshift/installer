@@ -67,6 +67,12 @@ type ListInfraEnvsParams struct {
 	*/
 	ClusterID *strfmt.UUID
 
+	/* Owner.
+
+	   If provided, returns only infra-envs that are owned by the specified user.
+	*/
+	Owner *string
+
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
@@ -131,6 +137,17 @@ func (o *ListInfraEnvsParams) SetClusterID(clusterID *strfmt.UUID) {
 	o.ClusterID = clusterID
 }
 
+// WithOwner adds the owner to the list infra envs params
+func (o *ListInfraEnvsParams) WithOwner(owner *string) *ListInfraEnvsParams {
+	o.SetOwner(owner)
+	return o
+}
+
+// SetOwner adds the owner to the list infra envs params
+func (o *ListInfraEnvsParams) SetOwner(owner *string) {
+	o.Owner = owner
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *ListInfraEnvsParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -151,6 +168,23 @@ func (o *ListInfraEnvsParams) WriteToRequest(r runtime.ClientRequest, reg strfmt
 		if qClusterID != "" {
 
 			if err := r.SetQueryParam("cluster_id", qClusterID); err != nil {
+				return err
+			}
+		}
+	}
+
+	if o.Owner != nil {
+
+		// query param owner
+		var qrOwner string
+
+		if o.Owner != nil {
+			qrOwner = *o.Owner
+		}
+		qOwner := qrOwner
+		if qOwner != "" {
+
+			if err := r.SetQueryParam("owner", qOwner); err != nil {
 				return err
 			}
 		}

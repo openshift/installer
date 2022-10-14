@@ -29,6 +29,9 @@ const (
 	// HostValidationIDConnected captures enum value "connected"
 	HostValidationIDConnected HostValidationID = "connected"
 
+	// HostValidationIDMediaConnected captures enum value "media-connected"
+	HostValidationIDMediaConnected HostValidationID = "media-connected"
+
 	// HostValidationIDHasInventory captures enum value "has-inventory"
 	HostValidationIDHasInventory HostValidationID = "has-inventory"
 
@@ -71,6 +74,9 @@ const (
 	// HostValidationIDNtpSynced captures enum value "ntp-synced"
 	HostValidationIDNtpSynced HostValidationID = "ntp-synced"
 
+	// HostValidationIDTimeSyncedBetweenHostAndService captures enum value "time-synced-between-host-and-service"
+	HostValidationIDTimeSyncedBetweenHostAndService HostValidationID = "time-synced-between-host-and-service"
+
 	// HostValidationIDContainerImagesAvailable captures enum value "container-images-available"
 	HostValidationIDContainerImagesAvailable HostValidationID = "container-images-available"
 
@@ -79,6 +85,12 @@ const (
 
 	// HostValidationIDOcsRequirementsSatisfied captures enum value "ocs-requirements-satisfied"
 	HostValidationIDOcsRequirementsSatisfied HostValidationID = "ocs-requirements-satisfied"
+
+	// HostValidationIDOdfRequirementsSatisfied captures enum value "odf-requirements-satisfied"
+	HostValidationIDOdfRequirementsSatisfied HostValidationID = "odf-requirements-satisfied"
+
+	// HostValidationIDLvmRequirementsSatisfied captures enum value "lvm-requirements-satisfied"
+	HostValidationIDLvmRequirementsSatisfied HostValidationID = "lvm-requirements-satisfied"
 
 	// HostValidationIDSufficientInstallationDiskSpeed captures enum value "sufficient-installation-disk-speed"
 	HostValidationIDSufficientInstallationDiskSpeed HostValidationID = "sufficient-installation-disk-speed"
@@ -112,6 +124,24 @@ const (
 
 	// HostValidationIDDiskEncryptionRequirementsSatisfied captures enum value "disk-encryption-requirements-satisfied"
 	HostValidationIDDiskEncryptionRequirementsSatisfied HostValidationID = "disk-encryption-requirements-satisfied"
+
+	// HostValidationIDNonOverlappingSubnets captures enum value "non-overlapping-subnets"
+	HostValidationIDNonOverlappingSubnets HostValidationID = "non-overlapping-subnets"
+
+	// HostValidationIDVsphereDiskUUIDEnabled captures enum value "vsphere-disk-uuid-enabled"
+	HostValidationIDVsphereDiskUUIDEnabled HostValidationID = "vsphere-disk-uuid-enabled"
+
+	// HostValidationIDCompatibleAgent captures enum value "compatible-agent"
+	HostValidationIDCompatibleAgent HostValidationID = "compatible-agent"
+
+	// HostValidationIDNoSkipInstallationDisk captures enum value "no-skip-installation-disk"
+	HostValidationIDNoSkipInstallationDisk HostValidationID = "no-skip-installation-disk"
+
+	// HostValidationIDNoSkipMissingDisk captures enum value "no-skip-missing-disk"
+	HostValidationIDNoSkipMissingDisk HostValidationID = "no-skip-missing-disk"
+
+	// HostValidationIDServiceHasSufficientSpokeKubeAPIAccess captures enum value "service-has-sufficient-spoke-kube-api-access"
+	HostValidationIDServiceHasSufficientSpokeKubeAPIAccess HostValidationID = "service-has-sufficient-spoke-kube-api-access"
 )
 
 // for schema
@@ -119,7 +149,7 @@ var hostValidationIdEnum []interface{}
 
 func init() {
 	var res []HostValidationID
-	if err := json.Unmarshal([]byte(`["connected","has-inventory","has-min-cpu-cores","has-min-valid-disks","has-min-memory","machine-cidr-defined","has-cpu-cores-for-role","has-memory-for-role","hostname-unique","hostname-valid","belongs-to-machine-cidr","ignition-downloadable","belongs-to-majority-group","valid-platform-network-settings","ntp-synced","container-images-available","lso-requirements-satisfied","ocs-requirements-satisfied","sufficient-installation-disk-speed","cnv-requirements-satisfied","sufficient-network-latency-requirement-for-role","sufficient-packet-loss-requirement-for-role","has-default-route","api-domain-name-resolved-correctly","api-int-domain-name-resolved-correctly","apps-domain-name-resolved-correctly","compatible-with-cluster-platform","dns-wildcard-not-configured","disk-encryption-requirements-satisfied"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["connected","media-connected","has-inventory","has-min-cpu-cores","has-min-valid-disks","has-min-memory","machine-cidr-defined","has-cpu-cores-for-role","has-memory-for-role","hostname-unique","hostname-valid","belongs-to-machine-cidr","ignition-downloadable","belongs-to-majority-group","valid-platform-network-settings","ntp-synced","time-synced-between-host-and-service","container-images-available","lso-requirements-satisfied","ocs-requirements-satisfied","odf-requirements-satisfied","lvm-requirements-satisfied","sufficient-installation-disk-speed","cnv-requirements-satisfied","sufficient-network-latency-requirement-for-role","sufficient-packet-loss-requirement-for-role","has-default-route","api-domain-name-resolved-correctly","api-int-domain-name-resolved-correctly","apps-domain-name-resolved-correctly","compatible-with-cluster-platform","dns-wildcard-not-configured","disk-encryption-requirements-satisfied","non-overlapping-subnets","vsphere-disk-uuid-enabled","compatible-agent","no-skip-installation-disk","no-skip-missing-disk","service-has-sufficient-spoke-kube-api-access"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

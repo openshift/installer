@@ -7,9 +7,12 @@ package models
 
 import (
 	"context"
+	"strconv"
 
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // ConnectivityCheckNic connectivity check nic
@@ -21,7 +24,8 @@ type ConnectivityCheckNic struct {
 	IPAddresses []string `json:"ip_addresses"`
 
 	// mac
-	Mac string `json:"mac,omitempty"`
+	// Format: mac
+	Mac strfmt.MAC `json:"mac,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
@@ -29,6 +33,47 @@ type ConnectivityCheckNic struct {
 
 // Validate validates this connectivity check nic
 func (m *ConnectivityCheckNic) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateIPAddresses(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateMac(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ConnectivityCheckNic) validateIPAddresses(formats strfmt.Registry) error {
+	if swag.IsZero(m.IPAddresses) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.IPAddresses); i++ {
+
+		if err := validate.Pattern("ip_addresses"+"."+strconv.Itoa(i), "body", m.IPAddresses[i], `^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))$`); err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+func (m *ConnectivityCheckNic) validateMac(formats strfmt.Registry) error {
+	if swag.IsZero(m.Mac) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("mac", "body", "mac", m.Mac.String(), formats); err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -120,16 +120,22 @@ type Cluster struct {
 	// Format: uuid
 	ID *strfmt.UUID `json:"id" gorm:"primaryKey"`
 
-	// Json formatted string containing the user overrides for the initial ignition config
-	// Example: {\"ignition\": {\"version\": \"3.1.0\"}, \"storage\": {\"files\": [{\"path\": \"/tmp/example\", \"contents\": {\"source\": \"data:text/plain;base64,aGVscGltdHJhcHBlZGluYXN3YWdnZXJzcGVj\"}}]}}
-	IgnitionConfigOverrides string `json:"ignition_config_overrides,omitempty" gorm:"type:text"`
-
 	// Explicit ignition endpoint overrides the default ignition endpoint.
 	IgnitionEndpoint *IgnitionEndpoint `json:"ignition_endpoint,omitempty" gorm:"embedded;embeddedPrefix:ignition_endpoint_"`
 
 	// image info
 	// Required: true
 	ImageInfo *ImageInfo `json:"image_info" gorm:"embedded;embeddedPrefix:image_"`
+
+	// Indicates whether this cluster is an imported day-2 cluster or a
+	// regular cluster. Clusters are considered imported when they are
+	// created via the ../clusters/import endpoint. Day-2 clusters converted
+	// from day-1 clusters by kube-api controllers or the
+	// ../clusters/<cluster_id>/actions/allow-add-workers endpoint are not
+	// considered imported. Imported clusters usually lack a lot of
+	// information and are filled with default values that don't necessarily
+	// reflect the actual cluster they represent
+	Imported *bool `json:"imported,omitempty"`
 
 	// The virtual IP used for cluster ingress traffic.
 	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))$
@@ -205,6 +211,11 @@ type Cluster struct {
 	// Schedule workloads on masters
 	SchedulableMasters *bool `json:"schedulable_masters,omitempty"`
 
+	// Indicates if schedule workloads on masters will be enabled regardless the value of 'schedulable_masters' property.
+	// Set to 'true' when not enough hosts are associated with this cluster to disable the scheduling on masters.
+	//
+	SchedulableMastersForcedTrue *bool `json:"schedulable_masters_forced_true,omitempty"`
+
 	// The IP address pool to use for service IP addresses. You can enter only one IP address pool. If you need to access the services from an external network, configure load balancers and routers to manage the traffic.
 	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/(?:(?:[0-9])|(?:[1-2][0-9])|(?:3[0-2])))|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,})/(?:(?:[0-9])|(?:[1-9][0-9])|(?:1[0-1][0-9])|(?:12[0-8])))$
 	ServiceNetworkCidr string `json:"service_network_cidr,omitempty"`
@@ -227,6 +238,9 @@ type Cluster struct {
 	// The last time that the cluster status was updated.
 	// Format: date-time
 	StatusUpdatedAt strfmt.DateTime `json:"status_updated_at,omitempty" gorm:"type:timestamp with time zone"`
+
+	// A comma-separated list of tags that are associated to the cluster.
+	Tags string `json:"tags,omitempty"`
 
 	// All hosts associated to this cluster.
 	TotalHostCount int64 `json:"total_host_count,omitempty" gorm:"-"`

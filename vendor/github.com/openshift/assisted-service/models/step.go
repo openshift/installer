@@ -21,9 +21,6 @@ type Step struct {
 	// args
 	Args []string `json:"args"`
 
-	// command
-	Command string `json:"command,omitempty"`
-
 	// step id
 	StepID string `json:"step_id,omitempty"`
 

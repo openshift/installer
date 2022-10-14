@@ -41,4 +41,9 @@ type EC2RootVolume struct {
 	Size int `json:"size"`
 	// Type defines the type of the storage.
 	Type string `json:"type"`
+	// The KMS key that will be used to encrypt the EBS volume.
+	// If no key is provided the default KMS key for the account will be used.
+	// https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
+	// +optional
+	KMSKeyARN string `json:"kmsKeyARN,omitempty"`
 }

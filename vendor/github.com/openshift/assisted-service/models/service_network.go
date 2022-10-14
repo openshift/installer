@@ -22,7 +22,7 @@ type ServiceNetwork struct {
 	// The IP block address pool.
 	Cidr Subnet `json:"cidr,omitempty" gorm:"primaryKey"`
 
-	// The cluster that this network is associated with.
+	// A network to use for service IP addresses. If you need to access the services from an external network, configure load balancers and routers to manage the traffic.
 	// Format: uuid
 	ClusterID strfmt.UUID `json:"cluster_id,omitempty" gorm:"primaryKey"`
 }

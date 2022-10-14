@@ -6,9 +6,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/none"
-	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -16,9 +14,6 @@ import (
 const (
 	installConfigFilename = "install-config.yaml"
 )
-
-// supportedPlatforms lists the supported platforms for agent installer
-var supportedPlatforms = []string{baremetal.Name, vsphere.Name, none.Name}
 
 // OptionalInstallConfig is an InstallConfig where the default is empty, rather
 // than generated from running the survey.
@@ -76,8 +71,8 @@ func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.
 
 	fieldPath := field.NewPath("Platform")
 
-	if installConfig.Platform.Name() != "" && !a.contains(installConfig.Platform.Name(), supportedPlatforms) {
-		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.Name(), supportedPlatforms))
+	if installConfig.Platform.Name() != "" && !IsSupportedPlatform(installConfig.Platform.Name()) {
+		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.Name(), SupportedPlatforms))
 	}
 	return allErrs
 }
@@ -115,15 +110,6 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 	}
 
 	return allErrs
-}
-
-func (a *OptionalInstallConfig) contains(platform string, supportedPlatforms []string) bool {
-	for _, p := range supportedPlatforms {
-		if p == platform {
-			return true
-		}
-	}
-	return false
 }
 
 // ClusterName returns the name of the cluster, or a default name if no

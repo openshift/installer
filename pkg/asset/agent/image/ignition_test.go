@@ -13,7 +13,6 @@ import (
 	"github.com/vincent-petithory/dataurl"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
-	"github.com/openshift/assisted-service/api/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
@@ -72,13 +71,11 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	arch := "x86_64"
 	ov := "4.12"
 	isoURL := "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.12/412.86.202208101039-0/x86_64/rhcos-412.86.202208101039-0-live.x86_64.iso"
-	rootFSUrl := "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.12/412.86.202208101039-0/x86_64/rhcos-412.86.202208101039-0-live-rootfs.x86_64.img"
 	ver := "412.86.202208101039-0"
 	osImage := &models.OsImage{
 		CPUArchitecture:  &arch,
 		OpenshiftVersion: &ov,
 		URL:              &isoURL,
-		RootfsURL:        &rootFSUrl,
 		Version:          &ver,
 	}
 
@@ -178,7 +175,7 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 	cases := []struct {
 		Name                 string
 		agentConfig          *agent.Config
-		nmStateConfigs       []*v1beta1.NMStateConfig
+		nmStateConfigs       []*aiv1beta1.NMStateConfig
 		expectedRendezvousIP string
 		expectedError        string
 	}{
@@ -197,10 +194,10 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 		},
 		{
 			Name: "no-agent-config-provided-so-read-from-nmstateconfig",
-			nmStateConfigs: []*v1beta1.NMStateConfig{
+			nmStateConfigs: []*aiv1beta1.NMStateConfig{
 				{
-					Spec: v1beta1.NMStateConfigSpec{
-						NetConfig: v1beta1.NetConfig{
+					Spec: aiv1beta1.NMStateConfigSpec{
+						NetConfig: aiv1beta1.NetConfig{
 							Raw: []byte(rawConfig),
 						},
 					},
@@ -368,7 +365,7 @@ func TestIgnition_Generate(t *testing.T) {
 			expectedFileContent: map[string]string{
 				"/usr/local/share/assisted-service/images.env": `ASSISTED_SERVICE_HOST=192.168.111.80:8090
 ASSISTED_SERVICE_SCHEME=http
-OS_IMAGES=\[\{"openshift_version":"was not built correctly","cpu_architecture":"x86_64","url":"https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-.*.x86_64.iso","rootfs_url":"https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-.*-rootfs.x86_64.img","version":".*"\}\]
+OS_IMAGES=\[\{"openshift_version":"was not built correctly","cpu_architecture":"x86_64","url":"https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-.*.x86_64.iso","version":".*"\}\]
 `,
 			},
 			preNetworkManagerConfigServiceEnabled: true,
@@ -377,8 +374,8 @@ OS_IMAGES=\[\{"openshift_version":"was not built correctly","cpu_architecture":"
 			name: "no nmstateconfigs defined, pre-network-manager-config.service should not be enabled",
 			overrideDeps: []asset.Asset{
 				&manifests.AgentManifests{
-					InfraEnv: &v1beta1.InfraEnv{
-						Spec: v1beta1.InfraEnvSpec{
+					InfraEnv: &aiv1beta1.InfraEnv{
+						Spec: aiv1beta1.InfraEnvSpec{
 							SSHAuthorizedKey: "my-ssh-key",
 						},
 					},
@@ -473,8 +470,8 @@ func buildIgnitionAssetDefaultDependencies() []asset.Asset {
 
 	return []asset.Asset{
 		&manifests.AgentManifests{
-			InfraEnv: &v1beta1.InfraEnv{
-				Spec: v1beta1.InfraEnvSpec{
+			InfraEnv: &aiv1beta1.InfraEnv{
+				Spec: aiv1beta1.InfraEnvSpec{
 					SSHAuthorizedKey: "my-ssh-key",
 				},
 			},

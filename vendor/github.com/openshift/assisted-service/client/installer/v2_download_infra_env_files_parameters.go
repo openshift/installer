@@ -59,6 +59,12 @@ func NewV2DownloadInfraEnvFilesParamsWithHTTPClient(client *http.Client) *V2Down
 */
 type V2DownloadInfraEnvFilesParams struct {
 
+	/* DiscoveryIsoType.
+
+	   Overrides the ISO type for the disovery ignition, either 'full-iso' or 'minimal-iso'.
+	*/
+	DiscoveryIsoType *string
+
 	/* FileName.
 
 	   The file to be downloaded.
@@ -72,6 +78,20 @@ type V2DownloadInfraEnvFilesParams struct {
 	   Format: uuid
 	*/
 	InfraEnvID strfmt.UUID
+
+	/* IpxeScriptType.
+
+	   Specify the script type to be served for iPXE.
+	*/
+	IpxeScriptType *string
+
+	/* Mac.
+
+	   Mac address of the host running ipxe script.
+
+	   Format: mac
+	*/
+	Mac *strfmt.MAC
 
 	timeout    time.Duration
 	Context    context.Context
@@ -126,6 +146,17 @@ func (o *V2DownloadInfraEnvFilesParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
+// WithDiscoveryIsoType adds the discoveryIsoType to the v2 download infra env files params
+func (o *V2DownloadInfraEnvFilesParams) WithDiscoveryIsoType(discoveryIsoType *string) *V2DownloadInfraEnvFilesParams {
+	o.SetDiscoveryIsoType(discoveryIsoType)
+	return o
+}
+
+// SetDiscoveryIsoType adds the discoveryIsoType to the v2 download infra env files params
+func (o *V2DownloadInfraEnvFilesParams) SetDiscoveryIsoType(discoveryIsoType *string) {
+	o.DiscoveryIsoType = discoveryIsoType
+}
+
 // WithFileName adds the fileName to the v2 download infra env files params
 func (o *V2DownloadInfraEnvFilesParams) WithFileName(fileName string) *V2DownloadInfraEnvFilesParams {
 	o.SetFileName(fileName)
@@ -148,6 +179,28 @@ func (o *V2DownloadInfraEnvFilesParams) SetInfraEnvID(infraEnvID strfmt.UUID) {
 	o.InfraEnvID = infraEnvID
 }
 
+// WithIpxeScriptType adds the ipxeScriptType to the v2 download infra env files params
+func (o *V2DownloadInfraEnvFilesParams) WithIpxeScriptType(ipxeScriptType *string) *V2DownloadInfraEnvFilesParams {
+	o.SetIpxeScriptType(ipxeScriptType)
+	return o
+}
+
+// SetIpxeScriptType adds the ipxeScriptType to the v2 download infra env files params
+func (o *V2DownloadInfraEnvFilesParams) SetIpxeScriptType(ipxeScriptType *string) {
+	o.IpxeScriptType = ipxeScriptType
+}
+
+// WithMac adds the mac to the v2 download infra env files params
+func (o *V2DownloadInfraEnvFilesParams) WithMac(mac *strfmt.MAC) *V2DownloadInfraEnvFilesParams {
+	o.SetMac(mac)
+	return o
+}
+
+// SetMac adds the mac to the v2 download infra env files params
+func (o *V2DownloadInfraEnvFilesParams) SetMac(mac *strfmt.MAC) {
+	o.Mac = mac
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *V2DownloadInfraEnvFilesParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -155,6 +208,23 @@ func (o *V2DownloadInfraEnvFilesParams) WriteToRequest(r runtime.ClientRequest, 
 		return err
 	}
 	var res []error
+
+	if o.DiscoveryIsoType != nil {
+
+		// query param discovery_iso_type
+		var qrDiscoveryIsoType string
+
+		if o.DiscoveryIsoType != nil {
+			qrDiscoveryIsoType = *o.DiscoveryIsoType
+		}
+		qDiscoveryIsoType := qrDiscoveryIsoType
+		if qDiscoveryIsoType != "" {
+
+			if err := r.SetQueryParam("discovery_iso_type", qDiscoveryIsoType); err != nil {
+				return err
+			}
+		}
+	}
 
 	// query param file_name
 	qrFileName := o.FileName
@@ -169,6 +239,40 @@ func (o *V2DownloadInfraEnvFilesParams) WriteToRequest(r runtime.ClientRequest, 
 	// path param infra_env_id
 	if err := r.SetPathParam("infra_env_id", o.InfraEnvID.String()); err != nil {
 		return err
+	}
+
+	if o.IpxeScriptType != nil {
+
+		// query param ipxe_script_type
+		var qrIpxeScriptType string
+
+		if o.IpxeScriptType != nil {
+			qrIpxeScriptType = *o.IpxeScriptType
+		}
+		qIpxeScriptType := qrIpxeScriptType
+		if qIpxeScriptType != "" {
+
+			if err := r.SetQueryParam("ipxe_script_type", qIpxeScriptType); err != nil {
+				return err
+			}
+		}
+	}
+
+	if o.Mac != nil {
+
+		// query param mac
+		var qrMac strfmt.MAC
+
+		if o.Mac != nil {
+			qrMac = *o.Mac
+		}
+		qMac := qrMac.String()
+		if qMac != "" {
+
+			if err := r.SetQueryParam("mac", qMac); err != nil {
+				return err
+			}
+		}
 	}
 
 	if len(res) > 0 {

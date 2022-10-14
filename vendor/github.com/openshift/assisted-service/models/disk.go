@@ -28,10 +28,16 @@ type Disk struct {
 	ByPath string `json:"by_path,omitempty"`
 
 	// drive type
-	DriveType string `json:"drive_type,omitempty"`
+	DriveType DriveType `json:"drive_type,omitempty"`
+
+	// has uuid
+	HasUUID bool `json:"has_uuid,omitempty"`
 
 	// hctl
 	Hctl string `json:"hctl,omitempty"`
+
+	// A comma-separated list of disk names that this disk belongs to
+	Holders string `json:"holders,omitempty"`
 
 	// Determine the disk's unique identifier which is the by-id field if it exists and fallback to the by-path field otherwise
 	ID string `json:"id,omitempty"`
@@ -77,6 +83,10 @@ type Disk struct {
 func (m *Disk) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateDriveType(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateInstallationEligibility(formats); err != nil {
 		res = append(res, err)
 	}
@@ -88,6 +98,23 @@ func (m *Disk) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Disk) validateDriveType(formats strfmt.Registry) error {
+	if swag.IsZero(m.DriveType) { // not required
+		return nil
+	}
+
+	if err := m.DriveType.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("drive_type")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("drive_type")
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -131,6 +158,10 @@ func (m *Disk) validateIoPerf(formats strfmt.Registry) error {
 func (m *Disk) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateDriveType(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateInstallationEligibility(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -142,6 +173,20 @@ func (m *Disk) ContextValidate(ctx context.Context, formats strfmt.Registry) err
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Disk) contextValidateDriveType(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.DriveType.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("drive_type")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("drive_type")
+		}
+		return err
+	}
+
 	return nil
 }
 

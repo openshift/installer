@@ -21,37 +21,33 @@ import (
 type OpenshiftVersion struct {
 
 	// Available CPU architectures.
+	// Required: true
 	CPUArchitectures []string `json:"cpu_architectures"`
 
 	// Indication that the version is the recommended one.
 	Default bool `json:"default,omitempty"`
 
 	// Name of the version to be presented to the user.
-	DisplayName string `json:"display_name,omitempty"`
-
-	// The installation image of the OpenShift cluster.
-	ReleaseImage string `json:"release_image,omitempty"`
-
-	// OCP version from the release metadata.
-	ReleaseVersion string `json:"release_version,omitempty"`
-
-	// The base RHCOS image used for the discovery iso.
-	RhcosImage string `json:"rhcos_image,omitempty"`
-
-	// The RHCOS rootfs url.
-	RhcosRootfs string `json:"rhcos_rootfs,omitempty"`
-
-	// Build ID of the RHCOS image.
-	RhcosVersion string `json:"rhcos_version,omitempty"`
+	// Required: true
+	DisplayName *string `json:"display_name"`
 
 	// Level of support of the version.
+	// Required: true
 	// Enum: [beta production maintenance]
-	SupportLevel string `json:"support_level,omitempty"`
+	SupportLevel *string `json:"support_level"`
 }
 
 // Validate validates this openshift version
 func (m *OpenshiftVersion) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateCPUArchitectures(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateDisplayName(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateSupportLevel(formats); err != nil {
 		res = append(res, err)
@@ -60,6 +56,24 @@ func (m *OpenshiftVersion) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *OpenshiftVersion) validateCPUArchitectures(formats strfmt.Registry) error {
+
+	if err := validate.Required("cpu_architectures", "body", m.CPUArchitectures); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *OpenshiftVersion) validateDisplayName(formats strfmt.Registry) error {
+
+	if err := validate.Required("display_name", "body", m.DisplayName); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -96,12 +110,13 @@ func (m *OpenshiftVersion) validateSupportLevelEnum(path, location string, value
 }
 
 func (m *OpenshiftVersion) validateSupportLevel(formats strfmt.Registry) error {
-	if swag.IsZero(m.SupportLevel) { // not required
-		return nil
+
+	if err := validate.Required("support_level", "body", m.SupportLevel); err != nil {
+		return err
 	}
 
 	// value enum
-	if err := m.validateSupportLevelEnum("support_level", "body", m.SupportLevel); err != nil {
+	if err := m.validateSupportLevelEnum("support_level", "body", *m.SupportLevel); err != nil {
 		return err
 	}
 

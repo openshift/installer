@@ -19,18 +19,6 @@ import (
 // API is the interface of the manifests client
 type API interface {
 	/*
-	   CreateClusterManifest Creates a manifest for customizing cluster installation.*/
-	CreateClusterManifest(ctx context.Context, params *CreateClusterManifestParams) (*CreateClusterManifestCreated, error)
-	/*
-	   DeleteClusterManifest Deletes a manifest from the cluster.*/
-	DeleteClusterManifest(ctx context.Context, params *DeleteClusterManifestParams) (*DeleteClusterManifestOK, error)
-	/*
-	   DownloadClusterManifest Downloads cluster manifest.*/
-	DownloadClusterManifest(ctx context.Context, params *DownloadClusterManifestParams, writer io.Writer) (*DownloadClusterManifestOK, error)
-	/*
-	   ListClusterManifests Lists manifests for customizing cluster installation.*/
-	ListClusterManifests(ctx context.Context, params *ListClusterManifestsParams) (*ListClusterManifestsOK, error)
-	/*
 	   V2CreateClusterManifest Creates a manifest for customizing cluster installation.*/
 	V2CreateClusterManifest(ctx context.Context, params *V2CreateClusterManifestParams) (*V2CreateClusterManifestCreated, error)
 	/*
@@ -60,106 +48,6 @@ type Client struct {
 	transport runtime.ClientTransport
 	formats   strfmt.Registry
 	authInfo  runtime.ClientAuthInfoWriter
-}
-
-/*
-CreateClusterManifest Creates a manifest for customizing cluster installation.
-*/
-func (a *Client) CreateClusterManifest(ctx context.Context, params *CreateClusterManifestParams) (*CreateClusterManifestCreated, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "CreateClusterManifest",
-		Method:             "POST",
-		PathPattern:        "/v1/clusters/{cluster_id}/manifests",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &CreateClusterManifestReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*CreateClusterManifestCreated), nil
-
-}
-
-/*
-DeleteClusterManifest Deletes a manifest from the cluster.
-*/
-func (a *Client) DeleteClusterManifest(ctx context.Context, params *DeleteClusterManifestParams) (*DeleteClusterManifestOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DeleteClusterManifest",
-		Method:             "DELETE",
-		PathPattern:        "/v1/clusters/{cluster_id}/manifests",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DeleteClusterManifestReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DeleteClusterManifestOK), nil
-
-}
-
-/*
-DownloadClusterManifest Downloads cluster manifest.
-*/
-func (a *Client) DownloadClusterManifest(ctx context.Context, params *DownloadClusterManifestParams, writer io.Writer) (*DownloadClusterManifestOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "DownloadClusterManifest",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/manifests/files",
-		ProducesMediaTypes: []string{"application/octet-stream"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &DownloadClusterManifestReader{formats: a.formats, writer: writer},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*DownloadClusterManifestOK), nil
-
-}
-
-/*
-ListClusterManifests Lists manifests for customizing cluster installation.
-*/
-func (a *Client) ListClusterManifests(ctx context.Context, params *ListClusterManifestsParams) (*ListClusterManifestsOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "ListClusterManifests",
-		Method:             "GET",
-		PathPattern:        "/v1/clusters/{cluster_id}/manifests",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &ListClusterManifestsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*ListClusterManifestsOK), nil
-
 }
 
 /*

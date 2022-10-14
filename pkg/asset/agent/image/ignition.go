@@ -418,12 +418,6 @@ func getOSImagesInfo(cpuArch string) (*models.OsImage, error) {
 	}
 	osImage.URL = &isoFormat.Disk.Location
 
-	pxeFormat, ok := artifacts.Formats["pxe"]
-	if !ok {
-		return nil, fmt.Errorf("failed to retrieve coreos rootfs info for architecture %s", cpuArch)
-	}
-	osImage.RootfsURL = &pxeFormat.Rootfs.Location
-
 	return osImage, nil
 }
 
