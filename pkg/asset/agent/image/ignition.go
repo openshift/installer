@@ -39,7 +39,8 @@ const extraManifestPath = "/etc/assisted/extra-manifests"
 
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
-	Config *igntypes.Config
+	Config  *igntypes.Config
+	CPUArch string
 }
 
 // agentTemplateData is the data used to replace values in agent template
@@ -140,6 +141,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
+	a.CPUArch = *osImage.CPUArchitecture
 
 	agentTemplateData := getTemplateData(
 		agentManifests.GetPullSecretData(),
