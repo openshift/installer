@@ -125,22 +125,14 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 
 	if len(p.APIVIPs) == 0 && p.DeprecatedAPIVIP == "" {
 		// This name should resolve to exactly one address
-		vip, err := lookupHost("api." + c.ClusterDomain())
-		if err != nil {
-			// This will fail validation and abort the install
-			p.APIVIPs = []string{fmt.Sprintf("DNS lookup failure: %s", err.Error())}
-		} else {
+		if vip, err := lookupHost("api." + c.ClusterDomain()); err == nil {
 			p.APIVIPs = []string{vip[0]}
 		}
 	}
 
 	if len(p.IngressVIPs) == 0 && p.DeprecatedIngressVIP == "" {
 		// This name should resolve to exactly one address
-		vip, err := lookupHost("test.apps." + c.ClusterDomain())
-		if err != nil {
-			// This will fail validation and abort the install
-			p.IngressVIPs = []string{fmt.Sprintf("DNS lookup failure: %s", err.Error())}
-		} else {
+		if vip, err := lookupHost("test.apps." + c.ClusterDomain()); err == nil {
 			p.IngressVIPs = []string{vip[0]}
 		}
 	}
