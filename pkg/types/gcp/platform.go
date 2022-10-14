@@ -19,9 +19,9 @@ type DNSZone struct {
 	// +optional
 	ID string `json:"id,omitempty"`
 
-	// ProjectID Technology Preview
-	// When the ProjectID is provided, the zone will be created in this project. When the ProjectID is
-	// empty, the DNS zone with this ID will be created and managed in the Service Project (GCP.ProjectID).
+	// ProjectID Technology Preview.
+	// When the ProjectID is provided, the zone will exist in this project. When the ProjectID is
+	// empty, the ProjectID defaults to the Service Project (GCP.ProjectID).
 	// +optional
 	ProjectID string `json:"project,omitempty"`
 }
@@ -76,12 +76,12 @@ type Platform struct {
 	Licenses []string `json:"licenses,omitempty"`
 
 	// PrivateDNSZone Technology Preview.
-	// PrivateDNSZone contains the zone ID and project where the Private DNS zone will be created.
+	// PrivateDNSZone contains the zone ID and project where the Private DNS zone records will be created.
 	// +optional
 	PrivateDNSZone *DNSZone `json:"privateDNSZone,omitempty"`
 
 	// PublicDNSZone Technology Preview.
-	// PublicDNSZone contains the zone ID and project where the Public DNS zone will be created.
+	// PublicDNSZone contains the zone ID and project where the Public DNS zone records will be created.
 	// +optional
 	PublicDNSZone *DNSZone `json:"publicDNSZone,omitempty"`
 }
