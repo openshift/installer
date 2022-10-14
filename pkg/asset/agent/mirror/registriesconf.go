@@ -104,11 +104,9 @@ unqualified-search-registries = []
 
 // RegistriesConf generates the registries.conf file.
 type RegistriesConf struct {
-	File             *asset.File
-	Config           *sysregistriesv2.V2RegistriesConf
-	MirrorConfig     []RegistriesConfig
-	Generated        bool
-	ReleaseImagePath string
+	File         *asset.File
+	Config       *sysregistriesv2.V2RegistriesConf
+	MirrorConfig []RegistriesConfig
 }
 
 // RegistriesConfig holds the data extracted from registries.conf
@@ -140,19 +138,8 @@ func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 	releaseImage := &releaseimage.Image{}
 	dependencies.Get(installConfig, releaseImage)
 
-	i.ReleaseImagePath = strings.Split(releaseImage.PullSpec, ":")[0]
-	i.Generated = true
-
 	if !installConfig.Supplied || len(installConfig.Config.ImageContentSources) == 0 {
-		i.File = &asset.File{
-			Data: []byte(defaultRegistriesConf),
-		}
-		registriesConf := &sysregistriesv2.V2RegistriesConf{}
-		if err := toml.Unmarshal([]byte(defaultRegistriesConf), registriesConf); err != nil {
-			return errors.Wrapf(err, "failed to unmarshal %s", RegistriesConfFilename)
-		}
-		i.Config = registriesConf
-		return i.finish()
+		return i.generateDefaultRegistriesConf()
 	}
 
 	registries := &sysregistriesv2.V2RegistriesConf{
@@ -172,6 +159,12 @@ func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 		registries.Registries = append(registries.Registries, registry)
 	}
 	i.Config = registries
+	i.setMirrorConfig(i.Config)
+
+	releaseImagePath := strings.Split(releaseImage.PullSpec, ":")[0]
+	if found := i.validateReleaseImageIsSameInRegistriesConf(releaseImagePath); !found {
+		logrus.Warnf(fmt.Sprintf("The ImageContentSources configuration in install-config.yaml should have at-least one source field matching the releaseImage value %s", releaseImagePath))
+	}
 
 	registriesData, err := toml.Marshal(registries)
 	if err != nil {
@@ -200,8 +193,6 @@ func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
 	releaseImage := &releaseimage.Image{}
 	releaseImage.Generate(asset.Parents{})
 
-	i.ReleaseImagePath = strings.Split(releaseImage.PullSpec, ":")[0]
-
 	file, err := f.FetchByName(RegistriesConfFilename)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -216,19 +207,16 @@ func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	i.File, i.Config = file, registriesConf
+	i.setMirrorConfig(i.Config)
 
-	mirrorConfig := make([]RegistriesConfig, len(registriesConf.Registries))
-	for i, reg := range registriesConf.Registries {
-		mirrorConfig[i] = RegistriesConfig{
-			Location: reg.Location,
-			Mirror:   reg.Mirrors[0].Location,
+	if string(i.File.Data) != defaultRegistriesConf {
+		if valid := i.validateRegistriesConf(); valid {
+			releaseImagePath := strings.Split(releaseImage.PullSpec, ":")[0]
+			if found := i.validateReleaseImageIsSameInRegistriesConf(releaseImagePath); !found {
+				logrus.Warnf(fmt.Sprintf("%s should have an entry matching the releaseImage %s", RegistriesConfFilename, releaseImagePath))
+			}
 		}
 	}
-	if err != nil {
-		return false, errors.Wrap(err, fmt.Sprintf("failed to parse mirrors in %s", RegistriesConfFilename))
-	}
-
-	i.MirrorConfig = mirrorConfig
 
 	if err = i.finish(); err != nil {
 		return false, err
@@ -239,17 +227,6 @@ func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
 
 func (i *RegistriesConf) finish() error {
 
-	if string(i.File.Data) != defaultRegistriesConf {
-		// validateRegistriesConf is always true in case of Generate()
-		// because the marshalling results in correct keys.
-		// Only in case of Load(), if the string keys are incorrect
-		// then validateRegistriesConf returns false.
-		// If validateRegistriesConf returns true, then only
-		// validate the data for release image
-		if valid := i.validateRegistriesConf(); valid {
-			i.validateReleaseImageIsSameInRegistriesConf()
-		}
-	}
 	return nil
 }
 
@@ -263,23 +240,39 @@ func (i *RegistriesConf) validateRegistriesConf() bool {
 	return true
 }
 
-func (i *RegistriesConf) validateReleaseImageIsSameInRegistriesConf() {
+func (i *RegistriesConf) validateReleaseImageIsSameInRegistriesConf(releaseImagePath string) bool {
 
 	var found bool
 
 	for _, registry := range i.Config.Registries {
 		source := registry.Endpoint.Location
-		if source == i.ReleaseImagePath {
+		if source == releaseImagePath {
 			found = true
 			break
 		}
 	}
+	return found
+}
 
-	if !found {
-		if i.Generated {
-			logrus.Warnf(fmt.Sprintf("The ImageContentSources configuration in install-config.yaml should have at-least one source field matching the releaseImage value %s", i.ReleaseImagePath))
-			return
-		}
-		logrus.Warnf(fmt.Sprintf("%s should have an entry matching the releaseImage %s", RegistriesConfFilename, i.ReleaseImagePath))
+func (i *RegistriesConf) generateDefaultRegistriesConf() error {
+	i.File = &asset.File{
+		Data: []byte(defaultRegistriesConf),
 	}
+	registriesConf := &sysregistriesv2.V2RegistriesConf{}
+	if err := toml.Unmarshal([]byte(defaultRegistriesConf), registriesConf); err != nil {
+		return errors.Wrapf(err, "failed to unmarshal %s", RegistriesConfFilename)
+	}
+	i.Config = registriesConf
+	return i.finish()
+}
+
+func (i *RegistriesConf) setMirrorConfig(registriesConf *sysregistriesv2.V2RegistriesConf) {
+	mirrorConfig := make([]RegistriesConfig, len(registriesConf.Registries))
+	for i, reg := range registriesConf.Registries {
+		mirrorConfig[i] = RegistriesConfig{
+			Location: reg.Location,
+			Mirror:   reg.Mirrors[0].Location,
+		}
+	}
+	i.MirrorConfig = mirrorConfig
 }
