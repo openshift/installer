@@ -147,6 +147,9 @@ func Test_PrintFields(t *testing.T) {
     hostedZone <string>
       HostedZone is the ID of an existing hosted zone into which to add DNS records for the cluster's internal API. An existing hosted zone can only be used when also using existing subnets. The hosted zone must be associated with the VPC containing the subnets. Leave the hosted zone unset to have the installer create the hosted zone on your behalf.
 
+    lbType <string>
+      LBType allows user to set a load balancer type. When this field is set the default ingresscontroller will get created using the specified LBType. If this field is not set then the default ingress controller of LBType Classic will be created. Valid values are: * "Classic": A Classic Load Balancer that makes routing decisions at either   the transport layer (TCP/SSL) or the application layer (HTTP/HTTPS). See   the following for additional details:   https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#clb * "NLB": A Network Load Balancer that makes routing decisions at the   transport layer (TCP/SSL). See the following for additional details:   https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb
+
     propagateUserTags <boolean>
       PropagateUserTags is a flag that directs in-cluster operators to include the specified user tags in the tags of the AWS resources that the operators create.
 
