@@ -119,13 +119,15 @@ func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, 
 
 	switch config.Platform.Name() {
 	case aws.Name:
-		obj.Spec.LoadBalancer = configv1.LoadBalancer{
-			Platform: configv1.IngressPlatformSpec{
-				AWS: &configv1.AWSIngressSpec{
-					Type: config.AWS.LBType,
+		if len(config.AWS.LBType) > 0 {
+			obj.Spec.LoadBalancer = configv1.LoadBalancer{
+				Platform: configv1.IngressPlatformSpec{
+					AWS: &configv1.AWSIngressSpec{
+						Type: config.AWS.LBType,
+					},
+					Type: configv1.AWSPlatformType,
 				},
-				Type: configv1.AWSPlatformType,
-			},
+			}
 		}
 	}
 	return yaml.Marshal(obj)
