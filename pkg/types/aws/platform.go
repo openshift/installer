@@ -63,17 +63,25 @@ type Platform struct {
 	// +optional
 	PropagateUserTag bool `json:"propagateUserTags,omitempty"`
 
-	// LBType allows user to set a load balancer type.
-	// When this field is set the default ingresscontroller will get created using the specified LBType.
-	// If this field is not set then the default ingress controller of LBType Classic will be created.
-	// Valid values are:
-	// * "Classic": A Classic Load Balancer that makes routing decisions at either
-	//   the transport layer (TCP/SSL) or the application layer (HTTP/HTTPS). See
-	//   the following for additional details:
-	//   https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#clb
+	// LBType is an optional field to specify a load balancer type.
+	//
+	// When this field is specified, the default ingresscontroller will be
+	// created using the specified load-balancer type.
+	//
+	// Following are the accepted values:
+	//
+	// * "Classic": A Classic Load Balancer that makes routing decisions at
+	// either the transport layer (TCP/SSL) or the application layer
+	// (HTTP/HTTPS). See the following for additional details:
+	// https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#clb
+	//
 	// * "NLB": A Network Load Balancer that makes routing decisions at the
-	//   transport layer (TCP/SSL). See the following for additional details:
-	//   https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb
+	// transport layer (TCP/SSL). See the following for additional details:
+	// https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb
+	//
+	// If this field is not set explicitly, it defaults to "Classic".  This
+	// default is subject to change over time.
+	//
 	// +optional
 	LBType configv1.AWSLBType `json:"lbType,omitempty"`
 }

@@ -68,6 +68,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			installConfigBuildOptions: []icOption{icBuild.forAWS()},
 			controlPlaneTopology:      configv1.SingleReplicaTopologyMode,
 			infrastructureTopology:    configv1.SingleReplicaTopologyMode,
+			expectedIngressAWSLBType:  configv1.Classic,
 			expectedIngressPlacement:  configv1.DefaultPlacementWorkers,
 		},
 		{
@@ -75,6 +76,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			installConfigBuildOptions: []icOption{icBuild.forAWS()},
 			controlPlaneTopology:      configv1.HighlyAvailableTopologyMode,
 			infrastructureTopology:    configv1.SingleReplicaTopologyMode,
+			expectedIngressAWSLBType:  configv1.Classic,
 			expectedIngressPlacement:  configv1.DefaultPlacementWorkers,
 		},
 		{
@@ -84,6 +86,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			installConfigBuildOptions: []icOption{icBuild.forAWS()},
 			controlPlaneTopology:      configv1.SingleReplicaTopologyMode,
 			infrastructureTopology:    configv1.HighlyAvailableTopologyMode,
+			expectedIngressAWSLBType:  configv1.Classic,
 			expectedIngressPlacement:  configv1.DefaultPlacementWorkers,
 		},
 		{
@@ -91,6 +94,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			installConfigBuildOptions: []icOption{icBuild.forAWS()},
 			controlPlaneTopology:      configv1.HighlyAvailableTopologyMode,
 			infrastructureTopology:    configv1.HighlyAvailableTopologyMode,
+			expectedIngressAWSLBType:  configv1.Classic,
 			expectedIngressPlacement:  configv1.DefaultPlacementWorkers,
 		},
 		{
@@ -174,7 +178,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 				return
 			}
 			assert.Equal(t, tc.expectedIngressPlacement, actualIngress.Status.DefaultPlacement)
-			if len(tc.expectedIngressAWSLBType) != 0 && len(tc.expectedIngressPlatformType) != 0 {
+			if len(tc.expectedIngressPlatformType) != 0 {
 				assert.Equal(t, tc.expectedIngressAWSLBType, actualIngress.Spec.LoadBalancer.Platform.AWS.Type)
 				assert.Equal(t, tc.expectedIngressPlatformType, actualIngress.Spec.LoadBalancer.Platform.Type)
 			}
