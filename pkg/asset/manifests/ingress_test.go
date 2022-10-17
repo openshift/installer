@@ -53,13 +53,11 @@ func installConfigFromTopologies(t *testing.T, options []icOption,
 
 func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 	cases := []struct {
-		name                        string
-		installConfigBuildOptions   []icOption
-		controlPlaneTopology        configv1.TopologyMode
-		infrastructureTopology      configv1.TopologyMode
-		expectedIngressPlacement    configv1.DefaultPlacement
-		expectedIngressAWSLBType    configv1.AWSLBType
-		expectedIngressPlatformType configv1.PlatformType
+		name                      string
+		installConfigBuildOptions []icOption
+		controlPlaneTopology      configv1.TopologyMode
+		infrastructureTopology    configv1.TopologyMode
+		expectedIngressPlacement  configv1.DefaultPlacement
 	}{
 		{
 			// AWS currently uses a load balancer even on single-node, so the
@@ -92,24 +90,6 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			controlPlaneTopology:      configv1.HighlyAvailableTopologyMode,
 			infrastructureTopology:    configv1.HighlyAvailableTopologyMode,
 			expectedIngressPlacement:  configv1.DefaultPlacementWorkers,
-		},
-		{
-			name:                        "test setting of aws lb type to NLB",
-			installConfigBuildOptions:   []icOption{icBuild.withLBType(configv1.NLB)},
-			controlPlaneTopology:        configv1.HighlyAvailableTopologyMode,
-			infrastructureTopology:      configv1.HighlyAvailableTopologyMode,
-			expectedIngressPlacement:    configv1.DefaultPlacementWorkers,
-			expectedIngressAWSLBType:    configv1.NLB,
-			expectedIngressPlatformType: configv1.AWSPlatformType,
-		},
-		{
-			name:                        "test setting of aws lb type to Classic",
-			installConfigBuildOptions:   []icOption{icBuild.withLBType(configv1.Classic)},
-			controlPlaneTopology:        configv1.HighlyAvailableTopologyMode,
-			infrastructureTopology:      configv1.HighlyAvailableTopologyMode,
-			expectedIngressPlacement:    configv1.DefaultPlacementWorkers,
-			expectedIngressAWSLBType:    configv1.Classic,
-			expectedIngressPlatformType: configv1.AWSPlatformType,
 		},
 		{
 			name:                      "none-platform single node with 0 or 1 day-1 workers",
@@ -174,10 +154,6 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 				return
 			}
 			assert.Equal(t, tc.expectedIngressPlacement, actualIngress.Status.DefaultPlacement)
-			if len(tc.expectedIngressAWSLBType) != 0 && len(tc.expectedIngressPlatformType) != 0 {
-				assert.Equal(t, tc.expectedIngressAWSLBType, actualIngress.Spec.LoadBalancer.Platform.AWS.Type)
-				assert.Equal(t, tc.expectedIngressPlatformType, actualIngress.Spec.LoadBalancer.Platform.Type)
-			}
 		})
 	}
 }
