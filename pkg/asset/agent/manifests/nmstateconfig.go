@@ -163,8 +163,7 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	// Split up the file into multiple YAMLs if it contains NMStateConfig for more than one node
-	var decoder nmStateConfigYamlDecoder
-	yamlList, err := getMultipleYamls(file.Data, &decoder)
+	yamlList, err := GetMultipleYamls[aiv1beta1.NMStateConfig](file.Data)
 	if err != nil {
 		return false, errors.Wrapf(err, "could not decode YAML for %s", nmStateConfigFilename)
 	}
@@ -173,12 +172,12 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 	var nmStateConfigList []*aiv1beta1.NMStateConfig
 
 	for i := range yamlList {
-		nmStateConfig := yamlList[i].(*aiv1beta1.NMStateConfig)
+		nmStateConfig := yamlList[i]
 		staticNetworkConfig = append(staticNetworkConfig, &models.HostStaticNetworkConfig{
-			MacInterfaceMap: buildMacInterfaceMap(*nmStateConfig),
+			MacInterfaceMap: buildMacInterfaceMap(nmStateConfig),
 			NetworkYaml:     string(nmStateConfig.Spec.NetConfig.Raw),
 		})
-		nmStateConfigList = append(nmStateConfigList, nmStateConfig)
+		nmStateConfigList = append(nmStateConfigList, &nmStateConfig)
 	}
 
 	log := logrus.New()
@@ -287,29 +286,17 @@ func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) (
 	return filesList, err
 }
 
-type nmStateConfigYamlDecoder int
-
-type decodeFormat interface {
-	NewDecodedYaml(decoder *yaml.YAMLToJSONDecoder) (interface{}, error)
-}
-
-func (d *nmStateConfigYamlDecoder) NewDecodedYaml(yamlDecoder *yaml.YAMLToJSONDecoder) (interface{}, error) {
-	decodedData := new(aiv1beta1.NMStateConfig)
-	err := yamlDecoder.Decode(&decodedData)
-
-	return decodedData, err
-}
-
-// Read a YAML file containing multiple YAML definitions of the same format
+// GetMultipleYamls reads a YAML file containing multiple YAML definitions of the same format
 // Each specific format must be of type DecodeFormat
-func getMultipleYamls(contents []byte, decoder decodeFormat) ([]interface{}, error) {
+func GetMultipleYamls[T any](contents []byte) ([]T, error) {
 
 	r := bytes.NewReader(contents)
 	dec := yaml.NewYAMLToJSONDecoder(r)
 
-	var outputList []interface{}
+	var outputList []T
 	for {
-		decodedData, err := decoder.NewDecodedYaml(dec)
+		decodedData := new(T)
+		err := dec.Decode(&decodedData)
 		if errors.Is(err, io.EOF) {
 			break
 		}
@@ -317,7 +304,9 @@ func getMultipleYamls(contents []byte, decoder decodeFormat) ([]interface{}, err
 			return nil, errors.Wrapf(err, "Error reading multiple YAMLs")
 		}
 
-		outputList = append(outputList, decodedData)
+		if decodedData != nil {
+			outputList = append(outputList, *decodedData)
+		}
 	}
 
 	return outputList, nil
