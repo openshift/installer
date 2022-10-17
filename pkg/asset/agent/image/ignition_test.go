@@ -296,6 +296,37 @@ func TestAddHostConfig_Roles(t *testing.T) {
 
 }
 
+func defaultGeneratedFiles() []string {
+	return []string{
+		"/etc/issue",
+		"/etc/multipath.conf",
+		"/etc/containers/containers.conf",
+		"/etc/motd",
+		"/root/.docker/config.json",
+		"/root/assisted.te",
+		"/usr/local/bin/common.sh",
+		"/usr/local/bin/agent-gather",
+		"/usr/local/bin/extract-agent.sh",
+		"/usr/local/bin/get-container-images.sh",
+		"/usr/local/bin/set-hostname.sh",
+		"/usr/local/bin/start-agent.sh",
+		"/usr/local/bin/start-cluster-installation.sh",
+		"/usr/local/bin/wait-for-assisted-service.sh",
+		"/usr/local/bin/set-node-zero.sh",
+		"/usr/local/share/assisted-service/assisted-db.env",
+		"/usr/local/share/assisted-service/assisted-service.env",
+		"/usr/local/share/assisted-service/images.env",
+		"/usr/local/bin/bootstrap-service-record.sh",
+		"/usr/local/bin/release-image.sh",
+		"/usr/local/bin/release-image-download.sh",
+		"/etc/assisted/manifests/agent-config.yaml",
+		"/etc/assisted/network/host0/eth0.nmconnection",
+		"/etc/assisted/network/host0/mac_interface.ini",
+		"/usr/local/bin/pre-network-manager-config.sh",
+		"/opt/agent/tls/kubeadmin-password.hash",
+	}
+}
+
 func TestIgnition_Generate(t *testing.T) {
 	// Generate calls addStaticNetworkConfig which calls nmstatectl
 	_, execErr := exec.LookPath("nmstatectl")
@@ -319,8 +350,9 @@ func TestIgnition_Generate(t *testing.T) {
 	}{
 		{
 			name:                                  "no-extra-manifests",
-			expectedFiles:                         []string{},
 			preNetworkManagerConfigServiceEnabled: true,
+
+			expectedFiles: defaultGeneratedFiles(),
 		},
 		{
 			name: "default",
@@ -329,6 +361,18 @@ func TestIgnition_Generate(t *testing.T) {
 					FileList: []*asset.File{
 						{
 							Filename: "openshift/test-configmap.yaml",
+							Data: []byte(`
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-test-1
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-test-2`),
 						},
 					},
 				},
@@ -360,7 +404,8 @@ func TestIgnition_Generate(t *testing.T) {
 				"/etc/assisted/network/host0/mac_interface.ini",
 				"/usr/local/bin/pre-network-manager-config.sh",
 				"/opt/agent/tls/kubeadmin-password.hash",
-				"/etc/assisted/extra-manifests/test-configmap.yaml",
+				"/etc/assisted/extra-manifests/test-configmap-0.yaml",
+				"/etc/assisted/extra-manifests/test-configmap-1.yaml",
 			},
 			expectedFileContent: map[string]string{
 				"/usr/local/share/assisted-service/images.env": `ASSISTED_SERVICE_HOST=192.168.111.80:8090
@@ -400,7 +445,6 @@ OS_IMAGES=\[\{"openshift_version":"was not built correctly","cpu_architecture":"
 					},
 				},
 			},
-			expectedFiles:                         []string{},
 			preNetworkManagerConfigServiceEnabled: false,
 		},
 	}
@@ -432,21 +476,25 @@ OS_IMAGES=\[\{"openshift_version":"was not built correctly","cpu_architecture":"
 				assert.Len(t, ignitionAsset.Config.Storage.Directories, 1)
 				assert.Equal(t, "/etc/assisted/extra-manifests", ignitionAsset.Config.Storage.Directories[0].Node.Path)
 
-				for _, f := range tc.expectedFiles {
-					found := false
-					for _, i := range ignitionAsset.Config.Storage.Files {
-						if i.Node.Path == f {
-							if expectedData, ok := tc.expectedFileContent[i.Node.Path]; ok {
-								actualData, err := dataurl.DecodeString(*i.FileEmbedded1.Contents.Source)
-								assert.NoError(t, err)
-								assert.Regexp(t, expectedData, string(actualData.Data))
-							}
+				if len(tc.expectedFiles) > 0 {
+					assert.Equal(t, len(tc.expectedFiles), len(ignitionAsset.Config.Storage.Files))
 
-							found = true
-							break
+					for _, f := range tc.expectedFiles {
+						found := false
+						for _, i := range ignitionAsset.Config.Storage.Files {
+							if i.Node.Path == f {
+								if expectedData, ok := tc.expectedFileContent[i.Node.Path]; ok {
+									actualData, err := dataurl.DecodeString(*i.FileEmbedded1.Contents.Source)
+									assert.NoError(t, err)
+									assert.Regexp(t, expectedData, string(actualData.Data))
+								}
+
+								found = true
+								break
+							}
 						}
+						assert.True(t, found, fmt.Sprintf("Expected file %s not found", f))
 					}
-					assert.True(t, found, fmt.Sprintf("Expected file %s not found", f))
 				}
 
 				for _, unit := range ignitionAsset.Config.Systemd.Units {
