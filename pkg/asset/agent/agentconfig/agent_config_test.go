@@ -294,6 +294,27 @@ hosts:
 			expectedFound: false,
 			expectedError: "invalid Agent Config configuration: Hosts[0].Interfaces[0].macAddress: Invalid value: \"000000\": address 000000: invalid MAC address",
 		},
+		{
+			name: "empty-rendezvousIP",
+			data: `
+apiVersion: v1alpha1
+metadata:
+  name: agent-config-cluster0`,
+
+			expectedFound:  true,
+			expectedConfig: agentConfig().rendezvousIP(""),
+		},
+		{
+			name: "invalid-rendezvousIP",
+			data: `
+apiVersion: v1alpha1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: not-a-valid-ip`,
+
+			expectedFound: false,
+			expectedError: "invalid Agent Config configuration: rendezvousIP: Invalid value: \"not-a-valid-ip\": \"not-a-valid-ip\" is not a valid IP",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -358,6 +379,11 @@ func (acb *AgentConfigBuilder) hosts(builders ...*AgentHostBuilder) *AgentConfig
 	}
 	acb.Config.Hosts = hosts
 
+	return acb
+}
+
+func (acb *AgentConfigBuilder) rendezvousIP(ip string) *AgentConfigBuilder {
+	acb.Config.RendezvousIP = ip
 	return acb
 }
 

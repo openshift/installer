@@ -153,6 +153,37 @@ func (a *AgentConfig) finish() error {
 func (a *AgentConfig) validateAgent() field.ErrorList {
 	var allErrs field.ErrorList
 
+	if err := a.validateRendezvousIP(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	if err := a.validateHosts(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	return allErrs
+}
+
+func (a *AgentConfig) validateRendezvousIP() field.ErrorList {
+	var allErrs field.ErrorList
+
+	rendezvousIPPath := field.NewPath("rendezvousIP")
+
+	//empty rendezvous ip is fine
+	if a.Config.RendezvousIP == "" {
+		return nil
+	}
+
+	if err := validate.IP(a.Config.RendezvousIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(rendezvousIPPath, a.Config.RendezvousIP, err.Error()))
+	}
+
+	return allErrs
+}
+
+func (a *AgentConfig) validateHosts() field.ErrorList {
+	var allErrs field.ErrorList
+
 	macs := make(map[string]bool)
 	for i, host := range a.Config.Hosts {
 
