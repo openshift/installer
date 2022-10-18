@@ -3957,6 +3957,87 @@ spec:
                     maxItems: 2
                     type: array
                     uniqueItems: true
+                  bootstrapHost:
+                    properties:
+                      name:
+                        type: string
+                      networkConfig:
+                        properties:
+                          dns-resolver:
+                            properties:
+                              config:
+                                properties:
+                                  server:
+                                    items:
+                                      type: string
+                                    type: array
+                                required:
+                                - server
+                                type: object
+                            required:
+                            - config
+                            type: object
+                          interfaces:
+                            items:
+                              properties:
+                                ipv4:
+                                  properties:
+                                    address:
+                                      items:
+                                        properties:
+                                          ip:
+                                            type: string
+                                          prefix-length:
+                                            format: int32
+                                            type: integer
+                                        required:
+                                        - ip
+                                        - prefix-length
+                                        type: object
+                                      type: array
+                                    enabled:
+                                      type: string
+                                  required:
+                                  - address
+                                  - enabled
+                                  type: object
+                                name:
+                                  type: string
+                                state:
+                                  type: string
+                                type:
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                            type: array
+                          routes:
+                            properties:
+                              config:
+                                items:
+                                  properties:
+                                    destination:
+                                      type: string
+                                    next-hop-address:
+                                      type: string
+                                    next-hop-interface:
+                                      type: string
+                                  required:
+                                  - destination
+                                  - next-hop-address
+                                  type: object
+                                type: array
+                            required:
+                            - config
+                            type: object
+                        required:
+                        - dns-resolver
+                        - interfaces
+                        - routes
+                        type: object
+                    required:
+                    - name
+                    type: object
                   cluster:
                     description: 'Cluster is the name of the cluster virtual machines
                       will be cloned into. Deprecated: Use FailureDomains.Topology.Cluster'
@@ -3965,6 +4046,89 @@ spec:
                     description: ClusterOSImage overrides the url provided in rhcos.json
                       to download the RHCOS OVA
                     type: string
+                  controlPlaneHosts:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        networkConfig:
+                          properties:
+                            dns-resolver:
+                              properties:
+                                config:
+                                  properties:
+                                    server:
+                                      items:
+                                        type: string
+                                      type: array
+                                  required:
+                                  - server
+                                  type: object
+                              required:
+                              - config
+                              type: object
+                            interfaces:
+                              items:
+                                properties:
+                                  ipv4:
+                                    properties:
+                                      address:
+                                        items:
+                                          properties:
+                                            ip:
+                                              type: string
+                                            prefix-length:
+                                              format: int32
+                                              type: integer
+                                          required:
+                                          - ip
+                                          - prefix-length
+                                          type: object
+                                        type: array
+                                      enabled:
+                                        type: string
+                                    required:
+                                    - address
+                                    - enabled
+                                    type: object
+                                  name:
+                                    type: string
+                                  state:
+                                    type: string
+                                  type:
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              type: array
+                            routes:
+                              properties:
+                                config:
+                                  items:
+                                    properties:
+                                      destination:
+                                        type: string
+                                      next-hop-address:
+                                        type: string
+                                      next-hop-interface:
+                                        type: string
+                                    required:
+                                    - destination
+                                    - next-hop-address
+                                    type: object
+                                  type: array
+                              required:
+                              - config
+                              type: object
+                          required:
+                          - dns-resolver
+                          - interfaces
+                          - routes
+                          type: object
+                      required:
+                      - name
+                      type: object
+                    type: array
                   datacenter:
                     description: 'Datacenter is the name of the datacenter to use
                       in the vCenter. Deprecated: Use FailureDomains.Topology.Datacenter'
@@ -4027,6 +4191,89 @@ spec:
                       description: FailureDomain holds the region and zone failure
                         domain and the vCenter topology of that failure domain.
                       properties:
+                        hosts:
+                          items:
+                            properties:
+                              name:
+                                type: string
+                              networkConfig:
+                                properties:
+                                  dns-resolver:
+                                    properties:
+                                      config:
+                                        properties:
+                                          server:
+                                            items:
+                                              type: string
+                                            type: array
+                                        required:
+                                        - server
+                                        type: object
+                                    required:
+                                    - config
+                                    type: object
+                                  interfaces:
+                                    items:
+                                      properties:
+                                        ipv4:
+                                          properties:
+                                            address:
+                                              items:
+                                                properties:
+                                                  ip:
+                                                    type: string
+                                                  prefix-length:
+                                                    format: int32
+                                                    type: integer
+                                                required:
+                                                - ip
+                                                - prefix-length
+                                                type: object
+                                              type: array
+                                            enabled:
+                                              type: string
+                                          required:
+                                          - address
+                                          - enabled
+                                          type: object
+                                        name:
+                                          type: string
+                                        state:
+                                          type: string
+                                        type:
+                                          type: string
+                                      required:
+                                      - name
+                                      type: object
+                                    type: array
+                                  routes:
+                                    properties:
+                                      config:
+                                        items:
+                                          properties:
+                                            destination:
+                                              type: string
+                                            next-hop-address:
+                                              type: string
+                                            next-hop-interface:
+                                              type: string
+                                          required:
+                                          - destination
+                                          - next-hop-address
+                                          type: object
+                                        type: array
+                                    required:
+                                    - config
+                                    type: object
+                                required:
+                                - dns-resolver
+                                - interfaces
+                                - routes
+                                type: object
+                            required:
+                            - name
+                            type: object
+                          type: array
                         name:
                           description: name defines the name of the FailureDomain
                             This name is arbitrary but will be used in VSpherePlatformDeploymentZone
@@ -4100,6 +4347,7 @@ spec:
                             domain type and the name of the vCenter tag category.
                           type: string
                       required:
+                      - hosts
                       - name
                       - region
                       - server

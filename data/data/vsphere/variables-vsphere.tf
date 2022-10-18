@@ -31,3 +31,11 @@ variable "vsphere_ova_filepath" {
   type        = string
   description = "This is the filepath to the ova file that will be imported into vSphere."
 }
+
+variable "vsphere_control_plane_network_kargs" {
+  type = list(string)
+}
+
+variable "vsphere_bootstrap_network_kargs" {
+  type = string
+}

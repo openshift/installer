@@ -3,13 +3,13 @@ package vsphere
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/pkg/errors"
+	"net"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	vtypes "github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/pkg/errors"
 )
 
 type folder struct {
@@ -24,6 +24,8 @@ type config struct {
 	FailureDomains           []vtypes.FailureDomain                   `json:"vsphere_failure_domains"`
 	NetworksInFailureDomains map[string]string                        `json:"vsphere_networks"`
 	ControlPlanes            []*machineapi.VSphereMachineProviderSpec `json:"vsphere_control_planes"`
+	ControlPlaneNetworkKargs []string                                 `json:"vsphere_control_plane_network_kargs"`
+	BootStrapNetworkKargs    string                                   `json:"vsphere_bootstrap_network_kargs"`
 	DatacentersFolders       map[string]*folder                       `json:"vsphere_folders"`
 }
 
@@ -61,6 +63,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		DatacentersFolders:       datacentersFolders,
 	}
 
+	if len(sources.InstallConfig.Config.VSphere.Hosts) > 0 {
+		processGuestNetworkConfiguration(cfg, sources)
+	}
 	return json.MarshalIndent(cfg, "", "  ")
 }
 
@@ -99,4 +104,47 @@ func convertVCentersToMap(values []vtypes.VCenter) map[string]vtypes.VCenter {
 		vcenterMap[v.Server] = v
 	}
 	return vcenterMap
+}
+
+func constructKargsFromNetworkConfig(networkConfig *vtypes.NetworkDeviceSpec) (string, error) {
+	outKargs := ""
+	// if an IPv4 gateway is defined, we'll only handle IPv4 addresses
+	if len(networkConfig.Gateway4) > 0 {
+		for _, address := range networkConfig.IPAddrs {
+			ip, mask, err := net.ParseCIDR(address)
+			if err != nil {
+				return "", err
+			}
+			maskParts := mask.Mask
+			maskStr := fmt.Sprintf("%d.%d.%d.%d", maskParts[0], maskParts[1], maskParts[2], maskParts[3])
+			outKargs = outKargs + fmt.Sprintf("ip=%s::%s:%s:::none ", ip.String(), networkConfig.Gateway4, maskStr)
+		}
+	}
+
+	for _, nameserver := range networkConfig.Nameservers {
+		outKargs = outKargs + fmt.Sprintf("nameserver=%s ", nameserver)
+	}
+
+	return outKargs, nil
+}
+
+func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error {
+	platform := sources.InstallConfig.Config.Platform.VSphere
+	for _, host := range platform.Hosts {
+		switch host.Role {
+		case vtypes.BootstrapRole:
+			kArgs, err := constructKargsFromNetworkConfig(host.NetworkDevice)
+			if err != nil {
+				return err
+			}
+			cfg.BootStrapNetworkKargs = kArgs
+		case vtypes.ControlPlaneRole:
+			kArgs, err := constructKargsFromNetworkConfig(host.NetworkDevice)
+			if err != nil {
+				return err
+			}
+			cfg.ControlPlaneNetworkKargs = append(cfg.ControlPlaneNetworkKargs, kArgs)
+		}
+	}
+	return nil
 }
