@@ -20,10 +20,10 @@ type StageOption func(*SplitStage)
 
 // NewStage creates a new split stage.
 // The default behavior is the following. The behavior can be changed by providing StageOptions.
-// - The resources of the stage will not be deleted as part of destroying the bootstrap.
-// - The IP addresses for the bootstrap and control plane VMs will be output from the stage as bootstrap_ip and
-//   control_plane_ips, respectively. Only one stage for the platform should output a particular variable. This will
-//   likely be the same stage that creates the VM.
+//   - The resources of the stage will not be deleted as part of destroying the bootstrap.
+//   - The IP addresses for the bootstrap and control plane VMs will be output from the stage as bootstrap_ip and
+//     control_plane_ips, respectively. Only one stage for the platform should output a particular variable. This will
+//     likely be the same stage that creates the VM.
 func NewStage(platform, name string, providers []providers.Provider, opts ...StageOption) SplitStage {
 	s := SplitStage{
 		platform:  platform,
