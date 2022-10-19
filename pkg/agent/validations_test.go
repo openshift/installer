@@ -2,113 +2,311 @@ package agent
 
 import (
 	"io/ioutil"
-	"regexp"
 	"testing"
 
-	"github.com/openshift/assisted-service/models"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCheckHostsValidation(t *testing.T) {
+// ValidationHistory test helpers
+const (
+	testKey                string = "test-cluster"
+	testID                 string = "test"
+	testLogPrefix          string = "Test: "
+	validationsInfoSuccess string = "{\"test\":[{\"id\":\"test\",\"status\":\"success\",\"message\":\"The validation succeeded\"}]}"
+	validationsInfoFailure string = "{\"test\":[{\"id\":\"test\",\"status\":\"failure\",\"message\":\"The validation failed\"}]}"
+)
+
+func TestUpdateValidationHistory(t *testing.T) {
 	tests := []struct {
-		name           string
-		hosts          []*models.Host
-		expectedResult bool
-		expectedLogs   []string
+		name            string
+		validationsInfo string
+		inputHistory    map[string]*validationResultHistory
+		expectedResult  map[string]*validationResultHistory
 	}{
 		{
-			name:           "no-validations",
-			expectedResult: true,
-		},
-		{
-			name: "no-failures",
-			hosts: []*models.Host{
-				{
-					RequestedHostname: "master-0.ostest.test.metalkube.org",
-					ValidationsInfo:   "{\"hardware\":[{\"id\":\"has-inventory\",\"status\":\"success\",\"message\":\"Valid inventory exists for the host\"}]}",
+			name:            "success-first-seen",
+			validationsInfo: validationsInfoSuccess,
+			inputHistory: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     0,
+					seen:            false,
+					currentStatus:   "",
+					currentMessage:  "",
+					previousStatus:  "",
+					previousMessage: "",
 				},
 			},
-			expectedResult: true,
-		},
-		{
-			name: "single-host-failure",
-			hosts: []*models.Host{
-				{
-					RequestedHostname: "master-0.ostest.test.metalkube.org",
-					ValidationsInfo:   `{"hardware":[{"id":"has-min-valid-disks","status":"failure","message":"No eligible disks were found, please check specific disks to see why they are not eligible"},{"id":"has-cpu-cores-for-role","status":"success","message":"Sufficient CPU cores for role master"},{"id":"has-memory-for-role","status":"success","message":"Sufficient RAM for role master"}]}`,
+			expectedResult: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     0,
+					seen:            true,
+					currentStatus:   "success",
+					currentMessage:  "The validation succeeded",
+					previousStatus:  "",
+					previousMessage: "",
 				},
-			},
-			expectedResult: false,
-			expectedLogs: []string{
-				`Checking for validation failures ----------------------------------------------`,
-				`level=debug msg="Validation failure found for master\-0.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
 			},
 		},
 		{
-			name: "multiple-hosts-failure",
-			hosts: []*models.Host{
-				{
-					RequestedHostname: "master-0.ostest.test.metalkube.org",
-					ValidationsInfo:   `{"hardware":[{"id":"has-min-valid-disks","status":"failure","message":"No eligible disks were found, please check specific disks to see why they are not eligible"},{"id":"has-cpu-cores-for-role","status":"success","message":"Sufficient CPU cores for role master"},{"id":"has-memory-for-role","status":"success","message":"Sufficient RAM for role master"}]}`,
-				},
-				{
-					RequestedHostname: "master-1.ostest.test.metalkube.org",
-					ValidationsInfo:   `{"hardware":[{"id":"has-min-valid-disks","status":"failure","message":"No eligible disks were found, please check specific disks to see why they are not eligible"},{"id":"has-cpu-cores-for-role","status":"success","message":"Sufficient CPU cores for role master"},{"id":"has-memory-for-role","status":"success","message":"Sufficient RAM for role master"}]}`,
+			name:            "success-no-change",
+			validationsInfo: validationsInfoSuccess,
+			inputHistory: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     0,
+					seen:            true,
+					currentStatus:   "success",
+					currentMessage:  "The validation succeeded",
+					previousStatus:  "",
+					previousMessage: "",
 				},
 			},
-			expectedResult: false,
-			expectedLogs: []string{
-				`Checking for validation failures ----------------------------------------------`,
-				`level=debug msg="Validation failure found for master\-0.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
-				`level=debug msg="Validation failure found for master\-1.ostest.test.metalkube.org" category=hardware label="Minimum disks of required size" message="No eligible disks were found, please check specific disks to see why they are not eligible"`,
+			expectedResult: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     0,
+					seen:            true,
+					currentStatus:   "success",
+					currentMessage:  "The validation succeeded",
+					previousStatus:  "success",
+					previousMessage: "The validation succeeded",
+				},
 			},
 		},
 		{
-			name: "malformed-json",
-			hosts: []*models.Host{
-				{
-					RequestedHostname: "master-0.ostest.test.metalkube.org",
-					ValidationsInfo:   `not a valid info`,
+			name:            "failure-first-seen",
+			validationsInfo: validationsInfoFailure,
+			inputHistory: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     0,
+					seen:            false,
+					currentStatus:   "",
+					currentMessage:  "",
+					previousStatus:  "",
+					previousMessage: "",
 				},
 			},
-			expectedResult: false,
-			expectedLogs: []string{
-				`Checking for validation failures ----------------------------------------------"`,
-				`Validation failure found for master-0.ostest.test.metalkube.org`,
+			expectedResult: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     1,
+					seen:            true,
+					currentStatus:   "failure",
+					currentMessage:  "The validation failed",
+					previousStatus:  "",
+					previousMessage: "",
+				},
+			},
+		},
+		{
+			name:            "failure-no-change",
+			validationsInfo: validationsInfoFailure,
+			inputHistory: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     0,
+					seen:            true,
+					currentStatus:   "failure",
+					currentMessage:  "The validation failed",
+					previousStatus:  "",
+					previousMessage: "",
+				},
+			},
+			expectedResult: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     1,
+					seen:            true,
+					currentStatus:   "failure",
+					currentMessage:  "The validation failed",
+					previousStatus:  "failure",
+					previousMessage: "The validation failed",
+				},
+			},
+		},
+		{
+			name:            "success-after-failure",
+			validationsInfo: validationsInfoSuccess,
+			inputHistory: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     1,
+					seen:            true,
+					currentStatus:   "failure",
+					currentMessage:  "The validation failed",
+					previousStatus:  "failure",
+					previousMessage: "The validation failed",
+				},
+			},
+			expectedResult: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     1,
+					seen:            true,
+					currentStatus:   "success",
+					currentMessage:  "The validation succeeded",
+					previousStatus:  "failure",
+					previousMessage: "The validation failed",
+				},
+			},
+		},
+		{
+			name:            "failure-after-success",
+			validationsInfo: validationsInfoFailure,
+			inputHistory: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     0,
+					seen:            true,
+					currentStatus:   "success",
+					currentMessage:  "The validation succeeded",
+					previousStatus:  "success",
+					previousMessage: "The validation succeeded",
+				},
+			},
+			expectedResult: map[string]*validationResultHistory{
+				"test": {
+					numFailures:     1,
+					seen:            true,
+					currentStatus:   "failure",
+					currentMessage:  "The validation failed",
+					previousStatus:  "success",
+					previousMessage: "The validation succeeded",
+				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			cluster := &models.Cluster{
-				Hosts: tt.hosts,
-			}
-
+			// Test logger
 			var logger = &logrus.Logger{
 				Out:       ioutil.Discard,
 				Formatter: new(logrus.TextFormatter),
 				Hooks:     make(logrus.LevelHooks),
 				Level:     logrus.DebugLevel,
 			}
-			hook := test.NewLocal(logger)
+			actualResult, _ := updateValidationResultHistory(testLogPrefix, tt.validationsInfo, tt.inputHistory, logger)
+			assert.Equal(t, tt.expectedResult, actualResult)
+		})
+	}
+}
 
-			assert.Equal(t, tt.expectedResult, checkHostsValidations(cluster, logger))
+func TestLogValidationHistory(t *testing.T) {
+	tests := []struct {
+		name           string
+		inputHistory   *validationResultHistory
+		expectedResult *logrus.Entry
+	}{
+		{
+			name: "default-case-not-seen",
+			inputHistory: &validationResultHistory{
+				numFailures:     0,
+				seen:            false,
+				currentStatus:   "test",
+				currentMessage:  "This is the default validation case",
+				previousStatus:  "",
+				previousMessage: "",
+			},
+			expectedResult: &logrus.Entry{Level: logrus.TraceLevel, Message: "Test: This is the default validation case"},
+		},
+		{
+			name: "default-case-seen",
+			inputHistory: &validationResultHistory{
+				numFailures:     0,
+				seen:            true,
+				currentStatus:   "test",
+				currentMessage:  "This is the default validation case",
+				previousStatus:  "",
+				previousMessage: "",
+			},
+			expectedResult: &logrus.Entry{Level: logrus.TraceLevel, Message: "Test: This is the default validation case"},
+		},
+		{
+			name: "success-first-seen",
+			inputHistory: &validationResultHistory{
+				numFailures:     0,
+				seen:            false,
+				currentStatus:   "success",
+				currentMessage:  "The validation succeeded",
+				previousStatus:  "",
+				previousMessage: "",
+			},
+			expectedResult: &logrus.Entry{Level: logrus.DebugLevel, Message: "Test: The validation succeeded"},
+		},
+		{
+			name: "success-no-change",
+			inputHistory: &validationResultHistory{
+				numFailures:     0,
+				seen:            true,
+				currentStatus:   "success",
+				currentMessage:  "The validation succeeded",
+				previousStatus:  "success",
+				previousMessage: "The validation succeeded",
+			},
+			expectedResult: nil,
+		},
+		{
+			name: "failure-first-seen",
+			inputHistory: &validationResultHistory{
+				numFailures:     0,
+				seen:            false,
+				currentStatus:   "failure",
+				currentMessage:  "The validation failed",
+				previousStatus:  "",
+				previousMessage: "",
+			},
+			expectedResult: &logrus.Entry{Level: logrus.WarnLevel, Message: "Test: The validation failed"},
+		},
+		{
+			name: "failure-no-change",
+			inputHistory: &validationResultHistory{
+				numFailures:     1,
+				seen:            true,
+				currentStatus:   "failure",
+				currentMessage:  "The validation failed",
+				previousStatus:  "failure",
+				previousMessage: "The validation failed",
+			},
+			expectedResult: nil,
+		},
+		{
+			name: "success-after-failure",
+			inputHistory: &validationResultHistory{
+				numFailures:     1,
+				seen:            true,
+				currentStatus:   "success",
+				currentMessage:  "The validation succeeded",
+				previousStatus:  "failure",
+				previousMessage: "The validation failed",
+			},
+			expectedResult: &logrus.Entry{Level: logrus.InfoLevel, Message: "Test: The validation succeeded"},
+		},
+		{
+			name: "failure-after-success",
+			inputHistory: &validationResultHistory{
+				numFailures:     1,
+				seen:            true,
+				currentStatus:   "failure",
+				currentMessage:  "The validation failed",
+				previousStatus:  "success",
+				previousMessage: "The validation succeeded",
+			},
+			expectedResult: &logrus.Entry{Level: logrus.WarnLevel, Message: "Test: The validation failed"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test logger
+			var logger = &logrus.Logger{
+				Out:       ioutil.Discard,
+				Formatter: new(logrus.TextFormatter),
+				Hooks:     make(logrus.LevelHooks),
+				Level:     logrus.TraceLevel,
+			}
+			var hook = test.NewLocal(logger)
 
-			assert.Equal(t, len(tt.expectedLogs), len(hook.Entries))
-			for _, expectedMsg := range tt.expectedLogs {
+			logValidationHistory(testLogPrefix, tt.inputHistory, logger)
+			actualResult := hook.LastEntry()
 
-				matchFound := false
-				for _, s := range hook.AllEntries() {
-					logLine, err := s.String()
-					assert.NoError(t, err)
-					if regexp.MustCompile(expectedMsg).Match([]byte(logLine)) {
-						matchFound = true
-					}
-				}
-				assert.True(t, matchFound, "Unable to find log trace for `%s`", expectedMsg)
+			if actualResult == nil {
+				assert.Equal(t, tt.expectedResult, actualResult)
+			} else {
+				assert.Equal(t, tt.expectedResult.Level, actualResult.Level)
+				assert.Equal(t, tt.expectedResult.Message, actualResult.Message)
 			}
 		})
 	}
