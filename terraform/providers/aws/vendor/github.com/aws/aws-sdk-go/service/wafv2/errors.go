@@ -15,6 +15,23 @@ const (
 	// by another resource or it’s associated with another resource.
 	ErrCodeWAFAssociatedItemException = "WAFAssociatedItemException"
 
+	// ErrCodeWAFConfigurationWarningException for service response error code
+	// "WAFConfigurationWarningException".
+	//
+	// The operation failed because you are inspecting the web request body, headers,
+	// or cookies without specifying how to handle oversize components. Rules that
+	// inspect the body must either provide an OversizeHandling configuration or
+	// they must be preceded by a SizeConstraintStatement that blocks the body content
+	// from being too large. Rules that inspect the headers or cookies must provide
+	// an OversizeHandling configuration.
+	//
+	// Provide the handling configuration and retry your operation.
+	//
+	// Alternately, you can suppress this warning by adding the following tag to
+	// the resource that you provide to this operation: Tag (key:WAF:OversizeFieldsHandlingConstraintOptOut,
+	// value:true).
+	ErrCodeWAFConfigurationWarningException = "WAFConfigurationWarningException"
+
 	// ErrCodeWAFDuplicateItemException for service response error code
 	// "WAFDuplicateItemException".
 	//
@@ -75,8 +92,9 @@ const (
 	//
 	//    * Effect must specify Allow.
 	//
-	//    * Action must specify wafv2:CreateWebACL, wafv2:UpdateWebACL, and wafv2:PutFirewallManagerRuleGroups.
-	//    WAF rejects any extra actions or wildcard actions in the policy.
+	//    * Action must specify wafv2:CreateWebACL, wafv2:UpdateWebACL, and wafv2:PutFirewallManagerRuleGroups
+	//    and may optionally specify wafv2:GetRuleGroup. WAF rejects any extra actions
+	//    or wildcard actions in the policy.
 	//
 	//    * The policy must not include a Resource parameter.
 	//
@@ -111,7 +129,10 @@ const (
 	// ErrCodeWAFNonexistentItemException for service response error code
 	// "WAFNonexistentItemException".
 	//
-	// WAF couldn’t perform the operation because your resource doesn’t exist.
+	// WAF couldn’t perform the operation because your resource doesn't exist.
+	// If you've just created a resource that you're using in this operation, you
+	// might just need to wait a few minutes. It can take from a few seconds to
+	// a number of minutes for changes to propagate.
 	ErrCodeWAFNonexistentItemException = "WAFNonexistentItemException"
 
 	// ErrCodeWAFOptimisticLockException for service response error code
@@ -158,12 +179,17 @@ const (
 	// ErrCodeWAFUnavailableEntityException for service response error code
 	// "WAFUnavailableEntityException".
 	//
-	// WAF couldn’t retrieve the resource that you requested. Retry your request.
+	// WAF couldn’t retrieve a resource that you specified for this operation.
+	// If you've just created a resource that you're using in this operation, you
+	// might just need to wait a few minutes. It can take from a few seconds to
+	// a number of minutes for changes to propagate. Verify the resources that you
+	// are specifying in your request parameters and then retry the operation.
 	ErrCodeWAFUnavailableEntityException = "WAFUnavailableEntityException"
 )
 
 var exceptionFromCode = map[string]func(protocol.ResponseMetadata) error{
 	"WAFAssociatedItemException":                 newErrorWAFAssociatedItemException,
+	"WAFConfigurationWarningException":           newErrorWAFConfigurationWarningException,
 	"WAFDuplicateItemException":                  newErrorWAFDuplicateItemException,
 	"WAFExpiredManagedRuleGroupVersionException": newErrorWAFExpiredManagedRuleGroupVersionException,
 	"WAFInternalErrorException":                  newErrorWAFInternalErrorException,

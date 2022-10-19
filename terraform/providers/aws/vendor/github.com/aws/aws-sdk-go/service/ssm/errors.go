@@ -511,12 +511,24 @@ const (
 	// The schedule is invalid. Verify your cron or rate expression and try again.
 	ErrCodeInvalidSchedule = "InvalidSchedule"
 
+	// ErrCodeInvalidTag for service response error code
+	// "InvalidTag".
+	//
+	// The tag key or value isn't valid.
+	ErrCodeInvalidTag = "InvalidTag"
+
 	// ErrCodeInvalidTarget for service response error code
 	// "InvalidTarget".
 	//
 	// The target isn't valid or doesn't exist. It might not be configured for Systems
 	// Manager or you might not have permission to perform the operation.
 	ErrCodeInvalidTarget = "InvalidTarget"
+
+	// ErrCodeInvalidTargetMaps for service response error code
+	// "InvalidTargetMaps".
+	//
+	// TargetMap parameter isn't valid.
+	ErrCodeInvalidTargetMaps = "InvalidTargetMaps"
 
 	// ErrCodeInvalidTypeNameException for service response error code
 	// "InvalidTypeNameException".
@@ -937,7 +949,9 @@ var exceptionFromCode = map[string]func(protocol.ResponseMetadata) error{
 	"InvalidResultAttributeException":                newErrorInvalidResultAttributeException,
 	"InvalidRole":                                    newErrorInvalidRole,
 	"InvalidSchedule":                                newErrorInvalidSchedule,
+	"InvalidTag":                                     newErrorInvalidTag,
 	"InvalidTarget":                                  newErrorInvalidTarget,
+	"InvalidTargetMaps":                              newErrorInvalidTargetMaps,
 	"InvalidTypeNameException":                       newErrorInvalidTypeNameException,
 	"InvalidUpdate":                                  newErrorInvalidUpdate,
 	"InvocationDoesNotExist":                         newErrorInvocationDoesNotExist,

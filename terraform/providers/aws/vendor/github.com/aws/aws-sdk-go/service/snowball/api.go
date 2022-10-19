@@ -29,14 +29,13 @@ const opCancelCluster = "CancelCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CancelClusterRequest method.
+//	req, resp := client.CancelClusterRequest(params)
 //
-//    // Example sending a request using the CancelClusterRequest method.
-//    req, resp := client.CancelClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CancelCluster
 func (c *Snowball) CancelClusterRequest(input *CancelClusterInput) (req *request.Request, output *CancelClusterOutput) {
@@ -70,17 +69,18 @@ func (c *Snowball) CancelClusterRequest(input *CancelClusterInput) (req *request
 // API operation CancelCluster for usage and error information.
 //
 // Returned Error Types:
-//   * KMSRequestFailedException
-//   The provided Key Management Service key lacks the permissions to perform
-//   the specified CreateJob or UpdateJob action.
 //
-//   * InvalidJobStateException
-//   The action can't be performed because the job's current state doesn't allow
-//   that action to be performed.
+//   - KMSRequestFailedException
+//     The provided Key Management Service key lacks the permissions to perform
+//     the specified CreateJob or UpdateJob action.
 //
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
+//   - InvalidJobStateException
+//     The action can't be performed because the job's current state doesn't allow
+//     that action to be performed.
+//
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CancelCluster
 func (c *Snowball) CancelCluster(input *CancelClusterInput) (*CancelClusterOutput, error) {
@@ -120,14 +120,13 @@ const opCancelJob = "CancelJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CancelJobRequest method.
+//	req, resp := client.CancelJobRequest(params)
 //
-//    // Example sending a request using the CancelJobRequest method.
-//    req, resp := client.CancelJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CancelJob
 func (c *Snowball) CancelJobRequest(input *CancelJobInput) (req *request.Request, output *CancelJobOutput) {
@@ -161,17 +160,18 @@ func (c *Snowball) CancelJobRequest(input *CancelJobInput) (req *request.Request
 // API operation CancelJob for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidJobStateException
-//   The action can't be performed because the job's current state doesn't allow
-//   that action to be performed.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
-//   * KMSRequestFailedException
-//   The provided Key Management Service key lacks the permissions to perform
-//   the specified CreateJob or UpdateJob action.
+//   - InvalidJobStateException
+//     The action can't be performed because the job's current state doesn't allow
+//     that action to be performed.
+//
+//   - KMSRequestFailedException
+//     The provided Key Management Service key lacks the permissions to perform
+//     the specified CreateJob or UpdateJob action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CancelJob
 func (c *Snowball) CancelJob(input *CancelJobInput) (*CancelJobOutput, error) {
@@ -211,14 +211,13 @@ const opCreateAddress = "CreateAddress"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateAddressRequest method.
+//	req, resp := client.CreateAddressRequest(params)
 //
-//    // Example sending a request using the CreateAddressRequest method.
-//    req, resp := client.CreateAddressRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateAddress
 func (c *Snowball) CreateAddressRequest(input *CreateAddressInput) (req *request.Request, output *CreateAddressOutput) {
@@ -252,14 +251,15 @@ func (c *Snowball) CreateAddressRequest(input *CreateAddressInput) (req *request
 // API operation CreateAddress for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidAddressException
-//   The address provided was invalid. Check the address with your region's carrier,
-//   and try again.
 //
-//   * UnsupportedAddressException
-//   The address is either outside the serviceable area for your region, or an
-//   error occurred. Check the address with your region's carrier and try again.
-//   If the issue persists, contact Amazon Web Services Support.
+//   - InvalidAddressException
+//     The address provided was invalid. Check the address with your region's carrier,
+//     and try again.
+//
+//   - UnsupportedAddressException
+//     The address is either outside the serviceable area for your region, or an
+//     error occurred. Check the address with your region's carrier and try again.
+//     If the issue persists, contact Amazon Web Services Support.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateAddress
 func (c *Snowball) CreateAddress(input *CreateAddressInput) (*CreateAddressOutput, error) {
@@ -299,14 +299,13 @@ const opCreateCluster = "CreateCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateClusterRequest method.
+//	req, resp := client.CreateClusterRequest(params)
 //
-//    // Example sending a request using the CreateClusterRequest method.
-//    req, resp := client.CreateClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateCluster
 func (c *Snowball) CreateClusterRequest(input *CreateClusterInput) (req *request.Request, output *CreateClusterOutput) {
@@ -339,22 +338,23 @@ func (c *Snowball) CreateClusterRequest(input *CreateClusterInput) (req *request
 // API operation CreateCluster for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * KMSRequestFailedException
-//   The provided Key Management Service key lacks the permissions to perform
-//   the specified CreateJob or UpdateJob action.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
-//   * InvalidInputCombinationException
-//   Job or cluster creation failed. One or more inputs were invalid. Confirm
-//   that the CreateClusterRequest$SnowballType value supports your CreateJobRequest$JobType,
-//   and try again.
+//   - KMSRequestFailedException
+//     The provided Key Management Service key lacks the permissions to perform
+//     the specified CreateJob or UpdateJob action.
 //
-//   * Ec2RequestFailedException
-//   Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
-//   action.
+//   - InvalidInputCombinationException
+//     Job or cluster creation failed. One or more inputs were invalid. Confirm
+//     that the CreateClusterRequest$SnowballType value supports your CreateJobRequest$JobType,
+//     and try again.
+//
+//   - Ec2RequestFailedException
+//     Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
+//     action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateCluster
 func (c *Snowball) CreateCluster(input *CreateClusterInput) (*CreateClusterOutput, error) {
@@ -394,14 +394,13 @@ const opCreateJob = "CreateJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateJobRequest method.
+//	req, resp := client.CreateJobRequest(params)
 //
-//    // Example sending a request using the CreateJobRequest method.
-//    req, resp := client.CreateJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateJob
 func (c *Snowball) CreateJobRequest(input *CreateJobInput) (req *request.Request, output *CreateJobOutput) {
@@ -437,31 +436,34 @@ func (c *Snowball) CreateJobRequest(input *CreateJobInput) (req *request.Request
 // information about Region availability, see Amazon Web Services Regional Services
 // (https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/?p=ngi&loc=4).
 //
-// Snow Family Devices and their capacities.
+// Snow Family devices and their capacities.
 //
-//    * Snow Family device type: SNC1_SSD Capacity: T14 Description: Snowcone
+//   - Snow Family device type: SNC1_SSD Capacity: T14 Description: Snowcone
 //
-//    * Snow Family device type: SNC1_HDD Capacity: T8 Description: Snowcone
+//   - Snow Family device type: SNC1_HDD Capacity: T8 Description: Snowcone
 //
-//    * Device type: EDGE_S Capacity: T98 Description: Snowball Edge Storage
-//    Optimized for data transfer only
+//   - Device type: EDGE_S Capacity: T98 Description: Snowball Edge Storage
+//     Optimized for data transfer only
 //
-//    * Device type: EDGE_CG Capacity: T42 Description: Snowball Edge Compute
-//    Optimized with GPU
+//   - Device type: EDGE_CG Capacity: T42 Description: Snowball Edge Compute
+//     Optimized with GPU
 //
-//    * Device type: EDGE_C Capacity: T42 Description: Snowball Edge Compute
-//    Optimized without GPU
+//   - Device type: EDGE_C Capacity: T42 Description: Snowball Edge Compute
+//     Optimized without GPU
 //
-//    * Device type: EDGE Capacity: T100 Description: Snowball Edge Storage
-//    Optimized with EC2 Compute
+//   - Device type: EDGE Capacity: T100 Description: Snowball Edge Storage
+//     Optimized with EC2 Compute
 //
-//    * Device type: STANDARD Capacity: T50 Description: Original Snowball device
-//    This device is only available in the Ningxia, Beijing, and Singapore Amazon
-//    Web Services Region
+//   - Device type: V3_5C Capacity: T32 Description: Snowball Edge Compute
+//     Optimized without GPU
 //
-//    * Device type: STANDARD Capacity: T80 Description: Original Snowball device
-//    This device is only available in the Ningxia, Beijing, and Singapore Amazon
-//    Web Services Region.
+//   - Device type: STANDARD Capacity: T50 Description: Original Snowball device
+//     This device is only available in the Ningxia, Beijing, and Singapore Amazon
+//     Web Services Region
+//
+//   - Device type: STANDARD Capacity: T80 Description: Original Snowball device
+//     This device is only available in the Ningxia, Beijing, and Singapore Amazon
+//     Web Services Region.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -471,28 +473,29 @@ func (c *Snowball) CreateJobRequest(input *CreateJobInput) (req *request.Request
 // API operation CreateJob for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * KMSRequestFailedException
-//   The provided Key Management Service key lacks the permissions to perform
-//   the specified CreateJob or UpdateJob action.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
-//   * InvalidInputCombinationException
-//   Job or cluster creation failed. One or more inputs were invalid. Confirm
-//   that the CreateClusterRequest$SnowballType value supports your CreateJobRequest$JobType,
-//   and try again.
+//   - KMSRequestFailedException
+//     The provided Key Management Service key lacks the permissions to perform
+//     the specified CreateJob or UpdateJob action.
 //
-//   * ClusterLimitExceededException
-//   Job creation failed. Currently, clusters support five nodes. If you have
-//   fewer than five nodes for your cluster and you have more nodes to create
-//   for this cluster, try again and create jobs until your cluster has exactly
-//   five nodes.
+//   - InvalidInputCombinationException
+//     Job or cluster creation failed. One or more inputs were invalid. Confirm
+//     that the CreateClusterRequest$SnowballType value supports your CreateJobRequest$JobType,
+//     and try again.
 //
-//   * Ec2RequestFailedException
-//   Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
-//   action.
+//   - ClusterLimitExceededException
+//     Job creation failed. Currently, clusters support five nodes. If you have
+//     fewer than five nodes for your cluster and you have more nodes to create
+//     for this cluster, try again and create jobs until your cluster has exactly
+//     five nodes.
+//
+//   - Ec2RequestFailedException
+//     Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
+//     action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateJob
 func (c *Snowball) CreateJob(input *CreateJobInput) (*CreateJobOutput, error) {
@@ -532,14 +535,13 @@ const opCreateLongTermPricing = "CreateLongTermPricing"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateLongTermPricingRequest method.
+//	req, resp := client.CreateLongTermPricingRequest(params)
 //
-//    // Example sending a request using the CreateLongTermPricingRequest method.
-//    req, resp := client.CreateLongTermPricingRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateLongTermPricing
 func (c *Snowball) CreateLongTermPricingRequest(input *CreateLongTermPricingInput) (req *request.Request, output *CreateLongTermPricingOutput) {
@@ -573,9 +575,9 @@ func (c *Snowball) CreateLongTermPricingRequest(input *CreateLongTermPricingInpu
 // API operation CreateLongTermPricing for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateLongTermPricing
 func (c *Snowball) CreateLongTermPricing(input *CreateLongTermPricingInput) (*CreateLongTermPricingOutput, error) {
@@ -615,14 +617,13 @@ const opCreateReturnShippingLabel = "CreateReturnShippingLabel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateReturnShippingLabelRequest method.
+//	req, resp := client.CreateReturnShippingLabelRequest(params)
 //
-//    // Example sending a request using the CreateReturnShippingLabelRequest method.
-//    req, resp := client.CreateReturnShippingLabelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateReturnShippingLabel
 func (c *Snowball) CreateReturnShippingLabelRequest(input *CreateReturnShippingLabelInput) (req *request.Request, output *CreateReturnShippingLabelOutput) {
@@ -654,27 +655,28 @@ func (c *Snowball) CreateReturnShippingLabelRequest(input *CreateReturnShippingL
 // API operation CreateReturnShippingLabel for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidJobStateException
-//   The action can't be performed because the job's current state doesn't allow
-//   that action to be performed.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
-//   * InvalidInputCombinationException
-//   Job or cluster creation failed. One or more inputs were invalid. Confirm
-//   that the CreateClusterRequest$SnowballType value supports your CreateJobRequest$JobType,
-//   and try again.
+//   - InvalidJobStateException
+//     The action can't be performed because the job's current state doesn't allow
+//     that action to be performed.
 //
-//   * ConflictException
-//   You get this exception when you call CreateReturnShippingLabel more than
-//   once when other requests are not completed.
+//   - InvalidInputCombinationException
+//     Job or cluster creation failed. One or more inputs were invalid. Confirm
+//     that the CreateClusterRequest$SnowballType value supports your CreateJobRequest$JobType,
+//     and try again.
 //
-//   * ReturnShippingLabelAlreadyExistsException
-//   You get this exception if you call CreateReturnShippingLabel and a valid
-//   return shipping label already exists. In this case, use DescribeReturnShippingLabel
-//   to get the URL.
+//   - ConflictException
+//     You get this exception when you call CreateReturnShippingLabel more than
+//     once when other requests are not completed.
+//
+//   - ReturnShippingLabelAlreadyExistsException
+//     You get this exception if you call CreateReturnShippingLabel and a valid
+//     return shipping label already exists. In this case, use DescribeReturnShippingLabel
+//     to get the URL.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateReturnShippingLabel
 func (c *Snowball) CreateReturnShippingLabel(input *CreateReturnShippingLabelInput) (*CreateReturnShippingLabelOutput, error) {
@@ -714,14 +716,13 @@ const opDescribeAddress = "DescribeAddress"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAddressRequest method.
+//	req, resp := client.DescribeAddressRequest(params)
 //
-//    // Example sending a request using the DescribeAddressRequest method.
-//    req, resp := client.DescribeAddressRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/DescribeAddress
 func (c *Snowball) DescribeAddressRequest(input *DescribeAddressInput) (req *request.Request, output *DescribeAddressOutput) {
@@ -753,9 +754,9 @@ func (c *Snowball) DescribeAddressRequest(input *DescribeAddressInput) (req *req
 // API operation DescribeAddress for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/DescribeAddress
 func (c *Snowball) DescribeAddress(input *DescribeAddressInput) (*DescribeAddressOutput, error) {
@@ -795,14 +796,13 @@ const opDescribeAddresses = "DescribeAddresses"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAddressesRequest method.
+//	req, resp := client.DescribeAddressesRequest(params)
 //
-//    // Example sending a request using the DescribeAddressesRequest method.
-//    req, resp := client.DescribeAddressesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/DescribeAddresses
 func (c *Snowball) DescribeAddressesRequest(input *DescribeAddressesInput) (req *request.Request, output *DescribeAddressesOutput) {
@@ -841,13 +841,14 @@ func (c *Snowball) DescribeAddressesRequest(input *DescribeAddressesInput) (req 
 // API operation DescribeAddresses for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidNextTokenException
-//   The NextToken string was altered unexpectedly, and the operation has stopped.
-//   Run the operation without changing the NextToken string, and try again.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
+//
+//   - InvalidNextTokenException
+//     The NextToken string was altered unexpectedly, and the operation has stopped.
+//     Run the operation without changing the NextToken string, and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/DescribeAddresses
 func (c *Snowball) DescribeAddresses(input *DescribeAddressesInput) (*DescribeAddressesOutput, error) {
@@ -879,15 +880,14 @@ func (c *Snowball) DescribeAddressesWithContext(ctx aws.Context, input *Describe
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeAddresses operation.
-//    pageNum := 0
-//    err := client.DescribeAddressesPages(params,
-//        func(page *snowball.DescribeAddressesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeAddresses operation.
+//	pageNum := 0
+//	err := client.DescribeAddressesPages(params,
+//	    func(page *snowball.DescribeAddressesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *Snowball) DescribeAddressesPages(input *DescribeAddressesInput, fn func(*DescribeAddressesOutput, bool) bool) error {
 	return c.DescribeAddressesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -939,14 +939,13 @@ const opDescribeCluster = "DescribeCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeClusterRequest method.
+//	req, resp := client.DescribeClusterRequest(params)
 //
-//    // Example sending a request using the DescribeClusterRequest method.
-//    req, resp := client.DescribeClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/DescribeCluster
 func (c *Snowball) DescribeClusterRequest(input *DescribeClusterInput) (req *request.Request, output *DescribeClusterOutput) {
@@ -978,9 +977,9 @@ func (c *Snowball) DescribeClusterRequest(input *DescribeClusterInput) (req *req
 // API operation DescribeCluster for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/DescribeCluster
 func (c *Snowball) DescribeCluster(input *DescribeClusterInput) (*DescribeClusterOutput, error) {
@@ -1020,14 +1019,13 @@ const opDescribeJob = "DescribeJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeJobRequest method.
+//	req, resp := client.DescribeJobRequest(params)
 //
-//    // Example sending a request using the DescribeJobRequest method.
-//    req, resp := client.DescribeJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/DescribeJob
 func (c *Snowball) DescribeJobRequest(input *DescribeJobInput) (req *request.Request, output *DescribeJobOutput) {
@@ -1059,9 +1057,9 @@ func (c *Snowball) DescribeJobRequest(input *DescribeJobInput) (req *request.Req
 // API operation DescribeJob for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/DescribeJob
 func (c *Snowball) DescribeJob(input *DescribeJobInput) (*DescribeJobOutput, error) {
@@ -1101,14 +1099,13 @@ const opDescribeReturnShippingLabel = "DescribeReturnShippingLabel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeReturnShippingLabelRequest method.
+//	req, resp := client.DescribeReturnShippingLabelRequest(params)
 //
-//    // Example sending a request using the DescribeReturnShippingLabelRequest method.
-//    req, resp := client.DescribeReturnShippingLabelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/DescribeReturnShippingLabel
 func (c *Snowball) DescribeReturnShippingLabelRequest(input *DescribeReturnShippingLabelInput) (req *request.Request, output *DescribeReturnShippingLabelOutput) {
@@ -1140,17 +1137,18 @@ func (c *Snowball) DescribeReturnShippingLabelRequest(input *DescribeReturnShipp
 // API operation DescribeReturnShippingLabel for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidJobStateException
-//   The action can't be performed because the job's current state doesn't allow
-//   that action to be performed.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
-//   * ConflictException
-//   You get this exception when you call CreateReturnShippingLabel more than
-//   once when other requests are not completed.
+//   - InvalidJobStateException
+//     The action can't be performed because the job's current state doesn't allow
+//     that action to be performed.
+//
+//   - ConflictException
+//     You get this exception when you call CreateReturnShippingLabel more than
+//     once when other requests are not completed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/DescribeReturnShippingLabel
 func (c *Snowball) DescribeReturnShippingLabel(input *DescribeReturnShippingLabelInput) (*DescribeReturnShippingLabelOutput, error) {
@@ -1190,14 +1188,13 @@ const opGetJobManifest = "GetJobManifest"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetJobManifestRequest method.
+//	req, resp := client.GetJobManifestRequest(params)
 //
-//    // Example sending a request using the GetJobManifestRequest method.
-//    req, resp := client.GetJobManifestRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/GetJobManifest
 func (c *Snowball) GetJobManifestRequest(input *GetJobManifestInput) (req *request.Request, output *GetJobManifestOutput) {
@@ -1225,9 +1222,12 @@ func (c *Snowball) GetJobManifestRequest(input *GetJobManifestInput) (req *reque
 // action.
 //
 // The manifest is an encrypted file that you can download after your job enters
-// the WithCustomer status. The manifest is decrypted by using the UnlockCode
-// code value, when you pass both values to the Snow device through the Snowball
-// client when the client is started for the first time.
+// the WithCustomer status. This is the only valid status for calling this API
+// as the manifest and UnlockCode code value are used for securing your device
+// and should only be used when you have the device. The manifest is decrypted
+// by using the UnlockCode code value, when you pass both values to the Snow
+// device through the Snowball client when the client is started for the first
+// time.
 //
 // As a best practice, we recommend that you don't save a copy of an UnlockCode
 // value in the same location as the manifest file for that job. Saving these
@@ -1245,13 +1245,14 @@ func (c *Snowball) GetJobManifestRequest(input *GetJobManifestInput) (req *reque
 // API operation GetJobManifest for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidJobStateException
-//   The action can't be performed because the job's current state doesn't allow
-//   that action to be performed.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
+//
+//   - InvalidJobStateException
+//     The action can't be performed because the job's current state doesn't allow
+//     that action to be performed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/GetJobManifest
 func (c *Snowball) GetJobManifest(input *GetJobManifestInput) (*GetJobManifestOutput, error) {
@@ -1291,14 +1292,13 @@ const opGetJobUnlockCode = "GetJobUnlockCode"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetJobUnlockCodeRequest method.
+//	req, resp := client.GetJobUnlockCodeRequest(params)
 //
-//    // Example sending a request using the GetJobUnlockCodeRequest method.
-//    req, resp := client.GetJobUnlockCodeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/GetJobUnlockCode
 func (c *Snowball) GetJobUnlockCodeRequest(input *GetJobUnlockCodeInput) (req *request.Request, output *GetJobUnlockCodeOutput) {
@@ -1326,7 +1326,9 @@ func (c *Snowball) GetJobUnlockCodeRequest(input *GetJobUnlockCodeInput) (req *r
 // The UnlockCode value is a 29-character code with 25 alphanumeric characters
 // and 4 hyphens. This code is used to decrypt the manifest file when it is
 // passed along with the manifest to the Snow device through the Snowball client
-// when the client is started for the first time.
+// when the client is started for the first time. The only valid status for
+// calling this API is WithCustomer as the manifest and Unlock code values are
+// used for securing your device and should only be used when you have the device.
 //
 // As a best practice, we recommend that you don't save a copy of the UnlockCode
 // in the same location as the manifest file for that job. Saving these separately
@@ -1341,13 +1343,14 @@ func (c *Snowball) GetJobUnlockCodeRequest(input *GetJobUnlockCodeInput) (req *r
 // API operation GetJobUnlockCode for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidJobStateException
-//   The action can't be performed because the job's current state doesn't allow
-//   that action to be performed.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
+//
+//   - InvalidJobStateException
+//     The action can't be performed because the job's current state doesn't allow
+//     that action to be performed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/GetJobUnlockCode
 func (c *Snowball) GetJobUnlockCode(input *GetJobUnlockCodeInput) (*GetJobUnlockCodeOutput, error) {
@@ -1387,14 +1390,13 @@ const opGetSnowballUsage = "GetSnowballUsage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetSnowballUsageRequest method.
+//	req, resp := client.GetSnowballUsageRequest(params)
 //
-//    // Example sending a request using the GetSnowballUsageRequest method.
-//    req, resp := client.GetSnowballUsageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/GetSnowballUsage
 func (c *Snowball) GetSnowballUsageRequest(input *GetSnowballUsageInput) (req *request.Request, output *GetSnowballUsageOutput) {
@@ -1466,14 +1468,13 @@ const opGetSoftwareUpdates = "GetSoftwareUpdates"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetSoftwareUpdatesRequest method.
+//	req, resp := client.GetSoftwareUpdatesRequest(params)
 //
-//    // Example sending a request using the GetSoftwareUpdatesRequest method.
-//    req, resp := client.GetSoftwareUpdatesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/GetSoftwareUpdates
 func (c *Snowball) GetSoftwareUpdatesRequest(input *GetSoftwareUpdatesInput) (req *request.Request, output *GetSoftwareUpdatesOutput) {
@@ -1505,13 +1506,14 @@ func (c *Snowball) GetSoftwareUpdatesRequest(input *GetSoftwareUpdatesInput) (re
 // API operation GetSoftwareUpdates for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidJobStateException
-//   The action can't be performed because the job's current state doesn't allow
-//   that action to be performed.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
+//
+//   - InvalidJobStateException
+//     The action can't be performed because the job's current state doesn't allow
+//     that action to be performed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/GetSoftwareUpdates
 func (c *Snowball) GetSoftwareUpdates(input *GetSoftwareUpdatesInput) (*GetSoftwareUpdatesOutput, error) {
@@ -1551,14 +1553,13 @@ const opListClusterJobs = "ListClusterJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListClusterJobsRequest method.
+//	req, resp := client.ListClusterJobsRequest(params)
 //
-//    // Example sending a request using the ListClusterJobsRequest method.
-//    req, resp := client.ListClusterJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListClusterJobs
 func (c *Snowball) ListClusterJobsRequest(input *ListClusterJobsInput) (req *request.Request, output *ListClusterJobsOutput) {
@@ -1566,6 +1567,12 @@ func (c *Snowball) ListClusterJobsRequest(input *ListClusterJobsInput) (req *req
 		Name:       opListClusterJobs,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1591,13 +1598,14 @@ func (c *Snowball) ListClusterJobsRequest(input *ListClusterJobsInput) (req *req
 // API operation ListClusterJobs for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidNextTokenException
-//   The NextToken string was altered unexpectedly, and the operation has stopped.
-//   Run the operation without changing the NextToken string, and try again.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
+//
+//   - InvalidNextTokenException
+//     The NextToken string was altered unexpectedly, and the operation has stopped.
+//     Run the operation without changing the NextToken string, and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListClusterJobs
 func (c *Snowball) ListClusterJobs(input *ListClusterJobsInput) (*ListClusterJobsOutput, error) {
@@ -1621,6 +1629,57 @@ func (c *Snowball) ListClusterJobsWithContext(ctx aws.Context, input *ListCluste
 	return out, req.Send()
 }
 
+// ListClusterJobsPages iterates over the pages of a ListClusterJobs operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListClusterJobs method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListClusterJobs operation.
+//	pageNum := 0
+//	err := client.ListClusterJobsPages(params,
+//	    func(page *snowball.ListClusterJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *Snowball) ListClusterJobsPages(input *ListClusterJobsInput, fn func(*ListClusterJobsOutput, bool) bool) error {
+	return c.ListClusterJobsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListClusterJobsPagesWithContext same as ListClusterJobsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Snowball) ListClusterJobsPagesWithContext(ctx aws.Context, input *ListClusterJobsInput, fn func(*ListClusterJobsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListClusterJobsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListClusterJobsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListClusterJobsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListClusters = "ListClusters"
 
 // ListClustersRequest generates a "aws/request.Request" representing the
@@ -1637,14 +1696,13 @@ const opListClusters = "ListClusters"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListClustersRequest method.
+//	req, resp := client.ListClustersRequest(params)
 //
-//    // Example sending a request using the ListClustersRequest method.
-//    req, resp := client.ListClustersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListClusters
 func (c *Snowball) ListClustersRequest(input *ListClustersInput) (req *request.Request, output *ListClustersOutput) {
@@ -1652,6 +1710,12 @@ func (c *Snowball) ListClustersRequest(input *ListClustersInput) (req *request.R
 		Name:       opListClusters,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1677,9 +1741,9 @@ func (c *Snowball) ListClustersRequest(input *ListClustersInput) (req *request.R
 // API operation ListClusters for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidNextTokenException
-//   The NextToken string was altered unexpectedly, and the operation has stopped.
-//   Run the operation without changing the NextToken string, and try again.
+//   - InvalidNextTokenException
+//     The NextToken string was altered unexpectedly, and the operation has stopped.
+//     Run the operation without changing the NextToken string, and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListClusters
 func (c *Snowball) ListClusters(input *ListClustersInput) (*ListClustersOutput, error) {
@@ -1703,6 +1767,57 @@ func (c *Snowball) ListClustersWithContext(ctx aws.Context, input *ListClustersI
 	return out, req.Send()
 }
 
+// ListClustersPages iterates over the pages of a ListClusters operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListClusters method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListClusters operation.
+//	pageNum := 0
+//	err := client.ListClustersPages(params,
+//	    func(page *snowball.ListClustersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *Snowball) ListClustersPages(input *ListClustersInput, fn func(*ListClustersOutput, bool) bool) error {
+	return c.ListClustersPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListClustersPagesWithContext same as ListClustersPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Snowball) ListClustersPagesWithContext(ctx aws.Context, input *ListClustersInput, fn func(*ListClustersOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListClustersInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListClustersRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListClustersOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListCompatibleImages = "ListCompatibleImages"
 
 // ListCompatibleImagesRequest generates a "aws/request.Request" representing the
@@ -1719,14 +1834,13 @@ const opListCompatibleImages = "ListCompatibleImages"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListCompatibleImagesRequest method.
+//	req, resp := client.ListCompatibleImagesRequest(params)
 //
-//    // Example sending a request using the ListCompatibleImagesRequest method.
-//    req, resp := client.ListCompatibleImagesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListCompatibleImages
 func (c *Snowball) ListCompatibleImagesRequest(input *ListCompatibleImagesInput) (req *request.Request, output *ListCompatibleImagesOutput) {
@@ -1734,6 +1848,12 @@ func (c *Snowball) ListCompatibleImagesRequest(input *ListCompatibleImagesInput)
 		Name:       opListCompatibleImages,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1761,13 +1881,14 @@ func (c *Snowball) ListCompatibleImagesRequest(input *ListCompatibleImagesInput)
 // API operation ListCompatibleImages for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidNextTokenException
-//   The NextToken string was altered unexpectedly, and the operation has stopped.
-//   Run the operation without changing the NextToken string, and try again.
 //
-//   * Ec2RequestFailedException
-//   Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
-//   action.
+//   - InvalidNextTokenException
+//     The NextToken string was altered unexpectedly, and the operation has stopped.
+//     Run the operation without changing the NextToken string, and try again.
+//
+//   - Ec2RequestFailedException
+//     Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
+//     action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListCompatibleImages
 func (c *Snowball) ListCompatibleImages(input *ListCompatibleImagesInput) (*ListCompatibleImagesOutput, error) {
@@ -1791,6 +1912,57 @@ func (c *Snowball) ListCompatibleImagesWithContext(ctx aws.Context, input *ListC
 	return out, req.Send()
 }
 
+// ListCompatibleImagesPages iterates over the pages of a ListCompatibleImages operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListCompatibleImages method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListCompatibleImages operation.
+//	pageNum := 0
+//	err := client.ListCompatibleImagesPages(params,
+//	    func(page *snowball.ListCompatibleImagesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *Snowball) ListCompatibleImagesPages(input *ListCompatibleImagesInput, fn func(*ListCompatibleImagesOutput, bool) bool) error {
+	return c.ListCompatibleImagesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListCompatibleImagesPagesWithContext same as ListCompatibleImagesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Snowball) ListCompatibleImagesPagesWithContext(ctx aws.Context, input *ListCompatibleImagesInput, fn func(*ListCompatibleImagesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListCompatibleImagesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListCompatibleImagesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListCompatibleImagesOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListJobs = "ListJobs"
 
 // ListJobsRequest generates a "aws/request.Request" representing the
@@ -1807,14 +1979,13 @@ const opListJobs = "ListJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListJobsRequest method.
+//	req, resp := client.ListJobsRequest(params)
 //
-//    // Example sending a request using the ListJobsRequest method.
-//    req, resp := client.ListJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListJobs
 func (c *Snowball) ListJobsRequest(input *ListJobsInput) (req *request.Request, output *ListJobsOutput) {
@@ -1855,9 +2026,9 @@ func (c *Snowball) ListJobsRequest(input *ListJobsInput) (req *request.Request, 
 // API operation ListJobs for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidNextTokenException
-//   The NextToken string was altered unexpectedly, and the operation has stopped.
-//   Run the operation without changing the NextToken string, and try again.
+//   - InvalidNextTokenException
+//     The NextToken string was altered unexpectedly, and the operation has stopped.
+//     Run the operation without changing the NextToken string, and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListJobs
 func (c *Snowball) ListJobs(input *ListJobsInput) (*ListJobsOutput, error) {
@@ -1889,15 +2060,14 @@ func (c *Snowball) ListJobsWithContext(ctx aws.Context, input *ListJobsInput, op
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListJobs operation.
-//    pageNum := 0
-//    err := client.ListJobsPages(params,
-//        func(page *snowball.ListJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListJobs operation.
+//	pageNum := 0
+//	err := client.ListJobsPages(params,
+//	    func(page *snowball.ListJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *Snowball) ListJobsPages(input *ListJobsInput, fn func(*ListJobsOutput, bool) bool) error {
 	return c.ListJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1949,14 +2119,13 @@ const opListLongTermPricing = "ListLongTermPricing"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListLongTermPricingRequest method.
+//	req, resp := client.ListLongTermPricingRequest(params)
 //
-//    // Example sending a request using the ListLongTermPricingRequest method.
-//    req, resp := client.ListLongTermPricingRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListLongTermPricing
 func (c *Snowball) ListLongTermPricingRequest(input *ListLongTermPricingInput) (req *request.Request, output *ListLongTermPricingOutput) {
@@ -1964,6 +2133,12 @@ func (c *Snowball) ListLongTermPricingRequest(input *ListLongTermPricingInput) (
 		Name:       opListLongTermPricing,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1987,13 +2162,14 @@ func (c *Snowball) ListLongTermPricingRequest(input *ListLongTermPricingInput) (
 // API operation ListLongTermPricing for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidNextTokenException
-//   The NextToken string was altered unexpectedly, and the operation has stopped.
-//   Run the operation without changing the NextToken string, and try again.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
+//
+//   - InvalidNextTokenException
+//     The NextToken string was altered unexpectedly, and the operation has stopped.
+//     Run the operation without changing the NextToken string, and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListLongTermPricing
 func (c *Snowball) ListLongTermPricing(input *ListLongTermPricingInput) (*ListLongTermPricingOutput, error) {
@@ -2017,6 +2193,57 @@ func (c *Snowball) ListLongTermPricingWithContext(ctx aws.Context, input *ListLo
 	return out, req.Send()
 }
 
+// ListLongTermPricingPages iterates over the pages of a ListLongTermPricing operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListLongTermPricing method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListLongTermPricing operation.
+//	pageNum := 0
+//	err := client.ListLongTermPricingPages(params,
+//	    func(page *snowball.ListLongTermPricingOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *Snowball) ListLongTermPricingPages(input *ListLongTermPricingInput, fn func(*ListLongTermPricingOutput, bool) bool) error {
+	return c.ListLongTermPricingPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListLongTermPricingPagesWithContext same as ListLongTermPricingPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Snowball) ListLongTermPricingPagesWithContext(ctx aws.Context, input *ListLongTermPricingInput, fn func(*ListLongTermPricingOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListLongTermPricingInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListLongTermPricingRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListLongTermPricingOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opUpdateCluster = "UpdateCluster"
 
 // UpdateClusterRequest generates a "aws/request.Request" representing the
@@ -2033,14 +2260,13 @@ const opUpdateCluster = "UpdateCluster"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateClusterRequest method.
+//	req, resp := client.UpdateClusterRequest(params)
 //
-//    // Example sending a request using the UpdateClusterRequest method.
-//    req, resp := client.UpdateClusterRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/UpdateCluster
 func (c *Snowball) UpdateClusterRequest(input *UpdateClusterInput) (req *request.Request, output *UpdateClusterOutput) {
@@ -2075,26 +2301,27 @@ func (c *Snowball) UpdateClusterRequest(input *UpdateClusterInput) (req *request
 // API operation UpdateCluster for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidJobStateException
-//   The action can't be performed because the job's current state doesn't allow
-//   that action to be performed.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
-//   * KMSRequestFailedException
-//   The provided Key Management Service key lacks the permissions to perform
-//   the specified CreateJob or UpdateJob action.
+//   - InvalidJobStateException
+//     The action can't be performed because the job's current state doesn't allow
+//     that action to be performed.
 //
-//   * InvalidInputCombinationException
-//   Job or cluster creation failed. One or more inputs were invalid. Confirm
-//   that the CreateClusterRequest$SnowballType value supports your CreateJobRequest$JobType,
-//   and try again.
+//   - KMSRequestFailedException
+//     The provided Key Management Service key lacks the permissions to perform
+//     the specified CreateJob or UpdateJob action.
 //
-//   * Ec2RequestFailedException
-//   Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
-//   action.
+//   - InvalidInputCombinationException
+//     Job or cluster creation failed. One or more inputs were invalid. Confirm
+//     that the CreateClusterRequest$SnowballType value supports your CreateJobRequest$JobType,
+//     and try again.
+//
+//   - Ec2RequestFailedException
+//     Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
+//     action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/UpdateCluster
 func (c *Snowball) UpdateCluster(input *UpdateClusterInput) (*UpdateClusterOutput, error) {
@@ -2134,14 +2361,13 @@ const opUpdateJob = "UpdateJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateJobRequest method.
+//	req, resp := client.UpdateJobRequest(params)
 //
-//    // Example sending a request using the UpdateJobRequest method.
-//    req, resp := client.UpdateJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/UpdateJob
 func (c *Snowball) UpdateJobRequest(input *UpdateJobInput) (req *request.Request, output *UpdateJobOutput) {
@@ -2175,32 +2401,33 @@ func (c *Snowball) UpdateJobRequest(input *UpdateJobInput) (req *request.Request
 // API operation UpdateJob for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidJobStateException
-//   The action can't be performed because the job's current state doesn't allow
-//   that action to be performed.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
-//   * KMSRequestFailedException
-//   The provided Key Management Service key lacks the permissions to perform
-//   the specified CreateJob or UpdateJob action.
+//   - InvalidJobStateException
+//     The action can't be performed because the job's current state doesn't allow
+//     that action to be performed.
 //
-//   * InvalidInputCombinationException
-//   Job or cluster creation failed. One or more inputs were invalid. Confirm
-//   that the CreateClusterRequest$SnowballType value supports your CreateJobRequest$JobType,
-//   and try again.
+//   - KMSRequestFailedException
+//     The provided Key Management Service key lacks the permissions to perform
+//     the specified CreateJob or UpdateJob action.
 //
-//   * ClusterLimitExceededException
-//   Job creation failed. Currently, clusters support five nodes. If you have
-//   fewer than five nodes for your cluster and you have more nodes to create
-//   for this cluster, try again and create jobs until your cluster has exactly
-//   five nodes.
+//   - InvalidInputCombinationException
+//     Job or cluster creation failed. One or more inputs were invalid. Confirm
+//     that the CreateClusterRequest$SnowballType value supports your CreateJobRequest$JobType,
+//     and try again.
 //
-//   * Ec2RequestFailedException
-//   Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
-//   action.
+//   - ClusterLimitExceededException
+//     Job creation failed. Currently, clusters support five nodes. If you have
+//     fewer than five nodes for your cluster and you have more nodes to create
+//     for this cluster, try again and create jobs until your cluster has exactly
+//     five nodes.
+//
+//   - Ec2RequestFailedException
+//     Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
+//     action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/UpdateJob
 func (c *Snowball) UpdateJob(input *UpdateJobInput) (*UpdateJobOutput, error) {
@@ -2240,14 +2467,13 @@ const opUpdateJobShipmentState = "UpdateJobShipmentState"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateJobShipmentStateRequest method.
+//	req, resp := client.UpdateJobShipmentStateRequest(params)
 //
-//    // Example sending a request using the UpdateJobShipmentStateRequest method.
-//    req, resp := client.UpdateJobShipmentStateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/UpdateJobShipmentState
 func (c *Snowball) UpdateJobShipmentStateRequest(input *UpdateJobShipmentStateInput) (req *request.Request, output *UpdateJobShipmentStateOutput) {
@@ -2279,13 +2505,14 @@ func (c *Snowball) UpdateJobShipmentStateRequest(input *UpdateJobShipmentStateIn
 // API operation UpdateJobShipmentState for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
 //
-//   * InvalidJobStateException
-//   The action can't be performed because the job's current state doesn't allow
-//   that action to be performed.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
+//
+//   - InvalidJobStateException
+//     The action can't be performed because the job's current state doesn't allow
+//     that action to be performed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/UpdateJobShipmentState
 func (c *Snowball) UpdateJobShipmentState(input *UpdateJobShipmentStateInput) (*UpdateJobShipmentStateOutput, error) {
@@ -2325,14 +2552,13 @@ const opUpdateLongTermPricing = "UpdateLongTermPricing"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateLongTermPricingRequest method.
+//	req, resp := client.UpdateLongTermPricingRequest(params)
 //
-//    // Example sending a request using the UpdateLongTermPricingRequest method.
-//    req, resp := client.UpdateLongTermPricingRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/UpdateLongTermPricing
 func (c *Snowball) UpdateLongTermPricingRequest(input *UpdateLongTermPricingInput) (req *request.Request, output *UpdateLongTermPricingOutput) {
@@ -2364,9 +2590,9 @@ func (c *Snowball) UpdateLongTermPricingRequest(input *UpdateLongTermPricingInpu
 // API operation UpdateLongTermPricing for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidResourceException
-//   The specified resource can't be found. Check the information you provided
-//   in your last request, and try again.
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/UpdateLongTermPricing
 func (c *Snowball) UpdateLongTermPricing(input *UpdateLongTermPricingInput) (*UpdateLongTermPricingOutput, error) {
@@ -3344,7 +3570,7 @@ type CreateClusterInput struct {
 	// ShippingOption is a required field
 	ShippingOption *string `type:"string" required:"true" enum:"ShippingOption"`
 
-	// The type of Snow Family Devices to use for this cluster.
+	// The type of Snow Family devices to use for this cluster.
 	//
 	// For cluster jobs, Amazon Web Services Snow Family currently supports only
 	// the EDGE device type.
@@ -3630,7 +3856,7 @@ type CreateJobInput struct {
 	// (Snow Family Devices and Capacity) in the Snowcone User Guide.
 	SnowballCapacityPreference *string `type:"string" enum:"Capacity"`
 
-	// The type of Snow Family Devices to use for this job.
+	// The type of Snow Family devices to use for this job.
 	//
 	// For cluster jobs, Amazon Web Services Snow Family currently supports only
 	// the EDGE device type.
@@ -3839,6 +4065,8 @@ func (s *CreateJobOutput) SetJobId(v string) *CreateJobOutput {
 type CreateLongTermPricingInput struct {
 	_ struct{} `type:"structure"`
 
+	// snowballty
+	//
 	// Specifies whether the current long-term pricing type for the device should
 	// be renewed.
 	IsLongTermPricingAutoRenew *bool `type:"boolean"`
@@ -3849,7 +4077,7 @@ type CreateLongTermPricingInput struct {
 	// LongTermPricingType is a required field
 	LongTermPricingType *string `type:"string" required:"true" enum:"LongTermPricingType"`
 
-	// The type of Snow Family Devices to use for the long-term pricing job.
+	// The type of Snow Family devices to use for the long-term pricing job.
 	SnowballType *string `type:"string" enum:"Type"`
 }
 
@@ -6624,7 +6852,7 @@ type LongTermPricingListEntry struct {
 	// A new device that replaces a device that is ordered with long-term pricing.
 	ReplacementJob *string `min:"39" type:"string"`
 
-	// The type of Snow Family Devices associated with this long-term pricing job.
+	// The type of Snow Family devices associated with this long-term pricing job.
 	SnowballType *string `type:"string" enum:"Type"`
 }
 
@@ -6763,7 +6991,7 @@ type Notification struct {
 	_ struct{} `type:"structure"`
 
 	// The list of job states that will trigger a notification for this job.
-	JobStatesToNotify []*string `type:"list"`
+	JobStatesToNotify []*string `type:"list" enum:"JobState"`
 
 	// Any change in job state will trigger a notification for this job.
 	NotifyAll *bool `type:"boolean"`
@@ -7928,6 +8156,9 @@ const (
 
 	// CapacityNoPreference is a Capacity enum value
 	CapacityNoPreference = "NoPreference"
+
+	// CapacityT32 is a Capacity enum value
+	CapacityT32 = "T32"
 )
 
 // Capacity_Values returns all elements of the Capacity enum
@@ -7941,6 +8172,7 @@ func Capacity_Values() []string {
 		CapacityT8,
 		CapacityT14,
 		CapacityNoPreference,
+		CapacityT32,
 	}
 }
 
@@ -8217,6 +8449,9 @@ const (
 
 	// TypeSnc1Ssd is a Type enum value
 	TypeSnc1Ssd = "SNC1_SSD"
+
+	// TypeV35c is a Type enum value
+	TypeV35c = "V3_5C"
 )
 
 // Type_Values returns all elements of the Type enum
@@ -8229,5 +8464,6 @@ func Type_Values() []string {
 		TypeEdgeS,
 		TypeSnc1Hdd,
 		TypeSnc1Ssd,
+		TypeV35c,
 	}
 }

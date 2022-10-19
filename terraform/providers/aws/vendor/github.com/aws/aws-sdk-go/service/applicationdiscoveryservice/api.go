@@ -29,14 +29,13 @@ const opAssociateConfigurationItemsToApplication = "AssociateConfigurationItemsT
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateConfigurationItemsToApplicationRequest method.
+//	req, resp := client.AssociateConfigurationItemsToApplicationRequest(params)
 //
-//    // Example sending a request using the AssociateConfigurationItemsToApplicationRequest method.
-//    req, resp := client.AssociateConfigurationItemsToApplicationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/AssociateConfigurationItemsToApplication
 func (c *ApplicationDiscoveryService) AssociateConfigurationItemsToApplicationRequest(input *AssociateConfigurationItemsToApplicationInput) (req *request.Request, output *AssociateConfigurationItemsToApplicationOutput) {
@@ -68,22 +67,23 @@ func (c *ApplicationDiscoveryService) AssociateConfigurationItemsToApplicationRe
 // API operation AssociateConfigurationItemsToApplication for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/AssociateConfigurationItemsToApplication
 func (c *ApplicationDiscoveryService) AssociateConfigurationItemsToApplication(input *AssociateConfigurationItemsToApplicationInput) (*AssociateConfigurationItemsToApplicationOutput, error) {
@@ -123,14 +123,13 @@ const opBatchDeleteImportData = "BatchDeleteImportData"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchDeleteImportDataRequest method.
+//	req, resp := client.BatchDeleteImportDataRequest(params)
 //
-//    // Example sending a request using the BatchDeleteImportDataRequest method.
-//    req, resp := client.BatchDeleteImportDataRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/BatchDeleteImportData
 func (c *ApplicationDiscoveryService) BatchDeleteImportDataRequest(input *BatchDeleteImportDataInput) (req *request.Request, output *BatchDeleteImportDataOutput) {
@@ -154,12 +153,12 @@ func (c *ApplicationDiscoveryService) BatchDeleteImportDataRequest(input *BatchD
 // Deletes one or more import tasks, each identified by their import ID. Each
 // import task has a number of records that can identify servers or applications.
 //
-// AWS Application Discovery Service has built-in matching logic that will identify
-// when discovered servers match existing entries that you've previously discovered,
-// the information for the already-existing discovered server is updated. When
-// you delete an import task that contains records that were used to match,
-// the information in those matched records that comes from the deleted records
-// will also be deleted.
+// Amazon Web Services Application Discovery Service has built-in matching logic
+// that will identify when discovered servers match existing entries that you've
+// previously discovered, the information for the already-existing discovered
+// server is updated. When you delete an import task that contains records that
+// were used to match, the information in those matched records that comes from
+// the deleted records will also be deleted.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -169,22 +168,23 @@ func (c *ApplicationDiscoveryService) BatchDeleteImportDataRequest(input *BatchD
 // API operation BatchDeleteImportData for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/BatchDeleteImportData
 func (c *ApplicationDiscoveryService) BatchDeleteImportData(input *BatchDeleteImportDataInput) (*BatchDeleteImportDataOutput, error) {
@@ -224,14 +224,13 @@ const opCreateApplication = "CreateApplication"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateApplicationRequest method.
+//	req, resp := client.CreateApplicationRequest(params)
 //
-//    // Example sending a request using the CreateApplicationRequest method.
-//    req, resp := client.CreateApplicationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/CreateApplication
 func (c *ApplicationDiscoveryService) CreateApplicationRequest(input *CreateApplicationInput) (req *request.Request, output *CreateApplicationOutput) {
@@ -262,22 +261,23 @@ func (c *ApplicationDiscoveryService) CreateApplicationRequest(input *CreateAppl
 // API operation CreateApplication for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/CreateApplication
 func (c *ApplicationDiscoveryService) CreateApplication(input *CreateApplicationInput) (*CreateApplicationOutput, error) {
@@ -317,14 +317,13 @@ const opCreateTags = "CreateTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateTagsRequest method.
+//	req, resp := client.CreateTagsRequest(params)
 //
-//    // Example sending a request using the CreateTagsRequest method.
-//    req, resp := client.CreateTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/CreateTags
 func (c *ApplicationDiscoveryService) CreateTagsRequest(input *CreateTagsInput) (req *request.Request, output *CreateTagsOutput) {
@@ -350,6 +349,8 @@ func (c *ApplicationDiscoveryService) CreateTagsRequest(input *CreateTagsInput) 
 // help you categorize IT assets. This API accepts a list of multiple configuration
 // items.
 //
+// Do not store sensitive information (like personal data) in tags.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -358,26 +359,27 @@ func (c *ApplicationDiscoveryService) CreateTagsRequest(input *CreateTagsInput) 
 // API operation CreateTags for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * ResourceNotFoundException
-//   The specified configuration ID was not located. Verify the configuration
-//   ID and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - ResourceNotFoundException
+//     The specified configuration ID was not located. Verify the configuration
+//     ID and try again.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/CreateTags
 func (c *ApplicationDiscoveryService) CreateTags(input *CreateTagsInput) (*CreateTagsOutput, error) {
@@ -417,14 +419,13 @@ const opDeleteApplications = "DeleteApplications"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteApplicationsRequest method.
+//	req, resp := client.DeleteApplicationsRequest(params)
 //
-//    // Example sending a request using the DeleteApplicationsRequest method.
-//    req, resp := client.DeleteApplicationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DeleteApplications
 func (c *ApplicationDiscoveryService) DeleteApplicationsRequest(input *DeleteApplicationsInput) (req *request.Request, output *DeleteApplicationsOutput) {
@@ -457,22 +458,23 @@ func (c *ApplicationDiscoveryService) DeleteApplicationsRequest(input *DeleteApp
 // API operation DeleteApplications for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DeleteApplications
 func (c *ApplicationDiscoveryService) DeleteApplications(input *DeleteApplicationsInput) (*DeleteApplicationsOutput, error) {
@@ -512,14 +514,13 @@ const opDeleteTags = "DeleteTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteTagsRequest method.
+//	req, resp := client.DeleteTagsRequest(params)
 //
-//    // Example sending a request using the DeleteTagsRequest method.
-//    req, resp := client.DeleteTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DeleteTags
 func (c *ApplicationDiscoveryService) DeleteTagsRequest(input *DeleteTagsInput) (req *request.Request, output *DeleteTagsOutput) {
@@ -552,26 +553,27 @@ func (c *ApplicationDiscoveryService) DeleteTagsRequest(input *DeleteTagsInput) 
 // API operation DeleteTags for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * ResourceNotFoundException
-//   The specified configuration ID was not located. Verify the configuration
-//   ID and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - ResourceNotFoundException
+//     The specified configuration ID was not located. Verify the configuration
+//     ID and try again.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DeleteTags
 func (c *ApplicationDiscoveryService) DeleteTags(input *DeleteTagsInput) (*DeleteTagsOutput, error) {
@@ -611,14 +613,13 @@ const opDescribeAgents = "DescribeAgents"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAgentsRequest method.
+//	req, resp := client.DescribeAgentsRequest(params)
 //
-//    // Example sending a request using the DescribeAgentsRequest method.
-//    req, resp := client.DescribeAgentsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeAgents
 func (c *ApplicationDiscoveryService) DescribeAgentsRequest(input *DescribeAgentsInput) (req *request.Request, output *DescribeAgentsOutput) {
@@ -651,22 +652,23 @@ func (c *ApplicationDiscoveryService) DescribeAgentsRequest(input *DescribeAgent
 // API operation DescribeAgents for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeAgents
 func (c *ApplicationDiscoveryService) DescribeAgents(input *DescribeAgentsInput) (*DescribeAgentsOutput, error) {
@@ -706,14 +708,13 @@ const opDescribeConfigurations = "DescribeConfigurations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeConfigurationsRequest method.
+//	req, resp := client.DescribeConfigurationsRequest(params)
 //
-//    // Example sending a request using the DescribeConfigurationsRequest method.
-//    req, resp := client.DescribeConfigurationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeConfigurations
 func (c *ApplicationDiscoveryService) DescribeConfigurationsRequest(input *DescribeConfigurationsInput) (req *request.Request, output *DescribeConfigurationsOutput) {
@@ -738,13 +739,13 @@ func (c *ApplicationDiscoveryService) DescribeConfigurationsRequest(input *Descr
 //
 // All of the supplied IDs must be for the same asset type from one of the following:
 //
-//    * server
+//   - server
 //
-//    * application
+//   - application
 //
-//    * process
+//   - process
 //
-//    * connection
+//   - connection
 //
 // Output fields are specific to the asset type specified. For example, the
 // output for a server configuration item includes a list of attributes about
@@ -753,7 +754,7 @@ func (c *ApplicationDiscoveryService) DescribeConfigurationsRequest(input *Descr
 //
 // For a complete list of outputs for each asset type, see Using the DescribeConfigurations
 // Action (https://docs.aws.amazon.com/application-discovery/latest/userguide/discovery-api-queries.html#DescribeConfigurations)
-// in the AWS Application Discovery Service User Guide.
+// in the Amazon Web Services Application Discovery Service User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -763,22 +764,23 @@ func (c *ApplicationDiscoveryService) DescribeConfigurationsRequest(input *Descr
 // API operation DescribeConfigurations for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeConfigurations
 func (c *ApplicationDiscoveryService) DescribeConfigurations(input *DescribeConfigurationsInput) (*DescribeConfigurationsOutput, error) {
@@ -818,14 +820,13 @@ const opDescribeContinuousExports = "DescribeContinuousExports"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeContinuousExportsRequest method.
+//	req, resp := client.DescribeContinuousExportsRequest(params)
 //
-//    // Example sending a request using the DescribeContinuousExportsRequest method.
-//    req, resp := client.DescribeContinuousExportsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeContinuousExports
 func (c *ApplicationDiscoveryService) DescribeContinuousExportsRequest(input *DescribeContinuousExportsInput) (req *request.Request, output *DescribeContinuousExportsOutput) {
@@ -864,29 +865,30 @@ func (c *ApplicationDiscoveryService) DescribeContinuousExportsRequest(input *De
 // API operation DescribeContinuousExports for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * OperationNotPermittedException
-//   This operation is not permitted.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
 //
-//   * ResourceNotFoundException
-//   The specified configuration ID was not located. Verify the configuration
-//   ID and try again.
+//   - OperationNotPermittedException
+//     This operation is not permitted.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ResourceNotFoundException
+//     The specified configuration ID was not located. Verify the configuration
+//     ID and try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeContinuousExports
 func (c *ApplicationDiscoveryService) DescribeContinuousExports(input *DescribeContinuousExportsInput) (*DescribeContinuousExportsOutput, error) {
@@ -918,15 +920,14 @@ func (c *ApplicationDiscoveryService) DescribeContinuousExportsWithContext(ctx a
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeContinuousExports operation.
-//    pageNum := 0
-//    err := client.DescribeContinuousExportsPages(params,
-//        func(page *applicationdiscoveryservice.DescribeContinuousExportsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeContinuousExports operation.
+//	pageNum := 0
+//	err := client.DescribeContinuousExportsPages(params,
+//	    func(page *applicationdiscoveryservice.DescribeContinuousExportsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *ApplicationDiscoveryService) DescribeContinuousExportsPages(input *DescribeContinuousExportsInput, fn func(*DescribeContinuousExportsOutput, bool) bool) error {
 	return c.DescribeContinuousExportsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -978,14 +979,13 @@ const opDescribeExportConfigurations = "DescribeExportConfigurations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeExportConfigurationsRequest method.
+//	req, resp := client.DescribeExportConfigurationsRequest(params)
 //
-//    // Example sending a request using the DescribeExportConfigurationsRequest method.
-//    req, resp := client.DescribeExportConfigurationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeExportConfigurations
 //
@@ -1011,7 +1011,7 @@ func (c *ApplicationDiscoveryService) DescribeExportConfigurationsRequest(input 
 
 // DescribeExportConfigurations API operation for AWS Application Discovery Service.
 //
-// DescribeExportConfigurations is deprecated. Use DescribeImportTasks (https://docs.aws.amazon.com/application-discovery/latest/APIReference/API_DescribeExportTasks.html),
+// DescribeExportConfigurations is deprecated. Use DescribeExportTasks (https://docs.aws.amazon.com/application-discovery/latest/APIReference/API_DescribeExportTasks.html),
 // instead.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -1022,26 +1022,27 @@ func (c *ApplicationDiscoveryService) DescribeExportConfigurationsRequest(input 
 // API operation DescribeExportConfigurations for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * ResourceNotFoundException
-//   The specified configuration ID was not located. Verify the configuration
-//   ID and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - ResourceNotFoundException
+//     The specified configuration ID was not located. Verify the configuration
+//     ID and try again.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeExportConfigurations
 //
@@ -1085,14 +1086,13 @@ const opDescribeExportTasks = "DescribeExportTasks"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeExportTasksRequest method.
+//	req, resp := client.DescribeExportTasksRequest(params)
 //
-//    // Example sending a request using the DescribeExportTasksRequest method.
-//    req, resp := client.DescribeExportTasksRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeExportTasks
 func (c *ApplicationDiscoveryService) DescribeExportTasksRequest(input *DescribeExportTasksInput) (req *request.Request, output *DescribeExportTasksOutput) {
@@ -1124,22 +1124,23 @@ func (c *ApplicationDiscoveryService) DescribeExportTasksRequest(input *Describe
 // API operation DescribeExportTasks for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeExportTasks
 func (c *ApplicationDiscoveryService) DescribeExportTasks(input *DescribeExportTasksInput) (*DescribeExportTasksOutput, error) {
@@ -1179,14 +1180,13 @@ const opDescribeImportTasks = "DescribeImportTasks"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeImportTasksRequest method.
+//	req, resp := client.DescribeImportTasksRequest(params)
 //
-//    // Example sending a request using the DescribeImportTasksRequest method.
-//    req, resp := client.DescribeImportTasksRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeImportTasks
 func (c *ApplicationDiscoveryService) DescribeImportTasksRequest(input *DescribeImportTasksInput) (req *request.Request, output *DescribeImportTasksOutput) {
@@ -1224,22 +1224,23 @@ func (c *ApplicationDiscoveryService) DescribeImportTasksRequest(input *Describe
 // API operation DescribeImportTasks for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeImportTasks
 func (c *ApplicationDiscoveryService) DescribeImportTasks(input *DescribeImportTasksInput) (*DescribeImportTasksOutput, error) {
@@ -1271,15 +1272,14 @@ func (c *ApplicationDiscoveryService) DescribeImportTasksWithContext(ctx aws.Con
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeImportTasks operation.
-//    pageNum := 0
-//    err := client.DescribeImportTasksPages(params,
-//        func(page *applicationdiscoveryservice.DescribeImportTasksOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeImportTasks operation.
+//	pageNum := 0
+//	err := client.DescribeImportTasksPages(params,
+//	    func(page *applicationdiscoveryservice.DescribeImportTasksOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *ApplicationDiscoveryService) DescribeImportTasksPages(input *DescribeImportTasksInput, fn func(*DescribeImportTasksOutput, bool) bool) error {
 	return c.DescribeImportTasksPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1331,14 +1331,13 @@ const opDescribeTags = "DescribeTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTagsRequest method.
+//	req, resp := client.DescribeTagsRequest(params)
 //
-//    // Example sending a request using the DescribeTagsRequest method.
-//    req, resp := client.DescribeTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeTags
 func (c *ApplicationDiscoveryService) DescribeTagsRequest(input *DescribeTagsInput) (req *request.Request, output *DescribeTagsOutput) {
@@ -1364,11 +1363,11 @@ func (c *ApplicationDiscoveryService) DescribeTagsRequest(input *DescribeTagsInp
 //
 // There are three valid tag filter names:
 //
-//    * tagKey
+//   - tagKey
 //
-//    * tagValue
+//   - tagValue
 //
-//    * configurationId
+//   - configurationId
 //
 // Also, all configuration items associated with your user account that have
 // tags can be listed if you call DescribeTags as is without passing any parameters.
@@ -1381,26 +1380,27 @@ func (c *ApplicationDiscoveryService) DescribeTagsRequest(input *DescribeTagsInp
 // API operation DescribeTags for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * ResourceNotFoundException
-//   The specified configuration ID was not located. Verify the configuration
-//   ID and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - ResourceNotFoundException
+//     The specified configuration ID was not located. Verify the configuration
+//     ID and try again.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DescribeTags
 func (c *ApplicationDiscoveryService) DescribeTags(input *DescribeTagsInput) (*DescribeTagsOutput, error) {
@@ -1440,14 +1440,13 @@ const opDisassociateConfigurationItemsFromApplication = "DisassociateConfigurati
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateConfigurationItemsFromApplicationRequest method.
+//	req, resp := client.DisassociateConfigurationItemsFromApplicationRequest(params)
 //
-//    // Example sending a request using the DisassociateConfigurationItemsFromApplicationRequest method.
-//    req, resp := client.DisassociateConfigurationItemsFromApplicationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DisassociateConfigurationItemsFromApplication
 func (c *ApplicationDiscoveryService) DisassociateConfigurationItemsFromApplicationRequest(input *DisassociateConfigurationItemsFromApplicationInput) (req *request.Request, output *DisassociateConfigurationItemsFromApplicationOutput) {
@@ -1479,22 +1478,23 @@ func (c *ApplicationDiscoveryService) DisassociateConfigurationItemsFromApplicat
 // API operation DisassociateConfigurationItemsFromApplication for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/DisassociateConfigurationItemsFromApplication
 func (c *ApplicationDiscoveryService) DisassociateConfigurationItemsFromApplication(input *DisassociateConfigurationItemsFromApplicationInput) (*DisassociateConfigurationItemsFromApplicationOutput, error) {
@@ -1534,14 +1534,13 @@ const opExportConfigurations = "ExportConfigurations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ExportConfigurationsRequest method.
+//	req, resp := client.ExportConfigurationsRequest(params)
 //
-//    // Example sending a request using the ExportConfigurationsRequest method.
-//    req, resp := client.ExportConfigurationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/ExportConfigurations
 //
@@ -1583,25 +1582,26 @@ func (c *ApplicationDiscoveryService) ExportConfigurationsRequest(input *ExportC
 // API operation ExportConfigurations for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * OperationNotPermittedException
-//   This operation is not permitted.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - OperationNotPermittedException
+//     This operation is not permitted.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/ExportConfigurations
 //
@@ -1645,14 +1645,13 @@ const opGetDiscoverySummary = "GetDiscoverySummary"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDiscoverySummaryRequest method.
+//	req, resp := client.GetDiscoverySummaryRequest(params)
 //
-//    // Example sending a request using the GetDiscoverySummaryRequest method.
-//    req, resp := client.GetDiscoverySummaryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/GetDiscoverySummary
 func (c *ApplicationDiscoveryService) GetDiscoverySummaryRequest(input *GetDiscoverySummaryInput) (req *request.Request, output *GetDiscoverySummaryOutput) {
@@ -1686,22 +1685,23 @@ func (c *ApplicationDiscoveryService) GetDiscoverySummaryRequest(input *GetDisco
 // API operation GetDiscoverySummary for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/GetDiscoverySummary
 func (c *ApplicationDiscoveryService) GetDiscoverySummary(input *GetDiscoverySummaryInput) (*GetDiscoverySummaryOutput, error) {
@@ -1741,14 +1741,13 @@ const opListConfigurations = "ListConfigurations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListConfigurationsRequest method.
+//	req, resp := client.ListConfigurationsRequest(params)
 //
-//    // Example sending a request using the ListConfigurationsRequest method.
-//    req, resp := client.ListConfigurationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/ListConfigurations
 func (c *ApplicationDiscoveryService) ListConfigurationsRequest(input *ListConfigurationsInput) (req *request.Request, output *ListConfigurationsOutput) {
@@ -1781,26 +1780,27 @@ func (c *ApplicationDiscoveryService) ListConfigurationsRequest(input *ListConfi
 // API operation ListConfigurations for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * ResourceNotFoundException
-//   The specified configuration ID was not located. Verify the configuration
-//   ID and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - ResourceNotFoundException
+//     The specified configuration ID was not located. Verify the configuration
+//     ID and try again.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/ListConfigurations
 func (c *ApplicationDiscoveryService) ListConfigurations(input *ListConfigurationsInput) (*ListConfigurationsOutput, error) {
@@ -1840,14 +1840,13 @@ const opListServerNeighbors = "ListServerNeighbors"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListServerNeighborsRequest method.
+//	req, resp := client.ListServerNeighborsRequest(params)
 //
-//    // Example sending a request using the ListServerNeighborsRequest method.
-//    req, resp := client.ListServerNeighborsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/ListServerNeighbors
 func (c *ApplicationDiscoveryService) ListServerNeighborsRequest(input *ListServerNeighborsInput) (req *request.Request, output *ListServerNeighborsOutput) {
@@ -1879,22 +1878,23 @@ func (c *ApplicationDiscoveryService) ListServerNeighborsRequest(input *ListServ
 // API operation ListServerNeighbors for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/ListServerNeighbors
 func (c *ApplicationDiscoveryService) ListServerNeighbors(input *ListServerNeighborsInput) (*ListServerNeighborsOutput, error) {
@@ -1934,14 +1934,13 @@ const opStartContinuousExport = "StartContinuousExport"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartContinuousExportRequest method.
+//	req, resp := client.StartContinuousExportRequest(params)
 //
-//    // Example sending a request using the StartContinuousExportRequest method.
-//    req, resp := client.StartContinuousExportRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StartContinuousExport
 func (c *ApplicationDiscoveryService) StartContinuousExportRequest(input *StartContinuousExportInput) (req *request.Request, output *StartContinuousExportOutput) {
@@ -1972,34 +1971,35 @@ func (c *ApplicationDiscoveryService) StartContinuousExportRequest(input *StartC
 // API operation StartContinuousExport for usage and error information.
 //
 // Returned Error Types:
-//   * ConflictErrorException
 //
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
+//   - ConflictErrorException
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * OperationNotPermittedException
-//   This operation is not permitted.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
 //
-//   * ResourceInUseException
-//   This issue occurs when the same clientRequestToken is used with the StartImportTask
-//   action, but with different parameters. For example, you use the same request
-//   token but have two different import URLs, you can encounter this issue. If
-//   the import tasks are meant to be different, use a different clientRequestToken,
-//   and try again.
+//   - OperationNotPermittedException
+//     This operation is not permitted.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ResourceInUseException
+//     This issue occurs when the same clientRequestToken is used with the StartImportTask
+//     action, but with different parameters. For example, you use the same request
+//     token but have two different import URLs, you can encounter this issue. If
+//     the import tasks are meant to be different, use a different clientRequestToken,
+//     and try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StartContinuousExport
 func (c *ApplicationDiscoveryService) StartContinuousExport(input *StartContinuousExportInput) (*StartContinuousExportOutput, error) {
@@ -2039,14 +2039,13 @@ const opStartDataCollectionByAgentIds = "StartDataCollectionByAgentIds"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartDataCollectionByAgentIdsRequest method.
+//	req, resp := client.StartDataCollectionByAgentIdsRequest(params)
 //
-//    // Example sending a request using the StartDataCollectionByAgentIdsRequest method.
-//    req, resp := client.StartDataCollectionByAgentIdsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StartDataCollectionByAgentIds
 func (c *ApplicationDiscoveryService) StartDataCollectionByAgentIdsRequest(input *StartDataCollectionByAgentIdsInput) (req *request.Request, output *StartDataCollectionByAgentIdsOutput) {
@@ -2077,22 +2076,23 @@ func (c *ApplicationDiscoveryService) StartDataCollectionByAgentIdsRequest(input
 // API operation StartDataCollectionByAgentIds for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StartDataCollectionByAgentIds
 func (c *ApplicationDiscoveryService) StartDataCollectionByAgentIds(input *StartDataCollectionByAgentIdsInput) (*StartDataCollectionByAgentIdsOutput, error) {
@@ -2132,14 +2132,13 @@ const opStartExportTask = "StartExportTask"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartExportTaskRequest method.
+//	req, resp := client.StartExportTaskRequest(params)
 //
-//    // Example sending a request using the StartExportTaskRequest method.
-//    req, resp := client.StartExportTaskRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StartExportTask
 func (c *ApplicationDiscoveryService) StartExportTaskRequest(input *StartExportTaskInput) (req *request.Request, output *StartExportTaskOutput) {
@@ -2169,8 +2168,9 @@ func (c *ApplicationDiscoveryService) StartExportTaskRequest(input *StartExportT
 // to five concurrently running exports.
 //
 // If you do not include an agentIds filter, summary data is exported that includes
-// both AWS Agentless Discovery Connector data and summary data from AWS Discovery
-// Agents. Export of summary data is limited to two exports per day.
+// both Amazon Web Services Agentless Discovery Connector data and summary data
+// from Amazon Web Services Discovery Agents. Export of summary data is limited
+// to two exports per day.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2180,25 +2180,26 @@ func (c *ApplicationDiscoveryService) StartExportTaskRequest(input *StartExportT
 // API operation StartExportTask for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * OperationNotPermittedException
-//   This operation is not permitted.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - OperationNotPermittedException
+//     This operation is not permitted.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StartExportTask
 func (c *ApplicationDiscoveryService) StartExportTask(input *StartExportTaskInput) (*StartExportTaskOutput, error) {
@@ -2238,14 +2239,13 @@ const opStartImportTask = "StartImportTask"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartImportTaskRequest method.
+//	req, resp := client.StartImportTaskRequest(params)
 //
-//    // Example sending a request using the StartImportTaskRequest method.
-//    req, resp := client.StartImportTaskRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StartImportTask
 func (c *ApplicationDiscoveryService) StartImportTaskRequest(input *StartImportTaskInput) (req *request.Request, output *StartImportTaskOutput) {
@@ -2267,34 +2267,35 @@ func (c *ApplicationDiscoveryService) StartImportTaskRequest(input *StartImportT
 // StartImportTask API operation for AWS Application Discovery Service.
 //
 // Starts an import task, which allows you to import details of your on-premises
-// environment directly into AWS Migration Hub without having to use the Application
-// Discovery Service (ADS) tools such as the Discovery Connector or Discovery
-// Agent. This gives you the option to perform migration assessment and planning
-// directly from your imported data, including the ability to group your devices
-// as applications and track their migration status.
+// environment directly into Amazon Web Services Migration Hub without having
+// to use the Application Discovery Service (ADS) tools such as the Discovery
+// Connector or Discovery Agent. This gives you the option to perform migration
+// assessment and planning directly from your imported data, including the ability
+// to group your devices as applications and track their migration status.
 //
 // To start an import request, do this:
 //
 // Download the specially formatted comma separated value (CSV) import template,
-// which you can find here: https://s3-us-west-2.amazonaws.com/templates-7cffcf56-bd96-4b1c-b45b-a5b42f282e46/import_template.csv
-// (https://s3-us-west-2.amazonaws.com/templates-7cffcf56-bd96-4b1c-b45b-a5b42f282e46/import_template.csv).
+// which you can find here: https://s3.us-west-2.amazonaws.com/templates-7cffcf56-bd96-4b1c-b45b-a5b42f282e46/import_template.csv
+// (https://s3.us-west-2.amazonaws.com/templates-7cffcf56-bd96-4b1c-b45b-a5b42f282e46/import_template.csv).
 //
 // Fill out the template with your server and application data.
 //
 // Upload your import file to an Amazon S3 bucket, and make a note of it's Object
 // URL. Your import file must be in the CSV format.
 //
-// Use the console or the StartImportTask command with the AWS CLI or one of
-// the AWS SDKs to import the records from your file.
+// Use the console or the StartImportTask command with the Amazon Web Services
+// CLI or one of the Amazon Web Services SDKs to import the records from your
+// file.
 //
 // For more information, including step-by-step procedures, see Migration Hub
 // Import (https://docs.aws.amazon.com/application-discovery/latest/userguide/discovery-import.html)
-// in the AWS Application Discovery Service User Guide.
+// in the Amazon Web Services Application Discovery Service User Guide.
 //
 // There are limits to the number of import tasks you can create (and delete)
-// in an AWS account. For more information, see AWS Application Discovery Service
-// Limits (https://docs.aws.amazon.com/application-discovery/latest/userguide/ads_service_limits.html)
-// in the AWS Application Discovery Service User Guide.
+// in an Amazon Web Services account. For more information, see Amazon Web Services
+// Application Discovery Service Limits (https://docs.aws.amazon.com/application-discovery/latest/userguide/ads_service_limits.html)
+// in the Amazon Web Services Application Discovery Service User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2304,29 +2305,30 @@ func (c *ApplicationDiscoveryService) StartImportTaskRequest(input *StartImportT
 // API operation StartImportTask for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceInUseException
-//   This issue occurs when the same clientRequestToken is used with the StartImportTask
-//   action, but with different parameters. For example, you use the same request
-//   token but have two different import URLs, you can encounter this issue. If
-//   the import tasks are meant to be different, use a different clientRequestToken,
-//   and try again.
 //
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
+//   - ResourceInUseException
+//     This issue occurs when the same clientRequestToken is used with the StartImportTask
+//     action, but with different parameters. For example, you use the same request
+//     token but have two different import URLs, you can encounter this issue. If
+//     the import tasks are meant to be different, use a different clientRequestToken,
+//     and try again.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StartImportTask
 func (c *ApplicationDiscoveryService) StartImportTask(input *StartImportTaskInput) (*StartImportTaskOutput, error) {
@@ -2366,14 +2368,13 @@ const opStopContinuousExport = "StopContinuousExport"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopContinuousExportRequest method.
+//	req, resp := client.StopContinuousExportRequest(params)
 //
-//    // Example sending a request using the StopContinuousExportRequest method.
-//    req, resp := client.StopContinuousExportRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StopContinuousExport
 func (c *ApplicationDiscoveryService) StopContinuousExportRequest(input *StopContinuousExportInput) (req *request.Request, output *StopContinuousExportOutput) {
@@ -2404,36 +2405,37 @@ func (c *ApplicationDiscoveryService) StopContinuousExportRequest(input *StopCon
 // API operation StopContinuousExport for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * OperationNotPermittedException
-//   This operation is not permitted.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
 //
-//   * ResourceNotFoundException
-//   The specified configuration ID was not located. Verify the configuration
-//   ID and try again.
+//   - OperationNotPermittedException
+//     This operation is not permitted.
 //
-//   * ResourceInUseException
-//   This issue occurs when the same clientRequestToken is used with the StartImportTask
-//   action, but with different parameters. For example, you use the same request
-//   token but have two different import URLs, you can encounter this issue. If
-//   the import tasks are meant to be different, use a different clientRequestToken,
-//   and try again.
+//   - ResourceNotFoundException
+//     The specified configuration ID was not located. Verify the configuration
+//     ID and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ResourceInUseException
+//     This issue occurs when the same clientRequestToken is used with the StartImportTask
+//     action, but with different parameters. For example, you use the same request
+//     token but have two different import URLs, you can encounter this issue. If
+//     the import tasks are meant to be different, use a different clientRequestToken,
+//     and try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StopContinuousExport
 func (c *ApplicationDiscoveryService) StopContinuousExport(input *StopContinuousExportInput) (*StopContinuousExportOutput, error) {
@@ -2473,14 +2475,13 @@ const opStopDataCollectionByAgentIds = "StopDataCollectionByAgentIds"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopDataCollectionByAgentIdsRequest method.
+//	req, resp := client.StopDataCollectionByAgentIdsRequest(params)
 //
-//    // Example sending a request using the StopDataCollectionByAgentIdsRequest method.
-//    req, resp := client.StopDataCollectionByAgentIdsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StopDataCollectionByAgentIds
 func (c *ApplicationDiscoveryService) StopDataCollectionByAgentIdsRequest(input *StopDataCollectionByAgentIdsInput) (req *request.Request, output *StopDataCollectionByAgentIdsOutput) {
@@ -2511,22 +2512,23 @@ func (c *ApplicationDiscoveryService) StopDataCollectionByAgentIdsRequest(input 
 // API operation StopDataCollectionByAgentIds for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/StopDataCollectionByAgentIds
 func (c *ApplicationDiscoveryService) StopDataCollectionByAgentIds(input *StopDataCollectionByAgentIdsInput) (*StopDataCollectionByAgentIdsOutput, error) {
@@ -2566,14 +2568,13 @@ const opUpdateApplication = "UpdateApplication"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateApplicationRequest method.
+//	req, resp := client.UpdateApplicationRequest(params)
 //
-//    // Example sending a request using the UpdateApplicationRequest method.
-//    req, resp := client.UpdateApplicationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/UpdateApplication
 func (c *ApplicationDiscoveryService) UpdateApplicationRequest(input *UpdateApplicationInput) (req *request.Request, output *UpdateApplicationOutput) {
@@ -2605,22 +2606,23 @@ func (c *ApplicationDiscoveryService) UpdateApplicationRequest(input *UpdateAppl
 // API operation UpdateApplication for usage and error information.
 //
 // Returned Error Types:
-//   * AuthorizationErrorException
-//   The AWS user account does not have permission to perform the action. Check
-//   the IAM policy associated with this account.
 //
-//   * InvalidParameterException
-//   One or more parameters are not valid. Verify the parameters and try again.
+//   - AuthorizationErrorException
+//     The Amazon Web Services user account does not have permission to perform
+//     the action. Check the IAM policy associated with this account.
 //
-//   * InvalidParameterValueException
-//   The value of one or more parameters are either invalid or out of range. Verify
-//   the parameter values and try again.
+//   - InvalidParameterException
+//     One or more parameters are not valid. Verify the parameters and try again.
 //
-//   * ServerInternalErrorException
-//   The server experienced an internal error. Try again.
+//   - InvalidParameterValueException
+//     The value of one or more parameters are either invalid or out of range. Verify
+//     the parameter values and try again.
 //
-//   * HomeRegionNotSetException
-//   The home region is not set. Set the home region to continue.
+//   - ServerInternalErrorException
+//     The server experienced an internal error. Try again.
+//
+//   - HomeRegionNotSetException
+//     The home region is not set. Set the home region to continue.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/UpdateApplication
 func (c *ApplicationDiscoveryService) UpdateApplication(input *UpdateApplicationInput) (*UpdateApplicationOutput, error) {
@@ -2698,15 +2700,15 @@ func (s *AgentConfigurationStatus) SetOperationSucceeded(v bool) *AgentConfigura
 	return s
 }
 
-// Information about agents or connectors associated with the user’s AWS account.
-// Information includes agent or connector IDs, IP addresses, media access control
-// (MAC) addresses, agent or connector health, hostname where the agent or connector
-// resides, and agent version for each agent.
+// Information about agents or connectors associated with the user’s Amazon
+// Web Services account. Information includes agent or connector IDs, IP addresses,
+// media access control (MAC) addresses, agent or connector health, hostname
+// where the agent or connector resides, and agent version for each agent.
 type AgentInfo struct {
 	_ struct{} `type:"structure"`
 
 	// The agent or connector ID.
-	AgentId *string `locationName:"agentId" type:"string"`
+	AgentId *string `locationName:"agentId" min:"10" type:"string"`
 
 	// Network details about the host where the agent or connector resides.
 	AgentNetworkInfoList []*AgentNetworkInfo `locationName:"agentNetworkInfoList" type:"list"`
@@ -2938,8 +2940,8 @@ func (s AssociateConfigurationItemsToApplicationOutput) GoString() string {
 	return s.String()
 }
 
-// The AWS user account does not have permission to perform the action. Check
-// the IAM policy associated with this account.
+// The Amazon Web Services user account does not have permission to perform
+// the action. Check the IAM policy associated with this account.
 type AuthorizationErrorException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -3317,8 +3319,9 @@ type ContinuousExportDescription struct {
 	// can have the following values:
 	//
 	//    * ACCESS_DENIED - You don’t have permission to start Data Exploration
-	//    in Amazon Athena. Contact your AWS administrator for help. For more information,
-	//    see Setting Up AWS Application Discovery Service (http://docs.aws.amazon.com/application-discovery/latest/userguide/setting-up.html)
+	//    in Amazon Athena. Contact your Amazon Web Services administrator for help.
+	//    For more information, see Setting Up Amazon Web Services Application Discovery
+	//    Service (http://docs.aws.amazon.com/application-discovery/latest/userguide/setting-up.html)
 	//    in the Application Discovery Service User Guide.
 	//
 	//    * DELIVERY_STREAM_LIMIT_FAILURE - You reached the limit for Amazon Kinesis
@@ -3340,12 +3343,32 @@ type ContinuousExportDescription struct {
 	//
 	//    * INTERNAL_FAILURE - The Data Exploration feature is in an error state
 	//    because of an internal failure. Try again later. If this problem persists,
-	//    contact AWS Support.
+	//    contact Amazon Web Services Support.
+	//
+	//    * LAKE_FORMATION_ACCESS_DENIED - You don't have sufficient lake formation
+	//    permissions to start continuous export. For more information, see Upgrading
+	//    Amazon Web Services Glue Data Permissions to the Amazon Web Services Lake
+	//    Formation Model (http://docs.aws.amazon.com/lake-formation/latest/dg/upgrade-glue-lake-formation.html)
+	//    in the Amazon Web Services Lake Formation Developer Guide. You can use
+	//    one of the following two ways to resolve this issue. If you don’t want
+	//    to use the Lake Formation permission model, you can change the default
+	//    Data Catalog settings to use only Amazon Web Services Identity and Access
+	//    Management (IAM) access control for new databases. For more information,
+	//    see Change Data Catalog Settings (https://docs.aws.amazon.com/lake-formation/latest/dg/getting-started-setup.html#setup-change-cat-settings)
+	//    in the Lake Formation Developer Guide. You can give the service-linked
+	//    IAM roles AWSServiceRoleForApplicationDiscoveryServiceContinuousExport
+	//    and AWSApplicationDiscoveryServiceFirehose the required Lake Formation
+	//    permissions. For more information, see Granting Database Permissions (https://docs.aws.amazon.com/lake-formation/latest/dg/granting-database-permissions.html)
+	//    in the Lake Formation Developer Guide. AWSServiceRoleForApplicationDiscoveryServiceContinuousExport
+	//    - Grant database creator permissions, which gives the role database creation
+	//    ability and implicit permissions for any created tables. For more information,
+	//    see Implicit Lake Formation Permissions (https://docs.aws.amazon.com/lake-formation/latest/dg/implicit-permissions.html)
+	//    in the Lake Formation Developer Guide. AWSApplicationDiscoveryServiceFirehose
+	//    - Grant describe permissions for all tables in the database.
 	//
 	//    * S3_BUCKET_LIMIT_FAILURE - You reached the limit for Amazon S3 buckets.
-	//    Reduce the number of Amazon S3 buckets or request a limit increase and
-	//    try again. For more information, see Bucket Restrictions and Limitations
-	//    (http://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html)
+	//    Reduce the number of S3 buckets or request a limit increase and try again.
+	//    For more information, see Bucket Restrictions and Limitations (http://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html)
 	//    in the Amazon Simple Storage Service Developer Guide.
 	//
 	//    * S3_NOT_SIGNED_UP - Your account is not signed up for the Amazon S3 service.
@@ -3704,6 +3727,91 @@ func (s *CustomerAgentInfo) SetUnknownAgents(v int64) *CustomerAgentInfo {
 	return s
 }
 
+type CustomerAgentlessCollectorInfo struct {
+	_ struct{} `type:"structure"`
+
+	// ActiveAgentlessCollectors is a required field
+	ActiveAgentlessCollectors *int64 `locationName:"activeAgentlessCollectors" type:"integer" required:"true"`
+
+	// DenyListedAgentlessCollectors is a required field
+	DenyListedAgentlessCollectors *int64 `locationName:"denyListedAgentlessCollectors" type:"integer" required:"true"`
+
+	// HealthyAgentlessCollectors is a required field
+	HealthyAgentlessCollectors *int64 `locationName:"healthyAgentlessCollectors" type:"integer" required:"true"`
+
+	// ShutdownAgentlessCollectors is a required field
+	ShutdownAgentlessCollectors *int64 `locationName:"shutdownAgentlessCollectors" type:"integer" required:"true"`
+
+	// TotalAgentlessCollectors is a required field
+	TotalAgentlessCollectors *int64 `locationName:"totalAgentlessCollectors" type:"integer" required:"true"`
+
+	// UnhealthyAgentlessCollectors is a required field
+	UnhealthyAgentlessCollectors *int64 `locationName:"unhealthyAgentlessCollectors" type:"integer" required:"true"`
+
+	// UnknownAgentlessCollectors is a required field
+	UnknownAgentlessCollectors *int64 `locationName:"unknownAgentlessCollectors" type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CustomerAgentlessCollectorInfo) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CustomerAgentlessCollectorInfo) GoString() string {
+	return s.String()
+}
+
+// SetActiveAgentlessCollectors sets the ActiveAgentlessCollectors field's value.
+func (s *CustomerAgentlessCollectorInfo) SetActiveAgentlessCollectors(v int64) *CustomerAgentlessCollectorInfo {
+	s.ActiveAgentlessCollectors = &v
+	return s
+}
+
+// SetDenyListedAgentlessCollectors sets the DenyListedAgentlessCollectors field's value.
+func (s *CustomerAgentlessCollectorInfo) SetDenyListedAgentlessCollectors(v int64) *CustomerAgentlessCollectorInfo {
+	s.DenyListedAgentlessCollectors = &v
+	return s
+}
+
+// SetHealthyAgentlessCollectors sets the HealthyAgentlessCollectors field's value.
+func (s *CustomerAgentlessCollectorInfo) SetHealthyAgentlessCollectors(v int64) *CustomerAgentlessCollectorInfo {
+	s.HealthyAgentlessCollectors = &v
+	return s
+}
+
+// SetShutdownAgentlessCollectors sets the ShutdownAgentlessCollectors field's value.
+func (s *CustomerAgentlessCollectorInfo) SetShutdownAgentlessCollectors(v int64) *CustomerAgentlessCollectorInfo {
+	s.ShutdownAgentlessCollectors = &v
+	return s
+}
+
+// SetTotalAgentlessCollectors sets the TotalAgentlessCollectors field's value.
+func (s *CustomerAgentlessCollectorInfo) SetTotalAgentlessCollectors(v int64) *CustomerAgentlessCollectorInfo {
+	s.TotalAgentlessCollectors = &v
+	return s
+}
+
+// SetUnhealthyAgentlessCollectors sets the UnhealthyAgentlessCollectors field's value.
+func (s *CustomerAgentlessCollectorInfo) SetUnhealthyAgentlessCollectors(v int64) *CustomerAgentlessCollectorInfo {
+	s.UnhealthyAgentlessCollectors = &v
+	return s
+}
+
+// SetUnknownAgentlessCollectors sets the UnknownAgentlessCollectors field's value.
+func (s *CustomerAgentlessCollectorInfo) SetUnknownAgentlessCollectors(v int64) *CustomerAgentlessCollectorInfo {
+	s.UnknownAgentlessCollectors = &v
+	return s
+}
+
 // Inventory data for installed discovery connectors.
 type CustomerConnectorInfo struct {
 	_ struct{} `type:"structure"`
@@ -3801,6 +3909,106 @@ func (s *CustomerConnectorInfo) SetUnhealthyConnectors(v int64) *CustomerConnect
 // SetUnknownConnectors sets the UnknownConnectors field's value.
 func (s *CustomerConnectorInfo) SetUnknownConnectors(v int64) *CustomerConnectorInfo {
 	s.UnknownConnectors = &v
+	return s
+}
+
+// The inventory data for installed Migration Evaluator collectors.
+type CustomerMeCollectorInfo struct {
+	_ struct{} `type:"structure"`
+
+	// The number of active Migration Evaluator collectors.
+	//
+	// ActiveMeCollectors is a required field
+	ActiveMeCollectors *int64 `locationName:"activeMeCollectors" type:"integer" required:"true"`
+
+	// The number of deny-listed Migration Evaluator collectors.
+	//
+	// DenyListedMeCollectors is a required field
+	DenyListedMeCollectors *int64 `locationName:"denyListedMeCollectors" type:"integer" required:"true"`
+
+	// The number of healthy Migration Evaluator collectors.
+	//
+	// HealthyMeCollectors is a required field
+	HealthyMeCollectors *int64 `locationName:"healthyMeCollectors" type:"integer" required:"true"`
+
+	// The number of Migration Evaluator collectors with SHUTDOWN status.
+	//
+	// ShutdownMeCollectors is a required field
+	ShutdownMeCollectors *int64 `locationName:"shutdownMeCollectors" type:"integer" required:"true"`
+
+	// The total number of Migration Evaluator collectors.
+	//
+	// TotalMeCollectors is a required field
+	TotalMeCollectors *int64 `locationName:"totalMeCollectors" type:"integer" required:"true"`
+
+	// The number of unhealthy Migration Evaluator collectors.
+	//
+	// UnhealthyMeCollectors is a required field
+	UnhealthyMeCollectors *int64 `locationName:"unhealthyMeCollectors" type:"integer" required:"true"`
+
+	// The number of unknown Migration Evaluator collectors.
+	//
+	// UnknownMeCollectors is a required field
+	UnknownMeCollectors *int64 `locationName:"unknownMeCollectors" type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CustomerMeCollectorInfo) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CustomerMeCollectorInfo) GoString() string {
+	return s.String()
+}
+
+// SetActiveMeCollectors sets the ActiveMeCollectors field's value.
+func (s *CustomerMeCollectorInfo) SetActiveMeCollectors(v int64) *CustomerMeCollectorInfo {
+	s.ActiveMeCollectors = &v
+	return s
+}
+
+// SetDenyListedMeCollectors sets the DenyListedMeCollectors field's value.
+func (s *CustomerMeCollectorInfo) SetDenyListedMeCollectors(v int64) *CustomerMeCollectorInfo {
+	s.DenyListedMeCollectors = &v
+	return s
+}
+
+// SetHealthyMeCollectors sets the HealthyMeCollectors field's value.
+func (s *CustomerMeCollectorInfo) SetHealthyMeCollectors(v int64) *CustomerMeCollectorInfo {
+	s.HealthyMeCollectors = &v
+	return s
+}
+
+// SetShutdownMeCollectors sets the ShutdownMeCollectors field's value.
+func (s *CustomerMeCollectorInfo) SetShutdownMeCollectors(v int64) *CustomerMeCollectorInfo {
+	s.ShutdownMeCollectors = &v
+	return s
+}
+
+// SetTotalMeCollectors sets the TotalMeCollectors field's value.
+func (s *CustomerMeCollectorInfo) SetTotalMeCollectors(v int64) *CustomerMeCollectorInfo {
+	s.TotalMeCollectors = &v
+	return s
+}
+
+// SetUnhealthyMeCollectors sets the UnhealthyMeCollectors field's value.
+func (s *CustomerMeCollectorInfo) SetUnhealthyMeCollectors(v int64) *CustomerMeCollectorInfo {
+	s.UnhealthyMeCollectors = &v
+	return s
+}
+
+// SetUnknownMeCollectors sets the UnknownMeCollectors field's value.
+func (s *CustomerMeCollectorInfo) SetUnknownMeCollectors(v int64) *CustomerMeCollectorInfo {
+	s.UnknownMeCollectors = &v
 	return s
 }
 
@@ -3967,7 +4175,7 @@ type DescribeAgentsInput struct {
 
 	// The agent or the Connector IDs for which you want information. If you specify
 	// no IDs, the system returns information about all agents/Connectors associated
-	// with your AWS user account.
+	// with your Amazon Web Services user account.
 	AgentIds []*string `locationName:"agentIds" type:"list"`
 
 	// You can filter the request using various logical operators and a key-value
@@ -4871,14 +5079,14 @@ type ExportFilter struct {
 	// Condition is a required field
 	Condition *string `locationName:"condition" type:"string" required:"true"`
 
-	// A single ExportFilter name. Supported filters: agentId.
+	// A single ExportFilter name. Supported filters: agentIds.
 	//
 	// Name is a required field
 	Name *string `locationName:"name" type:"string" required:"true"`
 
-	// A single agentId for a Discovery Agent. An agentId can be found using the
-	// DescribeAgents (http://docs.aws.amazon.com/application-discovery/latest/APIReference/API_DescribeExportTasks.html)
-	// action. Typically an ADS agentId is in the form o-0123456789abcdef0.
+	// A single agent ID for a Discovery Agent. An agent ID can be found using the
+	// DescribeAgents (http://docs.aws.amazon.com/application-discovery/latest/APIReference/API_DescribeAgents.html)
+	// action. Typically an ADS agent ID is in the form o-0123456789abcdef0.
 	//
 	// Values is a required field
 	Values []*string `locationName:"values" type:"list" required:"true"`
@@ -5053,7 +5261,7 @@ func (s *ExportInfo) SetStatusMessage(v string) *ExportInfo {
 //
 // For more information about filters, see Querying Discovered Configuration
 // Items (https://docs.aws.amazon.com/application-discovery/latest/userguide/discovery-api-queries.html)
-// in the AWS Application Discovery Service User Guide.
+// in the Amazon Web Services Application Discovery Service User Guide.
 type Filter struct {
 	_ struct{} `type:"structure"`
 
@@ -5162,11 +5370,17 @@ type GetDiscoverySummaryOutput struct {
 	// Details about discovered agents, including agent status and health.
 	AgentSummary *CustomerAgentInfo `locationName:"agentSummary" type:"structure"`
 
+	AgentlessCollectorSummary *CustomerAgentlessCollectorInfo `locationName:"agentlessCollectorSummary" type:"structure"`
+
 	// The number of applications discovered.
 	Applications *int64 `locationName:"applications" type:"long"`
 
 	// Details about discovered connectors, including connector status and health.
 	ConnectorSummary *CustomerConnectorInfo `locationName:"connectorSummary" type:"structure"`
+
+	// Details about Migration Evaluator collectors, including collector status
+	// and health.
+	MeCollectorSummary *CustomerMeCollectorInfo `locationName:"meCollectorSummary" type:"structure"`
 
 	// The number of servers discovered.
 	Servers *int64 `locationName:"servers" type:"long"`
@@ -5202,6 +5416,12 @@ func (s *GetDiscoverySummaryOutput) SetAgentSummary(v *CustomerAgentInfo) *GetDi
 	return s
 }
 
+// SetAgentlessCollectorSummary sets the AgentlessCollectorSummary field's value.
+func (s *GetDiscoverySummaryOutput) SetAgentlessCollectorSummary(v *CustomerAgentlessCollectorInfo) *GetDiscoverySummaryOutput {
+	s.AgentlessCollectorSummary = v
+	return s
+}
+
 // SetApplications sets the Applications field's value.
 func (s *GetDiscoverySummaryOutput) SetApplications(v int64) *GetDiscoverySummaryOutput {
 	s.Applications = &v
@@ -5211,6 +5431,12 @@ func (s *GetDiscoverySummaryOutput) SetApplications(v int64) *GetDiscoverySummar
 // SetConnectorSummary sets the ConnectorSummary field's value.
 func (s *GetDiscoverySummaryOutput) SetConnectorSummary(v *CustomerConnectorInfo) *GetDiscoverySummaryOutput {
 	s.ConnectorSummary = v
+	return s
+}
+
+// SetMeCollectorSummary sets the MeCollectorSummary field's value.
+func (s *GetDiscoverySummaryOutput) SetMeCollectorSummary(v *CustomerMeCollectorInfo) *GetDiscoverySummaryOutput {
+	s.MeCollectorSummary = v
 	return s
 }
 
@@ -5343,7 +5569,7 @@ type ImportTask struct {
 	ImportRequestTime *time.Time `locationName:"importRequestTime" type:"timestamp"`
 
 	// The unique ID for a specific import task. These IDs aren't globally unique,
-	// but they are unique within an AWS account.
+	// but they are unique within an Amazon Web Services account.
 	ImportTaskId *string `locationName:"importTaskId" type:"string"`
 
 	// The URL for your import file that you've uploaded to Amazon S3.
@@ -5667,7 +5893,7 @@ type ListConfigurationsInput struct {
 	//
 	// For a complete list of filter options and guidance about using them with
 	// this action, see Using the ListConfigurations Action (https://docs.aws.amazon.com/application-discovery/latest/userguide/discovery-api-queries.html#ListConfigurations)
-	// in the AWS Application Discovery Service User Guide.
+	// in the Amazon Web Services Application Discovery Service User Guide.
 	Filters []*Filter `locationName:"filters" type:"list"`
 
 	// The total number of items to return. The maximum value is 100.
@@ -5682,7 +5908,7 @@ type ListConfigurationsInput struct {
 	// Certain filter criteria return output that can be sorted in ascending or
 	// descending order. For a list of output characteristics for each filter, see
 	// Using the ListConfigurations Action (https://docs.aws.amazon.com/application-discovery/latest/userguide/discovery-api-queries.html#ListConfigurations)
-	// in the AWS Application Discovery Service User Guide.
+	// in the Amazon Web Services Application Discovery Service User Guide.
 	OrderBy []*OrderByElement `locationName:"orderBy" type:"list"`
 }
 
@@ -6440,11 +6666,12 @@ type StartDataCollectionByAgentIdsInput struct {
 
 	// The IDs of the agents or connectors from which to start collecting data.
 	// If you send a request to an agent/connector ID that you do not have permission
-	// to contact, according to your AWS account, the service does not throw an
-	// exception. Instead, it returns the error in the Description field. If you
-	// send a request to multiple agents/connectors and you do not have permission
-	// to contact some of those agents/connectors, the system does not throw an
-	// exception. Instead, the system shows Failed in the Description field.
+	// to contact, according to your Amazon Web Services account, the service does
+	// not throw an exception. Instead, it returns the error in the Description
+	// field. If you send a request to multiple agents/connectors and you do not
+	// have permission to contact some of those agents/connectors, the system does
+	// not throw an exception. Instead, the system shows Failed in the Description
+	// field.
 	//
 	// AgentIds is a required field
 	AgentIds []*string `locationName:"agentIds" type:"list" required:"true"`
@@ -6530,7 +6757,7 @@ type StartExportTaskInput struct {
 
 	// The file format for the returned export data. Default value is CSV. Note:
 	// The GRAPHML option has been deprecated.
-	ExportDataFormat []*string `locationName:"exportDataFormat" type:"list"`
+	ExportDataFormat []*string `locationName:"exportDataFormat" type:"list" enum:"ExportDataFormat"`
 
 	// If a filter is present, it selects the single agentId of the Application
 	// Discovery Agent for which data is exported. The agentId can be found in the
@@ -6652,7 +6879,8 @@ type StartImportTaskInput struct {
 
 	// The URL for your import file that you've uploaded to Amazon S3.
 	//
-	// If you're using the AWS CLI, this URL is structured as follows: s3://BucketName/ImportFileName.CSV
+	// If you're using the Amazon Web Services CLI, this URL is structured as follows:
+	// s3://BucketName/ImportFileName.CSV
 	//
 	// ImportUrl is a required field
 	ImportUrl *string `locationName:"importUrl" min:"1" type:"string" required:"true"`
@@ -6927,6 +7155,8 @@ func (s *StopDataCollectionByAgentIdsOutput) SetAgentsConfigurationStatus(v []*A
 }
 
 // Metadata that help you categorize IT assets.
+//
+// Do not store sensitive information (like personal data) in tags.
 type Tag struct {
 	_ struct{} `type:"structure"`
 

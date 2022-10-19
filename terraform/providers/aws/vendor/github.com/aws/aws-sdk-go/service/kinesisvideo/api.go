@@ -29,14 +29,13 @@ const opCreateSignalingChannel = "CreateSignalingChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateSignalingChannelRequest method.
+//	req, resp := client.CreateSignalingChannelRequest(params)
 //
-//    // Example sending a request using the CreateSignalingChannelRequest method.
-//    req, resp := client.CreateSignalingChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/CreateSignalingChannel
 func (c *KinesisVideo) CreateSignalingChannelRequest(input *CreateSignalingChannelInput) (req *request.Request, output *CreateSignalingChannelOutput) {
@@ -69,26 +68,33 @@ func (c *KinesisVideo) CreateSignalingChannelRequest(input *CreateSignalingChann
 // API operation CreateSignalingChannel for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * AccountChannelLimitExceededException
-//   You have reached the maximum limit of active signaling channels for this
-//   AWS account in this region.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * ResourceInUseException
-//   The signaling channel is currently not available for this operation.
+//   - AccountChannelLimitExceededException
+//     You have reached the maximum limit of active signaling channels for this
+//     Amazon Web Services account in this region.
 //
-//   * AccessDeniedException
-//   You do not have required permissions to perform this operation.
+//   - ResourceInUseException
+//     The resource is currently not available for this operation. New resources
+//     cannot be created with the same name as existing resources. Also, resources
+//     cannot be updated or deleted unless they are in an ACTIVE state.
 //
-//   * TagsPerResourceExceededLimitException
-//   You have exceeded the limit of tags that you can associate with the resource.
-//   Kinesis video streams support up to 50 tags.
+//     If this exception is returned, do not use it to determine whether the requested
+//     resource already exists. Instead, it is recommended you use the resource-specific
+//     describe API, for example, DescribeStream for video streams.
+//
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
+//
+//   - TagsPerResourceExceededLimitException
+//     You have exceeded the limit of tags that you can associate with the resource.
+//     A Kinesis video stream can support up to 50 tags.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/CreateSignalingChannel
 func (c *KinesisVideo) CreateSignalingChannel(input *CreateSignalingChannelInput) (*CreateSignalingChannelOutput, error) {
@@ -128,14 +134,13 @@ const opCreateStream = "CreateStream"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateStreamRequest method.
+//	req, resp := client.CreateStreamRequest(params)
 //
-//    // Example sending a request using the CreateStreamRequest method.
-//    req, resp := client.CreateStreamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/CreateStream
 func (c *KinesisVideo) CreateStreamRequest(input *CreateStreamInput) (req *request.Request, output *CreateStreamOutput) {
@@ -176,28 +181,35 @@ func (c *KinesisVideo) CreateStreamRequest(input *CreateStreamInput) (req *reque
 // API operation CreateStream for usage and error information.
 //
 // Returned Error Types:
-//   * AccountStreamLimitExceededException
-//   The number of streams created for the account is too high.
 //
-//   * DeviceStreamLimitExceededException
-//   Not implemented.
+//   - AccountStreamLimitExceededException
+//     The number of streams created for the account is too high.
 //
-//   * ResourceInUseException
-//   The signaling channel is currently not available for this operation.
+//   - DeviceStreamLimitExceededException
+//     Not implemented.
 //
-//   * InvalidDeviceException
-//   Not implemented.
+//   - ResourceInUseException
+//     The resource is currently not available for this operation. New resources
+//     cannot be created with the same name as existing resources. Also, resources
+//     cannot be updated or deleted unless they are in an ACTIVE state.
 //
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
+//     If this exception is returned, do not use it to determine whether the requested
+//     resource already exists. Instead, it is recommended you use the resource-specific
+//     describe API, for example, DescribeStream for video streams.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - InvalidDeviceException
+//     Not implemented.
 //
-//   * TagsPerResourceExceededLimitException
-//   You have exceeded the limit of tags that you can associate with the resource.
-//   Kinesis video streams support up to 50 tags.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
+//
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
+//
+//   - TagsPerResourceExceededLimitException
+//     You have exceeded the limit of tags that you can associate with the resource.
+//     A Kinesis video stream can support up to 50 tags.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/CreateStream
 func (c *KinesisVideo) CreateStream(input *CreateStreamInput) (*CreateStreamOutput, error) {
@@ -237,14 +249,13 @@ const opDeleteSignalingChannel = "DeleteSignalingChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteSignalingChannelRequest method.
+//	req, resp := client.DeleteSignalingChannelRequest(params)
 //
-//    // Example sending a request using the DeleteSignalingChannelRequest method.
-//    req, resp := client.DeleteSignalingChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DeleteSignalingChannel
 func (c *KinesisVideo) DeleteSignalingChannelRequest(input *DeleteSignalingChannelInput) (req *request.Request, output *DeleteSignalingChannelOutput) {
@@ -278,26 +289,33 @@ func (c *KinesisVideo) DeleteSignalingChannelRequest(input *DeleteSignalingChann
 // API operation DeleteSignalingChannel for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * AccessDeniedException
-//   You do not have required permissions to perform this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * VersionMismatchException
-//   The stream version that you specified is not the latest version. To get the
-//   latest version, use the DescribeStream (https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeStream.html)
-//   API.
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
 //
-//   * ResourceInUseException
-//   The signaling channel is currently not available for this operation.
+//   - VersionMismatchException
+//     The stream version that you specified is not the latest version. To get the
+//     latest version, use the DescribeStream (https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeStream.html)
+//     API.
+//
+//   - ResourceInUseException
+//     The resource is currently not available for this operation. New resources
+//     cannot be created with the same name as existing resources. Also, resources
+//     cannot be updated or deleted unless they are in an ACTIVE state.
+//
+//     If this exception is returned, do not use it to determine whether the requested
+//     resource already exists. Instead, it is recommended you use the resource-specific
+//     describe API, for example, DescribeStream for video streams.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DeleteSignalingChannel
 func (c *KinesisVideo) DeleteSignalingChannel(input *DeleteSignalingChannelInput) (*DeleteSignalingChannelOutput, error) {
@@ -337,14 +355,13 @@ const opDeleteStream = "DeleteStream"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteStreamRequest method.
+//	req, resp := client.DeleteStreamRequest(params)
 //
-//    // Example sending a request using the DeleteStreamRequest method.
-//    req, resp := client.DeleteStreamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DeleteStream
 func (c *KinesisVideo) DeleteStreamRequest(input *DeleteStreamInput) (req *request.Request, output *DeleteStreamOutput) {
@@ -387,26 +404,33 @@ func (c *KinesisVideo) DeleteStreamRequest(input *DeleteStreamInput) (req *reque
 // API operation DeleteStream for usage and error information.
 //
 // Returned Error Types:
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
 //
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * NotAuthorizedException
-//   The caller is not authorized to perform this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * VersionMismatchException
-//   The stream version that you specified is not the latest version. To get the
-//   latest version, use the DescribeStream (https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeStream.html)
-//   API.
+//   - NotAuthorizedException
+//     The caller is not authorized to perform this operation.
 //
-//   * ResourceInUseException
-//   The signaling channel is currently not available for this operation.
+//   - VersionMismatchException
+//     The stream version that you specified is not the latest version. To get the
+//     latest version, use the DescribeStream (https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeStream.html)
+//     API.
+//
+//   - ResourceInUseException
+//     The resource is currently not available for this operation. New resources
+//     cannot be created with the same name as existing resources. Also, resources
+//     cannot be updated or deleted unless they are in an ACTIVE state.
+//
+//     If this exception is returned, do not use it to determine whether the requested
+//     resource already exists. Instead, it is recommended you use the resource-specific
+//     describe API, for example, DescribeStream for video streams.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DeleteStream
 func (c *KinesisVideo) DeleteStream(input *DeleteStreamInput) (*DeleteStreamOutput, error) {
@@ -430,6 +454,184 @@ func (c *KinesisVideo) DeleteStreamWithContext(ctx aws.Context, input *DeleteStr
 	return out, req.Send()
 }
 
+const opDescribeImageGenerationConfiguration = "DescribeImageGenerationConfiguration"
+
+// DescribeImageGenerationConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeImageGenerationConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeImageGenerationConfiguration for more information on using the DescribeImageGenerationConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeImageGenerationConfigurationRequest method.
+//	req, resp := client.DescribeImageGenerationConfigurationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DescribeImageGenerationConfiguration
+func (c *KinesisVideo) DescribeImageGenerationConfigurationRequest(input *DescribeImageGenerationConfigurationInput) (req *request.Request, output *DescribeImageGenerationConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opDescribeImageGenerationConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/describeImageGenerationConfiguration",
+	}
+
+	if input == nil {
+		input = &DescribeImageGenerationConfigurationInput{}
+	}
+
+	output = &DescribeImageGenerationConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeImageGenerationConfiguration API operation for Amazon Kinesis Video Streams.
+//
+// Gets the ImageGenerationConfiguration for a given Kinesis video stream.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Kinesis Video Streams's
+// API operation DescribeImageGenerationConfiguration for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
+//
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
+//
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
+//
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DescribeImageGenerationConfiguration
+func (c *KinesisVideo) DescribeImageGenerationConfiguration(input *DescribeImageGenerationConfigurationInput) (*DescribeImageGenerationConfigurationOutput, error) {
+	req, out := c.DescribeImageGenerationConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// DescribeImageGenerationConfigurationWithContext is the same as DescribeImageGenerationConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeImageGenerationConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *KinesisVideo) DescribeImageGenerationConfigurationWithContext(ctx aws.Context, input *DescribeImageGenerationConfigurationInput, opts ...request.Option) (*DescribeImageGenerationConfigurationOutput, error) {
+	req, out := c.DescribeImageGenerationConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeNotificationConfiguration = "DescribeNotificationConfiguration"
+
+// DescribeNotificationConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeNotificationConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeNotificationConfiguration for more information on using the DescribeNotificationConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeNotificationConfigurationRequest method.
+//	req, resp := client.DescribeNotificationConfigurationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DescribeNotificationConfiguration
+func (c *KinesisVideo) DescribeNotificationConfigurationRequest(input *DescribeNotificationConfigurationInput) (req *request.Request, output *DescribeNotificationConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opDescribeNotificationConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/describeNotificationConfiguration",
+	}
+
+	if input == nil {
+		input = &DescribeNotificationConfigurationInput{}
+	}
+
+	output = &DescribeNotificationConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeNotificationConfiguration API operation for Amazon Kinesis Video Streams.
+//
+// Gets the NotificationConfiguration for a given Kinesis video stream.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Kinesis Video Streams's
+// API operation DescribeNotificationConfiguration for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
+//
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
+//
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
+//
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DescribeNotificationConfiguration
+func (c *KinesisVideo) DescribeNotificationConfiguration(input *DescribeNotificationConfigurationInput) (*DescribeNotificationConfigurationOutput, error) {
+	req, out := c.DescribeNotificationConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// DescribeNotificationConfigurationWithContext is the same as DescribeNotificationConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeNotificationConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *KinesisVideo) DescribeNotificationConfigurationWithContext(ctx aws.Context, input *DescribeNotificationConfigurationInput, opts ...request.Option) (*DescribeNotificationConfigurationOutput, error) {
+	req, out := c.DescribeNotificationConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeSignalingChannel = "DescribeSignalingChannel"
 
 // DescribeSignalingChannelRequest generates a "aws/request.Request" representing the
@@ -446,14 +648,13 @@ const opDescribeSignalingChannel = "DescribeSignalingChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeSignalingChannelRequest method.
+//	req, resp := client.DescribeSignalingChannelRequest(params)
 //
-//    // Example sending a request using the DescribeSignalingChannelRequest method.
-//    req, resp := client.DescribeSignalingChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DescribeSignalingChannel
 func (c *KinesisVideo) DescribeSignalingChannelRequest(input *DescribeSignalingChannelInput) (req *request.Request, output *DescribeSignalingChannelOutput) {
@@ -486,18 +687,19 @@ func (c *KinesisVideo) DescribeSignalingChannelRequest(input *DescribeSignalingC
 // API operation DescribeSignalingChannel for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * AccessDeniedException
-//   You do not have required permissions to perform this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
+//
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DescribeSignalingChannel
 func (c *KinesisVideo) DescribeSignalingChannel(input *DescribeSignalingChannelInput) (*DescribeSignalingChannelOutput, error) {
@@ -537,14 +739,13 @@ const opDescribeStream = "DescribeStream"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStreamRequest method.
+//	req, resp := client.DescribeStreamRequest(params)
 //
-//    // Example sending a request using the DescribeStreamRequest method.
-//    req, resp := client.DescribeStreamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DescribeStream
 func (c *KinesisVideo) DescribeStreamRequest(input *DescribeStreamInput) (req *request.Request, output *DescribeStreamOutput) {
@@ -576,18 +777,19 @@ func (c *KinesisVideo) DescribeStreamRequest(input *DescribeStreamInput) (req *r
 // API operation DescribeStream for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * NotAuthorizedException
-//   The caller is not authorized to perform this operation.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
+//
+//   - NotAuthorizedException
+//     The caller is not authorized to perform this operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/DescribeStream
 func (c *KinesisVideo) DescribeStream(input *DescribeStreamInput) (*DescribeStreamOutput, error) {
@@ -627,14 +829,13 @@ const opGetDataEndpoint = "GetDataEndpoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDataEndpointRequest method.
+//	req, resp := client.GetDataEndpointRequest(params)
 //
-//    // Example sending a request using the GetDataEndpointRequest method.
-//    req, resp := client.GetDataEndpointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/GetDataEndpoint
 func (c *KinesisVideo) GetDataEndpointRequest(input *GetDataEndpointInput) (req *request.Request, output *GetDataEndpointOutput) {
@@ -673,18 +874,19 @@ func (c *KinesisVideo) GetDataEndpointRequest(input *GetDataEndpointInput) (req 
 // API operation GetDataEndpoint for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * NotAuthorizedException
-//   The caller is not authorized to perform this operation.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
+//
+//   - NotAuthorizedException
+//     The caller is not authorized to perform this operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/GetDataEndpoint
 func (c *KinesisVideo) GetDataEndpoint(input *GetDataEndpointInput) (*GetDataEndpointOutput, error) {
@@ -724,14 +926,13 @@ const opGetSignalingChannelEndpoint = "GetSignalingChannelEndpoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetSignalingChannelEndpointRequest method.
+//	req, resp := client.GetSignalingChannelEndpointRequest(params)
 //
-//    // Example sending a request using the GetSignalingChannelEndpointRequest method.
-//    req, resp := client.GetSignalingChannelEndpointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/GetSignalingChannelEndpoint
 func (c *KinesisVideo) GetSignalingChannelEndpointRequest(input *GetSignalingChannelEndpointInput) (req *request.Request, output *GetSignalingChannelEndpointOutput) {
@@ -774,21 +975,28 @@ func (c *KinesisVideo) GetSignalingChannelEndpointRequest(input *GetSignalingCha
 // API operation GetSignalingChannelEndpoint for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * ResourceInUseException
-//   The signaling channel is currently not available for this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * AccessDeniedException
-//   You do not have required permissions to perform this operation.
+//   - ResourceInUseException
+//     The resource is currently not available for this operation. New resources
+//     cannot be created with the same name as existing resources. Also, resources
+//     cannot be updated or deleted unless they are in an ACTIVE state.
+//
+//     If this exception is returned, do not use it to determine whether the requested
+//     resource already exists. Instead, it is recommended you use the resource-specific
+//     describe API, for example, DescribeStream for video streams.
+//
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/GetSignalingChannelEndpoint
 func (c *KinesisVideo) GetSignalingChannelEndpoint(input *GetSignalingChannelEndpointInput) (*GetSignalingChannelEndpointOutput, error) {
@@ -828,14 +1036,13 @@ const opListSignalingChannels = "ListSignalingChannels"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListSignalingChannelsRequest method.
+//	req, resp := client.ListSignalingChannelsRequest(params)
 //
-//    // Example sending a request using the ListSignalingChannelsRequest method.
-//    req, resp := client.ListSignalingChannelsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/ListSignalingChannels
 func (c *KinesisVideo) ListSignalingChannelsRequest(input *ListSignalingChannelsInput) (req *request.Request, output *ListSignalingChannelsOutput) {
@@ -874,15 +1081,16 @@ func (c *KinesisVideo) ListSignalingChannelsRequest(input *ListSignalingChannels
 // API operation ListSignalingChannels for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * AccessDeniedException
-//   You do not have required permissions to perform this operation.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
+//
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/ListSignalingChannels
 func (c *KinesisVideo) ListSignalingChannels(input *ListSignalingChannelsInput) (*ListSignalingChannelsOutput, error) {
@@ -914,15 +1122,14 @@ func (c *KinesisVideo) ListSignalingChannelsWithContext(ctx aws.Context, input *
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListSignalingChannels operation.
-//    pageNum := 0
-//    err := client.ListSignalingChannelsPages(params,
-//        func(page *kinesisvideo.ListSignalingChannelsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListSignalingChannels operation.
+//	pageNum := 0
+//	err := client.ListSignalingChannelsPages(params,
+//	    func(page *kinesisvideo.ListSignalingChannelsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *KinesisVideo) ListSignalingChannelsPages(input *ListSignalingChannelsInput, fn func(*ListSignalingChannelsOutput, bool) bool) error {
 	return c.ListSignalingChannelsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -974,14 +1181,13 @@ const opListStreams = "ListStreams"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListStreamsRequest method.
+//	req, resp := client.ListStreamsRequest(params)
 //
-//    // Example sending a request using the ListStreamsRequest method.
-//    req, resp := client.ListStreamsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/ListStreams
 func (c *KinesisVideo) ListStreamsRequest(input *ListStreamsInput) (req *request.Request, output *ListStreamsOutput) {
@@ -1020,12 +1226,13 @@ func (c *KinesisVideo) ListStreamsRequest(input *ListStreamsInput) (req *request
 // API operation ListStreams for usage and error information.
 //
 // Returned Error Types:
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
 //
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
+//
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/ListStreams
 func (c *KinesisVideo) ListStreams(input *ListStreamsInput) (*ListStreamsOutput, error) {
@@ -1057,15 +1264,14 @@ func (c *KinesisVideo) ListStreamsWithContext(ctx aws.Context, input *ListStream
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListStreams operation.
-//    pageNum := 0
-//    err := client.ListStreamsPages(params,
-//        func(page *kinesisvideo.ListStreamsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListStreams operation.
+//	pageNum := 0
+//	err := client.ListStreamsPages(params,
+//	    func(page *kinesisvideo.ListStreamsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *KinesisVideo) ListStreamsPages(input *ListStreamsInput, fn func(*ListStreamsOutput, bool) bool) error {
 	return c.ListStreamsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1117,14 +1323,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/ListTagsForResource
 func (c *KinesisVideo) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -1155,18 +1360,19 @@ func (c *KinesisVideo) ListTagsForResourceRequest(input *ListTagsForResourceInpu
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * AccessDeniedException
-//   You do not have required permissions to perform this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
+//
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/ListTagsForResource
 func (c *KinesisVideo) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -1206,14 +1412,13 @@ const opListTagsForStream = "ListTagsForStream"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForStreamRequest method.
+//	req, resp := client.ListTagsForStreamRequest(params)
 //
-//    // Example sending a request using the ListTagsForStreamRequest method.
-//    req, resp := client.ListTagsForStreamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/ListTagsForStream
 func (c *KinesisVideo) ListTagsForStreamRequest(input *ListTagsForStreamInput) (req *request.Request, output *ListTagsForStreamOutput) {
@@ -1246,21 +1451,22 @@ func (c *KinesisVideo) ListTagsForStreamRequest(input *ListTagsForStreamInput) (
 // API operation ListTagsForStream for usage and error information.
 //
 // Returned Error Types:
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
 //
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * NotAuthorizedException
-//   The caller is not authorized to perform this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * InvalidResourceFormatException
-//   The format of the StreamARN is invalid.
+//   - NotAuthorizedException
+//     The caller is not authorized to perform this operation.
+//
+//   - InvalidResourceFormatException
+//     The format of the StreamARN is invalid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/ListTagsForStream
 func (c *KinesisVideo) ListTagsForStream(input *ListTagsForStreamInput) (*ListTagsForStreamOutput, error) {
@@ -1300,14 +1506,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/TagResource
 func (c *KinesisVideo) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -1330,11 +1535,11 @@ func (c *KinesisVideo) TagResourceRequest(input *TagResourceInput) (req *request
 // TagResource API operation for Amazon Kinesis Video Streams.
 //
 // Adds one or more tags to a signaling channel. A tag is a key-value pair (the
-// value is optional) that you can define and assign to AWS resources. If you
-// specify a tag that already exists, the tag value is replaced with the value
-// that you specify in the request. For more information, see Using Cost Allocation
-// Tags (https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html)
-// in the AWS Billing and Cost Management User Guide.
+// value is optional) that you can define and assign to Amazon Web Services
+// resources. If you specify a tag that already exists, the tag value is replaced
+// with the value that you specify in the request. For more information, see
+// Using Cost Allocation Tags (https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html)
+// in the Billing and Cost Management and Cost Management User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1344,22 +1549,23 @@ func (c *KinesisVideo) TagResourceRequest(input *TagResourceInput) (req *request
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * AccessDeniedException
-//   You do not have required permissions to perform this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * TagsPerResourceExceededLimitException
-//   You have exceeded the limit of tags that you can associate with the resource.
-//   Kinesis video streams support up to 50 tags.
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
+//
+//   - TagsPerResourceExceededLimitException
+//     You have exceeded the limit of tags that you can associate with the resource.
+//     A Kinesis video stream can support up to 50 tags.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/TagResource
 func (c *KinesisVideo) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -1399,14 +1605,13 @@ const opTagStream = "TagStream"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagStreamRequest method.
+//	req, resp := client.TagStreamRequest(params)
 //
-//    // Example sending a request using the TagStreamRequest method.
-//    req, resp := client.TagStreamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/TagStream
 func (c *KinesisVideo) TagStreamRequest(input *TagStreamInput) (req *request.Request, output *TagStreamOutput) {
@@ -1429,17 +1634,17 @@ func (c *KinesisVideo) TagStreamRequest(input *TagStreamInput) (req *request.Req
 // TagStream API operation for Amazon Kinesis Video Streams.
 //
 // Adds one or more tags to a stream. A tag is a key-value pair (the value is
-// optional) that you can define and assign to AWS resources. If you specify
-// a tag that already exists, the tag value is replaced with the value that
-// you specify in the request. For more information, see Using Cost Allocation
-// Tags (https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html)
-// in the AWS Billing and Cost Management User Guide.
+// optional) that you can define and assign to Amazon Web Services resources.
+// If you specify a tag that already exists, the tag value is replaced with
+// the value that you specify in the request. For more information, see Using
+// Cost Allocation Tags (https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html)
+// in the Billing and Cost Management and Cost Management User Guide.
 //
 // You must provide either the StreamName or the StreamARN.
 //
 // This operation requires permission for the KinesisVideo:TagStream action.
 //
-// Kinesis video streams support up to 50 tags.
+// A Kinesis video stream can support up to 50 tags.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1449,25 +1654,26 @@ func (c *KinesisVideo) TagStreamRequest(input *TagStreamInput) (req *request.Req
 // API operation TagStream for usage and error information.
 //
 // Returned Error Types:
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
 //
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * NotAuthorizedException
-//   The caller is not authorized to perform this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * InvalidResourceFormatException
-//   The format of the StreamARN is invalid.
+//   - NotAuthorizedException
+//     The caller is not authorized to perform this operation.
 //
-//   * TagsPerResourceExceededLimitException
-//   You have exceeded the limit of tags that you can associate with the resource.
-//   Kinesis video streams support up to 50 tags.
+//   - InvalidResourceFormatException
+//     The format of the StreamARN is invalid.
+//
+//   - TagsPerResourceExceededLimitException
+//     You have exceeded the limit of tags that you can associate with the resource.
+//     A Kinesis video stream can support up to 50 tags.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/TagStream
 func (c *KinesisVideo) TagStream(input *TagStreamInput) (*TagStreamOutput, error) {
@@ -1507,14 +1713,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UntagResource
 func (c *KinesisVideo) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -1548,18 +1753,19 @@ func (c *KinesisVideo) UntagResourceRequest(input *UntagResourceInput) (req *req
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * AccessDeniedException
-//   You do not have required permissions to perform this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
+//
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UntagResource
 func (c *KinesisVideo) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -1599,14 +1805,13 @@ const opUntagStream = "UntagStream"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagStreamRequest method.
+//	req, resp := client.UntagStreamRequest(params)
 //
-//    // Example sending a request using the UntagStreamRequest method.
-//    req, resp := client.UntagStreamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UntagStream
 func (c *KinesisVideo) UntagStreamRequest(input *UntagStreamInput) (req *request.Request, output *UntagStreamOutput) {
@@ -1642,21 +1847,22 @@ func (c *KinesisVideo) UntagStreamRequest(input *UntagStreamInput) (req *request
 // API operation UntagStream for usage and error information.
 //
 // Returned Error Types:
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
 //
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * NotAuthorizedException
-//   The caller is not authorized to perform this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * InvalidResourceFormatException
-//   The format of the StreamARN is invalid.
+//   - NotAuthorizedException
+//     The caller is not authorized to perform this operation.
+//
+//   - InvalidResourceFormatException
+//     The format of the StreamARN is invalid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UntagStream
 func (c *KinesisVideo) UntagStream(input *UntagStreamInput) (*UntagStreamOutput, error) {
@@ -1696,14 +1902,13 @@ const opUpdateDataRetention = "UpdateDataRetention"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateDataRetentionRequest method.
+//	req, resp := client.UpdateDataRetentionRequest(params)
 //
-//    // Example sending a request using the UpdateDataRetentionRequest method.
-//    req, resp := client.UpdateDataRetentionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UpdateDataRetention
 func (c *KinesisVideo) UpdateDataRetentionRequest(input *UpdateDataRetentionInput) (req *request.Request, output *UpdateDataRetentionOutput) {
@@ -1737,15 +1942,15 @@ func (c *KinesisVideo) UpdateDataRetentionRequest(input *UpdateDataRetentionInpu
 //
 // Changing the data retention period affects the data in the stream as follows:
 //
-//    * If the data retention period is increased, existing data is retained
-//    for the new retention period. For example, if the data retention period
-//    is increased from one hour to seven hours, all existing data is retained
-//    for seven hours.
+//   - If the data retention period is increased, existing data is retained
+//     for the new retention period. For example, if the data retention period
+//     is increased from one hour to seven hours, all existing data is retained
+//     for seven hours.
 //
-//    * If the data retention period is decreased, existing data is retained
-//    for the new retention period. For example, if the data retention period
-//    is decreased from seven hours to one hour, all existing data is retained
-//    for one hour, and any data older than one hour is deleted immediately.
+//   - If the data retention period is decreased, existing data is retained
+//     for the new retention period. For example, if the data retention period
+//     is decreased from seven hours to one hour, all existing data is retained
+//     for one hour, and any data older than one hour is deleted immediately.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1755,26 +1960,33 @@ func (c *KinesisVideo) UpdateDataRetentionRequest(input *UpdateDataRetentionInpu
 // API operation UpdateDataRetention for usage and error information.
 //
 // Returned Error Types:
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
 //
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * ResourceInUseException
-//   The signaling channel is currently not available for this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * NotAuthorizedException
-//   The caller is not authorized to perform this operation.
+//   - ResourceInUseException
+//     The resource is currently not available for this operation. New resources
+//     cannot be created with the same name as existing resources. Also, resources
+//     cannot be updated or deleted unless they are in an ACTIVE state.
 //
-//   * VersionMismatchException
-//   The stream version that you specified is not the latest version. To get the
-//   latest version, use the DescribeStream (https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeStream.html)
-//   API.
+//     If this exception is returned, do not use it to determine whether the requested
+//     resource already exists. Instead, it is recommended you use the resource-specific
+//     describe API, for example, DescribeStream for video streams.
+//
+//   - NotAuthorizedException
+//     The caller is not authorized to perform this operation.
+//
+//   - VersionMismatchException
+//     The stream version that you specified is not the latest version. To get the
+//     latest version, use the DescribeStream (https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeStream.html)
+//     API.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UpdateDataRetention
 func (c *KinesisVideo) UpdateDataRetention(input *UpdateDataRetentionInput) (*UpdateDataRetentionOutput, error) {
@@ -1798,6 +2010,210 @@ func (c *KinesisVideo) UpdateDataRetentionWithContext(ctx aws.Context, input *Up
 	return out, req.Send()
 }
 
+const opUpdateImageGenerationConfiguration = "UpdateImageGenerationConfiguration"
+
+// UpdateImageGenerationConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateImageGenerationConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateImageGenerationConfiguration for more information on using the UpdateImageGenerationConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateImageGenerationConfigurationRequest method.
+//	req, resp := client.UpdateImageGenerationConfigurationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UpdateImageGenerationConfiguration
+func (c *KinesisVideo) UpdateImageGenerationConfigurationRequest(input *UpdateImageGenerationConfigurationInput) (req *request.Request, output *UpdateImageGenerationConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opUpdateImageGenerationConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/updateImageGenerationConfiguration",
+	}
+
+	if input == nil {
+		input = &UpdateImageGenerationConfigurationInput{}
+	}
+
+	output = &UpdateImageGenerationConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UpdateImageGenerationConfiguration API operation for Amazon Kinesis Video Streams.
+//
+// Updates the StreamInfo and ImageProcessingConfiguration fields.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Kinesis Video Streams's
+// API operation UpdateImageGenerationConfiguration for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
+//
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
+//
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
+//
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
+//
+//   - ResourceInUseException
+//     The resource is currently not available for this operation. New resources
+//     cannot be created with the same name as existing resources. Also, resources
+//     cannot be updated or deleted unless they are in an ACTIVE state.
+//
+//     If this exception is returned, do not use it to determine whether the requested
+//     resource already exists. Instead, it is recommended you use the resource-specific
+//     describe API, for example, DescribeStream for video streams.
+//
+//   - NoDataRetentionException
+//     The Stream data retention in hours is equal to zero.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UpdateImageGenerationConfiguration
+func (c *KinesisVideo) UpdateImageGenerationConfiguration(input *UpdateImageGenerationConfigurationInput) (*UpdateImageGenerationConfigurationOutput, error) {
+	req, out := c.UpdateImageGenerationConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// UpdateImageGenerationConfigurationWithContext is the same as UpdateImageGenerationConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateImageGenerationConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *KinesisVideo) UpdateImageGenerationConfigurationWithContext(ctx aws.Context, input *UpdateImageGenerationConfigurationInput, opts ...request.Option) (*UpdateImageGenerationConfigurationOutput, error) {
+	req, out := c.UpdateImageGenerationConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateNotificationConfiguration = "UpdateNotificationConfiguration"
+
+// UpdateNotificationConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateNotificationConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateNotificationConfiguration for more information on using the UpdateNotificationConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateNotificationConfigurationRequest method.
+//	req, resp := client.UpdateNotificationConfigurationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UpdateNotificationConfiguration
+func (c *KinesisVideo) UpdateNotificationConfigurationRequest(input *UpdateNotificationConfigurationInput) (req *request.Request, output *UpdateNotificationConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opUpdateNotificationConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/updateNotificationConfiguration",
+	}
+
+	if input == nil {
+		input = &UpdateNotificationConfigurationInput{}
+	}
+
+	output = &UpdateNotificationConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UpdateNotificationConfiguration API operation for Amazon Kinesis Video Streams.
+//
+// Updates the notification information for a stream.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Kinesis Video Streams's
+// API operation UpdateNotificationConfiguration for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
+//
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
+//
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
+//
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
+//
+//   - ResourceInUseException
+//     The resource is currently not available for this operation. New resources
+//     cannot be created with the same name as existing resources. Also, resources
+//     cannot be updated or deleted unless they are in an ACTIVE state.
+//
+//     If this exception is returned, do not use it to determine whether the requested
+//     resource already exists. Instead, it is recommended you use the resource-specific
+//     describe API, for example, DescribeStream for video streams.
+//
+//   - NoDataRetentionException
+//     The Stream data retention in hours is equal to zero.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UpdateNotificationConfiguration
+func (c *KinesisVideo) UpdateNotificationConfiguration(input *UpdateNotificationConfigurationInput) (*UpdateNotificationConfigurationOutput, error) {
+	req, out := c.UpdateNotificationConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// UpdateNotificationConfigurationWithContext is the same as UpdateNotificationConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateNotificationConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *KinesisVideo) UpdateNotificationConfigurationWithContext(ctx aws.Context, input *UpdateNotificationConfigurationInput, opts ...request.Option) (*UpdateNotificationConfigurationOutput, error) {
+	req, out := c.UpdateNotificationConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateSignalingChannel = "UpdateSignalingChannel"
 
 // UpdateSignalingChannelRequest generates a "aws/request.Request" representing the
@@ -1814,14 +2230,13 @@ const opUpdateSignalingChannel = "UpdateSignalingChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSignalingChannelRequest method.
+//	req, resp := client.UpdateSignalingChannelRequest(params)
 //
-//    // Example sending a request using the UpdateSignalingChannelRequest method.
-//    req, resp := client.UpdateSignalingChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UpdateSignalingChannel
 func (c *KinesisVideo) UpdateSignalingChannelRequest(input *UpdateSignalingChannelInput) (req *request.Request, output *UpdateSignalingChannelOutput) {
@@ -1859,26 +2274,33 @@ func (c *KinesisVideo) UpdateSignalingChannelRequest(input *UpdateSignalingChann
 // API operation UpdateSignalingChannel for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * ResourceInUseException
-//   The signaling channel is currently not available for this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * AccessDeniedException
-//   You do not have required permissions to perform this operation.
+//   - ResourceInUseException
+//     The resource is currently not available for this operation. New resources
+//     cannot be created with the same name as existing resources. Also, resources
+//     cannot be updated or deleted unless they are in an ACTIVE state.
 //
-//   * VersionMismatchException
-//   The stream version that you specified is not the latest version. To get the
-//   latest version, use the DescribeStream (https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeStream.html)
-//   API.
+//     If this exception is returned, do not use it to determine whether the requested
+//     resource already exists. Instead, it is recommended you use the resource-specific
+//     describe API, for example, DescribeStream for video streams.
+//
+//   - AccessDeniedException
+//     You do not have required permissions to perform this operation.
+//
+//   - VersionMismatchException
+//     The stream version that you specified is not the latest version. To get the
+//     latest version, use the DescribeStream (https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeStream.html)
+//     API.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UpdateSignalingChannel
 func (c *KinesisVideo) UpdateSignalingChannel(input *UpdateSignalingChannelInput) (*UpdateSignalingChannelOutput, error) {
@@ -1918,14 +2340,13 @@ const opUpdateStream = "UpdateStream"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateStreamRequest method.
+//	req, resp := client.UpdateStreamRequest(params)
 //
-//    // Example sending a request using the UpdateStreamRequest method.
-//    req, resp := client.UpdateStreamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UpdateStream
 func (c *KinesisVideo) UpdateStreamRequest(input *UpdateStreamInput) (req *request.Request, output *UpdateStreamOutput) {
@@ -1968,26 +2389,33 @@ func (c *KinesisVideo) UpdateStreamRequest(input *UpdateStreamInput) (req *reque
 // API operation UpdateStream for usage and error information.
 //
 // Returned Error Types:
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   the limit of allowed client calls. Try making the call later.
 //
-//   * InvalidArgumentException
-//   The value for this input parameter is invalid.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     the limit of allowed client calls. Try making the call later.
 //
-//   * ResourceNotFoundException
-//   Amazon Kinesis Video Streams can't find the stream that you specified.
+//   - InvalidArgumentException
+//     The value for this input parameter is invalid.
 //
-//   * ResourceInUseException
-//   The signaling channel is currently not available for this operation.
+//   - ResourceNotFoundException
+//     Amazon Kinesis Video Streams can't find the stream that you specified.
 //
-//   * NotAuthorizedException
-//   The caller is not authorized to perform this operation.
+//   - ResourceInUseException
+//     The resource is currently not available for this operation. New resources
+//     cannot be created with the same name as existing resources. Also, resources
+//     cannot be updated or deleted unless they are in an ACTIVE state.
 //
-//   * VersionMismatchException
-//   The stream version that you specified is not the latest version. To get the
-//   latest version, use the DescribeStream (https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeStream.html)
-//   API.
+//     If this exception is returned, do not use it to determine whether the requested
+//     resource already exists. Instead, it is recommended you use the resource-specific
+//     describe API, for example, DescribeStream for video streams.
+//
+//   - NotAuthorizedException
+//     The caller is not authorized to perform this operation.
+//
+//   - VersionMismatchException
+//     The stream version that you specified is not the latest version. To get the
+//     latest version, use the DescribeStream (https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeStream.html)
+//     API.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisvideo-2017-09-30/UpdateStream
 func (c *KinesisVideo) UpdateStream(input *UpdateStreamInput) (*UpdateStreamOutput, error) {
@@ -2076,7 +2504,7 @@ func (s *AccessDeniedException) RequestID() string {
 }
 
 // You have reached the maximum limit of active signaling channels for this
-// AWS account in this region.
+// Amazon Web Services account in this region.
 type AccountChannelLimitExceededException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -2417,7 +2845,7 @@ type CreateSignalingChannelInput struct {
 	_ struct{} `type:"structure"`
 
 	// A name for the signaling channel that you are creating. It must be unique
-	// for each AWS account and AWS Region.
+	// for each Amazon Web Services account and Amazon Web Services Region.
 	//
 	// ChannelName is a required field
 	ChannelName *string `min:"1" type:"string" required:"true"`
@@ -2557,8 +2985,8 @@ type CreateStreamInput struct {
 	// In the current implementation, Kinesis Video Streams does not use this name.
 	DeviceName *string `min:"1" type:"string"`
 
-	// The ID of the AWS Key Management Service (AWS KMS) key that you want Kinesis
-	// Video Streams to use to encrypt stream data.
+	// The ID of the Key Management Service (KMS) key that you want Kinesis Video
+	// Streams to use to encrypt stream data.
 	//
 	// If no key ID is specified, the default, Kinesis Video-managed key (aws/kinesisvideo)
 	// is used.
@@ -2875,6 +3303,189 @@ func (s DeleteStreamOutput) String() string {
 // value will be replaced with "sensitive".
 func (s DeleteStreamOutput) GoString() string {
 	return s.String()
+}
+
+type DescribeImageGenerationConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the Kinesis video stream from which to
+	// retrieve the image generation configuration. You must specify either the
+	// StreamName or the StreamARN.
+	StreamARN *string `min:"1" type:"string"`
+
+	// The name of the stream from which to retrieve the image generation configuration.
+	// You must specify either the StreamName or the StreamARN.
+	StreamName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeImageGenerationConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeImageGenerationConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeImageGenerationConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeImageGenerationConfigurationInput"}
+	if s.StreamARN != nil && len(*s.StreamARN) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamARN", 1))
+	}
+	if s.StreamName != nil && len(*s.StreamName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetStreamARN sets the StreamARN field's value.
+func (s *DescribeImageGenerationConfigurationInput) SetStreamARN(v string) *DescribeImageGenerationConfigurationInput {
+	s.StreamARN = &v
+	return s
+}
+
+// SetStreamName sets the StreamName field's value.
+func (s *DescribeImageGenerationConfigurationInput) SetStreamName(v string) *DescribeImageGenerationConfigurationInput {
+	s.StreamName = &v
+	return s
+}
+
+type DescribeImageGenerationConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The structure that contains the information required for the Kinesis video
+	// stream (KVS) images delivery. If this structure is null, the configuration
+	// will be deleted from the stream.
+	ImageGenerationConfiguration *ImageGenerationConfiguration `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeImageGenerationConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeImageGenerationConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetImageGenerationConfiguration sets the ImageGenerationConfiguration field's value.
+func (s *DescribeImageGenerationConfigurationOutput) SetImageGenerationConfiguration(v *ImageGenerationConfiguration) *DescribeImageGenerationConfigurationOutput {
+	s.ImageGenerationConfiguration = v
+	return s
+}
+
+type DescribeNotificationConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the Kinesis video stream from where you
+	// want to retrieve the notification configuration. You must specify either
+	// the StreamName or the StreamARN.
+	StreamARN *string `min:"1" type:"string"`
+
+	// The name of the stream from which to retrieve the notification configuration.
+	// You must specify either the StreamName or the StreamARN.
+	StreamName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeNotificationConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeNotificationConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeNotificationConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeNotificationConfigurationInput"}
+	if s.StreamARN != nil && len(*s.StreamARN) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamARN", 1))
+	}
+	if s.StreamName != nil && len(*s.StreamName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetStreamARN sets the StreamARN field's value.
+func (s *DescribeNotificationConfigurationInput) SetStreamARN(v string) *DescribeNotificationConfigurationInput {
+	s.StreamARN = &v
+	return s
+}
+
+// SetStreamName sets the StreamName field's value.
+func (s *DescribeNotificationConfigurationInput) SetStreamName(v string) *DescribeNotificationConfigurationInput {
+	s.StreamName = &v
+	return s
+}
+
+type DescribeNotificationConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The structure that contains the information required for notifications. If
+	// the structure is null, the configuration will be deleted from the stream.
+	NotificationConfiguration *NotificationConfiguration `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeNotificationConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeNotificationConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetNotificationConfiguration sets the NotificationConfiguration field's value.
+func (s *DescribeNotificationConfigurationOutput) SetNotificationConfiguration(v *NotificationConfiguration) *DescribeNotificationConfigurationOutput {
+	s.NotificationConfiguration = v
+	return s
 }
 
 type DescribeSignalingChannelInput struct {
@@ -3313,6 +3924,247 @@ func (s GetSignalingChannelEndpointOutput) GoString() string {
 // SetResourceEndpointList sets the ResourceEndpointList field's value.
 func (s *GetSignalingChannelEndpointOutput) SetResourceEndpointList(v []*ResourceEndpointListItem) *GetSignalingChannelEndpointOutput {
 	s.ResourceEndpointList = v
+	return s
+}
+
+// The structure that contains the information required for the KVS images delivery.
+// If null, the configuration will be deleted from the stream.
+type ImageGenerationConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The structure that contains the information required to deliver images to
+	// a customer.
+	//
+	// DestinationConfig is a required field
+	DestinationConfig *ImageGenerationDestinationConfig `type:"structure" required:"true"`
+
+	// The accepted image format.
+	//
+	// Format is a required field
+	Format *string `type:"string" required:"true" enum:"Format"`
+
+	// The list of a key-value pair structure that contains extra parameters that
+	// can be applied when the image is generated. The FormatConfig key is the JPEGQuality,
+	// which indicates the JPEG quality key to be used to generate the image. The
+	// FormatConfig value accepts ints from 1 to 100. If the value is 1, the image
+	// will be generated with less quality and the best compression. If the value
+	// is 100, the image will be generated with the best quality and less compression.
+	// If no value is provided, the default value of the JPEGQuality key will be
+	// set to 80.
+	FormatConfig map[string]*string `min:"1" type:"map"`
+
+	// The height of the output image that is used in conjunction with the WidthPixels
+	// parameter. When both HeightPixels and WidthPixels parameters are provided,
+	// the image will be stretched to fit the specified aspect ratio. If only the
+	// HeightPixels parameter is provided, its original aspect ratio will be used
+	// to calculate the WidthPixels ratio. If neither parameter is provided, the
+	// original image size will be returned.
+	HeightPixels *int64 `min:"1" type:"integer"`
+
+	// The origin of the Server or Producer timestamps to use to generate the images.
+	//
+	// ImageSelectorType is a required field
+	ImageSelectorType *string `type:"string" required:"true" enum:"ImageSelectorType"`
+
+	// The time interval in milliseconds (ms) at which the images need to be generated
+	// from the stream. The minimum value that can be provided is 33 ms, because
+	// a camera that generates content at 30 FPS would create a frame every 33.3
+	// ms. If the timestamp range is less than the sampling interval, the Image
+	// from the StartTimestamp will be returned if available.
+	//
+	// SamplingInterval is a required field
+	SamplingInterval *int64 `min:"3000" type:"integer" required:"true"`
+
+	// Indicates whether the ContinuousImageGenerationConfigurations API is enabled
+	// or disabled.
+	//
+	// Status is a required field
+	Status *string `type:"string" required:"true" enum:"ConfigurationStatus"`
+
+	// The width of the output image that is used in conjunction with the HeightPixels
+	// parameter. When both WidthPixels and HeightPixels parameters are provided,
+	// the image will be stretched to fit the specified aspect ratio. If only the
+	// WidthPixels parameter is provided, its original aspect ratio will be used
+	// to calculate the HeightPixels ratio. If neither parameter is provided, the
+	// original image size will be returned.
+	WidthPixels *int64 `min:"1" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ImageGenerationConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ImageGenerationConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ImageGenerationConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ImageGenerationConfiguration"}
+	if s.DestinationConfig == nil {
+		invalidParams.Add(request.NewErrParamRequired("DestinationConfig"))
+	}
+	if s.Format == nil {
+		invalidParams.Add(request.NewErrParamRequired("Format"))
+	}
+	if s.FormatConfig != nil && len(s.FormatConfig) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FormatConfig", 1))
+	}
+	if s.HeightPixels != nil && *s.HeightPixels < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("HeightPixels", 1))
+	}
+	if s.ImageSelectorType == nil {
+		invalidParams.Add(request.NewErrParamRequired("ImageSelectorType"))
+	}
+	if s.SamplingInterval == nil {
+		invalidParams.Add(request.NewErrParamRequired("SamplingInterval"))
+	}
+	if s.SamplingInterval != nil && *s.SamplingInterval < 3000 {
+		invalidParams.Add(request.NewErrParamMinValue("SamplingInterval", 3000))
+	}
+	if s.Status == nil {
+		invalidParams.Add(request.NewErrParamRequired("Status"))
+	}
+	if s.WidthPixels != nil && *s.WidthPixels < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("WidthPixels", 1))
+	}
+	if s.DestinationConfig != nil {
+		if err := s.DestinationConfig.Validate(); err != nil {
+			invalidParams.AddNested("DestinationConfig", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDestinationConfig sets the DestinationConfig field's value.
+func (s *ImageGenerationConfiguration) SetDestinationConfig(v *ImageGenerationDestinationConfig) *ImageGenerationConfiguration {
+	s.DestinationConfig = v
+	return s
+}
+
+// SetFormat sets the Format field's value.
+func (s *ImageGenerationConfiguration) SetFormat(v string) *ImageGenerationConfiguration {
+	s.Format = &v
+	return s
+}
+
+// SetFormatConfig sets the FormatConfig field's value.
+func (s *ImageGenerationConfiguration) SetFormatConfig(v map[string]*string) *ImageGenerationConfiguration {
+	s.FormatConfig = v
+	return s
+}
+
+// SetHeightPixels sets the HeightPixels field's value.
+func (s *ImageGenerationConfiguration) SetHeightPixels(v int64) *ImageGenerationConfiguration {
+	s.HeightPixels = &v
+	return s
+}
+
+// SetImageSelectorType sets the ImageSelectorType field's value.
+func (s *ImageGenerationConfiguration) SetImageSelectorType(v string) *ImageGenerationConfiguration {
+	s.ImageSelectorType = &v
+	return s
+}
+
+// SetSamplingInterval sets the SamplingInterval field's value.
+func (s *ImageGenerationConfiguration) SetSamplingInterval(v int64) *ImageGenerationConfiguration {
+	s.SamplingInterval = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *ImageGenerationConfiguration) SetStatus(v string) *ImageGenerationConfiguration {
+	s.Status = &v
+	return s
+}
+
+// SetWidthPixels sets the WidthPixels field's value.
+func (s *ImageGenerationConfiguration) SetWidthPixels(v int64) *ImageGenerationConfiguration {
+	s.WidthPixels = &v
+	return s
+}
+
+// The structure that contains the information required to deliver images to
+// a customer.
+type ImageGenerationDestinationConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The AWS Region of the S3 bucket where images will be delivered. This DestinationRegion
+	// must match the Region where the stream is located.
+	//
+	// DestinationRegion is a required field
+	DestinationRegion *string `min:"9" type:"string" required:"true"`
+
+	// The Uniform Resource Idenifier (URI) that identifies where the images will
+	// be delivered.
+	//
+	// Uri is a required field
+	Uri *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ImageGenerationDestinationConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ImageGenerationDestinationConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ImageGenerationDestinationConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ImageGenerationDestinationConfig"}
+	if s.DestinationRegion == nil {
+		invalidParams.Add(request.NewErrParamRequired("DestinationRegion"))
+	}
+	if s.DestinationRegion != nil && len(*s.DestinationRegion) < 9 {
+		invalidParams.Add(request.NewErrParamMinLen("DestinationRegion", 9))
+	}
+	if s.Uri == nil {
+		invalidParams.Add(request.NewErrParamRequired("Uri"))
+	}
+	if s.Uri != nil && len(*s.Uri) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Uri", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDestinationRegion sets the DestinationRegion field's value.
+func (s *ImageGenerationDestinationConfig) SetDestinationRegion(v string) *ImageGenerationDestinationConfig {
+	s.DestinationRegion = &v
+	return s
+}
+
+// SetUri sets the Uri field's value.
+func (s *ImageGenerationDestinationConfig) SetUri(v string) *ImageGenerationDestinationConfig {
+	s.Uri = &v
 	return s
 }
 
@@ -3942,6 +4794,70 @@ func (s *ListTagsForStreamOutput) SetTags(v map[string]*string) *ListTagsForStre
 	return s
 }
 
+// The Stream data retention in hours is equal to zero.
+type NoDataRetentionException struct {
+	_            struct{}                  `type:"structure"`
+	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
+
+	Message_ *string `locationName:"Message" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s NoDataRetentionException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s NoDataRetentionException) GoString() string {
+	return s.String()
+}
+
+func newErrorNoDataRetentionException(v protocol.ResponseMetadata) error {
+	return &NoDataRetentionException{
+		RespMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s *NoDataRetentionException) Code() string {
+	return "NoDataRetentionException"
+}
+
+// Message returns the exception's message.
+func (s *NoDataRetentionException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s *NoDataRetentionException) OrigErr() error {
+	return nil
+}
+
+func (s *NoDataRetentionException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s *NoDataRetentionException) StatusCode() int {
+	return s.RespMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s *NoDataRetentionException) RequestID() string {
+	return s.RespMetadata.RequestID
+}
+
 // The caller is not authorized to perform this operation.
 type NotAuthorizedException struct {
 	_            struct{}                  `type:"structure"`
@@ -4006,6 +4922,126 @@ func (s *NotAuthorizedException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// The structure that contains the notification information for the KVS images
+// delivery. If this parameter is null, the configuration will be deleted from
+// the stream.
+type NotificationConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The destination information required to deliver a notification to a customer.
+	//
+	// DestinationConfig is a required field
+	DestinationConfig *NotificationDestinationConfig `type:"structure" required:"true"`
+
+	// Indicates if a notification configuration is enabled or disabled.
+	//
+	// Status is a required field
+	Status *string `type:"string" required:"true" enum:"ConfigurationStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s NotificationConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s NotificationConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *NotificationConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "NotificationConfiguration"}
+	if s.DestinationConfig == nil {
+		invalidParams.Add(request.NewErrParamRequired("DestinationConfig"))
+	}
+	if s.Status == nil {
+		invalidParams.Add(request.NewErrParamRequired("Status"))
+	}
+	if s.DestinationConfig != nil {
+		if err := s.DestinationConfig.Validate(); err != nil {
+			invalidParams.AddNested("DestinationConfig", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDestinationConfig sets the DestinationConfig field's value.
+func (s *NotificationConfiguration) SetDestinationConfig(v *NotificationDestinationConfig) *NotificationConfiguration {
+	s.DestinationConfig = v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *NotificationConfiguration) SetStatus(v string) *NotificationConfiguration {
+	s.Status = &v
+	return s
+}
+
+// The structure that contains the information required to deliver a notification
+// to a customer.
+type NotificationDestinationConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The Uniform Resource Idenifier (URI) that identifies where the images will
+	// be delivered.
+	//
+	// Uri is a required field
+	Uri *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s NotificationDestinationConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s NotificationDestinationConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *NotificationDestinationConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "NotificationDestinationConfig"}
+	if s.Uri == nil {
+		invalidParams.Add(request.NewErrParamRequired("Uri"))
+	}
+	if s.Uri != nil && len(*s.Uri) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Uri", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetUri sets the Uri field's value.
+func (s *NotificationDestinationConfig) SetUri(v string) *NotificationDestinationConfig {
+	s.Uri = &v
+	return s
+}
+
 // An object that describes the endpoint of the signaling channel returned by
 // the GetSignalingChannelEndpoint API.
 type ResourceEndpointListItem struct {
@@ -4050,7 +5086,13 @@ func (s *ResourceEndpointListItem) SetResourceEndpoint(v string) *ResourceEndpoi
 	return s
 }
 
-// The signaling channel is currently not available for this operation.
+// The resource is currently not available for this operation. New resources
+// cannot be created with the same name as existing resources. Also, resources
+// cannot be updated or deleted unless they are in an ACTIVE state.
+//
+// If this exception is returned, do not use it to determine whether the requested
+// resource already exists. Instead, it is recommended you use the resource-specific
+// describe API, for example, DescribeStream for video streams.
 type ResourceInUseException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -4186,7 +5228,7 @@ type SingleMasterChannelEndpointConfiguration struct {
 	// This property is used to determine the nature of communication over this
 	// SINGLE_MASTER signaling channel. If WSS is specified, this API returns a
 	// websocket endpoint. If HTTPS is specified, this API returns an HTTPS endpoint.
-	Protocols []*string `min:"1" type:"list"`
+	Protocols []*string `min:"1" type:"list" enum:"ChannelProtocol"`
 
 	// This property is used to determine messaging permissions in this SINGLE_MASTER
 	// signaling channel. If MASTER is specified, this API returns an endpoint that
@@ -4245,7 +5287,7 @@ func (s *SingleMasterChannelEndpointConfiguration) SetRole(v string) *SingleMast
 type SingleMasterConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// The period of time a signaling channel retains underlivered messages before
+	// The period of time a signaling channel retains undelivered messages before
 	// they are discarded.
 	MessageTtlSeconds *int64 `min:"5" type:"integer"`
 }
@@ -4300,8 +5342,8 @@ type StreamInfo struct {
 	// The name of the device that is associated with the stream.
 	DeviceName *string `min:"1" type:"string"`
 
-	// The ID of the AWS Key Management Service (AWS KMS) key that Kinesis Video
-	// Streams uses to encrypt data on the stream.
+	// The ID of the Key Management Service (KMS) key that Kinesis Video Streams
+	// uses to encrypt data on the stream.
 	KmsKeyId *string `min:"1" type:"string"`
 
 	// The MediaType of the stream.
@@ -4712,7 +5754,7 @@ func (s TagStreamOutput) GoString() string {
 }
 
 // You have exceeded the limit of tags that you can associate with the resource.
-// Kinesis video streams support up to 50 tags.
+// A Kinesis video stream can support up to 50 tags.
 type TagsPerResourceExceededLimitException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -5090,6 +6132,198 @@ func (s UpdateDataRetentionOutput) GoString() string {
 	return s.String()
 }
 
+type UpdateImageGenerationConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The structure that contains the information required for the KVS images delivery.
+	// If the structure is null, the configuration will be deleted from the stream.
+	ImageGenerationConfiguration *ImageGenerationConfiguration `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the Kinesis video stream from where you
+	// want to update the image generation configuration. You must specify either
+	// the StreamName or the StreamARN.
+	StreamARN *string `min:"1" type:"string"`
+
+	// The name of the stream from which to update the image generation configuration.
+	// You must specify either the StreamName or the StreamARN.
+	StreamName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateImageGenerationConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateImageGenerationConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateImageGenerationConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateImageGenerationConfigurationInput"}
+	if s.StreamARN != nil && len(*s.StreamARN) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamARN", 1))
+	}
+	if s.StreamName != nil && len(*s.StreamName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamName", 1))
+	}
+	if s.ImageGenerationConfiguration != nil {
+		if err := s.ImageGenerationConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("ImageGenerationConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetImageGenerationConfiguration sets the ImageGenerationConfiguration field's value.
+func (s *UpdateImageGenerationConfigurationInput) SetImageGenerationConfiguration(v *ImageGenerationConfiguration) *UpdateImageGenerationConfigurationInput {
+	s.ImageGenerationConfiguration = v
+	return s
+}
+
+// SetStreamARN sets the StreamARN field's value.
+func (s *UpdateImageGenerationConfigurationInput) SetStreamARN(v string) *UpdateImageGenerationConfigurationInput {
+	s.StreamARN = &v
+	return s
+}
+
+// SetStreamName sets the StreamName field's value.
+func (s *UpdateImageGenerationConfigurationInput) SetStreamName(v string) *UpdateImageGenerationConfigurationInput {
+	s.StreamName = &v
+	return s
+}
+
+type UpdateImageGenerationConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateImageGenerationConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateImageGenerationConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+type UpdateNotificationConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The structure containing the information required for notifications. If the
+	// structure is null, the configuration will be deleted from the stream.
+	NotificationConfiguration *NotificationConfiguration `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the Kinesis video stream from where you
+	// want to update the notification configuration. You must specify either the
+	// StreamName or the StreamARN.
+	StreamARN *string `min:"1" type:"string"`
+
+	// The name of the stream from which to update the notification configuration.
+	// You must specify either the StreamName or the StreamARN.
+	StreamName *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateNotificationConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateNotificationConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateNotificationConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateNotificationConfigurationInput"}
+	if s.StreamARN != nil && len(*s.StreamARN) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamARN", 1))
+	}
+	if s.StreamName != nil && len(*s.StreamName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamName", 1))
+	}
+	if s.NotificationConfiguration != nil {
+		if err := s.NotificationConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("NotificationConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetNotificationConfiguration sets the NotificationConfiguration field's value.
+func (s *UpdateNotificationConfigurationInput) SetNotificationConfiguration(v *NotificationConfiguration) *UpdateNotificationConfigurationInput {
+	s.NotificationConfiguration = v
+	return s
+}
+
+// SetStreamARN sets the StreamARN field's value.
+func (s *UpdateNotificationConfigurationInput) SetStreamARN(v string) *UpdateNotificationConfigurationInput {
+	s.StreamARN = &v
+	return s
+}
+
+// SetStreamName sets the StreamName field's value.
+func (s *UpdateNotificationConfigurationInput) SetStreamName(v string) *UpdateNotificationConfigurationInput {
+	s.StreamName = &v
+	return s
+}
+
+type UpdateNotificationConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateNotificationConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateNotificationConfigurationOutput) GoString() string {
+	return s.String()
+}
+
 type UpdateSignalingChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5411,6 +6645,9 @@ const (
 
 	// APINameGetClip is a APIName enum value
 	APINameGetClip = "GET_CLIP"
+
+	// APINameGetImages is a APIName enum value
+	APINameGetImages = "GET_IMAGES"
 )
 
 // APIName_Values returns all elements of the APIName enum
@@ -5423,6 +6660,7 @@ func APIName_Values() []string {
 		APINameGetHlsStreamingSessionUrl,
 		APINameGetDashStreamingSessionUrl,
 		APINameGetClip,
+		APINameGetImages,
 	}
 }
 
@@ -5461,12 +6699,16 @@ func ChannelRole_Values() []string {
 const (
 	// ChannelTypeSingleMaster is a ChannelType enum value
 	ChannelTypeSingleMaster = "SINGLE_MASTER"
+
+	// ChannelTypeFullMesh is a ChannelType enum value
+	ChannelTypeFullMesh = "FULL_MESH"
 )
 
 // ChannelType_Values returns all elements of the ChannelType enum
 func ChannelType_Values() []string {
 	return []string{
 		ChannelTypeSingleMaster,
+		ChannelTypeFullMesh,
 	}
 }
 
@@ -5479,6 +6721,66 @@ const (
 func ComparisonOperator_Values() []string {
 	return []string{
 		ComparisonOperatorBeginsWith,
+	}
+}
+
+const (
+	// ConfigurationStatusEnabled is a ConfigurationStatus enum value
+	ConfigurationStatusEnabled = "ENABLED"
+
+	// ConfigurationStatusDisabled is a ConfigurationStatus enum value
+	ConfigurationStatusDisabled = "DISABLED"
+)
+
+// ConfigurationStatus_Values returns all elements of the ConfigurationStatus enum
+func ConfigurationStatus_Values() []string {
+	return []string{
+		ConfigurationStatusEnabled,
+		ConfigurationStatusDisabled,
+	}
+}
+
+const (
+	// FormatJpeg is a Format enum value
+	FormatJpeg = "JPEG"
+
+	// FormatPng is a Format enum value
+	FormatPng = "PNG"
+)
+
+// Format_Values returns all elements of the Format enum
+func Format_Values() []string {
+	return []string{
+		FormatJpeg,
+		FormatPng,
+	}
+}
+
+const (
+	// FormatConfigKeyJpegquality is a FormatConfigKey enum value
+	FormatConfigKeyJpegquality = "JPEGQuality"
+)
+
+// FormatConfigKey_Values returns all elements of the FormatConfigKey enum
+func FormatConfigKey_Values() []string {
+	return []string{
+		FormatConfigKeyJpegquality,
+	}
+}
+
+const (
+	// ImageSelectorTypeServerTimestamp is a ImageSelectorType enum value
+	ImageSelectorTypeServerTimestamp = "SERVER_TIMESTAMP"
+
+	// ImageSelectorTypeProducerTimestamp is a ImageSelectorType enum value
+	ImageSelectorTypeProducerTimestamp = "PRODUCER_TIMESTAMP"
+)
+
+// ImageSelectorType_Values returns all elements of the ImageSelectorType enum
+func ImageSelectorType_Values() []string {
+	return []string{
+		ImageSelectorTypeServerTimestamp,
+		ImageSelectorTypeProducerTimestamp,
 	}
 }
 

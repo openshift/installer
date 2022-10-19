@@ -29,14 +29,13 @@ const opCreateLifecyclePolicy = "CreateLifecyclePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateLifecyclePolicyRequest method.
+//	req, resp := client.CreateLifecyclePolicyRequest(params)
 //
-//    // Example sending a request using the CreateLifecyclePolicyRequest method.
-//    req, resp := client.CreateLifecyclePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/CreateLifecyclePolicy
 func (c *DLM) CreateLifecyclePolicyRequest(input *CreateLifecyclePolicyInput) (req *request.Request, output *CreateLifecyclePolicyOutput) {
@@ -68,14 +67,15 @@ func (c *DLM) CreateLifecyclePolicyRequest(input *CreateLifecyclePolicyInput) (r
 // API operation CreateLifecyclePolicy for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidRequestException
-//   Bad request. The request is missing required parameters or has invalid parameters.
 //
-//   * LimitExceededException
-//   The request failed because a limit was exceeded.
+//   - InvalidRequestException
+//     Bad request. The request is missing required parameters or has invalid parameters.
 //
-//   * InternalServerException
-//   The service failed in an unexpected way.
+//   - LimitExceededException
+//     The request failed because a limit was exceeded.
+//
+//   - InternalServerException
+//     The service failed in an unexpected way.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/CreateLifecyclePolicy
 func (c *DLM) CreateLifecyclePolicy(input *CreateLifecyclePolicyInput) (*CreateLifecyclePolicyOutput, error) {
@@ -115,14 +115,13 @@ const opDeleteLifecyclePolicy = "DeleteLifecyclePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteLifecyclePolicyRequest method.
+//	req, resp := client.DeleteLifecyclePolicyRequest(params)
 //
-//    // Example sending a request using the DeleteLifecyclePolicyRequest method.
-//    req, resp := client.DeleteLifecyclePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/DeleteLifecyclePolicy
 func (c *DLM) DeleteLifecyclePolicyRequest(input *DeleteLifecyclePolicyInput) (req *request.Request, output *DeleteLifecyclePolicyOutput) {
@@ -147,6 +146,9 @@ func (c *DLM) DeleteLifecyclePolicyRequest(input *DeleteLifecyclePolicyInput) (r
 // Deletes the specified lifecycle policy and halts the automated operations
 // that the policy specified.
 //
+// For more information about deleting a policy, see Delete lifecycle policies
+// (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/view-modify-delete.html#delete).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -155,14 +157,15 @@ func (c *DLM) DeleteLifecyclePolicyRequest(input *DeleteLifecyclePolicyInput) (r
 // API operation DeleteLifecyclePolicy for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   A requested resource was not found.
 //
-//   * InternalServerException
-//   The service failed in an unexpected way.
+//   - ResourceNotFoundException
+//     A requested resource was not found.
 //
-//   * LimitExceededException
-//   The request failed because a limit was exceeded.
+//   - InternalServerException
+//     The service failed in an unexpected way.
+//
+//   - LimitExceededException
+//     The request failed because a limit was exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/DeleteLifecyclePolicy
 func (c *DLM) DeleteLifecyclePolicy(input *DeleteLifecyclePolicyInput) (*DeleteLifecyclePolicyOutput, error) {
@@ -202,14 +205,13 @@ const opGetLifecyclePolicies = "GetLifecyclePolicies"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetLifecyclePoliciesRequest method.
+//	req, resp := client.GetLifecyclePoliciesRequest(params)
 //
-//    // Example sending a request using the GetLifecyclePoliciesRequest method.
-//    req, resp := client.GetLifecyclePoliciesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/GetLifecyclePolicies
 func (c *DLM) GetLifecyclePoliciesRequest(input *GetLifecyclePoliciesInput) (req *request.Request, output *GetLifecyclePoliciesOutput) {
@@ -242,17 +244,18 @@ func (c *DLM) GetLifecyclePoliciesRequest(input *GetLifecyclePoliciesInput) (req
 // API operation GetLifecyclePolicies for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   A requested resource was not found.
 //
-//   * InvalidRequestException
-//   Bad request. The request is missing required parameters or has invalid parameters.
+//   - ResourceNotFoundException
+//     A requested resource was not found.
 //
-//   * InternalServerException
-//   The service failed in an unexpected way.
+//   - InvalidRequestException
+//     Bad request. The request is missing required parameters or has invalid parameters.
 //
-//   * LimitExceededException
-//   The request failed because a limit was exceeded.
+//   - InternalServerException
+//     The service failed in an unexpected way.
+//
+//   - LimitExceededException
+//     The request failed because a limit was exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/GetLifecyclePolicies
 func (c *DLM) GetLifecyclePolicies(input *GetLifecyclePoliciesInput) (*GetLifecyclePoliciesOutput, error) {
@@ -292,14 +295,13 @@ const opGetLifecyclePolicy = "GetLifecyclePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetLifecyclePolicyRequest method.
+//	req, resp := client.GetLifecyclePolicyRequest(params)
 //
-//    // Example sending a request using the GetLifecyclePolicyRequest method.
-//    req, resp := client.GetLifecyclePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/GetLifecyclePolicy
 func (c *DLM) GetLifecyclePolicyRequest(input *GetLifecyclePolicyInput) (req *request.Request, output *GetLifecyclePolicyOutput) {
@@ -330,14 +332,15 @@ func (c *DLM) GetLifecyclePolicyRequest(input *GetLifecyclePolicyInput) (req *re
 // API operation GetLifecyclePolicy for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   A requested resource was not found.
 //
-//   * InternalServerException
-//   The service failed in an unexpected way.
+//   - ResourceNotFoundException
+//     A requested resource was not found.
 //
-//   * LimitExceededException
-//   The request failed because a limit was exceeded.
+//   - InternalServerException
+//     The service failed in an unexpected way.
+//
+//   - LimitExceededException
+//     The request failed because a limit was exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/GetLifecyclePolicy
 func (c *DLM) GetLifecyclePolicy(input *GetLifecyclePolicyInput) (*GetLifecyclePolicyOutput, error) {
@@ -377,14 +380,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/ListTagsForResource
 func (c *DLM) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -415,14 +417,15 @@ func (c *DLM) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The service failed in an unexpected way.
 //
-//   * InvalidRequestException
-//   Bad request. The request is missing required parameters or has invalid parameters.
+//   - InternalServerException
+//     The service failed in an unexpected way.
 //
-//   * ResourceNotFoundException
-//   A requested resource was not found.
+//   - InvalidRequestException
+//     Bad request. The request is missing required parameters or has invalid parameters.
+//
+//   - ResourceNotFoundException
+//     A requested resource was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/ListTagsForResource
 func (c *DLM) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -462,14 +465,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/TagResource
 func (c *DLM) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -501,14 +503,15 @@ func (c *DLM) TagResourceRequest(input *TagResourceInput) (req *request.Request,
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The service failed in an unexpected way.
 //
-//   * InvalidRequestException
-//   Bad request. The request is missing required parameters or has invalid parameters.
+//   - InternalServerException
+//     The service failed in an unexpected way.
 //
-//   * ResourceNotFoundException
-//   A requested resource was not found.
+//   - InvalidRequestException
+//     Bad request. The request is missing required parameters or has invalid parameters.
+//
+//   - ResourceNotFoundException
+//     A requested resource was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/TagResource
 func (c *DLM) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -548,14 +551,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/UntagResource
 func (c *DLM) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -587,14 +589,15 @@ func (c *DLM) UntagResourceRequest(input *UntagResourceInput) (req *request.Requ
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The service failed in an unexpected way.
 //
-//   * InvalidRequestException
-//   Bad request. The request is missing required parameters or has invalid parameters.
+//   - InternalServerException
+//     The service failed in an unexpected way.
 //
-//   * ResourceNotFoundException
-//   A requested resource was not found.
+//   - InvalidRequestException
+//     Bad request. The request is missing required parameters or has invalid parameters.
+//
+//   - ResourceNotFoundException
+//     A requested resource was not found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/UntagResource
 func (c *DLM) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -634,14 +637,13 @@ const opUpdateLifecyclePolicy = "UpdateLifecyclePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateLifecyclePolicyRequest method.
+//	req, resp := client.UpdateLifecyclePolicyRequest(params)
 //
-//    // Example sending a request using the UpdateLifecyclePolicyRequest method.
-//    req, resp := client.UpdateLifecyclePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/UpdateLifecyclePolicy
 func (c *DLM) UpdateLifecyclePolicyRequest(input *UpdateLifecyclePolicyInput) (req *request.Request, output *UpdateLifecyclePolicyOutput) {
@@ -665,6 +667,9 @@ func (c *DLM) UpdateLifecyclePolicyRequest(input *UpdateLifecyclePolicyInput) (r
 //
 // Updates the specified lifecycle policy.
 //
+// For more information about updating a policy, see Modify lifecycle policies
+// (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/view-modify-delete.html#modify).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -673,17 +678,18 @@ func (c *DLM) UpdateLifecyclePolicyRequest(input *UpdateLifecyclePolicyInput) (r
 // API operation UpdateLifecyclePolicy for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   A requested resource was not found.
 //
-//   * InvalidRequestException
-//   Bad request. The request is missing required parameters or has invalid parameters.
+//   - ResourceNotFoundException
+//     A requested resource was not found.
 //
-//   * InternalServerException
-//   The service failed in an unexpected way.
+//   - InvalidRequestException
+//     Bad request. The request is missing required parameters or has invalid parameters.
 //
-//   * LimitExceededException
-//   The request failed because a limit was exceeded.
+//   - InternalServerException
+//     The service failed in an unexpected way.
+//
+//   - LimitExceededException
+//     The request failed because a limit was exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/dlm-2018-01-12/UpdateLifecyclePolicy
 func (c *DLM) UpdateLifecyclePolicy(input *UpdateLifecyclePolicyInput) (*UpdateLifecyclePolicyOutput, error) {
@@ -707,7 +713,7 @@ func (c *DLM) UpdateLifecyclePolicyWithContext(ctx aws.Context, input *UpdateLif
 	return out, req.Send()
 }
 
-// Specifies an action for an event-based policy.
+// [Event-based policies only] Specifies an action for an event-based policy.
 type Action struct {
 	_ struct{} `type:"structure"`
 
@@ -775,6 +781,112 @@ func (s *Action) SetCrossRegionCopy(v []*CrossRegionCopyAction) *Action {
 // SetName sets the Name field's value.
 func (s *Action) SetName(v string) *Action {
 	s.Name = &v
+	return s
+}
+
+// [Snapshot policies only] Specifies information about the archive storage
+// tier retention period.
+type ArchiveRetainRule struct {
+	_ struct{} `type:"structure"`
+
+	// Information about retention period in the Amazon EBS Snapshots Archive. For
+	// more information, see Archive Amazon EBS snapshots (https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/snapshot-archive.html).
+	//
+	// RetentionArchiveTier is a required field
+	RetentionArchiveTier *RetentionArchiveTier `type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ArchiveRetainRule) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ArchiveRetainRule) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ArchiveRetainRule) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ArchiveRetainRule"}
+	if s.RetentionArchiveTier == nil {
+		invalidParams.Add(request.NewErrParamRequired("RetentionArchiveTier"))
+	}
+	if s.RetentionArchiveTier != nil {
+		if err := s.RetentionArchiveTier.Validate(); err != nil {
+			invalidParams.AddNested("RetentionArchiveTier", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRetentionArchiveTier sets the RetentionArchiveTier field's value.
+func (s *ArchiveRetainRule) SetRetentionArchiveTier(v *RetentionArchiveTier) *ArchiveRetainRule {
+	s.RetentionArchiveTier = v
+	return s
+}
+
+// [Snapshot policies only] Specifies a snapshot archiving rule for a schedule.
+type ArchiveRule struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the retention period for the snapshot archiving rule.
+	//
+	// RetainRule is a required field
+	RetainRule *ArchiveRetainRule `type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ArchiveRule) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ArchiveRule) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ArchiveRule) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ArchiveRule"}
+	if s.RetainRule == nil {
+		invalidParams.Add(request.NewErrParamRequired("RetainRule"))
+	}
+	if s.RetainRule != nil {
+		if err := s.RetainRule.Validate(); err != nil {
+			invalidParams.AddNested("RetainRule", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRetainRule sets the RetainRule field's value.
+func (s *ArchiveRule) SetRetainRule(v *ArchiveRetainRule) *ArchiveRule {
+	s.RetainRule = v
 	return s
 }
 
@@ -916,10 +1028,14 @@ func (s *CreateLifecyclePolicyOutput) SetPolicyId(v string) *CreateLifecyclePoli
 	return s
 }
 
-// Specifies when to create snapshots of EBS volumes.
+// [Snapshot and AMI policies only] Specifies when the policy should create
+// snapshots or AMIs.
 //
-// You must specify either a Cron expression or an interval, interval unit,
-// and start time. You cannot specify both.
+//   - You must specify either CronExpression, or Interval, IntervalUnit, and
+//     Times.
+//
+//   - If you need to specify an ArchiveRule for the schedule, then you must
+//     specify a creation frequency of at least 28 days.
 type CreateRule struct {
 	_ struct{} `type:"structure"`
 
@@ -935,23 +1051,22 @@ type CreateRule struct {
 	// The interval unit.
 	IntervalUnit *string `type:"string" enum:"IntervalUnitValues"`
 
-	// Specifies the destination for snapshots created by the policy. To create
-	// snapshots in the same Region as the source resource, specify CLOUD. To create
-	// snapshots on the same Outpost as the source resource, specify OUTPOST_LOCAL.
-	// If you omit this parameter, CLOUD is used by default.
+	// [Snapshot policies only] Specifies the destination for snapshots created
+	// by the policy. To create snapshots in the same Region as the source resource,
+	// specify CLOUD. To create snapshots on the same Outpost as the source resource,
+	// specify OUTPOST_LOCAL. If you omit this parameter, CLOUD is used by default.
 	//
 	// If the policy targets resources in an Amazon Web Services Region, then you
-	// must create snapshots in the same Region as the source resource.
-	//
-	// If the policy targets resources on an Outpost, then you can create snapshots
-	// on the same Outpost as the source resource, or in the Region of that Outpost.
+	// must create snapshots in the same Region as the source resource. If the policy
+	// targets resources on an Outpost, then you can create snapshots on the same
+	// Outpost as the source resource, or in the Region of that Outpost.
 	Location *string `type:"string" enum:"LocationValues"`
 
 	// The time, in UTC, to start the operation. The supported format is hh:mm.
 	//
 	// The operation occurs within a one-hour window following the specified time.
-	// If you do not specify a time, Amazon DLM selects a time within the next 24
-	// hours.
+	// If you do not specify a time, Amazon Data Lifecycle Manager selects a time
+	// within the next 24 hours.
 	Times []*string `type:"list"`
 }
 
@@ -1019,7 +1134,10 @@ func (s *CreateRule) SetTimes(v []*string) *CreateRule {
 	return s
 }
 
-// Specifies a rule for copying shared snapshots across Regions.
+// [Event-based policies only] Specifies a cross-Region copy action for event-based
+// policies.
+//
+// To specify a cross-Region copy rule for snapshot and AMI policies, use CrossRegionCopyRule.
 type CrossRegionCopyAction struct {
 	_ struct{} `type:"structure"`
 
@@ -1028,7 +1146,9 @@ type CrossRegionCopyAction struct {
 	// EncryptionConfiguration is a required field
 	EncryptionConfiguration *EncryptionConfiguration `type:"structure" required:"true"`
 
-	// Specifies the retention rule for cross-Region snapshot copies.
+	// Specifies a retention rule for cross-Region snapshot copies created by snapshot
+	// or event-based policies, or cross-Region AMI copies created by AMI policies.
+	// After the retention period expires, the cross-Region copy is deleted.
 	RetainRule *CrossRegionCopyRetainRule `type:"structure"`
 
 	// The target Region.
@@ -1099,8 +1219,8 @@ func (s *CrossRegionCopyAction) SetTarget(v string) *CrossRegionCopyAction {
 	return s
 }
 
-// Specifies an AMI deprecation rule for cross-Region AMI copies created by
-// a cross-Region copy rule.
+// [AMI policies only] Specifies an AMI deprecation rule for cross-Region AMI
+// copies created by an AMI policy.
 type CrossRegionCopyDeprecateRule struct {
 	_ struct{} `type:"structure"`
 
@@ -1110,7 +1230,8 @@ type CrossRegionCopyDeprecateRule struct {
 	// 520 weeks, or 3650 days.
 	Interval *int64 `min:"1" type:"integer"`
 
-	// The unit of time in which to measure the Interval.
+	// The unit of time in which to measure the Interval. For example, to deprecate
+	// a cross-Region AMI copy after 3 months, specify Interval=3 and IntervalUnit=MONTHS.
 	IntervalUnit *string `type:"string" enum:"RetentionIntervalUnitValues"`
 }
 
@@ -1157,15 +1278,18 @@ func (s *CrossRegionCopyDeprecateRule) SetIntervalUnit(v string) *CrossRegionCop
 	return s
 }
 
-// Specifies the retention rule for cross-Region snapshot copies.
+// Specifies a retention rule for cross-Region snapshot copies created by snapshot
+// or event-based policies, or cross-Region AMI copies created by AMI policies.
+// After the retention period expires, the cross-Region copy is deleted.
 type CrossRegionCopyRetainRule struct {
 	_ struct{} `type:"structure"`
 
-	// The amount of time to retain each snapshot. The maximum is 100 years. This
-	// is equivalent to 1200 months, 5200 weeks, or 36500 days.
+	// The amount of time to retain a cross-Region snapshot or AMI copy. The maximum
+	// is 100 years. This is equivalent to 1200 months, 5200 weeks, or 36500 days.
 	Interval *int64 `min:"1" type:"integer"`
 
-	// The unit of time for time-based retention.
+	// The unit of time for time-based retention. For example, to retain a cross-Region
+	// copy for 3 months, specify Interval=3 and IntervalUnit=MONTHS.
 	IntervalUnit *string `type:"string" enum:"RetentionIntervalUnitValues"`
 }
 
@@ -1212,7 +1336,10 @@ func (s *CrossRegionCopyRetainRule) SetIntervalUnit(v string) *CrossRegionCopyRe
 	return s
 }
 
-// Specifies a rule for cross-Region snapshot copies.
+// [Snapshot and AMI policies only] Specifies a cross-Region copy rule for snapshot
+// and AMI policies.
+//
+// To specify a cross-Region copy action for event-based polices, use CrossRegionCopyAction.
 type CrossRegionCopyRule struct {
 	_ struct{} `type:"structure"`
 
@@ -1222,10 +1349,11 @@ type CrossRegionCopyRule struct {
 	CmkArn *string `type:"string"`
 
 	// Indicates whether to copy all user-defined tags from the source snapshot
-	// to the cross-Region snapshot copy.
+	// or AMI to the cross-Region copy.
 	CopyTags *bool `type:"boolean"`
 
-	// The AMI deprecation rule for cross-Region AMI copies created by the rule.
+	// [AMI policies only] The AMI deprecation rule for cross-Region AMI copies
+	// created by the rule.
 	DeprecateRule *CrossRegionCopyDeprecateRule `type:"structure"`
 
 	// To encrypt a copy of an unencrypted snapshot if encryption by default is
@@ -1236,8 +1364,8 @@ type CrossRegionCopyRule struct {
 	// Encrypted is a required field
 	Encrypted *bool `type:"boolean" required:"true"`
 
-	// The retention rule that indicates how long snapshot copies are to be retained
-	// in the destination Region.
+	// The retention rule that indicates how long the cross-Region snapshot or AMI
+	// copies are to be retained in the destination Region.
 	RetainRule *CrossRegionCopyRetainRule `type:"structure"`
 
 	// The target Region or the Amazon Resource Name (ARN) of the target Outpost
@@ -1246,6 +1374,7 @@ type CrossRegionCopyRule struct {
 	// Use this parameter instead of TargetRegion. Do not specify both.
 	Target *string `type:"string"`
 
+	//
 	// Avoid using this parameter when creating new policies. Instead, use Target
 	// to specify a target Region or a target Outpost for snapshot copies.
 	//
@@ -1408,7 +1537,11 @@ func (s DeleteLifecyclePolicyOutput) GoString() string {
 	return s.String()
 }
 
-// Specifies an AMI deprecation rule for a schedule.
+// [AMI policies only] Specifies an AMI deprecation rule for AMIs created by
+// an AMI lifecycle policy.
+//
+// For age-based schedules, you must specify Interval and IntervalUnit. For
+// count-based schedules, you must specify Count.
 type DeprecateRule struct {
 	_ struct{} `type:"structure"`
 
@@ -1480,8 +1613,8 @@ func (s *DeprecateRule) SetIntervalUnit(v string) *DeprecateRule {
 	return s
 }
 
-// Specifies the encryption settings for shared snapshots that are copied across
-// Regions.
+// [Event-based policies only] Specifies the encryption settings for cross-Region
+// snapshot copies created by event-based policies.
 type EncryptionConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -1542,7 +1675,8 @@ func (s *EncryptionConfiguration) SetEncrypted(v bool) *EncryptionConfiguration 
 	return s
 }
 
-// Specifies an event that triggers an event-based policy.
+// [Event-based policies only] Specifies an event that activates an event-based
+// policy.
 type EventParameters struct {
 	_ struct{} `type:"structure"`
 
@@ -1626,7 +1760,8 @@ func (s *EventParameters) SetSnapshotOwner(v []*string) *EventParameters {
 	return s
 }
 
-// Specifies an event that triggers an event-based policy.
+// [Event-based policies only] Specifies an event that activates an event-based
+// policy.
 type EventSource struct {
 	_ struct{} `type:"structure"`
 
@@ -1688,8 +1823,9 @@ func (s *EventSource) SetType(v string) *EventSource {
 	return s
 }
 
-// Specifies a rule for enabling fast snapshot restore. You can enable fast
-// snapshot restore based on either a count or a time interval.
+// [Snapshot policies only] Specifies a rule for enabling fast snapshot restore
+// for snapshots created by snapshot policies. You can enable fast snapshot
+// restore based on either a count or a time interval.
 type FastRestoreRule struct {
 	_ struct{} `type:"structure"`
 
@@ -1780,7 +1916,7 @@ type GetLifecyclePoliciesInput struct {
 	PolicyIds []*string `location:"querystring" locationName:"policyIds" type:"list"`
 
 	// The resource type.
-	ResourceTypes []*string `location:"querystring" locationName:"resourceTypes" min:"1" type:"list"`
+	ResourceTypes []*string `location:"querystring" locationName:"resourceTypes" min:"1" type:"list" enum:"ResourceTypeValues"`
 
 	// The activation state.
 	State *string `location:"querystring" locationName:"state" type:"string" enum:"GettablePolicyStateValues"`
@@ -2112,7 +2248,8 @@ func (s *InvalidRequestException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// Detailed information about a lifecycle policy.
+// [All policy types] Detailed information about a snapshot, AMI, or event-based
+// lifecycle policy.
 type LifecyclePolicy struct {
 	_ struct{} `type:"structure"`
 
@@ -2238,7 +2375,9 @@ type LifecyclePolicySummary struct {
 
 	// The type of policy. EBS_SNAPSHOT_MANAGEMENT indicates that the policy manages
 	// the lifecycle of Amazon EBS snapshots. IMAGE_MANAGEMENT indicates that the
-	// policy manages the lifecycle of EBS-backed AMIs.
+	// policy manages the lifecycle of EBS-backed AMIs. EVENT_BASED_POLICY indicates
+	// that the policy automates cross-account snapshot copies for snapshots that
+	// are shared with your account.
 	PolicyType *string `type:"string" enum:"PolicyTypeValues"`
 
 	// The activation state of the lifecycle policy.
@@ -2445,21 +2584,37 @@ func (s *ListTagsForResourceOutput) SetTags(v map[string]*string) *ListTagsForRe
 	return s
 }
 
-// Specifies optional parameters to add to a policy. The set of valid parameters
-// depends on the combination of policy type and resource type.
+// [Snapshot and AMI policies only] Specifies optional parameters for snapshot
+// and AMI policies. The set of valid parameters depends on the combination
+// of policy type and target resource type.
+//
+// If you choose to exclude boot volumes and you specify tags that consequently
+// exclude all of the additional data volumes attached to an instance, then
+// Amazon Data Lifecycle Manager will not create any snapshots for the affected
+// instance, and it will emit a SnapshotsCreateFailed Amazon CloudWatch metric.
+// For more information, see Monitor your policies using Amazon CloudWatch (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitor-dlm-cw-metrics.html).
 type Parameters struct {
 	_ struct{} `type:"structure"`
 
-	// [EBS Snapshot Management – Instance policies only] Indicates whether to
-	// exclude the root volume from snapshots created using CreateSnapshots (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateSnapshots.html).
-	// The default is false.
+	// [Snapshot policies that target instances only] Indicates whether to exclude
+	// the root volume from multi-volume snapshot sets. The default is false. If
+	// you specify true, then the root volumes attached to targeted instances will
+	// be excluded from the multi-volume snapshot sets created by the policy.
 	ExcludeBootVolume *bool `type:"boolean"`
 
-	// Applies to AMI lifecycle policies only. Indicates whether targeted instances
-	// are rebooted when the lifecycle policy runs. true indicates that targeted
-	// instances are not rebooted when the policy runs. false indicates that target
-	// instances are rebooted when the policy runs. The default is true (instances
-	// are not rebooted).
+	// [Snapshot policies that target instances only] The tags used to identify
+	// data (non-root) volumes to exclude from multi-volume snapshot sets.
+	//
+	// If you create a snapshot lifecycle policy that targets instances and you
+	// specify tags for this parameter, then data volumes with the specified tags
+	// that are attached to targeted instances will be excluded from the multi-volume
+	// snapshot sets created by the policy.
+	ExcludeDataVolumeTags []*Tag `type:"list"`
+
+	// [AMI policies only] Indicates whether targeted instances are rebooted when
+	// the lifecycle policy runs. true indicates that targeted instances are not
+	// rebooted when the policy runs. false indicates that target instances are
+	// rebooted when the policy runs. The default is true (instances are not rebooted).
 	NoReboot *bool `type:"boolean"`
 }
 
@@ -2481,9 +2636,35 @@ func (s Parameters) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Parameters) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Parameters"}
+	if s.ExcludeDataVolumeTags != nil {
+		for i, v := range s.ExcludeDataVolumeTags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "ExcludeDataVolumeTags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetExcludeBootVolume sets the ExcludeBootVolume field's value.
 func (s *Parameters) SetExcludeBootVolume(v bool) *Parameters {
 	s.ExcludeBootVolume = &v
+	return s
+}
+
+// SetExcludeDataVolumeTags sets the ExcludeDataVolumeTags field's value.
+func (s *Parameters) SetExcludeDataVolumeTags(v []*Tag) *Parameters {
+	s.ExcludeDataVolumeTags = v
 	return s
 }
 
@@ -2493,68 +2674,59 @@ func (s *Parameters) SetNoReboot(v bool) *Parameters {
 	return s
 }
 
-// Specifies the configuration of a lifecycle policy.
+// [All policy types] Specifies the configuration of a lifecycle policy.
 type PolicyDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The actions to be performed when the event-based policy is triggered. You
-	// can specify only one action per policy.
-	//
-	// This parameter is required for event-based policies only. If you are creating
-	// a snapshot or AMI policy, omit this parameter.
+	// [Event-based policies only] The actions to be performed when the event-based
+	// policy is activated. You can specify only one action per policy.
 	Actions []*Action `min:"1" type:"list"`
 
-	// The event that triggers the event-based policy.
-	//
-	// This parameter is required for event-based policies only. If you are creating
-	// a snapshot or AMI policy, omit this parameter.
+	// [Event-based policies only] The event that activates the event-based policy.
 	EventSource *EventSource `type:"structure"`
 
-	// A set of optional parameters for snapshot and AMI lifecycle policies.
+	// [Snapshot and AMI policies only] A set of optional parameters for snapshot
+	// and AMI lifecycle policies.
 	//
-	// This parameter is required for snapshot and AMI policies only. If you are
-	// creating an event-based policy, omit this parameter.
+	// If you are modifying a policy that was created or previously modified using
+	// the Amazon Data Lifecycle Manager console, then you must include this parameter
+	// and specify either the default values or the new values that you require.
+	// You can't omit this parameter or set its values to null.
 	Parameters *Parameters `type:"structure"`
 
-	// The valid target resource types and actions a policy can manage. Specify
-	// EBS_SNAPSHOT_MANAGEMENT to create a lifecycle policy that manages the lifecycle
-	// of Amazon EBS snapshots. Specify IMAGE_MANAGEMENT to create a lifecycle policy
-	// that manages the lifecycle of EBS-backed AMIs. Specify EVENT_BASED_POLICY
-	// to create an event-based policy that performs specific actions when a defined
-	// event occurs in your Amazon Web Services account.
+	// [All policy types] The valid target resource types and actions a policy can
+	// manage. Specify EBS_SNAPSHOT_MANAGEMENT to create a lifecycle policy that
+	// manages the lifecycle of Amazon EBS snapshots. Specify IMAGE_MANAGEMENT to
+	// create a lifecycle policy that manages the lifecycle of EBS-backed AMIs.
+	// Specify EVENT_BASED_POLICY to create an event-based policy that performs
+	// specific actions when a defined event occurs in your Amazon Web Services
+	// account.
 	//
 	// The default is EBS_SNAPSHOT_MANAGEMENT.
 	PolicyType *string `type:"string" enum:"PolicyTypeValues"`
 
-	// The location of the resources to backup. If the source resources are located
-	// in an Amazon Web Services Region, specify CLOUD. If the source resources
-	// are located on an Outpost in your account, specify OUTPOST.
+	// [Snapshot and AMI policies only] The location of the resources to backup.
+	// If the source resources are located in an Amazon Web Services Region, specify
+	// CLOUD. If the source resources are located on an Outpost in your account,
+	// specify OUTPOST.
 	//
 	// If you specify OUTPOST, Amazon Data Lifecycle Manager backs up all resources
 	// of the specified type with matching target tags across all of the Outposts
 	// in your account.
-	ResourceLocations []*string `min:"1" type:"list"`
+	ResourceLocations []*string `min:"1" type:"list" enum:"ResourceLocationValues"`
 
-	// The target resource type for snapshot and AMI lifecycle policies. Use VOLUME
-	// to create snapshots of individual volumes or use INSTANCE to create multi-volume
-	// snapshots from the volumes for an instance.
-	//
-	// This parameter is required for snapshot and AMI policies only. If you are
-	// creating an event-based policy, omit this parameter.
-	ResourceTypes []*string `min:"1" type:"list"`
+	// [Snapshot policies only] The target resource type for snapshot and AMI lifecycle
+	// policies. Use VOLUME to create snapshots of individual volumes or use INSTANCE
+	// to create multi-volume snapshots from the volumes for an instance.
+	ResourceTypes []*string `min:"1" type:"list" enum:"ResourceTypeValues"`
 
-	// The schedules of policy-defined actions for snapshot and AMI lifecycle policies.
-	// A policy can have up to four schedules—one mandatory schedule and up to
-	// three optional schedules.
-	//
-	// This parameter is required for snapshot and AMI policies only. If you are
-	// creating an event-based policy, omit this parameter.
+	// [Snapshot and AMI policies only] The schedules of policy-defined actions
+	// for snapshot and AMI lifecycle policies. A policy can have up to four schedules—one
+	// mandatory schedule and up to three optional schedules.
 	Schedules []*Schedule `min:"1" type:"list"`
 
-	// The single tag that identifies targeted resources for this policy.
-	//
-	// This parameter is required for snapshot and AMI policies only. If you are
-	// creating an event-based policy, omit this parameter.
+	// [Snapshot and AMI policies only] The single tag that identifies targeted
+	// resources for this policy.
 	TargetTags []*Tag `min:"1" type:"list"`
 }
 
@@ -2607,6 +2779,11 @@ func (s *PolicyDetails) Validate() error {
 	if s.EventSource != nil {
 		if err := s.EventSource.Validate(); err != nil {
 			invalidParams.AddNested("EventSource", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Parameters != nil {
+		if err := s.Parameters.Validate(); err != nil {
+			invalidParams.AddNested("Parameters", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.Schedules != nil {
@@ -2756,19 +2933,46 @@ func (s *ResourceNotFoundException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// Specifies the retention rule for a lifecycle policy. You can retain snapshots
-// based on either a count or a time interval.
+// [Snapshot and AMI policies only] Specifies a retention rule for snapshots
+// created by snapshot policies, or for AMIs created by AMI policies.
+//
+// For snapshot policies that have an ArchiveRule, this retention rule applies
+// to standard tier retention. When the retention threshold is met, snapshots
+// are moved from the standard to the archive tier.
+//
+// For snapshot policies that do not have an ArchiveRule, snapshots are permanently
+// deleted when this retention threshold is met.
+//
+// You can retain snapshots based on either a count or a time interval.
+//
+//   - Count-based retention You must specify Count. If you specify an ArchiveRule
+//     for the schedule, then you can specify a retention count of 0 to archive
+//     snapshots immediately after creation. If you specify a FastRestoreRule,
+//     ShareRule, or a CrossRegionCopyRule, then you must specify a retention
+//     count of 1 or more.
+//
+//   - Age-based retention You must specify Interval and IntervalUnit. If you
+//     specify an ArchiveRule for the schedule, then you can specify a retention
+//     interval of 0 days to archive snapshots immediately after creation. If
+//     you specify a FastRestoreRule, ShareRule, or a CrossRegionCopyRule, then
+//     you must specify a retention interval of 1 day or more.
 type RetainRule struct {
 	_ struct{} `type:"structure"`
 
 	// The number of snapshots to retain for each volume, up to a maximum of 1000.
-	Count *int64 `min:"1" type:"integer"`
+	// For example if you want to retain a maximum of three snapshots, specify 3.
+	// When the fourth snapshot is created, the oldest retained snapshot is deleted,
+	// or it is moved to the archive tier if you have specified an ArchiveRule.
+	Count *int64 `type:"integer"`
 
 	// The amount of time to retain each snapshot. The maximum is 100 years. This
 	// is equivalent to 1200 months, 5200 weeks, or 36500 days.
-	Interval *int64 `min:"1" type:"integer"`
+	Interval *int64 `type:"integer"`
 
-	// The unit of time for time-based retention.
+	// The unit of time for time-based retention. For example, to retain snapshots
+	// for 3 months, specify Interval=3 and IntervalUnit=MONTHS. Once the snapshot
+	// has been retained for 3 months, it is deleted, or it is moved to the archive
+	// tier if you have specified an ArchiveRule.
 	IntervalUnit *string `type:"string" enum:"RetentionIntervalUnitValues"`
 }
 
@@ -2790,22 +2994,6 @@ func (s RetainRule) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RetainRule) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RetainRule"}
-	if s.Count != nil && *s.Count < 1 {
-		invalidParams.Add(request.NewErrParamMinValue("Count", 1))
-	}
-	if s.Interval != nil && *s.Interval < 1 {
-		invalidParams.Add(request.NewErrParamMinValue("Interval", 1))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // SetCount sets the Count field's value.
 func (s *RetainRule) SetCount(v int64) *RetainRule {
 	s.Count = &v
@@ -2824,9 +3012,103 @@ func (s *RetainRule) SetIntervalUnit(v string) *RetainRule {
 	return s
 }
 
-// Specifies a backup schedule for a snapshot or AMI lifecycle policy.
+// [Snapshot policies only] Describes the retention rule for archived snapshots.
+// Once the archive retention threshold is met, the snapshots are permanently
+// deleted from the archive tier.
+//
+// The archive retention rule must retain snapshots in the archive tier for
+// a minimum of 90 days.
+//
+// For count-based schedules, you must specify Count. For age-based schedules,
+// you must specify Interval and IntervalUnit.
+//
+// For more information about using snapshot archiving, see Considerations for
+// snapshot lifecycle policies (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-ami-policy.html#dlm-archive).
+type RetentionArchiveTier struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of snapshots to retain in the archive storage tier for
+	// each volume. The count must ensure that each snapshot remains in the archive
+	// tier for at least 90 days. For example, if the schedule creates snapshots
+	// every 30 days, you must specify a count of 3 or more to ensure that each
+	// snapshot is archived for at least 90 days.
+	Count *int64 `min:"1" type:"integer"`
+
+	// Specifies the period of time to retain snapshots in the archive tier. After
+	// this period expires, the snapshot is permanently deleted.
+	Interval *int64 `min:"1" type:"integer"`
+
+	// The unit of time in which to measure the Interval. For example, to retain
+	// a snapshots in the archive tier for 6 months, specify Interval=6 and IntervalUnit=MONTHS.
+	IntervalUnit *string `type:"string" enum:"RetentionIntervalUnitValues"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RetentionArchiveTier) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RetentionArchiveTier) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RetentionArchiveTier) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RetentionArchiveTier"}
+	if s.Count != nil && *s.Count < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Count", 1))
+	}
+	if s.Interval != nil && *s.Interval < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Interval", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCount sets the Count field's value.
+func (s *RetentionArchiveTier) SetCount(v int64) *RetentionArchiveTier {
+	s.Count = &v
+	return s
+}
+
+// SetInterval sets the Interval field's value.
+func (s *RetentionArchiveTier) SetInterval(v int64) *RetentionArchiveTier {
+	s.Interval = &v
+	return s
+}
+
+// SetIntervalUnit sets the IntervalUnit field's value.
+func (s *RetentionArchiveTier) SetIntervalUnit(v string) *RetentionArchiveTier {
+	s.IntervalUnit = &v
+	return s
+}
+
+// [Snapshot and AMI policies only] Specifies a schedule for a snapshot or AMI
+// lifecycle policy.
 type Schedule struct {
 	_ struct{} `type:"structure"`
+
+	// [Snapshot policies that target volumes only] The snapshot archiving rule
+	// for the schedule. When you specify an archiving rule, snapshots are automatically
+	// moved from the standard tier to the archive tier once the schedule's retention
+	// threshold is met. Snapshots are then retained in the archive tier for the
+	// archive retention period that you specify.
+	//
+	// For more information about using snapshot archiving, see Considerations for
+	// snapshot lifecycle policies (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-ami-policy.html#dlm-archive).
+	ArchiveRule *ArchiveRule `type:"structure"`
 
 	// Copy all user-defined tags on a source volume to snapshots of the volume
 	// created by this policy.
@@ -2835,37 +3117,38 @@ type Schedule struct {
 	// The creation rule.
 	CreateRule *CreateRule `type:"structure"`
 
-	// The rule for cross-Region snapshot copies.
+	// Specifies a rule for copying snapshots or AMIs across regions.
 	//
-	// You can only specify cross-Region copy rules for policies that create snapshots
-	// in a Region. If the policy creates snapshots on an Outpost, then you cannot
-	// copy the snapshots to a Region or to an Outpost. If the policy creates snapshots
-	// in a Region, then snapshots can be copied to up to three Regions or Outposts.
+	// You can't specify cross-Region copy rules for policies that create snapshots
+	// on an Outpost. If the policy creates snapshots in a Region, then snapshots
+	// can be copied to up to three Regions or Outposts.
 	CrossRegionCopyRules []*CrossRegionCopyRule `type:"list"`
 
-	// The AMI deprecation rule for the schedule.
+	// [AMI policies only] The AMI deprecation rule for the schedule.
 	DeprecateRule *DeprecateRule `type:"structure"`
 
-	// The rule for enabling fast snapshot restore.
+	// [Snapshot policies only] The rule for enabling fast snapshot restore.
 	FastRestoreRule *FastRestoreRule `type:"structure"`
 
 	// The name of the schedule.
 	Name *string `type:"string"`
 
-	// The retention rule.
+	// The retention rule for snapshots or AMIs created by the policy.
 	RetainRule *RetainRule `type:"structure"`
 
-	// The rule for sharing snapshots with other Amazon Web Services accounts.
+	// [Snapshot policies only] The rule for sharing snapshots with other Amazon
+	// Web Services accounts.
 	ShareRules []*ShareRule `type:"list"`
 
 	// The tags to apply to policy-created resources. These user-defined tags are
 	// in addition to the Amazon Web Services-added lifecycle tags.
 	TagsToAdd []*Tag `type:"list"`
 
-	// A collection of key/value pairs with values determined dynamically when the
-	// policy is executed. Keys may be any valid Amazon EC2 tag key. Values must
-	// be in one of the two following formats: $(instance-id) or $(timestamp). Variable
-	// tags are only valid for EBS Snapshot Management – Instance policies.
+	// [AMI policies and snapshot policies that target instances only] A collection
+	// of key/value pairs with values determined dynamically when the policy is
+	// executed. Keys may be any valid Amazon EC2 tag key. Values must be in one
+	// of the two following formats: $(instance-id) or $(timestamp). Variable tags
+	// are only valid for EBS Snapshot Management – Instance policies.
 	VariableTags []*Tag `type:"list"`
 }
 
@@ -2890,6 +3173,11 @@ func (s Schedule) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *Schedule) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "Schedule"}
+	if s.ArchiveRule != nil {
+		if err := s.ArchiveRule.Validate(); err != nil {
+			invalidParams.AddNested("ArchiveRule", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.CreateRule != nil {
 		if err := s.CreateRule.Validate(); err != nil {
 			invalidParams.AddNested("CreateRule", err.(request.ErrInvalidParams))
@@ -2913,11 +3201,6 @@ func (s *Schedule) Validate() error {
 	if s.FastRestoreRule != nil {
 		if err := s.FastRestoreRule.Validate(); err != nil {
 			invalidParams.AddNested("FastRestoreRule", err.(request.ErrInvalidParams))
-		}
-	}
-	if s.RetainRule != nil {
-		if err := s.RetainRule.Validate(); err != nil {
-			invalidParams.AddNested("RetainRule", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.ShareRules != nil {
@@ -2955,6 +3238,12 @@ func (s *Schedule) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetArchiveRule sets the ArchiveRule field's value.
+func (s *Schedule) SetArchiveRule(v *ArchiveRule) *Schedule {
+	s.ArchiveRule = v
+	return s
 }
 
 // SetCopyTags sets the CopyTags field's value.
@@ -3017,7 +3306,8 @@ func (s *Schedule) SetVariableTags(v []*Tag) *Schedule {
 	return s
 }
 
-// Specifies a rule for sharing snapshots across Amazon Web Services accounts.
+// [Snapshot policies only] Specifies a rule for sharing snapshots across Amazon
+// Web Services accounts.
 type ShareRule struct {
 	_ struct{} `type:"structure"`
 

@@ -29,14 +29,13 @@ const opCreateAlertManagerDefinition = "CreateAlertManagerDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateAlertManagerDefinitionRequest method.
+//	req, resp := client.CreateAlertManagerDefinitionRequest(params)
 //
-//    // Example sending a request using the CreateAlertManagerDefinitionRequest method.
-//    req, resp := client.CreateAlertManagerDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/CreateAlertManagerDefinition
 func (c *PrometheusService) CreateAlertManagerDefinitionRequest(input *CreateAlertManagerDefinitionInput) (req *request.Request, output *CreateAlertManagerDefinitionOutput) {
@@ -67,26 +66,27 @@ func (c *PrometheusService) CreateAlertManagerDefinitionRequest(input *CreateAle
 // API operation CreateAlertManagerDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ConflictException
-//   Updating or deleting a resource can cause an inconsistent state.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ConflictException
+//     Updating or deleting a resource can cause an inconsistent state.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
 //
-//   * ServiceQuotaExceededException
-//   Request would cause a service quota to be exceeded.
+//   - InternalServerException
+//     Unexpected error during processing of request.
+//
+//   - ServiceQuotaExceededException
+//     Request would cause a service quota to be exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/CreateAlertManagerDefinition
 func (c *PrometheusService) CreateAlertManagerDefinition(input *CreateAlertManagerDefinitionInput) (*CreateAlertManagerDefinitionOutput, error) {
@@ -110,6 +110,94 @@ func (c *PrometheusService) CreateAlertManagerDefinitionWithContext(ctx aws.Cont
 	return out, req.Send()
 }
 
+const opCreateLoggingConfiguration = "CreateLoggingConfiguration"
+
+// CreateLoggingConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the CreateLoggingConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateLoggingConfiguration for more information on using the CreateLoggingConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CreateLoggingConfigurationRequest method.
+//	req, resp := client.CreateLoggingConfigurationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/CreateLoggingConfiguration
+func (c *PrometheusService) CreateLoggingConfigurationRequest(input *CreateLoggingConfigurationInput) (req *request.Request, output *CreateLoggingConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opCreateLoggingConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/workspaces/{workspaceId}/logging",
+	}
+
+	if input == nil {
+		input = &CreateLoggingConfigurationInput{}
+	}
+
+	output = &CreateLoggingConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateLoggingConfiguration API operation for Amazon Prometheus Service.
+//
+// Create logging configuration.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Prometheus Service's
+// API operation CreateLoggingConfiguration for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
+//
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
+//
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/CreateLoggingConfiguration
+func (c *PrometheusService) CreateLoggingConfiguration(input *CreateLoggingConfigurationInput) (*CreateLoggingConfigurationOutput, error) {
+	req, out := c.CreateLoggingConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// CreateLoggingConfigurationWithContext is the same as CreateLoggingConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateLoggingConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *PrometheusService) CreateLoggingConfigurationWithContext(ctx aws.Context, input *CreateLoggingConfigurationInput, opts ...request.Option) (*CreateLoggingConfigurationOutput, error) {
+	req, out := c.CreateLoggingConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateRuleGroupsNamespace = "CreateRuleGroupsNamespace"
 
 // CreateRuleGroupsNamespaceRequest generates a "aws/request.Request" representing the
@@ -126,14 +214,13 @@ const opCreateRuleGroupsNamespace = "CreateRuleGroupsNamespace"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateRuleGroupsNamespaceRequest method.
+//	req, resp := client.CreateRuleGroupsNamespaceRequest(params)
 //
-//    // Example sending a request using the CreateRuleGroupsNamespaceRequest method.
-//    req, resp := client.CreateRuleGroupsNamespaceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/CreateRuleGroupsNamespace
 func (c *PrometheusService) CreateRuleGroupsNamespaceRequest(input *CreateRuleGroupsNamespaceInput) (req *request.Request, output *CreateRuleGroupsNamespaceOutput) {
@@ -164,26 +251,27 @@ func (c *PrometheusService) CreateRuleGroupsNamespaceRequest(input *CreateRuleGr
 // API operation CreateRuleGroupsNamespace for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ConflictException
-//   Updating or deleting a resource can cause an inconsistent state.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ConflictException
+//     Updating or deleting a resource can cause an inconsistent state.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
 //
-//   * ServiceQuotaExceededException
-//   Request would cause a service quota to be exceeded.
+//   - InternalServerException
+//     Unexpected error during processing of request.
+//
+//   - ServiceQuotaExceededException
+//     Request would cause a service quota to be exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/CreateRuleGroupsNamespace
 func (c *PrometheusService) CreateRuleGroupsNamespace(input *CreateRuleGroupsNamespaceInput) (*CreateRuleGroupsNamespaceOutput, error) {
@@ -223,14 +311,13 @@ const opCreateWorkspace = "CreateWorkspace"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateWorkspaceRequest method.
+//	req, resp := client.CreateWorkspaceRequest(params)
 //
-//    // Example sending a request using the CreateWorkspaceRequest method.
-//    req, resp := client.CreateWorkspaceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/CreateWorkspace
 func (c *PrometheusService) CreateWorkspaceRequest(input *CreateWorkspaceInput) (req *request.Request, output *CreateWorkspaceOutput) {
@@ -261,23 +348,24 @@ func (c *PrometheusService) CreateWorkspaceRequest(input *CreateWorkspaceInput) 
 // API operation CreateWorkspace for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ConflictException
-//   Updating or deleting a resource can cause an inconsistent state.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ConflictException
+//     Updating or deleting a resource can cause an inconsistent state.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
 //
-//   * ServiceQuotaExceededException
-//   Request would cause a service quota to be exceeded.
+//   - InternalServerException
+//     Unexpected error during processing of request.
+//
+//   - ServiceQuotaExceededException
+//     Request would cause a service quota to be exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/CreateWorkspace
 func (c *PrometheusService) CreateWorkspace(input *CreateWorkspaceInput) (*CreateWorkspaceOutput, error) {
@@ -317,14 +405,13 @@ const opDeleteAlertManagerDefinition = "DeleteAlertManagerDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAlertManagerDefinitionRequest method.
+//	req, resp := client.DeleteAlertManagerDefinitionRequest(params)
 //
-//    // Example sending a request using the DeleteAlertManagerDefinitionRequest method.
-//    req, resp := client.DeleteAlertManagerDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DeleteAlertManagerDefinition
 func (c *PrometheusService) DeleteAlertManagerDefinitionRequest(input *DeleteAlertManagerDefinitionInput) (req *request.Request, output *DeleteAlertManagerDefinitionOutput) {
@@ -356,23 +443,24 @@ func (c *PrometheusService) DeleteAlertManagerDefinitionRequest(input *DeleteAle
 // API operation DeleteAlertManagerDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ConflictException
-//   Updating or deleting a resource can cause an inconsistent state.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ConflictException
+//     Updating or deleting a resource can cause an inconsistent state.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DeleteAlertManagerDefinition
 func (c *PrometheusService) DeleteAlertManagerDefinition(input *DeleteAlertManagerDefinitionInput) (*DeleteAlertManagerDefinitionOutput, error) {
@@ -396,6 +484,98 @@ func (c *PrometheusService) DeleteAlertManagerDefinitionWithContext(ctx aws.Cont
 	return out, req.Send()
 }
 
+const opDeleteLoggingConfiguration = "DeleteLoggingConfiguration"
+
+// DeleteLoggingConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteLoggingConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteLoggingConfiguration for more information on using the DeleteLoggingConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DeleteLoggingConfigurationRequest method.
+//	req, resp := client.DeleteLoggingConfigurationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DeleteLoggingConfiguration
+func (c *PrometheusService) DeleteLoggingConfigurationRequest(input *DeleteLoggingConfigurationInput) (req *request.Request, output *DeleteLoggingConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opDeleteLoggingConfiguration,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/workspaces/{workspaceId}/logging",
+	}
+
+	if input == nil {
+		input = &DeleteLoggingConfigurationInput{}
+	}
+
+	output = &DeleteLoggingConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteLoggingConfiguration API operation for Amazon Prometheus Service.
+//
+// Delete logging configuration.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Prometheus Service's
+// API operation DeleteLoggingConfiguration for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ConflictException
+//     Updating or deleting a resource can cause an inconsistent state.
+//
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
+//
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
+//
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DeleteLoggingConfiguration
+func (c *PrometheusService) DeleteLoggingConfiguration(input *DeleteLoggingConfigurationInput) (*DeleteLoggingConfigurationOutput, error) {
+	req, out := c.DeleteLoggingConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// DeleteLoggingConfigurationWithContext is the same as DeleteLoggingConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteLoggingConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *PrometheusService) DeleteLoggingConfigurationWithContext(ctx aws.Context, input *DeleteLoggingConfigurationInput, opts ...request.Option) (*DeleteLoggingConfigurationOutput, error) {
+	req, out := c.DeleteLoggingConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteRuleGroupsNamespace = "DeleteRuleGroupsNamespace"
 
 // DeleteRuleGroupsNamespaceRequest generates a "aws/request.Request" representing the
@@ -412,14 +592,13 @@ const opDeleteRuleGroupsNamespace = "DeleteRuleGroupsNamespace"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteRuleGroupsNamespaceRequest method.
+//	req, resp := client.DeleteRuleGroupsNamespaceRequest(params)
 //
-//    // Example sending a request using the DeleteRuleGroupsNamespaceRequest method.
-//    req, resp := client.DeleteRuleGroupsNamespaceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DeleteRuleGroupsNamespace
 func (c *PrometheusService) DeleteRuleGroupsNamespaceRequest(input *DeleteRuleGroupsNamespaceInput) (req *request.Request, output *DeleteRuleGroupsNamespaceOutput) {
@@ -451,23 +630,24 @@ func (c *PrometheusService) DeleteRuleGroupsNamespaceRequest(input *DeleteRuleGr
 // API operation DeleteRuleGroupsNamespace for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ConflictException
-//   Updating or deleting a resource can cause an inconsistent state.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ConflictException
+//     Updating or deleting a resource can cause an inconsistent state.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DeleteRuleGroupsNamespace
 func (c *PrometheusService) DeleteRuleGroupsNamespace(input *DeleteRuleGroupsNamespaceInput) (*DeleteRuleGroupsNamespaceOutput, error) {
@@ -507,14 +687,13 @@ const opDeleteWorkspace = "DeleteWorkspace"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteWorkspaceRequest method.
+//	req, resp := client.DeleteWorkspaceRequest(params)
 //
-//    // Example sending a request using the DeleteWorkspaceRequest method.
-//    req, resp := client.DeleteWorkspaceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DeleteWorkspace
 func (c *PrometheusService) DeleteWorkspaceRequest(input *DeleteWorkspaceInput) (req *request.Request, output *DeleteWorkspaceOutput) {
@@ -546,23 +725,24 @@ func (c *PrometheusService) DeleteWorkspaceRequest(input *DeleteWorkspaceInput) 
 // API operation DeleteWorkspace for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ConflictException
-//   Updating or deleting a resource can cause an inconsistent state.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ConflictException
+//     Updating or deleting a resource can cause an inconsistent state.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DeleteWorkspace
 func (c *PrometheusService) DeleteWorkspace(input *DeleteWorkspaceInput) (*DeleteWorkspaceOutput, error) {
@@ -602,14 +782,13 @@ const opDescribeAlertManagerDefinition = "DescribeAlertManagerDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAlertManagerDefinitionRequest method.
+//	req, resp := client.DescribeAlertManagerDefinitionRequest(params)
 //
-//    // Example sending a request using the DescribeAlertManagerDefinitionRequest method.
-//    req, resp := client.DescribeAlertManagerDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DescribeAlertManagerDefinition
 func (c *PrometheusService) DescribeAlertManagerDefinitionRequest(input *DescribeAlertManagerDefinitionInput) (req *request.Request, output *DescribeAlertManagerDefinitionOutput) {
@@ -640,20 +819,21 @@ func (c *PrometheusService) DescribeAlertManagerDefinitionRequest(input *Describ
 // API operation DescribeAlertManagerDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DescribeAlertManagerDefinition
 func (c *PrometheusService) DescribeAlertManagerDefinition(input *DescribeAlertManagerDefinitionInput) (*DescribeAlertManagerDefinitionOutput, error) {
@@ -677,6 +857,94 @@ func (c *PrometheusService) DescribeAlertManagerDefinitionWithContext(ctx aws.Co
 	return out, req.Send()
 }
 
+const opDescribeLoggingConfiguration = "DescribeLoggingConfiguration"
+
+// DescribeLoggingConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeLoggingConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeLoggingConfiguration for more information on using the DescribeLoggingConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeLoggingConfigurationRequest method.
+//	req, resp := client.DescribeLoggingConfigurationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DescribeLoggingConfiguration
+func (c *PrometheusService) DescribeLoggingConfigurationRequest(input *DescribeLoggingConfigurationInput) (req *request.Request, output *DescribeLoggingConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opDescribeLoggingConfiguration,
+		HTTPMethod: "GET",
+		HTTPPath:   "/workspaces/{workspaceId}/logging",
+	}
+
+	if input == nil {
+		input = &DescribeLoggingConfigurationInput{}
+	}
+
+	output = &DescribeLoggingConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeLoggingConfiguration API operation for Amazon Prometheus Service.
+//
+// Describes logging configuration.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Prometheus Service's
+// API operation DescribeLoggingConfiguration for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
+//
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
+//
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DescribeLoggingConfiguration
+func (c *PrometheusService) DescribeLoggingConfiguration(input *DescribeLoggingConfigurationInput) (*DescribeLoggingConfigurationOutput, error) {
+	req, out := c.DescribeLoggingConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// DescribeLoggingConfigurationWithContext is the same as DescribeLoggingConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeLoggingConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *PrometheusService) DescribeLoggingConfigurationWithContext(ctx aws.Context, input *DescribeLoggingConfigurationInput, opts ...request.Option) (*DescribeLoggingConfigurationOutput, error) {
+	req, out := c.DescribeLoggingConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeRuleGroupsNamespace = "DescribeRuleGroupsNamespace"
 
 // DescribeRuleGroupsNamespaceRequest generates a "aws/request.Request" representing the
@@ -693,14 +961,13 @@ const opDescribeRuleGroupsNamespace = "DescribeRuleGroupsNamespace"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeRuleGroupsNamespaceRequest method.
+//	req, resp := client.DescribeRuleGroupsNamespaceRequest(params)
 //
-//    // Example sending a request using the DescribeRuleGroupsNamespaceRequest method.
-//    req, resp := client.DescribeRuleGroupsNamespaceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DescribeRuleGroupsNamespace
 func (c *PrometheusService) DescribeRuleGroupsNamespaceRequest(input *DescribeRuleGroupsNamespaceInput) (req *request.Request, output *DescribeRuleGroupsNamespaceOutput) {
@@ -731,20 +998,21 @@ func (c *PrometheusService) DescribeRuleGroupsNamespaceRequest(input *DescribeRu
 // API operation DescribeRuleGroupsNamespace for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DescribeRuleGroupsNamespace
 func (c *PrometheusService) DescribeRuleGroupsNamespace(input *DescribeRuleGroupsNamespaceInput) (*DescribeRuleGroupsNamespaceOutput, error) {
@@ -784,14 +1052,13 @@ const opDescribeWorkspace = "DescribeWorkspace"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeWorkspaceRequest method.
+//	req, resp := client.DescribeWorkspaceRequest(params)
 //
-//    // Example sending a request using the DescribeWorkspaceRequest method.
-//    req, resp := client.DescribeWorkspaceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DescribeWorkspace
 func (c *PrometheusService) DescribeWorkspaceRequest(input *DescribeWorkspaceInput) (req *request.Request, output *DescribeWorkspaceOutput) {
@@ -822,20 +1089,21 @@ func (c *PrometheusService) DescribeWorkspaceRequest(input *DescribeWorkspaceInp
 // API operation DescribeWorkspace for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/DescribeWorkspace
 func (c *PrometheusService) DescribeWorkspace(input *DescribeWorkspaceInput) (*DescribeWorkspaceOutput, error) {
@@ -875,14 +1143,13 @@ const opListRuleGroupsNamespaces = "ListRuleGroupsNamespaces"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListRuleGroupsNamespacesRequest method.
+//	req, resp := client.ListRuleGroupsNamespacesRequest(params)
 //
-//    // Example sending a request using the ListRuleGroupsNamespacesRequest method.
-//    req, resp := client.ListRuleGroupsNamespacesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/ListRuleGroupsNamespaces
 func (c *PrometheusService) ListRuleGroupsNamespacesRequest(input *ListRuleGroupsNamespacesInput) (req *request.Request, output *ListRuleGroupsNamespacesOutput) {
@@ -919,20 +1186,21 @@ func (c *PrometheusService) ListRuleGroupsNamespacesRequest(input *ListRuleGroup
 // API operation ListRuleGroupsNamespaces for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/ListRuleGroupsNamespaces
 func (c *PrometheusService) ListRuleGroupsNamespaces(input *ListRuleGroupsNamespacesInput) (*ListRuleGroupsNamespacesOutput, error) {
@@ -964,15 +1232,14 @@ func (c *PrometheusService) ListRuleGroupsNamespacesWithContext(ctx aws.Context,
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListRuleGroupsNamespaces operation.
-//    pageNum := 0
-//    err := client.ListRuleGroupsNamespacesPages(params,
-//        func(page *prometheusservice.ListRuleGroupsNamespacesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListRuleGroupsNamespaces operation.
+//	pageNum := 0
+//	err := client.ListRuleGroupsNamespacesPages(params,
+//	    func(page *prometheusservice.ListRuleGroupsNamespacesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *PrometheusService) ListRuleGroupsNamespacesPages(input *ListRuleGroupsNamespacesInput, fn func(*ListRuleGroupsNamespacesOutput, bool) bool) error {
 	return c.ListRuleGroupsNamespacesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1024,14 +1291,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/ListTagsForResource
 func (c *PrometheusService) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -1062,20 +1328,21 @@ func (c *PrometheusService) ListTagsForResourceRequest(input *ListTagsForResourc
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/ListTagsForResource
 func (c *PrometheusService) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -1115,14 +1382,13 @@ const opListWorkspaces = "ListWorkspaces"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListWorkspacesRequest method.
+//	req, resp := client.ListWorkspacesRequest(params)
 //
-//    // Example sending a request using the ListWorkspacesRequest method.
-//    req, resp := client.ListWorkspacesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/ListWorkspaces
 func (c *PrometheusService) ListWorkspacesRequest(input *ListWorkspacesInput) (req *request.Request, output *ListWorkspacesOutput) {
@@ -1159,17 +1425,18 @@ func (c *PrometheusService) ListWorkspacesRequest(input *ListWorkspacesInput) (r
 // API operation ListWorkspaces for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/ListWorkspaces
 func (c *PrometheusService) ListWorkspaces(input *ListWorkspacesInput) (*ListWorkspacesOutput, error) {
@@ -1201,15 +1468,14 @@ func (c *PrometheusService) ListWorkspacesWithContext(ctx aws.Context, input *Li
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListWorkspaces operation.
-//    pageNum := 0
-//    err := client.ListWorkspacesPages(params,
-//        func(page *prometheusservice.ListWorkspacesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListWorkspaces operation.
+//	pageNum := 0
+//	err := client.ListWorkspacesPages(params,
+//	    func(page *prometheusservice.ListWorkspacesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *PrometheusService) ListWorkspacesPages(input *ListWorkspacesInput, fn func(*ListWorkspacesOutput, bool) bool) error {
 	return c.ListWorkspacesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1261,14 +1527,13 @@ const opPutAlertManagerDefinition = "PutAlertManagerDefinition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutAlertManagerDefinitionRequest method.
+//	req, resp := client.PutAlertManagerDefinitionRequest(params)
 //
-//    // Example sending a request using the PutAlertManagerDefinitionRequest method.
-//    req, resp := client.PutAlertManagerDefinitionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/PutAlertManagerDefinition
 func (c *PrometheusService) PutAlertManagerDefinitionRequest(input *PutAlertManagerDefinitionInput) (req *request.Request, output *PutAlertManagerDefinitionOutput) {
@@ -1299,26 +1564,27 @@ func (c *PrometheusService) PutAlertManagerDefinitionRequest(input *PutAlertMana
 // API operation PutAlertManagerDefinition for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ConflictException
-//   Updating or deleting a resource can cause an inconsistent state.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ConflictException
+//     Updating or deleting a resource can cause an inconsistent state.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
 //
-//   * ServiceQuotaExceededException
-//   Request would cause a service quota to be exceeded.
+//   - InternalServerException
+//     Unexpected error during processing of request.
+//
+//   - ServiceQuotaExceededException
+//     Request would cause a service quota to be exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/PutAlertManagerDefinition
 func (c *PrometheusService) PutAlertManagerDefinition(input *PutAlertManagerDefinitionInput) (*PutAlertManagerDefinitionOutput, error) {
@@ -1358,14 +1624,13 @@ const opPutRuleGroupsNamespace = "PutRuleGroupsNamespace"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutRuleGroupsNamespaceRequest method.
+//	req, resp := client.PutRuleGroupsNamespaceRequest(params)
 //
-//    // Example sending a request using the PutRuleGroupsNamespaceRequest method.
-//    req, resp := client.PutRuleGroupsNamespaceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/PutRuleGroupsNamespace
 func (c *PrometheusService) PutRuleGroupsNamespaceRequest(input *PutRuleGroupsNamespaceInput) (req *request.Request, output *PutRuleGroupsNamespaceOutput) {
@@ -1396,26 +1661,27 @@ func (c *PrometheusService) PutRuleGroupsNamespaceRequest(input *PutRuleGroupsNa
 // API operation PutRuleGroupsNamespace for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ConflictException
-//   Updating or deleting a resource can cause an inconsistent state.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ConflictException
+//     Updating or deleting a resource can cause an inconsistent state.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
 //
-//   * ServiceQuotaExceededException
-//   Request would cause a service quota to be exceeded.
+//   - InternalServerException
+//     Unexpected error during processing of request.
+//
+//   - ServiceQuotaExceededException
+//     Request would cause a service quota to be exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/PutRuleGroupsNamespace
 func (c *PrometheusService) PutRuleGroupsNamespace(input *PutRuleGroupsNamespaceInput) (*PutRuleGroupsNamespaceOutput, error) {
@@ -1455,14 +1721,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/TagResource
 func (c *PrometheusService) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -1494,20 +1759,21 @@ func (c *PrometheusService) TagResourceRequest(input *TagResourceInput) (req *re
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/TagResource
 func (c *PrometheusService) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -1547,14 +1813,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/UntagResource
 func (c *PrometheusService) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -1586,20 +1851,21 @@ func (c *PrometheusService) UntagResourceRequest(input *UntagResourceInput) (req
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/UntagResource
 func (c *PrometheusService) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -1623,6 +1889,97 @@ func (c *PrometheusService) UntagResourceWithContext(ctx aws.Context, input *Unt
 	return out, req.Send()
 }
 
+const opUpdateLoggingConfiguration = "UpdateLoggingConfiguration"
+
+// UpdateLoggingConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateLoggingConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateLoggingConfiguration for more information on using the UpdateLoggingConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateLoggingConfigurationRequest method.
+//	req, resp := client.UpdateLoggingConfigurationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/UpdateLoggingConfiguration
+func (c *PrometheusService) UpdateLoggingConfigurationRequest(input *UpdateLoggingConfigurationInput) (req *request.Request, output *UpdateLoggingConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opUpdateLoggingConfiguration,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/workspaces/{workspaceId}/logging",
+	}
+
+	if input == nil {
+		input = &UpdateLoggingConfigurationInput{}
+	}
+
+	output = &UpdateLoggingConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateLoggingConfiguration API operation for Amazon Prometheus Service.
+//
+// Update logging configuration.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Prometheus Service's
+// API operation UpdateLoggingConfiguration for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ConflictException
+//     Updating or deleting a resource can cause an inconsistent state.
+//
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
+//
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
+//
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
+//
+//   - InternalServerException
+//     Unexpected error during processing of request.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/UpdateLoggingConfiguration
+func (c *PrometheusService) UpdateLoggingConfiguration(input *UpdateLoggingConfigurationInput) (*UpdateLoggingConfigurationOutput, error) {
+	req, out := c.UpdateLoggingConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// UpdateLoggingConfigurationWithContext is the same as UpdateLoggingConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateLoggingConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *PrometheusService) UpdateLoggingConfigurationWithContext(ctx aws.Context, input *UpdateLoggingConfigurationInput, opts ...request.Option) (*UpdateLoggingConfigurationOutput, error) {
+	req, out := c.UpdateLoggingConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateWorkspaceAlias = "UpdateWorkspaceAlias"
 
 // UpdateWorkspaceAliasRequest generates a "aws/request.Request" representing the
@@ -1639,14 +1996,13 @@ const opUpdateWorkspaceAlias = "UpdateWorkspaceAlias"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateWorkspaceAliasRequest method.
+//	req, resp := client.UpdateWorkspaceAliasRequest(params)
 //
-//    // Example sending a request using the UpdateWorkspaceAliasRequest method.
-//    req, resp := client.UpdateWorkspaceAliasRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/UpdateWorkspaceAlias
 func (c *PrometheusService) UpdateWorkspaceAliasRequest(input *UpdateWorkspaceAliasInput) (req *request.Request, output *UpdateWorkspaceAliasOutput) {
@@ -1678,26 +2034,27 @@ func (c *PrometheusService) UpdateWorkspaceAliasRequest(input *UpdateWorkspaceAl
 // API operation UpdateWorkspaceAlias for usage and error information.
 //
 // Returned Error Types:
-//   * ThrottlingException
-//   Request was denied due to request throttling.
 //
-//   * ConflictException
-//   Updating or deleting a resource can cause an inconsistent state.
+//   - ThrottlingException
+//     Request was denied due to request throttling.
 //
-//   * ValidationException
-//   The input fails to satisfy the constraints specified by an AWS service.
+//   - ConflictException
+//     Updating or deleting a resource can cause an inconsistent state.
 //
-//   * ResourceNotFoundException
-//   Request references a resource which does not exist.
+//   - ValidationException
+//     The input fails to satisfy the constraints specified by an AWS service.
 //
-//   * AccessDeniedException
-//   User does not have sufficient access to perform this action.
+//   - ResourceNotFoundException
+//     Request references a resource which does not exist.
 //
-//   * InternalServerException
-//   Unexpected error during processing of request.
+//   - AccessDeniedException
+//     User does not have sufficient access to perform this action.
 //
-//   * ServiceQuotaExceededException
-//   Request would cause a service quota to be exceeded.
+//   - InternalServerException
+//     Unexpected error during processing of request.
+//
+//   - ServiceQuotaExceededException
+//     Request would cause a service quota to be exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/amp-2020-08-01/UpdateWorkspaceAlias
 func (c *PrometheusService) UpdateWorkspaceAlias(input *UpdateWorkspaceAliasInput) (*UpdateWorkspaceAliasOutput, error) {
@@ -2080,6 +2437,117 @@ func (s CreateAlertManagerDefinitionOutput) GoString() string {
 
 // SetStatus sets the Status field's value.
 func (s *CreateAlertManagerDefinitionOutput) SetStatus(v *AlertManagerDefinitionStatus) *CreateAlertManagerDefinitionOutput {
+	s.Status = v
+	return s
+}
+
+// Represents the input of a CreateLoggingConfiguration operation.
+type CreateLoggingConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// Optional, unique, case-sensitive, user-provided identifier to ensure the
+	// idempotency of the request.
+	ClientToken *string `locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
+
+	// The ARN of the CW log group to which the vended log data will be published.
+	//
+	// LogGroupArn is a required field
+	LogGroupArn *string `locationName:"logGroupArn" type:"string" required:"true"`
+
+	// The ID of the workspace to vend logs to.
+	//
+	// WorkspaceId is a required field
+	WorkspaceId *string `location:"uri" locationName:"workspaceId" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLoggingConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLoggingConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateLoggingConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateLoggingConfigurationInput"}
+	if s.ClientToken != nil && len(*s.ClientToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientToken", 1))
+	}
+	if s.LogGroupArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("LogGroupArn"))
+	}
+	if s.WorkspaceId == nil {
+		invalidParams.Add(request.NewErrParamRequired("WorkspaceId"))
+	}
+	if s.WorkspaceId != nil && len(*s.WorkspaceId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("WorkspaceId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *CreateLoggingConfigurationInput) SetClientToken(v string) *CreateLoggingConfigurationInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetLogGroupArn sets the LogGroupArn field's value.
+func (s *CreateLoggingConfigurationInput) SetLogGroupArn(v string) *CreateLoggingConfigurationInput {
+	s.LogGroupArn = &v
+	return s
+}
+
+// SetWorkspaceId sets the WorkspaceId field's value.
+func (s *CreateLoggingConfigurationInput) SetWorkspaceId(v string) *CreateLoggingConfigurationInput {
+	s.WorkspaceId = &v
+	return s
+}
+
+// Represents the output of a CreateLoggingConfiguration operation.
+type CreateLoggingConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The status of the logging configuration.
+	//
+	// Status is a required field
+	Status *LoggingConfigurationStatus `locationName:"status" type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLoggingConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLoggingConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetStatus sets the Status field's value.
+func (s *CreateLoggingConfigurationOutput) SetStatus(v *LoggingConfigurationStatus) *CreateLoggingConfigurationOutput {
 	s.Status = v
 	return s
 }
@@ -2471,6 +2939,91 @@ func (s DeleteAlertManagerDefinitionOutput) GoString() string {
 	return s.String()
 }
 
+// Represents the input of a DeleteLoggingConfiguration operation.
+type DeleteLoggingConfigurationInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// Optional, unique, case-sensitive, user-provided identifier to ensure the
+	// idempotency of the request.
+	ClientToken *string `location:"querystring" locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
+
+	// The ID of the workspace to vend logs to.
+	//
+	// WorkspaceId is a required field
+	WorkspaceId *string `location:"uri" locationName:"workspaceId" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLoggingConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLoggingConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteLoggingConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteLoggingConfigurationInput"}
+	if s.ClientToken != nil && len(*s.ClientToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientToken", 1))
+	}
+	if s.WorkspaceId == nil {
+		invalidParams.Add(request.NewErrParamRequired("WorkspaceId"))
+	}
+	if s.WorkspaceId != nil && len(*s.WorkspaceId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("WorkspaceId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *DeleteLoggingConfigurationInput) SetClientToken(v string) *DeleteLoggingConfigurationInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetWorkspaceId sets the WorkspaceId field's value.
+func (s *DeleteLoggingConfigurationInput) SetWorkspaceId(v string) *DeleteLoggingConfigurationInput {
+	s.WorkspaceId = &v
+	return s
+}
+
+type DeleteLoggingConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLoggingConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLoggingConfigurationOutput) GoString() string {
+	return s.String()
+}
+
 // Represents the input of a DeleteRuleGroupsNamespace operation.
 type DeleteRuleGroupsNamespaceInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
@@ -2739,6 +3292,91 @@ func (s DescribeAlertManagerDefinitionOutput) GoString() string {
 // SetAlertManagerDefinition sets the AlertManagerDefinition field's value.
 func (s *DescribeAlertManagerDefinitionOutput) SetAlertManagerDefinition(v *AlertManagerDefinitionDescription) *DescribeAlertManagerDefinitionOutput {
 	s.AlertManagerDefinition = v
+	return s
+}
+
+// Represents the input of a DescribeLoggingConfiguration operation.
+type DescribeLoggingConfigurationInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// The ID of the workspace to vend logs to.
+	//
+	// WorkspaceId is a required field
+	WorkspaceId *string `location:"uri" locationName:"workspaceId" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLoggingConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLoggingConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeLoggingConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeLoggingConfigurationInput"}
+	if s.WorkspaceId == nil {
+		invalidParams.Add(request.NewErrParamRequired("WorkspaceId"))
+	}
+	if s.WorkspaceId != nil && len(*s.WorkspaceId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("WorkspaceId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetWorkspaceId sets the WorkspaceId field's value.
+func (s *DescribeLoggingConfigurationInput) SetWorkspaceId(v string) *DescribeLoggingConfigurationInput {
+	s.WorkspaceId = &v
+	return s
+}
+
+// Represents the output of a DescribeLoggingConfiguration operation.
+type DescribeLoggingConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Metadata object containing information about the logging configuration of
+	// a workspace.
+	//
+	// LoggingConfiguration is a required field
+	LoggingConfiguration *LoggingConfigurationMetadata `locationName:"loggingConfiguration" type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLoggingConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLoggingConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetLoggingConfiguration sets the LoggingConfiguration field's value.
+func (s *DescribeLoggingConfigurationOutput) SetLoggingConfiguration(v *LoggingConfigurationMetadata) *DescribeLoggingConfigurationOutput {
+	s.LoggingConfiguration = v
 	return s
 }
 
@@ -3311,6 +3949,127 @@ func (s *ListWorkspacesOutput) SetNextToken(v string) *ListWorkspacesOutput {
 // SetWorkspaces sets the Workspaces field's value.
 func (s *ListWorkspacesOutput) SetWorkspaces(v []*WorkspaceSummary) *ListWorkspacesOutput {
 	s.Workspaces = v
+	return s
+}
+
+// Represents the properties of a logging configuration metadata.
+type LoggingConfigurationMetadata struct {
+	_ struct{} `type:"structure"`
+
+	// The time when the logging configuration was created.
+	//
+	// CreatedAt is a required field
+	CreatedAt *time.Time `locationName:"createdAt" type:"timestamp" required:"true"`
+
+	// The ARN of the CW log group to which the vended log data will be published.
+	//
+	// LogGroupArn is a required field
+	LogGroupArn *string `locationName:"logGroupArn" type:"string" required:"true"`
+
+	// The time when the logging configuration was modified.
+	//
+	// ModifiedAt is a required field
+	ModifiedAt *time.Time `locationName:"modifiedAt" type:"timestamp" required:"true"`
+
+	// The status of the logging configuration.
+	//
+	// Status is a required field
+	Status *LoggingConfigurationStatus `locationName:"status" type:"structure" required:"true"`
+
+	// The workspace where the logging configuration exists.
+	//
+	// Workspace is a required field
+	Workspace *string `locationName:"workspace" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LoggingConfigurationMetadata) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LoggingConfigurationMetadata) GoString() string {
+	return s.String()
+}
+
+// SetCreatedAt sets the CreatedAt field's value.
+func (s *LoggingConfigurationMetadata) SetCreatedAt(v time.Time) *LoggingConfigurationMetadata {
+	s.CreatedAt = &v
+	return s
+}
+
+// SetLogGroupArn sets the LogGroupArn field's value.
+func (s *LoggingConfigurationMetadata) SetLogGroupArn(v string) *LoggingConfigurationMetadata {
+	s.LogGroupArn = &v
+	return s
+}
+
+// SetModifiedAt sets the ModifiedAt field's value.
+func (s *LoggingConfigurationMetadata) SetModifiedAt(v time.Time) *LoggingConfigurationMetadata {
+	s.ModifiedAt = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *LoggingConfigurationMetadata) SetStatus(v *LoggingConfigurationStatus) *LoggingConfigurationMetadata {
+	s.Status = v
+	return s
+}
+
+// SetWorkspace sets the Workspace field's value.
+func (s *LoggingConfigurationMetadata) SetWorkspace(v string) *LoggingConfigurationMetadata {
+	s.Workspace = &v
+	return s
+}
+
+// Represents the status of a logging configuration.
+type LoggingConfigurationStatus struct {
+	_ struct{} `type:"structure"`
+
+	// Status code of the logging configuration.
+	//
+	// StatusCode is a required field
+	StatusCode *string `locationName:"statusCode" type:"string" required:"true" enum:"LoggingConfigurationStatusCode"`
+
+	// The reason for failure if any.
+	StatusReason *string `locationName:"statusReason" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LoggingConfigurationStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LoggingConfigurationStatus) GoString() string {
+	return s.String()
+}
+
+// SetStatusCode sets the StatusCode field's value.
+func (s *LoggingConfigurationStatus) SetStatusCode(v string) *LoggingConfigurationStatus {
+	s.StatusCode = &v
+	return s
+}
+
+// SetStatusReason sets the StatusReason field's value.
+func (s *LoggingConfigurationStatus) SetStatusReason(v string) *LoggingConfigurationStatus {
+	s.StatusReason = &v
 	return s
 }
 
@@ -4219,6 +4978,117 @@ func (s UntagResourceOutput) GoString() string {
 	return s.String()
 }
 
+// Represents the input of an UpdateLoggingConfiguration operation.
+type UpdateLoggingConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// Optional, unique, case-sensitive, user-provided identifier to ensure the
+	// idempotency of the request.
+	ClientToken *string `locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
+
+	// The ARN of the CW log group to which the vended log data will be published.
+	//
+	// LogGroupArn is a required field
+	LogGroupArn *string `locationName:"logGroupArn" type:"string" required:"true"`
+
+	// The ID of the workspace to vend logs to.
+	//
+	// WorkspaceId is a required field
+	WorkspaceId *string `location:"uri" locationName:"workspaceId" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLoggingConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLoggingConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateLoggingConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateLoggingConfigurationInput"}
+	if s.ClientToken != nil && len(*s.ClientToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientToken", 1))
+	}
+	if s.LogGroupArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("LogGroupArn"))
+	}
+	if s.WorkspaceId == nil {
+		invalidParams.Add(request.NewErrParamRequired("WorkspaceId"))
+	}
+	if s.WorkspaceId != nil && len(*s.WorkspaceId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("WorkspaceId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *UpdateLoggingConfigurationInput) SetClientToken(v string) *UpdateLoggingConfigurationInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetLogGroupArn sets the LogGroupArn field's value.
+func (s *UpdateLoggingConfigurationInput) SetLogGroupArn(v string) *UpdateLoggingConfigurationInput {
+	s.LogGroupArn = &v
+	return s
+}
+
+// SetWorkspaceId sets the WorkspaceId field's value.
+func (s *UpdateLoggingConfigurationInput) SetWorkspaceId(v string) *UpdateLoggingConfigurationInput {
+	s.WorkspaceId = &v
+	return s
+}
+
+// Represents the output of an UpdateLoggingConfiguration operation.
+type UpdateLoggingConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The status of the logging configuration.
+	//
+	// Status is a required field
+	Status *LoggingConfigurationStatus `locationName:"status" type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLoggingConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLoggingConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetStatus sets the Status field's value.
+func (s *UpdateLoggingConfigurationOutput) SetStatus(v *LoggingConfigurationStatus) *UpdateLoggingConfigurationOutput {
+	s.Status = v
+	return s
+}
+
 // Represents the input of an UpdateWorkspaceAlias operation.
 type UpdateWorkspaceAliasInput struct {
 	_ struct{} `type:"structure"`
@@ -4679,6 +5549,39 @@ func AlertManagerDefinitionStatusCode_Values() []string {
 		AlertManagerDefinitionStatusCodeDeleting,
 		AlertManagerDefinitionStatusCodeCreationFailed,
 		AlertManagerDefinitionStatusCodeUpdateFailed,
+	}
+}
+
+// State of a logging configuration.
+const (
+	// LoggingConfigurationStatusCodeCreating is a LoggingConfigurationStatusCode enum value
+	LoggingConfigurationStatusCodeCreating = "CREATING"
+
+	// LoggingConfigurationStatusCodeActive is a LoggingConfigurationStatusCode enum value
+	LoggingConfigurationStatusCodeActive = "ACTIVE"
+
+	// LoggingConfigurationStatusCodeUpdating is a LoggingConfigurationStatusCode enum value
+	LoggingConfigurationStatusCodeUpdating = "UPDATING"
+
+	// LoggingConfigurationStatusCodeDeleting is a LoggingConfigurationStatusCode enum value
+	LoggingConfigurationStatusCodeDeleting = "DELETING"
+
+	// LoggingConfigurationStatusCodeCreationFailed is a LoggingConfigurationStatusCode enum value
+	LoggingConfigurationStatusCodeCreationFailed = "CREATION_FAILED"
+
+	// LoggingConfigurationStatusCodeUpdateFailed is a LoggingConfigurationStatusCode enum value
+	LoggingConfigurationStatusCodeUpdateFailed = "UPDATE_FAILED"
+)
+
+// LoggingConfigurationStatusCode_Values returns all elements of the LoggingConfigurationStatusCode enum
+func LoggingConfigurationStatusCode_Values() []string {
+	return []string{
+		LoggingConfigurationStatusCodeCreating,
+		LoggingConfigurationStatusCodeActive,
+		LoggingConfigurationStatusCodeUpdating,
+		LoggingConfigurationStatusCodeDeleting,
+		LoggingConfigurationStatusCodeCreationFailed,
+		LoggingConfigurationStatusCodeUpdateFailed,
 	}
 }
 

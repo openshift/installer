@@ -29,14 +29,13 @@ const opAssociateCertificate = "AssociateCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateCertificateRequest method.
+//	req, resp := client.AssociateCertificateRequest(params)
 //
-//    // Example sending a request using the AssociateCertificateRequest method.
-//    req, resp := client.AssociateCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/AssociateCertificate
 func (c *MediaConvert) AssociateCertificateRequest(input *AssociateCertificateInput) (req *request.Request, output *AssociateCertificateOutput) {
@@ -69,17 +68,18 @@ func (c *MediaConvert) AssociateCertificateRequest(input *AssociateCertificateIn
 // API operation AssociateCertificate for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/AssociateCertificate
 func (c *MediaConvert) AssociateCertificate(input *AssociateCertificateInput) (*AssociateCertificateOutput, error) {
@@ -119,14 +119,13 @@ const opCancelJob = "CancelJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CancelJobRequest method.
+//	req, resp := client.CancelJobRequest(params)
 //
-//    // Example sending a request using the CancelJobRequest method.
-//    req, resp := client.CancelJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/CancelJob
 func (c *MediaConvert) CancelJobRequest(input *CancelJobInput) (req *request.Request, output *CancelJobOutput) {
@@ -159,17 +158,18 @@ func (c *MediaConvert) CancelJobRequest(input *CancelJobInput) (req *request.Req
 // API operation CancelJob for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/CancelJob
 func (c *MediaConvert) CancelJob(input *CancelJobInput) (*CancelJobOutput, error) {
@@ -209,14 +209,13 @@ const opCreateJob = "CreateJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateJobRequest method.
+//	req, resp := client.CreateJobRequest(params)
 //
-//    // Example sending a request using the CreateJobRequest method.
-//    req, resp := client.CreateJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/CreateJob
 func (c *MediaConvert) CreateJobRequest(input *CreateJobInput) (req *request.Request, output *CreateJobOutput) {
@@ -248,17 +247,18 @@ func (c *MediaConvert) CreateJobRequest(input *CreateJobInput) (req *request.Req
 // API operation CreateJob for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/CreateJob
 func (c *MediaConvert) CreateJob(input *CreateJobInput) (*CreateJobOutput, error) {
@@ -298,14 +298,13 @@ const opCreateJobTemplate = "CreateJobTemplate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateJobTemplateRequest method.
+//	req, resp := client.CreateJobTemplateRequest(params)
 //
-//    // Example sending a request using the CreateJobTemplateRequest method.
-//    req, resp := client.CreateJobTemplateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/CreateJobTemplate
 func (c *MediaConvert) CreateJobTemplateRequest(input *CreateJobTemplateInput) (req *request.Request, output *CreateJobTemplateOutput) {
@@ -337,17 +336,18 @@ func (c *MediaConvert) CreateJobTemplateRequest(input *CreateJobTemplateInput) (
 // API operation CreateJobTemplate for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/CreateJobTemplate
 func (c *MediaConvert) CreateJobTemplate(input *CreateJobTemplateInput) (*CreateJobTemplateOutput, error) {
@@ -387,14 +387,13 @@ const opCreatePreset = "CreatePreset"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreatePresetRequest method.
+//	req, resp := client.CreatePresetRequest(params)
 //
-//    // Example sending a request using the CreatePresetRequest method.
-//    req, resp := client.CreatePresetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/CreatePreset
 func (c *MediaConvert) CreatePresetRequest(input *CreatePresetInput) (req *request.Request, output *CreatePresetOutput) {
@@ -426,17 +425,18 @@ func (c *MediaConvert) CreatePresetRequest(input *CreatePresetInput) (req *reque
 // API operation CreatePreset for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/CreatePreset
 func (c *MediaConvert) CreatePreset(input *CreatePresetInput) (*CreatePresetOutput, error) {
@@ -476,14 +476,13 @@ const opCreateQueue = "CreateQueue"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateQueueRequest method.
+//	req, resp := client.CreateQueueRequest(params)
 //
-//    // Example sending a request using the CreateQueueRequest method.
-//    req, resp := client.CreateQueueRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/CreateQueue
 func (c *MediaConvert) CreateQueueRequest(input *CreateQueueInput) (req *request.Request, output *CreateQueueOutput) {
@@ -515,17 +514,18 @@ func (c *MediaConvert) CreateQueueRequest(input *CreateQueueInput) (req *request
 // API operation CreateQueue for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/CreateQueue
 func (c *MediaConvert) CreateQueue(input *CreateQueueInput) (*CreateQueueOutput, error) {
@@ -565,14 +565,13 @@ const opDeleteJobTemplate = "DeleteJobTemplate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteJobTemplateRequest method.
+//	req, resp := client.DeleteJobTemplateRequest(params)
 //
-//    // Example sending a request using the DeleteJobTemplateRequest method.
-//    req, resp := client.DeleteJobTemplateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DeleteJobTemplate
 func (c *MediaConvert) DeleteJobTemplateRequest(input *DeleteJobTemplateInput) (req *request.Request, output *DeleteJobTemplateOutput) {
@@ -604,17 +603,18 @@ func (c *MediaConvert) DeleteJobTemplateRequest(input *DeleteJobTemplateInput) (
 // API operation DeleteJobTemplate for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DeleteJobTemplate
 func (c *MediaConvert) DeleteJobTemplate(input *DeleteJobTemplateInput) (*DeleteJobTemplateOutput, error) {
@@ -654,14 +654,13 @@ const opDeletePolicy = "DeletePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeletePolicyRequest method.
+//	req, resp := client.DeletePolicyRequest(params)
 //
-//    // Example sending a request using the DeletePolicyRequest method.
-//    req, resp := client.DeletePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DeletePolicy
 func (c *MediaConvert) DeletePolicyRequest(input *DeletePolicyInput) (req *request.Request, output *DeletePolicyOutput) {
@@ -693,17 +692,18 @@ func (c *MediaConvert) DeletePolicyRequest(input *DeletePolicyInput) (req *reque
 // API operation DeletePolicy for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DeletePolicy
 func (c *MediaConvert) DeletePolicy(input *DeletePolicyInput) (*DeletePolicyOutput, error) {
@@ -743,14 +743,13 @@ const opDeletePreset = "DeletePreset"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeletePresetRequest method.
+//	req, resp := client.DeletePresetRequest(params)
 //
-//    // Example sending a request using the DeletePresetRequest method.
-//    req, resp := client.DeletePresetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DeletePreset
 func (c *MediaConvert) DeletePresetRequest(input *DeletePresetInput) (req *request.Request, output *DeletePresetOutput) {
@@ -782,17 +781,18 @@ func (c *MediaConvert) DeletePresetRequest(input *DeletePresetInput) (req *reque
 // API operation DeletePreset for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DeletePreset
 func (c *MediaConvert) DeletePreset(input *DeletePresetInput) (*DeletePresetOutput, error) {
@@ -832,14 +832,13 @@ const opDeleteQueue = "DeleteQueue"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteQueueRequest method.
+//	req, resp := client.DeleteQueueRequest(params)
 //
-//    // Example sending a request using the DeleteQueueRequest method.
-//    req, resp := client.DeleteQueueRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DeleteQueue
 func (c *MediaConvert) DeleteQueueRequest(input *DeleteQueueInput) (req *request.Request, output *DeleteQueueOutput) {
@@ -871,17 +870,18 @@ func (c *MediaConvert) DeleteQueueRequest(input *DeleteQueueInput) (req *request
 // API operation DeleteQueue for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DeleteQueue
 func (c *MediaConvert) DeleteQueue(input *DeleteQueueInput) (*DeleteQueueOutput, error) {
@@ -921,14 +921,13 @@ const opDescribeEndpoints = "DescribeEndpoints"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeEndpointsRequest method.
+//	req, resp := client.DescribeEndpointsRequest(params)
 //
-//    // Example sending a request using the DescribeEndpointsRequest method.
-//    req, resp := client.DescribeEndpointsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DescribeEndpoints
 func (c *MediaConvert) DescribeEndpointsRequest(input *DescribeEndpointsInput) (req *request.Request, output *DescribeEndpointsOutput) {
@@ -966,17 +965,18 @@ func (c *MediaConvert) DescribeEndpointsRequest(input *DescribeEndpointsInput) (
 // API operation DescribeEndpoints for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DescribeEndpoints
 func (c *MediaConvert) DescribeEndpoints(input *DescribeEndpointsInput) (*DescribeEndpointsOutput, error) {
@@ -1008,15 +1008,14 @@ func (c *MediaConvert) DescribeEndpointsWithContext(ctx aws.Context, input *Desc
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeEndpoints operation.
-//    pageNum := 0
-//    err := client.DescribeEndpointsPages(params,
-//        func(page *mediaconvert.DescribeEndpointsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeEndpoints operation.
+//	pageNum := 0
+//	err := client.DescribeEndpointsPages(params,
+//	    func(page *mediaconvert.DescribeEndpointsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaConvert) DescribeEndpointsPages(input *DescribeEndpointsInput, fn func(*DescribeEndpointsOutput, bool) bool) error {
 	return c.DescribeEndpointsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1068,14 +1067,13 @@ const opDisassociateCertificate = "DisassociateCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateCertificateRequest method.
+//	req, resp := client.DisassociateCertificateRequest(params)
 //
-//    // Example sending a request using the DisassociateCertificateRequest method.
-//    req, resp := client.DisassociateCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DisassociateCertificate
 func (c *MediaConvert) DisassociateCertificateRequest(input *DisassociateCertificateInput) (req *request.Request, output *DisassociateCertificateOutput) {
@@ -1108,17 +1106,18 @@ func (c *MediaConvert) DisassociateCertificateRequest(input *DisassociateCertifi
 // API operation DisassociateCertificate for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/DisassociateCertificate
 func (c *MediaConvert) DisassociateCertificate(input *DisassociateCertificateInput) (*DisassociateCertificateOutput, error) {
@@ -1158,14 +1157,13 @@ const opGetJob = "GetJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetJobRequest method.
+//	req, resp := client.GetJobRequest(params)
 //
-//    // Example sending a request using the GetJobRequest method.
-//    req, resp := client.GetJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/GetJob
 func (c *MediaConvert) GetJobRequest(input *GetJobInput) (req *request.Request, output *GetJobOutput) {
@@ -1196,17 +1194,18 @@ func (c *MediaConvert) GetJobRequest(input *GetJobInput) (req *request.Request, 
 // API operation GetJob for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/GetJob
 func (c *MediaConvert) GetJob(input *GetJobInput) (*GetJobOutput, error) {
@@ -1246,14 +1245,13 @@ const opGetJobTemplate = "GetJobTemplate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetJobTemplateRequest method.
+//	req, resp := client.GetJobTemplateRequest(params)
 //
-//    // Example sending a request using the GetJobTemplateRequest method.
-//    req, resp := client.GetJobTemplateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/GetJobTemplate
 func (c *MediaConvert) GetJobTemplateRequest(input *GetJobTemplateInput) (req *request.Request, output *GetJobTemplateOutput) {
@@ -1284,17 +1282,18 @@ func (c *MediaConvert) GetJobTemplateRequest(input *GetJobTemplateInput) (req *r
 // API operation GetJobTemplate for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/GetJobTemplate
 func (c *MediaConvert) GetJobTemplate(input *GetJobTemplateInput) (*GetJobTemplateOutput, error) {
@@ -1334,14 +1333,13 @@ const opGetPolicy = "GetPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetPolicyRequest method.
+//	req, resp := client.GetPolicyRequest(params)
 //
-//    // Example sending a request using the GetPolicyRequest method.
-//    req, resp := client.GetPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/GetPolicy
 func (c *MediaConvert) GetPolicyRequest(input *GetPolicyInput) (req *request.Request, output *GetPolicyOutput) {
@@ -1372,17 +1370,18 @@ func (c *MediaConvert) GetPolicyRequest(input *GetPolicyInput) (req *request.Req
 // API operation GetPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/GetPolicy
 func (c *MediaConvert) GetPolicy(input *GetPolicyInput) (*GetPolicyOutput, error) {
@@ -1422,14 +1421,13 @@ const opGetPreset = "GetPreset"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetPresetRequest method.
+//	req, resp := client.GetPresetRequest(params)
 //
-//    // Example sending a request using the GetPresetRequest method.
-//    req, resp := client.GetPresetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/GetPreset
 func (c *MediaConvert) GetPresetRequest(input *GetPresetInput) (req *request.Request, output *GetPresetOutput) {
@@ -1460,17 +1458,18 @@ func (c *MediaConvert) GetPresetRequest(input *GetPresetInput) (req *request.Req
 // API operation GetPreset for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/GetPreset
 func (c *MediaConvert) GetPreset(input *GetPresetInput) (*GetPresetOutput, error) {
@@ -1510,14 +1509,13 @@ const opGetQueue = "GetQueue"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetQueueRequest method.
+//	req, resp := client.GetQueueRequest(params)
 //
-//    // Example sending a request using the GetQueueRequest method.
-//    req, resp := client.GetQueueRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/GetQueue
 func (c *MediaConvert) GetQueueRequest(input *GetQueueInput) (req *request.Request, output *GetQueueOutput) {
@@ -1548,17 +1546,18 @@ func (c *MediaConvert) GetQueueRequest(input *GetQueueInput) (req *request.Reque
 // API operation GetQueue for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/GetQueue
 func (c *MediaConvert) GetQueue(input *GetQueueInput) (*GetQueueOutput, error) {
@@ -1598,14 +1597,13 @@ const opListJobTemplates = "ListJobTemplates"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListJobTemplatesRequest method.
+//	req, resp := client.ListJobTemplatesRequest(params)
 //
-//    // Example sending a request using the ListJobTemplatesRequest method.
-//    req, resp := client.ListJobTemplatesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/ListJobTemplates
 func (c *MediaConvert) ListJobTemplatesRequest(input *ListJobTemplatesInput) (req *request.Request, output *ListJobTemplatesOutput) {
@@ -1644,17 +1642,18 @@ func (c *MediaConvert) ListJobTemplatesRequest(input *ListJobTemplatesInput) (re
 // API operation ListJobTemplates for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/ListJobTemplates
 func (c *MediaConvert) ListJobTemplates(input *ListJobTemplatesInput) (*ListJobTemplatesOutput, error) {
@@ -1686,15 +1685,14 @@ func (c *MediaConvert) ListJobTemplatesWithContext(ctx aws.Context, input *ListJ
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListJobTemplates operation.
-//    pageNum := 0
-//    err := client.ListJobTemplatesPages(params,
-//        func(page *mediaconvert.ListJobTemplatesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListJobTemplates operation.
+//	pageNum := 0
+//	err := client.ListJobTemplatesPages(params,
+//	    func(page *mediaconvert.ListJobTemplatesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaConvert) ListJobTemplatesPages(input *ListJobTemplatesInput, fn func(*ListJobTemplatesOutput, bool) bool) error {
 	return c.ListJobTemplatesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1746,14 +1744,13 @@ const opListJobs = "ListJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListJobsRequest method.
+//	req, resp := client.ListJobsRequest(params)
 //
-//    // Example sending a request using the ListJobsRequest method.
-//    req, resp := client.ListJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/ListJobs
 func (c *MediaConvert) ListJobsRequest(input *ListJobsInput) (req *request.Request, output *ListJobsOutput) {
@@ -1793,17 +1790,18 @@ func (c *MediaConvert) ListJobsRequest(input *ListJobsInput) (req *request.Reque
 // API operation ListJobs for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/ListJobs
 func (c *MediaConvert) ListJobs(input *ListJobsInput) (*ListJobsOutput, error) {
@@ -1835,15 +1833,14 @@ func (c *MediaConvert) ListJobsWithContext(ctx aws.Context, input *ListJobsInput
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListJobs operation.
-//    pageNum := 0
-//    err := client.ListJobsPages(params,
-//        func(page *mediaconvert.ListJobsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListJobs operation.
+//	pageNum := 0
+//	err := client.ListJobsPages(params,
+//	    func(page *mediaconvert.ListJobsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaConvert) ListJobsPages(input *ListJobsInput, fn func(*ListJobsOutput, bool) bool) error {
 	return c.ListJobsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1895,14 +1892,13 @@ const opListPresets = "ListPresets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPresetsRequest method.
+//	req, resp := client.ListPresetsRequest(params)
 //
-//    // Example sending a request using the ListPresetsRequest method.
-//    req, resp := client.ListPresetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/ListPresets
 func (c *MediaConvert) ListPresetsRequest(input *ListPresetsInput) (req *request.Request, output *ListPresetsOutput) {
@@ -1941,17 +1937,18 @@ func (c *MediaConvert) ListPresetsRequest(input *ListPresetsInput) (req *request
 // API operation ListPresets for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/ListPresets
 func (c *MediaConvert) ListPresets(input *ListPresetsInput) (*ListPresetsOutput, error) {
@@ -1983,15 +1980,14 @@ func (c *MediaConvert) ListPresetsWithContext(ctx aws.Context, input *ListPreset
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListPresets operation.
-//    pageNum := 0
-//    err := client.ListPresetsPages(params,
-//        func(page *mediaconvert.ListPresetsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListPresets operation.
+//	pageNum := 0
+//	err := client.ListPresetsPages(params,
+//	    func(page *mediaconvert.ListPresetsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaConvert) ListPresetsPages(input *ListPresetsInput, fn func(*ListPresetsOutput, bool) bool) error {
 	return c.ListPresetsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2043,14 +2039,13 @@ const opListQueues = "ListQueues"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListQueuesRequest method.
+//	req, resp := client.ListQueuesRequest(params)
 //
-//    // Example sending a request using the ListQueuesRequest method.
-//    req, resp := client.ListQueuesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/ListQueues
 func (c *MediaConvert) ListQueuesRequest(input *ListQueuesInput) (req *request.Request, output *ListQueuesOutput) {
@@ -2089,17 +2084,18 @@ func (c *MediaConvert) ListQueuesRequest(input *ListQueuesInput) (req *request.R
 // API operation ListQueues for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/ListQueues
 func (c *MediaConvert) ListQueues(input *ListQueuesInput) (*ListQueuesOutput, error) {
@@ -2131,15 +2127,14 @@ func (c *MediaConvert) ListQueuesWithContext(ctx aws.Context, input *ListQueuesI
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListQueues operation.
-//    pageNum := 0
-//    err := client.ListQueuesPages(params,
-//        func(page *mediaconvert.ListQueuesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListQueues operation.
+//	pageNum := 0
+//	err := client.ListQueuesPages(params,
+//	    func(page *mediaconvert.ListQueuesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaConvert) ListQueuesPages(input *ListQueuesInput, fn func(*ListQueuesOutput, bool) bool) error {
 	return c.ListQueuesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2191,14 +2186,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/ListTagsForResource
 func (c *MediaConvert) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -2229,17 +2223,18 @@ func (c *MediaConvert) ListTagsForResourceRequest(input *ListTagsForResourceInpu
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/ListTagsForResource
 func (c *MediaConvert) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -2279,14 +2274,13 @@ const opPutPolicy = "PutPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutPolicyRequest method.
+//	req, resp := client.PutPolicyRequest(params)
 //
-//    // Example sending a request using the PutPolicyRequest method.
-//    req, resp := client.PutPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/PutPolicy
 func (c *MediaConvert) PutPolicyRequest(input *PutPolicyInput) (req *request.Request, output *PutPolicyOutput) {
@@ -2318,17 +2312,18 @@ func (c *MediaConvert) PutPolicyRequest(input *PutPolicyInput) (req *request.Req
 // API operation PutPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/PutPolicy
 func (c *MediaConvert) PutPolicy(input *PutPolicyInput) (*PutPolicyOutput, error) {
@@ -2368,14 +2363,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/TagResource
 func (c *MediaConvert) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -2408,17 +2402,18 @@ func (c *MediaConvert) TagResourceRequest(input *TagResourceInput) (req *request
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/TagResource
 func (c *MediaConvert) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -2458,14 +2453,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/UntagResource
 func (c *MediaConvert) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -2498,17 +2492,18 @@ func (c *MediaConvert) UntagResourceRequest(input *UntagResourceInput) (req *req
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/UntagResource
 func (c *MediaConvert) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -2548,14 +2543,13 @@ const opUpdateJobTemplate = "UpdateJobTemplate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateJobTemplateRequest method.
+//	req, resp := client.UpdateJobTemplateRequest(params)
 //
-//    // Example sending a request using the UpdateJobTemplateRequest method.
-//    req, resp := client.UpdateJobTemplateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/UpdateJobTemplate
 func (c *MediaConvert) UpdateJobTemplateRequest(input *UpdateJobTemplateInput) (req *request.Request, output *UpdateJobTemplateOutput) {
@@ -2586,17 +2580,18 @@ func (c *MediaConvert) UpdateJobTemplateRequest(input *UpdateJobTemplateInput) (
 // API operation UpdateJobTemplate for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/UpdateJobTemplate
 func (c *MediaConvert) UpdateJobTemplate(input *UpdateJobTemplateInput) (*UpdateJobTemplateOutput, error) {
@@ -2636,14 +2631,13 @@ const opUpdatePreset = "UpdatePreset"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdatePresetRequest method.
+//	req, resp := client.UpdatePresetRequest(params)
 //
-//    // Example sending a request using the UpdatePresetRequest method.
-//    req, resp := client.UpdatePresetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/UpdatePreset
 func (c *MediaConvert) UpdatePresetRequest(input *UpdatePresetInput) (req *request.Request, output *UpdatePresetOutput) {
@@ -2674,17 +2668,18 @@ func (c *MediaConvert) UpdatePresetRequest(input *UpdatePresetInput) (req *reque
 // API operation UpdatePreset for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/UpdatePreset
 func (c *MediaConvert) UpdatePreset(input *UpdatePresetInput) (*UpdatePresetOutput, error) {
@@ -2724,14 +2719,13 @@ const opUpdateQueue = "UpdateQueue"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateQueueRequest method.
+//	req, resp := client.UpdateQueueRequest(params)
 //
-//    // Example sending a request using the UpdateQueueRequest method.
-//    req, resp := client.UpdateQueueRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/UpdateQueue
 func (c *MediaConvert) UpdateQueueRequest(input *UpdateQueueInput) (req *request.Request, output *UpdateQueueOutput) {
@@ -2762,17 +2756,18 @@ func (c *MediaConvert) UpdateQueueRequest(input *UpdateQueueInput) (req *request
 // API operation UpdateQueue for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
 //
-//   * InternalServerErrorException
+//   - BadRequestException
 //
-//   * ForbiddenException
+//   - InternalServerErrorException
 //
-//   * NotFoundException
+//   - ForbiddenException
 //
-//   * TooManyRequestsException
+//   - NotFoundException
 //
-//   * ConflictException
+//   - TooManyRequestsException
+//
+//   - ConflictException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediaconvert-2017-08-29/UpdateQueue
 func (c *MediaConvert) UpdateQueue(input *UpdateQueueInput) (*UpdateQueueOutput, error) {
@@ -3220,6 +3215,79 @@ func (s *AiffSettings) SetChannels(v int64) *AiffSettings {
 // SetSampleRate sets the SampleRate field's value.
 func (s *AiffSettings) SetSampleRate(v int64) *AiffSettings {
 	s.SampleRate = &v
+	return s
+}
+
+// Use Allowed renditions to specify a list of possible resolutions in your
+// ABR stack. * MediaConvert will create an ABR stack exclusively from the list
+// of resolutions that you specify. * Some resolutions in the Allowed renditions
+// list may not be included, however you can force a resolution to be included
+// by setting Required to ENABLED. * You must specify at least one resolution
+// that is greater than or equal to any resolutions that you specify in Min
+// top rendition size or Min bottom rendition size. * If you specify Allowed
+// renditions, you must not specify a separate rule for Force include renditions.
+type AllowedRenditionSize struct {
+	_ struct{} `type:"structure"`
+
+	// Use Height to define the video resolution height, in pixels, for this rule.
+	Height *int64 `locationName:"height" min:"32" type:"integer"`
+
+	// Set to ENABLED to force a rendition to be included.
+	Required *string `locationName:"required" type:"string" enum:"RequiredFlag"`
+
+	// Use Width to define the video resolution width, in pixels, for this rule.
+	Width *int64 `locationName:"width" min:"32" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AllowedRenditionSize) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AllowedRenditionSize) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AllowedRenditionSize) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AllowedRenditionSize"}
+	if s.Height != nil && *s.Height < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Height", 32))
+	}
+	if s.Width != nil && *s.Width < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Width", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetHeight sets the Height field's value.
+func (s *AllowedRenditionSize) SetHeight(v int64) *AllowedRenditionSize {
+	s.Height = &v
+	return s
+}
+
+// SetRequired sets the Required field's value.
+func (s *AllowedRenditionSize) SetRequired(v string) *AllowedRenditionSize {
+	s.Required = &v
+	return s
+}
+
+// SetWidth sets the Width field's value.
+func (s *AllowedRenditionSize) SetWidth(v int64) *AllowedRenditionSize {
+	s.Width = &v
 	return s
 }
 
@@ -3920,6 +3988,22 @@ func (s *AudioNormalizationSettings) SetTargetLkfs(v float64) *AudioNormalizatio
 type AudioSelector struct {
 	_ struct{} `type:"structure"`
 
+	// Apply audio timing corrections to help synchronize audio and video in your
+	// output. To apply timing corrections, your input must meet the following requirements:
+	// * Container: MP4, or MOV, with an accurate time-to-sample (STTS) table. *
+	// Audio track: AAC. Choose from the following audio timing correction settings:
+	// * Disabled (Default): Apply no correction. * Auto: Recommended for most inputs.
+	// MediaConvert analyzes the audio timing in your input and determines which
+	// correction setting to use, if needed. * Track: Adjust the duration of each
+	// audio frame by a constant amount to align the audio track length with STTS
+	// duration. Track-level correction does not affect pitch, and is recommended
+	// for tonal audio content such as music. * Frame: Adjust the duration of each
+	// audio frame by a variable amount to align audio frames with STTS timestamps.
+	// No corrections are made to already-aligned frames. Frame-level correction
+	// may affect the pitch of corrected frames, and is recommended for atonal audio
+	// content such as speech or percussion.
+	AudioDurationCorrection *string `locationName:"audioDurationCorrection" type:"string" enum:"AudioDurationCorrection"`
+
 	// Selects a specific language code from within an audio source, using the ISO
 	// 639-2 or ISO 639-3 three-letter language code
 	CustomLanguageCode *string `locationName:"customLanguageCode" min:"3" type:"string"`
@@ -4018,6 +4102,12 @@ func (s *AudioSelector) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAudioDurationCorrection sets the AudioDurationCorrection field's value.
+func (s *AudioSelector) SetAudioDurationCorrection(v string) *AudioSelector {
+	s.AudioDurationCorrection = &v
+	return s
 }
 
 // SetCustomLanguageCode sets the CustomLanguageCode field's value.
@@ -4125,6 +4215,162 @@ func (s *AudioSelectorGroup) SetAudioSelectorNames(v []*string) *AudioSelectorGr
 	return s
 }
 
+// Specify one or more Automated ABR rule types. Note: Force include and Allowed
+// renditions are mutually exclusive.
+type AutomatedAbrRule struct {
+	_ struct{} `type:"structure"`
+
+	// When customer adds the allowed renditions rule for auto ABR ladder, they
+	// are required to add at leat one rendition to allowedRenditions list
+	AllowedRenditions []*AllowedRenditionSize `locationName:"allowedRenditions" type:"list"`
+
+	// When customer adds the force include renditions rule for auto ABR ladder,
+	// they are required to add at leat one rendition to forceIncludeRenditions
+	// list
+	ForceIncludeRenditions []*ForceIncludeRenditionSize `locationName:"forceIncludeRenditions" type:"list"`
+
+	// Use Min bottom rendition size to specify a minimum size for the lowest resolution
+	// in your ABR stack. * The lowest resolution in your ABR stack will be equal
+	// to or greater than the value that you enter. For example: If you specify
+	// 640x360 the lowest resolution in your ABR stack will be equal to or greater
+	// than to 640x360. * If you specify a Min top rendition size rule, the value
+	// that you specify for Min bottom rendition size must be less than, or equal
+	// to, Min top rendition size.
+	MinBottomRenditionSize *MinBottomRenditionSize `locationName:"minBottomRenditionSize" type:"structure"`
+
+	// Use Min top rendition size to specify a minimum size for the highest resolution
+	// in your ABR stack. * The highest resolution in your ABR stack will be equal
+	// to or greater than the value that you enter. For example: If you specify
+	// 1280x720 the highest resolution in your ABR stack will be equal to or greater
+	// than 1280x720. * If you specify a value for Max resolution, the value that
+	// you specify for Min top rendition size must be less than, or equal to, Max
+	// resolution.
+	MinTopRenditionSize *MinTopRenditionSize `locationName:"minTopRenditionSize" type:"structure"`
+
+	// Use Min top rendition size to specify a minimum size for the highest resolution
+	// in your ABR stack. * The highest resolution in your ABR stack will be equal
+	// to or greater than the value that you enter. For example: If you specify
+	// 1280x720 the highest resolution in your ABR stack will be equal to or greater
+	// than 1280x720. * If you specify a value for Max resolution, the value that
+	// you specify for Min top rendition size must be less than, or equal to, Max
+	// resolution. Use Min bottom rendition size to specify a minimum size for the
+	// lowest resolution in your ABR stack. * The lowest resolution in your ABR
+	// stack will be equal to or greater than the value that you enter. For example:
+	// If you specify 640x360 the lowest resolution in your ABR stack will be equal
+	// to or greater than to 640x360. * If you specify a Min top rendition size
+	// rule, the value that you specify for Min bottom rendition size must be less
+	// than, or equal to, Min top rendition size. Use Force include renditions to
+	// specify one or more resolutions to include your ABR stack. * (Recommended)
+	// To optimize automated ABR, specify as few resolutions as possible. * (Required)
+	// The number of resolutions that you specify must be equal to, or less than,
+	// the Max renditions setting. * If you specify a Min top rendition size rule,
+	// specify at least one resolution that is equal to, or greater than, Min top
+	// rendition size. * If you specify a Min bottom rendition size rule, only specify
+	// resolutions that are equal to, or greater than, Min bottom rendition size.
+	// * If you specify a Force include renditions rule, do not specify a separate
+	// rule for Allowed renditions. * Note: The ABR stack may include other resolutions
+	// that you do not specify here, depending on the Max renditions setting. Use
+	// Allowed renditions to specify a list of possible resolutions in your ABR
+	// stack. * (Required) The number of resolutions that you specify must be equal
+	// to, or greater than, the Max renditions setting. * MediaConvert will create
+	// an ABR stack exclusively from the list of resolutions that you specify. *
+	// Some resolutions in the Allowed renditions list may not be included, however
+	// you can force a resolution to be included by setting Required to ENABLED.
+	// * You must specify at least one resolution that is greater than or equal
+	// to any resolutions that you specify in Min top rendition size or Min bottom
+	// rendition size. * If you specify Allowed renditions, you must not specify
+	// a separate rule for Force include renditions.
+	Type *string `locationName:"type" type:"string" enum:"RuleType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AutomatedAbrRule) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AutomatedAbrRule) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AutomatedAbrRule) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AutomatedAbrRule"}
+	if s.AllowedRenditions != nil {
+		for i, v := range s.AllowedRenditions {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AllowedRenditions", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.ForceIncludeRenditions != nil {
+		for i, v := range s.ForceIncludeRenditions {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "ForceIncludeRenditions", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.MinBottomRenditionSize != nil {
+		if err := s.MinBottomRenditionSize.Validate(); err != nil {
+			invalidParams.AddNested("MinBottomRenditionSize", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.MinTopRenditionSize != nil {
+		if err := s.MinTopRenditionSize.Validate(); err != nil {
+			invalidParams.AddNested("MinTopRenditionSize", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAllowedRenditions sets the AllowedRenditions field's value.
+func (s *AutomatedAbrRule) SetAllowedRenditions(v []*AllowedRenditionSize) *AutomatedAbrRule {
+	s.AllowedRenditions = v
+	return s
+}
+
+// SetForceIncludeRenditions sets the ForceIncludeRenditions field's value.
+func (s *AutomatedAbrRule) SetForceIncludeRenditions(v []*ForceIncludeRenditionSize) *AutomatedAbrRule {
+	s.ForceIncludeRenditions = v
+	return s
+}
+
+// SetMinBottomRenditionSize sets the MinBottomRenditionSize field's value.
+func (s *AutomatedAbrRule) SetMinBottomRenditionSize(v *MinBottomRenditionSize) *AutomatedAbrRule {
+	s.MinBottomRenditionSize = v
+	return s
+}
+
+// SetMinTopRenditionSize sets the MinTopRenditionSize field's value.
+func (s *AutomatedAbrRule) SetMinTopRenditionSize(v *MinTopRenditionSize) *AutomatedAbrRule {
+	s.MinTopRenditionSize = v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *AutomatedAbrRule) SetType(v string) *AutomatedAbrRule {
+	s.Type = &v
+	return s
+}
+
 // Use automated ABR to have MediaConvert set up the renditions in your ABR
 // package for you automatically, based on characteristics of your input video.
 // This feature optimizes video quality while minimizing the overall size of
@@ -4151,6 +4397,12 @@ type AutomatedAbrSettings struct {
 	// with slow internet connections. If you don't specify a value, MediaConvert
 	// uses 600,000 (600 kb/s) by default.
 	MinAbrBitrate *int64 `locationName:"minAbrBitrate" min:"100000" type:"integer"`
+
+	// Optional. Use Automated ABR rules to specify restrictions for the rendition
+	// sizes MediaConvert will create in your ABR stack. You can use these rules
+	// if your ABR workflow has specific rendition size requirements, but you still
+	// want MediaConvert to optimize for video quality and overall file size.
+	Rules []*AutomatedAbrRule `locationName:"rules" type:"list"`
 }
 
 // String returns the string representation.
@@ -4183,6 +4435,16 @@ func (s *AutomatedAbrSettings) Validate() error {
 	if s.MinAbrBitrate != nil && *s.MinAbrBitrate < 100000 {
 		invalidParams.Add(request.NewErrParamMinValue("MinAbrBitrate", 100000))
 	}
+	if s.Rules != nil {
+		for i, v := range s.Rules {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Rules", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4205,6 +4467,12 @@ func (s *AutomatedAbrSettings) SetMaxRenditions(v int64) *AutomatedAbrSettings {
 // SetMinAbrBitrate sets the MinAbrBitrate field's value.
 func (s *AutomatedAbrSettings) SetMinAbrBitrate(v int64) *AutomatedAbrSettings {
 	s.MinAbrBitrate = &v
+	return s
+}
+
+// SetRules sets the Rules field's value.
+func (s *AutomatedAbrSettings) SetRules(v []*AutomatedAbrRule) *AutomatedAbrSettings {
+	s.Rules = v
 	return s
 }
 
@@ -4259,7 +4527,7 @@ func (s *AutomatedEncodingSettings) SetAbrSettings(v *AutomatedAbrSettings) *Aut
 	return s
 }
 
-// Settings for quality-defined variable bitrate encoding with the H.265 codec.
+// Settings for quality-defined variable bitrate encoding with the AV1 codec.
 // Use these settings only when you set QVBR for Rate control mode (RateControlMode).
 type Av1QvbrSettings struct {
 	_ struct{} `type:"structure"`
@@ -6743,6 +7011,13 @@ type CmfcSettings struct {
 	// value Exclude (EXCLUDE).
 	IFrameOnlyManifest *string `locationName:"iFrameOnlyManifest" type:"string" enum:"CmfcIFrameOnlyManifest"`
 
+	// To include key-length-value metadata in this output: Set KLV metadata insertion
+	// to Passthrough. MediaConvert reads KLV metadata present in your input and
+	// writes each instance to a separate event message box in the output, according
+	// to MISB ST1910.1. To exclude this KLV metadata: Set KLV metadata insertion
+	// to None or leave blank.
+	KlvMetadata *string `locationName:"klvMetadata" type:"string" enum:"CmfcKlvMetadata"`
+
 	// Use this setting only when you specify SCTE-35 markers from ESAM. Choose
 	// INSERT to put SCTE-35 markers in this output at the insertion points that
 	// you specify in an ESAM XML document. Provide the document in the setting
@@ -6755,8 +7030,11 @@ type CmfcSettings struct {
 	// want those SCTE-35 markers in this output.
 	Scte35Source *string `locationName:"scte35Source" type:"string" enum:"CmfcScte35Source"`
 
-	// Applies to CMAF outputs. Use this setting to specify whether the service
-	// inserts the ID3 timed metadata from the input in this output.
+	// To include ID3 metadata in this output: Set ID3 metadata (timedMetadata)
+	// to Passthrough (PASSTHROUGH). Specify this ID3 metadata in Custom ID3 metadata
+	// inserter (timedMetadataInsertion). MediaConvert writes each instance of ID3
+	// metadata in a separate Event Message (eMSG) box. To exclude this ID3 metadata:
+	// Set ID3 metadata to None (NONE) or leave blank.
 	TimedMetadata *string `locationName:"timedMetadata" type:"string" enum:"CmfcTimedMetadata"`
 }
 
@@ -6811,6 +7089,12 @@ func (s *CmfcSettings) SetDescriptiveVideoServiceFlag(v string) *CmfcSettings {
 // SetIFrameOnlyManifest sets the IFrameOnlyManifest field's value.
 func (s *CmfcSettings) SetIFrameOnlyManifest(v string) *CmfcSettings {
 	s.IFrameOnlyManifest = &v
+	return s
+}
+
+// SetKlvMetadata sets the KlvMetadata field's value.
+func (s *CmfcSettings) SetKlvMetadata(v string) *CmfcSettings {
+	s.KlvMetadata = &v
 	return s
 }
 
@@ -8945,9 +9229,7 @@ func (s DisassociateCertificateOutput) GoString() string {
 	return s.String()
 }
 
-// With AWS Elemental MediaConvert, you can create profile 5 Dolby Vision outputs
-// from MXF and IMF sources that contain mastering information as frame-interleaved
-// Dolby Vision metadata.
+// Create Dolby Vision Profile 5 or Profile 8.1 compatible video output.
 type DolbyVision struct {
 	_ struct{} `type:"structure"`
 
@@ -8959,9 +9241,22 @@ type DolbyVision struct {
 	// MaxCLL and MaxFALL properies.
 	L6Mode *string `locationName:"l6Mode" type:"string" enum:"DolbyVisionLevel6Mode"`
 
-	// In the current MediaConvert implementation, the Dolby Vision profile is always
-	// 5 (PROFILE_5). Therefore, all of your inputs must contain Dolby Vision frame
-	// interleaved data.
+	// Required when you set Dolby Vision Profile to Profile 8.1. When you set Content
+	// mapping to None, content mapping is not applied to the HDR10-compatible signal.
+	// Depending on the source peak nit level, clipping might occur on HDR devices
+	// without Dolby Vision. When you set Content mapping to HDR10 1000, the transcoder
+	// creates a 1,000 nits peak HDR10-compatible signal by applying static content
+	// mapping to the source. This mode is speed-optimized for PQ10 sources with
+	// metadata that is created from analysis. For graded Dolby Vision content,
+	// be aware that creative intent might not be guaranteed with extreme 1,000
+	// nits trims.
+	Mapping *string `locationName:"mapping" type:"string" enum:"DolbyVisionMapping"`
+
+	// Required when you enable Dolby Vision. Use Profile 5 to include frame-interleaved
+	// Dolby Vision metadata in your output. Your input must include Dolby Vision
+	// metadata or an HDR10 YUV color space. Use Profile 8.1 to include frame-interleaved
+	// Dolby Vision metadata and HDR10 metadata in your output. Your input must
+	// include Dolby Vision metadata.
 	Profile *string `locationName:"profile" type:"string" enum:"DolbyVisionProfile"`
 }
 
@@ -8992,6 +9287,12 @@ func (s *DolbyVision) SetL6Metadata(v *DolbyVisionLevel6Metadata) *DolbyVision {
 // SetL6Mode sets the L6Mode field's value.
 func (s *DolbyVision) SetL6Mode(v string) *DolbyVision {
 	s.L6Mode = &v
+	return s
+}
+
+// SetMapping sets the Mapping field's value.
+func (s *DolbyVision) SetMapping(v string) *DolbyVision {
+	s.Mapping = &v
 	return s
 }
 
@@ -10913,6 +11214,73 @@ func (s *ForbiddenException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Use Force include renditions to specify one or more resolutions to include
+// your ABR stack. * (Recommended) To optimize automated ABR, specify as few
+// resolutions as possible. * (Required) The number of resolutions that you
+// specify must be equal to, or less than, the Max renditions setting. * If
+// you specify a Min top rendition size rule, specify at least one resolution
+// that is equal to, or greater than, Min top rendition size. * If you specify
+// a Min bottom rendition size rule, only specify resolutions that are equal
+// to, or greater than, Min bottom rendition size. * If you specify a Force
+// include renditions rule, do not specify a separate rule for Allowed renditions.
+// * Note: The ABR stack may include other resolutions that you do not specify
+// here, depending on the Max renditions setting.
+type ForceIncludeRenditionSize struct {
+	_ struct{} `type:"structure"`
+
+	// Use Height to define the video resolution height, in pixels, for this rule.
+	Height *int64 `locationName:"height" min:"32" type:"integer"`
+
+	// Use Width to define the video resolution width, in pixels, for this rule.
+	Width *int64 `locationName:"width" min:"32" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ForceIncludeRenditionSize) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ForceIncludeRenditionSize) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ForceIncludeRenditionSize) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ForceIncludeRenditionSize"}
+	if s.Height != nil && *s.Height < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Height", 32))
+	}
+	if s.Width != nil && *s.Width < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Width", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetHeight sets the Height field's value.
+func (s *ForceIncludeRenditionSize) SetHeight(v int64) *ForceIncludeRenditionSize {
+	s.Height = &v
+	return s
+}
+
+// SetWidth sets the Width field's value.
+func (s *ForceIncludeRenditionSize) SetWidth(v int64) *ForceIncludeRenditionSize {
+	s.Width = &v
+	return s
+}
+
 // Required when you set (Codec) under (VideoDescription)>(CodecSettings) to
 // the value FRAME_CAPTURE.
 type FrameCaptureSettings struct {
@@ -11397,7 +11765,7 @@ func (s *GetQueueOutput) SetQueue(v *Queue) *GetQueueOutput {
 	return s
 }
 
-// Settings for quality-defined variable bitrate encoding with the H.265 codec.
+// Settings for quality-defined variable bitrate encoding with the H.264 codec.
 // Use these settings only when you set QVBR for Rate control mode (RateControlMode).
 type H264QvbrSettings struct {
 	_ struct{} `type:"structure"`
@@ -13305,7 +13673,7 @@ type HlsGroupSettings struct {
 	// Choose one or more ad marker types to decorate your Apple HLS manifest. This
 	// setting does not determine whether SCTE-35 markers appear in the outputs
 	// themselves.
-	AdMarkers []*string `locationName:"adMarkers" type:"list"`
+	AdMarkers []*string `locationName:"adMarkers" type:"list" enum:"HlsAdMarkers"`
 
 	// By default, the service creates one top-level .m3u8 HLS manifest for each
 	// HLS output group in your job. This default manifest references every output
@@ -13337,6 +13705,14 @@ type HlsGroupSettings struct {
 	// CLOSED-CAPTIONS=NONE line in the manifest. Omit: Omit any CLOSED-CAPTIONS
 	// line from the manifest.
 	CaptionLanguageSetting *string `locationName:"captionLanguageSetting" type:"string" enum:"HlsCaptionLanguageSetting"`
+
+	// Set Caption segment length control (CaptionSegmentLengthControl) to Match
+	// video (MATCH_VIDEO) to create caption segments that align with the video
+	// segments from the first video output in this output group. For example, if
+	// the video segments are 2 seconds long, your WebVTT segments will also be
+	// 2 seconds long. Keep the default setting, Large segments (LARGE_SEGMENTS)
+	// to create caption segments that are 300 seconds long.
+	CaptionSegmentLengthControl *string `locationName:"captionSegmentLengthControl" type:"string" enum:"HlsCaptionSegmentLengthControl"`
 
 	// Disable this setting only when your workflow requires the #EXT-X-ALLOW-CACHE:no
 	// tag. Otherwise, keep the default value Enabled (ENABLED) and control caching
@@ -13454,10 +13830,19 @@ type HlsGroupSettings struct {
 	// the actual duration of a track in a segment is longer than the target duration.
 	TargetDurationCompatibilityMode *string `locationName:"targetDurationCompatibilityMode" type:"string" enum:"HlsTargetDurationCompatibilityMode"`
 
-	// Indicates ID3 frame that has the timecode.
+	// Specify the type of the ID3 frame (timedMetadataId3Frame) to use for ID3
+	// timestamps (timedMetadataId3Period) in your output. To include ID3 timestamps:
+	// Specify PRIV (PRIV) or TDRL (TDRL) and set ID3 metadata (timedMetadata) to
+	// Passthrough (PASSTHROUGH). To exclude ID3 timestamps: Set ID3 timestamp frame
+	// type to None (NONE).
 	TimedMetadataId3Frame *string `locationName:"timedMetadataId3Frame" type:"string" enum:"HlsTimedMetadataId3Frame"`
 
-	// Timed Metadata interval in seconds.
+	// Specify the interval in seconds to write ID3 timestamps in your output. The
+	// first timestamp starts at the output timecode and date, and increases incrementally
+	// with each ID3 timestamp. To use the default interval of 10 seconds: Leave
+	// blank. To include this metadata in your output: Set ID3 timestamp frame type
+	// (timedMetadataId3Frame) to PRIV (PRIV) or TDRL (TDRL), and set ID3 metadata
+	// (timedMetadata) to Passthrough (PASSTHROUGH).
 	TimedMetadataId3Period *int64 `locationName:"timedMetadataId3Period" type:"integer"`
 
 	// Provides an extra millisecond delta offset to fine tune the timestamps.
@@ -13567,6 +13952,12 @@ func (s *HlsGroupSettings) SetCaptionLanguageMappings(v []*HlsCaptionLanguageMap
 // SetCaptionLanguageSetting sets the CaptionLanguageSetting field's value.
 func (s *HlsGroupSettings) SetCaptionLanguageSetting(v string) *HlsGroupSettings {
 	s.CaptionLanguageSetting = &v
+	return s
+}
+
+// SetCaptionSegmentLengthControl sets the CaptionSegmentLengthControl field's value.
+func (s *HlsGroupSettings) SetCaptionSegmentLengthControl(v string) *HlsGroupSettings {
+	s.CaptionSegmentLengthControl = &v
 	return s
 }
 
@@ -14078,7 +14469,7 @@ func (s *HopDestination) SetWaitMinutes(v int64) *HopDestination {
 type Id3Insertion struct {
 	_ struct{} `type:"structure"`
 
-	// Use ID3 tag (Id3) to provide a tag value in base64-encode format.
+	// Use ID3 tag (Id3) to provide a fully formed ID3 tag in base64-encode format.
 	Id3 *string `locationName:"id3" type:"string"`
 
 	// Provide a Timecode (TimeCode) in HH:MM:SS:FF or HH:MM:SS;FF format.
@@ -14180,11 +14571,13 @@ func (s *ImageInserter) SetInsertableImages(v []*InsertableImage) *ImageInserter
 type ImscDestinationSettings struct {
 	_ struct{} `type:"structure"`
 
-	// Specify whether to flag this caption track as accessibility in your HLS/CMAF
-	// parent manifest. When you choose ENABLED, MediaConvert includes the parameters
-	// CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
-	// and AUTOSELECT="YES" in the EXT-X-MEDIA entry for this track. When you keep
-	// the default choice, DISABLED, MediaConvert leaves this parameter out.
+	// Set Accessibility subtitles to Enabled if the ISMC or WebVTT captions track
+	// is intended to provide accessibility for people who are deaf or hard of hearing.
+	// When you enable this feature, MediaConvert adds the following attributes
+	// under EXT-X-MEDIA in the HLS or CMAF manifest for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
+	// and AUTOSELECT="YES". Keep the default value, Disabled, if the captions track
+	// is not intended to provide such accessibility. MediaConvert will not add
+	// the above attributes.
 	Accessibility *string `locationName:"accessibility" type:"string" enum:"ImscAccessibilitySubs"`
 
 	// Keep this setting enabled to have MediaConvert use the font style and position
@@ -14370,6 +14763,13 @@ type Input struct {
 	// For more information about timecodes, see https://docs.aws.amazon.com/console/mediaconvert/timecode.
 	TimecodeStart *string `locationName:"timecodeStart" min:"11" type:"string"`
 
+	// When you include Video generator, MediaConvert creates a video input with
+	// black frames. Use this setting if you do not have a video input or if you
+	// want to add black video frames before, or after, other inputs. You can specify
+	// Video generator, or you can specify an Input file, but you cannot specify
+	// both. For more information, see https://docs.aws.amazon.com/mediaconvert/latest/ug/video-generator.html
+	VideoGenerator *InputVideoGenerator `locationName:"videoGenerator" type:"structure"`
+
 	// Input video selectors contain the video settings for the input. Each of your
 	// inputs can have up to one video selector.
 	VideoSelector *VideoSelector `locationName:"videoSelector" type:"structure"`
@@ -14446,6 +14846,11 @@ func (s *Input) Validate() error {
 	if s.Position != nil {
 		if err := s.Position.Validate(); err != nil {
 			invalidParams.AddNested("Position", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.VideoGenerator != nil {
+		if err := s.VideoGenerator.Validate(); err != nil {
+			invalidParams.AddNested("VideoGenerator", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.VideoSelector != nil {
@@ -14577,6 +14982,12 @@ func (s *Input) SetTimecodeSource(v string) *Input {
 // SetTimecodeStart sets the TimecodeStart field's value.
 func (s *Input) SetTimecodeStart(v string) *Input {
 	s.TimecodeStart = &v
+	return s
+}
+
+// SetVideoGenerator sets the VideoGenerator field's value.
+func (s *Input) SetVideoGenerator(v *InputVideoGenerator) *Input {
+	s.VideoGenerator = v
 	return s
 }
 
@@ -15046,6 +15457,57 @@ func (s *InputTemplate) SetTimecodeStart(v string) *InputTemplate {
 // SetVideoSelector sets the VideoSelector field's value.
 func (s *InputTemplate) SetVideoSelector(v *VideoSelector) *InputTemplate {
 	s.VideoSelector = v
+	return s
+}
+
+// When you include Video generator, MediaConvert creates a video input with
+// black frames. Use this setting if you do not have a video input or if you
+// want to add black video frames before, or after, other inputs. You can specify
+// Video generator, or you can specify an Input file, but you cannot specify
+// both. For more information, see https://docs.aws.amazon.com/mediaconvert/latest/ug/video-generator.html
+type InputVideoGenerator struct {
+	_ struct{} `type:"structure"`
+
+	// Specify an integer value for Black video duration from 50 to 86400000 to
+	// generate a black video input for that many milliseconds. Required when you
+	// include Video generator.
+	Duration *int64 `locationName:"duration" min:"50" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InputVideoGenerator) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s InputVideoGenerator) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InputVideoGenerator) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InputVideoGenerator"}
+	if s.Duration != nil && *s.Duration < 50 {
+		invalidParams.Add(request.NewErrParamMinValue("Duration", 50))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDuration sets the Duration field's value.
+func (s *InputVideoGenerator) SetDuration(v int64) *InputVideoGenerator {
+	s.Duration = &v
 	return s
 }
 
@@ -15674,10 +16136,9 @@ type JobSettings struct {
 	// These settings don't affect input clipping.
 	TimecodeConfig *TimecodeConfig `locationName:"timecodeConfig" type:"structure"`
 
-	// Enable Timed metadata insertion (TimedMetadataInsertion) to include ID3 tags
-	// in any HLS outputs. To include timed metadata, you must enable it here, enable
-	// it in each output container, and specify tags and timecodes in ID3 insertion
-	// (Id3Insertion) objects.
+	// Insert user-defined custom ID3 metadata (id3) at timecodes (timecode) that
+	// you specify. In each output that you want to include this metadata, you must
+	// set ID3 metadata (timedMetadata) to Passthrough (PASSTHROUGH).
 	TimedMetadataInsertion *TimedMetadataInsertion `locationName:"timedMetadataInsertion" type:"structure"`
 }
 
@@ -16051,10 +16512,9 @@ type JobTemplateSettings struct {
 	// These settings don't affect input clipping.
 	TimecodeConfig *TimecodeConfig `locationName:"timecodeConfig" type:"structure"`
 
-	// Enable Timed metadata insertion (TimedMetadataInsertion) to include ID3 tags
-	// in any HLS outputs. To include timed metadata, you must enable it here, enable
-	// it in each output container, and specify tags and timecodes in ID3 insertion
-	// (Id3Insertion) objects.
+	// Insert user-defined custom ID3 metadata (id3) at timecodes (timecode) that
+	// you specify. In each output that you want to include this metadata, you must
+	// set ID3 metadata (timedMetadata) to Passthrough (PASSTHROUGH).
 	TimedMetadataInsertion *TimedMetadataInsertion `locationName:"timedMetadataInsertion" type:"structure"`
 }
 
@@ -17156,6 +17616,12 @@ type M2tsSettings struct {
 	// The length, in seconds, of each fragment. Only used with EBP markers.
 	FragmentTime *float64 `locationName:"fragmentTime" type:"double"`
 
+	// To include key-length-value metadata in this output: Set KLV metadata insertion
+	// to Passthrough. MediaConvert reads KLV metadata present in your input and
+	// passes it through to the output transport stream. To exclude this KLV metadata:
+	// Set KLV metadata insertion to None or leave blank.
+	KlvMetadata *string `locationName:"klvMetadata" type:"string" enum:"M2tsKlvMetadata"`
+
 	// Specify the maximum time, in milliseconds, between Program Clock References
 	// (PCRs) inserted into the transport stream.
 	MaxPcrInterval *int64 `locationName:"maxPcrInterval" type:"integer"`
@@ -17257,8 +17723,7 @@ type M2tsSettings struct {
 	// is set to _none_.
 	SegmentationTime *float64 `locationName:"segmentationTime" type:"double"`
 
-	// Specify the packet identifier (PID) for timed metadata in this output. Default
-	// is 502.
+	// Packet Identifier (PID) of the ID3 metadata stream in the transport stream.
 	TimedMetadataPid *int64 `locationName:"timedMetadataPid" min:"32" type:"integer"`
 
 	// Specify the ID for the transport stream itself in the program map table for
@@ -17439,6 +17904,12 @@ func (s *M2tsSettings) SetForceTsVideoEbpOrder(v string) *M2tsSettings {
 // SetFragmentTime sets the FragmentTime field's value.
 func (s *M2tsSettings) SetFragmentTime(v float64) *M2tsSettings {
 	s.FragmentTime = &v
+	return s
+}
+
+// SetKlvMetadata sets the KlvMetadata field's value.
+func (s *M2tsSettings) SetKlvMetadata(v string) *M2tsSettings {
+	s.KlvMetadata = &v
 	return s
 }
 
@@ -17651,11 +18122,14 @@ type M3u8Settings struct {
 	// XML (sccXml).
 	Scte35Source *string `locationName:"scte35Source" type:"string" enum:"M3u8Scte35Source"`
 
-	// Applies to HLS outputs. Use this setting to specify whether the service inserts
-	// the ID3 timed metadata from the input in this output.
+	// Set ID3 metadata (timedMetadata) to Passthrough (PASSTHROUGH) to include
+	// ID3 metadata in this output. This includes ID3 metadata from the following
+	// features: ID3 timestamp period (timedMetadataId3Period), and Custom ID3 metadata
+	// inserter (timedMetadataInsertion). To exclude this ID3 metadata in this output:
+	// set ID3 metadata to None (NONE) or leave blank.
 	TimedMetadata *string `locationName:"timedMetadata" type:"string" enum:"TimedMetadata"`
 
-	// Packet Identifier (PID) of the timed metadata stream in the transport stream.
+	// Packet Identifier (PID) of the ID3 metadata stream in the transport stream.
 	TimedMetadataPid *int64 `locationName:"timedMetadataPid" min:"32" type:"integer"`
 
 	// The value of the transport stream ID field in the Program Map Table.
@@ -17822,6 +18296,132 @@ func (s *M3u8Settings) SetTransportStreamId(v int64) *M3u8Settings {
 // SetVideoPid sets the VideoPid field's value.
 func (s *M3u8Settings) SetVideoPid(v int64) *M3u8Settings {
 	s.VideoPid = &v
+	return s
+}
+
+// Use Min bottom rendition size to specify a minimum size for the lowest resolution
+// in your ABR stack. * The lowest resolution in your ABR stack will be equal
+// to or greater than the value that you enter. For example: If you specify
+// 640x360 the lowest resolution in your ABR stack will be equal to or greater
+// than to 640x360. * If you specify a Min top rendition size rule, the value
+// that you specify for Min bottom rendition size must be less than, or equal
+// to, Min top rendition size.
+type MinBottomRenditionSize struct {
+	_ struct{} `type:"structure"`
+
+	// Use Height to define the video resolution height, in pixels, for this rule.
+	Height *int64 `locationName:"height" min:"32" type:"integer"`
+
+	// Use Width to define the video resolution width, in pixels, for this rule.
+	Width *int64 `locationName:"width" min:"32" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MinBottomRenditionSize) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MinBottomRenditionSize) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MinBottomRenditionSize) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MinBottomRenditionSize"}
+	if s.Height != nil && *s.Height < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Height", 32))
+	}
+	if s.Width != nil && *s.Width < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Width", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetHeight sets the Height field's value.
+func (s *MinBottomRenditionSize) SetHeight(v int64) *MinBottomRenditionSize {
+	s.Height = &v
+	return s
+}
+
+// SetWidth sets the Width field's value.
+func (s *MinBottomRenditionSize) SetWidth(v int64) *MinBottomRenditionSize {
+	s.Width = &v
+	return s
+}
+
+// Use Min top rendition size to specify a minimum size for the highest resolution
+// in your ABR stack. * The highest resolution in your ABR stack will be equal
+// to or greater than the value that you enter. For example: If you specify
+// 1280x720 the highest resolution in your ABR stack will be equal to or greater
+// than 1280x720. * If you specify a value for Max resolution, the value that
+// you specify for Min top rendition size must be less than, or equal to, Max
+// resolution.
+type MinTopRenditionSize struct {
+	_ struct{} `type:"structure"`
+
+	// Use Height to define the video resolution height, in pixels, for this rule.
+	Height *int64 `locationName:"height" min:"32" type:"integer"`
+
+	// Use Width to define the video resolution width, in pixels, for this rule.
+	Width *int64 `locationName:"width" min:"32" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MinTopRenditionSize) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MinTopRenditionSize) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MinTopRenditionSize) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MinTopRenditionSize"}
+	if s.Height != nil && *s.Height < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Height", 32))
+	}
+	if s.Width != nil && *s.Width < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Width", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetHeight sets the Height field's value.
+func (s *MinTopRenditionSize) SetHeight(v int64) *MinTopRenditionSize {
+	s.Height = &v
+	return s
+}
+
+// SetWidth sets the Width field's value.
+func (s *MinTopRenditionSize) SetWidth(v int64) *MinTopRenditionSize {
+	s.Width = &v
 	return s
 }
 
@@ -18440,6 +19040,13 @@ type MpdSettings struct {
 	// MP4 files is separate from your video and audio fragmented MP4 files.
 	CaptionContainerType *string `locationName:"captionContainerType" type:"string" enum:"MpdCaptionContainerType"`
 
+	// To include key-length-value metadata in this output: Set KLV metadata insertion
+	// to Passthrough. MediaConvert reads KLV metadata present in your input and
+	// writes each instance to a separate event message box in the output, according
+	// to MISB ST1910.1. To exclude this KLV metadata: Set KLV metadata insertion
+	// to None or leave blank.
+	KlvMetadata *string `locationName:"klvMetadata" type:"string" enum:"MpdKlvMetadata"`
+
 	// Use this setting only when you specify SCTE-35 markers from ESAM. Choose
 	// INSERT to put SCTE-35 markers in this output at the insertion points that
 	// you specify in an ESAM XML document. Provide the document in the setting
@@ -18452,8 +19059,11 @@ type MpdSettings struct {
 	// want those SCTE-35 markers in this output.
 	Scte35Source *string `locationName:"scte35Source" type:"string" enum:"MpdScte35Source"`
 
-	// Applies to DASH outputs. Use this setting to specify whether the service
-	// inserts the ID3 timed metadata from the input in this output.
+	// To include ID3 metadata in this output: Set ID3 metadata (timedMetadata)
+	// to Passthrough (PASSTHROUGH). Specify this ID3 metadata in Custom ID3 metadata
+	// inserter (timedMetadataInsertion). MediaConvert writes each instance of ID3
+	// metadata in a separate Event Message (eMSG) box. To exclude this ID3 metadata:
+	// Set ID3 metadata to None (NONE) or leave blank.
 	TimedMetadata *string `locationName:"timedMetadata" type:"string" enum:"MpdTimedMetadata"`
 }
 
@@ -18490,6 +19100,12 @@ func (s *MpdSettings) SetAudioDuration(v string) *MpdSettings {
 // SetCaptionContainerType sets the CaptionContainerType field's value.
 func (s *MpdSettings) SetCaptionContainerType(v string) *MpdSettings {
 	s.CaptionContainerType = &v
+	return s
+}
+
+// SetKlvMetadata sets the KlvMetadata field's value.
+func (s *MpdSettings) SetKlvMetadata(v string) *MpdSettings {
+	s.KlvMetadata = &v
 	return s
 }
 
@@ -19883,22 +20499,22 @@ type NoiseReducerTemporalFilterSettings struct {
 	// and creates better VQ for low bitrate outputs.
 	AggressiveMode *int64 `locationName:"aggressiveMode" type:"integer"`
 
-	// When you set Noise reducer (noiseReducer) to Temporal (TEMPORAL), the sharpness
-	// of your output is reduced. You can optionally use Post temporal sharpening
-	// (PostTemporalSharpening) to apply sharpening to the edges of your output.
-	// The default behavior, Auto (AUTO), allows the transcoder to determine whether
-	// to apply sharpening, depending on your input type and quality. When you set
-	// Post temporal sharpening to Enabled (ENABLED), specify how much sharpening
-	// is applied using Post temporal sharpening strength (PostTemporalSharpeningStrength).
-	// Set Post temporal sharpening to Disabled (DISABLED) to not apply sharpening.
+	// When you set Noise reducer (noiseReducer) to Temporal (TEMPORAL), the bandwidth
+	// and sharpness of your output is reduced. You can optionally use Post temporal
+	// sharpening (postTemporalSharpening) to apply sharpening to the edges of your
+	// output. Note that Post temporal sharpening will also make the bandwidth reduction
+	// from the Noise reducer smaller. The default behavior, Auto (AUTO), allows
+	// the transcoder to determine whether to apply sharpening, depending on your
+	// input type and quality. When you set Post temporal sharpening to Enabled
+	// (ENABLED), specify how much sharpening is applied using Post temporal sharpening
+	// strength (postTemporalSharpeningStrength). Set Post temporal sharpening to
+	// Disabled (DISABLED) to not apply sharpening.
 	PostTemporalSharpening *string `locationName:"postTemporalSharpening" type:"string" enum:"NoiseFilterPostTemporalSharpening"`
 
-	// Use Post temporal sharpening strength (PostTemporalSharpeningStrength) to
+	// Use Post temporal sharpening strength (postTemporalSharpeningStrength) to
 	// define the amount of sharpening the transcoder applies to your output. Set
-	// Post temporal sharpening strength to Low (LOW), or leave blank, to apply
-	// a low amount of sharpening. Set Post temporal sharpening strength to Medium
-	// (MEDIUM) to apply medium amount of sharpening. Set Post temporal sharpening
-	// strength to High (HIGH) to apply a high amount of sharpening.
+	// Post temporal sharpening strength to Low (LOW), Medium (MEDIUM), or High
+	// (HIGH) to indicate the amount of sharpening.
 	PostTemporalSharpeningStrength *string `locationName:"postTemporalSharpeningStrength" type:"string" enum:"NoiseFilterPostTemporalSharpeningStrength"`
 
 	// The speed of the filter (higher number is faster). Low setting reduces bit
@@ -22410,7 +23026,7 @@ type TeletextDestinationSettings struct {
 	// If you pass through the entire set of Teletext data, don't use this field.
 	// When you pass through a set of Teletext pages, your output has the same page
 	// types as your input.
-	PageTypes []*string `locationName:"pageTypes" type:"list"`
+	PageTypes []*string `locationName:"pageTypes" type:"list" enum:"TeletextPageType"`
 }
 
 // String returns the string representation.
@@ -22660,10 +23276,9 @@ func (s *TimecodeConfig) SetTimestampOffset(v string) *TimecodeConfig {
 	return s
 }
 
-// Enable Timed metadata insertion (TimedMetadataInsertion) to include ID3 tags
-// in any HLS outputs. To include timed metadata, you must enable it here, enable
-// it in each output container, and specify tags and timecodes in ID3 insertion
-// (Id3Insertion) objects.
+// Insert user-defined custom ID3 metadata (id3) at timecodes (timecode) that
+// you specify. In each output that you want to include this metadata, you must
+// set ID3 metadata (timedMetadata) to Passthrough (PASSTHROUGH).
 type TimedMetadataInsertion struct {
 	_ struct{} `type:"structure"`
 
@@ -24284,6 +24899,14 @@ type VideoSelector struct {
 	// the service defaults to using values you specify in the input settings.
 	ColorSpaceUsage *string `locationName:"colorSpaceUsage" type:"string" enum:"ColorSpaceUsage"`
 
+	// Set Embedded timecode override (embeddedTimecodeOverride) to Use MDPM (USE_MDPM)
+	// when your AVCHD input contains timecode tag data in the Modified Digital
+	// Video Pack Metadata (MDPM). When you do, we recommend you also set Timecode
+	// source (inputTimecodeSource) to Embedded (EMBEDDED). Leave Embedded timecode
+	// override blank, or set to None (NONE), when your input does not contain MDPM
+	// timecode.
+	EmbeddedTimecodeOverride *string `locationName:"embeddedTimecodeOverride" type:"string" enum:"EmbeddedTimecodeOverride"`
+
 	// Use these settings to provide HDR 10 metadata that is missing or inaccurate
 	// in your input video. Appropriate values vary depending on the input video
 	// and must be provided by a color grader. The color grader generates these
@@ -24296,6 +24919,16 @@ type VideoSelector struct {
 	// color metadata is included in an output, set Color metadata (ColorMetadata).
 	// For more information about MediaConvert HDR jobs, see https://docs.aws.amazon.com/console/mediaconvert/hdr.
 	Hdr10Metadata *Hdr10Metadata `locationName:"hdr10Metadata" type:"structure"`
+
+	// Use this setting if your input has video and audio durations that don't align,
+	// and your output or player has strict alignment requirements. Examples: Input
+	// audio track has a delayed start. Input video track ends before audio ends.
+	// When you set Pad video (padVideo) to Black (BLACK), MediaConvert generates
+	// black video frames so that output video and audio durations match. Black
+	// video frames are added at the beginning or end, depending on your input.
+	// To keep the default behavior and not generate black video, set Pad video
+	// to Disabled (DISABLED) or leave blank.
+	PadVideo *string `locationName:"padVideo" type:"string" enum:"PadVideo"`
 
 	// Use PID (Pid) to select specific video data from an input file. Specify this
 	// value as an integer; the system automatically converts it to the hexidecimal
@@ -24383,9 +25016,21 @@ func (s *VideoSelector) SetColorSpaceUsage(v string) *VideoSelector {
 	return s
 }
 
+// SetEmbeddedTimecodeOverride sets the EmbeddedTimecodeOverride field's value.
+func (s *VideoSelector) SetEmbeddedTimecodeOverride(v string) *VideoSelector {
+	s.EmbeddedTimecodeOverride = &v
+	return s
+}
+
 // SetHdr10Metadata sets the Hdr10Metadata field's value.
 func (s *VideoSelector) SetHdr10Metadata(v *Hdr10Metadata) *VideoSelector {
 	s.Hdr10Metadata = v
+	return s
+}
+
+// SetPadVideo sets the PadVideo field's value.
+func (s *VideoSelector) SetPadVideo(v string) *VideoSelector {
+	s.PadVideo = &v
 	return s
 }
 
@@ -25021,19 +25666,24 @@ func (s *WavSettings) SetSampleRate(v int64) *WavSettings {
 type WebvttDestinationSettings struct {
 	_ struct{} `type:"structure"`
 
-	// Specify whether to flag this caption track as accessibility in your HLS/CMAF
-	// parent manifest. When you choose ENABLED, MediaConvert includes the parameters
-	// CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
-	// and AUTOSELECT="YES" in the EXT-X-MEDIA entry for this track. When you keep
-	// the default choice, DISABLED, MediaConvert leaves this parameter out.
+	// Set Accessibility subtitles to Enabled if the ISMC or WebVTT captions track
+	// is intended to provide accessibility for people who are deaf or hard of hearing.
+	// When you enable this feature, MediaConvert adds the following attributes
+	// under EXT-X-MEDIA in the HLS or CMAF manifest for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
+	// and AUTOSELECT="YES". Keep the default value, Disabled, if the captions track
+	// is not intended to provide such accessibility. MediaConvert will not add
+	// the above attributes.
 	Accessibility *string `locationName:"accessibility" type:"string" enum:"WebvttAccessibilitySubs"`
 
-	// Set Style passthrough (StylePassthrough) to ENABLED to use the available
-	// style, color, and position information from your input captions. MediaConvert
-	// uses default settings for any missing style and position information in your
-	// input captions. Set Style passthrough to DISABLED, or leave blank, to ignore
+	// To use the available style, color, and position information from your input
+	// captions: Set Style passthrough (stylePassthrough) to Enabled (ENABLED).
+	// MediaConvert uses default settings when style and position information is
+	// missing from your input captions. To recreate the input captions exactly:
+	// Set Style passthrough to Strict (STRICT). MediaConvert automatically applies
+	// timing adjustments, including adjustments for frame rate conversion, ad avails,
+	// and input clipping. Your input captions format must be WebVTT. To ignore
 	// the style and position information from your input captions and use simplified
-	// output captions.
+	// output captions: Set Style passthrough to Disabled (DISABLED), or leave blank.
 	StylePassthrough *string `locationName:"stylePassthrough" type:"string" enum:"WebvttStylePassthrough"`
 }
 
@@ -26501,6 +27151,44 @@ func AudioDefaultSelection_Values() []string {
 	}
 }
 
+// Apply audio timing corrections to help synchronize audio and video in your
+// output. To apply timing corrections, your input must meet the following requirements:
+// * Container: MP4, or MOV, with an accurate time-to-sample (STTS) table. *
+// Audio track: AAC. Choose from the following audio timing correction settings:
+// * Disabled (Default): Apply no correction. * Auto: Recommended for most inputs.
+// MediaConvert analyzes the audio timing in your input and determines which
+// correction setting to use, if needed. * Track: Adjust the duration of each
+// audio frame by a constant amount to align the audio track length with STTS
+// duration. Track-level correction does not affect pitch, and is recommended
+// for tonal audio content such as music. * Frame: Adjust the duration of each
+// audio frame by a variable amount to align audio frames with STTS timestamps.
+// No corrections are made to already-aligned frames. Frame-level correction
+// may affect the pitch of corrected frames, and is recommended for atonal audio
+// content such as speech or percussion.
+const (
+	// AudioDurationCorrectionDisabled is a AudioDurationCorrection enum value
+	AudioDurationCorrectionDisabled = "DISABLED"
+
+	// AudioDurationCorrectionAuto is a AudioDurationCorrection enum value
+	AudioDurationCorrectionAuto = "AUTO"
+
+	// AudioDurationCorrectionTrack is a AudioDurationCorrection enum value
+	AudioDurationCorrectionTrack = "TRACK"
+
+	// AudioDurationCorrectionFrame is a AudioDurationCorrection enum value
+	AudioDurationCorrectionFrame = "FRAME"
+)
+
+// AudioDurationCorrection_Values returns all elements of the AudioDurationCorrection enum
+func AudioDurationCorrection_Values() []string {
+	return []string{
+		AudioDurationCorrectionDisabled,
+		AudioDurationCorrectionAuto,
+		AudioDurationCorrectionTrack,
+		AudioDurationCorrectionFrame,
+	}
+}
+
 // Specify which source for language code takes precedence for this audio track.
 // When you choose Follow input (FOLLOW_INPUT), the service uses the language
 // code from the input track if it's present. If there's no languge code on
@@ -26766,7 +27454,7 @@ func Av1FramerateConversionAlgorithm_Values() []string {
 }
 
 // 'With AV1 outputs, for rate control mode, MediaConvert supports only quality-defined
-// variable bitrate (QVBR). You can''t use CBR or VBR.'
+// variable bitrate (QVBR). You can”t use CBR or VBR.'
 const (
 	// Av1RateControlModeQvbr is a Av1RateControlMode enum value
 	Av1RateControlModeQvbr = "QVBR"
@@ -27939,6 +28627,27 @@ func CmfcIFrameOnlyManifest_Values() []string {
 	}
 }
 
+// To include key-length-value metadata in this output: Set KLV metadata insertion
+// to Passthrough. MediaConvert reads KLV metadata present in your input and
+// writes each instance to a separate event message box in the output, according
+// to MISB ST1910.1. To exclude this KLV metadata: Set KLV metadata insertion
+// to None or leave blank.
+const (
+	// CmfcKlvMetadataPassthrough is a CmfcKlvMetadata enum value
+	CmfcKlvMetadataPassthrough = "PASSTHROUGH"
+
+	// CmfcKlvMetadataNone is a CmfcKlvMetadata enum value
+	CmfcKlvMetadataNone = "NONE"
+)
+
+// CmfcKlvMetadata_Values returns all elements of the CmfcKlvMetadata enum
+func CmfcKlvMetadata_Values() []string {
+	return []string{
+		CmfcKlvMetadataPassthrough,
+		CmfcKlvMetadataNone,
+	}
+}
+
 // Use this setting only when you specify SCTE-35 markers from ESAM. Choose
 // INSERT to put SCTE-35 markers in this output at the insertion points that
 // you specify in an ESAM XML document. Provide the document in the setting
@@ -27979,8 +28688,11 @@ func CmfcScte35Source_Values() []string {
 	}
 }
 
-// Applies to CMAF outputs. Use this setting to specify whether the service
-// inserts the ID3 timed metadata from the input in this output.
+// To include ID3 metadata in this output: Set ID3 metadata (timedMetadata)
+// to Passthrough (PASSTHROUGH). Specify this ID3 metadata in Custom ID3 metadata
+// inserter (timedMetadataInsertion). MediaConvert writes each instance of ID3
+// metadata in a separate Event Message (eMSG) box. To exclude this ID3 metadata:
+// Set ID3 metadata to None (NONE) or leave blank.
 const (
 	// CmfcTimedMetadataPassthrough is a CmfcTimedMetadata enum value
 	CmfcTimedMetadataPassthrough = "PASSTHROUGH"
@@ -28562,18 +29274,49 @@ func DolbyVisionLevel6Mode_Values() []string {
 	}
 }
 
-// In the current MediaConvert implementation, the Dolby Vision profile is always
-// 5 (PROFILE_5). Therefore, all of your inputs must contain Dolby Vision frame
-// interleaved data.
+// Required when you set Dolby Vision Profile to Profile 8.1. When you set Content
+// mapping to None, content mapping is not applied to the HDR10-compatible signal.
+// Depending on the source peak nit level, clipping might occur on HDR devices
+// without Dolby Vision. When you set Content mapping to HDR10 1000, the transcoder
+// creates a 1,000 nits peak HDR10-compatible signal by applying static content
+// mapping to the source. This mode is speed-optimized for PQ10 sources with
+// metadata that is created from analysis. For graded Dolby Vision content,
+// be aware that creative intent might not be guaranteed with extreme 1,000
+// nits trims.
+const (
+	// DolbyVisionMappingHdr10Nomap is a DolbyVisionMapping enum value
+	DolbyVisionMappingHdr10Nomap = "HDR10_NOMAP"
+
+	// DolbyVisionMappingHdr101000 is a DolbyVisionMapping enum value
+	DolbyVisionMappingHdr101000 = "HDR10_1000"
+)
+
+// DolbyVisionMapping_Values returns all elements of the DolbyVisionMapping enum
+func DolbyVisionMapping_Values() []string {
+	return []string{
+		DolbyVisionMappingHdr10Nomap,
+		DolbyVisionMappingHdr101000,
+	}
+}
+
+// Required when you enable Dolby Vision. Use Profile 5 to include frame-interleaved
+// Dolby Vision metadata in your output. Your input must include Dolby Vision
+// metadata or an HDR10 YUV color space. Use Profile 8.1 to include frame-interleaved
+// Dolby Vision metadata and HDR10 metadata in your output. Your input must
+// include Dolby Vision metadata.
 const (
 	// DolbyVisionProfileProfile5 is a DolbyVisionProfile enum value
 	DolbyVisionProfileProfile5 = "PROFILE_5"
+
+	// DolbyVisionProfileProfile81 is a DolbyVisionProfile enum value
+	DolbyVisionProfileProfile81 = "PROFILE_8_1"
 )
 
 // DolbyVisionProfile_Values returns all elements of the DolbyVisionProfile enum
 func DolbyVisionProfile_Values() []string {
 	return []string{
 		DolbyVisionProfileProfile5,
+		DolbyVisionProfileProfile81,
 	}
 }
 
@@ -29561,6 +30304,28 @@ func EmbeddedTerminateCaptions_Values() []string {
 	return []string{
 		EmbeddedTerminateCaptionsEndOfInput,
 		EmbeddedTerminateCaptionsDisabled,
+	}
+}
+
+// Set Embedded timecode override (embeddedTimecodeOverride) to Use MDPM (USE_MDPM)
+// when your AVCHD input contains timecode tag data in the Modified Digital
+// Video Pack Metadata (MDPM). When you do, we recommend you also set Timecode
+// source (inputTimecodeSource) to Embedded (EMBEDDED). Leave Embedded timecode
+// override blank, or set to None (NONE), when your input does not contain MDPM
+// timecode.
+const (
+	// EmbeddedTimecodeOverrideNone is a EmbeddedTimecodeOverride enum value
+	EmbeddedTimecodeOverrideNone = "NONE"
+
+	// EmbeddedTimecodeOverrideUseMdpm is a EmbeddedTimecodeOverride enum value
+	EmbeddedTimecodeOverrideUseMdpm = "USE_MDPM"
+)
+
+// EmbeddedTimecodeOverride_Values returns all elements of the EmbeddedTimecodeOverride enum
+func EmbeddedTimecodeOverride_Values() []string {
+	return []string{
+		EmbeddedTimecodeOverrideNone,
+		EmbeddedTimecodeOverrideUseMdpm,
 	}
 }
 
@@ -31165,6 +31930,28 @@ func HlsCaptionLanguageSetting_Values() []string {
 	}
 }
 
+// Set Caption segment length control (CaptionSegmentLengthControl) to Match
+// video (MATCH_VIDEO) to create caption segments that align with the video
+// segments from the first video output in this output group. For example, if
+// the video segments are 2 seconds long, your WebVTT segments will also be
+// 2 seconds long. Keep the default setting, Large segments (LARGE_SEGMENTS)
+// to create caption segments that are 300 seconds long.
+const (
+	// HlsCaptionSegmentLengthControlLargeSegments is a HlsCaptionSegmentLengthControl enum value
+	HlsCaptionSegmentLengthControlLargeSegments = "LARGE_SEGMENTS"
+
+	// HlsCaptionSegmentLengthControlMatchVideo is a HlsCaptionSegmentLengthControl enum value
+	HlsCaptionSegmentLengthControlMatchVideo = "MATCH_VIDEO"
+)
+
+// HlsCaptionSegmentLengthControl_Values returns all elements of the HlsCaptionSegmentLengthControl enum
+func HlsCaptionSegmentLengthControl_Values() []string {
+	return []string{
+		HlsCaptionSegmentLengthControlLargeSegments,
+		HlsCaptionSegmentLengthControlMatchVideo,
+	}
+}
+
 // Disable this setting only when your workflow requires the #EXT-X-ALLOW-CACHE:no
 // tag. Otherwise, keep the default value Enabled (ENABLED) and control caching
 // in your video distribution set up. For example, use the Cache-Control http
@@ -31546,7 +32333,11 @@ func HlsTargetDurationCompatibilityMode_Values() []string {
 	}
 }
 
-// Indicates ID3 frame that has the timecode.
+// Specify the type of the ID3 frame (timedMetadataId3Frame) to use for ID3
+// timestamps (timedMetadataId3Period) in your output. To include ID3 timestamps:
+// Specify PRIV (PRIV) or TDRL (TDRL) and set ID3 metadata (timedMetadata) to
+// Passthrough (PASSTHROUGH). To exclude ID3 timestamps: Set ID3 timestamp frame
+// type to None (NONE).
 const (
 	// HlsTimedMetadataId3FrameNone is a HlsTimedMetadataId3Frame enum value
 	HlsTimedMetadataId3FrameNone = "NONE"
@@ -31567,11 +32358,13 @@ func HlsTimedMetadataId3Frame_Values() []string {
 	}
 }
 
-// Specify whether to flag this caption track as accessibility in your HLS/CMAF
-// parent manifest. When you choose ENABLED, MediaConvert includes the parameters
-// CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
-// and AUTOSELECT="YES" in the EXT-X-MEDIA entry for this track. When you keep
-// the default choice, DISABLED, MediaConvert leaves this parameter out.
+// Set Accessibility subtitles to Enabled if the ISMC or WebVTT captions track
+// is intended to provide accessibility for people who are deaf or hard of hearing.
+// When you enable this feature, MediaConvert adds the following attributes
+// under EXT-X-MEDIA in the HLS or CMAF manifest for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
+// and AUTOSELECT="YES". Keep the default value, Disabled, if the captions track
+// is not intended to provide such accessibility. MediaConvert will not add
+// the above attributes.
 const (
 	// ImscAccessibilitySubsDisabled is a ImscAccessibilitySubs enum value
 	ImscAccessibilitySubsDisabled = "DISABLED"
@@ -32843,6 +33636,26 @@ func M2tsForceTsVideoEbpOrder_Values() []string {
 	}
 }
 
+// To include key-length-value metadata in this output: Set KLV metadata insertion
+// to Passthrough. MediaConvert reads KLV metadata present in your input and
+// passes it through to the output transport stream. To exclude this KLV metadata:
+// Set KLV metadata insertion to None or leave blank.
+const (
+	// M2tsKlvMetadataPassthrough is a M2tsKlvMetadata enum value
+	M2tsKlvMetadataPassthrough = "PASSTHROUGH"
+
+	// M2tsKlvMetadataNone is a M2tsKlvMetadata enum value
+	M2tsKlvMetadataNone = "NONE"
+)
+
+// M2tsKlvMetadata_Values returns all elements of the M2tsKlvMetadata enum
+func M2tsKlvMetadata_Values() []string {
+	return []string{
+		M2tsKlvMetadataPassthrough,
+		M2tsKlvMetadataNone,
+	}
+}
+
 // If INSERT, Nielsen inaudible tones for media tracking will be detected in
 // the input audio and an equivalent ID3 tag will be inserted in the output.
 const (
@@ -33375,6 +34188,27 @@ func MpdCaptionContainerType_Values() []string {
 	}
 }
 
+// To include key-length-value metadata in this output: Set KLV metadata insertion
+// to Passthrough. MediaConvert reads KLV metadata present in your input and
+// writes each instance to a separate event message box in the output, according
+// to MISB ST1910.1. To exclude this KLV metadata: Set KLV metadata insertion
+// to None or leave blank.
+const (
+	// MpdKlvMetadataNone is a MpdKlvMetadata enum value
+	MpdKlvMetadataNone = "NONE"
+
+	// MpdKlvMetadataPassthrough is a MpdKlvMetadata enum value
+	MpdKlvMetadataPassthrough = "PASSTHROUGH"
+)
+
+// MpdKlvMetadata_Values returns all elements of the MpdKlvMetadata enum
+func MpdKlvMetadata_Values() []string {
+	return []string{
+		MpdKlvMetadataNone,
+		MpdKlvMetadataPassthrough,
+	}
+}
+
 // Use this setting only when you specify SCTE-35 markers from ESAM. Choose
 // INSERT to put SCTE-35 markers in this output at the insertion points that
 // you specify in an ESAM XML document. Provide the document in the setting
@@ -33415,8 +34249,11 @@ func MpdScte35Source_Values() []string {
 	}
 }
 
-// Applies to DASH outputs. Use this setting to specify whether the service
-// inserts the ID3 timed metadata from the input in this output.
+// To include ID3 metadata in this output: Set ID3 metadata (timedMetadata)
+// to Passthrough (PASSTHROUGH). Specify this ID3 metadata in Custom ID3 metadata
+// inserter (timedMetadataInsertion). MediaConvert writes each instance of ID3
+// metadata in a separate Event Message (eMSG) box. To exclude this ID3 metadata:
+// Set ID3 metadata to None (NONE) or leave blank.
 const (
 	// MpdTimedMetadataPassthrough is a MpdTimedMetadata enum value
 	MpdTimedMetadataPassthrough = "PASSTHROUGH"
@@ -34109,14 +34946,16 @@ func NielsenUniqueTicPerAudioTrackType_Values() []string {
 	}
 }
 
-// When you set Noise reducer (noiseReducer) to Temporal (TEMPORAL), the sharpness
-// of your output is reduced. You can optionally use Post temporal sharpening
-// (PostTemporalSharpening) to apply sharpening to the edges of your output.
-// The default behavior, Auto (AUTO), allows the transcoder to determine whether
-// to apply sharpening, depending on your input type and quality. When you set
-// Post temporal sharpening to Enabled (ENABLED), specify how much sharpening
-// is applied using Post temporal sharpening strength (PostTemporalSharpeningStrength).
-// Set Post temporal sharpening to Disabled (DISABLED) to not apply sharpening.
+// When you set Noise reducer (noiseReducer) to Temporal (TEMPORAL), the bandwidth
+// and sharpness of your output is reduced. You can optionally use Post temporal
+// sharpening (postTemporalSharpening) to apply sharpening to the edges of your
+// output. Note that Post temporal sharpening will also make the bandwidth reduction
+// from the Noise reducer smaller. The default behavior, Auto (AUTO), allows
+// the transcoder to determine whether to apply sharpening, depending on your
+// input type and quality. When you set Post temporal sharpening to Enabled
+// (ENABLED), specify how much sharpening is applied using Post temporal sharpening
+// strength (postTemporalSharpeningStrength). Set Post temporal sharpening to
+// Disabled (DISABLED) to not apply sharpening.
 const (
 	// NoiseFilterPostTemporalSharpeningDisabled is a NoiseFilterPostTemporalSharpening enum value
 	NoiseFilterPostTemporalSharpeningDisabled = "DISABLED"
@@ -34137,12 +34976,10 @@ func NoiseFilterPostTemporalSharpening_Values() []string {
 	}
 }
 
-// Use Post temporal sharpening strength (PostTemporalSharpeningStrength) to
+// Use Post temporal sharpening strength (postTemporalSharpeningStrength) to
 // define the amount of sharpening the transcoder applies to your output. Set
-// Post temporal sharpening strength to Low (LOW), or leave blank, to apply
-// a low amount of sharpening. Set Post temporal sharpening strength to Medium
-// (MEDIUM) to apply medium amount of sharpening. Set Post temporal sharpening
-// strength to High (HIGH) to apply a high amount of sharpening.
+// Post temporal sharpening strength to Low (LOW), Medium (MEDIUM), or High
+// (HIGH) to indicate the amount of sharpening.
 const (
 	// NoiseFilterPostTemporalSharpeningStrengthLow is a NoiseFilterPostTemporalSharpeningStrength enum value
 	NoiseFilterPostTemporalSharpeningStrengthLow = "LOW"
@@ -34285,6 +35122,30 @@ func OutputSdt_Values() []string {
 		OutputSdtSdtFollowIfPresent,
 		OutputSdtSdtManual,
 		OutputSdtSdtNone,
+	}
+}
+
+// Use this setting if your input has video and audio durations that don't align,
+// and your output or player has strict alignment requirements. Examples: Input
+// audio track has a delayed start. Input video track ends before audio ends.
+// When you set Pad video (padVideo) to Black (BLACK), MediaConvert generates
+// black video frames so that output video and audio durations match. Black
+// video frames are added at the beginning or end, depending on your input.
+// To keep the default behavior and not generate black video, set Pad video
+// to Disabled (DISABLED) or leave blank.
+const (
+	// PadVideoDisabled is a PadVideo enum value
+	PadVideoDisabled = "DISABLED"
+
+	// PadVideoBlack is a PadVideo enum value
+	PadVideoBlack = "BLACK"
+)
+
+// PadVideo_Values returns all elements of the PadVideo enum
+func PadVideo_Values() []string {
+	return []string{
+		PadVideoDisabled,
+		PadVideoBlack,
 	}
 }
 
@@ -34647,6 +35508,23 @@ func RenewalType_Values() []string {
 	}
 }
 
+// Set to ENABLED to force a rendition to be included.
+const (
+	// RequiredFlagEnabled is a RequiredFlag enum value
+	RequiredFlagEnabled = "ENABLED"
+
+	// RequiredFlagDisabled is a RequiredFlag enum value
+	RequiredFlagDisabled = "DISABLED"
+)
+
+// RequiredFlag_Values returns all elements of the RequiredFlag enum
+func RequiredFlag_Values() []string {
+	return []string{
+		RequiredFlagEnabled,
+		RequiredFlagDisabled,
+	}
+}
+
 // Specifies whether the pricing plan for your reserved queue is ACTIVE or EXPIRED.
 const (
 	// ReservationPlanStatusActive is a ReservationPlanStatus enum value
@@ -34689,6 +35567,63 @@ func RespondToAfd_Values() []string {
 		RespondToAfdNone,
 		RespondToAfdRespond,
 		RespondToAfdPassthrough,
+	}
+}
+
+// Use Min top rendition size to specify a minimum size for the highest resolution
+// in your ABR stack. * The highest resolution in your ABR stack will be equal
+// to or greater than the value that you enter. For example: If you specify
+// 1280x720 the highest resolution in your ABR stack will be equal to or greater
+// than 1280x720. * If you specify a value for Max resolution, the value that
+// you specify for Min top rendition size must be less than, or equal to, Max
+// resolution. Use Min bottom rendition size to specify a minimum size for the
+// lowest resolution in your ABR stack. * The lowest resolution in your ABR
+// stack will be equal to or greater than the value that you enter. For example:
+// If you specify 640x360 the lowest resolution in your ABR stack will be equal
+// to or greater than to 640x360. * If you specify a Min top rendition size
+// rule, the value that you specify for Min bottom rendition size must be less
+// than, or equal to, Min top rendition size. Use Force include renditions to
+// specify one or more resolutions to include your ABR stack. * (Recommended)
+// To optimize automated ABR, specify as few resolutions as possible. * (Required)
+// The number of resolutions that you specify must be equal to, or less than,
+// the Max renditions setting. * If you specify a Min top rendition size rule,
+// specify at least one resolution that is equal to, or greater than, Min top
+// rendition size. * If you specify a Min bottom rendition size rule, only specify
+// resolutions that are equal to, or greater than, Min bottom rendition size.
+// * If you specify a Force include renditions rule, do not specify a separate
+// rule for Allowed renditions. * Note: The ABR stack may include other resolutions
+// that you do not specify here, depending on the Max renditions setting. Use
+// Allowed renditions to specify a list of possible resolutions in your ABR
+// stack. * (Required) The number of resolutions that you specify must be equal
+// to, or greater than, the Max renditions setting. * MediaConvert will create
+// an ABR stack exclusively from the list of resolutions that you specify. *
+// Some resolutions in the Allowed renditions list may not be included, however
+// you can force a resolution to be included by setting Required to ENABLED.
+// * You must specify at least one resolution that is greater than or equal
+// to any resolutions that you specify in Min top rendition size or Min bottom
+// rendition size. * If you specify Allowed renditions, you must not specify
+// a separate rule for Force include renditions.
+const (
+	// RuleTypeMinTopRenditionSize is a RuleType enum value
+	RuleTypeMinTopRenditionSize = "MIN_TOP_RENDITION_SIZE"
+
+	// RuleTypeMinBottomRenditionSize is a RuleType enum value
+	RuleTypeMinBottomRenditionSize = "MIN_BOTTOM_RENDITION_SIZE"
+
+	// RuleTypeForceIncludeRenditions is a RuleType enum value
+	RuleTypeForceIncludeRenditions = "FORCE_INCLUDE_RENDITIONS"
+
+	// RuleTypeAllowedRenditions is a RuleType enum value
+	RuleTypeAllowedRenditions = "ALLOWED_RENDITIONS"
+)
+
+// RuleType_Values returns all elements of the RuleType enum
+func RuleType_Values() []string {
+	return []string{
+		RuleTypeMinTopRenditionSize,
+		RuleTypeMinBottomRenditionSize,
+		RuleTypeForceIncludeRenditions,
+		RuleTypeAllowedRenditions,
 	}
 }
 
@@ -35046,8 +35981,11 @@ func TimecodeSource_Values() []string {
 	}
 }
 
-// Applies to HLS outputs. Use this setting to specify whether the service inserts
-// the ID3 timed metadata from the input in this output.
+// Set ID3 metadata (timedMetadata) to Passthrough (PASSTHROUGH) to include
+// ID3 metadata in this output. This includes ID3 metadata from the following
+// features: ID3 timestamp period (timedMetadataId3Period), and Custom ID3 metadata
+// inserter (timedMetadataInsertion). To exclude this ID3 metadata in this output:
+// set ID3 metadata to None (NONE) or leave blank.
 const (
 	// TimedMetadataPassthrough is a TimedMetadata enum value
 	TimedMetadataPassthrough = "PASSTHROUGH"
@@ -35651,11 +36589,13 @@ func WavFormat_Values() []string {
 	}
 }
 
-// Specify whether to flag this caption track as accessibility in your HLS/CMAF
-// parent manifest. When you choose ENABLED, MediaConvert includes the parameters
-// CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
-// and AUTOSELECT="YES" in the EXT-X-MEDIA entry for this track. When you keep
-// the default choice, DISABLED, MediaConvert leaves this parameter out.
+// Set Accessibility subtitles to Enabled if the ISMC or WebVTT captions track
+// is intended to provide accessibility for people who are deaf or hard of hearing.
+// When you enable this feature, MediaConvert adds the following attributes
+// under EXT-X-MEDIA in the HLS or CMAF manifest for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
+// and AUTOSELECT="YES". Keep the default value, Disabled, if the captions track
+// is not intended to provide such accessibility. MediaConvert will not add
+// the above attributes.
 const (
 	// WebvttAccessibilitySubsDisabled is a WebvttAccessibilitySubs enum value
 	WebvttAccessibilitySubsDisabled = "DISABLED"
@@ -35672,18 +36612,24 @@ func WebvttAccessibilitySubs_Values() []string {
 	}
 }
 
-// Set Style passthrough (StylePassthrough) to ENABLED to use the available
-// style, color, and position information from your input captions. MediaConvert
-// uses default settings for any missing style and position information in your
-// input captions. Set Style passthrough to DISABLED, or leave blank, to ignore
+// To use the available style, color, and position information from your input
+// captions: Set Style passthrough (stylePassthrough) to Enabled (ENABLED).
+// MediaConvert uses default settings when style and position information is
+// missing from your input captions. To recreate the input captions exactly:
+// Set Style passthrough to Strict (STRICT). MediaConvert automatically applies
+// timing adjustments, including adjustments for frame rate conversion, ad avails,
+// and input clipping. Your input captions format must be WebVTT. To ignore
 // the style and position information from your input captions and use simplified
-// output captions.
+// output captions: Set Style passthrough to Disabled (DISABLED), or leave blank.
 const (
 	// WebvttStylePassthroughEnabled is a WebvttStylePassthrough enum value
 	WebvttStylePassthroughEnabled = "ENABLED"
 
 	// WebvttStylePassthroughDisabled is a WebvttStylePassthrough enum value
 	WebvttStylePassthroughDisabled = "DISABLED"
+
+	// WebvttStylePassthroughStrict is a WebvttStylePassthrough enum value
+	WebvttStylePassthroughStrict = "STRICT"
 )
 
 // WebvttStylePassthrough_Values returns all elements of the WebvttStylePassthrough enum
@@ -35691,6 +36637,7 @@ func WebvttStylePassthrough_Values() []string {
 	return []string{
 		WebvttStylePassthroughEnabled,
 		WebvttStylePassthroughDisabled,
+		WebvttStylePassthroughStrict,
 	}
 }
 

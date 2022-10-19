@@ -30,14 +30,13 @@ const opAddCustomAttributes = "AddCustomAttributes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddCustomAttributesRequest method.
+//	req, resp := client.AddCustomAttributesRequest(params)
 //
-//    // Example sending a request using the AddCustomAttributesRequest method.
-//    req, resp := client.AddCustomAttributesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AddCustomAttributes
 func (c *CognitoIdentityProvider) AddCustomAttributesRequest(input *AddCustomAttributesInput) (req *request.Request, output *AddCustomAttributesOutput) {
@@ -69,27 +68,28 @@ func (c *CognitoIdentityProvider) AddCustomAttributesRequest(input *AddCustomAtt
 // API operation AddCustomAttributes for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserImportInProgressException
-//   This exception is thrown when you're trying to modify a user pool while a
-//   user import job is in progress for that pool.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserImportInProgressException
+//     This exception is thrown when you're trying to modify a user pool while a
+//     user import job is in progress for that pool.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AddCustomAttributes
 func (c *CognitoIdentityProvider) AddCustomAttributes(input *AddCustomAttributesInput) (*AddCustomAttributesOutput, error) {
@@ -129,14 +129,13 @@ const opAdminAddUserToGroup = "AdminAddUserToGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminAddUserToGroupRequest method.
+//	req, resp := client.AdminAddUserToGroupRequest(params)
 //
-//    // Example sending a request using the AdminAddUserToGroupRequest method.
-//    req, resp := client.AdminAddUserToGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminAddUserToGroup
 func (c *CognitoIdentityProvider) AdminAddUserToGroupRequest(input *AdminAddUserToGroupInput) (req *request.Request, output *AdminAddUserToGroupOutput) {
@@ -170,26 +169,27 @@ func (c *CognitoIdentityProvider) AdminAddUserToGroupRequest(input *AdminAddUser
 // API operation AdminAddUserToGroup for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminAddUserToGroup
 func (c *CognitoIdentityProvider) AdminAddUserToGroup(input *AdminAddUserToGroupInput) (*AdminAddUserToGroupOutput, error) {
@@ -229,14 +229,13 @@ const opAdminConfirmSignUp = "AdminConfirmSignUp"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminConfirmSignUpRequest method.
+//	req, resp := client.AdminConfirmSignUpRequest(params)
 //
-//    // Example sending a request using the AdminConfirmSignUpRequest method.
-//    req, resp := client.AdminConfirmSignUpRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminConfirmSignUp
 func (c *CognitoIdentityProvider) AdminConfirmSignUpRequest(input *AdminConfirmSignUpInput) (req *request.Request, output *AdminConfirmSignUpOutput) {
@@ -271,46 +270,47 @@ func (c *CognitoIdentityProvider) AdminConfirmSignUpRequest(input *AdminConfirmS
 // API operation AdminConfirmSignUp for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * TooManyFailedAttemptsException
-//   This exception is thrown when the user has made too many failed attempts
-//   for a given action, such as sign-in.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - TooManyFailedAttemptsException
+//     This exception is thrown when the user has made too many failed attempts
+//     for a given action, such as sign-in.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminConfirmSignUp
 func (c *CognitoIdentityProvider) AdminConfirmSignUp(input *AdminConfirmSignUpInput) (*AdminConfirmSignUpOutput, error) {
@@ -350,14 +350,13 @@ const opAdminCreateUser = "AdminCreateUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminCreateUserRequest method.
+//	req, resp := client.AdminCreateUserRequest(params)
 //
-//    // Example sending a request using the AdminCreateUserRequest method.
-//    req, resp := client.AdminCreateUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminCreateUser
 func (c *CognitoIdentityProvider) AdminCreateUserRequest(input *AdminCreateUserInput) (req *request.Request, output *AdminCreateUserOutput) {
@@ -385,20 +384,20 @@ func (c *CognitoIdentityProvider) AdminCreateUserRequest(input *AdminCreateUserI
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // This message is based on a template that you configured in your call to create
@@ -421,64 +420,65 @@ func (c *CognitoIdentityProvider) AdminCreateUserRequest(input *AdminCreateUserI
 // API operation AdminCreateUser for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * UsernameExistsException
-//   This exception is thrown when Amazon Cognito encounters a user name that
-//   already exists in the user pool.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InvalidPasswordException
-//   This exception is thrown when Amazon Cognito encounters an invalid password.
+//   - UsernameExistsException
+//     This exception is thrown when Amazon Cognito encounters a user name that
+//     already exists in the user pool.
 //
-//   * CodeDeliveryFailureException
-//   This exception is thrown when a verification code fails to deliver successfully.
+//   - InvalidPasswordException
+//     This exception is thrown when Amazon Cognito encounters an invalid password.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - CodeDeliveryFailureException
+//     This exception is thrown when a verification code fails to deliver successfully.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * PreconditionNotMetException
-//   This exception is thrown when a precondition is not met.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - PreconditionNotMetException
+//     This exception is thrown when a precondition is not met.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UnsupportedUserStateException
-//   The request failed because the user is in an unsupported state.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UnsupportedUserStateException
+//     The request failed because the user is in an unsupported state.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminCreateUser
 func (c *CognitoIdentityProvider) AdminCreateUser(input *AdminCreateUserInput) (*AdminCreateUserOutput, error) {
@@ -518,14 +518,13 @@ const opAdminDeleteUser = "AdminDeleteUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminDeleteUserRequest method.
+//	req, resp := client.AdminDeleteUserRequest(params)
 //
-//    // Example sending a request using the AdminDeleteUserRequest method.
-//    req, resp := client.AdminDeleteUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminDeleteUser
 func (c *CognitoIdentityProvider) AdminDeleteUserRequest(input *AdminDeleteUserInput) (req *request.Request, output *AdminDeleteUserOutput) {
@@ -559,26 +558,27 @@ func (c *CognitoIdentityProvider) AdminDeleteUserRequest(input *AdminDeleteUserI
 // API operation AdminDeleteUser for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminDeleteUser
 func (c *CognitoIdentityProvider) AdminDeleteUser(input *AdminDeleteUserInput) (*AdminDeleteUserOutput, error) {
@@ -618,14 +618,13 @@ const opAdminDeleteUserAttributes = "AdminDeleteUserAttributes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminDeleteUserAttributesRequest method.
+//	req, resp := client.AdminDeleteUserAttributesRequest(params)
 //
-//    // Example sending a request using the AdminDeleteUserAttributesRequest method.
-//    req, resp := client.AdminDeleteUserAttributesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminDeleteUserAttributes
 func (c *CognitoIdentityProvider) AdminDeleteUserAttributesRequest(input *AdminDeleteUserAttributesInput) (req *request.Request, output *AdminDeleteUserAttributesOutput) {
@@ -660,26 +659,27 @@ func (c *CognitoIdentityProvider) AdminDeleteUserAttributesRequest(input *AdminD
 // API operation AdminDeleteUserAttributes for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminDeleteUserAttributes
 func (c *CognitoIdentityProvider) AdminDeleteUserAttributes(input *AdminDeleteUserAttributesInput) (*AdminDeleteUserAttributesOutput, error) {
@@ -719,14 +719,13 @@ const opAdminDisableProviderForUser = "AdminDisableProviderForUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminDisableProviderForUserRequest method.
+//	req, resp := client.AdminDisableProviderForUserRequest(params)
 //
-//    // Example sending a request using the AdminDisableProviderForUserRequest method.
-//    req, resp := client.AdminDisableProviderForUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminDisableProviderForUser
 func (c *CognitoIdentityProvider) AdminDisableProviderForUserRequest(input *AdminDisableProviderForUserInput) (req *request.Request, output *AdminDisableProviderForUserOutput) {
@@ -748,13 +747,13 @@ func (c *CognitoIdentityProvider) AdminDisableProviderForUserRequest(input *Admi
 
 // AdminDisableProviderForUser API operation for Amazon Cognito Identity Provider.
 //
-// Disables the user from signing in with the specified external (SAML or social)
-// identity provider. If the user to disable is a Amazon Cognito User Pools
-// native username + password user, they aren't permitted to use their password
-// to sign in. If the user to deactivate is a linked external identity provider
-// (IdP) user, any link between that user and an existing user is removed. The
-// next time the external user (no longer attached to the previously linked
-// DestinationUser) signs in, they must create a new user account. See AdminLinkProviderForUser
+// Prevents the user from signing in with the specified external (SAML or social)
+// identity provider (IdP). If the user that you want to deactivate is a Amazon
+// Cognito user pools native username + password user, they can't use their
+// password to sign in. If the user to deactivate is a linked external IdP user,
+// any link between that user and an existing user is removed. When the external
+// user signs in again, and the user is no longer attached to the previously
+// linked DestinationUser, the user must create a new user account. See AdminLinkProviderForUser
 // (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminLinkProviderForUser.html).
 //
 // This action is enabled only for admin access and requires developer credentials.
@@ -766,9 +765,9 @@ func (c *CognitoIdentityProvider) AdminDisableProviderForUserRequest(input *Admi
 // be Cognito and the ProviderAttributeName must be Cognito_Subject. The ProviderAttributeValue
 // must be the name that is used in the user pool for the user.
 //
-// The ProviderAttributeName must always be Cognito_Subject for social identity
-// providers. The ProviderAttributeValue must always be the exact subject that
-// was used when the user was originally linked as a source user.
+// The ProviderAttributeName must always be Cognito_Subject for social IdPs.
+// The ProviderAttributeValue must always be the exact subject that was used
+// when the user was originally linked as a source user.
 //
 // For de-linking a SAML identity, there are two scenarios. If the linked identity
 // has not yet been used to sign in, the ProviderAttributeName and ProviderAttributeValue
@@ -787,32 +786,34 @@ func (c *CognitoIdentityProvider) AdminDisableProviderForUserRequest(input *Admi
 // API operation AdminDisableProviderForUser for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * AliasExistsException
-//   This exception is thrown when a user tries to confirm the account with an
-//   email or phone number that has already been supplied as an alias from a different
-//   account. This exception tells user that an account with this email or phone
-//   already exists.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - AliasExistsException
+//     This exception is thrown when a user tries to confirm the account with an
+//     email address or phone number that has already been supplied as an alias
+//     for a different user profile. This exception indicates that an account with
+//     this email address or phone already exists in a user pool that you've configured
+//     to use email address or phone number as a sign-in alias.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminDisableProviderForUser
 func (c *CognitoIdentityProvider) AdminDisableProviderForUser(input *AdminDisableProviderForUserInput) (*AdminDisableProviderForUserOutput, error) {
@@ -852,14 +853,13 @@ const opAdminDisableUser = "AdminDisableUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminDisableUserRequest method.
+//	req, resp := client.AdminDisableUserRequest(params)
 //
-//    // Example sending a request using the AdminDisableUserRequest method.
-//    req, resp := client.AdminDisableUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminDisableUser
 func (c *CognitoIdentityProvider) AdminDisableUserRequest(input *AdminDisableUserInput) (req *request.Request, output *AdminDisableUserOutput) {
@@ -893,26 +893,27 @@ func (c *CognitoIdentityProvider) AdminDisableUserRequest(input *AdminDisableUse
 // API operation AdminDisableUser for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminDisableUser
 func (c *CognitoIdentityProvider) AdminDisableUser(input *AdminDisableUserInput) (*AdminDisableUserOutput, error) {
@@ -952,14 +953,13 @@ const opAdminEnableUser = "AdminEnableUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminEnableUserRequest method.
+//	req, resp := client.AdminEnableUserRequest(params)
 //
-//    // Example sending a request using the AdminEnableUserRequest method.
-//    req, resp := client.AdminEnableUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminEnableUser
 func (c *CognitoIdentityProvider) AdminEnableUserRequest(input *AdminEnableUserInput) (req *request.Request, output *AdminEnableUserOutput) {
@@ -993,26 +993,27 @@ func (c *CognitoIdentityProvider) AdminEnableUserRequest(input *AdminEnableUserI
 // API operation AdminEnableUser for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminEnableUser
 func (c *CognitoIdentityProvider) AdminEnableUser(input *AdminEnableUserInput) (*AdminEnableUserOutput, error) {
@@ -1052,14 +1053,13 @@ const opAdminForgetDevice = "AdminForgetDevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminForgetDeviceRequest method.
+//	req, resp := client.AdminForgetDeviceRequest(params)
 //
-//    // Example sending a request using the AdminForgetDeviceRequest method.
-//    req, resp := client.AdminForgetDeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminForgetDevice
 func (c *CognitoIdentityProvider) AdminForgetDeviceRequest(input *AdminForgetDeviceInput) (req *request.Request, output *AdminForgetDeviceOutput) {
@@ -1093,29 +1093,30 @@ func (c *CognitoIdentityProvider) AdminForgetDeviceRequest(input *AdminForgetDev
 // API operation AdminForgetDevice for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminForgetDevice
 func (c *CognitoIdentityProvider) AdminForgetDevice(input *AdminForgetDeviceInput) (*AdminForgetDeviceOutput, error) {
@@ -1155,14 +1156,13 @@ const opAdminGetDevice = "AdminGetDevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminGetDeviceRequest method.
+//	req, resp := client.AdminGetDeviceRequest(params)
 //
-//    // Example sending a request using the AdminGetDeviceRequest method.
-//    req, resp := client.AdminGetDeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminGetDevice
 func (c *CognitoIdentityProvider) AdminGetDeviceRequest(input *AdminGetDeviceInput) (req *request.Request, output *AdminGetDeviceOutput) {
@@ -1195,26 +1195,27 @@ func (c *CognitoIdentityProvider) AdminGetDeviceRequest(input *AdminGetDeviceInp
 // API operation AdminGetDevice for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminGetDevice
 func (c *CognitoIdentityProvider) AdminGetDevice(input *AdminGetDeviceInput) (*AdminGetDeviceOutput, error) {
@@ -1254,14 +1255,13 @@ const opAdminGetUser = "AdminGetUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminGetUserRequest method.
+//	req, resp := client.AdminGetUserRequest(params)
 //
-//    // Example sending a request using the AdminGetUserRequest method.
-//    req, resp := client.AdminGetUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminGetUser
 func (c *CognitoIdentityProvider) AdminGetUserRequest(input *AdminGetUserInput) (req *request.Request, output *AdminGetUserOutput) {
@@ -1295,26 +1295,27 @@ func (c *CognitoIdentityProvider) AdminGetUserRequest(input *AdminGetUserInput) 
 // API operation AdminGetUser for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminGetUser
 func (c *CognitoIdentityProvider) AdminGetUser(input *AdminGetUserInput) (*AdminGetUserOutput, error) {
@@ -1354,14 +1355,13 @@ const opAdminInitiateAuth = "AdminInitiateAuth"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminInitiateAuthRequest method.
+//	req, resp := client.AdminInitiateAuthRequest(params)
 //
-//    // Example sending a request using the AdminInitiateAuthRequest method.
-//    req, resp := client.AdminInitiateAuthRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminInitiateAuth
 func (c *CognitoIdentityProvider) AdminInitiateAuthRequest(input *AdminInitiateAuthInput) (req *request.Request, output *AdminInitiateAuthOutput) {
@@ -1386,20 +1386,20 @@ func (c *CognitoIdentityProvider) AdminInitiateAuthRequest(input *AdminInitiateA
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Calling this action requires developer credentials.
@@ -1412,61 +1412,62 @@ func (c *CognitoIdentityProvider) AdminInitiateAuthRequest(input *AdminInitiateA
 // API operation AdminInitiateAuth for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * MFAMethodNotFoundException
-//   This exception is thrown when Amazon Cognito can't find a multi-factor authentication
-//   (MFA) method.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - MFAMethodNotFoundException
+//     This exception is thrown when Amazon Cognito can't find a multi-factor authentication
+//     (MFA) method.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminInitiateAuth
 func (c *CognitoIdentityProvider) AdminInitiateAuth(input *AdminInitiateAuthInput) (*AdminInitiateAuthOutput, error) {
@@ -1506,14 +1507,13 @@ const opAdminLinkProviderForUser = "AdminLinkProviderForUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminLinkProviderForUserRequest method.
+//	req, resp := client.AdminLinkProviderForUserRequest(params)
 //
-//    // Example sending a request using the AdminLinkProviderForUserRequest method.
-//    req, resp := client.AdminLinkProviderForUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminLinkProviderForUser
 func (c *CognitoIdentityProvider) AdminLinkProviderForUserRequest(input *AdminLinkProviderForUserInput) (req *request.Request, output *AdminLinkProviderForUserOutput) {
@@ -1536,22 +1536,22 @@ func (c *CognitoIdentityProvider) AdminLinkProviderForUserRequest(input *AdminLi
 // AdminLinkProviderForUser API operation for Amazon Cognito Identity Provider.
 //
 // Links an existing user account in a user pool (DestinationUser) to an identity
-// from an external identity provider (SourceUser) based on a specified attribute
-// name and value from the external identity provider. This allows you to create
-// a link from the existing user account to an external federated user identity
-// that has not yet been used to sign in. You can then use the federated user
-// identity to sign in as the existing user account.
+// from an external IdP (SourceUser) based on a specified attribute name and
+// value from the external IdP. This allows you to create a link from the existing
+// user account to an external federated user identity that has not yet been
+// used to sign in. You can then use the federated user identity to sign in
+// as the existing user account.
 //
 // For example, if there is an existing user with a username and password, this
 // API links that user to a federated user identity. When the user signs in
 // with a federated user identity, they sign in as the existing user account.
 //
-// The maximum number of federated identities linked to a user is 5.
+// The maximum number of federated identities linked to a user is five.
 //
 // Because this API allows a user with an external federated identity to sign
 // in as an existing user in the user pool, it is critical that it only be used
-// with external identity providers and provider attributes that have been trusted
-// by the application owner.
+// with external IdPs and provider attributes that have been trusted by the
+// application owner.
 //
 // This action is administrative and requires developer credentials.
 //
@@ -1563,36 +1563,38 @@ func (c *CognitoIdentityProvider) AdminLinkProviderForUserRequest(input *AdminLi
 // API operation AdminLinkProviderForUser for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * AliasExistsException
-//   This exception is thrown when a user tries to confirm the account with an
-//   email or phone number that has already been supplied as an alias from a different
-//   account. This exception tells user that an account with this email or phone
-//   already exists.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - AliasExistsException
+//     This exception is thrown when a user tries to confirm the account with an
+//     email address or phone number that has already been supplied as an alias
+//     for a different user profile. This exception indicates that an account with
+//     this email address or phone already exists in a user pool that you've configured
+//     to use email address or phone number as a sign-in alias.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminLinkProviderForUser
 func (c *CognitoIdentityProvider) AdminLinkProviderForUser(input *AdminLinkProviderForUserInput) (*AdminLinkProviderForUserOutput, error) {
@@ -1632,14 +1634,13 @@ const opAdminListDevices = "AdminListDevices"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminListDevicesRequest method.
+//	req, resp := client.AdminListDevicesRequest(params)
 //
-//    // Example sending a request using the AdminListDevicesRequest method.
-//    req, resp := client.AdminListDevicesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminListDevices
 func (c *CognitoIdentityProvider) AdminListDevicesRequest(input *AdminListDevicesInput) (req *request.Request, output *AdminListDevicesOutput) {
@@ -1672,26 +1673,27 @@ func (c *CognitoIdentityProvider) AdminListDevicesRequest(input *AdminListDevice
 // API operation AdminListDevices for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminListDevices
 func (c *CognitoIdentityProvider) AdminListDevices(input *AdminListDevicesInput) (*AdminListDevicesOutput, error) {
@@ -1731,14 +1733,13 @@ const opAdminListGroupsForUser = "AdminListGroupsForUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminListGroupsForUserRequest method.
+//	req, resp := client.AdminListGroupsForUserRequest(params)
 //
-//    // Example sending a request using the AdminListGroupsForUserRequest method.
-//    req, resp := client.AdminListGroupsForUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminListGroupsForUser
 func (c *CognitoIdentityProvider) AdminListGroupsForUserRequest(input *AdminListGroupsForUserInput) (req *request.Request, output *AdminListGroupsForUserOutput) {
@@ -1777,26 +1778,27 @@ func (c *CognitoIdentityProvider) AdminListGroupsForUserRequest(input *AdminList
 // API operation AdminListGroupsForUser for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminListGroupsForUser
 func (c *CognitoIdentityProvider) AdminListGroupsForUser(input *AdminListGroupsForUserInput) (*AdminListGroupsForUserOutput, error) {
@@ -1828,15 +1830,14 @@ func (c *CognitoIdentityProvider) AdminListGroupsForUserWithContext(ctx aws.Cont
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a AdminListGroupsForUser operation.
-//    pageNum := 0
-//    err := client.AdminListGroupsForUserPages(params,
-//        func(page *cognitoidentityprovider.AdminListGroupsForUserOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a AdminListGroupsForUser operation.
+//	pageNum := 0
+//	err := client.AdminListGroupsForUserPages(params,
+//	    func(page *cognitoidentityprovider.AdminListGroupsForUserOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CognitoIdentityProvider) AdminListGroupsForUserPages(input *AdminListGroupsForUserInput, fn func(*AdminListGroupsForUserOutput, bool) bool) error {
 	return c.AdminListGroupsForUserPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1888,14 +1889,13 @@ const opAdminListUserAuthEvents = "AdminListUserAuthEvents"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminListUserAuthEventsRequest method.
+//	req, resp := client.AdminListUserAuthEventsRequest(params)
 //
-//    // Example sending a request using the AdminListUserAuthEventsRequest method.
-//    req, resp := client.AdminListUserAuthEventsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminListUserAuthEvents
 func (c *CognitoIdentityProvider) AdminListUserAuthEventsRequest(input *AdminListUserAuthEventsInput) (req *request.Request, output *AdminListUserAuthEventsOutput) {
@@ -1933,29 +1933,30 @@ func (c *CognitoIdentityProvider) AdminListUserAuthEventsRequest(input *AdminLis
 // API operation AdminListUserAuthEvents for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * UserPoolAddOnNotEnabledException
-//   This exception is thrown when user pool add-ons aren't enabled.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserPoolAddOnNotEnabledException
+//     This exception is thrown when user pool add-ons aren't enabled.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminListUserAuthEvents
 func (c *CognitoIdentityProvider) AdminListUserAuthEvents(input *AdminListUserAuthEventsInput) (*AdminListUserAuthEventsOutput, error) {
@@ -1987,15 +1988,14 @@ func (c *CognitoIdentityProvider) AdminListUserAuthEventsWithContext(ctx aws.Con
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a AdminListUserAuthEvents operation.
-//    pageNum := 0
-//    err := client.AdminListUserAuthEventsPages(params,
-//        func(page *cognitoidentityprovider.AdminListUserAuthEventsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a AdminListUserAuthEvents operation.
+//	pageNum := 0
+//	err := client.AdminListUserAuthEventsPages(params,
+//	    func(page *cognitoidentityprovider.AdminListUserAuthEventsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CognitoIdentityProvider) AdminListUserAuthEventsPages(input *AdminListUserAuthEventsInput, fn func(*AdminListUserAuthEventsOutput, bool) bool) error {
 	return c.AdminListUserAuthEventsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2047,14 +2047,13 @@ const opAdminRemoveUserFromGroup = "AdminRemoveUserFromGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminRemoveUserFromGroupRequest method.
+//	req, resp := client.AdminRemoveUserFromGroupRequest(params)
 //
-//    // Example sending a request using the AdminRemoveUserFromGroupRequest method.
-//    req, resp := client.AdminRemoveUserFromGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminRemoveUserFromGroup
 func (c *CognitoIdentityProvider) AdminRemoveUserFromGroupRequest(input *AdminRemoveUserFromGroupInput) (req *request.Request, output *AdminRemoveUserFromGroupOutput) {
@@ -2088,26 +2087,27 @@ func (c *CognitoIdentityProvider) AdminRemoveUserFromGroupRequest(input *AdminRe
 // API operation AdminRemoveUserFromGroup for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminRemoveUserFromGroup
 func (c *CognitoIdentityProvider) AdminRemoveUserFromGroup(input *AdminRemoveUserFromGroupInput) (*AdminRemoveUserFromGroupOutput, error) {
@@ -2147,14 +2147,13 @@ const opAdminResetUserPassword = "AdminResetUserPassword"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminResetUserPasswordRequest method.
+//	req, resp := client.AdminResetUserPasswordRequest(params)
 //
-//    // Example sending a request using the AdminResetUserPasswordRequest method.
-//    req, resp := client.AdminResetUserPasswordRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminResetUserPassword
 func (c *CognitoIdentityProvider) AdminResetUserPasswordRequest(input *AdminResetUserPasswordInput) (req *request.Request, output *AdminResetUserPasswordOutput) {
@@ -2191,20 +2190,20 @@ func (c *CognitoIdentityProvider) AdminResetUserPasswordRequest(input *AdminRese
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Calling this action requires developer credentials.
@@ -2217,56 +2216,57 @@ func (c *CognitoIdentityProvider) AdminResetUserPasswordRequest(input *AdminRese
 // API operation AdminResetUserPassword for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InvalidEmailRoleAccessPolicyException
-//   This exception is thrown when Amazon Cognito isn't allowed to use your email
-//   identity. HTTP status code: 400.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidEmailRoleAccessPolicyException
+//     This exception is thrown when Amazon Cognito isn't allowed to use your email
+//     identity. HTTP status code: 400.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminResetUserPassword
 func (c *CognitoIdentityProvider) AdminResetUserPassword(input *AdminResetUserPasswordInput) (*AdminResetUserPasswordOutput, error) {
@@ -2306,14 +2306,13 @@ const opAdminRespondToAuthChallenge = "AdminRespondToAuthChallenge"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminRespondToAuthChallengeRequest method.
+//	req, resp := client.AdminRespondToAuthChallengeRequest(params)
 //
-//    // Example sending a request using the AdminRespondToAuthChallengeRequest method.
-//    req, resp := client.AdminRespondToAuthChallengeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminRespondToAuthChallenge
 func (c *CognitoIdentityProvider) AdminRespondToAuthChallengeRequest(input *AdminRespondToAuthChallengeInput) (req *request.Request, output *AdminRespondToAuthChallengeOutput) {
@@ -2338,20 +2337,20 @@ func (c *CognitoIdentityProvider) AdminRespondToAuthChallengeRequest(input *Admi
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Calling this action requires developer credentials.
@@ -2364,81 +2363,83 @@ func (c *CognitoIdentityProvider) AdminRespondToAuthChallengeRequest(input *Admi
 // API operation AdminRespondToAuthChallenge for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * CodeMismatchException
-//   This exception is thrown if the provided code doesn't match what the server
-//   was expecting.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * ExpiredCodeException
-//   This exception is thrown if a code has expired.
+//   - CodeMismatchException
+//     This exception is thrown if the provided code doesn't match what the server
+//     was expecting.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - ExpiredCodeException
+//     This exception is thrown if a code has expired.
 //
-//   * InvalidPasswordException
-//   This exception is thrown when Amazon Cognito encounters an invalid password.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - InvalidPasswordException
+//     This exception is thrown when Amazon Cognito encounters an invalid password.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * MFAMethodNotFoundException
-//   This exception is thrown when Amazon Cognito can't find a multi-factor authentication
-//   (MFA) method.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - MFAMethodNotFoundException
+//     This exception is thrown when Amazon Cognito can't find a multi-factor authentication
+//     (MFA) method.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * AliasExistsException
-//   This exception is thrown when a user tries to confirm the account with an
-//   email or phone number that has already been supplied as an alias from a different
-//   account. This exception tells user that an account with this email or phone
-//   already exists.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - AliasExistsException
+//     This exception is thrown when a user tries to confirm the account with an
+//     email address or phone number that has already been supplied as an alias
+//     for a different user profile. This exception indicates that an account with
+//     this email address or phone already exists in a user pool that you've configured
+//     to use email address or phone number as a sign-in alias.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * SoftwareTokenMFANotFoundException
-//   This exception is thrown when the software token time-based one-time password
-//   (TOTP) multi-factor authentication (MFA) isn't activated for the user pool.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - SoftwareTokenMFANotFoundException
+//     This exception is thrown when the software token time-based one-time password
+//     (TOTP) multi-factor authentication (MFA) isn't activated for the user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminRespondToAuthChallenge
 func (c *CognitoIdentityProvider) AdminRespondToAuthChallenge(input *AdminRespondToAuthChallengeInput) (*AdminRespondToAuthChallengeOutput, error) {
@@ -2478,14 +2479,13 @@ const opAdminSetUserMFAPreference = "AdminSetUserMFAPreference"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminSetUserMFAPreferenceRequest method.
+//	req, resp := client.AdminSetUserMFAPreferenceRequest(params)
 //
-//    // Example sending a request using the AdminSetUserMFAPreferenceRequest method.
-//    req, resp := client.AdminSetUserMFAPreferenceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminSetUserMFAPreference
 func (c *CognitoIdentityProvider) AdminSetUserMFAPreferenceRequest(input *AdminSetUserMFAPreferenceInput) (req *request.Request, output *AdminSetUserMFAPreferenceOutput) {
@@ -2522,28 +2522,29 @@ func (c *CognitoIdentityProvider) AdminSetUserMFAPreferenceRequest(input *AdminS
 // API operation AdminSetUserMFAPreference for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminSetUserMFAPreference
 func (c *CognitoIdentityProvider) AdminSetUserMFAPreference(input *AdminSetUserMFAPreferenceInput) (*AdminSetUserMFAPreferenceOutput, error) {
@@ -2583,14 +2584,13 @@ const opAdminSetUserPassword = "AdminSetUserPassword"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminSetUserPasswordRequest method.
+//	req, resp := client.AdminSetUserPasswordRequest(params)
 //
-//    // Example sending a request using the AdminSetUserPasswordRequest method.
-//    req, resp := client.AdminSetUserPasswordRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminSetUserPassword
 func (c *CognitoIdentityProvider) AdminSetUserPasswordRequest(input *AdminSetUserPasswordInput) (req *request.Request, output *AdminSetUserPasswordOutput) {
@@ -2632,29 +2632,30 @@ func (c *CognitoIdentityProvider) AdminSetUserPasswordRequest(input *AdminSetUse
 // API operation AdminSetUserPassword for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InvalidPasswordException
-//   This exception is thrown when Amazon Cognito encounters an invalid password.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
+//
+//   - InvalidPasswordException
+//     This exception is thrown when Amazon Cognito encounters an invalid password.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminSetUserPassword
 func (c *CognitoIdentityProvider) AdminSetUserPassword(input *AdminSetUserPasswordInput) (*AdminSetUserPasswordOutput, error) {
@@ -2694,14 +2695,13 @@ const opAdminSetUserSettings = "AdminSetUserSettings"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminSetUserSettingsRequest method.
+//	req, resp := client.AdminSetUserSettingsRequest(params)
 //
-//    // Example sending a request using the AdminSetUserSettingsRequest method.
-//    req, resp := client.AdminSetUserSettingsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminSetUserSettings
 func (c *CognitoIdentityProvider) AdminSetUserSettingsRequest(input *AdminSetUserSettingsInput) (req *request.Request, output *AdminSetUserSettingsOutput) {
@@ -2737,22 +2737,23 @@ func (c *CognitoIdentityProvider) AdminSetUserSettingsRequest(input *AdminSetUse
 // API operation AdminSetUserSettings for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminSetUserSettings
 func (c *CognitoIdentityProvider) AdminSetUserSettings(input *AdminSetUserSettingsInput) (*AdminSetUserSettingsOutput, error) {
@@ -2792,14 +2793,13 @@ const opAdminUpdateAuthEventFeedback = "AdminUpdateAuthEventFeedback"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminUpdateAuthEventFeedbackRequest method.
+//	req, resp := client.AdminUpdateAuthEventFeedbackRequest(params)
 //
-//    // Example sending a request using the AdminUpdateAuthEventFeedbackRequest method.
-//    req, resp := client.AdminUpdateAuthEventFeedbackRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminUpdateAuthEventFeedback
 func (c *CognitoIdentityProvider) AdminUpdateAuthEventFeedbackRequest(input *AdminUpdateAuthEventFeedbackInput) (req *request.Request, output *AdminUpdateAuthEventFeedbackOutput) {
@@ -2833,29 +2833,30 @@ func (c *CognitoIdentityProvider) AdminUpdateAuthEventFeedbackRequest(input *Adm
 // API operation AdminUpdateAuthEventFeedback for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * UserPoolAddOnNotEnabledException
-//   This exception is thrown when user pool add-ons aren't enabled.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserPoolAddOnNotEnabledException
+//     This exception is thrown when user pool add-ons aren't enabled.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminUpdateAuthEventFeedback
 func (c *CognitoIdentityProvider) AdminUpdateAuthEventFeedback(input *AdminUpdateAuthEventFeedbackInput) (*AdminUpdateAuthEventFeedbackOutput, error) {
@@ -2895,14 +2896,13 @@ const opAdminUpdateDeviceStatus = "AdminUpdateDeviceStatus"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminUpdateDeviceStatusRequest method.
+//	req, resp := client.AdminUpdateDeviceStatusRequest(params)
 //
-//    // Example sending a request using the AdminUpdateDeviceStatusRequest method.
-//    req, resp := client.AdminUpdateDeviceStatusRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminUpdateDeviceStatus
 func (c *CognitoIdentityProvider) AdminUpdateDeviceStatusRequest(input *AdminUpdateDeviceStatusInput) (req *request.Request, output *AdminUpdateDeviceStatusOutput) {
@@ -2936,29 +2936,30 @@ func (c *CognitoIdentityProvider) AdminUpdateDeviceStatusRequest(input *AdminUpd
 // API operation AdminUpdateDeviceStatus for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminUpdateDeviceStatus
 func (c *CognitoIdentityProvider) AdminUpdateDeviceStatus(input *AdminUpdateDeviceStatusInput) (*AdminUpdateDeviceStatusOutput, error) {
@@ -2998,14 +2999,13 @@ const opAdminUpdateUserAttributes = "AdminUpdateUserAttributes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminUpdateUserAttributesRequest method.
+//	req, resp := client.AdminUpdateUserAttributesRequest(params)
 //
-//    // Example sending a request using the AdminUpdateUserAttributesRequest method.
-//    req, resp := client.AdminUpdateUserAttributesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminUpdateUserAttributes
 func (c *CognitoIdentityProvider) AdminUpdateUserAttributesRequest(input *AdminUpdateUserAttributesInput) (req *request.Request, output *AdminUpdateUserAttributesOutput) {
@@ -3038,20 +3038,20 @@ func (c *CognitoIdentityProvider) AdminUpdateUserAttributesRequest(input *AdminU
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Calling this action requires developer credentials.
@@ -3064,58 +3064,60 @@ func (c *CognitoIdentityProvider) AdminUpdateUserAttributesRequest(input *AdminU
 // API operation AdminUpdateUserAttributes for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * AliasExistsException
-//   This exception is thrown when a user tries to confirm the account with an
-//   email or phone number that has already been supplied as an alias from a different
-//   account. This exception tells user that an account with this email or phone
-//   already exists.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - AliasExistsException
+//     This exception is thrown when a user tries to confirm the account with an
+//     email address or phone number that has already been supplied as an alias
+//     for a different user profile. This exception indicates that an account with
+//     this email address or phone already exists in a user pool that you've configured
+//     to use email address or phone number as a sign-in alias.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * InvalidEmailRoleAccessPolicyException
-//   This exception is thrown when Amazon Cognito isn't allowed to use your email
-//   identity. HTTP status code: 400.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidEmailRoleAccessPolicyException
+//     This exception is thrown when Amazon Cognito isn't allowed to use your email
+//     identity. HTTP status code: 400.
+//
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminUpdateUserAttributes
 func (c *CognitoIdentityProvider) AdminUpdateUserAttributes(input *AdminUpdateUserAttributesInput) (*AdminUpdateUserAttributesOutput, error) {
@@ -3155,14 +3157,13 @@ const opAdminUserGlobalSignOut = "AdminUserGlobalSignOut"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AdminUserGlobalSignOutRequest method.
+//	req, resp := client.AdminUserGlobalSignOutRequest(params)
 //
-//    // Example sending a request using the AdminUserGlobalSignOutRequest method.
-//    req, resp := client.AdminUserGlobalSignOutRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminUserGlobalSignOut
 func (c *CognitoIdentityProvider) AdminUserGlobalSignOutRequest(input *AdminUserGlobalSignOutInput) (req *request.Request, output *AdminUserGlobalSignOutOutput) {
@@ -3184,10 +3185,12 @@ func (c *CognitoIdentityProvider) AdminUserGlobalSignOutRequest(input *AdminUser
 
 // AdminUserGlobalSignOut API operation for Amazon Cognito Identity Provider.
 //
-// Signs out users from all devices, as an administrator. It also invalidates
-// all refresh tokens issued to a user. The user's current access and Id tokens
-// remain valid until their expiry. Access and Id tokens expire one hour after
-// they're issued.
+// Signs out a user from all devices. You must sign AdminUserGlobalSignOut requests
+// with Amazon Web Services credentials. It also invalidates all refresh tokens
+// that Amazon Cognito has issued to a user. The user's current access and ID
+// tokens remain valid until they expire. By default, access and ID tokens expire
+// one hour after they're issued. A user can still use a hosted UI cookie to
+// retrieve new tokens for the duration of the cookie validity period of 1 hour.
 //
 // Calling this action requires developer credentials.
 //
@@ -3199,26 +3202,27 @@ func (c *CognitoIdentityProvider) AdminUserGlobalSignOutRequest(input *AdminUser
 // API operation AdminUserGlobalSignOut for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AdminUserGlobalSignOut
 func (c *CognitoIdentityProvider) AdminUserGlobalSignOut(input *AdminUserGlobalSignOutInput) (*AdminUserGlobalSignOutOutput, error) {
@@ -3258,14 +3262,13 @@ const opAssociateSoftwareToken = "AssociateSoftwareToken"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateSoftwareTokenRequest method.
+//	req, resp := client.AssociateSoftwareTokenRequest(params)
 //
-//    // Example sending a request using the AssociateSoftwareTokenRequest method.
-//    req, resp := client.AssociateSoftwareTokenRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AssociateSoftwareToken
 func (c *CognitoIdentityProvider) AssociateSoftwareTokenRequest(input *AssociateSoftwareTokenInput) (req *request.Request, output *AssociateSoftwareTokenOutput) {
@@ -3286,15 +3289,23 @@ func (c *CognitoIdentityProvider) AssociateSoftwareTokenRequest(input *Associate
 
 // AssociateSoftwareToken API operation for Amazon Cognito Identity Provider.
 //
-// Returns a unique generated shared secret key code for the user account. The
-// request takes an access token or a session string, but not both.
+// Begins setup of time-based one-time password (TOTP) multi-factor authentication
+// (MFA) for a user, with a unique private key that Amazon Cognito generates
+// and returns in the API response. You can authorize an AssociateSoftwareToken
+// request with either the user's access token, or a session string from a challenge
+// response that you received from Amazon Cognito.
 //
-// Calling AssociateSoftwareToken immediately disassociates the existing software
-// token from the user account. If the user doesn't subsequently verify the
-// software token, their account is set up to authenticate without MFA. If MFA
-// config is set to Optional at the user pool level, the user can then log in
-// without MFA. However, if MFA is set to Required for the user pool, the user
-// is asked to set up a new software token MFA during sign-in.
+// Amazon Cognito disassociates an existing software token when you verify the
+// new token in a VerifySoftwareToken (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_VerifySoftwareToken.html)
+// API request. If you don't verify the software token and your user pool doesn't
+// require MFA, the user can then authenticate with user name and password credentials
+// alone. If your user pool requires TOTP MFA, Amazon Cognito generates an MFA_SETUP
+// or SOFTWARE_TOKEN_SETUP challenge each time your user signs. Complete setup
+// with AssociateSoftwareToken and VerifySoftwareToken.
+//
+// After you set up software token MFA for your user, Amazon Cognito generates
+// a SOFTWARE_TOKEN_MFA challenge when they authenticate. Respond to this challenge
+// with your user's TOTP.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3304,26 +3315,31 @@ func (c *CognitoIdentityProvider) AssociateSoftwareTokenRequest(input *Associate
 // API operation AssociateSoftwareToken for usage and error information.
 //
 // Returned Error Types:
-//   * ConcurrentModificationException
-//   This exception is thrown if two or more modifications are happening concurrently.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ConcurrentModificationException
+//     This exception is thrown if two or more modifications are happening concurrently.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * SoftwareTokenMFANotFoundException
-//   This exception is thrown when the software token time-based one-time password
-//   (TOTP) multi-factor authentication (MFA) isn't activated for the user pool.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - SoftwareTokenMFANotFoundException
+//     This exception is thrown when the software token time-based one-time password
+//     (TOTP) multi-factor authentication (MFA) isn't activated for the user pool.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/AssociateSoftwareToken
 func (c *CognitoIdentityProvider) AssociateSoftwareToken(input *AssociateSoftwareTokenInput) (*AssociateSoftwareTokenOutput, error) {
@@ -3363,14 +3379,13 @@ const opChangePassword = "ChangePassword"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ChangePasswordRequest method.
+//	req, resp := client.ChangePasswordRequest(params)
 //
-//    // Example sending a request using the ChangePasswordRequest method.
-//    req, resp := client.ChangePasswordRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ChangePassword
 func (c *CognitoIdentityProvider) ChangePasswordRequest(input *ChangePasswordInput) (req *request.Request, output *ChangePasswordOutput) {
@@ -3403,39 +3418,44 @@ func (c *CognitoIdentityProvider) ChangePasswordRequest(input *ChangePasswordInp
 // API operation ChangePassword for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * InvalidPasswordException
-//   This exception is thrown when Amazon Cognito encounters an invalid password.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidPasswordException
+//     This exception is thrown when Amazon Cognito encounters an invalid password.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ChangePassword
 func (c *CognitoIdentityProvider) ChangePassword(input *ChangePasswordInput) (*ChangePasswordOutput, error) {
@@ -3475,14 +3495,13 @@ const opConfirmDevice = "ConfirmDevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ConfirmDeviceRequest method.
+//	req, resp := client.ConfirmDeviceRequest(params)
 //
-//    // Example sending a request using the ConfirmDeviceRequest method.
-//    req, resp := client.ConfirmDeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ConfirmDevice
 func (c *CognitoIdentityProvider) ConfirmDeviceRequest(input *ConfirmDeviceInput) (req *request.Request, output *ConfirmDeviceOutput) {
@@ -3514,46 +3533,51 @@ func (c *CognitoIdentityProvider) ConfirmDeviceRequest(input *ConfirmDeviceInput
 // API operation ConfirmDevice for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * InvalidPasswordException
-//   This exception is thrown when Amazon Cognito encounters an invalid password.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - InvalidPasswordException
+//     This exception is thrown when Amazon Cognito encounters an invalid password.
 //
-//   * UsernameExistsException
-//   This exception is thrown when Amazon Cognito encounters a user name that
-//   already exists in the user pool.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - UsernameExistsException
+//     This exception is thrown when Amazon Cognito encounters a user name that
+//     already exists in the user pool.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ConfirmDevice
 func (c *CognitoIdentityProvider) ConfirmDevice(input *ConfirmDeviceInput) (*ConfirmDeviceOutput, error) {
@@ -3593,14 +3617,13 @@ const opConfirmForgotPassword = "ConfirmForgotPassword"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ConfirmForgotPasswordRequest method.
+//	req, resp := client.ConfirmForgotPasswordRequest(params)
 //
-//    // Example sending a request using the ConfirmForgotPasswordRequest method.
-//    req, resp := client.ConfirmForgotPasswordRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ConfirmForgotPassword
 func (c *CognitoIdentityProvider) ConfirmForgotPasswordRequest(input *ConfirmForgotPasswordInput) (req *request.Request, output *ConfirmForgotPasswordOutput) {
@@ -3633,59 +3656,64 @@ func (c *CognitoIdentityProvider) ConfirmForgotPasswordRequest(input *ConfirmFor
 // API operation ConfirmForgotPassword for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * InvalidPasswordException
-//   This exception is thrown when Amazon Cognito encounters an invalid password.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidPasswordException
+//     This exception is thrown when Amazon Cognito encounters an invalid password.
 //
-//   * CodeMismatchException
-//   This exception is thrown if the provided code doesn't match what the server
-//   was expecting.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * ExpiredCodeException
-//   This exception is thrown if a code has expired.
+//   - CodeMismatchException
+//     This exception is thrown if the provided code doesn't match what the server
+//     was expecting.
 //
-//   * TooManyFailedAttemptsException
-//   This exception is thrown when the user has made too many failed attempts
-//   for a given action, such as sign-in.
+//   - ExpiredCodeException
+//     This exception is thrown if a code has expired.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - TooManyFailedAttemptsException
+//     This exception is thrown when the user has made too many failed attempts
+//     for a given action, such as sign-in.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ConfirmForgotPassword
 func (c *CognitoIdentityProvider) ConfirmForgotPassword(input *ConfirmForgotPasswordInput) (*ConfirmForgotPasswordOutput, error) {
@@ -3725,14 +3753,13 @@ const opConfirmSignUp = "ConfirmSignUp"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ConfirmSignUpRequest method.
+//	req, resp := client.ConfirmSignUpRequest(params)
 //
-//    // Example sending a request using the ConfirmSignUpRequest method.
-//    req, resp := client.ConfirmSignUpRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ConfirmSignUp
 func (c *CognitoIdentityProvider) ConfirmSignUpRequest(input *ConfirmSignUpInput) (req *request.Request, output *ConfirmSignUpOutput) {
@@ -3755,8 +3782,7 @@ func (c *CognitoIdentityProvider) ConfirmSignUpRequest(input *ConfirmSignUpInput
 
 // ConfirmSignUp API operation for Amazon Cognito Identity Provider.
 //
-// Confirms registration of a user and handles the existing alias from a previous
-// user.
+// Confirms registration of a new user.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3766,59 +3792,65 @@ func (c *CognitoIdentityProvider) ConfirmSignUpRequest(input *ConfirmSignUpInput
 // API operation ConfirmSignUp for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * TooManyFailedAttemptsException
-//   This exception is thrown when the user has made too many failed attempts
-//   for a given action, such as sign-in.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * CodeMismatchException
-//   This exception is thrown if the provided code doesn't match what the server
-//   was expecting.
+//   - TooManyFailedAttemptsException
+//     This exception is thrown when the user has made too many failed attempts
+//     for a given action, such as sign-in.
 //
-//   * ExpiredCodeException
-//   This exception is thrown if a code has expired.
+//   - CodeMismatchException
+//     This exception is thrown if the provided code doesn't match what the server
+//     was expecting.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - ExpiredCodeException
+//     This exception is thrown if a code has expired.
 //
-//   * AliasExistsException
-//   This exception is thrown when a user tries to confirm the account with an
-//   email or phone number that has already been supplied as an alias from a different
-//   account. This exception tells user that an account with this email or phone
-//   already exists.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - AliasExistsException
+//     This exception is thrown when a user tries to confirm the account with an
+//     email address or phone number that has already been supplied as an alias
+//     for a different user profile. This exception indicates that an account with
+//     this email address or phone already exists in a user pool that you've configured
+//     to use email address or phone number as a sign-in alias.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ConfirmSignUp
 func (c *CognitoIdentityProvider) ConfirmSignUp(input *ConfirmSignUpInput) (*ConfirmSignUpOutput, error) {
@@ -3858,14 +3890,13 @@ const opCreateGroup = "CreateGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateGroupRequest method.
+//	req, resp := client.CreateGroupRequest(params)
 //
-//    // Example sending a request using the CreateGroupRequest method.
-//    req, resp := client.CreateGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateGroup
 func (c *CognitoIdentityProvider) CreateGroupRequest(input *CreateGroupInput) (req *request.Request, output *CreateGroupOutput) {
@@ -3898,31 +3929,32 @@ func (c *CognitoIdentityProvider) CreateGroupRequest(input *CreateGroupInput) (r
 // API operation CreateGroup for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * GroupExistsException
-//   This exception is thrown when Amazon Cognito encounters a group that already
-//   exists in the user pool.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - GroupExistsException
+//     This exception is thrown when Amazon Cognito encounters a group that already
+//     exists in the user pool.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateGroup
 func (c *CognitoIdentityProvider) CreateGroup(input *CreateGroupInput) (*CreateGroupOutput, error) {
@@ -3962,14 +3994,13 @@ const opCreateIdentityProvider = "CreateIdentityProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateIdentityProviderRequest method.
+//	req, resp := client.CreateIdentityProviderRequest(params)
 //
-//    // Example sending a request using the CreateIdentityProviderRequest method.
-//    req, resp := client.CreateIdentityProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateIdentityProvider
 func (c *CognitoIdentityProvider) CreateIdentityProviderRequest(input *CreateIdentityProviderInput) (req *request.Request, output *CreateIdentityProviderOutput) {
@@ -3990,7 +4021,7 @@ func (c *CognitoIdentityProvider) CreateIdentityProviderRequest(input *CreateIde
 
 // CreateIdentityProvider API operation for Amazon Cognito Identity Provider.
 //
-// Creates an identity provider for a user pool.
+// Creates an IdP for a user pool.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4000,31 +4031,32 @@ func (c *CognitoIdentityProvider) CreateIdentityProviderRequest(input *CreateIde
 // API operation CreateIdentityProvider for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * DuplicateProviderException
-//   This exception is thrown when the provider is already supported by the user
-//   pool.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - DuplicateProviderException
+//     This exception is thrown when the provider is already supported by the user
+//     pool.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateIdentityProvider
 func (c *CognitoIdentityProvider) CreateIdentityProvider(input *CreateIdentityProviderInput) (*CreateIdentityProviderOutput, error) {
@@ -4064,14 +4096,13 @@ const opCreateResourceServer = "CreateResourceServer"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateResourceServerRequest method.
+//	req, resp := client.CreateResourceServerRequest(params)
 //
-//    // Example sending a request using the CreateResourceServerRequest method.
-//    req, resp := client.CreateResourceServerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateResourceServer
 func (c *CognitoIdentityProvider) CreateResourceServerRequest(input *CreateResourceServerInput) (req *request.Request, output *CreateResourceServerOutput) {
@@ -4102,27 +4133,28 @@ func (c *CognitoIdentityProvider) CreateResourceServerRequest(input *CreateResou
 // API operation CreateResourceServer for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateResourceServer
 func (c *CognitoIdentityProvider) CreateResourceServer(input *CreateResourceServerInput) (*CreateResourceServerOutput, error) {
@@ -4162,14 +4194,13 @@ const opCreateUserImportJob = "CreateUserImportJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateUserImportJobRequest method.
+//	req, resp := client.CreateUserImportJobRequest(params)
 //
-//    // Example sending a request using the CreateUserImportJobRequest method.
-//    req, resp := client.CreateUserImportJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateUserImportJob
 func (c *CognitoIdentityProvider) CreateUserImportJobRequest(input *CreateUserImportJobInput) (req *request.Request, output *CreateUserImportJobOutput) {
@@ -4200,30 +4231,31 @@ func (c *CognitoIdentityProvider) CreateUserImportJobRequest(input *CreateUserIm
 // API operation CreateUserImportJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * PreconditionNotMetException
-//   This exception is thrown when a precondition is not met.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - PreconditionNotMetException
+//     This exception is thrown when a precondition is not met.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateUserImportJob
 func (c *CognitoIdentityProvider) CreateUserImportJob(input *CreateUserImportJobInput) (*CreateUserImportJobOutput, error) {
@@ -4263,14 +4295,13 @@ const opCreateUserPool = "CreateUserPool"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateUserPoolRequest method.
+//	req, resp := client.CreateUserPoolRequest(params)
 //
-//    // Example sending a request using the CreateUserPoolRequest method.
-//    req, resp := client.CreateUserPoolRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateUserPool
 func (c *CognitoIdentityProvider) CreateUserPoolRequest(input *CreateUserPoolInput) (req *request.Request, output *CreateUserPoolOutput) {
@@ -4296,20 +4327,20 @@ func (c *CognitoIdentityProvider) CreateUserPoolRequest(input *CreateUserPoolInp
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -4320,40 +4351,41 @@ func (c *CognitoIdentityProvider) CreateUserPoolRequest(input *CreateUserPoolInp
 // API operation CreateUserPool for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * InvalidEmailRoleAccessPolicyException
-//   This exception is thrown when Amazon Cognito isn't allowed to use your email
-//   identity. HTTP status code: 400.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidEmailRoleAccessPolicyException
+//     This exception is thrown when Amazon Cognito isn't allowed to use your email
+//     identity. HTTP status code: 400.
 //
-//   * UserPoolTaggingException
-//   This exception is thrown when a user pool tag can't be set or updated.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserPoolTaggingException
+//     This exception is thrown when a user pool tag can't be set or updated.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateUserPool
 func (c *CognitoIdentityProvider) CreateUserPool(input *CreateUserPoolInput) (*CreateUserPoolOutput, error) {
@@ -4393,14 +4425,13 @@ const opCreateUserPoolClient = "CreateUserPoolClient"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateUserPoolClientRequest method.
+//	req, resp := client.CreateUserPoolClientRequest(params)
 //
-//    // Example sending a request using the CreateUserPoolClientRequest method.
-//    req, resp := client.CreateUserPoolClientRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateUserPoolClient
 func (c *CognitoIdentityProvider) CreateUserPoolClientRequest(input *CreateUserPoolClientInput) (req *request.Request, output *CreateUserPoolClientOutput) {
@@ -4434,33 +4465,34 @@ func (c *CognitoIdentityProvider) CreateUserPoolClientRequest(input *CreateUserP
 // API operation CreateUserPoolClient for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * ScopeDoesNotExistException
-//   This exception is thrown when the specified scope doesn't exist.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InvalidOAuthFlowException
-//   This exception is thrown when the specified OAuth flow is not valid.
+//   - ScopeDoesNotExistException
+//     This exception is thrown when the specified scope doesn't exist.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - InvalidOAuthFlowException
+//     This exception is thrown when the specified OAuth flow is not valid.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateUserPoolClient
 func (c *CognitoIdentityProvider) CreateUserPoolClient(input *CreateUserPoolClientInput) (*CreateUserPoolClientOutput, error) {
@@ -4500,14 +4532,13 @@ const opCreateUserPoolDomain = "CreateUserPoolDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateUserPoolDomainRequest method.
+//	req, resp := client.CreateUserPoolDomainRequest(params)
 //
-//    // Example sending a request using the CreateUserPoolDomainRequest method.
-//    req, resp := client.CreateUserPoolDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateUserPoolDomain
 func (c *CognitoIdentityProvider) CreateUserPoolDomainRequest(input *CreateUserPoolDomainInput) (req *request.Request, output *CreateUserPoolDomainOutput) {
@@ -4538,23 +4569,24 @@ func (c *CognitoIdentityProvider) CreateUserPoolDomainRequest(input *CreateUserP
 // API operation CreateUserPoolDomain for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/CreateUserPoolDomain
 func (c *CognitoIdentityProvider) CreateUserPoolDomain(input *CreateUserPoolDomainInput) (*CreateUserPoolDomainOutput, error) {
@@ -4594,14 +4626,13 @@ const opDeleteGroup = "DeleteGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteGroupRequest method.
+//	req, resp := client.DeleteGroupRequest(params)
 //
-//    // Example sending a request using the DeleteGroupRequest method.
-//    req, resp := client.DeleteGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteGroup
 func (c *CognitoIdentityProvider) DeleteGroupRequest(input *DeleteGroupInput) (req *request.Request, output *DeleteGroupOutput) {
@@ -4635,23 +4666,24 @@ func (c *CognitoIdentityProvider) DeleteGroupRequest(input *DeleteGroupInput) (r
 // API operation DeleteGroup for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteGroup
 func (c *CognitoIdentityProvider) DeleteGroup(input *DeleteGroupInput) (*DeleteGroupOutput, error) {
@@ -4691,14 +4723,13 @@ const opDeleteIdentityProvider = "DeleteIdentityProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteIdentityProviderRequest method.
+//	req, resp := client.DeleteIdentityProviderRequest(params)
 //
-//    // Example sending a request using the DeleteIdentityProviderRequest method.
-//    req, resp := client.DeleteIdentityProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteIdentityProvider
 func (c *CognitoIdentityProvider) DeleteIdentityProviderRequest(input *DeleteIdentityProviderInput) (req *request.Request, output *DeleteIdentityProviderOutput) {
@@ -4720,7 +4751,7 @@ func (c *CognitoIdentityProvider) DeleteIdentityProviderRequest(input *DeleteIde
 
 // DeleteIdentityProvider API operation for Amazon Cognito Identity Provider.
 //
-// Deletes an identity provider for a user pool.
+// Deletes an IdP for a user pool.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4730,26 +4761,27 @@ func (c *CognitoIdentityProvider) DeleteIdentityProviderRequest(input *DeleteIde
 // API operation DeleteIdentityProvider for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * UnsupportedIdentityProviderException
-//   This exception is thrown when the specified identifier isn't supported.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - UnsupportedIdentityProviderException
+//     This exception is thrown when the specified identifier isn't supported.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteIdentityProvider
 func (c *CognitoIdentityProvider) DeleteIdentityProvider(input *DeleteIdentityProviderInput) (*DeleteIdentityProviderOutput, error) {
@@ -4789,14 +4821,13 @@ const opDeleteResourceServer = "DeleteResourceServer"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteResourceServerRequest method.
+//	req, resp := client.DeleteResourceServerRequest(params)
 //
-//    // Example sending a request using the DeleteResourceServerRequest method.
-//    req, resp := client.DeleteResourceServerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteResourceServer
 func (c *CognitoIdentityProvider) DeleteResourceServerRequest(input *DeleteResourceServerInput) (req *request.Request, output *DeleteResourceServerOutput) {
@@ -4828,23 +4859,24 @@ func (c *CognitoIdentityProvider) DeleteResourceServerRequest(input *DeleteResou
 // API operation DeleteResourceServer for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteResourceServer
 func (c *CognitoIdentityProvider) DeleteResourceServer(input *DeleteResourceServerInput) (*DeleteResourceServerOutput, error) {
@@ -4884,14 +4916,13 @@ const opDeleteUser = "DeleteUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteUserRequest method.
+//	req, resp := client.DeleteUserRequest(params)
 //
-//    // Example sending a request using the DeleteUserRequest method.
-//    req, resp := client.DeleteUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteUser
 func (c *CognitoIdentityProvider) DeleteUserRequest(input *DeleteUserInput) (req *request.Request, output *DeleteUserOutput) {
@@ -4924,32 +4955,37 @@ func (c *CognitoIdentityProvider) DeleteUserRequest(input *DeleteUserInput) (req
 // API operation DeleteUser for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteUser
 func (c *CognitoIdentityProvider) DeleteUser(input *DeleteUserInput) (*DeleteUserOutput, error) {
@@ -4989,14 +5025,13 @@ const opDeleteUserAttributes = "DeleteUserAttributes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteUserAttributesRequest method.
+//	req, resp := client.DeleteUserAttributesRequest(params)
 //
-//    // Example sending a request using the DeleteUserAttributesRequest method.
-//    req, resp := client.DeleteUserAttributesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteUserAttributes
 func (c *CognitoIdentityProvider) DeleteUserAttributesRequest(input *DeleteUserAttributesInput) (req *request.Request, output *DeleteUserAttributesOutput) {
@@ -5029,32 +5064,37 @@ func (c *CognitoIdentityProvider) DeleteUserAttributesRequest(input *DeleteUserA
 // API operation DeleteUserAttributes for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteUserAttributes
 func (c *CognitoIdentityProvider) DeleteUserAttributes(input *DeleteUserAttributesInput) (*DeleteUserAttributesOutput, error) {
@@ -5094,14 +5134,13 @@ const opDeleteUserPool = "DeleteUserPool"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteUserPoolRequest method.
+//	req, resp := client.DeleteUserPoolRequest(params)
 //
-//    // Example sending a request using the DeleteUserPoolRequest method.
-//    req, resp := client.DeleteUserPoolRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteUserPool
 func (c *CognitoIdentityProvider) DeleteUserPoolRequest(input *DeleteUserPoolInput) (req *request.Request, output *DeleteUserPoolOutput) {
@@ -5133,27 +5172,28 @@ func (c *CognitoIdentityProvider) DeleteUserPoolRequest(input *DeleteUserPoolInp
 // API operation DeleteUserPool for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserImportInProgressException
-//   This exception is thrown when you're trying to modify a user pool while a
-//   user import job is in progress for that pool.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserImportInProgressException
+//     This exception is thrown when you're trying to modify a user pool while a
+//     user import job is in progress for that pool.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteUserPool
 func (c *CognitoIdentityProvider) DeleteUserPool(input *DeleteUserPoolInput) (*DeleteUserPoolOutput, error) {
@@ -5193,14 +5233,13 @@ const opDeleteUserPoolClient = "DeleteUserPoolClient"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteUserPoolClientRequest method.
+//	req, resp := client.DeleteUserPoolClientRequest(params)
 //
-//    // Example sending a request using the DeleteUserPoolClientRequest method.
-//    req, resp := client.DeleteUserPoolClientRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteUserPoolClient
 func (c *CognitoIdentityProvider) DeleteUserPoolClientRequest(input *DeleteUserPoolClientInput) (req *request.Request, output *DeleteUserPoolClientOutput) {
@@ -5232,23 +5271,24 @@ func (c *CognitoIdentityProvider) DeleteUserPoolClientRequest(input *DeleteUserP
 // API operation DeleteUserPoolClient for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteUserPoolClient
 func (c *CognitoIdentityProvider) DeleteUserPoolClient(input *DeleteUserPoolClientInput) (*DeleteUserPoolClientOutput, error) {
@@ -5288,14 +5328,13 @@ const opDeleteUserPoolDomain = "DeleteUserPoolDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteUserPoolDomainRequest method.
+//	req, resp := client.DeleteUserPoolDomainRequest(params)
 //
-//    // Example sending a request using the DeleteUserPoolDomainRequest method.
-//    req, resp := client.DeleteUserPoolDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteUserPoolDomain
 func (c *CognitoIdentityProvider) DeleteUserPoolDomainRequest(input *DeleteUserPoolDomainInput) (req *request.Request, output *DeleteUserPoolDomainOutput) {
@@ -5327,19 +5366,20 @@ func (c *CognitoIdentityProvider) DeleteUserPoolDomainRequest(input *DeleteUserP
 // API operation DeleteUserPoolDomain for usage and error information.
 //
 // Returned Error Types:
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DeleteUserPoolDomain
 func (c *CognitoIdentityProvider) DeleteUserPoolDomain(input *DeleteUserPoolDomainInput) (*DeleteUserPoolDomainOutput, error) {
@@ -5379,14 +5419,13 @@ const opDescribeIdentityProvider = "DescribeIdentityProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeIdentityProviderRequest method.
+//	req, resp := client.DescribeIdentityProviderRequest(params)
 //
-//    // Example sending a request using the DescribeIdentityProviderRequest method.
-//    req, resp := client.DescribeIdentityProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeIdentityProvider
 func (c *CognitoIdentityProvider) DescribeIdentityProviderRequest(input *DescribeIdentityProviderInput) (req *request.Request, output *DescribeIdentityProviderOutput) {
@@ -5407,7 +5446,7 @@ func (c *CognitoIdentityProvider) DescribeIdentityProviderRequest(input *Describ
 
 // DescribeIdentityProvider API operation for Amazon Cognito Identity Provider.
 //
-// Gets information about a specific identity provider.
+// Gets information about a specific IdP.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5417,23 +5456,24 @@ func (c *CognitoIdentityProvider) DescribeIdentityProviderRequest(input *Describ
 // API operation DescribeIdentityProvider for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeIdentityProvider
 func (c *CognitoIdentityProvider) DescribeIdentityProvider(input *DescribeIdentityProviderInput) (*DescribeIdentityProviderOutput, error) {
@@ -5473,14 +5513,13 @@ const opDescribeResourceServer = "DescribeResourceServer"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeResourceServerRequest method.
+//	req, resp := client.DescribeResourceServerRequest(params)
 //
-//    // Example sending a request using the DescribeResourceServerRequest method.
-//    req, resp := client.DescribeResourceServerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeResourceServer
 func (c *CognitoIdentityProvider) DescribeResourceServerRequest(input *DescribeResourceServerInput) (req *request.Request, output *DescribeResourceServerOutput) {
@@ -5511,23 +5550,24 @@ func (c *CognitoIdentityProvider) DescribeResourceServerRequest(input *DescribeR
 // API operation DescribeResourceServer for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeResourceServer
 func (c *CognitoIdentityProvider) DescribeResourceServer(input *DescribeResourceServerInput) (*DescribeResourceServerOutput, error) {
@@ -5567,14 +5607,13 @@ const opDescribeRiskConfiguration = "DescribeRiskConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeRiskConfigurationRequest method.
+//	req, resp := client.DescribeRiskConfigurationRequest(params)
 //
-//    // Example sending a request using the DescribeRiskConfigurationRequest method.
-//    req, resp := client.DescribeRiskConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeRiskConfiguration
 func (c *CognitoIdentityProvider) DescribeRiskConfigurationRequest(input *DescribeRiskConfigurationInput) (req *request.Request, output *DescribeRiskConfigurationOutput) {
@@ -5605,26 +5644,27 @@ func (c *CognitoIdentityProvider) DescribeRiskConfigurationRequest(input *Descri
 // API operation DescribeRiskConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserPoolAddOnNotEnabledException
-//   This exception is thrown when user pool add-ons aren't enabled.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserPoolAddOnNotEnabledException
+//     This exception is thrown when user pool add-ons aren't enabled.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeRiskConfiguration
 func (c *CognitoIdentityProvider) DescribeRiskConfiguration(input *DescribeRiskConfigurationInput) (*DescribeRiskConfigurationOutput, error) {
@@ -5664,14 +5704,13 @@ const opDescribeUserImportJob = "DescribeUserImportJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeUserImportJobRequest method.
+//	req, resp := client.DescribeUserImportJobRequest(params)
 //
-//    // Example sending a request using the DescribeUserImportJobRequest method.
-//    req, resp := client.DescribeUserImportJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeUserImportJob
 func (c *CognitoIdentityProvider) DescribeUserImportJobRequest(input *DescribeUserImportJobInput) (req *request.Request, output *DescribeUserImportJobOutput) {
@@ -5702,23 +5741,24 @@ func (c *CognitoIdentityProvider) DescribeUserImportJobRequest(input *DescribeUs
 // API operation DescribeUserImportJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeUserImportJob
 func (c *CognitoIdentityProvider) DescribeUserImportJob(input *DescribeUserImportJobInput) (*DescribeUserImportJobOutput, error) {
@@ -5758,14 +5798,13 @@ const opDescribeUserPool = "DescribeUserPool"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeUserPoolRequest method.
+//	req, resp := client.DescribeUserPoolRequest(params)
 //
-//    // Example sending a request using the DescribeUserPoolRequest method.
-//    req, resp := client.DescribeUserPoolRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeUserPool
 func (c *CognitoIdentityProvider) DescribeUserPoolRequest(input *DescribeUserPoolInput) (req *request.Request, output *DescribeUserPoolOutput) {
@@ -5797,26 +5836,27 @@ func (c *CognitoIdentityProvider) DescribeUserPoolRequest(input *DescribeUserPoo
 // API operation DescribeUserPool for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserPoolTaggingException
-//   This exception is thrown when a user pool tag can't be set or updated.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserPoolTaggingException
+//     This exception is thrown when a user pool tag can't be set or updated.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeUserPool
 func (c *CognitoIdentityProvider) DescribeUserPool(input *DescribeUserPoolInput) (*DescribeUserPoolOutput, error) {
@@ -5856,14 +5896,13 @@ const opDescribeUserPoolClient = "DescribeUserPoolClient"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeUserPoolClientRequest method.
+//	req, resp := client.DescribeUserPoolClientRequest(params)
 //
-//    // Example sending a request using the DescribeUserPoolClientRequest method.
-//    req, resp := client.DescribeUserPoolClientRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeUserPoolClient
 func (c *CognitoIdentityProvider) DescribeUserPoolClientRequest(input *DescribeUserPoolClientInput) (req *request.Request, output *DescribeUserPoolClientOutput) {
@@ -5895,23 +5934,24 @@ func (c *CognitoIdentityProvider) DescribeUserPoolClientRequest(input *DescribeU
 // API operation DescribeUserPoolClient for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeUserPoolClient
 func (c *CognitoIdentityProvider) DescribeUserPoolClient(input *DescribeUserPoolClientInput) (*DescribeUserPoolClientOutput, error) {
@@ -5951,14 +5991,13 @@ const opDescribeUserPoolDomain = "DescribeUserPoolDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeUserPoolDomainRequest method.
+//	req, resp := client.DescribeUserPoolDomainRequest(params)
 //
-//    // Example sending a request using the DescribeUserPoolDomainRequest method.
-//    req, resp := client.DescribeUserPoolDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeUserPoolDomain
 func (c *CognitoIdentityProvider) DescribeUserPoolDomainRequest(input *DescribeUserPoolDomainInput) (req *request.Request, output *DescribeUserPoolDomainOutput) {
@@ -5989,19 +6028,20 @@ func (c *CognitoIdentityProvider) DescribeUserPoolDomainRequest(input *DescribeU
 // API operation DescribeUserPoolDomain for usage and error information.
 //
 // Returned Error Types:
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/DescribeUserPoolDomain
 func (c *CognitoIdentityProvider) DescribeUserPoolDomain(input *DescribeUserPoolDomainInput) (*DescribeUserPoolDomainOutput, error) {
@@ -6041,14 +6081,13 @@ const opForgetDevice = "ForgetDevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ForgetDeviceRequest method.
+//	req, resp := client.ForgetDeviceRequest(params)
 //
-//    // Example sending a request using the ForgetDeviceRequest method.
-//    req, resp := client.ForgetDeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ForgetDevice
 func (c *CognitoIdentityProvider) ForgetDeviceRequest(input *ForgetDeviceInput) (req *request.Request, output *ForgetDeviceOutput) {
@@ -6080,35 +6119,40 @@ func (c *CognitoIdentityProvider) ForgetDeviceRequest(input *ForgetDeviceInput) 
 // API operation ForgetDevice for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ForgetDevice
 func (c *CognitoIdentityProvider) ForgetDevice(input *ForgetDeviceInput) (*ForgetDeviceOutput, error) {
@@ -6148,14 +6192,13 @@ const opForgotPassword = "ForgotPassword"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ForgotPasswordRequest method.
+//	req, resp := client.ForgotPasswordRequest(params)
 //
-//    // Example sending a request using the ForgotPasswordRequest method.
-//    req, resp := client.ForgotPasswordRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ForgotPassword
 func (c *CognitoIdentityProvider) ForgotPasswordRequest(input *ForgotPasswordInput) (req *request.Request, output *ForgotPasswordOutput) {
@@ -6189,20 +6232,20 @@ func (c *CognitoIdentityProvider) ForgotPasswordRequest(input *ForgotPasswordInp
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -6213,62 +6256,64 @@ func (c *CognitoIdentityProvider) ForgotPasswordRequest(input *ForgotPasswordInp
 // API operation ForgotPassword for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * InvalidEmailRoleAccessPolicyException
-//   This exception is thrown when Amazon Cognito isn't allowed to use your email
-//   identity. HTTP status code: 400.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * CodeDeliveryFailureException
-//   This exception is thrown when a verification code fails to deliver successfully.
+//   - InvalidEmailRoleAccessPolicyException
+//     This exception is thrown when Amazon Cognito isn't allowed to use your email
+//     identity. HTTP status code: 400.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - CodeDeliveryFailureException
+//     This exception is thrown when a verification code fails to deliver successfully.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ForgotPassword
 func (c *CognitoIdentityProvider) ForgotPassword(input *ForgotPasswordInput) (*ForgotPasswordOutput, error) {
@@ -6308,14 +6353,13 @@ const opGetCSVHeader = "GetCSVHeader"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetCSVHeaderRequest method.
+//	req, resp := client.GetCSVHeaderRequest(params)
 //
-//    // Example sending a request using the GetCSVHeaderRequest method.
-//    req, resp := client.GetCSVHeaderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetCSVHeader
 func (c *CognitoIdentityProvider) GetCSVHeaderRequest(input *GetCSVHeaderInput) (req *request.Request, output *GetCSVHeaderOutput) {
@@ -6347,23 +6391,24 @@ func (c *CognitoIdentityProvider) GetCSVHeaderRequest(input *GetCSVHeaderInput) 
 // API operation GetCSVHeader for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetCSVHeader
 func (c *CognitoIdentityProvider) GetCSVHeader(input *GetCSVHeaderInput) (*GetCSVHeaderOutput, error) {
@@ -6403,14 +6448,13 @@ const opGetDevice = "GetDevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDeviceRequest method.
+//	req, resp := client.GetDeviceRequest(params)
 //
-//    // Example sending a request using the GetDeviceRequest method.
-//    req, resp := client.GetDeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetDevice
 func (c *CognitoIdentityProvider) GetDeviceRequest(input *GetDeviceInput) (req *request.Request, output *GetDeviceOutput) {
@@ -6441,35 +6485,40 @@ func (c *CognitoIdentityProvider) GetDeviceRequest(input *GetDeviceInput) (req *
 // API operation GetDevice for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetDevice
 func (c *CognitoIdentityProvider) GetDevice(input *GetDeviceInput) (*GetDeviceOutput, error) {
@@ -6509,14 +6558,13 @@ const opGetGroup = "GetGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetGroupRequest method.
+//	req, resp := client.GetGroupRequest(params)
 //
-//    // Example sending a request using the GetGroupRequest method.
-//    req, resp := client.GetGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetGroup
 func (c *CognitoIdentityProvider) GetGroupRequest(input *GetGroupInput) (req *request.Request, output *GetGroupOutput) {
@@ -6549,23 +6597,24 @@ func (c *CognitoIdentityProvider) GetGroupRequest(input *GetGroupInput) (req *re
 // API operation GetGroup for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetGroup
 func (c *CognitoIdentityProvider) GetGroup(input *GetGroupInput) (*GetGroupOutput, error) {
@@ -6605,14 +6654,13 @@ const opGetIdentityProviderByIdentifier = "GetIdentityProviderByIdentifier"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetIdentityProviderByIdentifierRequest method.
+//	req, resp := client.GetIdentityProviderByIdentifierRequest(params)
 //
-//    // Example sending a request using the GetIdentityProviderByIdentifierRequest method.
-//    req, resp := client.GetIdentityProviderByIdentifierRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetIdentityProviderByIdentifier
 func (c *CognitoIdentityProvider) GetIdentityProviderByIdentifierRequest(input *GetIdentityProviderByIdentifierInput) (req *request.Request, output *GetIdentityProviderByIdentifierOutput) {
@@ -6633,7 +6681,7 @@ func (c *CognitoIdentityProvider) GetIdentityProviderByIdentifierRequest(input *
 
 // GetIdentityProviderByIdentifier API operation for Amazon Cognito Identity Provider.
 //
-// Gets the specified identity provider.
+// Gets the specified IdP.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -6643,23 +6691,24 @@ func (c *CognitoIdentityProvider) GetIdentityProviderByIdentifierRequest(input *
 // API operation GetIdentityProviderByIdentifier for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetIdentityProviderByIdentifier
 func (c *CognitoIdentityProvider) GetIdentityProviderByIdentifier(input *GetIdentityProviderByIdentifierInput) (*GetIdentityProviderByIdentifierOutput, error) {
@@ -6699,14 +6748,13 @@ const opGetSigningCertificate = "GetSigningCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetSigningCertificateRequest method.
+//	req, resp := client.GetSigningCertificateRequest(params)
 //
-//    // Example sending a request using the GetSigningCertificateRequest method.
-//    req, resp := client.GetSigningCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetSigningCertificate
 func (c *CognitoIdentityProvider) GetSigningCertificateRequest(input *GetSigningCertificateInput) (req *request.Request, output *GetSigningCertificateOutput) {
@@ -6737,16 +6785,17 @@ func (c *CognitoIdentityProvider) GetSigningCertificateRequest(input *GetSigning
 // API operation GetSigningCertificate for usage and error information.
 //
 // Returned Error Types:
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
+//
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetSigningCertificate
 func (c *CognitoIdentityProvider) GetSigningCertificate(input *GetSigningCertificateInput) (*GetSigningCertificateOutput, error) {
@@ -6786,14 +6835,13 @@ const opGetUICustomization = "GetUICustomization"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetUICustomizationRequest method.
+//	req, resp := client.GetUICustomizationRequest(params)
 //
-//    // Example sending a request using the GetUICustomizationRequest method.
-//    req, resp := client.GetUICustomizationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetUICustomization
 func (c *CognitoIdentityProvider) GetUICustomizationRequest(input *GetUICustomizationInput) (req *request.Request, output *GetUICustomizationOutput) {
@@ -6828,23 +6876,24 @@ func (c *CognitoIdentityProvider) GetUICustomizationRequest(input *GetUICustomiz
 // API operation GetUICustomization for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetUICustomization
 func (c *CognitoIdentityProvider) GetUICustomization(input *GetUICustomizationInput) (*GetUICustomizationOutput, error) {
@@ -6884,14 +6933,13 @@ const opGetUser = "GetUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetUserRequest method.
+//	req, resp := client.GetUserRequest(params)
 //
-//    // Example sending a request using the GetUserRequest method.
-//    req, resp := client.GetUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetUser
 func (c *CognitoIdentityProvider) GetUserRequest(input *GetUserInput) (req *request.Request, output *GetUserOutput) {
@@ -6923,32 +6971,37 @@ func (c *CognitoIdentityProvider) GetUserRequest(input *GetUserInput) (req *requ
 // API operation GetUser for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetUser
 func (c *CognitoIdentityProvider) GetUser(input *GetUserInput) (*GetUserOutput, error) {
@@ -6988,14 +7041,13 @@ const opGetUserAttributeVerificationCode = "GetUserAttributeVerificationCode"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetUserAttributeVerificationCodeRequest method.
+//	req, resp := client.GetUserAttributeVerificationCodeRequest(params)
 //
-//    // Example sending a request using the GetUserAttributeVerificationCodeRequest method.
-//    req, resp := client.GetUserAttributeVerificationCodeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetUserAttributeVerificationCode
 func (c *CognitoIdentityProvider) GetUserAttributeVerificationCodeRequest(input *GetUserAttributeVerificationCodeInput) (req *request.Request, output *GetUserAttributeVerificationCodeOutput) {
@@ -7017,24 +7069,26 @@ func (c *CognitoIdentityProvider) GetUserAttributeVerificationCodeRequest(input 
 
 // GetUserAttributeVerificationCode API operation for Amazon Cognito Identity Provider.
 //
-// Gets the user attribute verification code for the specified attribute name.
+// Generates a user attribute verification code for the specified attribute
+// name. Sends a message to a user with a code that they must return in a VerifyUserAttribute
+// request.
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -7045,65 +7099,70 @@ func (c *CognitoIdentityProvider) GetUserAttributeVerificationCodeRequest(input 
 // API operation GetUserAttributeVerificationCode for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * InvalidEmailRoleAccessPolicyException
-//   This exception is thrown when Amazon Cognito isn't allowed to use your email
-//   identity. HTTP status code: 400.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * CodeDeliveryFailureException
-//   This exception is thrown when a verification code fails to deliver successfully.
+//   - InvalidEmailRoleAccessPolicyException
+//     This exception is thrown when Amazon Cognito isn't allowed to use your email
+//     identity. HTTP status code: 400.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - CodeDeliveryFailureException
+//     This exception is thrown when a verification code fails to deliver successfully.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetUserAttributeVerificationCode
 func (c *CognitoIdentityProvider) GetUserAttributeVerificationCode(input *GetUserAttributeVerificationCodeInput) (*GetUserAttributeVerificationCodeOutput, error) {
@@ -7143,14 +7202,13 @@ const opGetUserPoolMfaConfig = "GetUserPoolMfaConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetUserPoolMfaConfigRequest method.
+//	req, resp := client.GetUserPoolMfaConfigRequest(params)
 //
-//    // Example sending a request using the GetUserPoolMfaConfigRequest method.
-//    req, resp := client.GetUserPoolMfaConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetUserPoolMfaConfig
 func (c *CognitoIdentityProvider) GetUserPoolMfaConfigRequest(input *GetUserPoolMfaConfigInput) (req *request.Request, output *GetUserPoolMfaConfigOutput) {
@@ -7181,23 +7239,24 @@ func (c *CognitoIdentityProvider) GetUserPoolMfaConfigRequest(input *GetUserPool
 // API operation GetUserPoolMfaConfig for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GetUserPoolMfaConfig
 func (c *CognitoIdentityProvider) GetUserPoolMfaConfig(input *GetUserPoolMfaConfigInput) (*GetUserPoolMfaConfigOutput, error) {
@@ -7237,14 +7296,13 @@ const opGlobalSignOut = "GlobalSignOut"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GlobalSignOutRequest method.
+//	req, resp := client.GlobalSignOutRequest(params)
 //
-//    // Example sending a request using the GlobalSignOutRequest method.
-//    req, resp := client.GlobalSignOutRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GlobalSignOut
 func (c *CognitoIdentityProvider) GlobalSignOutRequest(input *GlobalSignOutInput) (req *request.Request, output *GlobalSignOutOutput) {
@@ -7267,8 +7325,11 @@ func (c *CognitoIdentityProvider) GlobalSignOutRequest(input *GlobalSignOutInput
 // GlobalSignOut API operation for Amazon Cognito Identity Provider.
 //
 // Signs out users from all devices. It also invalidates all refresh tokens
-// issued to a user. The user's current access and ID tokens remain valid until
-// their expiry. Access and Id tokens expire one hour after they're issued.
+// that Amazon Cognito has issued to a user. The user's current access and ID
+// tokens remain valid until their expiry. By default, access and ID tokens
+// expire one hour after Amazon Cognito issues them. A user can still use a
+// hosted UI cookie to retrieve new tokens for the duration of the cookie validity
+// period of 1 hour.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -7278,29 +7339,34 @@ func (c *CognitoIdentityProvider) GlobalSignOutRequest(input *GlobalSignOutInput
 // API operation GlobalSignOut for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/GlobalSignOut
 func (c *CognitoIdentityProvider) GlobalSignOut(input *GlobalSignOutInput) (*GlobalSignOutOutput, error) {
@@ -7340,14 +7406,13 @@ const opInitiateAuth = "InitiateAuth"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the InitiateAuthRequest method.
+//	req, resp := client.InitiateAuthRequest(params)
 //
-//    // Example sending a request using the InitiateAuthRequest method.
-//    req, resp := client.InitiateAuthRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/InitiateAuth
 func (c *CognitoIdentityProvider) InitiateAuthRequest(input *InitiateAuthInput) (req *request.Request, output *InitiateAuthOutput) {
@@ -7369,24 +7434,26 @@ func (c *CognitoIdentityProvider) InitiateAuthRequest(input *InitiateAuthInput) 
 
 // InitiateAuth API operation for Amazon Cognito Identity Provider.
 //
-// Initiates the authentication flow.
+// Initiates sign-in for a user in the Amazon Cognito user directory. You can't
+// sign in a user with a federated IdP with InitiateAuth. For more information,
+// see Adding user pool sign-in through a third party (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-identity-federation.html).
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -7397,57 +7464,62 @@ func (c *CognitoIdentityProvider) InitiateAuthRequest(input *InitiateAuthInput) 
 // API operation InitiateAuth for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
+//
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/InitiateAuth
 func (c *CognitoIdentityProvider) InitiateAuth(input *InitiateAuthInput) (*InitiateAuthOutput, error) {
@@ -7487,14 +7559,13 @@ const opListDevices = "ListDevices"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDevicesRequest method.
+//	req, resp := client.ListDevicesRequest(params)
 //
-//    // Example sending a request using the ListDevicesRequest method.
-//    req, resp := client.ListDevicesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListDevices
 func (c *CognitoIdentityProvider) ListDevicesRequest(input *ListDevicesInput) (req *request.Request, output *ListDevicesOutput) {
@@ -7515,7 +7586,8 @@ func (c *CognitoIdentityProvider) ListDevicesRequest(input *ListDevicesInput) (r
 
 // ListDevices API operation for Amazon Cognito Identity Provider.
 //
-// Lists the devices.
+// Lists the sign-in devices that Amazon Cognito has registered to the current
+// user.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -7525,35 +7597,40 @@ func (c *CognitoIdentityProvider) ListDevicesRequest(input *ListDevicesInput) (r
 // API operation ListDevices for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListDevices
 func (c *CognitoIdentityProvider) ListDevices(input *ListDevicesInput) (*ListDevicesOutput, error) {
@@ -7593,14 +7670,13 @@ const opListGroups = "ListGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListGroupsRequest method.
+//	req, resp := client.ListGroupsRequest(params)
 //
-//    // Example sending a request using the ListGroupsRequest method.
-//    req, resp := client.ListGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListGroups
 func (c *CognitoIdentityProvider) ListGroupsRequest(input *ListGroupsInput) (req *request.Request, output *ListGroupsOutput) {
@@ -7639,23 +7715,24 @@ func (c *CognitoIdentityProvider) ListGroupsRequest(input *ListGroupsInput) (req
 // API operation ListGroups for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListGroups
 func (c *CognitoIdentityProvider) ListGroups(input *ListGroupsInput) (*ListGroupsOutput, error) {
@@ -7687,15 +7764,14 @@ func (c *CognitoIdentityProvider) ListGroupsWithContext(ctx aws.Context, input *
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListGroups operation.
-//    pageNum := 0
-//    err := client.ListGroupsPages(params,
-//        func(page *cognitoidentityprovider.ListGroupsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListGroups operation.
+//	pageNum := 0
+//	err := client.ListGroupsPages(params,
+//	    func(page *cognitoidentityprovider.ListGroupsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CognitoIdentityProvider) ListGroupsPages(input *ListGroupsInput, fn func(*ListGroupsOutput, bool) bool) error {
 	return c.ListGroupsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -7747,14 +7823,13 @@ const opListIdentityProviders = "ListIdentityProviders"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListIdentityProvidersRequest method.
+//	req, resp := client.ListIdentityProvidersRequest(params)
 //
-//    // Example sending a request using the ListIdentityProvidersRequest method.
-//    req, resp := client.ListIdentityProvidersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListIdentityProviders
 func (c *CognitoIdentityProvider) ListIdentityProvidersRequest(input *ListIdentityProvidersInput) (req *request.Request, output *ListIdentityProvidersOutput) {
@@ -7781,7 +7856,7 @@ func (c *CognitoIdentityProvider) ListIdentityProvidersRequest(input *ListIdenti
 
 // ListIdentityProviders API operation for Amazon Cognito Identity Provider.
 //
-// Lists information about all identity providers for a user pool.
+// Lists information about all IdPs for a user pool.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -7791,23 +7866,24 @@ func (c *CognitoIdentityProvider) ListIdentityProvidersRequest(input *ListIdenti
 // API operation ListIdentityProviders for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListIdentityProviders
 func (c *CognitoIdentityProvider) ListIdentityProviders(input *ListIdentityProvidersInput) (*ListIdentityProvidersOutput, error) {
@@ -7839,15 +7915,14 @@ func (c *CognitoIdentityProvider) ListIdentityProvidersWithContext(ctx aws.Conte
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListIdentityProviders operation.
-//    pageNum := 0
-//    err := client.ListIdentityProvidersPages(params,
-//        func(page *cognitoidentityprovider.ListIdentityProvidersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListIdentityProviders operation.
+//	pageNum := 0
+//	err := client.ListIdentityProvidersPages(params,
+//	    func(page *cognitoidentityprovider.ListIdentityProvidersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CognitoIdentityProvider) ListIdentityProvidersPages(input *ListIdentityProvidersInput, fn func(*ListIdentityProvidersOutput, bool) bool) error {
 	return c.ListIdentityProvidersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -7899,14 +7974,13 @@ const opListResourceServers = "ListResourceServers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListResourceServersRequest method.
+//	req, resp := client.ListResourceServersRequest(params)
 //
-//    // Example sending a request using the ListResourceServersRequest method.
-//    req, resp := client.ListResourceServersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListResourceServers
 func (c *CognitoIdentityProvider) ListResourceServersRequest(input *ListResourceServersInput) (req *request.Request, output *ListResourceServersOutput) {
@@ -7943,23 +8017,24 @@ func (c *CognitoIdentityProvider) ListResourceServersRequest(input *ListResource
 // API operation ListResourceServers for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListResourceServers
 func (c *CognitoIdentityProvider) ListResourceServers(input *ListResourceServersInput) (*ListResourceServersOutput, error) {
@@ -7991,15 +8066,14 @@ func (c *CognitoIdentityProvider) ListResourceServersWithContext(ctx aws.Context
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListResourceServers operation.
-//    pageNum := 0
-//    err := client.ListResourceServersPages(params,
-//        func(page *cognitoidentityprovider.ListResourceServersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListResourceServers operation.
+//	pageNum := 0
+//	err := client.ListResourceServersPages(params,
+//	    func(page *cognitoidentityprovider.ListResourceServersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CognitoIdentityProvider) ListResourceServersPages(input *ListResourceServersInput, fn func(*ListResourceServersOutput, bool) bool) error {
 	return c.ListResourceServersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -8051,14 +8125,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListTagsForResource
 func (c *CognitoIdentityProvider) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -8095,23 +8168,24 @@ func (c *CognitoIdentityProvider) ListTagsForResourceRequest(input *ListTagsForR
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListTagsForResource
 func (c *CognitoIdentityProvider) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -8151,14 +8225,13 @@ const opListUserImportJobs = "ListUserImportJobs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListUserImportJobsRequest method.
+//	req, resp := client.ListUserImportJobsRequest(params)
 //
-//    // Example sending a request using the ListUserImportJobsRequest method.
-//    req, resp := client.ListUserImportJobsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListUserImportJobs
 func (c *CognitoIdentityProvider) ListUserImportJobsRequest(input *ListUserImportJobsInput) (req *request.Request, output *ListUserImportJobsOutput) {
@@ -8189,23 +8262,24 @@ func (c *CognitoIdentityProvider) ListUserImportJobsRequest(input *ListUserImpor
 // API operation ListUserImportJobs for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListUserImportJobs
 func (c *CognitoIdentityProvider) ListUserImportJobs(input *ListUserImportJobsInput) (*ListUserImportJobsOutput, error) {
@@ -8245,14 +8319,13 @@ const opListUserPoolClients = "ListUserPoolClients"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListUserPoolClientsRequest method.
+//	req, resp := client.ListUserPoolClientsRequest(params)
 //
-//    // Example sending a request using the ListUserPoolClientsRequest method.
-//    req, resp := client.ListUserPoolClientsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListUserPoolClients
 func (c *CognitoIdentityProvider) ListUserPoolClientsRequest(input *ListUserPoolClientsInput) (req *request.Request, output *ListUserPoolClientsOutput) {
@@ -8289,23 +8362,24 @@ func (c *CognitoIdentityProvider) ListUserPoolClientsRequest(input *ListUserPool
 // API operation ListUserPoolClients for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListUserPoolClients
 func (c *CognitoIdentityProvider) ListUserPoolClients(input *ListUserPoolClientsInput) (*ListUserPoolClientsOutput, error) {
@@ -8337,15 +8411,14 @@ func (c *CognitoIdentityProvider) ListUserPoolClientsWithContext(ctx aws.Context
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListUserPoolClients operation.
-//    pageNum := 0
-//    err := client.ListUserPoolClientsPages(params,
-//        func(page *cognitoidentityprovider.ListUserPoolClientsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListUserPoolClients operation.
+//	pageNum := 0
+//	err := client.ListUserPoolClientsPages(params,
+//	    func(page *cognitoidentityprovider.ListUserPoolClientsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CognitoIdentityProvider) ListUserPoolClientsPages(input *ListUserPoolClientsInput, fn func(*ListUserPoolClientsOutput, bool) bool) error {
 	return c.ListUserPoolClientsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -8397,14 +8470,13 @@ const opListUserPools = "ListUserPools"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListUserPoolsRequest method.
+//	req, resp := client.ListUserPoolsRequest(params)
 //
-//    // Example sending a request using the ListUserPoolsRequest method.
-//    req, resp := client.ListUserPoolsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListUserPools
 func (c *CognitoIdentityProvider) ListUserPoolsRequest(input *ListUserPoolsInput) (req *request.Request, output *ListUserPoolsOutput) {
@@ -8441,19 +8513,20 @@ func (c *CognitoIdentityProvider) ListUserPoolsRequest(input *ListUserPoolsInput
 // API operation ListUserPools for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListUserPools
 func (c *CognitoIdentityProvider) ListUserPools(input *ListUserPoolsInput) (*ListUserPoolsOutput, error) {
@@ -8485,15 +8558,14 @@ func (c *CognitoIdentityProvider) ListUserPoolsWithContext(ctx aws.Context, inpu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListUserPools operation.
-//    pageNum := 0
-//    err := client.ListUserPoolsPages(params,
-//        func(page *cognitoidentityprovider.ListUserPoolsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListUserPools operation.
+//	pageNum := 0
+//	err := client.ListUserPoolsPages(params,
+//	    func(page *cognitoidentityprovider.ListUserPoolsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CognitoIdentityProvider) ListUserPoolsPages(input *ListUserPoolsInput, fn func(*ListUserPoolsOutput, bool) bool) error {
 	return c.ListUserPoolsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -8545,14 +8617,13 @@ const opListUsers = "ListUsers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListUsersRequest method.
+//	req, resp := client.ListUsersRequest(params)
 //
-//    // Example sending a request using the ListUsersRequest method.
-//    req, resp := client.ListUsersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListUsers
 func (c *CognitoIdentityProvider) ListUsersRequest(input *ListUsersInput) (req *request.Request, output *ListUsersOutput) {
@@ -8589,23 +8660,24 @@ func (c *CognitoIdentityProvider) ListUsersRequest(input *ListUsersInput) (req *
 // API operation ListUsers for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListUsers
 func (c *CognitoIdentityProvider) ListUsers(input *ListUsersInput) (*ListUsersOutput, error) {
@@ -8637,15 +8709,14 @@ func (c *CognitoIdentityProvider) ListUsersWithContext(ctx aws.Context, input *L
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListUsers operation.
-//    pageNum := 0
-//    err := client.ListUsersPages(params,
-//        func(page *cognitoidentityprovider.ListUsersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListUsers operation.
+//	pageNum := 0
+//	err := client.ListUsersPages(params,
+//	    func(page *cognitoidentityprovider.ListUsersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CognitoIdentityProvider) ListUsersPages(input *ListUsersInput, fn func(*ListUsersOutput, bool) bool) error {
 	return c.ListUsersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -8697,14 +8768,13 @@ const opListUsersInGroup = "ListUsersInGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListUsersInGroupRequest method.
+//	req, resp := client.ListUsersInGroupRequest(params)
 //
-//    // Example sending a request using the ListUsersInGroupRequest method.
-//    req, resp := client.ListUsersInGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListUsersInGroup
 func (c *CognitoIdentityProvider) ListUsersInGroupRequest(input *ListUsersInGroupInput) (req *request.Request, output *ListUsersInGroupOutput) {
@@ -8743,23 +8813,24 @@ func (c *CognitoIdentityProvider) ListUsersInGroupRequest(input *ListUsersInGrou
 // API operation ListUsersInGroup for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ListUsersInGroup
 func (c *CognitoIdentityProvider) ListUsersInGroup(input *ListUsersInGroupInput) (*ListUsersInGroupOutput, error) {
@@ -8791,15 +8862,14 @@ func (c *CognitoIdentityProvider) ListUsersInGroupWithContext(ctx aws.Context, i
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListUsersInGroup operation.
-//    pageNum := 0
-//    err := client.ListUsersInGroupPages(params,
-//        func(page *cognitoidentityprovider.ListUsersInGroupOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListUsersInGroup operation.
+//	pageNum := 0
+//	err := client.ListUsersInGroupPages(params,
+//	    func(page *cognitoidentityprovider.ListUsersInGroupOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CognitoIdentityProvider) ListUsersInGroupPages(input *ListUsersInGroupInput, fn func(*ListUsersInGroupOutput, bool) bool) error {
 	return c.ListUsersInGroupPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -8851,14 +8921,13 @@ const opResendConfirmationCode = "ResendConfirmationCode"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ResendConfirmationCodeRequest method.
+//	req, resp := client.ResendConfirmationCodeRequest(params)
 //
-//    // Example sending a request using the ResendConfirmationCodeRequest method.
-//    req, resp := client.ResendConfirmationCodeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ResendConfirmationCode
 func (c *CognitoIdentityProvider) ResendConfirmationCodeRequest(input *ResendConfirmationCodeInput) (req *request.Request, output *ResendConfirmationCodeOutput) {
@@ -8885,20 +8954,20 @@ func (c *CognitoIdentityProvider) ResendConfirmationCodeRequest(input *ResendCon
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -8909,59 +8978,64 @@ func (c *CognitoIdentityProvider) ResendConfirmationCodeRequest(input *ResendCon
 // API operation ResendConfirmationCode for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * InvalidEmailRoleAccessPolicyException
-//   This exception is thrown when Amazon Cognito isn't allowed to use your email
-//   identity. HTTP status code: 400.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * CodeDeliveryFailureException
-//   This exception is thrown when a verification code fails to deliver successfully.
+//   - InvalidEmailRoleAccessPolicyException
+//     This exception is thrown when Amazon Cognito isn't allowed to use your email
+//     identity. HTTP status code: 400.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - CodeDeliveryFailureException
+//     This exception is thrown when a verification code fails to deliver successfully.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/ResendConfirmationCode
 func (c *CognitoIdentityProvider) ResendConfirmationCode(input *ResendConfirmationCodeInput) (*ResendConfirmationCodeOutput, error) {
@@ -9001,14 +9075,13 @@ const opRespondToAuthChallenge = "RespondToAuthChallenge"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RespondToAuthChallengeRequest method.
+//	req, resp := client.RespondToAuthChallengeRequest(params)
 //
-//    // Example sending a request using the RespondToAuthChallengeRequest method.
-//    req, resp := client.RespondToAuthChallengeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/RespondToAuthChallenge
 func (c *CognitoIdentityProvider) RespondToAuthChallengeRequest(input *RespondToAuthChallengeInput) (req *request.Request, output *RespondToAuthChallengeOutput) {
@@ -9034,20 +9107,20 @@ func (c *CognitoIdentityProvider) RespondToAuthChallengeRequest(input *RespondTo
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -9058,81 +9131,87 @@ func (c *CognitoIdentityProvider) RespondToAuthChallengeRequest(input *RespondTo
 // API operation RespondToAuthChallenge for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * CodeMismatchException
-//   This exception is thrown if the provided code doesn't match what the server
-//   was expecting.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * ExpiredCodeException
-//   This exception is thrown if a code has expired.
+//   - CodeMismatchException
+//     This exception is thrown if the provided code doesn't match what the server
+//     was expecting.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - ExpiredCodeException
+//     This exception is thrown if a code has expired.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * InvalidPasswordException
-//   This exception is thrown when Amazon Cognito encounters an invalid password.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - InvalidPasswordException
+//     This exception is thrown when Amazon Cognito encounters an invalid password.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * MFAMethodNotFoundException
-//   This exception is thrown when Amazon Cognito can't find a multi-factor authentication
-//   (MFA) method.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - MFAMethodNotFoundException
+//     This exception is thrown when Amazon Cognito can't find a multi-factor authentication
+//     (MFA) method.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * AliasExistsException
-//   This exception is thrown when a user tries to confirm the account with an
-//   email or phone number that has already been supplied as an alias from a different
-//   account. This exception tells user that an account with this email or phone
-//   already exists.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - AliasExistsException
+//     This exception is thrown when a user tries to confirm the account with an
+//     email address or phone number that has already been supplied as an alias
+//     for a different user profile. This exception indicates that an account with
+//     this email address or phone already exists in a user pool that you've configured
+//     to use email address or phone number as a sign-in alias.
 //
-//   * SoftwareTokenMFANotFoundException
-//   This exception is thrown when the software token time-based one-time password
-//   (TOTP) multi-factor authentication (MFA) isn't activated for the user pool.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - SoftwareTokenMFANotFoundException
+//     This exception is thrown when the software token time-based one-time password
+//     (TOTP) multi-factor authentication (MFA) isn't activated for the user pool.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/RespondToAuthChallenge
 func (c *CognitoIdentityProvider) RespondToAuthChallenge(input *RespondToAuthChallengeInput) (*RespondToAuthChallengeOutput, error) {
@@ -9172,14 +9251,13 @@ const opRevokeToken = "RevokeToken"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RevokeTokenRequest method.
+//	req, resp := client.RevokeTokenRequest(params)
 //
-//    // Example sending a request using the RevokeTokenRequest method.
-//    req, resp := client.RevokeTokenRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/RevokeToken
 func (c *CognitoIdentityProvider) RevokeTokenRequest(input *RevokeTokenInput) (req *request.Request, output *RevokeTokenOutput) {
@@ -9213,27 +9291,32 @@ func (c *CognitoIdentityProvider) RevokeTokenRequest(input *RevokeTokenInput) (r
 // API operation RevokeToken for usage and error information.
 //
 // Returned Error Types:
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UnauthorizedException
-//   Exception that is thrown when the request isn't authorized. This can happen
-//   due to an invalid access token in the request.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - UnauthorizedException
+//     Exception that is thrown when the request isn't authorized. This can happen
+//     due to an invalid access token in the request.
 //
-//   * UnsupportedOperationException
-//   Exception that is thrown when you attempt to perform an operation that isn't
-//   enabled for the user pool client.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * UnsupportedTokenTypeException
-//   Exception that is thrown when an unsupported token is passed to an operation.
+//   - UnsupportedOperationException
+//     Exception that is thrown when you attempt to perform an operation that isn't
+//     enabled for the user pool client.
+//
+//   - UnsupportedTokenTypeException
+//     Exception that is thrown when an unsupported token is passed to an operation.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/RevokeToken
 func (c *CognitoIdentityProvider) RevokeToken(input *RevokeTokenInput) (*RevokeTokenOutput, error) {
@@ -9273,14 +9356,13 @@ const opSetRiskConfiguration = "SetRiskConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetRiskConfigurationRequest method.
+//	req, resp := client.SetRiskConfigurationRequest(params)
 //
-//    // Example sending a request using the SetRiskConfigurationRequest method.
-//    req, resp := client.SetRiskConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SetRiskConfiguration
 func (c *CognitoIdentityProvider) SetRiskConfigurationRequest(input *SetRiskConfigurationInput) (req *request.Request, output *SetRiskConfigurationOutput) {
@@ -9315,33 +9397,34 @@ func (c *CognitoIdentityProvider) SetRiskConfigurationRequest(input *SetRiskConf
 // API operation SetRiskConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserPoolAddOnNotEnabledException
-//   This exception is thrown when user pool add-ons aren't enabled.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * CodeDeliveryFailureException
-//   This exception is thrown when a verification code fails to deliver successfully.
+//   - UserPoolAddOnNotEnabledException
+//     This exception is thrown when user pool add-ons aren't enabled.
 //
-//   * InvalidEmailRoleAccessPolicyException
-//   This exception is thrown when Amazon Cognito isn't allowed to use your email
-//   identity. HTTP status code: 400.
+//   - CodeDeliveryFailureException
+//     This exception is thrown when a verification code fails to deliver successfully.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - InvalidEmailRoleAccessPolicyException
+//     This exception is thrown when Amazon Cognito isn't allowed to use your email
+//     identity. HTTP status code: 400.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SetRiskConfiguration
 func (c *CognitoIdentityProvider) SetRiskConfiguration(input *SetRiskConfigurationInput) (*SetRiskConfigurationOutput, error) {
@@ -9381,14 +9464,13 @@ const opSetUICustomization = "SetUICustomization"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetUICustomizationRequest method.
+//	req, resp := client.SetUICustomizationRequest(params)
 //
-//    // Example sending a request using the SetUICustomizationRequest method.
-//    req, resp := client.SetUICustomizationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SetUICustomization
 func (c *CognitoIdentityProvider) SetUICustomizationRequest(input *SetUICustomizationInput) (req *request.Request, output *SetUICustomizationOutput) {
@@ -9430,23 +9512,24 @@ func (c *CognitoIdentityProvider) SetUICustomizationRequest(input *SetUICustomiz
 // API operation SetUICustomization for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SetUICustomization
 func (c *CognitoIdentityProvider) SetUICustomization(input *SetUICustomizationInput) (*SetUICustomizationOutput, error) {
@@ -9486,14 +9569,13 @@ const opSetUserMFAPreference = "SetUserMFAPreference"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetUserMFAPreferenceRequest method.
+//	req, resp := client.SetUserMFAPreferenceRequest(params)
 //
-//    // Example sending a request using the SetUserMFAPreferenceRequest method.
-//    req, resp := client.SetUserMFAPreferenceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SetUserMFAPreference
 func (c *CognitoIdentityProvider) SetUserMFAPreferenceRequest(input *SetUserMFAPreferenceInput) (req *request.Request, output *SetUserMFAPreferenceOutput) {
@@ -9534,28 +9616,33 @@ func (c *CognitoIdentityProvider) SetUserMFAPreferenceRequest(input *SetUserMFAP
 // API operation SetUserMFAPreference for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SetUserMFAPreference
 func (c *CognitoIdentityProvider) SetUserMFAPreference(input *SetUserMFAPreferenceInput) (*SetUserMFAPreferenceOutput, error) {
@@ -9595,14 +9682,13 @@ const opSetUserPoolMfaConfig = "SetUserPoolMfaConfig"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetUserPoolMfaConfigRequest method.
+//	req, resp := client.SetUserPoolMfaConfigRequest(params)
 //
-//    // Example sending a request using the SetUserPoolMfaConfigRequest method.
-//    req, resp := client.SetUserPoolMfaConfigRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SetUserPoolMfaConfig
 func (c *CognitoIdentityProvider) SetUserPoolMfaConfigRequest(input *SetUserPoolMfaConfigInput) (req *request.Request, output *SetUserPoolMfaConfigOutput) {
@@ -9627,20 +9713,20 @@ func (c *CognitoIdentityProvider) SetUserPoolMfaConfigRequest(input *SetUserPool
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -9651,33 +9737,34 @@ func (c *CognitoIdentityProvider) SetUserPoolMfaConfigRequest(input *SetUserPool
 // API operation SetUserPoolMfaConfig for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SetUserPoolMfaConfig
 func (c *CognitoIdentityProvider) SetUserPoolMfaConfig(input *SetUserPoolMfaConfigInput) (*SetUserPoolMfaConfigOutput, error) {
@@ -9717,14 +9804,13 @@ const opSetUserSettings = "SetUserSettings"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetUserSettingsRequest method.
+//	req, resp := client.SetUserSettingsRequest(params)
 //
-//    // Example sending a request using the SetUserSettingsRequest method.
-//    req, resp := client.SetUserSettingsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SetUserSettings
 func (c *CognitoIdentityProvider) SetUserSettingsRequest(input *SetUserSettingsInput) (req *request.Request, output *SetUserSettingsOutput) {
@@ -9760,28 +9846,33 @@ func (c *CognitoIdentityProvider) SetUserSettingsRequest(input *SetUserSettingsI
 // API operation SetUserSettings for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SetUserSettings
 func (c *CognitoIdentityProvider) SetUserSettings(input *SetUserSettingsInput) (*SetUserSettingsOutput, error) {
@@ -9821,14 +9912,13 @@ const opSignUp = "SignUp"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SignUpRequest method.
+//	req, resp := client.SignUpRequest(params)
 //
-//    // Example sending a request using the SignUpRequest method.
-//    req, resp := client.SignUpRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SignUp
 func (c *CognitoIdentityProvider) SignUpRequest(input *SignUpInput) (req *request.Request, output *SignUpOutput) {
@@ -9855,20 +9945,20 @@ func (c *CognitoIdentityProvider) SignUpRequest(input *SignUpInput) (req *reques
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -9879,59 +9969,64 @@ func (c *CognitoIdentityProvider) SignUpRequest(input *SignUpInput) (req *reques
 // API operation SignUp for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * InvalidPasswordException
-//   This exception is thrown when Amazon Cognito encounters an invalid password.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - InvalidPasswordException
+//     This exception is thrown when Amazon Cognito encounters an invalid password.
 //
-//   * UsernameExistsException
-//   This exception is thrown when Amazon Cognito encounters a user name that
-//   already exists in the user pool.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - UsernameExistsException
+//     This exception is thrown when Amazon Cognito encounters a user name that
+//     already exists in the user pool.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * InvalidEmailRoleAccessPolicyException
-//   This exception is thrown when Amazon Cognito isn't allowed to use your email
-//   identity. HTTP status code: 400.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * CodeDeliveryFailureException
-//   This exception is thrown when a verification code fails to deliver successfully.
+//   - InvalidEmailRoleAccessPolicyException
+//     This exception is thrown when Amazon Cognito isn't allowed to use your email
+//     identity. HTTP status code: 400.
+//
+//   - CodeDeliveryFailureException
+//     This exception is thrown when a verification code fails to deliver successfully.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/SignUp
 func (c *CognitoIdentityProvider) SignUp(input *SignUpInput) (*SignUpOutput, error) {
@@ -9971,14 +10066,13 @@ const opStartUserImportJob = "StartUserImportJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartUserImportJobRequest method.
+//	req, resp := client.StartUserImportJobRequest(params)
 //
-//    // Example sending a request using the StartUserImportJobRequest method.
-//    req, resp := client.StartUserImportJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/StartUserImportJob
 func (c *CognitoIdentityProvider) StartUserImportJobRequest(input *StartUserImportJobInput) (req *request.Request, output *StartUserImportJobOutput) {
@@ -10009,26 +10103,27 @@ func (c *CognitoIdentityProvider) StartUserImportJobRequest(input *StartUserImpo
 // API operation StartUserImportJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * PreconditionNotMetException
-//   This exception is thrown when a precondition is not met.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - PreconditionNotMetException
+//     This exception is thrown when a precondition is not met.
+//
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/StartUserImportJob
 func (c *CognitoIdentityProvider) StartUserImportJob(input *StartUserImportJobInput) (*StartUserImportJobOutput, error) {
@@ -10068,14 +10163,13 @@ const opStopUserImportJob = "StopUserImportJob"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopUserImportJobRequest method.
+//	req, resp := client.StopUserImportJobRequest(params)
 //
-//    // Example sending a request using the StopUserImportJobRequest method.
-//    req, resp := client.StopUserImportJobRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/StopUserImportJob
 func (c *CognitoIdentityProvider) StopUserImportJobRequest(input *StopUserImportJobInput) (req *request.Request, output *StopUserImportJobOutput) {
@@ -10106,26 +10200,27 @@ func (c *CognitoIdentityProvider) StopUserImportJobRequest(input *StopUserImport
 // API operation StopUserImportJob for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * PreconditionNotMetException
-//   This exception is thrown when a precondition is not met.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - PreconditionNotMetException
+//     This exception is thrown when a precondition is not met.
+//
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/StopUserImportJob
 func (c *CognitoIdentityProvider) StopUserImportJob(input *StopUserImportJobInput) (*StopUserImportJobOutput, error) {
@@ -10165,14 +10260,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/TagResource
 func (c *CognitoIdentityProvider) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -10221,23 +10315,24 @@ func (c *CognitoIdentityProvider) TagResourceRequest(input *TagResourceInput) (r
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/TagResource
 func (c *CognitoIdentityProvider) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -10277,14 +10372,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UntagResource
 func (c *CognitoIdentityProvider) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -10317,23 +10411,24 @@ func (c *CognitoIdentityProvider) UntagResourceRequest(input *UntagResourceInput
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UntagResource
 func (c *CognitoIdentityProvider) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -10373,14 +10468,13 @@ const opUpdateAuthEventFeedback = "UpdateAuthEventFeedback"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateAuthEventFeedbackRequest method.
+//	req, resp := client.UpdateAuthEventFeedbackRequest(params)
 //
-//    // Example sending a request using the UpdateAuthEventFeedbackRequest method.
-//    req, resp := client.UpdateAuthEventFeedbackRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateAuthEventFeedback
 func (c *CognitoIdentityProvider) UpdateAuthEventFeedbackRequest(input *UpdateAuthEventFeedbackInput) (req *request.Request, output *UpdateAuthEventFeedbackOutput) {
@@ -10414,29 +10508,30 @@ func (c *CognitoIdentityProvider) UpdateAuthEventFeedbackRequest(input *UpdateAu
 // API operation UpdateAuthEventFeedback for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * UserPoolAddOnNotEnabledException
-//   This exception is thrown when user pool add-ons aren't enabled.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserPoolAddOnNotEnabledException
+//     This exception is thrown when user pool add-ons aren't enabled.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateAuthEventFeedback
 func (c *CognitoIdentityProvider) UpdateAuthEventFeedback(input *UpdateAuthEventFeedbackInput) (*UpdateAuthEventFeedbackOutput, error) {
@@ -10476,14 +10571,13 @@ const opUpdateDeviceStatus = "UpdateDeviceStatus"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateDeviceStatusRequest method.
+//	req, resp := client.UpdateDeviceStatusRequest(params)
 //
-//    // Example sending a request using the UpdateDeviceStatusRequest method.
-//    req, resp := client.UpdateDeviceStatusRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateDeviceStatus
 func (c *CognitoIdentityProvider) UpdateDeviceStatusRequest(input *UpdateDeviceStatusInput) (req *request.Request, output *UpdateDeviceStatusOutput) {
@@ -10515,35 +10609,40 @@ func (c *CognitoIdentityProvider) UpdateDeviceStatusRequest(input *UpdateDeviceS
 // API operation UpdateDeviceStatus for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateDeviceStatus
 func (c *CognitoIdentityProvider) UpdateDeviceStatus(input *UpdateDeviceStatusInput) (*UpdateDeviceStatusOutput, error) {
@@ -10583,14 +10682,13 @@ const opUpdateGroup = "UpdateGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateGroupRequest method.
+//	req, resp := client.UpdateGroupRequest(params)
 //
-//    // Example sending a request using the UpdateGroupRequest method.
-//    req, resp := client.UpdateGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateGroup
 func (c *CognitoIdentityProvider) UpdateGroupRequest(input *UpdateGroupInput) (req *request.Request, output *UpdateGroupOutput) {
@@ -10623,23 +10721,24 @@ func (c *CognitoIdentityProvider) UpdateGroupRequest(input *UpdateGroupInput) (r
 // API operation UpdateGroup for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateGroup
 func (c *CognitoIdentityProvider) UpdateGroup(input *UpdateGroupInput) (*UpdateGroupOutput, error) {
@@ -10679,14 +10778,13 @@ const opUpdateIdentityProvider = "UpdateIdentityProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateIdentityProviderRequest method.
+//	req, resp := client.UpdateIdentityProviderRequest(params)
 //
-//    // Example sending a request using the UpdateIdentityProviderRequest method.
-//    req, resp := client.UpdateIdentityProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateIdentityProvider
 func (c *CognitoIdentityProvider) UpdateIdentityProviderRequest(input *UpdateIdentityProviderInput) (req *request.Request, output *UpdateIdentityProviderOutput) {
@@ -10707,7 +10805,7 @@ func (c *CognitoIdentityProvider) UpdateIdentityProviderRequest(input *UpdateIde
 
 // UpdateIdentityProvider API operation for Amazon Cognito Identity Provider.
 //
-// Updates identity provider information for a user pool.
+// Updates IdP information for a user pool.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -10717,26 +10815,27 @@ func (c *CognitoIdentityProvider) UpdateIdentityProviderRequest(input *UpdateIde
 // API operation UpdateIdentityProvider for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * UnsupportedIdentityProviderException
-//   This exception is thrown when the specified identifier isn't supported.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - UnsupportedIdentityProviderException
+//     This exception is thrown when the specified identifier isn't supported.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateIdentityProvider
 func (c *CognitoIdentityProvider) UpdateIdentityProvider(input *UpdateIdentityProviderInput) (*UpdateIdentityProviderOutput, error) {
@@ -10776,14 +10875,13 @@ const opUpdateResourceServer = "UpdateResourceServer"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateResourceServerRequest method.
+//	req, resp := client.UpdateResourceServerRequest(params)
 //
-//    // Example sending a request using the UpdateResourceServerRequest method.
-//    req, resp := client.UpdateResourceServerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateResourceServer
 func (c *CognitoIdentityProvider) UpdateResourceServerRequest(input *UpdateResourceServerInput) (req *request.Request, output *UpdateResourceServerOutput) {
@@ -10816,23 +10914,24 @@ func (c *CognitoIdentityProvider) UpdateResourceServerRequest(input *UpdateResou
 // API operation UpdateResourceServer for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateResourceServer
 func (c *CognitoIdentityProvider) UpdateResourceServer(input *UpdateResourceServerInput) (*UpdateResourceServerOutput, error) {
@@ -10872,14 +10971,13 @@ const opUpdateUserAttributes = "UpdateUserAttributes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateUserAttributesRequest method.
+//	req, resp := client.UpdateUserAttributesRequest(params)
 //
-//    // Example sending a request using the UpdateUserAttributesRequest method.
-//    req, resp := client.UpdateUserAttributesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateUserAttributes
 func (c *CognitoIdentityProvider) UpdateUserAttributesRequest(input *UpdateUserAttributesInput) (req *request.Request, output *UpdateUserAttributesOutput) {
@@ -10905,20 +11003,20 @@ func (c *CognitoIdentityProvider) UpdateUserAttributesRequest(input *UpdateUserA
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -10929,74 +11027,80 @@ func (c *CognitoIdentityProvider) UpdateUserAttributesRequest(input *UpdateUserA
 // API operation UpdateUserAttributes for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * CodeMismatchException
-//   This exception is thrown if the provided code doesn't match what the server
-//   was expecting.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * ExpiredCodeException
-//   This exception is thrown if a code has expired.
+//   - CodeMismatchException
+//     This exception is thrown if the provided code doesn't match what the server
+//     was expecting.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ExpiredCodeException
+//     This exception is thrown if a code has expired.
 //
-//   * UnexpectedLambdaException
-//   This exception is thrown when Amazon Cognito encounters an unexpected exception
-//   with Lambda.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * UserLambdaValidationException
-//   This exception is thrown when the Amazon Cognito service encounters a user
-//   validation exception with the Lambda service.
+//   - UnexpectedLambdaException
+//     This exception is thrown when Amazon Cognito encounters an unexpected exception
+//     with Lambda.
 //
-//   * InvalidLambdaResponseException
-//   This exception is thrown when Amazon Cognito encounters an invalid Lambda
-//   response.
+//   - UserLambdaValidationException
+//     This exception is thrown when the Amazon Cognito service encounters a user
+//     validation exception with the Lambda service.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - InvalidLambdaResponseException
+//     This exception is thrown when Amazon Cognito encounters an invalid Lambda
+//     response.
 //
-//   * AliasExistsException
-//   This exception is thrown when a user tries to confirm the account with an
-//   email or phone number that has already been supplied as an alias from a different
-//   account. This exception tells user that an account with this email or phone
-//   already exists.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - AliasExistsException
+//     This exception is thrown when a user tries to confirm the account with an
+//     email address or phone number that has already been supplied as an alias
+//     for a different user profile. This exception indicates that an account with
+//     this email address or phone already exists in a user pool that you've configured
+//     to use email address or phone number as a sign-in alias.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * InvalidEmailRoleAccessPolicyException
-//   This exception is thrown when Amazon Cognito isn't allowed to use your email
-//   identity. HTTP status code: 400.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * CodeDeliveryFailureException
-//   This exception is thrown when a verification code fails to deliver successfully.
+//   - InvalidEmailRoleAccessPolicyException
+//     This exception is thrown when Amazon Cognito isn't allowed to use your email
+//     identity. HTTP status code: 400.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - CodeDeliveryFailureException
+//     This exception is thrown when a verification code fails to deliver successfully.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateUserAttributes
 func (c *CognitoIdentityProvider) UpdateUserAttributes(input *UpdateUserAttributesInput) (*UpdateUserAttributesOutput, error) {
@@ -11036,14 +11140,13 @@ const opUpdateUserPool = "UpdateUserPool"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateUserPoolRequest method.
+//	req, resp := client.UpdateUserPoolRequest(params)
 //
-//    // Example sending a request using the UpdateUserPoolRequest method.
-//    req, resp := client.UpdateUserPoolRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateUserPool
 func (c *CognitoIdentityProvider) UpdateUserPoolRequest(input *UpdateUserPoolInput) (req *request.Request, output *UpdateUserPoolOutput) {
@@ -11072,20 +11175,20 @@ func (c *CognitoIdentityProvider) UpdateUserPoolRequest(input *UpdateUserPoolInp
 //
 // This action might generate an SMS text message. Starting June 1, 2021, US
 // telecom carriers require you to register an origination phone number before
-// you can send SMS messages to U.S. phone numbers. If you use SMS text messages
+// you can send SMS messages to US phone numbers. If you use SMS text messages
 // in Amazon Cognito, you must register a phone number with Amazon Pinpoint
-// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito will use
-// the registered number automatically. Otherwise, Amazon Cognito users that
-// must receive SMS messages might be unable to sign up, activate their accounts,
+// (https://console.aws.amazon.com/pinpoint/home/). Amazon Cognito uses the
+// registered number automatically. Otherwise, Amazon Cognito users who must
+// receive SMS messages might not be able to sign up, activate their accounts,
 // or sign in.
 //
 // If you have never used SMS text messages with Amazon Cognito or any other
 // Amazon Web Service, Amazon Simple Notification Service might place your account
-// in SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
-// , you will have limitations, such as sending messages only to verified phone
-// numbers. After testing in the sandbox environment, you can move out of the
-// SMS sandbox and into production. For more information, see SMS message settings
-// for Amazon Cognito User Pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
+// in the SMS sandbox. In sandbox mode (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html)
+// , you can send messages only to verified phone numbers. After you test your
+// app while in the sandbox environment, you can move out of the sandbox and
+// into production. For more information, see SMS message settings for Amazon
+// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-sms-userpool-settings.html)
 // in the Amazon Cognito Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -11096,47 +11199,48 @@ func (c *CognitoIdentityProvider) UpdateUserPoolRequest(input *UpdateUserPoolInp
 // API operation UpdateUserPool for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * ConcurrentModificationException
-//   This exception is thrown if two or more modifications are happening concurrently.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ConcurrentModificationException
+//     This exception is thrown if two or more modifications are happening concurrently.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserImportInProgressException
-//   This exception is thrown when you're trying to modify a user pool while a
-//   user import job is in progress for that pool.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserImportInProgressException
+//     This exception is thrown when you're trying to modify a user pool while a
+//     user import job is in progress for that pool.
 //
-//   * InvalidSmsRoleAccessPolicyException
-//   This exception is returned when the role provided for SMS configuration doesn't
-//   have permission to publish using Amazon SNS.
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * InvalidSmsRoleTrustRelationshipException
-//   This exception is thrown when the trust relationship is not valid for the
-//   role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
-//   or the external ID provided in the role does not match what is provided in
-//   the SMS configuration for the user pool.
+//   - InvalidSmsRoleAccessPolicyException
+//     This exception is returned when the role provided for SMS configuration doesn't
+//     have permission to publish using Amazon SNS.
 //
-//   * UserPoolTaggingException
-//   This exception is thrown when a user pool tag can't be set or updated.
+//   - InvalidSmsRoleTrustRelationshipException
+//     This exception is thrown when the trust relationship is not valid for the
+//     role provided for SMS configuration. This can happen if you don't trust cognito-idp.amazonaws.com
+//     or the external ID provided in the role does not match what is provided in
+//     the SMS configuration for the user pool.
 //
-//   * InvalidEmailRoleAccessPolicyException
-//   This exception is thrown when Amazon Cognito isn't allowed to use your email
-//   identity. HTTP status code: 400.
+//   - UserPoolTaggingException
+//     This exception is thrown when a user pool tag can't be set or updated.
+//
+//   - InvalidEmailRoleAccessPolicyException
+//     This exception is thrown when Amazon Cognito isn't allowed to use your email
+//     identity. HTTP status code: 400.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateUserPool
 func (c *CognitoIdentityProvider) UpdateUserPool(input *UpdateUserPoolInput) (*UpdateUserPoolOutput, error) {
@@ -11176,14 +11280,13 @@ const opUpdateUserPoolClient = "UpdateUserPoolClient"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateUserPoolClientRequest method.
+//	req, resp := client.UpdateUserPoolClientRequest(params)
 //
-//    // Example sending a request using the UpdateUserPoolClientRequest method.
-//    req, resp := client.UpdateUserPoolClientRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateUserPoolClient
 func (c *CognitoIdentityProvider) UpdateUserPoolClientRequest(input *UpdateUserPoolClientInput) (req *request.Request, output *UpdateUserPoolClientOutput) {
@@ -11222,32 +11325,33 @@ func (c *CognitoIdentityProvider) UpdateUserPoolClientRequest(input *UpdateUserP
 // API operation UpdateUserPoolClient for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * ConcurrentModificationException
-//   This exception is thrown if two or more modifications are happening concurrently.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ConcurrentModificationException
+//     This exception is thrown if two or more modifications are happening concurrently.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * ScopeDoesNotExistException
-//   This exception is thrown when the specified scope doesn't exist.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * InvalidOAuthFlowException
-//   This exception is thrown when the specified OAuth flow is not valid.
+//   - ScopeDoesNotExistException
+//     This exception is thrown when the specified scope doesn't exist.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - InvalidOAuthFlowException
+//     This exception is thrown when the specified OAuth flow is not valid.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateUserPoolClient
 func (c *CognitoIdentityProvider) UpdateUserPoolClient(input *UpdateUserPoolClientInput) (*UpdateUserPoolClientOutput, error) {
@@ -11287,14 +11391,13 @@ const opUpdateUserPoolDomain = "UpdateUserPoolDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateUserPoolDomainRequest method.
+//	req, resp := client.UpdateUserPoolDomainRequest(params)
 //
-//    // Example sending a request using the UpdateUserPoolDomainRequest method.
-//    req, resp := client.UpdateUserPoolDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateUserPoolDomain
 func (c *CognitoIdentityProvider) UpdateUserPoolDomainRequest(input *UpdateUserPoolDomainInput) (req *request.Request, output *UpdateUserPoolDomainOutput) {
@@ -11353,23 +11456,24 @@ func (c *CognitoIdentityProvider) UpdateUserPoolDomainRequest(input *UpdateUserP
 // API operation UpdateUserPoolDomain for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/UpdateUserPoolDomain
 func (c *CognitoIdentityProvider) UpdateUserPoolDomain(input *UpdateUserPoolDomainInput) (*UpdateUserPoolDomainOutput, error) {
@@ -11409,14 +11513,13 @@ const opVerifySoftwareToken = "VerifySoftwareToken"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the VerifySoftwareTokenRequest method.
+//	req, resp := client.VerifySoftwareTokenRequest(params)
 //
-//    // Example sending a request using the VerifySoftwareTokenRequest method.
-//    req, resp := client.VerifySoftwareTokenRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/VerifySoftwareToken
 func (c *CognitoIdentityProvider) VerifySoftwareTokenRequest(input *VerifySoftwareTokenInput) (req *request.Request, output *VerifySoftwareTokenOutput) {
@@ -11449,50 +11552,55 @@ func (c *CognitoIdentityProvider) VerifySoftwareTokenRequest(input *VerifySoftwa
 // API operation VerifySoftwareToken for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
 //
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * InvalidUserPoolConfigurationException
-//   This exception is thrown when the user pool configuration is not valid.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - InvalidUserPoolConfigurationException
+//     This exception is thrown when the user pool configuration is not valid.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
 //
-//   * EnableSoftwareTokenMFAException
-//   This exception is thrown when there is a code mismatch and the service fails
-//   to configure the software token TOTP multi-factor authentication (MFA).
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - EnableSoftwareTokenMFAException
+//     This exception is thrown when there is a code mismatch and the service fails
+//     to configure the software token TOTP multi-factor authentication (MFA).
 //
-//   * SoftwareTokenMFANotFoundException
-//   This exception is thrown when the software token time-based one-time password
-//   (TOTP) multi-factor authentication (MFA) isn't activated for the user pool.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * CodeMismatchException
-//   This exception is thrown if the provided code doesn't match what the server
-//   was expecting.
+//   - SoftwareTokenMFANotFoundException
+//     This exception is thrown when the software token time-based one-time password
+//     (TOTP) multi-factor authentication (MFA) isn't activated for the user pool.
+//
+//   - CodeMismatchException
+//     This exception is thrown if the provided code doesn't match what the server
+//     was expecting.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/VerifySoftwareToken
 func (c *CognitoIdentityProvider) VerifySoftwareToken(input *VerifySoftwareTokenInput) (*VerifySoftwareTokenOutput, error) {
@@ -11532,14 +11640,13 @@ const opVerifyUserAttribute = "VerifyUserAttribute"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the VerifyUserAttributeRequest method.
+//	req, resp := client.VerifyUserAttributeRequest(params)
 //
-//    // Example sending a request using the VerifyUserAttributeRequest method.
-//    req, resp := client.VerifyUserAttributeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/VerifyUserAttribute
 func (c *CognitoIdentityProvider) VerifyUserAttributeRequest(input *VerifyUserAttributeInput) (req *request.Request, output *VerifyUserAttributeOutput) {
@@ -11564,6 +11671,11 @@ func (c *CognitoIdentityProvider) VerifyUserAttributeRequest(input *VerifyUserAt
 //
 // Verifies the specified user attributes in the user pool.
 //
+// If your user pool requires verification before Amazon Cognito updates the
+// attribute value, VerifyUserAttribute updates the affected attribute to its
+// pending value. For more information, see UserAttributeUpdateSettingsType
+// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_UserAttributeUpdateSettingsType.html).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -11572,43 +11684,55 @@ func (c *CognitoIdentityProvider) VerifyUserAttributeRequest(input *VerifyUserAt
 // API operation VerifyUserAttribute for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   This exception is thrown when the Amazon Cognito service can't find the requested
-//   resource.
 //
-//   * InvalidParameterException
-//   This exception is thrown when the Amazon Cognito service encounters an invalid
-//   parameter.
+//   - ResourceNotFoundException
+//     This exception is thrown when the Amazon Cognito service can't find the requested
+//     resource.
 //
-//   * CodeMismatchException
-//   This exception is thrown if the provided code doesn't match what the server
-//   was expecting.
+//   - InvalidParameterException
+//     This exception is thrown when the Amazon Cognito service encounters an invalid
+//     parameter.
 //
-//   * ExpiredCodeException
-//   This exception is thrown if a code has expired.
+//   - CodeMismatchException
+//     This exception is thrown if the provided code doesn't match what the server
+//     was expecting.
 //
-//   * NotAuthorizedException
-//   This exception is thrown when a user isn't authorized.
+//   - ExpiredCodeException
+//     This exception is thrown if a code has expired.
 //
-//   * TooManyRequestsException
-//   This exception is thrown when the user has made too many requests for a given
-//   operation.
+//   - NotAuthorizedException
+//     This exception is thrown when a user isn't authorized.
 //
-//   * LimitExceededException
-//   This exception is thrown when a user exceeds the limit for a requested Amazon
-//   Web Services resource.
+//   - TooManyRequestsException
+//     This exception is thrown when the user has made too many requests for a given
+//     operation.
 //
-//   * PasswordResetRequiredException
-//   This exception is thrown when a password reset is required.
+//   - LimitExceededException
+//     This exception is thrown when a user exceeds the limit for a requested Amazon
+//     Web Services resource.
 //
-//   * UserNotFoundException
-//   This exception is thrown when a user isn't found.
+//   - PasswordResetRequiredException
+//     This exception is thrown when a password reset is required.
 //
-//   * UserNotConfirmedException
-//   This exception is thrown when a user isn't confirmed successfully.
+//   - UserNotFoundException
+//     This exception is thrown when a user isn't found.
 //
-//   * InternalErrorException
-//   This exception is thrown when Amazon Cognito encounters an internal error.
+//   - UserNotConfirmedException
+//     This exception is thrown when a user isn't confirmed successfully.
+//
+//   - InternalErrorException
+//     This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   - AliasExistsException
+//     This exception is thrown when a user tries to confirm the account with an
+//     email address or phone number that has already been supplied as an alias
+//     for a different user profile. This exception indicates that an account with
+//     this email address or phone already exists in a user pool that you've configured
+//     to use email address or phone number as a sign-in alias.
+//
+//   - ForbiddenException
+//     This exception is thrown when WAF doesn't allow your request based on a web
+//     ACL that's associated with your user pool.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/VerifyUserAttribute
 func (c *CognitoIdentityProvider) VerifyUserAttribute(input *VerifyUserAttributeInput) (*VerifyUserAttributeOutput, error) {
@@ -11691,7 +11815,8 @@ func (s *AccountRecoverySettingType) SetRecoveryMechanisms(v []*RecoveryOptionTy
 type AccountTakeoverActionType struct {
 	_ struct{} `type:"structure"`
 
-	// The event action.
+	// The action to take in response to the account takeover action. Valid values
+	// are as follows:
 	//
 	//    * BLOCK Choosing this action will block the request.
 	//
@@ -12125,7 +12250,7 @@ type AdminConfirmSignUpInput struct {
 	// can process the ClientMetadata value to enhance your workflow for your specific
 	// needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -12252,10 +12377,10 @@ type AdminCreateUserConfigType struct {
 	// See also Customizing User Invitation Messages (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-message-customizations.html#cognito-user-pool-settings-user-invitation-message-customization).
 	InviteMessageTemplate *MessageTemplateType `type:"structure"`
 
-	// The user account expiration limit, in days, after which the account is no
-	// longer usable. To reset the account after that time limit, you must call
-	// AdminCreateUser again, specifying "RESEND" for the MessageAction parameter.
-	// The default value for this parameter is 7.
+	// The user account expiration limit, in days, after which a new account that
+	// hasn't signed in is no longer usable. To reset the account after that time
+	// limit, you must call AdminCreateUser again, specifying "RESEND" for the MessageAction
+	// parameter. The default value for this parameter is 7.
 	//
 	// If you set a value for TemporaryPasswordValidityDays in PasswordPolicy, that
 	// value will be used, and UnusedAccountValidityDays will be no longer be an
@@ -12330,7 +12455,7 @@ type AdminCreateUserInput struct {
 	// request. In your function code in Lambda, you can process the clientMetadata
 	// value to enhance your workflow for your specific needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -12351,7 +12476,7 @@ type AdminCreateUserInput struct {
 	// Specify "EMAIL" if email will be used to send the welcome message. Specify
 	// "SMS" if the phone number will be used. The default value is "SMS". You can
 	// specify more than one value.
-	DesiredDeliveryMediums []*string `type:"list"`
+	DesiredDeliveryMediums []*string `type:"list" enum:"DeliveryMediumType"`
 
 	// This parameter is used only if the phone_number_verified or email_verified
 	// attribute is set to True. Otherwise, it is ignored.
@@ -12389,7 +12514,7 @@ type AdminCreateUserInput struct {
 	// TemporaryPassword is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by AdminCreateUserInput's
 	// String and GoString methods.
-	TemporaryPassword *string `min:"6" type:"string" sensitive:"true"`
+	TemporaryPassword *string `type:"string" sensitive:"true"`
 
 	// An array of name-value pairs that contain user attributes and attribute values
 	// to be set for the user to be created. You can create a user without specifying
@@ -12473,9 +12598,6 @@ func (s AdminCreateUserInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *AdminCreateUserInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "AdminCreateUserInput"}
-	if s.TemporaryPassword != nil && len(*s.TemporaryPassword) < 6 {
-		invalidParams.Add(request.NewErrParamMinLen("TemporaryPassword", 6))
-	}
 	if s.UserPoolId == nil {
 		invalidParams.Add(request.NewErrParamRequired("UserPoolId"))
 	}
@@ -13425,8 +13547,6 @@ type AdminGetUserOutput struct {
 	//
 	//    * ARCHIVED - User is no longer active.
 	//
-	//    * COMPROMISED - User is disabled due to a potential security threat.
-	//
 	//    * UNKNOWN - User status isn't known.
 	//
 	//    * RESET_REQUIRED - User is confirmed, but the user must request a code
@@ -13630,7 +13750,7 @@ type AdminInitiateAuthInput struct {
 	//
 	//    * Verify auth challenge
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -13648,9 +13768,10 @@ type AdminInitiateAuthInput struct {
 	//    sensitive information.
 	ClientMetadata map[string]*string `type:"map"`
 
-	// Contextual data such as the user's device fingerprint, IP address, or location
-	// used for evaluating the risk of an unexpected event by Amazon Cognito advanced
-	// security.
+	// Contextual data about your user session, such as the device fingerprint,
+	// IP address, or location. Amazon Cognito advanced security evaluates the risk
+	// of an authentication event based on the context that your app generates and
+	// passes to Amazon Cognito when it makes API requests.
 	ContextData *ContextDataType `type:"structure"`
 
 	// The ID of the Amazon Cognito user pool.
@@ -13791,8 +13912,16 @@ type AdminInitiateAuthOutput struct {
 	//    and PASSWORD directly. An app client must be enabled to use this flow.
 	//
 	//    * NEW_PASSWORD_REQUIRED: For users who are required to change their passwords
-	//    after successful first login. This challenge should be passed with NEW_PASSWORD
-	//    and any other required attributes.
+	//    after successful first login. Respond to this challenge with NEW_PASSWORD
+	//    and any required attributes that Amazon Cognito returned in the requiredAttributes
+	//    parameter. You can also set values for attributes that aren't required
+	//    by your user pool and that your app client can write. For more information,
+	//    see AdminRespondToAuthChallenge (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminRespondToAuthChallenge.html).
+	//    In a NEW_PASSWORD_REQUIRED challenge response, you can't modify a required
+	//    attribute that already has a value. In AdminRespondToAuthChallenge, set
+	//    a value for any keys that Amazon Cognito returned in the requiredAttributes
+	//    parameter, then use the AdminUpdateUserAttributes API operation to modify
+	//    the value of any additional attributes.
 	//
 	//    * MFA_SETUP: For users who are required to set up an MFA factor before
 	//    they can sign in. The MFA types activated for the user pool will be listed
@@ -13870,11 +13999,11 @@ func (s *AdminInitiateAuthOutput) SetSession(v string) *AdminInitiateAuthOutput 
 type AdminLinkProviderForUserInput struct {
 	_ struct{} `type:"structure"`
 
-	// The existing user in the user pool to be linked to the external identity
-	// provider user account. Can be a native (Username + Password) Amazon Cognito
-	// User Pools user or a federated user (for example, a SAML or Facebook user).
-	// If the user doesn't exist, an exception is thrown. This is the user that
-	// is returned when the new user (with the linked identity provider attribute)
+	// The existing user in the user pool that you want to assign to the external
+	// IdP user account. This user can be a native (Username + Password) Amazon
+	// Cognito user pools user or a federated user (for example, a SAML or Facebook
+	// user). If the user doesn't exist, Amazon Cognito generates an exception.
+	// Amazon Cognito returns this user when the new user (with the linked IdP attribute)
 	// signs in.
 	//
 	// For a native username + password user, the ProviderAttributeValue for the
@@ -13891,26 +14020,24 @@ type AdminLinkProviderForUserInput struct {
 	// DestinationUser is a required field
 	DestinationUser *ProviderUserIdentifierType `type:"structure" required:"true"`
 
-	// An external identity provider account for a user who doesn't exist yet in
-	// the user pool. This user must be a federated user (for example, a SAML or
-	// Facebook user), not another native user.
+	// An external IdP account for a user who doesn't exist yet in the user pool.
+	// This user must be a federated user (for example, a SAML or Facebook user),
+	// not another native user.
 	//
-	// If the SourceUser is using a federated social identity provider, such as
-	// Facebook, Google, or Login with Amazon, you must set the ProviderAttributeName
-	// to Cognito_Subject. For social identity providers, the ProviderName will
-	// be Facebook, Google, or LoginWithAmazon, and Amazon Cognito will automatically
-	// parse the Facebook, Google, and Login with Amazon tokens for id, sub, and
-	// user_id, respectively. The ProviderAttributeValue for the user must be the
-	// same value as the id, sub, or user_id value found in the social identity
-	// provider token.
+	// If the SourceUser is using a federated social IdP, such as Facebook, Google,
+	// or Login with Amazon, you must set the ProviderAttributeName to Cognito_Subject.
+	// For social IdPs, the ProviderName will be Facebook, Google, or LoginWithAmazon,
+	// and Amazon Cognito will automatically parse the Facebook, Google, and Login
+	// with Amazon tokens for id, sub, and user_id, respectively. The ProviderAttributeValue
+	// for the user must be the same value as the id, sub, or user_id value found
+	// in the social IdP token.
 	//
 	// For SAML, the ProviderAttributeName can be any value that matches a claim
 	// in the SAML assertion. If you want to link SAML users based on the subject
 	// of the SAML assertion, you should map the subject to a claim through the
-	// SAML identity provider and submit that claim name as the ProviderAttributeName.
-	// If you set ProviderAttributeName to Cognito_Subject, Amazon Cognito will
-	// automatically parse the default unique identifier found in the subject from
-	// the SAML token.
+	// SAML IdP and submit that claim name as the ProviderAttributeName. If you
+	// set ProviderAttributeName to Cognito_Subject, Amazon Cognito will automatically
+	// parse the default unique identifier found in the subject from the SAML token.
 	//
 	// SourceUser is a required field
 	SourceUser *ProviderUserIdentifierType `type:"structure" required:"true"`
@@ -14532,7 +14659,7 @@ type AdminResetUserPasswordInput struct {
 	// process the clientMetadata value to enhance your workflow for your specific
 	// needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -14673,8 +14800,16 @@ type AdminRespondToAuthChallengeInput struct {
 	//    * ADMIN_NO_SRP_AUTH: PASSWORD, USERNAME, SECRET_HASH (if app client is
 	//    configured with client secret).
 	//
-	//    * NEW_PASSWORD_REQUIRED: NEW_PASSWORD, any other required attributes,
-	//    USERNAME, SECRET_HASH (if app client is configured with client secret).
+	//    * NEW_PASSWORD_REQUIRED: NEW_PASSWORD, USERNAME, SECRET_HASH (if app client
+	//    is configured with client secret). To set any required attributes that
+	//    Amazon Cognito returned as requiredAttributes in the AdminInitiateAuth
+	//    response, add a userAttributes.attributename parameter. This parameter
+	//    can also set values for writable attributes that aren't required by your
+	//    user pool. In a NEW_PASSWORD_REQUIRED challenge response, you can't modify
+	//    a required attribute that already has a value. In AdminRespondToAuthChallenge,
+	//    set a value for any keys that Amazon Cognito returned in the requiredAttributes
+	//    parameter, then use the AdminUpdateUserAttributes API operation to modify
+	//    the value of any additional attributes.
 	//
 	//    * MFA_SETUP requires USERNAME, plus you must use the session value returned
 	//    by VerifySoftwareToken in the Session parameter.
@@ -14700,17 +14835,32 @@ type AdminRespondToAuthChallengeInput struct {
 	//
 	// You create custom workflows by assigning Lambda functions to user pool triggers.
 	// When you use the AdminRespondToAuthChallenge API action, Amazon Cognito invokes
-	// any functions that are assigned to the following triggers: pre sign-up, custom
-	// message, post authentication, user migration, pre token generation, define
-	// auth challenge, create auth challenge, and verify auth challenge response.
+	// any functions that you have assigned to the following triggers:
+	//
+	//    * pre sign-up
+	//
+	//    * custom message
+	//
+	//    * post authentication
+	//
+	//    * user migration
+	//
+	//    * pre token generation
+	//
+	//    * define auth challenge
+	//
+	//    * create auth challenge
+	//
+	//    * verify auth challenge response
+	//
 	// When Amazon Cognito invokes any of these functions, it passes a JSON payload,
 	// which the function receives as input. This payload contains a clientMetadata
-	// attribute, which provides the data that you assigned to the ClientMetadata
+	// attribute that provides the data that you assigned to the ClientMetadata
 	// parameter in your AdminRespondToAuthChallenge request. In your function code
 	// in Lambda, you can process the clientMetadata value to enhance your workflow
 	// for your specific needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -14728,9 +14878,10 @@ type AdminRespondToAuthChallengeInput struct {
 	//    sensitive information.
 	ClientMetadata map[string]*string `type:"map"`
 
-	// Contextual data such as the user's device fingerprint, IP address, or location
-	// used for evaluating the risk of an unexpected event by Amazon Cognito advanced
-	// security.
+	// Contextual data about your user session, such as the device fingerprint,
+	// IP address, or location. Amazon Cognito advanced security evaluates the risk
+	// of an authentication event based on the context that your app generates and
+	// passes to Amazon Cognito when it makes API requests.
 	ContextData *ContextDataType `type:"structure"`
 
 	// The session that should be passed both ways in challenge-response calls to
@@ -15027,7 +15178,7 @@ type AdminSetUserPasswordInput struct {
 	// String and GoString methods.
 	//
 	// Password is a required field
-	Password *string `min:"6" type:"string" required:"true" sensitive:"true"`
+	Password *string `type:"string" required:"true" sensitive:"true"`
 
 	// True if the password is permanent, False if it is temporary.
 	Permanent *bool `type:"boolean"`
@@ -15070,9 +15221,6 @@ func (s *AdminSetUserPasswordInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "AdminSetUserPasswordInput"}
 	if s.Password == nil {
 		invalidParams.Add(request.NewErrParamRequired("Password"))
-	}
-	if s.Password != nil && len(*s.Password) < 6 {
-		invalidParams.Add(request.NewErrParamMinLen("Password", 6))
 	}
 	if s.UserPoolId == nil {
 		invalidParams.Add(request.NewErrParamRequired("UserPoolId"))
@@ -15519,7 +15667,7 @@ type AdminUpdateUserAttributesInput struct {
 	// process the clientMetadata value to enhance your workflow for your specific
 	// needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -15541,6 +15689,19 @@ type AdminUpdateUserAttributesInput struct {
 	//
 	// For custom attributes, you must prepend the custom: prefix to the attribute
 	// name.
+	//
+	// If your user pool requires verification before Amazon Cognito updates an
+	// attribute value that you specify in this request, Amazon Cognito doesn’t
+	// immediately update the value of that attribute. After your user receives
+	// and responds to a verification message to verify the new value, Amazon Cognito
+	// updates the attribute value. Your user can sign in and receive messages with
+	// the original attribute value until they verify the new value.
+	//
+	// To update the value of an attribute that requires verification in the same
+	// API request, include the email_verified or phone_number_verified attribute,
+	// with a value of true. If you set the email_verified or phone_number_verified
+	// value for an email or phone_number attribute that requires verification to
+	// true, Amazon Cognito doesn’t send a verification message to your user.
 	//
 	// UserAttributes is a required field
 	UserAttributes []*AttributeType `type:"list" required:"true"`
@@ -15756,14 +15917,16 @@ func (s AdminUserGlobalSignOutOutput) GoString() string {
 }
 
 // This exception is thrown when a user tries to confirm the account with an
-// email or phone number that has already been supplied as an alias from a different
-// account. This exception tells user that an account with this email or phone
-// already exists.
+// email address or phone number that has already been supplied as an alias
+// for a different user profile. This exception indicates that an account with
+// this email address or phone already exists in a user pool that you've configured
+// to use email address or phone number as a sign-in alias.
 type AliasExistsException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
 
-	// The message sent to the user when an alias exists.
+	// The message that Amazon Cognito sends to the user when the value of an alias
+	// attribute is already linked to another user profile.
 	Message_ *string `locationName:"message" type:"string"`
 }
 
@@ -15823,20 +15986,20 @@ func (s *AliasExistsException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// The Amazon Pinpoint analytics configuration for collecting metrics for a
-// user pool.
+// The Amazon Pinpoint analytics configuration necessary to collect metrics
+// for a user pool.
 //
-// In Regions where Pinpoint isn't available, User Pools only supports sending
-// events to Amazon Pinpoint projects in us-east-1. In Regions where Pinpoint
-// is available, User Pools will support sending events to Amazon Pinpoint projects
-// within that same Region.
+// In Regions where Amazon Pinpointisn't available, user pools only support
+// sending events to Amazon Pinpoint projects in us-east-1. In Regions where
+// Amazon Pinpoint is available, user pools support sending events to Amazon
+// Pinpoint projects within that same Region.
 type AnalyticsConfigurationType struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of an Amazon Pinpoint project. You can use
-	// the Amazon Pinpoint project for integration with the chosen User Pool Client.
-	// Amazon Cognito publishes events to the Amazon Pinpointproject declared by
-	// the app ARN.
+	// the Amazon Pinpoint project to integrate with the chosen user pool Client.
+	// Amazon Cognito publishes events to the Amazon Pinpoint project that the app
+	// ARN declares.
 	ApplicationArn *string `min:"20" type:"string"`
 
 	// The application ID for an Amazon Pinpoint application.
@@ -15849,8 +16012,8 @@ type AnalyticsConfigurationType struct {
 	// Cognito to publish events to Amazon Pinpoint analytics.
 	RoleArn *string `min:"20" type:"string"`
 
-	// If UserDataShared is true, Amazon Cognito will include user data in the events
-	// it publishes to Amazon Pinpoint analytics.
+	// If UserDataShared is true, Amazon Cognito includes user data in the events
+	// that it publishes to Amazon Pinpoint analytics.
 	UserDataShared *bool `type:"boolean"`
 }
 
@@ -15921,11 +16084,10 @@ func (s *AnalyticsConfigurationType) SetUserDataShared(v bool) *AnalyticsConfigu
 // An Amazon Pinpoint analytics endpoint.
 //
 // An endpoint uniquely identifies a mobile device, email address, or phone
-// number that can receive messages from Amazon Pinpoint analytics.
-//
-// Amazon Cognito User Pools only supports sending events to Amazon Pinpoint
-// projects in the US East (N. Virginia) us-east-1 Region, regardless of the
-// Region in which the user pool resides.
+// number that can receive messages from Amazon Pinpoint analytics. For more
+// information about Amazon Web Services Regions that can contain Amazon Pinpoint
+// resources for use with Amazon Cognito user pools, see Using Amazon Pinpoint
+// analytics with Amazon Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-pinpoint-integration.html).
 type AnalyticsMetadataType struct {
 	_ struct{} `type:"structure"`
 
@@ -15960,7 +16122,8 @@ func (s *AnalyticsMetadataType) SetAnalyticsEndpointId(v string) *AnalyticsMetad
 type AssociateSoftwareTokenInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token.
+	// A valid access token that Amazon Cognito issued to the user whose software
+	// token you want to generate.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by AssociateSoftwareTokenInput's
@@ -16019,8 +16182,8 @@ func (s *AssociateSoftwareTokenInput) SetSession(v string) *AssociateSoftwareTok
 type AssociateSoftwareTokenOutput struct {
 	_ struct{} `type:"structure"`
 
-	// A unique generated shared secret code that is used in the time-based one-time
-	// password (TOTP) algorithm to generate a one-time code.
+	// A unique generated shared secret code that is used in the TOTP algorithm
+	// to generate a one-time code.
 	//
 	// SecretCode is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by AssociateSoftwareTokenOutput's
@@ -16228,7 +16391,8 @@ func (s *AuthEventType) SetEventType(v string) *AuthEventType {
 type AuthenticationResultType struct {
 	_ struct{} `type:"structure"`
 
-	// The access token.
+	// A valid access token that Amazon Cognito issued to the user who you want
+	// to authenticate.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by AuthenticationResultType's
@@ -16358,7 +16522,8 @@ func (s *ChallengeResponseType) SetChallengeResponse(v string) *ChallengeRespons
 type ChangePasswordInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token.
+	// A valid access token that Amazon Cognito issued to the user whose password
+	// you want to change.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by ChangePasswordInput's
@@ -16374,7 +16539,7 @@ type ChangePasswordInput struct {
 	// String and GoString methods.
 	//
 	// PreviousPassword is a required field
-	PreviousPassword *string `min:"6" type:"string" required:"true" sensitive:"true"`
+	PreviousPassword *string `type:"string" required:"true" sensitive:"true"`
 
 	// The new password.
 	//
@@ -16383,7 +16548,7 @@ type ChangePasswordInput struct {
 	// String and GoString methods.
 	//
 	// ProposedPassword is a required field
-	ProposedPassword *string `min:"6" type:"string" required:"true" sensitive:"true"`
+	ProposedPassword *string `type:"string" required:"true" sensitive:"true"`
 }
 
 // String returns the string representation.
@@ -16413,14 +16578,8 @@ func (s *ChangePasswordInput) Validate() error {
 	if s.PreviousPassword == nil {
 		invalidParams.Add(request.NewErrParamRequired("PreviousPassword"))
 	}
-	if s.PreviousPassword != nil && len(*s.PreviousPassword) < 6 {
-		invalidParams.Add(request.NewErrParamMinLen("PreviousPassword", 6))
-	}
 	if s.ProposedPassword == nil {
 		invalidParams.Add(request.NewErrParamRequired("ProposedPassword"))
-	}
-	if s.ProposedPassword != nil && len(*s.ProposedPassword) < 6 {
-		invalidParams.Add(request.NewErrParamMinLen("ProposedPassword", 6))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -16470,17 +16629,19 @@ func (s ChangePasswordOutput) GoString() string {
 	return s.String()
 }
 
-// The code delivery details being returned from the server.
+// The delivery details for an email or SMS message that Amazon Cognito sent
+// for authentication or verification.
 type CodeDeliveryDetailsType struct {
 	_ struct{} `type:"structure"`
 
-	// The attribute name.
+	// The name of the attribute that Amazon Cognito verifies with the code.
 	AttributeName *string `min:"1" type:"string"`
 
-	// The delivery medium (email message or phone number).
+	// The method that Amazon Cognito used to send the code.
 	DeliveryMedium *string `type:"string" enum:"DeliveryMediumType"`
 
-	// The destination for the code delivery details.
+	// The email address or phone number destination where Amazon Cognito sent the
+	// code.
 	Destination *string `type:"string"`
 }
 
@@ -16709,7 +16870,7 @@ type CompromisedCredentialsRiskConfigurationType struct {
 
 	// Perform the action for these events. The default is to perform all events
 	// if no event filter is specified.
-	EventFilter []*string `type:"list"`
+	EventFilter []*string `type:"list" enum:"EventFilterType"`
 }
 
 // String returns the string representation.
@@ -16829,7 +16990,8 @@ func (s *ConcurrentModificationException) RequestID() string {
 type ConfirmDeviceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token.
+	// A valid access token that Amazon Cognito issued to the user whose device
+	// you want to confirm.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by ConfirmDeviceInput's
@@ -16975,7 +17137,7 @@ type ConfirmForgotPasswordInput struct {
 	// ConfirmForgotPassword request. In your function code in Lambda, you can process
 	// the clientMetadata value to enhance your workflow for your specific needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -16993,20 +17155,20 @@ type ConfirmForgotPasswordInput struct {
 	//    sensitive information.
 	ClientMetadata map[string]*string `type:"map"`
 
-	// The confirmation code sent by a user's request to retrieve a forgotten password.
-	// For more information, see ForgotPassword (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ForgotPassword.html).
+	// The confirmation code from your user's request to reset their password. For
+	// more information, see ForgotPassword (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ForgotPassword.html).
 	//
 	// ConfirmationCode is a required field
 	ConfirmationCode *string `min:"1" type:"string" required:"true"`
 
-	// The password sent by a user's request to retrieve a forgotten password.
+	// The new password that your user wants to set.
 	//
 	// Password is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by ConfirmForgotPasswordInput's
 	// String and GoString methods.
 	//
 	// Password is a required field
-	Password *string `min:"6" type:"string" required:"true" sensitive:"true"`
+	Password *string `type:"string" required:"true" sensitive:"true"`
 
 	// A keyed-hash message authentication code (HMAC) calculated using the secret
 	// key of a user pool client and username plus the client ID in the message.
@@ -17016,9 +17178,10 @@ type ConfirmForgotPasswordInput struct {
 	// String and GoString methods.
 	SecretHash *string `min:"1" type:"string" sensitive:"true"`
 
-	// Contextual data such as the user's device fingerprint, IP address, or location
-	// used for evaluating the risk of an unexpected event by Amazon Cognito advanced
-	// security.
+	// Contextual data about your user session, such as the device fingerprint,
+	// IP address, or location. Amazon Cognito advanced security evaluates the risk
+	// of an authentication event based on the context that your app generates and
+	// passes to Amazon Cognito when it makes API requests.
 	UserContextData *UserContextDataType `type:"structure"`
 
 	// The user name of the user for whom you want to enter a code to retrieve a
@@ -17067,9 +17230,6 @@ func (s *ConfirmForgotPasswordInput) Validate() error {
 	}
 	if s.Password == nil {
 		invalidParams.Add(request.NewErrParamRequired("Password"))
-	}
-	if s.Password != nil && len(*s.Password) < 6 {
-		invalidParams.Add(request.NewErrParamMinLen("Password", 6))
 	}
 	if s.SecretHash != nil && len(*s.SecretHash) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("SecretHash", 1))
@@ -17188,7 +17348,7 @@ type ConfirmSignUpInput struct {
 	// In your function code in Lambda, you can process the clientMetadata value
 	// to enhance your workflow for your specific needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -17227,9 +17387,10 @@ type ConfirmSignUpInput struct {
 	// String and GoString methods.
 	SecretHash *string `min:"1" type:"string" sensitive:"true"`
 
-	// Contextual data such as the user's device fingerprint, IP address, or location
-	// used for evaluating the risk of an unexpected event by Amazon Cognito advanced
-	// security.
+	// Contextual data about your user session, such as the device fingerprint,
+	// IP address, or location. Amazon Cognito advanced security evaluates the risk
+	// of an authentication event based on the context that your app generates and
+	// passes to Amazon Cognito when it makes API requests.
 	UserContextData *UserContextDataType `type:"structure"`
 
 	// The user name of the user whose registration you want to confirm.
@@ -17367,8 +17528,9 @@ func (s ConfirmSignUpOutput) GoString() string {
 type ContextDataType struct {
 	_ struct{} `type:"structure"`
 
-	// Encoded data containing device fingerprinting details collected using the
-	// Amazon Cognito context data collection library.
+	// Encoded device-fingerprint details that your app collected with the Amazon
+	// Cognito context data collection library. For more information, see Adding
+	// user device and session data to API requests (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint).
 	EncodedData *string `type:"string"`
 
 	// HttpHeaders received on your server in same order.
@@ -17376,7 +17538,7 @@ type ContextDataType struct {
 	// HttpHeaders is a required field
 	HttpHeaders []*HttpHeader `type:"list" required:"true"`
 
-	// Source IP address of your user.
+	// The source IP address of your user's device.
 	//
 	// IpAddress is a required field
 	IpAddress *string `type:"string" required:"true"`
@@ -17476,7 +17638,7 @@ type CreateGroupInput struct {
 	// A non-negative integer value that specifies the precedence of this group
 	// relative to the other groups that a user can belong to in the user pool.
 	// Zero is the highest precedence value. Groups with lower Precedence values
-	// take precedence over groups with higher ornull Precedence values. If a user
+	// take precedence over groups with higher or null Precedence values. If a user
 	// belongs to two or more groups, it is the group with the lowest precedence
 	// value whose role ARN is given in the user's tokens for the cognito:roles
 	// and cognito:preferred_role claims.
@@ -17487,7 +17649,7 @@ type CreateGroupInput struct {
 	// in tokens for users in each group. If the two groups have different role
 	// ARNs, the cognito:preferred_role claim isn't set in users' tokens.
 	//
-	// The default Precedence value is null.
+	// The default Precedence value is null. The maximum Precedence value is 2^31-1.
 	Precedence *int64 `type:"integer"`
 
 	// The role Amazon Resource Name (ARN) for the group.
@@ -17606,15 +17768,14 @@ func (s *CreateGroupOutput) SetGroup(v *GroupType) *CreateGroupOutput {
 type CreateIdentityProviderInput struct {
 	_ struct{} `type:"structure"`
 
-	// A mapping of identity provider attributes to standard and custom user pool
-	// attributes.
+	// A mapping of IdP attributes to standard and custom user pool attributes.
 	AttributeMapping map[string]*string `type:"map"`
 
-	// A list of identity provider identifiers.
+	// A list of IdP identifiers.
 	IdpIdentifiers []*string `type:"list"`
 
-	// The identity provider details. The following list describes the provider
-	// detail keys for each identity provider type.
+	// The IdP details. The following list describes the provider detail keys for
+	// each IdP type.
 	//
 	//    * For Google and Login with Amazon: client_id client_secret authorize_scopes
 	//
@@ -17623,24 +17784,22 @@ type CreateIdentityProviderInput struct {
 	//    * For Sign in with Apple: client_id team_id key_id private_key authorize_scopes
 	//
 	//    * For OpenID Connect (OIDC) providers: client_id client_secret attributes_request_method
-	//    oidc_issuer authorize_scopes authorize_url if not available from discovery
-	//    URL specified by oidc_issuer key token_url if not available from discovery
-	//    URL specified by oidc_issuer key attributes_url if not available from
-	//    discovery URL specified by oidc_issuer key jwks_uri if not available from
-	//    discovery URL specified by oidc_issuer key attributes_url_add_attributes
-	//    a read-only property that is set automatically
+	//    oidc_issuer authorize_scopes The following keys are only present if Amazon
+	//    Cognito didn't discover them at the oidc_issuer URL. authorize_url token_url
+	//    attributes_url jwks_uri Amazon Cognito sets the value of the following
+	//    keys automatically. They are read-only. attributes_url_add_attributes
 	//
-	//    * For SAML providers: MetadataFile OR MetadataURL IDPSignout (optional)
+	//    * For SAML providers: MetadataFile or MetadataURL IDPSignout optional
 	//
 	// ProviderDetails is a required field
 	ProviderDetails map[string]*string `type:"map" required:"true"`
 
-	// The identity provider name.
+	// The IdP name.
 	//
 	// ProviderName is a required field
-	ProviderName *string `min:"1" type:"string" required:"true"`
+	ProviderName *string `min:"3" type:"string" required:"true"`
 
-	// The identity provider type.
+	// The IdP type.
 	//
 	// ProviderType is a required field
 	ProviderType *string `type:"string" required:"true" enum:"IdentityProviderTypeType"`
@@ -17678,8 +17837,8 @@ func (s *CreateIdentityProviderInput) Validate() error {
 	if s.ProviderName == nil {
 		invalidParams.Add(request.NewErrParamRequired("ProviderName"))
 	}
-	if s.ProviderName != nil && len(*s.ProviderName) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("ProviderName", 1))
+	if s.ProviderName != nil && len(*s.ProviderName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("ProviderName", 3))
 	}
 	if s.ProviderType == nil {
 		invalidParams.Add(request.NewErrParamRequired("ProviderType"))
@@ -17736,7 +17895,7 @@ func (s *CreateIdentityProviderInput) SetUserPoolId(v string) *CreateIdentityPro
 type CreateIdentityProviderOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The newly created identity provider object.
+	// The newly created IdP object.
 	//
 	// IdentityProvider is a required field
 	IdentityProvider *IdentityProviderType `type:"structure" required:"true"`
@@ -18024,45 +18183,62 @@ func (s *CreateUserImportJobOutput) SetUserImportJob(v *UserImportJobType) *Crea
 type CreateUserPoolClientInput struct {
 	_ struct{} `type:"structure"`
 
-	// The time limit, between 5 minutes and 1 day, after which the access token
-	// is no longer valid and can't be used. If you supply a TokenValidityUnits
-	// value, you will override the default time unit.
+	// The access token time limit. After this limit expires, your user can't use
+	// their access token. To specify the time unit for AccessTokenValidity as seconds,
+	// minutes, hours, or days, set a TokenValidityUnits value in your API request.
+	//
+	// For example, when you set AccessTokenValidity to 10 and TokenValidityUnits
+	// to hours, your user can authorize access with their access token for 10 hours.
+	//
+	// The default time unit for AccessTokenValidity in an API request is hours.
+	// Valid range is displayed below in seconds.
 	AccessTokenValidity *int64 `min:"1" type:"integer"`
 
 	// The allowed OAuth flows.
 	//
-	// Set to code to initiate a code grant flow, which provides an authorization
-	// code as the response. This code can be exchanged for access tokens with the
-	// token endpoint.
+	// code
 	//
-	// Set to implicit to specify that the client should get the access token (and,
-	// optionally, ID token, based on scopes) directly.
+	// Use a code grant flow, which provides an authorization code as the response.
+	// This code can be exchanged for access tokens with the /oauth2/token endpoint.
 	//
-	// Set to client_credentials to specify that the client should get the access
-	// token (and, optionally, ID token, based on scopes) from the token endpoint
-	// using a combination of client and client_secret.
-	AllowedOAuthFlows []*string `type:"list"`
+	// implicit
+	//
+	// Issue the access token (and, optionally, ID token, based on scopes) directly
+	// to your user.
+	//
+	// client_credentials
+	//
+	// Issue the access token from the /oauth2/token endpoint directly to a non-person
+	// user using a combination of the client ID and client secret.
+	AllowedOAuthFlows []*string `type:"list" enum:"OAuthFlowType"`
 
 	// Set to true if the client is allowed to follow the OAuth protocol when interacting
 	// with Amazon Cognito user pools.
 	AllowedOAuthFlowsUserPoolClient *bool `type:"boolean"`
 
-	// The allowed OAuth scopes. Possible values provided by OAuth are: phone, email,
-	// openid, and profile. Possible values provided by Amazon Web Services are:
+	// The allowed OAuth scopes. Possible values provided by OAuth are phone, email,
+	// openid, and profile. Possible values provided by Amazon Web Services are
 	// aws.cognito.signin.user.admin. Custom scopes created in Resource Servers
 	// are also supported.
 	AllowedOAuthScopes []*string `type:"list"`
 
-	// The Amazon Pinpoint analytics configuration for collecting metrics for this
-	// user pool.
+	// The user pool analytics configuration for collecting metrics and sending
+	// them to your Amazon Pinpoint campaign.
 	//
-	// In Amazon Web Services Regions where isn't available, User Pools only supports
-	// sending events to Amazon Pinpoint projects in Amazon Web Services Region
-	// us-east-1. In Regions where is available, User Pools will support sending
-	// events to Amazon Pinpoint projects within that same Region.
+	// In Amazon Web Services Regions where Amazon Pinpoint isn't available, user
+	// pools only support sending events to Amazon Pinpoint projects in Amazon Web
+	// Services Region us-east-1. In Regions where Amazon Pinpoint is available,
+	// user pools support sending events to Amazon Pinpoint projects within that
+	// same Region.
 	AnalyticsConfiguration *AnalyticsConfigurationType `type:"structure"`
 
-	// A list of allowed redirect (callback) URLs for the identity providers.
+	// Amazon Cognito creates a session token for each API request in an authentication
+	// flow. AuthSessionValidity is the duration, in minutes, of that session token.
+	// Your user pool native user must respond to each authentication challenge
+	// before the session expires.
+	AuthSessionValidity *int64 `min:"3" type:"integer"`
+
+	// A list of allowed redirect (callback) URLs for the IdPs.
 	//
 	// A redirect URI must:
 	//
@@ -18103,6 +18279,15 @@ type CreateUserPoolClientInput struct {
 	// App callback URLs such as myapp://example are also supported.
 	DefaultRedirectURI *string `min:"1" type:"string"`
 
+	// Activates the propagation of additional user context data. For more information
+	// about propagation of user context data, see Adding advanced security to a
+	// user pool (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html).
+	// If you don’t include this parameter, you can't send device fingerprint
+	// information, including source IP address, to Amazon Cognito advanced security.
+	// You can only activate EnablePropagateAdditionalUserContextData in an app
+	// client that has a client secret.
+	EnablePropagateAdditionalUserContextData *bool `type:"boolean"`
+
 	// Activates or deactivates token revocation. For more information about revoking
 	// tokens, see RevokeToken (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_RevokeToken.html).
 	//
@@ -18112,38 +18297,57 @@ type CreateUserPoolClientInput struct {
 
 	// The authentication flows that are supported by the user pool clients. Flow
 	// names without the ALLOW_ prefix are no longer supported, in favor of new
-	// names with the ALLOW_ prefix. Note that values with ALLOW_ prefix must be
-	// used only along with the ALLOW_ prefix.
+	// names with the ALLOW_ prefix.
+	//
+	// Values with ALLOW_ prefix must be used only along with the ALLOW_ prefix.
 	//
 	// Valid values include:
 	//
-	//    * ALLOW_ADMIN_USER_PASSWORD_AUTH: Enable admin based user password authentication
-	//    flow ADMIN_USER_PASSWORD_AUTH. This setting replaces the ADMIN_NO_SRP_AUTH
-	//    setting. With this authentication flow, Amazon Cognito receives the password
-	//    in the request instead of using the Secure Remote Password (SRP) protocol
-	//    to verify passwords.
+	// ALLOW_ADMIN_USER_PASSWORD_AUTH
 	//
-	//    * ALLOW_CUSTOM_AUTH: Enable Lambda trigger based authentication.
+	// Enable admin based user password authentication flow ADMIN_USER_PASSWORD_AUTH.
+	// This setting replaces the ADMIN_NO_SRP_AUTH setting. With this authentication
+	// flow, Amazon Cognito receives the password in the request instead of using
+	// the Secure Remote Password (SRP) protocol to verify passwords.
 	//
-	//    * ALLOW_USER_PASSWORD_AUTH: Enable user password-based authentication.
-	//    In this flow, Amazon Cognito receives the password in the request instead
-	//    of using the SRP protocol to verify passwords.
+	// ALLOW_CUSTOM_AUTH
 	//
-	//    * ALLOW_USER_SRP_AUTH: Enable SRP-based authentication.
+	// Enable Lambda trigger based authentication.
 	//
-	//    * ALLOW_REFRESH_TOKEN_AUTH: Enable authflow to refresh tokens.
-	ExplicitAuthFlows []*string `type:"list"`
+	// ALLOW_USER_PASSWORD_AUTH
+	//
+	// Enable user password-based authentication. In this flow, Amazon Cognito receives
+	// the password in the request instead of using the SRP protocol to verify passwords.
+	//
+	// ALLOW_USER_SRP_AUTH
+	//
+	// Enable SRP-based authentication.
+	//
+	// ALLOW_REFRESH_TOKEN_AUTH
+	//
+	// Enable the authflow that refreshes tokens.
+	//
+	// If you don't specify a value for ExplicitAuthFlows, your user client supports
+	// ALLOW_USER_SRP_AUTH and ALLOW_CUSTOM_AUTH.
+	ExplicitAuthFlows []*string `type:"list" enum:"ExplicitAuthFlowsType"`
 
 	// Boolean to specify whether you want to generate a secret for the user pool
 	// client being created.
 	GenerateSecret *bool `type:"boolean"`
 
-	// The time limit, between 5 minutes and 1 day, after which the access token
-	// is no longer valid and can't be used. If you supply a TokenValidityUnits
-	// value, you will override the default time unit.
+	// The ID token time limit. After this limit expires, your user can't use their
+	// ID token. To specify the time unit for IdTokenValidity as seconds, minutes,
+	// hours, or days, set a TokenValidityUnits value in your API request.
+	//
+	// For example, when you set IdTokenValidity as 10 and TokenValidityUnits as
+	// hours, your user can authenticate their session with their ID token for 10
+	// hours.
+	//
+	// The default time unit for AccessTokenValidity in an API request is hours.
+	// Valid range is displayed below in seconds.
 	IdTokenValidity *int64 `min:"1" type:"integer"`
 
-	// A list of allowed logout URLs for the identity providers.
+	// A list of allowed logout URLs for the IdPs.
 	LogoutURLs []*string `type:"list"`
 
 	// Errors and responses that you want Amazon Cognito APIs to return during authentication,
@@ -18166,16 +18370,29 @@ type CreateUserPoolClientInput struct {
 	// The read attributes.
 	ReadAttributes []*string `type:"list"`
 
-	// The time limit, in days, after which the refresh token is no longer valid
-	// and can't be used.
+	// The refresh token time limit. After this limit expires, your user can't use
+	// their refresh token. To specify the time unit for RefreshTokenValidity as
+	// seconds, minutes, hours, or days, set a TokenValidityUnits value in your
+	// API request.
+	//
+	// For example, when you set RefreshTokenValidity as 10 and TokenValidityUnits
+	// as days, your user can refresh their session and retrieve new access and
+	// ID tokens for 10 days.
+	//
+	// The default time unit for RefreshTokenValidity in an API request is days.
+	// You can't set RefreshTokenValidity to 0. If you do, Amazon Cognito overrides
+	// the value with the default value of 30 days. Valid range is displayed below
+	// in seconds.
 	RefreshTokenValidity *int64 `type:"integer"`
 
-	// A list of provider names for the identity providers that are supported on
-	// this client. The following are supported: COGNITO, Facebook, Google and LoginWithAmazon.
+	// A list of provider names for the identity providers (IdPs) that are supported
+	// on this client. The following are supported: COGNITO, Facebook, Google, SignInWithApple,
+	// and LoginWithAmazon. You can also specify the names that you configured for
+	// the SAML and OIDC IdPs in your user pool, for example MySAMLIdP or MyOIDCIdP.
 	SupportedIdentityProviders []*string `type:"list"`
 
-	// The units in which the validity times are represented. Default for RefreshToken
-	// is days, and default for ID and access tokens are hours.
+	// The units in which the validity times are represented. The default unit for
+	// RefreshToken is days, and default for ID and access tokens are hours.
 	TokenValidityUnits *TokenValidityUnitsType `type:"structure"`
 
 	// The user pool ID for the user pool where you want to create a user pool client.
@@ -18185,13 +18402,13 @@ type CreateUserPoolClientInput struct {
 
 	// The user pool attributes that the app client can write to.
 	//
-	// If your app client allows users to sign in through an identity provider,
-	// this array must include all attributes that are mapped to identity provider
-	// attributes. Amazon Cognito updates mapped attributes when users sign in to
-	// your application through an identity provider. If your app client lacks write
-	// access to a mapped attribute, Amazon Cognito throws an error when it tries
-	// to update the attribute. For more information, see Specifying Identity Provider
-	// Attribute Mappings for Your User Pool (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-specifying-attribute-mapping.html).
+	// If your app client allows users to sign in through an IdP, this array must
+	// include all attributes that you have mapped to IdP attributes. Amazon Cognito
+	// updates mapped attributes when users sign in to your application through
+	// an IdP. If your app client does not have write access to a mapped attribute,
+	// Amazon Cognito throws an error when it tries to update the attribute. For
+	// more information, see Specifying IdP Attribute Mappings for Your user pool
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-specifying-attribute-mapping.html).
 	WriteAttributes []*string `type:"list"`
 }
 
@@ -18218,6 +18435,9 @@ func (s *CreateUserPoolClientInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "CreateUserPoolClientInput"}
 	if s.AccessTokenValidity != nil && *s.AccessTokenValidity < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("AccessTokenValidity", 1))
+	}
+	if s.AuthSessionValidity != nil && *s.AuthSessionValidity < 3 {
+		invalidParams.Add(request.NewErrParamMinValue("AuthSessionValidity", 3))
 	}
 	if s.ClientName == nil {
 		invalidParams.Add(request.NewErrParamRequired("ClientName"))
@@ -18279,6 +18499,12 @@ func (s *CreateUserPoolClientInput) SetAnalyticsConfiguration(v *AnalyticsConfig
 	return s
 }
 
+// SetAuthSessionValidity sets the AuthSessionValidity field's value.
+func (s *CreateUserPoolClientInput) SetAuthSessionValidity(v int64) *CreateUserPoolClientInput {
+	s.AuthSessionValidity = &v
+	return s
+}
+
 // SetCallbackURLs sets the CallbackURLs field's value.
 func (s *CreateUserPoolClientInput) SetCallbackURLs(v []*string) *CreateUserPoolClientInput {
 	s.CallbackURLs = v
@@ -18294,6 +18520,12 @@ func (s *CreateUserPoolClientInput) SetClientName(v string) *CreateUserPoolClien
 // SetDefaultRedirectURI sets the DefaultRedirectURI field's value.
 func (s *CreateUserPoolClientInput) SetDefaultRedirectURI(v string) *CreateUserPoolClientInput {
 	s.DefaultRedirectURI = &v
+	return s
+}
+
+// SetEnablePropagateAdditionalUserContextData sets the EnablePropagateAdditionalUserContextData field's value.
+func (s *CreateUserPoolClientInput) SetEnablePropagateAdditionalUserContextData(v bool) *CreateUserPoolClientInput {
+	s.EnablePropagateAdditionalUserContextData = &v
 	return s
 }
 
@@ -18541,25 +18773,27 @@ type CreateUserPoolInput struct {
 
 	// Attributes supported as an alias for this user pool. Possible values: phone_number,
 	// email, or preferred_username.
-	AliasAttributes []*string `type:"list"`
+	AliasAttributes []*string `type:"list" enum:"AliasAttributeType"`
 
 	// The attributes to be auto-verified. Possible values: email, phone_number.
-	AutoVerifiedAttributes []*string `type:"list"`
+	AutoVerifiedAttributes []*string `type:"list" enum:"VerifiedAttributeType"`
 
-	// The device configuration.
+	// The device-remembering configuration for a user pool. A null value indicates
+	// that you have deactivated device remembering in your user pool.
+	//
+	// When you provide a value for any DeviceConfiguration field, you activate
+	// the Amazon Cognito device-remembering feature.
 	DeviceConfiguration *DeviceConfigurationType `type:"structure"`
 
-	// The email configuration.
+	// The email configuration of your user pool. The email configuration type sets
+	// your preferred sending method, Amazon Web Services Region, and sender for
+	// messages from your user pool.
 	EmailConfiguration *EmailConfigurationType `type:"structure"`
 
-	// A string representing the email verification message. EmailVerificationMessage
-	// is allowed only if EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
-	// is DEVELOPER.
+	// This parameter is no longer used. See VerificationMessageTemplateType (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_VerificationMessageTemplateType.html).
 	EmailVerificationMessage *string `min:"6" type:"string"`
 
-	// A string representing the email verification subject. EmailVerificationSubject
-	// is allowed only if EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
-	// is DEVELOPER.
+	// This parameter is no longer used. See VerificationMessageTemplateType (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_VerificationMessageTemplateType.html).
 	EmailVerificationSubject *string `min:"1" type:"string"`
 
 	// The Lambda trigger configuration information for the new user pool.
@@ -18592,11 +18826,23 @@ type CreateUserPoolInput struct {
 	// A string representing the SMS authentication message.
 	SmsAuthenticationMessage *string `min:"6" type:"string"`
 
-	// The SMS configuration.
+	// The SMS configuration with the settings that your Amazon Cognito user pool
+	// must use to send an SMS message from your Amazon Web Services account through
+	// Amazon Simple Notification Service. To send SMS messages with Amazon SNS
+	// in the Amazon Web Services Region that you want, the Amazon Cognito user
+	// pool uses an Identity and Access Management (IAM) role in your Amazon Web
+	// Services account.
 	SmsConfiguration *SmsConfigurationType `type:"structure"`
 
-	// A string representing the SMS verification message.
+	// This parameter is no longer used. See VerificationMessageTemplateType (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_VerificationMessageTemplateType.html).
 	SmsVerificationMessage *string `min:"6" type:"string"`
+
+	// The settings for updates to user attributes. These settings include the property
+	// AttributesRequireVerificationBeforeUpdate, a user-pool setting that tells
+	// Amazon Cognito how to handle changes to the value of your users' email address
+	// and phone number attributes. For more information, see Verifying updates
+	// to email addresses and phone numbers (https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html#user-pool-settings-verifications-verify-attribute-updates).
+	UserAttributeUpdateSettings *UserAttributeUpdateSettingsType `type:"structure"`
 
 	// Enables advanced security risk detection. Set the key AdvancedSecurityMode
 	// to the value "AUDIT".
@@ -18609,7 +18855,7 @@ type CreateUserPoolInput struct {
 
 	// Specifies whether a user can use an email address or phone number as a username
 	// when they sign up.
-	UsernameAttributes []*string `type:"list"`
+	UsernameAttributes []*string `type:"list" enum:"UsernameAttributeType"`
 
 	// Case sensitivity on the username input for the selected sign-in option. For
 	// example, when case sensitivity is set to False, users can sign in using either
@@ -18819,6 +19065,12 @@ func (s *CreateUserPoolInput) SetSmsConfiguration(v *SmsConfigurationType) *Crea
 // SetSmsVerificationMessage sets the SmsVerificationMessage field's value.
 func (s *CreateUserPoolInput) SetSmsVerificationMessage(v string) *CreateUserPoolInput {
 	s.SmsVerificationMessage = &v
+	return s
+}
+
+// SetUserAttributeUpdateSettings sets the UserAttributeUpdateSettings field's value.
+func (s *CreateUserPoolInput) SetUserAttributeUpdateSettings(v *UserAttributeUpdateSettingsType) *CreateUserPoolInput {
+	s.UserAttributeUpdateSettings = v
 	return s
 }
 
@@ -19162,7 +19414,7 @@ func (s DeleteGroupOutput) GoString() string {
 type DeleteIdentityProviderInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identity provider name.
+	// The IdP name.
 	//
 	// ProviderName is a required field
 	ProviderName *string `min:"1" type:"string" required:"true"`
@@ -19339,7 +19591,8 @@ func (s DeleteResourceServerOutput) GoString() string {
 type DeleteUserAttributesInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token used in the request to delete user attributes.
+	// A valid access token that Amazon Cognito issued to the user whose attributes
+	// you want to delete.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by DeleteUserAttributesInput's
@@ -19430,7 +19683,8 @@ func (s DeleteUserAttributesOutput) GoString() string {
 type DeleteUserInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token from a request to delete a user.
+	// A valid access token that Amazon Cognito issued to the user whose user profile
+	// you want to delete.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by DeleteUserInput's
@@ -19757,7 +20011,7 @@ func (s DeleteUserPoolOutput) GoString() string {
 type DescribeIdentityProviderInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identity provider name.
+	// The IdP name.
 	//
 	// ProviderName is a required field
 	ProviderName *string `min:"1" type:"string" required:"true"`
@@ -19823,7 +20077,7 @@ func (s *DescribeIdentityProviderInput) SetUserPoolId(v string) *DescribeIdentit
 type DescribeIdentityProviderOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The identity provider that was deleted.
+	// The IdP that was deleted.
 	//
 	// IdentityProvider is a required field
 	IdentityProvider *IdentityProviderType `type:"structure" required:"true"`
@@ -20418,24 +20672,46 @@ func (s *DescribeUserPoolOutput) SetUserPool(v *UserPoolType) *DescribeUserPoolO
 	return s
 }
 
-// The device tracking configuration for a user pool. A user pool with device
-// tracking deactivated returns a null value.
+// The device-remembering configuration for a user pool. A DescribeUserPool
+// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_DescribeUserPool.html)
+// request returns a null value for this object when the user pool isn't configured
+// to remember devices. When device remembering is active, you can remember
+// a user's device with a ConfirmDevice (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ConfirmDevice.html)
+// API request. Additionally. when the property DeviceOnlyRememberedOnUserPrompt
+// is true, you must follow ConfirmDevice with an UpdateDeviceStatus (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_UpdateDeviceStatus.html)
+// API request that sets the user's device to remembered or not_remembered.
 //
-// When you provide values for any DeviceConfiguration field, you activate device
-// tracking.
+// To sign in with a remembered device, include DEVICE_KEY in the authentication
+// parameters in your user's InitiateAuth (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_InitiateAuth.html)
+// request. If your app doesn't include a DEVICE_KEY parameter, the response
+// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_InitiateAuth.html#API_InitiateAuth_ResponseSyntax)
+// from Amazon Cognito includes newly-generated DEVICE_KEY and DEVICE_GROUP_KEY
+// values under NewDeviceMetadata. Store these values to use in future device-authentication
+// requests.
+//
+// When you provide a value for any property of DeviceConfiguration, you activate
+// the device remembering for the user pool.
 type DeviceConfigurationType struct {
 	_ struct{} `type:"structure"`
 
-	// When true, device authentication can replace SMS and time-based one-time
-	// password (TOTP) factors for multi-factor authentication (MFA).
+	// When true, a remembered device can sign in with device authentication instead
+	// of SMS and time-based one-time password (TOTP) factors for multi-factor authentication
+	// (MFA).
 	//
-	// Users that sign in with devices that have not been confirmed or remembered
-	// will still have to provide a second factor, whether or not ChallengeRequiredOnNewDevice
-	// is true, when your user pool requires MFA.
+	// Whether or not ChallengeRequiredOnNewDevice is true, users who sign in with
+	// devices that have not been confirmed or remembered must still provide a second
+	// factor in a user pool that requires MFA.
 	ChallengeRequiredOnNewDevice *bool `type:"boolean"`
 
-	// When true, users can opt in to remembering their device. Your app code must
-	// use callback functions to return the user's choice.
+	// When true, Amazon Cognito doesn't automatically remember a user's device
+	// when your app sends a ConfirmDevice (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ConfirmDevice.html)
+	// API request. In your app, create a prompt for your user to choose whether
+	// they want to remember their device. Return the user's choice in an UpdateDeviceStatus
+	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_UpdateDeviceStatus.html)
+	// API request.
+	//
+	// When DeviceOnlyRememberedOnUserPrompt is false, Amazon Cognito immediately
+	// remembers devices that you register in a ConfirmDevice API request.
 	DeviceOnlyRememberedOnUserPrompt *bool `type:"boolean"`
 }
 
@@ -20476,7 +20752,7 @@ type DeviceSecretVerifierConfigType struct {
 	// The password verifier.
 	PasswordVerifier *string `type:"string"`
 
-	// The salt.
+	// The salt (https://en.wikipedia.org/wiki/Salt_(cryptography))
 	Salt *string `type:"string"`
 }
 
@@ -20741,11 +21017,14 @@ func (s *DuplicateProviderException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// The email configuration type.
+// The email configuration of your user pool. The email configuration type sets
+// your preferred sending method, Amazon Web Services Region, and sender for
+// messages from your user pool.
 //
-// Amazon Cognito has specific Regions for use with Amazon Simple Email Service.
-// For more information on the supported Regions, see Email settings for Amazon
-// Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-email.html).
+// Amazon Cognito can send email messages with Amazon Simple Email Service resources
+// in the Amazon Web Services Region where you created your user pool, and in
+// alternate Regions in some cases. For more information on the supported Regions,
+// see Email settings for Amazon Cognito user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-email.html).
 type EmailConfigurationType struct {
 	_ struct{} `type:"structure"`
 
@@ -20755,20 +21034,23 @@ type EmailConfigurationType struct {
 	// all of the rules in that configuration set are applied to the email. Configuration
 	// sets can be used to apply the following types of rules to emails:
 	//
-	//    * Event publishing – Amazon Simple Email Service can track the number
-	//    of send, delivery, open, click, bounce, and complaint events for each
-	//    email sent. Use event publishing to send information about these events
-	//    to other Amazon Web Services services such as and Amazon CloudWatch.
+	// Event publishing
 	//
-	//    * IP pool management – When leasing dedicated IP addresses with Amazon
-	//    Simple Email Service, you can create groups of IP addresses, called dedicated
-	//    IP pools. You can then associate the dedicated IP pools with configuration
-	//    sets.
+	// Amazon Simple Email Service can track the number of send, delivery, open,
+	// click, bounce, and complaint events for each email sent. Use event publishing
+	// to send information about these events to other Amazon Web Services services
+	// such as and Amazon CloudWatch
+	//
+	// IP pool management
+	//
+	// When leasing dedicated IP addresses with Amazon Simple Email Service, you
+	// can create groups of IP addresses, called dedicated IP pools. You can then
+	// associate the dedicated IP pools with configuration sets.
 	ConfigurationSet *string `min:"1" type:"string"`
 
-	// Specifies whether Amazon Cognito emails your users by using its built-in
-	// email functionality or your Amazon Simple Email Service email configuration.
-	// Specify one of the following values:
+	// Specifies whether Amazon Cognito uses its built-in functionality to send
+	// your users email messages, or uses your Amazon Simple Email Service email
+	// configuration. Specify one of the following values:
 	//
 	// COGNITO_DEFAULT
 	//
@@ -20787,26 +21069,6 @@ type EmailConfigurationType struct {
 	// the FROM address, provide the Amazon Resource Name (ARN) of an Amazon SES
 	// verified email address for the SourceArn parameter.
 	//
-	// If EmailSendingAccount is COGNITO_DEFAULT, you can't use the following parameters:
-	//
-	//    * EmailVerificationMessage
-	//
-	//    * EmailVerificationSubject
-	//
-	//    * InviteMessageTemplate.EmailMessage
-	//
-	//    * InviteMessageTemplate.EmailSubject
-	//
-	//    * VerificationMessageTemplate.EmailMessage
-	//
-	//    * VerificationMessageTemplate.EmailMessageByLink
-	//
-	//    * VerificationMessageTemplate.EmailSubject,
-	//
-	//    * VerificationMessageTemplate.EmailSubjectByLink
-	//
-	// DEVELOPER EmailSendingAccount is required.
-	//
 	// DEVELOPER
 	//
 	// When Amazon Cognito emails your users, it uses your Amazon SES configuration.
@@ -20815,8 +21077,8 @@ type EmailConfigurationType struct {
 	// same limits that apply to your Amazon SES verified email address in your
 	// Amazon Web Services account.
 	//
-	// If you use this option, you must provide the ARN of an Amazon SES verified
-	// email address for the SourceArn parameter.
+	// If you use this option, provide the ARN of an Amazon SES verified email address
+	// for the SourceArn parameter.
 	//
 	// Before Amazon Cognito can email your users, it requires additional permissions
 	// to call Amazon SES on your behalf. When you update your user pool with this
@@ -20846,6 +21108,12 @@ type EmailConfigurationType struct {
 	//
 	//    * If you specify DEVELOPER, Amazon Cognito emails your users with this
 	//    address by calling Amazon SES on your behalf.
+	//
+	// The Region value of the SourceArn parameter must indicate a supported Amazon
+	// Web Services Region of your user pool. Typically, the Region in the SourceArn
+	// and the user pool Region are the same. For more information, see Amazon SES
+	// email configuration regions (https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-email.html#user-pool-email-developer-region-mapping)
+	// in the Amazon Cognito Developer Guide (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools.html).
 	SourceArn *string `min:"20" type:"string"`
 }
 
@@ -20991,7 +21259,7 @@ type EventContextDataType struct {
 	// The user's device name.
 	DeviceName *string `type:"string"`
 
-	// The user's IP address.
+	// The source IP address of your user's device.
 	IpAddress *string `type:"string"`
 
 	// The user's time zone.
@@ -21216,11 +21484,79 @@ func (s *ExpiredCodeException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// This exception is thrown when WAF doesn't allow your request based on a web
+// ACL that's associated with your user pool.
+type ForbiddenException struct {
+	_            struct{}                  `type:"structure"`
+	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
+
+	// The message returned when WAF doesn't allow your request based on a web ACL
+	// that's associated with your user pool.
+	Message_ *string `locationName:"message" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ForbiddenException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ForbiddenException) GoString() string {
+	return s.String()
+}
+
+func newErrorForbiddenException(v protocol.ResponseMetadata) error {
+	return &ForbiddenException{
+		RespMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s *ForbiddenException) Code() string {
+	return "ForbiddenException"
+}
+
+// Message returns the exception's message.
+func (s *ForbiddenException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s *ForbiddenException) OrigErr() error {
+	return nil
+}
+
+func (s *ForbiddenException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s *ForbiddenException) StatusCode() int {
+	return s.RespMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s *ForbiddenException) RequestID() string {
+	return s.RespMetadata.RequestID
+}
+
 // Represents the request to forget the device.
 type ForgetDeviceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token for the forgotten device request.
+	// A valid access token that Amazon Cognito issued to the user whose registered
+	// device you want to forget.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by ForgetDeviceInput's
@@ -21305,8 +21641,8 @@ func (s ForgetDeviceOutput) GoString() string {
 type ForgotPasswordInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Pinpoint analytics metadata for collecting metrics for ForgotPassword
-	// calls.
+	// The Amazon Pinpoint analytics metadata that contributes to your metrics for
+	// ForgotPassword calls.
 	AnalyticsMetadata *AnalyticsMetadataType `type:"structure"`
 
 	// The ID of the client associated with the user pool.
@@ -21331,7 +21667,7 @@ type ForgotPasswordInput struct {
 	// code in Lambda, you can process the clientMetadata value to enhance your
 	// workflow for your specific needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -21357,9 +21693,10 @@ type ForgotPasswordInput struct {
 	// String and GoString methods.
 	SecretHash *string `min:"1" type:"string" sensitive:"true"`
 
-	// Contextual data such as the user's device fingerprint, IP address, or location
-	// used for evaluating the risk of an unexpected event by Amazon Cognito advanced
-	// security.
+	// Contextual data about your user session, such as the device fingerprint,
+	// IP address, or location. Amazon Cognito advanced security evaluates the risk
+	// of an authentication event based on the context that your app generates and
+	// passes to Amazon Cognito when it makes API requests.
 	UserContextData *UserContextDataType `type:"structure"`
 
 	// The user name of the user for whom you want to enter a code to reset a forgotten
@@ -21452,8 +21789,7 @@ func (s *ForgotPasswordInput) SetUsername(v string) *ForgotPasswordInput {
 	return s
 }
 
-// Respresents the response from the server regarding the request to reset a
-// password.
+// The response from Amazon Cognito to a request to reset a password.
 type ForgotPasswordOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -21583,7 +21919,8 @@ func (s *GetCSVHeaderOutput) SetUserPoolId(v string) *GetCSVHeaderOutput {
 type GetDeviceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token.
+	// A valid access token that Amazon Cognito issued to the user whose device
+	// information you want to request.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by GetDeviceInput's
@@ -21776,7 +22113,7 @@ func (s *GetGroupOutput) SetGroup(v *GroupType) *GetGroupOutput {
 type GetIdentityProviderByIdentifierInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identity provider ID.
+	// The IdP identifier.
 	//
 	// IdpIdentifier is a required field
 	IdpIdentifier *string `min:"1" type:"string" required:"true"`
@@ -21842,7 +22179,7 @@ func (s *GetIdentityProviderByIdentifierInput) SetUserPoolId(v string) *GetIdent
 type GetIdentityProviderByIdentifierOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The identity provider object.
+	// The IdP object.
 	//
 	// IdentityProvider is a required field
 	IdentityProvider *IdentityProviderType `type:"structure" required:"true"`
@@ -22056,8 +22393,8 @@ func (s *GetUICustomizationOutput) SetUICustomization(v *UICustomizationType) *G
 type GetUserAttributeVerificationCodeInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token returned by the server response to get the user attribute
-	// verification code.
+	// A non-expired access token for the user whose attribute verification code
+	// you want to generate.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by GetUserAttributeVerificationCodeInput's
@@ -22085,7 +22422,7 @@ type GetUserAttributeVerificationCodeInput struct {
 	// Lambda, you can process the clientMetadata value to enhance your workflow
 	// for your specific needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -22197,8 +22534,7 @@ func (s *GetUserAttributeVerificationCodeOutput) SetCodeDeliveryDetails(v *CodeD
 type GetUserInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token returned by the server response to get information about
-	// the user.
+	// A non-expired access token for the user whose information you want to query.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by GetUserInput's
@@ -22381,7 +22717,7 @@ func (s *GetUserPoolMfaConfigInput) SetUserPoolId(v string) *GetUserPoolMfaConfi
 type GetUserPoolMfaConfigOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The multi-factor (MFA) configuration. Valid values include:
+	// The multi-factor authentication (MFA) configuration. Valid values include:
 	//
 	//    * OFF MFA won't be used for any users.
 	//
@@ -22391,10 +22727,10 @@ type GetUserPoolMfaConfigOutput struct {
 	//    MFA factor activated.
 	MfaConfiguration *string `type:"string" enum:"UserPoolMfaType"`
 
-	// The SMS text message multi-factor (MFA) configuration.
+	// The SMS text message multi-factor authentication (MFA) configuration.
 	SmsMfaConfiguration *SmsMfaConfigType `type:"structure"`
 
-	// The software token multi-factor (MFA) configuration.
+	// The software token multi-factor authentication (MFA) configuration.
 	SoftwareTokenMfaConfiguration *SoftwareTokenMfaConfigType `type:"structure"`
 }
 
@@ -22438,7 +22774,8 @@ func (s *GetUserPoolMfaConfigOutput) SetSoftwareTokenMfaConfiguration(v *Softwar
 type GlobalSignOutInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token.
+	// A valid access token that Amazon Cognito issued to the user who you want
+	// to sign out.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by GlobalSignOutInput's
@@ -22714,47 +23051,46 @@ func (s *HttpHeader) SetHeaderValue(v string) *HttpHeader {
 	return s
 }
 
-// A container for information about an identity provider.
+// A container for information about an IdP.
 type IdentityProviderType struct {
 	_ struct{} `type:"structure"`
 
-	// A mapping of identity provider attributes to standard and custom user pool
-	// attributes.
+	// A mapping of IdP attributes to standard and custom user pool attributes.
 	AttributeMapping map[string]*string `type:"map"`
 
-	// The date the identity provider was created.
+	// The date the IdP was created.
 	CreationDate *time.Time `type:"timestamp"`
 
-	// A list of identity provider identifiers.
+	// A list of IdP identifiers.
 	IdpIdentifiers []*string `type:"list"`
 
-	// The date the identity provider was last modified.
+	// The date the IdP was last modified.
 	LastModifiedDate *time.Time `type:"timestamp"`
 
-	// The identity provider details. The following list describes the provider
-	// detail keys for each identity provider type.
+	// The IdP details. The following list describes the provider detail keys for
+	// each IdP type.
 	//
 	//    * For Google and Login with Amazon: client_id client_secret authorize_scopes
 	//
 	//    * For Facebook: client_id client_secret authorize_scopes api_version
 	//
-	//    * For Sign in with Apple: client_id team_id key_id private_key authorize_scopes
+	//    * For Sign in with Apple: client_id team_id key_id private_key You can
+	//    submit a private_key when you add or update an IdP. Describe operations
+	//    don't return the private key. authorize_scopes
 	//
 	//    * For OIDC providers: client_id client_secret attributes_request_method
-	//    oidc_issuer authorize_scopes authorize_url if not available from discovery
-	//    URL specified by oidc_issuer key token_url if not available from discovery
-	//    URL specified by oidc_issuer key attributes_url if not available from
-	//    discovery URL specified by oidc_issuer key jwks_uri if not available from
-	//    discovery URL specified by oidc_issuer key attributes_url_add_attributes
-	//    a read-only property that is set automatically
+	//    oidc_issuer authorize_scopes The following keys are only present if Amazon
+	//    Cognito didn't discover them at the oidc_issuer URL. authorize_url token_url
+	//    attributes_url jwks_uri Amazon Cognito sets the value of the following
+	//    keys automatically. They are read-only. attributes_url_add_attributes
 	//
-	//    * For SAML providers: MetadataFile or MetadataURL IDPSignOut optional
+	//    * For SAML providers: MetadataFile or MetadataURL IDPSignout optional
 	ProviderDetails map[string]*string `type:"map"`
 
-	// The identity provider name.
+	// The IdP name.
 	ProviderName *string `min:"1" type:"string"`
 
-	// The identity provider type.
+	// The IdP type.
 	ProviderType *string `type:"string" enum:"IdentityProviderTypeType"`
 
 	// The user pool ID.
@@ -22831,8 +23167,8 @@ func (s *IdentityProviderType) SetUserPoolId(v string) *IdentityProviderType {
 type InitiateAuthInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Pinpoint analytics metadata for collecting metrics for InitiateAuth
-	// calls.
+	// The Amazon Pinpoint analytics metadata that contributes to your metrics for
+	// InitiateAuth calls.
 	AnalyticsMetadata *AnalyticsMetadataType `type:"structure"`
 
 	// The authentication flow for this call to run. The API action will depend
@@ -22856,9 +23192,9 @@ type InitiateAuthInput struct {
 	//
 	//    * CUSTOM_AUTH: Custom authentication flow.
 	//
-	//    * USER_PASSWORD_AUTH: Non-SRP authentication flow; USERNAME and PASSWORD
+	//    * USER_PASSWORD_AUTH: Non-SRP authentication flow; user name and password
 	//    are passed directly. If a user migration Lambda trigger is set, this flow
-	//    will invoke the user migration Lambda if it doesn't find the USERNAME
+	//    will invoke the user migration Lambda if it doesn't find the user name
 	//    in the user pool.
 	//
 	// ADMIN_NO_SRP_AUTH isn't a valid value.
@@ -22931,7 +23267,7 @@ type InitiateAuthInput struct {
 	//
 	//    * Verify auth challenge
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -22949,9 +23285,10 @@ type InitiateAuthInput struct {
 	//    sensitive information.
 	ClientMetadata map[string]*string `type:"map"`
 
-	// Contextual data such as the user's device fingerprint, IP address, or location
-	// used for evaluating the risk of an unexpected event by Amazon Cognito advanced
-	// security.
+	// Contextual data about your user session, such as the device fingerprint,
+	// IP address, or location. Amazon Cognito advanced security evaluates the risk
+	// of an authentication event based on the context that your app generates and
+	// passes to Amazon Cognito when it makes API requests.
 	UserContextData *UserContextDataType `type:"structure"`
 }
 
@@ -23042,8 +23379,10 @@ type InitiateAuthOutput struct {
 	// name is returned in the AdminInitiateAuth response if you must pass another
 	// challenge.
 	//
-	// Valid values include the following. Note that all of these challenges require
-	// USERNAME and SECRET_HASH (if applicable) in the parameters.
+	// Valid values include the following:
+	//
+	// All of the following challenges require USERNAME and SECRET_HASH (if applicable)
+	// in the parameters.
 	//
 	//    * SMS_MFA: Next challenge is to supply an SMS_MFA_CODE, delivered via
 	//    SMS.
@@ -23063,8 +23402,16 @@ type InitiateAuthOutput struct {
 	//    only.
 	//
 	//    * NEW_PASSWORD_REQUIRED: For users who are required to change their passwords
-	//    after successful first login. This challenge should be passed with NEW_PASSWORD
-	//    and any other required attributes.
+	//    after successful first login. Respond to this challenge with NEW_PASSWORD
+	//    and any required attributes that Amazon Cognito returned in the requiredAttributes
+	//    parameter. You can also set values for attributes that aren't required
+	//    by your user pool and that your app client can write. For more information,
+	//    see RespondToAuthChallenge (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_RespondToAuthChallenge.html).
+	//    In a NEW_PASSWORD_REQUIRED challenge response, you can't modify a required
+	//    attribute that already has a value. In RespondToAuthChallenge, set a value
+	//    for any keys that Amazon Cognito returned in the requiredAttributes parameter,
+	//    then use the UpdateUserAttributes API operation to modify the value of
+	//    any additional attributes.
 	//
 	//    * MFA_SETUP: For users who are required to setup an MFA factor before
 	//    they can sign in. The MFA types activated for the user pool will be listed
@@ -23270,7 +23617,7 @@ type InvalidLambdaResponseException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
 
-	// The message returned when Amazon Cognito hrows an invalid Lambda response
+	// The message returned when Amazon Cognito throws an invalid Lambda response
 	// exception.
 	Message_ *string `locationName:"message" type:"string"`
 }
@@ -23994,7 +24341,8 @@ func (s *LimitExceededException) RequestID() string {
 type ListDevicesInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access tokens for the request to list devices.
+	// A valid access token that Amazon Cognito issued to the user whose list of
+	// devices you want to view.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by ListDevicesInput's
@@ -24218,7 +24566,7 @@ func (s *ListGroupsOutput) SetNextToken(v string) *ListGroupsOutput {
 type ListIdentityProvidersInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of identity providers to return.
+	// The maximum number of IdPs to return.
 	MaxResults *int64 `type:"integer"`
 
 	// A pagination token.
@@ -24291,7 +24639,7 @@ type ListIdentityProvidersOutput struct {
 	// A pagination token.
 	NextToken *string `min:"1" type:"string"`
 
-	// A list of identity provider objects.
+	// A list of IdP objects.
 	//
 	// Providers is a required field
 	Providers []*ProviderDescription `type:"list" required:"true"`
@@ -24961,8 +25309,8 @@ func (s *ListUsersInGroupInput) SetUserPoolId(v string) *ListUsersInGroupInput {
 type ListUsersInGroupOutput struct {
 	_ struct{} `type:"structure"`
 
-	// An identifier that was returned from the previous call to this operation,
-	// which can be used to return the next set of items in the list.
+	// An identifier that you can use in a later request to return the next set
+	// of items in the list.
 	NextToken *string `min:"1" type:"string"`
 
 	// The users returned in the request to list users.
@@ -25048,7 +25396,7 @@ type ListUsersInput struct {
 	// Custom attributes aren't searchable.
 	//
 	// You can also list users with a client-side filter. The server-side filter
-	// matches no more than 1 attribute. For an advanced search, use a client-side
+	// matches no more than one attribute. For an advanced search, use a client-side
 	// filter with the --query parameter of the list-users action in the CLI. When
 	// you use a client-side filter, ListUsers returns a paginated list of zero
 	// or more users. You can receive multiple pages in a row with zero results.
@@ -25252,9 +25600,9 @@ func (s *MFAMethodNotFoundException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// This data type is no longer supported. You can use it only for SMS multi-factor
-// authentication (MFA) configurations. You can't use it for time-based one-time
-// password (TOTP) software token MFA configurations.
+// This data type is no longer supported. Applies only to SMS multi-factor authentication
+// (MFA) configurations. Does not apply to time-based one-time password (TOTP)
+// software token MFA configurations.
 type MFAOptionType struct {
 	_ struct{} `type:"structure"`
 
@@ -25749,7 +26097,8 @@ type PasswordPolicyType struct {
 	// their password.
 	//
 	// When you set TemporaryPasswordValidityDays for a user pool, you can no longer
-	// set the deprecated UnusedAccountValidityDays value for that user pool.
+	// set a value for the legacy UnusedAccountValidityDays parameter in that user
+	// pool.
 	TemporaryPasswordValidityDays *int64 `type:"integer"`
 }
 
@@ -25950,7 +26299,7 @@ func (s *PreconditionNotMetException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// A container for identity provider details.
+// A container for IdP details.
 type ProviderDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -25960,10 +26309,10 @@ type ProviderDescription struct {
 	// The date the provider was last modified.
 	LastModifiedDate *time.Time `type:"timestamp"`
 
-	// The identity provider name.
+	// The IdP name.
 	ProviderName *string `min:"1" type:"string"`
 
-	// The identity provider type.
+	// The IdP type.
 	ProviderType *string `type:"string" enum:"IdentityProviderTypeType"`
 }
 
@@ -26009,7 +26358,7 @@ func (s *ProviderDescription) SetProviderType(v string) *ProviderDescription {
 	return s
 }
 
-// A container for information about an identity provider for a user pool.
+// A container for information about an IdP for a user pool.
 type ProviderUserIdentifierType struct {
 	_ struct{} `type:"structure"`
 
@@ -26141,8 +26490,8 @@ func (s *RecoveryOptionType) SetPriority(v int64) *RecoveryOptionType {
 type ResendConfirmationCodeInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Pinpoint analytics metadata for collecting metrics for ResendConfirmationCode
-	// calls.
+	// The Amazon Pinpoint analytics metadata that contributes to your metrics for
+	// ResendConfirmationCode calls.
 	AnalyticsMetadata *AnalyticsMetadataType `type:"structure"`
 
 	// The ID of the client associated with the user pool.
@@ -26167,7 +26516,7 @@ type ResendConfirmationCodeInput struct {
 	// process the clientMetadata value to enhance your workflow for your specific
 	// needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -26193,9 +26542,10 @@ type ResendConfirmationCodeInput struct {
 	// String and GoString methods.
 	SecretHash *string `min:"1" type:"string" sensitive:"true"`
 
-	// Contextual data such as the user's device fingerprint, IP address, or location
-	// used for evaluating the risk of an unexpected event by Amazon Cognito advanced
-	// security.
+	// Contextual data about your user session, such as the device fingerprint,
+	// IP address, or location. Amazon Cognito advanced security evaluates the risk
+	// of an authentication event based on the context that your app generates and
+	// passes to Amazon Cognito when it makes API requests.
 	UserContextData *UserContextDataType `type:"structure"`
 
 	// The username attribute of the user to whom you want to resend a confirmation
@@ -26519,8 +26869,8 @@ func (s *ResourceServerType) SetUserPoolId(v string) *ResourceServerType {
 type RespondToAuthChallengeInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Pinpoint analytics metadata for collecting metrics for RespondToAuthChallenge
-	// calls.
+	// The Amazon Pinpoint analytics metadata that contributes to your metrics for
+	// RespondToAuthChallenge calls.
 	AnalyticsMetadata *AnalyticsMetadataType `type:"structure"`
 
 	// The challenge name. For more information, see InitiateAuth (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_InitiateAuth.html).
@@ -26539,11 +26889,19 @@ type RespondToAuthChallengeInput struct {
 	//    * SMS_MFA: SMS_MFA_CODE, USERNAME.
 	//
 	//    * PASSWORD_VERIFIER: PASSWORD_CLAIM_SIGNATURE, PASSWORD_CLAIM_SECRET_BLOCK,
-	//    TIMESTAMP, USERNAME. PASSWORD_VERIFIER requires DEVICE_KEY when signing
+	//    TIMESTAMP, USERNAME. PASSWORD_VERIFIER requires DEVICE_KEY when you sign
 	//    in with a remembered device.
 	//
-	//    * NEW_PASSWORD_REQUIRED: NEW_PASSWORD, any other required attributes,
-	//    USERNAME.
+	//    * NEW_PASSWORD_REQUIRED: NEW_PASSWORD, USERNAME, SECRET_HASH (if app client
+	//    is configured with client secret). To set any required attributes that
+	//    Amazon Cognito returned as requiredAttributes in the InitiateAuth response,
+	//    add a userAttributes.attributename parameter. This parameter can also
+	//    set values for writable attributes that aren't required by your user pool.
+	//    In a NEW_PASSWORD_REQUIRED challenge response, you can't modify a required
+	//    attribute that already has a value. In RespondToAuthChallenge, set a value
+	//    for any keys that Amazon Cognito returned in the requiredAttributes parameter,
+	//    then use the UpdateUserAttributes API operation to modify the value of
+	//    any additional attributes.
 	//
 	//    * SOFTWARE_TOKEN_MFA: USERNAME and SOFTWARE_TOKEN_MFA_CODE are required
 	//    attributes.
@@ -26580,7 +26938,7 @@ type RespondToAuthChallengeInput struct {
 	// function code in Lambda, you can process the clientMetadata value to enhance
 	// your workflow for your specific needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -26605,9 +26963,10 @@ type RespondToAuthChallengeInput struct {
 	// RespondToAuthChallenge API call.
 	Session *string `min:"20" type:"string"`
 
-	// Contextual data such as the user's device fingerprint, IP address, or location
-	// used for evaluating the risk of an unexpected event by Amazon Cognito advanced
-	// security.
+	// Contextual data about your user session, such as the device fingerprint,
+	// IP address, or location. Amazon Cognito advanced security evaluates the risk
+	// of an authentication event based on the context that your app generates and
+	// passes to Amazon Cognito when it makes API requests.
 	UserContextData *UserContextDataType `type:"structure"`
 }
 
@@ -27062,12 +27421,12 @@ type SchemaAttributeType struct {
 
 	// Specifies whether the value of the attribute can be changed.
 	//
-	// For any user pool attribute that is mapped to an identity provider attribute,
-	// you must set this parameter to true. Amazon Cognito updates mapped attributes
-	// when users sign in to your application through an identity provider. If an
-	// attribute is immutable, Amazon Cognito throws an error when it attempts to
-	// update the attribute. For more information, see Specifying Identity Provider
-	// Attribute Mappings for Your User Pool (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-specifying-attribute-mapping.html).
+	// For any user pool attribute that is mapped to an IdP attribute, you must
+	// set this parameter to true. Amazon Cognito updates mapped attributes when
+	// users sign in to your application through an IdP. If an attribute is immutable,
+	// Amazon Cognito throws an error when it attempts to update the attribute.
+	// For more information, see Specifying Identity Provider Attribute Mappings
+	// for Your User Pool (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-specifying-attribute-mapping.html).
 	Mutable *bool `type:"boolean"`
 
 	// A schema attribute of the name type.
@@ -27483,7 +27842,8 @@ func (s *SetUICustomizationOutput) SetUICustomization(v *UICustomizationType) *S
 type SetUserMFAPreferenceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token for the user.
+	// A valid access token that Amazon Cognito issued to the user whose MFA preference
+	// you want to set.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by SetUserMFAPreferenceInput's
@@ -27495,7 +27855,7 @@ type SetUserMFAPreferenceInput struct {
 	// The SMS text message multi-factor authentication (MFA) settings.
 	SMSMfaSettings *SMSMfaSettingsType `type:"structure"`
 
-	// The time-based one-time password software token MFA settings.
+	// The time-based one-time password (TOTP) software token MFA settings.
 	SoftwareTokenMfaSettings *SoftwareTokenMfaSettingsType `type:"structure"`
 }
 
@@ -27574,8 +27934,8 @@ type SetUserPoolMfaConfigInput struct {
 	_ struct{} `type:"structure"`
 
 	// The MFA configuration. If you set the MfaConfiguration value to ‘ON’,
-	// only users with an MFA factor set up can sign in. To learn more, see Adding
-	// Multi-Factor Authentication (MFA) to a User Pool (cognito/latest/developerguide/user-pool-settings-mfa.html).
+	// only users who have set up an MFA factor can sign in. To learn more, see
+	// Adding Multi-Factor Authentication (MFA) to a user pool (cognito/latest/developerguide/user-pool-settings-mfa.html).
 	// Valid values include:
 	//
 	//    * OFF MFA won't be used for any users.
@@ -27721,7 +28081,8 @@ func (s *SetUserPoolMfaConfigOutput) SetSoftwareTokenMfaConfiguration(v *Softwar
 type SetUserSettingsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token for the set user settings request.
+	// A valid access token that Amazon Cognito issued to the user whose user settings
+	// you want to configure.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by SetUserSettingsInput's
@@ -27820,8 +28181,8 @@ func (s SetUserSettingsOutput) GoString() string {
 type SignUpInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Pinpoint analytics metadata for collecting metrics for SignUp
-	// calls.
+	// The Amazon Pinpoint analytics metadata that contributes to your metrics for
+	// SignUp calls.
 	AnalyticsMetadata *AnalyticsMetadataType `type:"structure"`
 
 	// The ID of the client associated with the user pool.
@@ -27846,7 +28207,7 @@ type SignUpInput struct {
 	// code in Lambda, you can process the clientMetadata value to enhance your
 	// workflow for your specific needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -27871,7 +28232,7 @@ type SignUpInput struct {
 	// String and GoString methods.
 	//
 	// Password is a required field
-	Password *string `min:"6" type:"string" required:"true" sensitive:"true"`
+	Password *string `type:"string" required:"true" sensitive:"true"`
 
 	// A keyed-hash message authentication code (HMAC) calculated using the secret
 	// key of a user pool client and username plus the client ID in the message.
@@ -27887,9 +28248,10 @@ type SignUpInput struct {
 	// name.
 	UserAttributes []*AttributeType `type:"list"`
 
-	// Contextual data such as the user's device fingerprint, IP address, or location
-	// used for evaluating the risk of an unexpected event by Amazon Cognito advanced
-	// security.
+	// Contextual data about your user session, such as the device fingerprint,
+	// IP address, or location. Amazon Cognito advanced security evaluates the risk
+	// of an authentication event based on the context that your app generates and
+	// passes to Amazon Cognito when it makes API requests.
 	UserContextData *UserContextDataType `type:"structure"`
 
 	// The user name of the user you want to register.
@@ -27934,9 +28296,6 @@ func (s *SignUpInput) Validate() error {
 	}
 	if s.Password == nil {
 		invalidParams.Add(request.NewErrParamRequired("Password"))
-	}
-	if s.Password != nil && len(*s.Password) < 6 {
-		invalidParams.Add(request.NewErrParamMinLen("Password", 6))
 	}
 	if s.SecretHash != nil && len(*s.SecretHash) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("SecretHash", 1))
@@ -28083,23 +28442,24 @@ func (s *SignUpOutput) SetUserSub(v string) *SignUpOutput {
 	return s
 }
 
-// The SMS configuration type that includes the settings the Amazon Cognito
-// User Pool must call for the Amazon Simple Notification Service service to
-// send an SMS message from your Amazon Web Services account. The Amazon Cognito
-// User Pool makes the request to the Amazon SNS Service by using an Identity
-// and Access Management role that you provide for your Amazon Web Services
-// account.
+// The SMS configuration type is the settings that your Amazon Cognito user
+// pool must use to send an SMS message from your Amazon Web Services account
+// through Amazon Simple Notification Service. To send SMS messages with Amazon
+// SNS in the Amazon Web Services Region that you want, the Amazon Cognito user
+// pool uses an Identity and Access Management (IAM) role in your Amazon Web
+// Services account.
 type SmsConfigurationType struct {
 	_ struct{} `type:"structure"`
 
-	// The external ID is a value that you should use to add security to your IAM
-	// role that is used to call Amazon SNS to send SMS messages for your user pool.
-	// If you provide an ExternalId, the Amazon Cognito User Pool will include it
-	// when attempting to assume your IAM role so that you can set your roles trust
-	// policy to require the ExternalID. If you use the Amazon Cognito Management
-	// Console to create a role for SMS multi-factor authentication (MFA), Amazon
-	// Cognito will create a role with the required permissions and a trust policy
-	// that demonstrates use of the ExternalId.
+	// The external ID provides additional security for your IAM role. You can use
+	// an ExternalId with the IAM role that you use with Amazon SNS to send SMS
+	// messages for your user pool. If you provide an ExternalId, your Amazon Cognito
+	// user pool includes it in the request to assume your IAM role. You can configure
+	// the role trust policy to require that Amazon Cognito, and any principal,
+	// provide the ExternalID. If you use the Amazon Cognito Management Console
+	// to create a role for SMS multi-factor authentication (MFA), Amazon Cognito
+	// creates a role with the required permissions and a trust policy that demonstrates
+	// use of the ExternalId.
 	//
 	// For more information about the ExternalId of a role, see How to use an external
 	// ID when granting access to your Amazon Web Services resources to a third
@@ -28112,6 +28472,16 @@ type SmsConfigurationType struct {
 	//
 	// SnsCallerArn is a required field
 	SnsCallerArn *string `min:"20" type:"string" required:"true"`
+
+	// The Amazon Web Services Region to use with Amazon SNS integration. You can
+	// choose the same Region as your user pool, or a supported Legacy Amazon SNS
+	// alternate Region.
+	//
+	// Amazon Cognito resources in the Asia Pacific (Seoul) Amazon Web Services
+	// Region must use your Amazon SNS configuration in the Asia Pacific (Tokyo)
+	// Region. For more information, see SMS message settings for Amazon Cognito
+	// user pools (https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-sms-settings.html).
+	SnsRegion *string `min:"5" type:"string"`
 }
 
 // String returns the string representation.
@@ -28141,6 +28511,9 @@ func (s *SmsConfigurationType) Validate() error {
 	if s.SnsCallerArn != nil && len(*s.SnsCallerArn) < 20 {
 		invalidParams.Add(request.NewErrParamMinLen("SnsCallerArn", 20))
 	}
+	if s.SnsRegion != nil && len(*s.SnsRegion) < 5 {
+		invalidParams.Add(request.NewErrParamMinLen("SnsRegion", 5))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -28160,6 +28533,12 @@ func (s *SmsConfigurationType) SetSnsCallerArn(v string) *SmsConfigurationType {
 	return s
 }
 
+// SetSnsRegion sets the SnsRegion field's value.
+func (s *SmsConfigurationType) SetSnsRegion(v string) *SmsConfigurationType {
+	s.SnsRegion = &v
+	return s
+}
+
 // The SMS text message multi-factor authentication (MFA) configuration type.
 type SmsMfaConfigType struct {
 	_ struct{} `type:"structure"`
@@ -28170,7 +28549,12 @@ type SmsMfaConfigType struct {
 	// will be used.
 	SmsAuthenticationMessage *string `min:"6" type:"string"`
 
-	// The SMS configuration.
+	// The SMS configuration with the settings that your Amazon Cognito user pool
+	// must use to send an SMS message from your Amazon Web Services account through
+	// Amazon Simple Notification Service. To request Amazon SNS in the Amazon Web
+	// Services Region that you want, the Amazon Cognito user pool uses an Identity
+	// and Access Management (IAM) role that you provide for your Amazon Web Services
+	// account.
 	SmsConfiguration *SmsConfigurationType `type:"structure"`
 }
 
@@ -28693,21 +29077,24 @@ func (s TagResourceOutput) GoString() string {
 	return s.String()
 }
 
-// The data type for TokenValidityUnits that specifics the time measurements
-// for token validity.
+// The data type TokenValidityUnits specifies the time units you use when you
+// set the duration of ID, access, and refresh tokens.
 type TokenValidityUnitsType struct {
 	_ struct{} `type:"structure"`
 
-	// A time unit in “seconds”, “minutes”, “hours”, or “days” for
-	// the value in AccessTokenValidity, defaulting to hours.
+	// A time unit of seconds, minutes, hours, or days for the value that you set
+	// in the AccessTokenValidity parameter. The default AccessTokenValidity time
+	// unit is hours.
 	AccessToken *string `type:"string" enum:"TimeUnitsType"`
 
-	// A time unit in “seconds”, “minutes”, “hours”, or “days” for
-	// the value in IdTokenValidity, defaulting to hours.
+	// A time unit of seconds, minutes, hours, or days for the value that you set
+	// in the IdTokenValidity parameter. The default IdTokenValidity time unit is
+	// hours.
 	IdToken *string `type:"string" enum:"TimeUnitsType"`
 
-	// A time unit in “seconds”, “minutes”, “hours”, or “days” for
-	// the value in RefreshTokenValidity, defaulting to days.
+	// A time unit of seconds, minutes, hours, or days for the value that you set
+	// in the RefreshTokenValidity parameter. The default RefreshTokenValidity time
+	// unit is days.
 	RefreshToken *string `type:"string" enum:"TimeUnitsType"`
 }
 
@@ -29592,7 +29979,8 @@ func (s UpdateAuthEventFeedbackOutput) GoString() string {
 type UpdateDeviceStatusInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token.
+	// A valid access token that Amazon Cognito issued to the user whose device
+	// status you want to update.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by UpdateDeviceStatusInput's
@@ -29820,16 +30208,16 @@ func (s *UpdateGroupOutput) SetGroup(v *GroupType) *UpdateGroupOutput {
 type UpdateIdentityProviderInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identity provider attribute mapping to be changed.
+	// The IdP attribute mapping to be changed.
 	AttributeMapping map[string]*string `type:"map"`
 
-	// A list of identity provider identifiers.
+	// A list of IdP identifiers.
 	IdpIdentifiers []*string `type:"list"`
 
-	// The identity provider details to be updated, such as MetadataURL and MetadataFile.
+	// The IdP details to be updated, such as MetadataURL and MetadataFile.
 	ProviderDetails map[string]*string `type:"map"`
 
-	// The identity provider name.
+	// The IdP name.
 	//
 	// ProviderName is a required field
 	ProviderName *string `min:"1" type:"string" required:"true"`
@@ -29913,7 +30301,7 @@ func (s *UpdateIdentityProviderInput) SetUserPoolId(v string) *UpdateIdentityPro
 type UpdateIdentityProviderOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The identity provider object.
+	// The IdP object.
 	//
 	// IdentityProvider is a required field
 	IdentityProvider *IdentityProviderType `type:"structure" required:"true"`
@@ -30082,7 +30470,8 @@ func (s *UpdateResourceServerOutput) SetResourceServer(v *ResourceServerType) *U
 type UpdateUserAttributesInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token for the request to update user attributes.
+	// A valid access token that Amazon Cognito issued to the user whose user attributes
+	// you want to update.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by UpdateUserAttributesInput's
@@ -30103,7 +30492,7 @@ type UpdateUserAttributesInput struct {
 	// UpdateUserAttributes request. In your function code in Lambda, you can process
 	// the clientMetadata value to enhance your workflow for your specific needs.
 	//
-	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// For more information, see Customizing user pool Workflows with Lambda Triggers
 	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
 	// in the Amazon Cognito Developer Guide.
 	//
@@ -30125,6 +30514,13 @@ type UpdateUserAttributesInput struct {
 	//
 	// For custom attributes, you must prepend the custom: prefix to the attribute
 	// name.
+	//
+	// If you have set an attribute to require verification before Amazon Cognito
+	// updates its value, this request doesn’t immediately update the value of
+	// that attribute. After your user receives and responds to a verification message
+	// to verify the new value, Amazon Cognito updates the attribute value. Your
+	// user can sign in and receive messages with the original attribute value until
+	// they verify the new value.
 	//
 	// UserAttributes is a required field
 	UserAttributes []*AttributeType `type:"list" required:"true"`
@@ -30229,44 +30625,61 @@ func (s *UpdateUserAttributesOutput) SetCodeDeliveryDetailsList(v []*CodeDeliver
 type UpdateUserPoolClientInput struct {
 	_ struct{} `type:"structure"`
 
-	// The time limit after which the access token is no longer valid and can't
-	// be used.
+	// The access token time limit. After this limit expires, your user can't use
+	// their access token. To specify the time unit for AccessTokenValidity as seconds,
+	// minutes, hours, or days, set a TokenValidityUnits value in your API request.
+	//
+	// For example, when you set AccessTokenValidity to 10 and TokenValidityUnits
+	// to hours, your user can authorize access with their access token for 10 hours.
+	//
+	// The default time unit for AccessTokenValidity in an API request is hours.
+	// Valid range is displayed below in seconds.
 	AccessTokenValidity *int64 `min:"1" type:"integer"`
 
 	// The allowed OAuth flows.
 	//
-	// Set to code to initiate a code grant flow, which provides an authorization
-	// code as the response. This code can be exchanged for access tokens with the
-	// token endpoint.
+	// code
 	//
-	// Set to implicit to specify that the client should get the access token (and,
-	// optionally, ID token, based on scopes) directly.
+	// Use a code grant flow, which provides an authorization code as the response.
+	// This code can be exchanged for access tokens with the /oauth2/token endpoint.
 	//
-	// Set to client_credentials to specify that the client should get the access
-	// token (and, optionally, ID token, based on scopes) from the token endpoint
-	// using a combination of client and client_secret.
-	AllowedOAuthFlows []*string `type:"list"`
+	// implicit
+	//
+	// Issue the access token (and, optionally, ID token, based on scopes) directly
+	// to your user.
+	//
+	// client_credentials
+	//
+	// Issue the access token from the /oauth2/token endpoint directly to a non-person
+	// user using a combination of the client ID and client secret.
+	AllowedOAuthFlows []*string `type:"list" enum:"OAuthFlowType"`
 
 	// Set to true if the client is allowed to follow the OAuth protocol when interacting
 	// with Amazon Cognito user pools.
 	AllowedOAuthFlowsUserPoolClient *bool `type:"boolean"`
 
-	// The allowed OAuth scopes. Possible values provided by OAuth are: phone, email,
-	// openid, and profile. Possible values provided by Amazon Web Services are:
+	// The allowed OAuth scopes. Possible values provided by OAuth are phone, email,
+	// openid, and profile. Possible values provided by Amazon Web Services are
 	// aws.cognito.signin.user.admin. Custom scopes created in Resource Servers
 	// are also supported.
 	AllowedOAuthScopes []*string `type:"list"`
 
-	// The Amazon Pinpoint analytics configuration for collecting metrics for this
-	// user pool.
+	// The Amazon Pinpoint analytics configuration necessary to collect metrics
+	// for this user pool.
 	//
-	// In Amazon Web Services Regions where isn't available, User Pools only supports
-	// sending events to Amazon Pinpoint projects in us-east-1. In Regions where
-	// Pinpoint is available, User Pools will support sending events to Amazon Pinpoint
-	// projects within that same Region.
+	// In Amazon Web Services Regions where Amazon Pinpoint isn't available, user
+	// pools only support sending events to Amazon Pinpoint projects in us-east-1.
+	// In Regions where Amazon Pinpoint is available, user pools support sending
+	// events to Amazon Pinpoint projects within that same Region.
 	AnalyticsConfiguration *AnalyticsConfigurationType `type:"structure"`
 
-	// A list of allowed redirect (callback) URLs for the identity providers.
+	// Amazon Cognito creates a session token for each API request in an authentication
+	// flow. AuthSessionValidity is the duration, in minutes, of that session token.
+	// Your user pool native user must respond to each authentication challenge
+	// before the session expires.
+	AuthSessionValidity *int64 `min:"3" type:"integer"`
+
+	// A list of allowed redirect (callback) URLs for the IdPs.
 	//
 	// A redirect URI must:
 	//
@@ -30314,6 +30727,15 @@ type UpdateUserPoolClientInput struct {
 	// App callback URLs such as myapp://example are also supported.
 	DefaultRedirectURI *string `min:"1" type:"string"`
 
+	// Activates the propagation of additional user context data. For more information
+	// about propagation of user context data, see Adding advanced security to a
+	// user pool (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html).
+	// If you don’t include this parameter, you can't send device fingerprint
+	// information, including source IP address, to Amazon Cognito advanced security.
+	// You can only activate EnablePropagateAdditionalUserContextData in an app
+	// client that has a client secret.
+	EnablePropagateAdditionalUserContextData *bool `type:"boolean"`
+
 	// Activates or deactivates token revocation. For more information about revoking
 	// tokens, see RevokeToken (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_RevokeToken.html).
 	EnableTokenRevocation *bool `type:"boolean"`
@@ -30340,12 +30762,21 @@ type UpdateUserPoolClientInput struct {
 	//    * ALLOW_USER_SRP_AUTH: Enable SRP-based authentication.
 	//
 	//    * ALLOW_REFRESH_TOKEN_AUTH: Enable authflow to refresh tokens.
-	ExplicitAuthFlows []*string `type:"list"`
+	ExplicitAuthFlows []*string `type:"list" enum:"ExplicitAuthFlowsType"`
 
-	// The time limit after which the ID token is no longer valid and can't be used.
+	// The ID token time limit. After this limit expires, your user can't use their
+	// ID token. To specify the time unit for IdTokenValidity as seconds, minutes,
+	// hours, or days, set a TokenValidityUnits value in your API request.
+	//
+	// For example, when you set IdTokenValidity as 10 and TokenValidityUnits as
+	// hours, your user can authenticate their session with their ID token for 10
+	// hours.
+	//
+	// The default time unit for AccessTokenValidity in an API request is hours.
+	// Valid range is displayed below in seconds.
 	IdTokenValidity *int64 `min:"1" type:"integer"`
 
-	// A list of allowed logout URLs for the identity providers.
+	// A list of allowed logout URLs for the IdPs.
 	LogoutURLs []*string `type:"list"`
 
 	// Errors and responses that you want Amazon Cognito APIs to return during authentication,
@@ -30368,16 +30799,28 @@ type UpdateUserPoolClientInput struct {
 	// The read-only attributes of the user pool.
 	ReadAttributes []*string `type:"list"`
 
-	// The time limit, in days, after which the refresh token is no longer valid
-	// and can't be used.
+	// The refresh token time limit. After this limit expires, your user can't use
+	// their refresh token. To specify the time unit for RefreshTokenValidity as
+	// seconds, minutes, hours, or days, set a TokenValidityUnits value in your
+	// API request.
+	//
+	// For example, when you set RefreshTokenValidity as 10 and TokenValidityUnits
+	// as days, your user can refresh their session and retrieve new access and
+	// ID tokens for 10 days.
+	//
+	// The default time unit for RefreshTokenValidity in an API request is days.
+	// You can't set RefreshTokenValidity to 0. If you do, Amazon Cognito overrides
+	// the value with the default value of 30 days. Valid range is displayed below
+	// in seconds.
 	RefreshTokenValidity *int64 `type:"integer"`
 
-	// A list of provider names for the identity providers that are supported on
-	// this client.
+	// A list of provider names for the IdPs that this client supports. The following
+	// are supported: COGNITO, Facebook, Google, SignInWithApple, LoginWithAmazon,
+	// and the names of your own SAML and OIDC providers.
 	SupportedIdentityProviders []*string `type:"list"`
 
-	// The units in which the validity times are represented. Default for RefreshToken
-	// is days, and default for ID and access tokens is hours.
+	// The units in which the validity times are represented. The default unit for
+	// RefreshToken is days, and the default for ID and access tokens is hours.
 	TokenValidityUnits *TokenValidityUnitsType `type:"structure"`
 
 	// The user pool ID for the user pool where you want to update the user pool
@@ -30413,6 +30856,9 @@ func (s *UpdateUserPoolClientInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "UpdateUserPoolClientInput"}
 	if s.AccessTokenValidity != nil && *s.AccessTokenValidity < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("AccessTokenValidity", 1))
+	}
+	if s.AuthSessionValidity != nil && *s.AuthSessionValidity < 3 {
+		invalidParams.Add(request.NewErrParamMinValue("AuthSessionValidity", 3))
 	}
 	if s.ClientId == nil {
 		invalidParams.Add(request.NewErrParamRequired("ClientId"))
@@ -30477,6 +30923,12 @@ func (s *UpdateUserPoolClientInput) SetAnalyticsConfiguration(v *AnalyticsConfig
 	return s
 }
 
+// SetAuthSessionValidity sets the AuthSessionValidity field's value.
+func (s *UpdateUserPoolClientInput) SetAuthSessionValidity(v int64) *UpdateUserPoolClientInput {
+	s.AuthSessionValidity = &v
+	return s
+}
+
 // SetCallbackURLs sets the CallbackURLs field's value.
 func (s *UpdateUserPoolClientInput) SetCallbackURLs(v []*string) *UpdateUserPoolClientInput {
 	s.CallbackURLs = v
@@ -30498,6 +30950,12 @@ func (s *UpdateUserPoolClientInput) SetClientName(v string) *UpdateUserPoolClien
 // SetDefaultRedirectURI sets the DefaultRedirectURI field's value.
 func (s *UpdateUserPoolClientInput) SetDefaultRedirectURI(v string) *UpdateUserPoolClientInput {
 	s.DefaultRedirectURI = &v
+	return s
+}
+
+// SetEnablePropagateAdditionalUserContextData sets the EnablePropagateAdditionalUserContextData field's value.
+func (s *UpdateUserPoolClientInput) SetEnablePropagateAdditionalUserContextData(v bool) *UpdateUserPoolClientInput {
+	s.EnablePropagateAdditionalUserContextData = &v
 	return s
 }
 
@@ -30746,25 +31204,31 @@ type UpdateUserPoolInput struct {
 
 	// The attributes that are automatically verified when Amazon Cognito requests
 	// to update user pools.
-	AutoVerifiedAttributes []*string `type:"list"`
+	AutoVerifiedAttributes []*string `type:"list" enum:"VerifiedAttributeType"`
 
-	// Device configuration.
+	// The device-remembering configuration for a user pool. A null value indicates
+	// that you have deactivated device remembering in your user pool.
+	//
+	// When you provide a value for any DeviceConfiguration field, you activate
+	// the Amazon Cognito device-remembering feature.
 	DeviceConfiguration *DeviceConfigurationType `type:"structure"`
 
-	// Email configuration.
+	// The email configuration of your user pool. The email configuration type sets
+	// your preferred sending method, Amazon Web Services Region, and sender for
+	// email invitation and verification messages from your user pool.
 	EmailConfiguration *EmailConfigurationType `type:"structure"`
 
-	// The contents of the email verification message.
+	// This parameter is no longer used. See VerificationMessageTemplateType (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_VerificationMessageTemplateType.html).
 	EmailVerificationMessage *string `min:"6" type:"string"`
 
-	// The subject of the email verification message.
+	// This parameter is no longer used. See VerificationMessageTemplateType (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_VerificationMessageTemplateType.html).
 	EmailVerificationSubject *string `min:"1" type:"string"`
 
 	// The Lambda configuration information from the request to update the user
 	// pool.
 	LambdaConfig *LambdaConfigType `type:"structure"`
 
-	// Can be one of the following values:
+	// Possible values include:
 	//
 	//    * OFF - MFA tokens aren't required and can't be specified during user
 	//    registration.
@@ -30783,11 +31247,23 @@ type UpdateUserPoolInput struct {
 	// The contents of the SMS authentication message.
 	SmsAuthenticationMessage *string `min:"6" type:"string"`
 
-	// SMS configuration.
+	// The SMS configuration with the settings that your Amazon Cognito user pool
+	// must use to send an SMS message from your Amazon Web Services account through
+	// Amazon Simple Notification Service. To send SMS messages with Amazon SNS
+	// in the Amazon Web Services Region that you want, the Amazon Cognito user
+	// pool uses an Identity and Access Management (IAM) role in your Amazon Web
+	// Services account.
 	SmsConfiguration *SmsConfigurationType `type:"structure"`
 
-	// A container with information about the SMS verification message.
+	// This parameter is no longer used. See VerificationMessageTemplateType (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_VerificationMessageTemplateType.html).
 	SmsVerificationMessage *string `min:"6" type:"string"`
+
+	// The settings for updates to user attributes. These settings include the property
+	// AttributesRequireVerificationBeforeUpdate, a user-pool setting that tells
+	// Amazon Cognito how to handle changes to the value of your users' email address
+	// and phone number attributes. For more information, see Verifying updates
+	// to email addresses and phone numbers (https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html#user-pool-settings-verifications-verify-attribute-updates).
+	UserAttributeUpdateSettings *UserAttributeUpdateSettingsType `type:"structure"`
 
 	// Enables advanced security risk detection. Set the key AdvancedSecurityMode
 	// to the value "AUDIT".
@@ -30971,6 +31447,12 @@ func (s *UpdateUserPoolInput) SetSmsVerificationMessage(v string) *UpdateUserPoo
 	return s
 }
 
+// SetUserAttributeUpdateSettings sets the UserAttributeUpdateSettings field's value.
+func (s *UpdateUserPoolInput) SetUserAttributeUpdateSettings(v *UserAttributeUpdateSettingsType) *UpdateUserPoolInput {
+	s.UserAttributeUpdateSettings = v
+	return s
+}
+
 // SetUserPoolAddOns sets the UserPoolAddOns field's value.
 func (s *UpdateUserPoolInput) SetUserPoolAddOns(v *UserPoolAddOnsType) *UpdateUserPoolInput {
 	s.UserPoolAddOns = v
@@ -31019,16 +31501,72 @@ func (s UpdateUserPoolOutput) GoString() string {
 	return s.String()
 }
 
+// The settings for updates to user attributes. These settings include the property
+// AttributesRequireVerificationBeforeUpdate, a user-pool setting that tells
+// Amazon Cognito how to handle changes to the value of your users' email address
+// and phone number attributes. For more information, see Verifying updates
+// to email addresses and phone numbers (https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html#user-pool-settings-verifications-verify-attribute-updates).
+type UserAttributeUpdateSettingsType struct {
+	_ struct{} `type:"structure"`
+
+	// Requires that your user verifies their email address, phone number, or both
+	// before Amazon Cognito updates the value of that attribute. When you update
+	// a user attribute that has this option activated, Amazon Cognito sends a verification
+	// message to the new phone number or email address. Amazon Cognito doesn’t
+	// change the value of the attribute until your user responds to the verification
+	// message and confirms the new value.
+	//
+	// You can verify an updated email address or phone number with a VerifyUserAttribute
+	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_VerifyUserAttribute.html)
+	// API request. You can also call the UpdateUserAttributes (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_UpdateUserAttributes.html)
+	// or AdminUpdateUserAttributes (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminUpdateUserAttributes.html)
+	// API and set email_verified or phone_number_verified to true.
+	//
+	// When AttributesRequireVerificationBeforeUpdate is false, your user pool doesn't
+	// require that your users verify attribute changes before Amazon Cognito updates
+	// them. In a user pool where AttributesRequireVerificationBeforeUpdate is false,
+	// API operations that change attribute values can immediately update a user’s
+	// email or phone_number attribute.
+	AttributesRequireVerificationBeforeUpdate []*string `type:"list" enum:"VerifiedAttributeType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UserAttributeUpdateSettingsType) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UserAttributeUpdateSettingsType) GoString() string {
+	return s.String()
+}
+
+// SetAttributesRequireVerificationBeforeUpdate sets the AttributesRequireVerificationBeforeUpdate field's value.
+func (s *UserAttributeUpdateSettingsType) SetAttributesRequireVerificationBeforeUpdate(v []*string) *UserAttributeUpdateSettingsType {
+	s.AttributesRequireVerificationBeforeUpdate = v
+	return s
+}
+
 // Contextual data, such as the user's device fingerprint, IP address, or location,
 // used for evaluating the risk of an unexpected event by Amazon Cognito advanced
 // security.
 type UserContextDataType struct {
 	_ struct{} `type:"structure"`
 
-	// Contextual data, such as the user's device fingerprint, IP address, or location,
-	// used for evaluating the risk of an unexpected event by Amazon Cognito advanced
-	// security.
+	// Encoded device-fingerprint details that your app collected with the Amazon
+	// Cognito context data collection library. For more information, see Adding
+	// user device and session data to API requests (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint).
 	EncodedData *string `type:"string"`
+
+	// The source IP address of your user's device.
+	IpAddress *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -31052,6 +31590,12 @@ func (s UserContextDataType) GoString() string {
 // SetEncodedData sets the EncodedData field's value.
 func (s *UserContextDataType) SetEncodedData(v string) *UserContextDataType {
 	s.EncodedData = &v
+	return s
+}
+
+// SetIpAddress sets the IpAddress field's value.
+func (s *UserContextDataType) SetIpAddress(v string) *UserContextDataType {
+	s.IpAddress = &v
 	return s
 }
 
@@ -31651,42 +32195,59 @@ func (s *UserPoolClientDescription) SetUserPoolId(v string) *UserPoolClientDescr
 type UserPoolClientType struct {
 	_ struct{} `type:"structure"`
 
-	// The time limit, specified by tokenValidityUnits, defaulting to hours, after
-	// which the access token is no longer valid and can't be used.
+	// The access token time limit. After this limit expires, your user can't use
+	// their access token. To specify the time unit for AccessTokenValidity as seconds,
+	// minutes, hours, or days, set a TokenValidityUnits value in your API request.
+	//
+	// For example, when you set AccessTokenValidity to 10 and TokenValidityUnits
+	// to hours, your user can authorize access with their access token for 10 hours.
+	//
+	// The default time unit for AccessTokenValidity in an API request is hours.
+	// Valid range is displayed below in seconds.
 	AccessTokenValidity *int64 `min:"1" type:"integer"`
 
 	// The allowed OAuth flows.
 	//
-	// Set to code to initiate a code grant flow, which provides an authorization
-	// code as the response. This code can be exchanged for access tokens with the
-	// token endpoint.
+	// code
 	//
-	// Set to implicit to specify that the client should get the access token (and,
-	// optionally, ID token, based on scopes) directly.
+	// Use a code grant flow, which provides an authorization code as the response.
+	// This code can be exchanged for access tokens with the /oauth2/token endpoint.
 	//
-	// Set to client_credentials to specify that the client should get the access
-	// token (and, optionally, ID token, based on scopes) from the token endpoint
-	// using a combination of client and client_secret.
-	AllowedOAuthFlows []*string `type:"list"`
+	// implicit
+	//
+	// Issue the access token (and, optionally, ID token, based on scopes) directly
+	// to your user.
+	//
+	// client_credentials
+	//
+	// Issue the access token from the /oauth2/token endpoint directly to a non-person
+	// user using a combination of the client ID and client secret.
+	AllowedOAuthFlows []*string `type:"list" enum:"OAuthFlowType"`
 
 	// Set to true if the client is allowed to follow the OAuth protocol when interacting
 	// with Amazon Cognito user pools.
 	AllowedOAuthFlowsUserPoolClient *bool `type:"boolean"`
 
-	// The allowed OAuth scopes. Possible values provided by OAuth are: phone, email,
-	// openid, and profile. Possible values provided by Amazon Web Services are:
-	// aws.cognito.signin.user.admin. Custom scopes created in Resource Servers
-	// are also supported.
+	// The OAuth scopes that your app client supports. Possible values that OAuth
+	// provides are phone, email, openid, and profile. Possible values that Amazon
+	// Web Services provides are aws.cognito.signin.user.admin. Amazon Cognito also
+	// supports custom scopes that you create in Resource Servers.
 	AllowedOAuthScopes []*string `type:"list"`
 
 	// The Amazon Pinpoint analytics configuration for the user pool client.
 	//
-	// Amazon Cognito User Pools only supports sending events to Amazon Pinpoint
+	// Amazon Cognito user pools only support sending events to Amazon Pinpoint
 	// projects in the US East (N. Virginia) us-east-1 Region, regardless of the
-	// Region in which the user pool resides.
+	// Region where the user pool resides.
 	AnalyticsConfiguration *AnalyticsConfigurationType `type:"structure"`
 
-	// A list of allowed redirect (callback) URLs for the identity providers.
+	// Amazon Cognito creates a session token for each API request in an authentication
+	// flow. AuthSessionValidity is the duration, in minutes, of that session token.
+	// Your user pool native user must respond to each authentication challenge
+	// before the session expires.
+	AuthSessionValidity *int64 `min:"3" type:"integer"`
+
+	// A list of allowed redirect (callback) URLs for the IdPs.
 	//
 	// A redirect URI must:
 	//
@@ -31742,6 +32303,24 @@ type UserPoolClientType struct {
 	// App callback URLs such as myapp://example are also supported.
 	DefaultRedirectURI *string `min:"1" type:"string"`
 
+	// When EnablePropagateAdditionalUserContextData is true, Amazon Cognito accepts
+	// an IpAddress value that you send in the UserContextData parameter. The UserContextData
+	// parameter sends information to Amazon Cognito advanced security for risk
+	// analysis. You can send UserContextData when you sign in Amazon Cognito native
+	// users with the InitiateAuth and RespondToAuthChallenge API operations.
+	//
+	// When EnablePropagateAdditionalUserContextData is false, you can't send your
+	// user's source IP address to Amazon Cognito advanced security with unauthenticated
+	// API operations. EnablePropagateAdditionalUserContextData doesn't affect whether
+	// you can send a source IP address in a ContextData parameter with the authenticated
+	// API operations AdminInitiateAuth and AdminRespondToAuthChallenge.
+	//
+	// You can only activate EnablePropagateAdditionalUserContextData in an app
+	// client that has a client secret. For more information about propagation of
+	// user context data, see Adding user device and session data to API requests
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint).
+	EnablePropagateAdditionalUserContextData *bool `type:"boolean"`
+
 	// Indicates whether token revocation is activated for the user pool client.
 	// When you create a new user pool client, token revocation is activated by
 	// default. For more information about revoking tokens, see RevokeToken (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_RevokeToken.html).
@@ -31769,16 +32348,24 @@ type UserPoolClientType struct {
 	//    * ALLOW_USER_SRP_AUTH: Enable SRP-based authentication.
 	//
 	//    * ALLOW_REFRESH_TOKEN_AUTH: Enable authflow to refresh tokens.
-	ExplicitAuthFlows []*string `type:"list"`
+	ExplicitAuthFlows []*string `type:"list" enum:"ExplicitAuthFlowsType"`
 
-	// The time limit specified by tokenValidityUnits, defaulting to hours, after
-	// which the refresh token is no longer valid and can't be used.
+	// The ID token time limit. After this limit expires, your user can't use their
+	// ID token. To specify the time unit for IdTokenValidity as seconds, minutes,
+	// hours, or days, set a TokenValidityUnits value in your API request.
+	//
+	// For example, when you set IdTokenValidity as 10 and TokenValidityUnits as
+	// hours, your user can authenticate their session with their ID token for 10
+	// hours.
+	//
+	// The default time unit for AccessTokenValidity in an API request is hours.
+	// Valid range is displayed below in seconds.
 	IdTokenValidity *int64 `min:"1" type:"integer"`
 
 	// The date the user pool client was last modified.
 	LastModifiedDate *time.Time `type:"timestamp"`
 
-	// A list of allowed logout URLs for the identity providers.
+	// A list of allowed logout URLs for the IdPs.
 	LogoutURLs []*string `type:"list"`
 
 	// Errors and responses that you want Amazon Cognito APIs to return during authentication,
@@ -31794,23 +32381,35 @@ type UserPoolClientType struct {
 	//
 	//    * ENABLED - This prevents user existence-related errors.
 	//
-	//    * LEGACY - This represents the old behavior of Cognito where user existence
-	//    related errors aren't prevented.
+	//    * LEGACY - This represents the old behavior of Amazon Cognito where user
+	//    existence related errors aren't prevented.
 	PreventUserExistenceErrors *string `type:"string" enum:"PreventUserExistenceErrorTypes"`
 
 	// The Read-only attributes.
 	ReadAttributes []*string `type:"list"`
 
-	// The time limit, in days, after which the refresh token is no longer valid
-	// and can't be used.
+	// The refresh token time limit. After this limit expires, your user can't use
+	// their refresh token. To specify the time unit for RefreshTokenValidity as
+	// seconds, minutes, hours, or days, set a TokenValidityUnits value in your
+	// API request.
+	//
+	// For example, when you set RefreshTokenValidity as 10 and TokenValidityUnits
+	// as days, your user can refresh their session and retrieve new access and
+	// ID tokens for 10 days.
+	//
+	// The default time unit for RefreshTokenValidity in an API request is days.
+	// You can't set RefreshTokenValidity to 0. If you do, Amazon Cognito overrides
+	// the value with the default value of 30 days. Valid range is displayed below
+	// in seconds.
 	RefreshTokenValidity *int64 `type:"integer"`
 
-	// A list of provider names for the identity providers that are supported on
-	// this client.
+	// A list of provider names for the IdPs that this client supports. The following
+	// are supported: COGNITO, Facebook, Google, SignInWithApple, LoginWithAmazon,
+	// and the names of your own SAML and OIDC providers.
 	SupportedIdentityProviders []*string `type:"list"`
 
-	// The time units used to specify the token validity times of their respective
-	// token.
+	// The time units used to specify the token validity times of each token type:
+	// ID, access, and refresh.
 	TokenValidityUnits *TokenValidityUnitsType `type:"structure"`
 
 	// The user pool ID for the user pool client.
@@ -31868,6 +32467,12 @@ func (s *UserPoolClientType) SetAnalyticsConfiguration(v *AnalyticsConfiguration
 	return s
 }
 
+// SetAuthSessionValidity sets the AuthSessionValidity field's value.
+func (s *UserPoolClientType) SetAuthSessionValidity(v int64) *UserPoolClientType {
+	s.AuthSessionValidity = &v
+	return s
+}
+
 // SetCallbackURLs sets the CallbackURLs field's value.
 func (s *UserPoolClientType) SetCallbackURLs(v []*string) *UserPoolClientType {
 	s.CallbackURLs = v
@@ -31901,6 +32506,12 @@ func (s *UserPoolClientType) SetCreationDate(v time.Time) *UserPoolClientType {
 // SetDefaultRedirectURI sets the DefaultRedirectURI field's value.
 func (s *UserPoolClientType) SetDefaultRedirectURI(v string) *UserPoolClientType {
 	s.DefaultRedirectURI = &v
+	return s
+}
+
+// SetEnablePropagateAdditionalUserContextData sets the EnablePropagateAdditionalUserContextData field's value.
+func (s *UserPoolClientType) SetEnablePropagateAdditionalUserContextData(v bool) *UserPoolClientType {
+	s.EnablePropagateAdditionalUserContextData = &v
 	return s
 }
 
@@ -32181,13 +32792,13 @@ type UserPoolType struct {
 	AdminCreateUserConfig *AdminCreateUserConfigType `type:"structure"`
 
 	// The attributes that are aliased in a user pool.
-	AliasAttributes []*string `type:"list"`
+	AliasAttributes []*string `type:"list" enum:"AliasAttributeType"`
 
 	// The Amazon Resource Name (ARN) for the user pool.
 	Arn *string `min:"20" type:"string"`
 
 	// The attributes that are auto-verified in a user pool.
-	AutoVerifiedAttributes []*string `type:"list"`
+	AutoVerifiedAttributes []*string `type:"list" enum:"VerifiedAttributeType"`
 
 	// The date the user pool was created.
 	CreationDate *time.Time `type:"timestamp"`
@@ -32200,22 +32811,29 @@ type UserPoolType struct {
 	// Using Your Own Domain for the Hosted UI (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-add-custom-domain.html).
 	CustomDomain *string `min:"1" type:"string"`
 
-	// The device configuration.
+	// The device-remembering configuration for a user pool. A null value indicates
+	// that you have deactivated device remembering in your user pool.
+	//
+	// When you provide a value for any DeviceConfiguration field, you activate
+	// the Amazon Cognito device-remembering feature.
 	DeviceConfiguration *DeviceConfigurationType `type:"structure"`
 
 	// The domain prefix, if the user pool has a domain associated with it.
 	Domain *string `min:"1" type:"string"`
 
-	// The email configuration.
+	// The email configuration of your user pool. The email configuration type sets
+	// your preferred sending method, Amazon Web Services Region, and sender for
+	// messages tfrom your user pool.
 	EmailConfiguration *EmailConfigurationType `type:"structure"`
 
-	// The reason why the email configuration can't send the messages to your users.
+	// Deprecated. Review error codes from API requests with EventSource:cognito-idp.amazonaws.com
+	// in CloudTrail for information about problems with user pool email configuration.
 	EmailConfigurationFailure *string `type:"string"`
 
-	// The contents of the email verification message.
+	// This parameter is no longer used. See VerificationMessageTemplateType (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_VerificationMessageTemplateType.html).
 	EmailVerificationMessage *string `min:"6" type:"string"`
 
-	// The subject of the email verification message.
+	// This parameter is no longer used. See VerificationMessageTemplateType (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_VerificationMessageTemplateType.html).
 	EmailVerificationSubject *string `min:"1" type:"string"`
 
 	// A number estimating the size of the user pool.
@@ -32253,7 +32871,12 @@ type UserPoolType struct {
 	// The contents of the SMS authentication message.
 	SmsAuthenticationMessage *string `min:"6" type:"string"`
 
-	// The SMS configuration.
+	// The SMS configuration with the settings that your Amazon Cognito user pool
+	// must use to send an SMS message from your Amazon Web Services account through
+	// Amazon Simple Notification Service. To send SMS messages with Amazon SNS
+	// in the Amazon Web Services Region that you want, the Amazon Cognito user
+	// pool uses an Identity and Access Management (IAM) role in your Amazon Web
+	// Services account.
 	SmsConfiguration *SmsConfigurationType `type:"structure"`
 
 	// The reason why the SMS configuration can't send the messages to your users.
@@ -32261,22 +32884,33 @@ type UserPoolType struct {
 	// This message might include comma-separated values to describe why your SMS
 	// configuration can't send messages to user pool end users.
 	//
-	//    * InvalidSmsRoleAccessPolicyException - The Identity and Access Management
-	//    role that Amazon Cognito uses to send SMS messages isn't properly configured.
-	//    For more information, see SmsConfigurationType (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_SmsConfigurationType.html).
+	// InvalidSmsRoleAccessPolicyException
 	//
-	//    * SNSSandbox - The Amazon Web Services account is in SNS Sandbox and messages
-	//    will only reach verified end users. This parameter won’t get populated
-	//    with SNSSandbox if the IAM user creating the user pool doesn’t have
-	//    SNS permissions. To learn how to move your Amazon Web Services account
-	//    out of the sandbox, see Moving out of the SMS sandbox (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox-moving-to-production.html).
+	// The Identity and Access Management role that Amazon Cognito uses to send
+	// SMS messages isn't properly configured. For more information, see SmsConfigurationType
+	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_SmsConfigurationType.html).
+	//
+	// SNSSandbox
+	//
+	// The Amazon Web Services account is in the SNS SMS Sandbox and messages will
+	// only reach verified end users. This parameter won’t get populated with
+	// SNSSandbox if the IAM user creating the user pool doesn’t have SNS permissions.
+	// To learn how to move your Amazon Web Services account out of the sandbox,
+	// see Moving out of the SMS sandbox (https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox-moving-to-production.html).
 	SmsConfigurationFailure *string `type:"string"`
 
-	// The contents of the SMS verification message.
+	// This parameter is no longer used. See VerificationMessageTemplateType (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_VerificationMessageTemplateType.html).
 	SmsVerificationMessage *string `min:"6" type:"string"`
 
 	// The status of a user pool.
 	Status *string `type:"string" enum:"StatusType"`
+
+	// The settings for updates to user attributes. These settings include the property
+	// AttributesRequireVerificationBeforeUpdate, a user-pool setting that tells
+	// Amazon Cognito how to handle changes to the value of your users' email address
+	// and phone number attributes. For more information, see Verifying updates
+	// to email addresses and phone numbers (https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-email-phone-verification.html#user-pool-settings-verifications-verify-attribute-updates).
+	UserAttributeUpdateSettings *UserAttributeUpdateSettingsType `type:"structure"`
 
 	// The user pool add-ons.
 	UserPoolAddOns *UserPoolAddOnsType `type:"structure"`
@@ -32288,7 +32922,7 @@ type UserPoolType struct {
 
 	// Specifies whether a user can use an email address or phone number as a username
 	// when they sign up.
-	UsernameAttributes []*string `type:"list"`
+	UsernameAttributes []*string `type:"list" enum:"UsernameAttributeType"`
 
 	// Case sensitivity of the username input for the selected sign-in option. For
 	// example, when case sensitivity is set to False, users can sign in using either
@@ -32474,6 +33108,12 @@ func (s *UserPoolType) SetStatus(v string) *UserPoolType {
 	return s
 }
 
+// SetUserAttributeUpdateSettings sets the UserAttributeUpdateSettings field's value.
+func (s *UserPoolType) SetUserAttributeUpdateSettings(v *UserAttributeUpdateSettingsType) *UserPoolType {
+	s.UserAttributeUpdateSettings = v
+	return s
+}
+
 // SetUserPoolAddOns sets the UserPoolAddOns field's value.
 func (s *UserPoolType) SetUserPoolAddOns(v *UserPoolAddOnsType) *UserPoolType {
 	s.UserPoolAddOns = v
@@ -32504,7 +33144,7 @@ func (s *UserPoolType) SetVerificationMessageTemplate(v *VerificationMessageTemp
 	return s
 }
 
-// The user type.
+// A user profile in a Amazon Cognito user pool.
 type UserType struct {
 	_ struct{} `type:"structure"`
 
@@ -32529,9 +33169,9 @@ type UserType struct {
 	//
 	//    * CONFIRMED - User has been confirmed.
 	//
-	//    * ARCHIVED - User is no longer active.
+	//    * EXTERNAL_PROVIDER - User signed in with a third-party IdP.
 	//
-	//    * COMPROMISED - User is disabled due to a potential security threat.
+	//    * ARCHIVED - User is no longer active.
 	//
 	//    * UNKNOWN - User status isn't known.
 	//
@@ -32615,19 +33255,23 @@ func (s *UserType) SetUsername(v string) *UserType {
 type UsernameConfigurationType struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies whether username case sensitivity will be applied for all users
+	// Specifies whether user name case sensitivity will be applied for all users
 	// in the user pool through Amazon Cognito APIs.
 	//
 	// Valid values include:
 	//
-	//    * True : Enables case sensitivity for all username input. When this option
-	//    is set to True, users must sign in using the exact capitalization of their
-	//    given username, such as “UserName”. This is the default value.
+	// True
 	//
-	//    * False : Enables case insensitivity for all username input. For example,
-	//    when this option is set to False, users can sign in using either "username"
-	//    or "Username". This option also enables both preferred_username and email
-	//    alias to be case insensitive, in addition to the username attribute.
+	// Enables case sensitivity for all username input. When this option is set
+	// to True, users must sign in using the exact capitalization of their given
+	// username, such as “UserName”. This is the default value.
+	//
+	// False
+	//
+	// Enables case insensitivity for all username input. For example, when this
+	// option is set to False, users can sign in using either "username" or "Username".
+	// This option also enables both preferred_username and email alias to be case
+	// insensitive, in addition to the username attribute.
 	//
 	// CaseSensitive is a required field
 	CaseSensitive *bool `type:"boolean" required:"true"`
@@ -32743,28 +33387,38 @@ type VerificationMessageTemplateType struct {
 	// The default email option.
 	DefaultEmailOption *string `type:"string" enum:"DefaultEmailOptionType"`
 
-	// The email message template. EmailMessage is allowed only if EmailSendingAccount
+	// The template for email messages that Amazon Cognito sends to your users.
+	// You can set an EmailMessage template only if the value of EmailSendingAccount
 	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
-	// is DEVELOPER.
+	// is DEVELOPER. When your EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER, your user pool sends email messages with your own Amazon SES
+	// configuration.
 	EmailMessage *string `min:"6" type:"string"`
 
-	// The email message template for sending a confirmation link to the user. EmailMessageByLink
-	// is allowed only if EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
-	// is DEVELOPER.
+	// The email message template for sending a confirmation link to the user. You
+	// can set an EmailMessageByLink template only if the value of EmailSendingAccount
+	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER. When your EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER, your user pool sends email messages with your own Amazon SES
+	// configuration.
 	EmailMessageByLink *string `min:"6" type:"string"`
 
-	// The subject line for the email message template. EmailSubject is allowed
-	// only if EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
-	// is DEVELOPER.
+	// The subject line for the email message template. You can set an EmailSubject
+	// template only if the value of EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER. When your EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER, your user pool sends email messages with your own Amazon SES
+	// configuration.
 	EmailSubject *string `min:"1" type:"string"`
 
 	// The subject line for the email message template for sending a confirmation
-	// link to the user. EmailSubjectByLink is allowed only EmailSendingAccount
-	// (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
-	// is DEVELOPER.
+	// link to the user. You can set an EmailSubjectByLink template only if the
+	// value of EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER. When your EmailSendingAccount (https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_EmailConfigurationType.html#CognitoUserPools-Type-EmailConfigurationType-EmailSendingAccount)
+	// is DEVELOPER, your user pool sends email messages with your own Amazon SES
+	// configuration.
 	EmailSubjectByLink *string `min:"1" type:"string"`
 
-	// The SMS message template.
+	// The template for SMS messages that Amazon Cognito sends to your users.
 	SmsMessage *string `min:"6" type:"string"`
 }
 
@@ -32850,7 +33504,8 @@ func (s *VerificationMessageTemplateType) SetSmsMessage(v string) *VerificationM
 type VerifySoftwareTokenInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token.
+	// A valid access token that Amazon Cognito issued to the user whose software
+	// token you want to verify.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by VerifySoftwareTokenInput's
@@ -32977,7 +33632,8 @@ func (s *VerifySoftwareTokenOutput) SetStatus(v string) *VerifySoftwareTokenOutp
 type VerifyUserAttributeInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token of the request to verify user attributes.
+	// A valid access token that Amazon Cognito issued to the user whose user attributes
+	// you want to verify.
 	//
 	// AccessToken is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by VerifyUserAttributeInput's
@@ -33439,18 +34095,22 @@ func EventFilterType_Values() []string {
 }
 
 const (
-	// EventResponseTypeSuccess is a EventResponseType enum value
-	EventResponseTypeSuccess = "Success"
+	// EventResponseTypePass is a EventResponseType enum value
+	EventResponseTypePass = "Pass"
 
-	// EventResponseTypeFailure is a EventResponseType enum value
-	EventResponseTypeFailure = "Failure"
+	// EventResponseTypeFail is a EventResponseType enum value
+	EventResponseTypeFail = "Fail"
+
+	// EventResponseTypeInProgress is a EventResponseType enum value
+	EventResponseTypeInProgress = "InProgress"
 )
 
 // EventResponseType_Values returns all elements of the EventResponseType enum
 func EventResponseType_Values() []string {
 	return []string{
-		EventResponseTypeSuccess,
-		EventResponseTypeFailure,
+		EventResponseTypePass,
+		EventResponseTypeFail,
+		EventResponseTypeInProgress,
 	}
 }
 
@@ -33463,6 +34123,12 @@ const (
 
 	// EventTypeForgotPassword is a EventType enum value
 	EventTypeForgotPassword = "ForgotPassword"
+
+	// EventTypePasswordChange is a EventType enum value
+	EventTypePasswordChange = "PasswordChange"
+
+	// EventTypeResendCode is a EventType enum value
+	EventTypeResendCode = "ResendCode"
 )
 
 // EventType_Values returns all elements of the EventType enum
@@ -33471,6 +34137,8 @@ func EventType_Values() []string {
 		EventTypeSignIn,
 		EventTypeSignUp,
 		EventTypeForgotPassword,
+		EventTypePasswordChange,
+		EventTypeResendCode,
 	}
 }
 

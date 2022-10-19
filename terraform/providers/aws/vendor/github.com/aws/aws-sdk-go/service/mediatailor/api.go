@@ -29,14 +29,13 @@ const opConfigureLogsForPlaybackConfiguration = "ConfigureLogsForPlaybackConfigu
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ConfigureLogsForPlaybackConfigurationRequest method.
+//	req, resp := client.ConfigureLogsForPlaybackConfigurationRequest(params)
 //
-//    // Example sending a request using the ConfigureLogsForPlaybackConfigurationRequest method.
-//    req, resp := client.ConfigureLogsForPlaybackConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/ConfigureLogsForPlaybackConfiguration
 func (c *MediaTailor) ConfigureLogsForPlaybackConfigurationRequest(input *ConfigureLogsForPlaybackConfigurationInput) (req *request.Request, output *ConfigureLogsForPlaybackConfigurationOutput) {
@@ -103,14 +102,13 @@ const opCreateChannel = "CreateChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateChannelRequest method.
+//	req, resp := client.CreateChannelRequest(params)
 //
-//    // Example sending a request using the CreateChannelRequest method.
-//    req, resp := client.CreateChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/CreateChannel
 func (c *MediaTailor) CreateChannelRequest(input *CreateChannelInput) (req *request.Request, output *CreateChannelOutput) {
@@ -161,6 +159,79 @@ func (c *MediaTailor) CreateChannelWithContext(ctx aws.Context, input *CreateCha
 	return out, req.Send()
 }
 
+const opCreateLiveSource = "CreateLiveSource"
+
+// CreateLiveSourceRequest generates a "aws/request.Request" representing the
+// client's request for the CreateLiveSource operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateLiveSource for more information on using the CreateLiveSource
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CreateLiveSourceRequest method.
+//	req, resp := client.CreateLiveSourceRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/CreateLiveSource
+func (c *MediaTailor) CreateLiveSourceRequest(input *CreateLiveSourceInput) (req *request.Request, output *CreateLiveSourceOutput) {
+	op := &request.Operation{
+		Name:       opCreateLiveSource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/sourceLocation/{sourceLocationName}/liveSource/{liveSourceName}",
+	}
+
+	if input == nil {
+		input = &CreateLiveSourceInput{}
+	}
+
+	output = &CreateLiveSourceOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateLiveSource API operation for AWS MediaTailor.
+//
+// Creates name for a specific live source in a source location.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS MediaTailor's
+// API operation CreateLiveSource for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/CreateLiveSource
+func (c *MediaTailor) CreateLiveSource(input *CreateLiveSourceInput) (*CreateLiveSourceOutput, error) {
+	req, out := c.CreateLiveSourceRequest(input)
+	return out, req.Send()
+}
+
+// CreateLiveSourceWithContext is the same as CreateLiveSource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateLiveSource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *MediaTailor) CreateLiveSourceWithContext(ctx aws.Context, input *CreateLiveSourceInput, opts ...request.Option) (*CreateLiveSourceOutput, error) {
+	req, out := c.CreateLiveSourceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreatePrefetchSchedule = "CreatePrefetchSchedule"
 
 // CreatePrefetchScheduleRequest generates a "aws/request.Request" representing the
@@ -177,14 +248,13 @@ const opCreatePrefetchSchedule = "CreatePrefetchSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreatePrefetchScheduleRequest method.
+//	req, resp := client.CreatePrefetchScheduleRequest(params)
 //
-//    // Example sending a request using the CreatePrefetchScheduleRequest method.
-//    req, resp := client.CreatePrefetchScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/CreatePrefetchSchedule
 func (c *MediaTailor) CreatePrefetchScheduleRequest(input *CreatePrefetchScheduleInput) (req *request.Request, output *CreatePrefetchScheduleOutput) {
@@ -251,14 +321,13 @@ const opCreateProgram = "CreateProgram"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateProgramRequest method.
+//	req, resp := client.CreateProgramRequest(params)
 //
-//    // Example sending a request using the CreateProgramRequest method.
-//    req, resp := client.CreateProgramRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/CreateProgram
 func (c *MediaTailor) CreateProgramRequest(input *CreateProgramInput) (req *request.Request, output *CreateProgramOutput) {
@@ -325,14 +394,13 @@ const opCreateSourceLocation = "CreateSourceLocation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateSourceLocationRequest method.
+//	req, resp := client.CreateSourceLocationRequest(params)
 //
-//    // Example sending a request using the CreateSourceLocationRequest method.
-//    req, resp := client.CreateSourceLocationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/CreateSourceLocation
 func (c *MediaTailor) CreateSourceLocationRequest(input *CreateSourceLocationInput) (req *request.Request, output *CreateSourceLocationOutput) {
@@ -399,14 +467,13 @@ const opCreateVodSource = "CreateVodSource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateVodSourceRequest method.
+//	req, resp := client.CreateVodSourceRequest(params)
 //
-//    // Example sending a request using the CreateVodSourceRequest method.
-//    req, resp := client.CreateVodSourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/CreateVodSource
 func (c *MediaTailor) CreateVodSourceRequest(input *CreateVodSourceInput) (req *request.Request, output *CreateVodSourceOutput) {
@@ -473,14 +540,13 @@ const opDeleteChannel = "DeleteChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteChannelRequest method.
+//	req, resp := client.DeleteChannelRequest(params)
 //
-//    // Example sending a request using the DeleteChannelRequest method.
-//    req, resp := client.DeleteChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DeleteChannel
 func (c *MediaTailor) DeleteChannelRequest(input *DeleteChannelInput) (req *request.Request, output *DeleteChannelOutput) {
@@ -548,14 +614,13 @@ const opDeleteChannelPolicy = "DeleteChannelPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteChannelPolicyRequest method.
+//	req, resp := client.DeleteChannelPolicyRequest(params)
 //
-//    // Example sending a request using the DeleteChannelPolicyRequest method.
-//    req, resp := client.DeleteChannelPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DeleteChannelPolicy
 func (c *MediaTailor) DeleteChannelPolicyRequest(input *DeleteChannelPolicyInput) (req *request.Request, output *DeleteChannelPolicyOutput) {
@@ -607,6 +672,80 @@ func (c *MediaTailor) DeleteChannelPolicyWithContext(ctx aws.Context, input *Del
 	return out, req.Send()
 }
 
+const opDeleteLiveSource = "DeleteLiveSource"
+
+// DeleteLiveSourceRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteLiveSource operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteLiveSource for more information on using the DeleteLiveSource
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DeleteLiveSourceRequest method.
+//	req, resp := client.DeleteLiveSourceRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DeleteLiveSource
+func (c *MediaTailor) DeleteLiveSourceRequest(input *DeleteLiveSourceInput) (req *request.Request, output *DeleteLiveSourceOutput) {
+	op := &request.Operation{
+		Name:       opDeleteLiveSource,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/sourceLocation/{sourceLocationName}/liveSource/{liveSourceName}",
+	}
+
+	if input == nil {
+		input = &DeleteLiveSourceInput{}
+	}
+
+	output = &DeleteLiveSourceOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteLiveSource API operation for AWS MediaTailor.
+//
+// Deletes a specific live source in a specific source location.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS MediaTailor's
+// API operation DeleteLiveSource for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DeleteLiveSource
+func (c *MediaTailor) DeleteLiveSource(input *DeleteLiveSourceInput) (*DeleteLiveSourceOutput, error) {
+	req, out := c.DeleteLiveSourceRequest(input)
+	return out, req.Send()
+}
+
+// DeleteLiveSourceWithContext is the same as DeleteLiveSource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteLiveSource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *MediaTailor) DeleteLiveSourceWithContext(ctx aws.Context, input *DeleteLiveSourceInput, opts ...request.Option) (*DeleteLiveSourceOutput, error) {
+	req, out := c.DeleteLiveSourceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeletePlaybackConfiguration = "DeletePlaybackConfiguration"
 
 // DeletePlaybackConfigurationRequest generates a "aws/request.Request" representing the
@@ -623,14 +762,13 @@ const opDeletePlaybackConfiguration = "DeletePlaybackConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeletePlaybackConfigurationRequest method.
+//	req, resp := client.DeletePlaybackConfigurationRequest(params)
 //
-//    // Example sending a request using the DeletePlaybackConfigurationRequest method.
-//    req, resp := client.DeletePlaybackConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DeletePlaybackConfiguration
 func (c *MediaTailor) DeletePlaybackConfigurationRequest(input *DeletePlaybackConfigurationInput) (req *request.Request, output *DeletePlaybackConfigurationOutput) {
@@ -698,14 +836,13 @@ const opDeletePrefetchSchedule = "DeletePrefetchSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeletePrefetchScheduleRequest method.
+//	req, resp := client.DeletePrefetchScheduleRequest(params)
 //
-//    // Example sending a request using the DeletePrefetchScheduleRequest method.
-//    req, resp := client.DeletePrefetchScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DeletePrefetchSchedule
 func (c *MediaTailor) DeletePrefetchScheduleRequest(input *DeletePrefetchScheduleInput) (req *request.Request, output *DeletePrefetchScheduleOutput) {
@@ -775,14 +912,13 @@ const opDeleteProgram = "DeleteProgram"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteProgramRequest method.
+//	req, resp := client.DeleteProgramRequest(params)
 //
-//    // Example sending a request using the DeleteProgramRequest method.
-//    req, resp := client.DeleteProgramRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DeleteProgram
 func (c *MediaTailor) DeleteProgramRequest(input *DeleteProgramInput) (req *request.Request, output *DeleteProgramOutput) {
@@ -850,14 +986,13 @@ const opDeleteSourceLocation = "DeleteSourceLocation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteSourceLocationRequest method.
+//	req, resp := client.DeleteSourceLocationRequest(params)
 //
-//    // Example sending a request using the DeleteSourceLocationRequest method.
-//    req, resp := client.DeleteSourceLocationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DeleteSourceLocation
 func (c *MediaTailor) DeleteSourceLocationRequest(input *DeleteSourceLocationInput) (req *request.Request, output *DeleteSourceLocationOutput) {
@@ -925,14 +1060,13 @@ const opDeleteVodSource = "DeleteVodSource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteVodSourceRequest method.
+//	req, resp := client.DeleteVodSourceRequest(params)
 //
-//    // Example sending a request using the DeleteVodSourceRequest method.
-//    req, resp := client.DeleteVodSourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DeleteVodSource
 func (c *MediaTailor) DeleteVodSourceRequest(input *DeleteVodSourceInput) (req *request.Request, output *DeleteVodSourceOutput) {
@@ -1000,14 +1134,13 @@ const opDescribeChannel = "DescribeChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeChannelRequest method.
+//	req, resp := client.DescribeChannelRequest(params)
 //
-//    // Example sending a request using the DescribeChannelRequest method.
-//    req, resp := client.DescribeChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DescribeChannel
 func (c *MediaTailor) DescribeChannelRequest(input *DescribeChannelInput) (req *request.Request, output *DescribeChannelOutput) {
@@ -1058,6 +1191,79 @@ func (c *MediaTailor) DescribeChannelWithContext(ctx aws.Context, input *Describ
 	return out, req.Send()
 }
 
+const opDescribeLiveSource = "DescribeLiveSource"
+
+// DescribeLiveSourceRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeLiveSource operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeLiveSource for more information on using the DescribeLiveSource
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeLiveSourceRequest method.
+//	req, resp := client.DescribeLiveSourceRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DescribeLiveSource
+func (c *MediaTailor) DescribeLiveSourceRequest(input *DescribeLiveSourceInput) (req *request.Request, output *DescribeLiveSourceOutput) {
+	op := &request.Operation{
+		Name:       opDescribeLiveSource,
+		HTTPMethod: "GET",
+		HTTPPath:   "/sourceLocation/{sourceLocationName}/liveSource/{liveSourceName}",
+	}
+
+	if input == nil {
+		input = &DescribeLiveSourceInput{}
+	}
+
+	output = &DescribeLiveSourceOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeLiveSource API operation for AWS MediaTailor.
+//
+// Provides details about a specific live source in a specific source location.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS MediaTailor's
+// API operation DescribeLiveSource for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DescribeLiveSource
+func (c *MediaTailor) DescribeLiveSource(input *DescribeLiveSourceInput) (*DescribeLiveSourceOutput, error) {
+	req, out := c.DescribeLiveSourceRequest(input)
+	return out, req.Send()
+}
+
+// DescribeLiveSourceWithContext is the same as DescribeLiveSource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeLiveSource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *MediaTailor) DescribeLiveSourceWithContext(ctx aws.Context, input *DescribeLiveSourceInput, opts ...request.Option) (*DescribeLiveSourceOutput, error) {
+	req, out := c.DescribeLiveSourceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeProgram = "DescribeProgram"
 
 // DescribeProgramRequest generates a "aws/request.Request" representing the
@@ -1074,14 +1280,13 @@ const opDescribeProgram = "DescribeProgram"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeProgramRequest method.
+//	req, resp := client.DescribeProgramRequest(params)
 //
-//    // Example sending a request using the DescribeProgramRequest method.
-//    req, resp := client.DescribeProgramRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DescribeProgram
 func (c *MediaTailor) DescribeProgramRequest(input *DescribeProgramInput) (req *request.Request, output *DescribeProgramOutput) {
@@ -1148,14 +1353,13 @@ const opDescribeSourceLocation = "DescribeSourceLocation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeSourceLocationRequest method.
+//	req, resp := client.DescribeSourceLocationRequest(params)
 //
-//    // Example sending a request using the DescribeSourceLocationRequest method.
-//    req, resp := client.DescribeSourceLocationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DescribeSourceLocation
 func (c *MediaTailor) DescribeSourceLocationRequest(input *DescribeSourceLocationInput) (req *request.Request, output *DescribeSourceLocationOutput) {
@@ -1222,14 +1426,13 @@ const opDescribeVodSource = "DescribeVodSource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeVodSourceRequest method.
+//	req, resp := client.DescribeVodSourceRequest(params)
 //
-//    // Example sending a request using the DescribeVodSourceRequest method.
-//    req, resp := client.DescribeVodSourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/DescribeVodSource
 func (c *MediaTailor) DescribeVodSourceRequest(input *DescribeVodSourceInput) (req *request.Request, output *DescribeVodSourceOutput) {
@@ -1296,14 +1499,13 @@ const opGetChannelPolicy = "GetChannelPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetChannelPolicyRequest method.
+//	req, resp := client.GetChannelPolicyRequest(params)
 //
-//    // Example sending a request using the GetChannelPolicyRequest method.
-//    req, resp := client.GetChannelPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/GetChannelPolicy
 func (c *MediaTailor) GetChannelPolicyRequest(input *GetChannelPolicyInput) (req *request.Request, output *GetChannelPolicyOutput) {
@@ -1370,14 +1572,13 @@ const opGetChannelSchedule = "GetChannelSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetChannelScheduleRequest method.
+//	req, resp := client.GetChannelScheduleRequest(params)
 //
-//    // Example sending a request using the GetChannelScheduleRequest method.
-//    req, resp := client.GetChannelScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/GetChannelSchedule
 func (c *MediaTailor) GetChannelScheduleRequest(input *GetChannelScheduleInput) (req *request.Request, output *GetChannelScheduleOutput) {
@@ -1442,15 +1643,14 @@ func (c *MediaTailor) GetChannelScheduleWithContext(ctx aws.Context, input *GetC
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a GetChannelSchedule operation.
-//    pageNum := 0
-//    err := client.GetChannelSchedulePages(params,
-//        func(page *mediatailor.GetChannelScheduleOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a GetChannelSchedule operation.
+//	pageNum := 0
+//	err := client.GetChannelSchedulePages(params,
+//	    func(page *mediatailor.GetChannelScheduleOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaTailor) GetChannelSchedulePages(input *GetChannelScheduleInput, fn func(*GetChannelScheduleOutput, bool) bool) error {
 	return c.GetChannelSchedulePagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1502,14 +1702,13 @@ const opGetPlaybackConfiguration = "GetPlaybackConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetPlaybackConfigurationRequest method.
+//	req, resp := client.GetPlaybackConfigurationRequest(params)
 //
-//    // Example sending a request using the GetPlaybackConfigurationRequest method.
-//    req, resp := client.GetPlaybackConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/GetPlaybackConfiguration
 func (c *MediaTailor) GetPlaybackConfigurationRequest(input *GetPlaybackConfigurationInput) (req *request.Request, output *GetPlaybackConfigurationOutput) {
@@ -1576,14 +1775,13 @@ const opGetPrefetchSchedule = "GetPrefetchSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetPrefetchScheduleRequest method.
+//	req, resp := client.GetPrefetchScheduleRequest(params)
 //
-//    // Example sending a request using the GetPrefetchScheduleRequest method.
-//    req, resp := client.GetPrefetchScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/GetPrefetchSchedule
 func (c *MediaTailor) GetPrefetchScheduleRequest(input *GetPrefetchScheduleInput) (req *request.Request, output *GetPrefetchScheduleOutput) {
@@ -1652,14 +1850,13 @@ const opListAlerts = "ListAlerts"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAlertsRequest method.
+//	req, resp := client.ListAlertsRequest(params)
 //
-//    // Example sending a request using the ListAlertsRequest method.
-//    req, resp := client.ListAlertsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/ListAlerts
 func (c *MediaTailor) ListAlertsRequest(input *ListAlertsInput) (req *request.Request, output *ListAlertsOutput) {
@@ -1724,15 +1921,14 @@ func (c *MediaTailor) ListAlertsWithContext(ctx aws.Context, input *ListAlertsIn
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAlerts operation.
-//    pageNum := 0
-//    err := client.ListAlertsPages(params,
-//        func(page *mediatailor.ListAlertsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAlerts operation.
+//	pageNum := 0
+//	err := client.ListAlertsPages(params,
+//	    func(page *mediatailor.ListAlertsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaTailor) ListAlertsPages(input *ListAlertsInput, fn func(*ListAlertsOutput, bool) bool) error {
 	return c.ListAlertsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1784,14 +1980,13 @@ const opListChannels = "ListChannels"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListChannelsRequest method.
+//	req, resp := client.ListChannelsRequest(params)
 //
-//    // Example sending a request using the ListChannelsRequest method.
-//    req, resp := client.ListChannelsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/ListChannels
 func (c *MediaTailor) ListChannelsRequest(input *ListChannelsInput) (req *request.Request, output *ListChannelsOutput) {
@@ -1856,15 +2051,14 @@ func (c *MediaTailor) ListChannelsWithContext(ctx aws.Context, input *ListChanne
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListChannels operation.
-//    pageNum := 0
-//    err := client.ListChannelsPages(params,
-//        func(page *mediatailor.ListChannelsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListChannels operation.
+//	pageNum := 0
+//	err := client.ListChannelsPages(params,
+//	    func(page *mediatailor.ListChannelsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaTailor) ListChannelsPages(input *ListChannelsInput, fn func(*ListChannelsOutput, bool) bool) error {
 	return c.ListChannelsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1900,6 +2094,136 @@ func (c *MediaTailor) ListChannelsPagesWithContext(ctx aws.Context, input *ListC
 	return p.Err()
 }
 
+const opListLiveSources = "ListLiveSources"
+
+// ListLiveSourcesRequest generates a "aws/request.Request" representing the
+// client's request for the ListLiveSources operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListLiveSources for more information on using the ListLiveSources
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListLiveSourcesRequest method.
+//	req, resp := client.ListLiveSourcesRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/ListLiveSources
+func (c *MediaTailor) ListLiveSourcesRequest(input *ListLiveSourcesInput) (req *request.Request, output *ListLiveSourcesOutput) {
+	op := &request.Operation{
+		Name:       opListLiveSources,
+		HTTPMethod: "GET",
+		HTTPPath:   "/sourceLocation/{sourceLocationName}/liveSources",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListLiveSourcesInput{}
+	}
+
+	output = &ListLiveSourcesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListLiveSources API operation for AWS MediaTailor.
+//
+// lists all the live sources in a source location.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS MediaTailor's
+// API operation ListLiveSources for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/ListLiveSources
+func (c *MediaTailor) ListLiveSources(input *ListLiveSourcesInput) (*ListLiveSourcesOutput, error) {
+	req, out := c.ListLiveSourcesRequest(input)
+	return out, req.Send()
+}
+
+// ListLiveSourcesWithContext is the same as ListLiveSources with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListLiveSources for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *MediaTailor) ListLiveSourcesWithContext(ctx aws.Context, input *ListLiveSourcesInput, opts ...request.Option) (*ListLiveSourcesOutput, error) {
+	req, out := c.ListLiveSourcesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListLiveSourcesPages iterates over the pages of a ListLiveSources operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListLiveSources method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListLiveSources operation.
+//	pageNum := 0
+//	err := client.ListLiveSourcesPages(params,
+//	    func(page *mediatailor.ListLiveSourcesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *MediaTailor) ListLiveSourcesPages(input *ListLiveSourcesInput, fn func(*ListLiveSourcesOutput, bool) bool) error {
+	return c.ListLiveSourcesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListLiveSourcesPagesWithContext same as ListLiveSourcesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *MediaTailor) ListLiveSourcesPagesWithContext(ctx aws.Context, input *ListLiveSourcesInput, fn func(*ListLiveSourcesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListLiveSourcesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListLiveSourcesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListLiveSourcesOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListPlaybackConfigurations = "ListPlaybackConfigurations"
 
 // ListPlaybackConfigurationsRequest generates a "aws/request.Request" representing the
@@ -1916,14 +2240,13 @@ const opListPlaybackConfigurations = "ListPlaybackConfigurations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPlaybackConfigurationsRequest method.
+//	req, resp := client.ListPlaybackConfigurationsRequest(params)
 //
-//    // Example sending a request using the ListPlaybackConfigurationsRequest method.
-//    req, resp := client.ListPlaybackConfigurationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/ListPlaybackConfigurations
 func (c *MediaTailor) ListPlaybackConfigurationsRequest(input *ListPlaybackConfigurationsInput) (req *request.Request, output *ListPlaybackConfigurationsOutput) {
@@ -1992,15 +2315,14 @@ func (c *MediaTailor) ListPlaybackConfigurationsWithContext(ctx aws.Context, inp
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListPlaybackConfigurations operation.
-//    pageNum := 0
-//    err := client.ListPlaybackConfigurationsPages(params,
-//        func(page *mediatailor.ListPlaybackConfigurationsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListPlaybackConfigurations operation.
+//	pageNum := 0
+//	err := client.ListPlaybackConfigurationsPages(params,
+//	    func(page *mediatailor.ListPlaybackConfigurationsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaTailor) ListPlaybackConfigurationsPages(input *ListPlaybackConfigurationsInput, fn func(*ListPlaybackConfigurationsOutput, bool) bool) error {
 	return c.ListPlaybackConfigurationsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2052,14 +2374,13 @@ const opListPrefetchSchedules = "ListPrefetchSchedules"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPrefetchSchedulesRequest method.
+//	req, resp := client.ListPrefetchSchedulesRequest(params)
 //
-//    // Example sending a request using the ListPrefetchSchedulesRequest method.
-//    req, resp := client.ListPrefetchSchedulesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/ListPrefetchSchedules
 func (c *MediaTailor) ListPrefetchSchedulesRequest(input *ListPrefetchSchedulesInput) (req *request.Request, output *ListPrefetchSchedulesOutput) {
@@ -2124,15 +2445,14 @@ func (c *MediaTailor) ListPrefetchSchedulesWithContext(ctx aws.Context, input *L
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListPrefetchSchedules operation.
-//    pageNum := 0
-//    err := client.ListPrefetchSchedulesPages(params,
-//        func(page *mediatailor.ListPrefetchSchedulesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListPrefetchSchedules operation.
+//	pageNum := 0
+//	err := client.ListPrefetchSchedulesPages(params,
+//	    func(page *mediatailor.ListPrefetchSchedulesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaTailor) ListPrefetchSchedulesPages(input *ListPrefetchSchedulesInput, fn func(*ListPrefetchSchedulesOutput, bool) bool) error {
 	return c.ListPrefetchSchedulesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2184,14 +2504,13 @@ const opListSourceLocations = "ListSourceLocations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListSourceLocationsRequest method.
+//	req, resp := client.ListSourceLocationsRequest(params)
 //
-//    // Example sending a request using the ListSourceLocationsRequest method.
-//    req, resp := client.ListSourceLocationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/ListSourceLocations
 func (c *MediaTailor) ListSourceLocationsRequest(input *ListSourceLocationsInput) (req *request.Request, output *ListSourceLocationsOutput) {
@@ -2256,15 +2575,14 @@ func (c *MediaTailor) ListSourceLocationsWithContext(ctx aws.Context, input *Lis
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListSourceLocations operation.
-//    pageNum := 0
-//    err := client.ListSourceLocationsPages(params,
-//        func(page *mediatailor.ListSourceLocationsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListSourceLocations operation.
+//	pageNum := 0
+//	err := client.ListSourceLocationsPages(params,
+//	    func(page *mediatailor.ListSourceLocationsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaTailor) ListSourceLocationsPages(input *ListSourceLocationsInput, fn func(*ListSourceLocationsOutput, bool) bool) error {
 	return c.ListSourceLocationsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2316,14 +2634,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/ListTagsForResource
 func (c *MediaTailor) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -2355,8 +2672,8 @@ func (c *MediaTailor) ListTagsForResourceRequest(input *ListTagsForResourceInput
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   A request contains unexpected data.
+//   - BadRequestException
+//     A request contains unexpected data.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/ListTagsForResource
 func (c *MediaTailor) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -2396,14 +2713,13 @@ const opListVodSources = "ListVodSources"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListVodSourcesRequest method.
+//	req, resp := client.ListVodSourcesRequest(params)
 //
-//    // Example sending a request using the ListVodSourcesRequest method.
-//    req, resp := client.ListVodSourcesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/ListVodSources
 func (c *MediaTailor) ListVodSourcesRequest(input *ListVodSourcesInput) (req *request.Request, output *ListVodSourcesOutput) {
@@ -2468,15 +2784,14 @@ func (c *MediaTailor) ListVodSourcesWithContext(ctx aws.Context, input *ListVodS
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListVodSources operation.
-//    pageNum := 0
-//    err := client.ListVodSourcesPages(params,
-//        func(page *mediatailor.ListVodSourcesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListVodSources operation.
+//	pageNum := 0
+//	err := client.ListVodSourcesPages(params,
+//	    func(page *mediatailor.ListVodSourcesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *MediaTailor) ListVodSourcesPages(input *ListVodSourcesInput, fn func(*ListVodSourcesOutput, bool) bool) error {
 	return c.ListVodSourcesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2528,14 +2843,13 @@ const opPutChannelPolicy = "PutChannelPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutChannelPolicyRequest method.
+//	req, resp := client.PutChannelPolicyRequest(params)
 //
-//    // Example sending a request using the PutChannelPolicyRequest method.
-//    req, resp := client.PutChannelPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/PutChannelPolicy
 func (c *MediaTailor) PutChannelPolicyRequest(input *PutChannelPolicyInput) (req *request.Request, output *PutChannelPolicyOutput) {
@@ -2603,14 +2917,13 @@ const opPutPlaybackConfiguration = "PutPlaybackConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutPlaybackConfigurationRequest method.
+//	req, resp := client.PutPlaybackConfigurationRequest(params)
 //
-//    // Example sending a request using the PutPlaybackConfigurationRequest method.
-//    req, resp := client.PutPlaybackConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/PutPlaybackConfiguration
 func (c *MediaTailor) PutPlaybackConfigurationRequest(input *PutPlaybackConfigurationInput) (req *request.Request, output *PutPlaybackConfigurationOutput) {
@@ -2677,14 +2990,13 @@ const opStartChannel = "StartChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartChannelRequest method.
+//	req, resp := client.StartChannelRequest(params)
 //
-//    // Example sending a request using the StartChannelRequest method.
-//    req, resp := client.StartChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/StartChannel
 func (c *MediaTailor) StartChannelRequest(input *StartChannelInput) (req *request.Request, output *StartChannelOutput) {
@@ -2752,14 +3064,13 @@ const opStopChannel = "StopChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopChannelRequest method.
+//	req, resp := client.StopChannelRequest(params)
 //
-//    // Example sending a request using the StopChannelRequest method.
-//    req, resp := client.StopChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/StopChannel
 func (c *MediaTailor) StopChannelRequest(input *StopChannelInput) (req *request.Request, output *StopChannelOutput) {
@@ -2827,14 +3138,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/TagResource
 func (c *MediaTailor) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -2867,8 +3177,8 @@ func (c *MediaTailor) TagResourceRequest(input *TagResourceInput) (req *request.
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   A request contains unexpected data.
+//   - BadRequestException
+//     A request contains unexpected data.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/TagResource
 func (c *MediaTailor) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -2908,14 +3218,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/UntagResource
 func (c *MediaTailor) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -2948,8 +3257,8 @@ func (c *MediaTailor) UntagResourceRequest(input *UntagResourceInput) (req *requ
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   A request contains unexpected data.
+//   - BadRequestException
+//     A request contains unexpected data.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/UntagResource
 func (c *MediaTailor) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -2989,14 +3298,13 @@ const opUpdateChannel = "UpdateChannel"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateChannelRequest method.
+//	req, resp := client.UpdateChannelRequest(params)
 //
-//    // Example sending a request using the UpdateChannelRequest method.
-//    req, resp := client.UpdateChannelRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/UpdateChannel
 func (c *MediaTailor) UpdateChannelRequest(input *UpdateChannelInput) (req *request.Request, output *UpdateChannelOutput) {
@@ -3047,6 +3355,79 @@ func (c *MediaTailor) UpdateChannelWithContext(ctx aws.Context, input *UpdateCha
 	return out, req.Send()
 }
 
+const opUpdateLiveSource = "UpdateLiveSource"
+
+// UpdateLiveSourceRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateLiveSource operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateLiveSource for more information on using the UpdateLiveSource
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateLiveSourceRequest method.
+//	req, resp := client.UpdateLiveSourceRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/UpdateLiveSource
+func (c *MediaTailor) UpdateLiveSourceRequest(input *UpdateLiveSourceInput) (req *request.Request, output *UpdateLiveSourceOutput) {
+	op := &request.Operation{
+		Name:       opUpdateLiveSource,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/sourceLocation/{sourceLocationName}/liveSource/{liveSourceName}",
+	}
+
+	if input == nil {
+		input = &UpdateLiveSourceInput{}
+	}
+
+	output = &UpdateLiveSourceOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateLiveSource API operation for AWS MediaTailor.
+//
+// Updates a specific live source in a specific source location.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS MediaTailor's
+// API operation UpdateLiveSource for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/UpdateLiveSource
+func (c *MediaTailor) UpdateLiveSource(input *UpdateLiveSourceInput) (*UpdateLiveSourceOutput, error) {
+	req, out := c.UpdateLiveSourceRequest(input)
+	return out, req.Send()
+}
+
+// UpdateLiveSourceWithContext is the same as UpdateLiveSource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateLiveSource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *MediaTailor) UpdateLiveSourceWithContext(ctx aws.Context, input *UpdateLiveSourceInput, opts ...request.Option) (*UpdateLiveSourceOutput, error) {
+	req, out := c.UpdateLiveSourceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateSourceLocation = "UpdateSourceLocation"
 
 // UpdateSourceLocationRequest generates a "aws/request.Request" representing the
@@ -3063,14 +3444,13 @@ const opUpdateSourceLocation = "UpdateSourceLocation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSourceLocationRequest method.
+//	req, resp := client.UpdateSourceLocationRequest(params)
 //
-//    // Example sending a request using the UpdateSourceLocationRequest method.
-//    req, resp := client.UpdateSourceLocationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/UpdateSourceLocation
 func (c *MediaTailor) UpdateSourceLocationRequest(input *UpdateSourceLocationInput) (req *request.Request, output *UpdateSourceLocationOutput) {
@@ -3137,14 +3517,13 @@ const opUpdateVodSource = "UpdateVodSource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateVodSourceRequest method.
+//	req, resp := client.UpdateVodSourceRequest(params)
 //
-//    // Example sending a request using the UpdateVodSourceRequest method.
-//    req, resp := client.UpdateVodSourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/mediatailor-2018-04-23/UpdateVodSource
 func (c *MediaTailor) UpdateVodSourceRequest(input *UpdateVodSourceInput) (req *request.Request, output *UpdateVodSourceOutput) {
@@ -3777,6 +4156,11 @@ type Channel struct {
 
 	// The tags to assign to the channel.
 	Tags map[string]*string `locationName:"tags" type:"map"`
+
+	// The tier for this channel. STANDARD tier channels can contain live programs.
+	//
+	// Tier is a required field
+	Tier *string `type:"string" required:"true"`
 }
 
 // String returns the string representation.
@@ -3848,6 +4232,12 @@ func (s *Channel) SetPlaybackMode(v string) *Channel {
 // SetTags sets the Tags field's value.
 func (s *Channel) SetTags(v map[string]*string) *Channel {
 	s.Tags = v
+	return s
+}
+
+// SetTier sets the Tier field's value.
+func (s *Channel) SetTier(v string) *Channel {
+	s.Tier = &v
 	return s
 }
 
@@ -3992,6 +4382,9 @@ type CreateChannelInput struct {
 
 	// The tags to assign to the channel.
 	Tags map[string]*string `locationName:"tags" type:"map"`
+
+	// The tier of the channel.
+	Tier *string `type:"string" enum:"Tier"`
 }
 
 // String returns the string representation.
@@ -4074,6 +4467,12 @@ func (s *CreateChannelInput) SetTags(v map[string]*string) *CreateChannelInput {
 	return s
 }
 
+// SetTier sets the Tier field's value.
+func (s *CreateChannelInput) SetTier(v string) *CreateChannelInput {
+	s.Tier = &v
+	return s
+}
+
 type CreateChannelOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4095,6 +4494,8 @@ type CreateChannelOutput struct {
 	PlaybackMode *string `type:"string"`
 
 	Tags map[string]*string `locationName:"tags" type:"map"`
+
+	Tier *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -4165,6 +4566,187 @@ func (s *CreateChannelOutput) SetPlaybackMode(v string) *CreateChannelOutput {
 
 // SetTags sets the Tags field's value.
 func (s *CreateChannelOutput) SetTags(v map[string]*string) *CreateChannelOutput {
+	s.Tags = v
+	return s
+}
+
+// SetTier sets the Tier field's value.
+func (s *CreateChannelOutput) SetTier(v string) *CreateChannelOutput {
+	s.Tier = &v
+	return s
+}
+
+// The live source configuration parameters.
+type CreateLiveSourceInput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of HTTP package configuration parameters for this live source.
+	//
+	// HttpPackageConfigurations is a required field
+	HttpPackageConfigurations []*HttpPackageConfiguration `type:"list" required:"true"`
+
+	// LiveSourceName is a required field
+	LiveSourceName *string `location:"uri" locationName:"liveSourceName" type:"string" required:"true"`
+
+	// SourceLocationName is a required field
+	SourceLocationName *string `location:"uri" locationName:"sourceLocationName" type:"string" required:"true"`
+
+	// The tags to assign to the live source.
+	Tags map[string]*string `locationName:"tags" type:"map"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLiveSourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLiveSourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateLiveSourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateLiveSourceInput"}
+	if s.HttpPackageConfigurations == nil {
+		invalidParams.Add(request.NewErrParamRequired("HttpPackageConfigurations"))
+	}
+	if s.LiveSourceName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LiveSourceName"))
+	}
+	if s.LiveSourceName != nil && len(*s.LiveSourceName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LiveSourceName", 1))
+	}
+	if s.SourceLocationName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceLocationName"))
+	}
+	if s.SourceLocationName != nil && len(*s.SourceLocationName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SourceLocationName", 1))
+	}
+	if s.HttpPackageConfigurations != nil {
+		for i, v := range s.HttpPackageConfigurations {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "HttpPackageConfigurations", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetHttpPackageConfigurations sets the HttpPackageConfigurations field's value.
+func (s *CreateLiveSourceInput) SetHttpPackageConfigurations(v []*HttpPackageConfiguration) *CreateLiveSourceInput {
+	s.HttpPackageConfigurations = v
+	return s
+}
+
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *CreateLiveSourceInput) SetLiveSourceName(v string) *CreateLiveSourceInput {
+	s.LiveSourceName = &v
+	return s
+}
+
+// SetSourceLocationName sets the SourceLocationName field's value.
+func (s *CreateLiveSourceInput) SetSourceLocationName(v string) *CreateLiveSourceInput {
+	s.SourceLocationName = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateLiveSourceInput) SetTags(v map[string]*string) *CreateLiveSourceInput {
+	s.Tags = v
+	return s
+}
+
+type CreateLiveSourceOutput struct {
+	_ struct{} `type:"structure"`
+
+	Arn *string `type:"string"`
+
+	CreationTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
+
+	// The VOD source's HTTP package configuration settings.
+	HttpPackageConfigurations []*HttpPackageConfiguration `type:"list"`
+
+	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
+
+	LiveSourceName *string `type:"string"`
+
+	SourceLocationName *string `type:"string"`
+
+	Tags map[string]*string `locationName:"tags" type:"map"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLiveSourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateLiveSourceOutput) GoString() string {
+	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *CreateLiveSourceOutput) SetArn(v string) *CreateLiveSourceOutput {
+	s.Arn = &v
+	return s
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *CreateLiveSourceOutput) SetCreationTime(v time.Time) *CreateLiveSourceOutput {
+	s.CreationTime = &v
+	return s
+}
+
+// SetHttpPackageConfigurations sets the HttpPackageConfigurations field's value.
+func (s *CreateLiveSourceOutput) SetHttpPackageConfigurations(v []*HttpPackageConfiguration) *CreateLiveSourceOutput {
+	s.HttpPackageConfigurations = v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *CreateLiveSourceOutput) SetLastModifiedTime(v time.Time) *CreateLiveSourceOutput {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *CreateLiveSourceOutput) SetLiveSourceName(v string) *CreateLiveSourceOutput {
+	s.LiveSourceName = &v
+	return s
+}
+
+// SetSourceLocationName sets the SourceLocationName field's value.
+func (s *CreateLiveSourceOutput) SetSourceLocationName(v string) *CreateLiveSourceOutput {
+	s.SourceLocationName = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateLiveSourceOutput) SetTags(v map[string]*string) *CreateLiveSourceOutput {
 	s.Tags = v
 	return s
 }
@@ -4375,6 +4957,9 @@ type CreateProgramInput struct {
 	// ChannelName is a required field
 	ChannelName *string `location:"uri" locationName:"channelName" type:"string" required:"true"`
 
+	// The name of the LiveSource for this Program.
+	LiveSourceName *string `type:"string"`
+
 	// ProgramName is a required field
 	ProgramName *string `location:"uri" locationName:"programName" type:"string" required:"true"`
 
@@ -4389,9 +4974,7 @@ type CreateProgramInput struct {
 	SourceLocationName *string `type:"string" required:"true"`
 
 	// The name that's used to refer to a VOD source.
-	//
-	// VodSourceName is a required field
-	VodSourceName *string `type:"string" required:"true"`
+	VodSourceName *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -4433,9 +5016,6 @@ func (s *CreateProgramInput) Validate() error {
 	if s.SourceLocationName == nil {
 		invalidParams.Add(request.NewErrParamRequired("SourceLocationName"))
 	}
-	if s.VodSourceName == nil {
-		invalidParams.Add(request.NewErrParamRequired("VodSourceName"))
-	}
 	if s.ScheduleConfiguration != nil {
 		if err := s.ScheduleConfiguration.Validate(); err != nil {
 			invalidParams.AddNested("ScheduleConfiguration", err.(request.ErrInvalidParams))
@@ -4457,6 +5037,12 @@ func (s *CreateProgramInput) SetAdBreaks(v []*AdBreak) *CreateProgramInput {
 // SetChannelName sets the ChannelName field's value.
 func (s *CreateProgramInput) SetChannelName(v string) *CreateProgramInput {
 	s.ChannelName = &v
+	return s
+}
+
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *CreateProgramInput) SetLiveSourceName(v string) *CreateProgramInput {
+	s.LiveSourceName = &v
 	return s
 }
 
@@ -4494,6 +5080,8 @@ type CreateProgramOutput struct {
 	ChannelName *string `type:"string"`
 
 	CreationTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
+
+	LiveSourceName *string `type:"string"`
 
 	ProgramName *string `type:"string"`
 
@@ -4546,6 +5134,12 @@ func (s *CreateProgramOutput) SetCreationTime(v time.Time) *CreateProgramOutput 
 	return s
 }
 
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *CreateProgramOutput) SetLiveSourceName(v string) *CreateProgramOutput {
+	s.LiveSourceName = &v
+	return s
+}
+
 // SetProgramName sets the ProgramName field's value.
 func (s *CreateProgramOutput) SetProgramName(v string) *CreateProgramOutput {
 	s.ProgramName = &v
@@ -4586,7 +5180,7 @@ type CreateSourceLocationInput struct {
 	// HttpConfiguration is a required field
 	HttpConfiguration *HttpConfiguration `type:"structure" required:"true"`
 
-	// An array of segment delivery configurations for this source location.
+	// A list of the segment delivery configurations associated with this resource.
 	SegmentDeliveryConfigurations []*SegmentDeliveryConfiguration `type:"list"`
 
 	// SourceLocationName is a required field
@@ -4780,7 +5374,7 @@ func (s *CreateSourceLocationOutput) SetTags(v map[string]*string) *CreateSource
 type CreateVodSourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// An array of HTTP package configuration parameters for this VOD source.
+	// A list of HTTP package configuration parameters for this VOD source.
 	//
 	// HttpPackageConfigurations is a required field
 	HttpPackageConfigurations []*HttpPackageConfiguration `type:"list" required:"true"`
@@ -5307,6 +5901,91 @@ func (s DeleteChannelPolicyOutput) GoString() string {
 	return s.String()
 }
 
+type DeleteLiveSourceInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// LiveSourceName is a required field
+	LiveSourceName *string `location:"uri" locationName:"liveSourceName" type:"string" required:"true"`
+
+	// SourceLocationName is a required field
+	SourceLocationName *string `location:"uri" locationName:"sourceLocationName" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLiveSourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLiveSourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteLiveSourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteLiveSourceInput"}
+	if s.LiveSourceName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LiveSourceName"))
+	}
+	if s.LiveSourceName != nil && len(*s.LiveSourceName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LiveSourceName", 1))
+	}
+	if s.SourceLocationName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceLocationName"))
+	}
+	if s.SourceLocationName != nil && len(*s.SourceLocationName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SourceLocationName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *DeleteLiveSourceInput) SetLiveSourceName(v string) *DeleteLiveSourceInput {
+	s.LiveSourceName = &v
+	return s
+}
+
+// SetSourceLocationName sets the SourceLocationName field's value.
+func (s *DeleteLiveSourceInput) SetSourceLocationName(v string) *DeleteLiveSourceInput {
+	s.SourceLocationName = &v
+	return s
+}
+
+// This response includes only the "type" : "object" property.
+type DeleteLiveSourceOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLiveSourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteLiveSourceOutput) GoString() string {
+	return s.String()
+}
+
 type DeletePlaybackConfigurationInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
@@ -5780,6 +6459,9 @@ type DescribeChannelOutput struct {
 
 	// The tags assigned to the channel.
 	Tags map[string]*string `locationName:"tags" type:"map"`
+
+	// The channel's tier.
+	Tier *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -5850,6 +6532,160 @@ func (s *DescribeChannelOutput) SetPlaybackMode(v string) *DescribeChannelOutput
 
 // SetTags sets the Tags field's value.
 func (s *DescribeChannelOutput) SetTags(v map[string]*string) *DescribeChannelOutput {
+	s.Tags = v
+	return s
+}
+
+// SetTier sets the Tier field's value.
+func (s *DescribeChannelOutput) SetTier(v string) *DescribeChannelOutput {
+	s.Tier = &v
+	return s
+}
+
+type DescribeLiveSourceInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// LiveSourceName is a required field
+	LiveSourceName *string `location:"uri" locationName:"liveSourceName" type:"string" required:"true"`
+
+	// SourceLocationName is a required field
+	SourceLocationName *string `location:"uri" locationName:"sourceLocationName" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLiveSourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLiveSourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeLiveSourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeLiveSourceInput"}
+	if s.LiveSourceName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LiveSourceName"))
+	}
+	if s.LiveSourceName != nil && len(*s.LiveSourceName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LiveSourceName", 1))
+	}
+	if s.SourceLocationName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceLocationName"))
+	}
+	if s.SourceLocationName != nil && len(*s.SourceLocationName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SourceLocationName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *DescribeLiveSourceInput) SetLiveSourceName(v string) *DescribeLiveSourceInput {
+	s.LiveSourceName = &v
+	return s
+}
+
+// SetSourceLocationName sets the SourceLocationName field's value.
+func (s *DescribeLiveSourceInput) SetSourceLocationName(v string) *DescribeLiveSourceInput {
+	s.SourceLocationName = &v
+	return s
+}
+
+// This response includes only the "type" : "object" property.
+type DescribeLiveSourceOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the live source.
+	Arn *string `type:"string"`
+
+	// The timestamp that indicates when the live source was created.
+	CreationTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
+
+	// The HTTP package configurations.
+	HttpPackageConfigurations []*HttpPackageConfiguration `type:"list"`
+
+	// The timestamp that indicates when the live source was modified.
+	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
+
+	// The name of the live source.
+	LiveSourceName *string `type:"string"`
+
+	// The name of the source location associated with the VOD source.
+	SourceLocationName *string `type:"string"`
+
+	// The tags assigned to the live source.
+	Tags map[string]*string `locationName:"tags" type:"map"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLiveSourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeLiveSourceOutput) GoString() string {
+	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *DescribeLiveSourceOutput) SetArn(v string) *DescribeLiveSourceOutput {
+	s.Arn = &v
+	return s
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *DescribeLiveSourceOutput) SetCreationTime(v time.Time) *DescribeLiveSourceOutput {
+	s.CreationTime = &v
+	return s
+}
+
+// SetHttpPackageConfigurations sets the HttpPackageConfigurations field's value.
+func (s *DescribeLiveSourceOutput) SetHttpPackageConfigurations(v []*HttpPackageConfiguration) *DescribeLiveSourceOutput {
+	s.HttpPackageConfigurations = v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *DescribeLiveSourceOutput) SetLastModifiedTime(v time.Time) *DescribeLiveSourceOutput {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *DescribeLiveSourceOutput) SetLiveSourceName(v string) *DescribeLiveSourceOutput {
+	s.LiveSourceName = &v
+	return s
+}
+
+// SetSourceLocationName sets the SourceLocationName field's value.
+func (s *DescribeLiveSourceOutput) SetSourceLocationName(v string) *DescribeLiveSourceOutput {
+	s.SourceLocationName = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *DescribeLiveSourceOutput) SetTags(v map[string]*string) *DescribeLiveSourceOutput {
 	s.Tags = v
 	return s
 }
@@ -5932,6 +6768,9 @@ type DescribeProgramOutput struct {
 	// The timestamp of when the program was created.
 	CreationTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
 
+	// The name of the LiveSource for this Program.
+	LiveSourceName *string `type:"string"`
+
 	// The name of the program.
 	ProgramName *string `type:"string"`
 
@@ -5986,6 +6825,12 @@ func (s *DescribeProgramOutput) SetChannelName(v string) *DescribeProgramOutput 
 // SetCreationTime sets the CreationTime field's value.
 func (s *DescribeProgramOutput) SetCreationTime(v time.Time) *DescribeProgramOutput {
 	s.CreationTime = &v
+	return s
+}
+
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *DescribeProgramOutput) SetLiveSourceName(v string) *DescribeProgramOutput {
+	s.LiveSourceName = &v
 	return s
 }
 
@@ -6082,7 +6927,7 @@ type DescribeSourceLocationOutput struct {
 	// The timestamp that indicates when the source location was last modified.
 	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
 
-	// An array of segment delivery configurations for this source location.
+	// A list of the segment delivery configurations associated with this resource.
 	SegmentDeliveryConfigurations []*SegmentDeliveryConfiguration `type:"list"`
 
 	// The name of the source location.
@@ -6239,7 +7084,7 @@ type DescribeVodSourceOutput struct {
 	// The HTTP package configurations.
 	HttpPackageConfigurations []*HttpPackageConfiguration `type:"list"`
 
-	// The ARN for the VOD source.
+	// The last modified time of the VOD source.
 	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
 
 	// The name of the source location associated with the VOD source.
@@ -6469,7 +7314,7 @@ func (s *GetChannelScheduleInput) SetNextToken(v string) *GetChannelScheduleInpu
 type GetChannelScheduleOutput struct {
 	_ struct{} `type:"structure"`
 
-	// An array of schedule entries for the channel.
+	// A list of schedule entries for the channel.
 	Items []*ScheduleEntry `type:"list"`
 
 	// Pagination token from the GET list request. Use the token to fetch the next
@@ -7170,7 +8015,7 @@ func (s *ListAlertsInput) SetResourceArn(v string) *ListAlertsInput {
 type ListAlertsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// An array of alerts that are associated with this resource.
+	// A list of alerts that are associated with this resource.
 	Items []*Alert `type:"list"`
 
 	// Pagination token from the list request. Use the token to fetch the next page
@@ -7263,7 +8108,7 @@ func (s *ListChannelsInput) SetNextToken(v string) *ListChannelsInput {
 type ListChannelsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// An array of channels that are associated with this account.
+	// A list of channels that are associated with this account.
 	Items []*Channel `type:"list"`
 
 	// Pagination token returned by the list request when results exceed the maximum
@@ -7297,6 +8142,114 @@ func (s *ListChannelsOutput) SetItems(v []*Channel) *ListChannelsOutput {
 
 // SetNextToken sets the NextToken field's value.
 func (s *ListChannelsOutput) SetNextToken(v string) *ListChannelsOutput {
+	s.NextToken = &v
+	return s
+}
+
+type ListLiveSourcesInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	MaxResults *int64 `location:"querystring" locationName:"maxResults" min:"1" type:"integer"`
+
+	NextToken *string `location:"querystring" locationName:"nextToken" type:"string"`
+
+	// SourceLocationName is a required field
+	SourceLocationName *string `location:"uri" locationName:"sourceLocationName" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLiveSourcesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLiveSourcesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListLiveSourcesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListLiveSourcesInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.SourceLocationName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceLocationName"))
+	}
+	if s.SourceLocationName != nil && len(*s.SourceLocationName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SourceLocationName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListLiveSourcesInput) SetMaxResults(v int64) *ListLiveSourcesInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListLiveSourcesInput) SetNextToken(v string) *ListLiveSourcesInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetSourceLocationName sets the SourceLocationName field's value.
+func (s *ListLiveSourcesInput) SetSourceLocationName(v string) *ListLiveSourcesInput {
+	s.SourceLocationName = &v
+	return s
+}
+
+// A list of your live sources.
+type ListLiveSourcesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Lists the live sources.
+	Items []*LiveSource `type:"list"`
+
+	// Pagination token from the list request. Use the token to fetch the next page
+	// of results.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLiveSourcesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListLiveSourcesOutput) GoString() string {
+	return s.String()
+}
+
+// SetItems sets the Items field's value.
+func (s *ListLiveSourcesOutput) SetItems(v []*LiveSource) *ListLiveSourcesOutput {
+	s.Items = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListLiveSourcesOutput) SetNextToken(v string) *ListLiveSourcesOutput {
 	s.NextToken = &v
 	return s
 }
@@ -7585,7 +8538,7 @@ func (s *ListSourceLocationsInput) SetNextToken(v string) *ListSourceLocationsIn
 type ListSourceLocationsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// An array of source locations.
+	// A list of source locations.
 	Items []*SourceLocation `type:"list"`
 
 	// Pagination token from the list request. Use the token to fetch the next page
@@ -7766,7 +8719,7 @@ func (s *ListVodSourcesInput) SetSourceLocationName(v string) *ListVodSourcesInp
 	return s
 }
 
-// An array of VOD sources.
+// A list of VOD sources.
 type ListVodSourcesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7852,6 +8805,100 @@ func (s *LivePreRollConfiguration) SetAdDecisionServerUrl(v string) *LivePreRoll
 // SetMaxDurationSeconds sets the MaxDurationSeconds field's value.
 func (s *LivePreRollConfiguration) SetMaxDurationSeconds(v int64) *LivePreRollConfiguration {
 	s.MaxDurationSeconds = &v
+	return s
+}
+
+// Live source configuration parameters.
+type LiveSource struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN for the live source.
+	//
+	// Arn is a required field
+	Arn *string `type:"string" required:"true"`
+
+	// The timestamp that indicates when the live source was created.
+	CreationTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
+
+	// The HTTP package configurations for the live source.
+	//
+	// HttpPackageConfigurations is a required field
+	HttpPackageConfigurations []*HttpPackageConfiguration `type:"list" required:"true"`
+
+	// The timestamp that indicates when the live source was last modified.
+	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
+
+	// The name that's used to refer to a live source.
+	//
+	// LiveSourceName is a required field
+	LiveSourceName *string `type:"string" required:"true"`
+
+	// The name of the source location.
+	//
+	// SourceLocationName is a required field
+	SourceLocationName *string `type:"string" required:"true"`
+
+	// The tags assigned to the live source.
+	Tags map[string]*string `locationName:"tags" type:"map"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LiveSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LiveSource) GoString() string {
+	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *LiveSource) SetArn(v string) *LiveSource {
+	s.Arn = &v
+	return s
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *LiveSource) SetCreationTime(v time.Time) *LiveSource {
+	s.CreationTime = &v
+	return s
+}
+
+// SetHttpPackageConfigurations sets the HttpPackageConfigurations field's value.
+func (s *LiveSource) SetHttpPackageConfigurations(v []*HttpPackageConfiguration) *LiveSource {
+	s.HttpPackageConfigurations = v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *LiveSource) SetLastModifiedTime(v time.Time) *LiveSource {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *LiveSource) SetLiveSourceName(v string) *LiveSource {
+	s.LiveSourceName = &v
+	return s
+}
+
+// SetSourceLocationName sets the SourceLocationName field's value.
+func (s *LiveSource) SetSourceLocationName(v string) *LiveSource {
+	s.SourceLocationName = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *LiveSource) SetTags(v map[string]*string) *LiveSource {
+	s.Tags = v
 	return s
 }
 
@@ -9157,6 +10204,9 @@ type ScheduleEntry struct {
 	// ChannelName is a required field
 	ChannelName *string `type:"string" required:"true"`
 
+	// The name of the live source used for the program.
+	LiveSourceName *string `type:"string"`
+
 	// The name of the program.
 	//
 	// ProgramName is a required field
@@ -9176,9 +10226,7 @@ type ScheduleEntry struct {
 	SourceLocationName *string `type:"string" required:"true"`
 
 	// The name of the VOD source.
-	//
-	// VodSourceName is a required field
-	VodSourceName *string `type:"string" required:"true"`
+	VodSourceName *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -9220,6 +10268,12 @@ func (s *ScheduleEntry) SetArn(v string) *ScheduleEntry {
 // SetChannelName sets the ChannelName field's value.
 func (s *ScheduleEntry) SetChannelName(v string) *ScheduleEntry {
 	s.ChannelName = &v
+	return s
+}
+
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *ScheduleEntry) SetLiveSourceName(v string) *ScheduleEntry {
+	s.LiveSourceName = &v
 	return s
 }
 
@@ -9309,6 +10363,11 @@ func (s *SecretsManagerAccessTokenConfiguration) SetSecretStringKey(v string) *S
 	return s
 }
 
+// The base URL of the host or path of the segment delivery server that you're
+// using to serve segments. This is typically a content delivery network (CDN).
+// The URL can be absolute or relative. To use an absolute URL include the protocol,
+// such as https://example.com/some/path. To use a relative URL specify the
+// relative path, such as /some/path*.
 type SegmentDeliveryConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -9316,7 +10375,7 @@ type SegmentDeliveryConfiguration struct {
 	// using to serve segments. This is typically a content delivery network (CDN).
 	// The URL can be absolute or relative. To use an absolute URL include the protocol,
 	// such as https://example.com/some/path. To use a relative URL specify the
-	// relative path, such as /some/path.
+	// relative path, such as /some/path*.
 	BaseUrl *string `type:"string"`
 
 	// A unique identifier used to distinguish between multiple segment delivery
@@ -9422,7 +10481,7 @@ type SourceLocation struct {
 	// The timestamp that indicates when the source location was last modified.
 	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
 
-	// An array of segment delivery configurations for this source location.
+	// The segment delivery configurations for the source location.
 	SegmentDeliveryConfigurations []*SegmentDeliveryConfiguration `type:"list"`
 
 	// The name of the source location.
@@ -9795,6 +10854,9 @@ func (s TagResourceOutput) GoString() string {
 type Transition struct {
 	_ struct{} `type:"structure"`
 
+	// The duration of the live program in seconds.
+	DurationMillis *int64 `type:"long"`
+
 	// The position where this program will be inserted relative to the RelativePosition.
 	//
 	// RelativePosition is a required field
@@ -9861,6 +10923,12 @@ func (s *Transition) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetDurationMillis sets the DurationMillis field's value.
+func (s *Transition) SetDurationMillis(v int64) *Transition {
+	s.DurationMillis = &v
+	return s
 }
 
 // SetRelativePosition sets the RelativePosition field's value.
@@ -10072,6 +11140,8 @@ type UpdateChannelOutput struct {
 	PlaybackMode *string `type:"string"`
 
 	Tags map[string]*string `locationName:"tags" type:"map"`
+
+	Tier *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -10146,6 +11216,178 @@ func (s *UpdateChannelOutput) SetTags(v map[string]*string) *UpdateChannelOutput
 	return s
 }
 
+// SetTier sets the Tier field's value.
+func (s *UpdateChannelOutput) SetTier(v string) *UpdateChannelOutput {
+	s.Tier = &v
+	return s
+}
+
+// Updates a live source's configuration.
+type UpdateLiveSourceInput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of HTTP package configurations for the live source on this account.
+	//
+	// HttpPackageConfigurations is a required field
+	HttpPackageConfigurations []*HttpPackageConfiguration `type:"list" required:"true"`
+
+	// LiveSourceName is a required field
+	LiveSourceName *string `location:"uri" locationName:"liveSourceName" type:"string" required:"true"`
+
+	// SourceLocationName is a required field
+	SourceLocationName *string `location:"uri" locationName:"sourceLocationName" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLiveSourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLiveSourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateLiveSourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateLiveSourceInput"}
+	if s.HttpPackageConfigurations == nil {
+		invalidParams.Add(request.NewErrParamRequired("HttpPackageConfigurations"))
+	}
+	if s.LiveSourceName == nil {
+		invalidParams.Add(request.NewErrParamRequired("LiveSourceName"))
+	}
+	if s.LiveSourceName != nil && len(*s.LiveSourceName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LiveSourceName", 1))
+	}
+	if s.SourceLocationName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceLocationName"))
+	}
+	if s.SourceLocationName != nil && len(*s.SourceLocationName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SourceLocationName", 1))
+	}
+	if s.HttpPackageConfigurations != nil {
+		for i, v := range s.HttpPackageConfigurations {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "HttpPackageConfigurations", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetHttpPackageConfigurations sets the HttpPackageConfigurations field's value.
+func (s *UpdateLiveSourceInput) SetHttpPackageConfigurations(v []*HttpPackageConfiguration) *UpdateLiveSourceInput {
+	s.HttpPackageConfigurations = v
+	return s
+}
+
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *UpdateLiveSourceInput) SetLiveSourceName(v string) *UpdateLiveSourceInput {
+	s.LiveSourceName = &v
+	return s
+}
+
+// SetSourceLocationName sets the SourceLocationName field's value.
+func (s *UpdateLiveSourceInput) SetSourceLocationName(v string) *UpdateLiveSourceInput {
+	s.SourceLocationName = &v
+	return s
+}
+
+type UpdateLiveSourceOutput struct {
+	_ struct{} `type:"structure"`
+
+	Arn *string `type:"string"`
+
+	CreationTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
+
+	// The VOD source's HTTP package configuration settings.
+	HttpPackageConfigurations []*HttpPackageConfiguration `type:"list"`
+
+	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unixTimestamp"`
+
+	LiveSourceName *string `type:"string"`
+
+	SourceLocationName *string `type:"string"`
+
+	Tags map[string]*string `locationName:"tags" type:"map"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLiveSourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateLiveSourceOutput) GoString() string {
+	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *UpdateLiveSourceOutput) SetArn(v string) *UpdateLiveSourceOutput {
+	s.Arn = &v
+	return s
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *UpdateLiveSourceOutput) SetCreationTime(v time.Time) *UpdateLiveSourceOutput {
+	s.CreationTime = &v
+	return s
+}
+
+// SetHttpPackageConfigurations sets the HttpPackageConfigurations field's value.
+func (s *UpdateLiveSourceOutput) SetHttpPackageConfigurations(v []*HttpPackageConfiguration) *UpdateLiveSourceOutput {
+	s.HttpPackageConfigurations = v
+	return s
+}
+
+// SetLastModifiedTime sets the LastModifiedTime field's value.
+func (s *UpdateLiveSourceOutput) SetLastModifiedTime(v time.Time) *UpdateLiveSourceOutput {
+	s.LastModifiedTime = &v
+	return s
+}
+
+// SetLiveSourceName sets the LiveSourceName field's value.
+func (s *UpdateLiveSourceOutput) SetLiveSourceName(v string) *UpdateLiveSourceOutput {
+	s.LiveSourceName = &v
+	return s
+}
+
+// SetSourceLocationName sets the SourceLocationName field's value.
+func (s *UpdateLiveSourceOutput) SetSourceLocationName(v string) *UpdateLiveSourceOutput {
+	s.SourceLocationName = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *UpdateLiveSourceOutput) SetTags(v map[string]*string) *UpdateLiveSourceOutput {
+	s.Tags = v
+	return s
+}
+
 // Source location configuration parameters.
 type UpdateSourceLocationInput struct {
 	_ struct{} `type:"structure"`
@@ -10162,7 +11404,7 @@ type UpdateSourceLocationInput struct {
 	// HttpConfiguration is a required field
 	HttpConfiguration *HttpConfiguration `type:"structure" required:"true"`
 
-	// An array of segment delivery configurations for this source location.
+	// A list of the segment delivery configurations associated with this resource.
 	SegmentDeliveryConfigurations []*SegmentDeliveryConfiguration `type:"list"`
 
 	// SourceLocationName is a required field
@@ -10347,7 +11589,7 @@ func (s *UpdateSourceLocationOutput) SetTags(v map[string]*string) *UpdateSource
 type UpdateVodSourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// An array of HTTP package configurations for the VOD source on this account.
+	// A list of HTTP package configurations for the VOD source on this account.
 	//
 	// HttpPackageConfigurations is a required field
 	HttpPackageConfigurations []*HttpPackageConfiguration `type:"list" required:"true"`
@@ -10736,6 +11978,22 @@ func ScheduleEntryType_Values() []string {
 	return []string{
 		ScheduleEntryTypeProgram,
 		ScheduleEntryTypeFillerSlate,
+	}
+}
+
+const (
+	// TierBasic is a Tier enum value
+	TierBasic = "BASIC"
+
+	// TierStandard is a Tier enum value
+	TierStandard = "STANDARD"
+)
+
+// Tier_Values returns all elements of the Tier enum
+func Tier_Values() []string {
+	return []string{
+		TierBasic,
+		TierStandard,
 	}
 }
 

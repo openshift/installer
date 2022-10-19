@@ -82,7 +82,15 @@ const (
 
 	// ErrCodeIllegalBlueprintStateException for service response error code
 	// "IllegalBlueprintStateException".
+	//
+	// The blueprint is in an invalid state to perform a requested operation.
 	ErrCodeIllegalBlueprintStateException = "IllegalBlueprintStateException"
+
+	// ErrCodeIllegalSessionStateException for service response error code
+	// "IllegalSessionStateException".
+	//
+	// The session is in an invalid state to perform a requested operation.
+	ErrCodeIllegalSessionStateException = "IllegalSessionStateException"
 
 	// ErrCodeIllegalWorkflowStateException for service response error code
 	// "IllegalWorkflowStateException".
@@ -187,6 +195,7 @@ var exceptionFromCode = map[string]func(protocol.ResponseMetadata) error{
 	"EntityNotFoundException":              newErrorEntityNotFoundException,
 	"IdempotentParameterMismatchException": newErrorIdempotentParameterMismatchException,
 	"IllegalBlueprintStateException":       newErrorIllegalBlueprintStateException,
+	"IllegalSessionStateException":         newErrorIllegalSessionStateException,
 	"IllegalWorkflowStateException":        newErrorIllegalWorkflowStateException,
 	"InternalServiceException":             newErrorInternalServiceException,
 	"InvalidInputException":                newErrorInvalidInputException,

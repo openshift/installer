@@ -3,14 +3,15 @@
 // Package acmpca provides the client and types for making API
 // requests to AWS Certificate Manager Private Certificate Authority.
 //
-// This is the ACM Private CA API Reference. It provides descriptions, syntax,
-// and usage examples for each of the actions and data types involved in creating
-// and managing private certificate authorities (CA) for your organization.
+// This is the Certificate Manager Private Certificate Authority (PCA) API Reference.
+// It provides descriptions, syntax, and usage examples for each of the actions
+// and data types involved in creating and managing a private certificate authority
+// (CA) for your organization.
 //
-// The documentation for each action shows the Query API request parameters
-// and the XML response. Alternatively, you can use one of the AWS SDKs to access
-// an API that's tailored to the programming language or platform that you're
-// using. For more information, see AWS SDKs (https://aws.amazon.com/tools/#SDKs).
+// The documentation for each action shows the API request parameters and the
+// JSON response. Alternatively, you can use one of the Amazon Web Services
+// SDKs to access an API that is tailored to the programming language or platform
+// that you prefer. For more information, see Amazon Web Services SDKs (https://aws.amazon.com/tools/#SDKs).
 //
 // Each ACM Private CA API operation has a quota that determines the number
 // of times the operation can be called per second. ACM Private CA throttles
@@ -21,15 +22,15 @@
 // error. ACM Private CA does not guarantee a minimum request rate for APIs.
 //
 // To see an up-to-date list of your ACM Private CA quotas, or to request a
-// quota increase, log into your AWS account and visit the Service Quotas (https://console.aws.amazon.com/servicequotas/)
-// console.
+// quota increase, log into your Amazon Web Services account and visit the Service
+// Quotas (https://console.aws.amazon.com/servicequotas/) console.
 //
 // See https://docs.aws.amazon.com/goto/WebAPI/acm-pca-2017-08-22 for more information on this service.
 //
 // See acmpca package documentation for more information.
 // https://docs.aws.amazon.com/sdk-for-go/api/service/acmpca/
 //
-// Using the Client
+// # Using the Client
 //
 // To contact AWS Certificate Manager Private Certificate Authority with the SDK use the New function to create
 // a new service client. With that client you can make API requests to the service.

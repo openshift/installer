@@ -27,14 +27,13 @@ const opBatchExecuteStatement = "BatchExecuteStatement"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchExecuteStatementRequest method.
+//	req, resp := client.BatchExecuteStatementRequest(params)
 //
-//    // Example sending a request using the BatchExecuteStatementRequest method.
-//    req, resp := client.BatchExecuteStatementRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/BatchExecuteStatement
 func (c *RDSDataService) BatchExecuteStatementRequest(input *BatchExecuteStatementInput) (req *request.Request, output *BatchExecuteStatementOutput) {
@@ -64,6 +63,17 @@ func (c *RDSDataService) BatchExecuteStatementRequest(input *BatchExecuteStateme
 // If a call isn't part of a transaction because it doesn't include the transactionID
 // parameter, changes that result from the call are committed automatically.
 //
+// There isn't a fixed upper limit on the number of parameter sets. However,
+// the maximum size of the HTTP request submitted through the Data API is 4
+// MiB. If the request exceeds this limit, the Data API returns an error and
+// doesn't process the request. This 4-MiB limit includes the size of the HTTP
+// headers and the JSON notation in the request. Thus, the number of parameter
+// sets that you can include depends on a combination of factors, such as the
+// size of the SQL statement and the size of each parameter set.
+//
+// The response size limit is 1 MiB. If the call returns more than 1 MiB of
+// response data, the call is terminated.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -72,20 +82,24 @@ func (c *RDSDataService) BatchExecuteStatementRequest(input *BatchExecuteStateme
 // API operation BatchExecuteStatement for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   There is an error in the call or in a SQL statement.
 //
-//   * StatementTimeoutException
-//   The execution of the SQL statement timed out.
+//   - AccessDeniedException
+//     You do not have sufficient access to perform this action.
 //
-//   * InternalServerErrorException
-//   An internal error occurred.
+//   - BadRequestException
+//     There is an error in the call or in a SQL statement.
 //
-//   * ForbiddenException
-//   There are insufficient privileges to make the call.
+//   - StatementTimeoutException
+//     The execution of the SQL statement timed out.
 //
-//   * ServiceUnavailableError
-//   The service specified by the resourceArn parameter is not available.
+//   - InternalServerErrorException
+//     An internal error occurred.
+//
+//   - ForbiddenException
+//     There are insufficient privileges to make the call.
+//
+//   - ServiceUnavailableError
+//     The service specified by the resourceArn parameter is not available.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/BatchExecuteStatement
 func (c *RDSDataService) BatchExecuteStatement(input *BatchExecuteStatementInput) (*BatchExecuteStatementOutput, error) {
@@ -125,14 +139,13 @@ const opBeginTransaction = "BeginTransaction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BeginTransactionRequest method.
+//	req, resp := client.BeginTransactionRequest(params)
 //
-//    // Example sending a request using the BeginTransactionRequest method.
-//    req, resp := client.BeginTransactionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/BeginTransaction
 func (c *RDSDataService) BeginTransactionRequest(input *BeginTransactionInput) (req *request.Request, output *BeginTransactionOutput) {
@@ -155,13 +168,15 @@ func (c *RDSDataService) BeginTransactionRequest(input *BeginTransactionInput) (
 //
 // Starts a SQL transaction.
 //
-//    <important> <p>A transaction can run for a maximum of 24 hours. A transaction
-//    is terminated and rolled back automatically after 24 hours.</p> <p>A transaction
-//    times out if no calls use its transaction ID in three minutes. If a transaction
-//    times out before it's committed, it's rolled back automatically.</p> <p>DDL
-//    statements inside a transaction cause an implicit commit. We recommend
-//    that you run each DDL statement in a separate <code>ExecuteStatement</code>
-//    call with <code>continueAfterTimeout</code> enabled.</p> </important>
+// A transaction can run for a maximum of 24 hours. A transaction is terminated
+// and rolled back automatically after 24 hours.
+//
+// A transaction times out if no calls use its transaction ID in three minutes.
+// If a transaction times out before it's committed, it's rolled back automatically.
+//
+// DDL statements inside a transaction cause an implicit commit. We recommend
+// that you run each DDL statement in a separate ExecuteStatement call with
+// continueAfterTimeout enabled.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -171,20 +186,24 @@ func (c *RDSDataService) BeginTransactionRequest(input *BeginTransactionInput) (
 // API operation BeginTransaction for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   There is an error in the call or in a SQL statement.
 //
-//   * StatementTimeoutException
-//   The execution of the SQL statement timed out.
+//   - AccessDeniedException
+//     You do not have sufficient access to perform this action.
 //
-//   * InternalServerErrorException
-//   An internal error occurred.
+//   - BadRequestException
+//     There is an error in the call or in a SQL statement.
 //
-//   * ForbiddenException
-//   There are insufficient privileges to make the call.
+//   - StatementTimeoutException
+//     The execution of the SQL statement timed out.
 //
-//   * ServiceUnavailableError
-//   The service specified by the resourceArn parameter is not available.
+//   - InternalServerErrorException
+//     An internal error occurred.
+//
+//   - ForbiddenException
+//     There are insufficient privileges to make the call.
+//
+//   - ServiceUnavailableError
+//     The service specified by the resourceArn parameter is not available.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/BeginTransaction
 func (c *RDSDataService) BeginTransaction(input *BeginTransactionInput) (*BeginTransactionOutput, error) {
@@ -224,14 +243,13 @@ const opCommitTransaction = "CommitTransaction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CommitTransactionRequest method.
+//	req, resp := client.CommitTransactionRequest(params)
 //
-//    // Example sending a request using the CommitTransactionRequest method.
-//    req, resp := client.CommitTransactionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/CommitTransaction
 func (c *RDSDataService) CommitTransactionRequest(input *CommitTransactionInput) (req *request.Request, output *CommitTransactionOutput) {
@@ -263,23 +281,27 @@ func (c *RDSDataService) CommitTransactionRequest(input *CommitTransactionInput)
 // API operation CommitTransaction for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   There is an error in the call or in a SQL statement.
 //
-//   * StatementTimeoutException
-//   The execution of the SQL statement timed out.
+//   - AccessDeniedException
+//     You do not have sufficient access to perform this action.
 //
-//   * InternalServerErrorException
-//   An internal error occurred.
+//   - BadRequestException
+//     There is an error in the call or in a SQL statement.
 //
-//   * ForbiddenException
-//   There are insufficient privileges to make the call.
+//   - StatementTimeoutException
+//     The execution of the SQL statement timed out.
 //
-//   * ServiceUnavailableError
-//   The service specified by the resourceArn parameter is not available.
+//   - InternalServerErrorException
+//     An internal error occurred.
 //
-//   * NotFoundException
-//   The resourceArn, secretArn, or transactionId value can't be found.
+//   - ForbiddenException
+//     There are insufficient privileges to make the call.
+//
+//   - ServiceUnavailableError
+//     The service specified by the resourceArn parameter is not available.
+//
+//   - NotFoundException
+//     The resourceArn, secretArn, or transactionId value can't be found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/CommitTransaction
 func (c *RDSDataService) CommitTransaction(input *CommitTransactionInput) (*CommitTransactionOutput, error) {
@@ -319,14 +341,13 @@ const opExecuteSql = "ExecuteSql"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ExecuteSqlRequest method.
+//	req, resp := client.ExecuteSqlRequest(params)
 //
-//    // Example sending a request using the ExecuteSqlRequest method.
-//    req, resp := client.ExecuteSqlRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/ExecuteSql
 //
@@ -365,17 +386,21 @@ func (c *RDSDataService) ExecuteSqlRequest(input *ExecuteSqlInput) (req *request
 // API operation ExecuteSql for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   There is an error in the call or in a SQL statement.
 //
-//   * InternalServerErrorException
-//   An internal error occurred.
+//   - AccessDeniedException
+//     You do not have sufficient access to perform this action.
 //
-//   * ForbiddenException
-//   There are insufficient privileges to make the call.
+//   - BadRequestException
+//     There is an error in the call or in a SQL statement.
 //
-//   * ServiceUnavailableError
-//   The service specified by the resourceArn parameter is not available.
+//   - InternalServerErrorException
+//     An internal error occurred.
+//
+//   - ForbiddenException
+//     There are insufficient privileges to make the call.
+//
+//   - ServiceUnavailableError
+//     The service specified by the resourceArn parameter is not available.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/ExecuteSql
 //
@@ -419,14 +444,13 @@ const opExecuteStatement = "ExecuteStatement"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ExecuteStatementRequest method.
+//	req, resp := client.ExecuteStatementRequest(params)
 //
-//    // Example sending a request using the ExecuteStatementRequest method.
-//    req, resp := client.ExecuteStatementRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/ExecuteStatement
 func (c *RDSDataService) ExecuteStatementRequest(input *ExecuteStatementInput) (req *request.Request, output *ExecuteStatementOutput) {
@@ -452,8 +476,8 @@ func (c *RDSDataService) ExecuteStatementRequest(input *ExecuteStatementInput) (
 // If a call isn't part of a transaction because it doesn't include the transactionID
 // parameter, changes that result from the call are committed automatically.
 //
-// The response size limit is 1 MB. If the call returns more than 1 MB of response
-// data, the call is terminated.
+// If the binary response data from the database is more than 1 MB, the call
+// is terminated.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -463,20 +487,24 @@ func (c *RDSDataService) ExecuteStatementRequest(input *ExecuteStatementInput) (
 // API operation ExecuteStatement for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   There is an error in the call or in a SQL statement.
 //
-//   * StatementTimeoutException
-//   The execution of the SQL statement timed out.
+//   - AccessDeniedException
+//     You do not have sufficient access to perform this action.
 //
-//   * InternalServerErrorException
-//   An internal error occurred.
+//   - BadRequestException
+//     There is an error in the call or in a SQL statement.
 //
-//   * ForbiddenException
-//   There are insufficient privileges to make the call.
+//   - StatementTimeoutException
+//     The execution of the SQL statement timed out.
 //
-//   * ServiceUnavailableError
-//   The service specified by the resourceArn parameter is not available.
+//   - InternalServerErrorException
+//     An internal error occurred.
+//
+//   - ForbiddenException
+//     There are insufficient privileges to make the call.
+//
+//   - ServiceUnavailableError
+//     The service specified by the resourceArn parameter is not available.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/ExecuteStatement
 func (c *RDSDataService) ExecuteStatement(input *ExecuteStatementInput) (*ExecuteStatementOutput, error) {
@@ -516,14 +544,13 @@ const opRollbackTransaction = "RollbackTransaction"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RollbackTransactionRequest method.
+//	req, resp := client.RollbackTransactionRequest(params)
 //
-//    // Example sending a request using the RollbackTransactionRequest method.
-//    req, resp := client.RollbackTransactionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/RollbackTransaction
 func (c *RDSDataService) RollbackTransactionRequest(input *RollbackTransactionInput) (req *request.Request, output *RollbackTransactionOutput) {
@@ -555,23 +582,27 @@ func (c *RDSDataService) RollbackTransactionRequest(input *RollbackTransactionIn
 // API operation RollbackTransaction for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequestException
-//   There is an error in the call or in a SQL statement.
 //
-//   * StatementTimeoutException
-//   The execution of the SQL statement timed out.
+//   - AccessDeniedException
+//     You do not have sufficient access to perform this action.
 //
-//   * InternalServerErrorException
-//   An internal error occurred.
+//   - BadRequestException
+//     There is an error in the call or in a SQL statement.
 //
-//   * ForbiddenException
-//   There are insufficient privileges to make the call.
+//   - StatementTimeoutException
+//     The execution of the SQL statement timed out.
 //
-//   * ServiceUnavailableError
-//   The service specified by the resourceArn parameter is not available.
+//   - InternalServerErrorException
+//     An internal error occurred.
 //
-//   * NotFoundException
-//   The resourceArn, secretArn, or transactionId value can't be found.
+//   - ForbiddenException
+//     There are insufficient privileges to make the call.
+//
+//   - ServiceUnavailableError
+//     The service specified by the resourceArn parameter is not available.
+//
+//   - NotFoundException
+//     The resourceArn, secretArn, or transactionId value can't be found.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/rds-data-2018-08-01/RollbackTransaction
 func (c *RDSDataService) RollbackTransaction(input *RollbackTransactionInput) (*RollbackTransactionOutput, error) {
@@ -595,6 +626,70 @@ func (c *RDSDataService) RollbackTransactionWithContext(ctx aws.Context, input *
 	return out, req.Send()
 }
 
+// You do not have sufficient access to perform this action.
+type AccessDeniedException struct {
+	_            struct{}                  `type:"structure"`
+	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
+
+	Message_ *string `locationName:"message" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AccessDeniedException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AccessDeniedException) GoString() string {
+	return s.String()
+}
+
+func newErrorAccessDeniedException(v protocol.ResponseMetadata) error {
+	return &AccessDeniedException{
+		RespMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s *AccessDeniedException) Code() string {
+	return "AccessDeniedException"
+}
+
+// Message returns the exception's message.
+func (s *AccessDeniedException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s *AccessDeniedException) OrigErr() error {
+	return nil
+}
+
+func (s *AccessDeniedException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s *AccessDeniedException) StatusCode() int {
+	return s.RespMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s *AccessDeniedException) RequestID() string {
+	return s.RespMetadata.RequestID
+}
+
 // Contains an array.
 type ArrayValue struct {
 	_ struct{} `type:"structure"`
@@ -605,10 +700,10 @@ type ArrayValue struct {
 	// An array of Boolean values.
 	BooleanValues []*bool `locationName:"booleanValues" type:"list"`
 
-	// An array of integers.
+	// An array of floating-point numbers.
 	DoubleValues []*float64 `locationName:"doubleValues" type:"list"`
 
-	// An array of floating point numbers.
+	// An array of integers.
 	LongValues []*int64 `locationName:"longValues" type:"list"`
 
 	// An array of strings.
@@ -758,12 +853,16 @@ type BatchExecuteStatementInput struct {
 	// The name of the database schema.
 	Schema *string `locationName:"schema" type:"string"`
 
-	// The name or ARN of the secret that enables access to the DB cluster.
+	// The ARN of the secret that enables access to the DB cluster. Enter the database
+	// user name and password for the credentials in the secret.
+	//
+	// For information about creating the secret, see Create a database secret (https://docs.aws.amazon.com/secretsmanager/latest/userguide/create_database_secret.html).
 	//
 	// SecretArn is a required field
 	SecretArn *string `locationName:"secretArn" min:"11" type:"string" required:"true"`
 
-	// The SQL statement to run.
+	// The SQL statement to run. Don't include a semicolon (;) at the end of the
+	// SQL statement.
 	//
 	// Sql is a required field
 	Sql *string `locationName:"sql" type:"string" required:"true"`
@@ -1279,7 +1378,10 @@ type ExecuteSqlInput struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the secret that enables access to the DB
-	// cluster.
+	// cluster. Enter the database user name and password for the credentials in
+	// the secret.
+	//
+	// For information about creating the secret, see Create a database secret (https://docs.aws.amazon.com/secretsmanager/latest/userguide/create_database_secret.html).
 	//
 	// AwsSecretStoreArn is a required field
 	AwsSecretStoreArn *string `locationName:"awsSecretStoreArn" min:"11" type:"string" required:"true"`
@@ -1428,6 +1530,16 @@ type ExecuteStatementInput struct {
 	// The name of the database.
 	Database *string `locationName:"database" type:"string"`
 
+	// A value that indicates whether to format the result set as a single JSON
+	// string. This parameter only applies to SELECT statements and is ignored for
+	// other types of statements. Allowed values are NONE and JSON. The default
+	// value is NONE. The result is returned in the formattedRecords field.
+	//
+	// For usage information about the JSON format for result sets, see Using the
+	// Data API (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api.html)
+	// in the Amazon Aurora User Guide.
+	FormatRecordsAs *string `locationName:"formatRecordsAs" type:"string" enum:"RecordsFormatType"`
+
 	// A value that indicates whether to include metadata in the results.
 	IncludeResultMetadata *bool `locationName:"includeResultMetadata" type:"boolean"`
 
@@ -1449,7 +1561,10 @@ type ExecuteStatementInput struct {
 	// Currently, the schema parameter isn't supported.
 	Schema *string `locationName:"schema" type:"string"`
 
-	// The name or ARN of the secret that enables access to the DB cluster.
+	// The ARN of the secret that enables access to the DB cluster. Enter the database
+	// user name and password for the credentials in the secret.
+	//
+	// For information about creating the secret, see Create a database secret (https://docs.aws.amazon.com/secretsmanager/latest/userguide/create_database_secret.html).
 	//
 	// SecretArn is a required field
 	SecretArn *string `locationName:"secretArn" min:"11" type:"string" required:"true"`
@@ -1522,6 +1637,12 @@ func (s *ExecuteStatementInput) SetDatabase(v string) *ExecuteStatementInput {
 	return s
 }
 
+// SetFormatRecordsAs sets the FormatRecordsAs field's value.
+func (s *ExecuteStatementInput) SetFormatRecordsAs(v string) *ExecuteStatementInput {
+	s.FormatRecordsAs = &v
+	return s
+}
+
 // SetIncludeResultMetadata sets the IncludeResultMetadata field's value.
 func (s *ExecuteStatementInput) SetIncludeResultMetadata(v bool) *ExecuteStatementInput {
 	s.IncludeResultMetadata = &v
@@ -1575,10 +1696,20 @@ func (s *ExecuteStatementInput) SetTransactionId(v string) *ExecuteStatementInpu
 type ExecuteStatementOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Metadata for the columns included in the results.
+	// Metadata for the columns included in the results. This field is blank if
+	// the formatRecordsAs parameter is set to JSON.
 	ColumnMetadata []*ColumnMetadata `locationName:"columnMetadata" type:"list"`
 
-	// Values for fields generated during the request.
+	// A string value that represents the result set of a SELECT statement in JSON
+	// format. This value is only present when the formatRecordsAs parameter is
+	// set to JSON.
+	//
+	// The size limit for this field is currently 10 MB. If the JSON-formatted string
+	// representing the result set requires more than 10 MB, the call returns an
+	// error.
+	FormattedRecords *string `locationName:"formattedRecords" type:"string"`
+
+	// Values for fields generated during a DML request.
 	//
 	//    <note> <p>The <code>generatedFields</code> data isn't supported by Aurora
 	//    PostgreSQL. To get the values of generated fields, use the <code>RETURNING</code>
@@ -1589,7 +1720,8 @@ type ExecuteStatementOutput struct {
 	// The number of records updated by the request.
 	NumberOfRecordsUpdated *int64 `locationName:"numberOfRecordsUpdated" type:"long"`
 
-	// The records returned by the SQL statement.
+	// The records returned by the SQL statement. This field is blank if the formatRecordsAs
+	// parameter is set to JSON.
 	Records [][]*Field `locationName:"records" type:"list"`
 }
 
@@ -1614,6 +1746,12 @@ func (s ExecuteStatementOutput) GoString() string {
 // SetColumnMetadata sets the ColumnMetadata field's value.
 func (s *ExecuteStatementOutput) SetColumnMetadata(v []*ColumnMetadata) *ExecuteStatementOutput {
 	s.ColumnMetadata = v
+	return s
+}
+
+// SetFormattedRecords sets the FormattedRecords field's value.
+func (s *ExecuteStatementOutput) SetFormattedRecords(v string) *ExecuteStatementOutput {
+	s.FormattedRecords = &v
 	return s
 }
 
@@ -1917,6 +2055,9 @@ func (s *NotFoundException) RequestID() string {
 }
 
 // A record returned by a call.
+//
+// This data structure is only used with the deprecated ExecuteSql operation.
+// Use the BatchExecuteStatement or ExecuteStatement operation instead.
 type Record struct {
 	_ struct{} `type:"structure"`
 
@@ -1949,6 +2090,9 @@ func (s *Record) SetValues(v []*Value) *Record {
 }
 
 // The result set returned by a SQL statement.
+//
+// This data structure is only used with the deprecated ExecuteSql operation.
+// Use the BatchExecuteStatement or ExecuteStatement operation instead.
 type ResultFrame struct {
 	_ struct{} `type:"structure"`
 
@@ -2043,6 +2187,11 @@ type ResultSetOptions struct {
 	// loss. We recommend converting to String, especially when working with currency
 	// values.
 	DecimalReturnType *string `locationName:"decimalReturnType" type:"string" enum:"DecimalReturnType"`
+
+	// A value that indicates how a field of LONG type is represented. Allowed values
+	// are LONG and STRING. The default is LONG. Specify STRING if the length or
+	// precision of numeric values might cause truncation or rounding errors.
+	LongReturnType *string `locationName:"longReturnType" type:"string" enum:"LongReturnType"`
 }
 
 // String returns the string representation.
@@ -2066,6 +2215,12 @@ func (s ResultSetOptions) GoString() string {
 // SetDecimalReturnType sets the DecimalReturnType field's value.
 func (s *ResultSetOptions) SetDecimalReturnType(v string) *ResultSetOptions {
 	s.DecimalReturnType = &v
+	return s
+}
+
+// SetLongReturnType sets the LongReturnType field's value.
+func (s *ResultSetOptions) SetLongReturnType(v string) *ResultSetOptions {
+	s.LongReturnType = &v
 	return s
 }
 
@@ -2319,7 +2474,9 @@ func (s *SqlParameter) SetValue(v *Field) *SqlParameter {
 
 // The result of a SQL statement.
 //
-//    <important> <p>This data type is deprecated.</p> </important>
+//	<note> <p>This data structure is only used with the deprecated <code>ExecuteSql</code>
+//	operation. Use the <code>BatchExecuteStatement</code> or <code>ExecuteStatement</code>
+//	operation instead.</p> </note>
 type SqlStatementResult struct {
 	_ struct{} `type:"structure"`
 
@@ -2429,6 +2586,9 @@ func (s *StatementTimeoutException) RequestID() string {
 }
 
 // A structure value returned by a call.
+//
+// This data structure is only used with the deprecated ExecuteSql operation.
+// Use the BatchExecuteStatement or ExecuteStatement operation instead.
 type StructValue struct {
 	_ struct{} `type:"structure"`
 
@@ -2494,7 +2654,9 @@ func (s *UpdateResult) SetGeneratedFields(v []*Field) *UpdateResult {
 
 // Contains the value of a column.
 //
-//    <important> <p>This data type is deprecated.</p> </important>
+//	<note> <p>This data structure is only used with the deprecated <code>ExecuteSql</code>
+//	operation. Use the <code>BatchExecuteStatement</code> or <code>ExecuteStatement</code>
+//	operation instead.</p> </note>
 type Value struct {
 	_ struct{} `type:"structure"`
 
@@ -2621,6 +2783,38 @@ func DecimalReturnType_Values() []string {
 	return []string{
 		DecimalReturnTypeString,
 		DecimalReturnTypeDoubleOrLong,
+	}
+}
+
+const (
+	// LongReturnTypeString is a LongReturnType enum value
+	LongReturnTypeString = "STRING"
+
+	// LongReturnTypeLong is a LongReturnType enum value
+	LongReturnTypeLong = "LONG"
+)
+
+// LongReturnType_Values returns all elements of the LongReturnType enum
+func LongReturnType_Values() []string {
+	return []string{
+		LongReturnTypeString,
+		LongReturnTypeLong,
+	}
+}
+
+const (
+	// RecordsFormatTypeNone is a RecordsFormatType enum value
+	RecordsFormatTypeNone = "NONE"
+
+	// RecordsFormatTypeJson is a RecordsFormatType enum value
+	RecordsFormatTypeJson = "JSON"
+)
+
+// RecordsFormatType_Values returns all elements of the RecordsFormatType enum
+func RecordsFormatType_Values() []string {
+	return []string{
+		RecordsFormatTypeNone,
+		RecordsFormatTypeJson,
 	}
 }
 

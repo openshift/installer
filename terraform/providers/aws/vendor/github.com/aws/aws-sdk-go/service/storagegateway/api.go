@@ -28,14 +28,13 @@ const opActivateGateway = "ActivateGateway"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ActivateGatewayRequest method.
+//	req, resp := client.ActivateGatewayRequest(params)
 //
-//    // Example sending a request using the ActivateGatewayRequest method.
-//    req, resp := client.ActivateGatewayRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ActivateGateway
 func (c *StorageGateway) ActivateGatewayRequest(input *ActivateGatewayInput) (req *request.Request, output *ActivateGatewayOutput) {
@@ -73,13 +72,14 @@ func (c *StorageGateway) ActivateGatewayRequest(input *ActivateGatewayInput) (re
 // API operation ActivateGateway for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ActivateGateway
 func (c *StorageGateway) ActivateGateway(input *ActivateGatewayInput) (*ActivateGatewayOutput, error) {
@@ -119,14 +119,13 @@ const opAddCache = "AddCache"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddCacheRequest method.
+//	req, resp := client.AddCacheRequest(params)
 //
-//    // Example sending a request using the AddCacheRequest method.
-//    req, resp := client.AddCacheRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AddCache
 func (c *StorageGateway) AddCacheRequest(input *AddCacheInput) (req *request.Request, output *AddCacheOutput) {
@@ -163,13 +162,14 @@ func (c *StorageGateway) AddCacheRequest(input *AddCacheInput) (req *request.Req
 // API operation AddCache for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AddCache
 func (c *StorageGateway) AddCache(input *AddCacheInput) (*AddCacheOutput, error) {
@@ -209,14 +209,13 @@ const opAddTagsToResource = "AddTagsToResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddTagsToResourceRequest method.
+//	req, resp := client.AddTagsToResourceRequest(params)
 //
-//    // Example sending a request using the AddTagsToResourceRequest method.
-//    req, resp := client.AddTagsToResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AddTagsToResource
 func (c *StorageGateway) AddTagsToResourceRequest(input *AddTagsToResourceInput) (req *request.Request, output *AddTagsToResourceOutput) {
@@ -243,15 +242,15 @@ func (c *StorageGateway) AddTagsToResourceRequest(input *AddTagsToResourceInput)
 // tag consists of a key and a value, which you define. You can add tags to
 // the following Storage Gateway resources:
 //
-//    * Storage gateways of all types
+//   - Storage gateways of all types
 //
-//    * Storage volumes
+//   - Storage volumes
 //
-//    * Virtual tapes
+//   - Virtual tapes
 //
-//    * NFS and SMB file shares
+//   - NFS and SMB file shares
 //
-//    * File System associations
+//   - File System associations
 //
 // You can create a maximum of 50 tags for each resource. Virtual tapes and
 // storage volumes that are recovered to a new gateway maintain their tags.
@@ -264,13 +263,14 @@ func (c *StorageGateway) AddTagsToResourceRequest(input *AddTagsToResourceInput)
 // API operation AddTagsToResource for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AddTagsToResource
 func (c *StorageGateway) AddTagsToResource(input *AddTagsToResourceInput) (*AddTagsToResourceOutput, error) {
@@ -310,14 +310,13 @@ const opAddUploadBuffer = "AddUploadBuffer"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddUploadBufferRequest method.
+//	req, resp := client.AddUploadBufferRequest(params)
 //
-//    // Example sending a request using the AddUploadBufferRequest method.
-//    req, resp := client.AddUploadBufferRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AddUploadBuffer
 func (c *StorageGateway) AddUploadBufferRequest(input *AddUploadBufferInput) (req *request.Request, output *AddUploadBufferOutput) {
@@ -354,13 +353,14 @@ func (c *StorageGateway) AddUploadBufferRequest(input *AddUploadBufferInput) (re
 // API operation AddUploadBuffer for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AddUploadBuffer
 func (c *StorageGateway) AddUploadBuffer(input *AddUploadBufferInput) (*AddUploadBufferOutput, error) {
@@ -400,14 +400,13 @@ const opAddWorkingStorage = "AddWorkingStorage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddWorkingStorageRequest method.
+//	req, resp := client.AddWorkingStorageRequest(params)
 //
-//    // Example sending a request using the AddWorkingStorageRequest method.
-//    req, resp := client.AddWorkingStorageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AddWorkingStorage
 func (c *StorageGateway) AddWorkingStorageRequest(input *AddWorkingStorageInput) (req *request.Request, output *AddWorkingStorageOutput) {
@@ -448,13 +447,14 @@ func (c *StorageGateway) AddWorkingStorageRequest(input *AddWorkingStorageInput)
 // API operation AddWorkingStorage for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AddWorkingStorage
 func (c *StorageGateway) AddWorkingStorage(input *AddWorkingStorageInput) (*AddWorkingStorageOutput, error) {
@@ -494,14 +494,13 @@ const opAssignTapePool = "AssignTapePool"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssignTapePoolRequest method.
+//	req, resp := client.AssignTapePoolRequest(params)
 //
-//    // Example sending a request using the AssignTapePoolRequest method.
-//    req, resp := client.AssignTapePoolRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AssignTapePool
 func (c *StorageGateway) AssignTapePoolRequest(input *AssignTapePoolInput) (req *request.Request, output *AssignTapePoolOutput) {
@@ -528,8 +527,6 @@ func (c *StorageGateway) AssignTapePoolRequest(input *AssignTapePoolInput) (req 
 // into the S3 storage class (S3 Glacier or S3 Glacier Deep Archive) that corresponds
 // to the pool.
 //
-// Valid Values: GLACIER | DEEP_ARCHIVE
-//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -538,13 +535,14 @@ func (c *StorageGateway) AssignTapePoolRequest(input *AssignTapePoolInput) (req 
 // API operation AssignTapePool for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AssignTapePool
 func (c *StorageGateway) AssignTapePool(input *AssignTapePoolInput) (*AssignTapePoolOutput, error) {
@@ -584,14 +582,13 @@ const opAssociateFileSystem = "AssociateFileSystem"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateFileSystemRequest method.
+//	req, resp := client.AssociateFileSystemRequest(params)
 //
-//    // Example sending a request using the AssociateFileSystemRequest method.
-//    req, resp := client.AssociateFileSystemRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AssociateFileSystem
 func (c *StorageGateway) AssociateFileSystemRequest(input *AssociateFileSystemInput) (req *request.Request, output *AssociateFileSystemOutput) {
@@ -625,13 +622,14 @@ func (c *StorageGateway) AssociateFileSystemRequest(input *AssociateFileSystemIn
 // API operation AssociateFileSystem for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AssociateFileSystem
 func (c *StorageGateway) AssociateFileSystem(input *AssociateFileSystemInput) (*AssociateFileSystemOutput, error) {
@@ -671,14 +669,13 @@ const opAttachVolume = "AttachVolume"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AttachVolumeRequest method.
+//	req, resp := client.AttachVolumeRequest(params)
 //
-//    // Example sending a request using the AttachVolumeRequest method.
-//    req, resp := client.AttachVolumeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AttachVolume
 func (c *StorageGateway) AttachVolumeRequest(input *AttachVolumeInput) (req *request.Request, output *AttachVolumeOutput) {
@@ -713,13 +710,14 @@ func (c *StorageGateway) AttachVolumeRequest(input *AttachVolumeInput) (req *req
 // API operation AttachVolume for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AttachVolume
 func (c *StorageGateway) AttachVolume(input *AttachVolumeInput) (*AttachVolumeOutput, error) {
@@ -759,14 +757,13 @@ const opCancelArchival = "CancelArchival"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CancelArchivalRequest method.
+//	req, resp := client.CancelArchivalRequest(params)
 //
-//    // Example sending a request using the CancelArchivalRequest method.
-//    req, resp := client.CancelArchivalRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CancelArchival
 func (c *StorageGateway) CancelArchivalRequest(input *CancelArchivalInput) (req *request.Request, output *CancelArchivalOutput) {
@@ -799,13 +796,14 @@ func (c *StorageGateway) CancelArchivalRequest(input *CancelArchivalInput) (req 
 // API operation CancelArchival for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CancelArchival
 func (c *StorageGateway) CancelArchival(input *CancelArchivalInput) (*CancelArchivalOutput, error) {
@@ -845,14 +843,13 @@ const opCancelRetrieval = "CancelRetrieval"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CancelRetrievalRequest method.
+//	req, resp := client.CancelRetrievalRequest(params)
 //
-//    // Example sending a request using the CancelRetrievalRequest method.
-//    req, resp := client.CancelRetrievalRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CancelRetrieval
 func (c *StorageGateway) CancelRetrievalRequest(input *CancelRetrievalInput) (req *request.Request, output *CancelRetrievalOutput) {
@@ -885,13 +882,14 @@ func (c *StorageGateway) CancelRetrievalRequest(input *CancelRetrievalInput) (re
 // API operation CancelRetrieval for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CancelRetrieval
 func (c *StorageGateway) CancelRetrieval(input *CancelRetrievalInput) (*CancelRetrievalOutput, error) {
@@ -931,14 +929,13 @@ const opCreateCachediSCSIVolume = "CreateCachediSCSIVolume"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateCachediSCSIVolumeRequest method.
+//	req, resp := client.CreateCachediSCSIVolumeRequest(params)
 //
-//    // Example sending a request using the CreateCachediSCSIVolumeRequest method.
-//    req, resp := client.CreateCachediSCSIVolumeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateCachediSCSIVolume
 func (c *StorageGateway) CreateCachediSCSIVolumeRequest(input *CreateCachediSCSIVolumeInput) (req *request.Request, output *CreateCachediSCSIVolumeOutput) {
@@ -985,13 +982,14 @@ func (c *StorageGateway) CreateCachediSCSIVolumeRequest(input *CreateCachediSCSI
 // API operation CreateCachediSCSIVolume for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateCachediSCSIVolume
 func (c *StorageGateway) CreateCachediSCSIVolume(input *CreateCachediSCSIVolumeInput) (*CreateCachediSCSIVolumeOutput, error) {
@@ -1031,14 +1029,13 @@ const opCreateNFSFileShare = "CreateNFSFileShare"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateNFSFileShareRequest method.
+//	req, resp := client.CreateNFSFileShareRequest(params)
 //
-//    // Example sending a request using the CreateNFSFileShareRequest method.
-//    req, resp := client.CreateNFSFileShareRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateNFSFileShare
 func (c *StorageGateway) CreateNFSFileShareRequest(input *CreateNFSFileShareInput) (req *request.Request, output *CreateNFSFileShareOutput) {
@@ -1084,13 +1081,14 @@ func (c *StorageGateway) CreateNFSFileShareRequest(input *CreateNFSFileShareInpu
 // API operation CreateNFSFileShare for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateNFSFileShare
 func (c *StorageGateway) CreateNFSFileShare(input *CreateNFSFileShareInput) (*CreateNFSFileShareOutput, error) {
@@ -1130,14 +1128,13 @@ const opCreateSMBFileShare = "CreateSMBFileShare"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateSMBFileShareRequest method.
+//	req, resp := client.CreateSMBFileShareRequest(params)
 //
-//    // Example sending a request using the CreateSMBFileShareRequest method.
-//    req, resp := client.CreateSMBFileShareRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateSMBFileShare
 func (c *StorageGateway) CreateSMBFileShareRequest(input *CreateSMBFileShareInput) (req *request.Request, output *CreateSMBFileShareOutput) {
@@ -1182,13 +1179,14 @@ func (c *StorageGateway) CreateSMBFileShareRequest(input *CreateSMBFileShareInpu
 // API operation CreateSMBFileShare for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateSMBFileShare
 func (c *StorageGateway) CreateSMBFileShare(input *CreateSMBFileShareInput) (*CreateSMBFileShareOutput, error) {
@@ -1228,14 +1226,13 @@ const opCreateSnapshot = "CreateSnapshot"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateSnapshotRequest method.
+//	req, resp := client.CreateSnapshotRequest(params)
 //
-//    // Example sending a request using the CreateSnapshotRequest method.
-//    req, resp := client.CreateSnapshotRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateSnapshot
 func (c *StorageGateway) CreateSnapshotRequest(input *CreateSnapshotInput) (req *request.Request, output *CreateSnapshotOutput) {
@@ -1291,17 +1288,18 @@ func (c *StorageGateway) CreateSnapshotRequest(input *CreateSnapshotInput) (req 
 // API operation CreateSnapshot for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
 //
-//   * ServiceUnavailableError
-//   An internal server error has occurred because the service is unavailable.
-//   For more information, see the error and message fields.
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
+//
+//   - ServiceUnavailableError
+//     An internal server error has occurred because the service is unavailable.
+//     For more information, see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateSnapshot
 func (c *StorageGateway) CreateSnapshot(input *CreateSnapshotInput) (*CreateSnapshotOutput, error) {
@@ -1341,14 +1339,13 @@ const opCreateSnapshotFromVolumeRecoveryPoint = "CreateSnapshotFromVolumeRecover
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateSnapshotFromVolumeRecoveryPointRequest method.
+//	req, resp := client.CreateSnapshotFromVolumeRecoveryPointRequest(params)
 //
-//    // Example sending a request using the CreateSnapshotFromVolumeRecoveryPointRequest method.
-//    req, resp := client.CreateSnapshotFromVolumeRecoveryPointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateSnapshotFromVolumeRecoveryPoint
 func (c *StorageGateway) CreateSnapshotFromVolumeRecoveryPointRequest(input *CreateSnapshotFromVolumeRecoveryPointInput) (req *request.Request, output *CreateSnapshotFromVolumeRecoveryPointOutput) {
@@ -1397,17 +1394,18 @@ func (c *StorageGateway) CreateSnapshotFromVolumeRecoveryPointRequest(input *Cre
 // API operation CreateSnapshotFromVolumeRecoveryPoint for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
 //
-//   * ServiceUnavailableError
-//   An internal server error has occurred because the service is unavailable.
-//   For more information, see the error and message fields.
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
+//
+//   - ServiceUnavailableError
+//     An internal server error has occurred because the service is unavailable.
+//     For more information, see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateSnapshotFromVolumeRecoveryPoint
 func (c *StorageGateway) CreateSnapshotFromVolumeRecoveryPoint(input *CreateSnapshotFromVolumeRecoveryPointInput) (*CreateSnapshotFromVolumeRecoveryPointOutput, error) {
@@ -1447,14 +1445,13 @@ const opCreateStorediSCSIVolume = "CreateStorediSCSIVolume"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateStorediSCSIVolumeRequest method.
+//	req, resp := client.CreateStorediSCSIVolumeRequest(params)
 //
-//    // Example sending a request using the CreateStorediSCSIVolumeRequest method.
-//    req, resp := client.CreateStorediSCSIVolumeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateStorediSCSIVolume
 func (c *StorageGateway) CreateStorediSCSIVolumeRequest(input *CreateStorediSCSIVolumeInput) (req *request.Request, output *CreateStorediSCSIVolumeOutput) {
@@ -1497,13 +1494,14 @@ func (c *StorageGateway) CreateStorediSCSIVolumeRequest(input *CreateStorediSCSI
 // API operation CreateStorediSCSIVolume for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateStorediSCSIVolume
 func (c *StorageGateway) CreateStorediSCSIVolume(input *CreateStorediSCSIVolumeInput) (*CreateStorediSCSIVolumeOutput, error) {
@@ -1543,14 +1541,13 @@ const opCreateTapePool = "CreateTapePool"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateTapePoolRequest method.
+//	req, resp := client.CreateTapePoolRequest(params)
 //
-//    // Example sending a request using the CreateTapePoolRequest method.
-//    req, resp := client.CreateTapePoolRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateTapePool
 func (c *StorageGateway) CreateTapePoolRequest(input *CreateTapePoolInput) (req *request.Request, output *CreateTapePoolOutput) {
@@ -1582,13 +1579,14 @@ func (c *StorageGateway) CreateTapePoolRequest(input *CreateTapePoolInput) (req 
 // API operation CreateTapePool for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateTapePool
 func (c *StorageGateway) CreateTapePool(input *CreateTapePoolInput) (*CreateTapePoolOutput, error) {
@@ -1628,14 +1626,13 @@ const opCreateTapeWithBarcode = "CreateTapeWithBarcode"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateTapeWithBarcodeRequest method.
+//	req, resp := client.CreateTapeWithBarcodeRequest(params)
 //
-//    // Example sending a request using the CreateTapeWithBarcodeRequest method.
-//    req, resp := client.CreateTapeWithBarcodeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateTapeWithBarcode
 func (c *StorageGateway) CreateTapeWithBarcodeRequest(input *CreateTapeWithBarcodeInput) (req *request.Request, output *CreateTapeWithBarcodeOutput) {
@@ -1672,13 +1669,14 @@ func (c *StorageGateway) CreateTapeWithBarcodeRequest(input *CreateTapeWithBarco
 // API operation CreateTapeWithBarcode for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateTapeWithBarcode
 func (c *StorageGateway) CreateTapeWithBarcode(input *CreateTapeWithBarcodeInput) (*CreateTapeWithBarcodeOutput, error) {
@@ -1718,14 +1716,13 @@ const opCreateTapes = "CreateTapes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateTapesRequest method.
+//	req, resp := client.CreateTapesRequest(params)
 //
-//    // Example sending a request using the CreateTapesRequest method.
-//    req, resp := client.CreateTapesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateTapes
 func (c *StorageGateway) CreateTapesRequest(input *CreateTapesInput) (req *request.Request, output *CreateTapesOutput) {
@@ -1761,13 +1758,14 @@ func (c *StorageGateway) CreateTapesRequest(input *CreateTapesInput) (req *reque
 // API operation CreateTapes for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/CreateTapes
 func (c *StorageGateway) CreateTapes(input *CreateTapesInput) (*CreateTapesOutput, error) {
@@ -1807,14 +1805,13 @@ const opDeleteAutomaticTapeCreationPolicy = "DeleteAutomaticTapeCreationPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAutomaticTapeCreationPolicyRequest method.
+//	req, resp := client.DeleteAutomaticTapeCreationPolicyRequest(params)
 //
-//    // Example sending a request using the DeleteAutomaticTapeCreationPolicyRequest method.
-//    req, resp := client.DeleteAutomaticTapeCreationPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteAutomaticTapeCreationPolicy
 func (c *StorageGateway) DeleteAutomaticTapeCreationPolicyRequest(input *DeleteAutomaticTapeCreationPolicyInput) (req *request.Request, output *DeleteAutomaticTapeCreationPolicyOutput) {
@@ -1847,13 +1844,14 @@ func (c *StorageGateway) DeleteAutomaticTapeCreationPolicyRequest(input *DeleteA
 // API operation DeleteAutomaticTapeCreationPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteAutomaticTapeCreationPolicy
 func (c *StorageGateway) DeleteAutomaticTapeCreationPolicy(input *DeleteAutomaticTapeCreationPolicyInput) (*DeleteAutomaticTapeCreationPolicyOutput, error) {
@@ -1893,14 +1891,13 @@ const opDeleteBandwidthRateLimit = "DeleteBandwidthRateLimit"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteBandwidthRateLimitRequest method.
+//	req, resp := client.DeleteBandwidthRateLimitRequest(params)
 //
-//    // Example sending a request using the DeleteBandwidthRateLimitRequest method.
-//    req, resp := client.DeleteBandwidthRateLimitRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteBandwidthRateLimit
 func (c *StorageGateway) DeleteBandwidthRateLimitRequest(input *DeleteBandwidthRateLimitInput) (req *request.Request, output *DeleteBandwidthRateLimitOutput) {
@@ -1936,13 +1933,14 @@ func (c *StorageGateway) DeleteBandwidthRateLimitRequest(input *DeleteBandwidthR
 // API operation DeleteBandwidthRateLimit for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteBandwidthRateLimit
 func (c *StorageGateway) DeleteBandwidthRateLimit(input *DeleteBandwidthRateLimitInput) (*DeleteBandwidthRateLimitOutput, error) {
@@ -1982,14 +1980,13 @@ const opDeleteChapCredentials = "DeleteChapCredentials"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteChapCredentialsRequest method.
+//	req, resp := client.DeleteChapCredentialsRequest(params)
 //
-//    // Example sending a request using the DeleteChapCredentialsRequest method.
-//    req, resp := client.DeleteChapCredentialsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteChapCredentials
 func (c *StorageGateway) DeleteChapCredentialsRequest(input *DeleteChapCredentialsInput) (req *request.Request, output *DeleteChapCredentialsOutput) {
@@ -2022,13 +2019,14 @@ func (c *StorageGateway) DeleteChapCredentialsRequest(input *DeleteChapCredentia
 // API operation DeleteChapCredentials for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteChapCredentials
 func (c *StorageGateway) DeleteChapCredentials(input *DeleteChapCredentialsInput) (*DeleteChapCredentialsOutput, error) {
@@ -2068,14 +2066,13 @@ const opDeleteFileShare = "DeleteFileShare"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteFileShareRequest method.
+//	req, resp := client.DeleteFileShareRequest(params)
 //
-//    // Example sending a request using the DeleteFileShareRequest method.
-//    req, resp := client.DeleteFileShareRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteFileShare
 func (c *StorageGateway) DeleteFileShareRequest(input *DeleteFileShareInput) (req *request.Request, output *DeleteFileShareOutput) {
@@ -2107,13 +2104,14 @@ func (c *StorageGateway) DeleteFileShareRequest(input *DeleteFileShareInput) (re
 // API operation DeleteFileShare for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteFileShare
 func (c *StorageGateway) DeleteFileShare(input *DeleteFileShareInput) (*DeleteFileShareOutput, error) {
@@ -2153,14 +2151,13 @@ const opDeleteGateway = "DeleteGateway"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteGatewayRequest method.
+//	req, resp := client.DeleteGatewayRequest(params)
 //
-//    // Example sending a request using the DeleteGatewayRequest method.
-//    req, resp := client.DeleteGatewayRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteGateway
 func (c *StorageGateway) DeleteGatewayRequest(input *DeleteGatewayInput) (req *request.Request, output *DeleteGatewayOutput) {
@@ -2206,13 +2203,14 @@ func (c *StorageGateway) DeleteGatewayRequest(input *DeleteGatewayInput) (req *r
 // API operation DeleteGateway for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteGateway
 func (c *StorageGateway) DeleteGateway(input *DeleteGatewayInput) (*DeleteGatewayOutput, error) {
@@ -2252,14 +2250,13 @@ const opDeleteSnapshotSchedule = "DeleteSnapshotSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteSnapshotScheduleRequest method.
+//	req, resp := client.DeleteSnapshotScheduleRequest(params)
 //
-//    // Example sending a request using the DeleteSnapshotScheduleRequest method.
-//    req, resp := client.DeleteSnapshotScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteSnapshotSchedule
 func (c *StorageGateway) DeleteSnapshotScheduleRequest(input *DeleteSnapshotScheduleInput) (req *request.Request, output *DeleteSnapshotScheduleOutput) {
@@ -2286,8 +2283,8 @@ func (c *StorageGateway) DeleteSnapshotScheduleRequest(input *DeleteSnapshotSche
 // This API action enables you to delete a snapshot schedule for a volume. For
 // more information, see Backing up your volumes (https://docs.aws.amazon.com/storagegateway/latest/userguide/backing-up-volumes.html).
 // In the DeleteSnapshotSchedule request, you identify the volume by providing
-// its Amazon Resource Name (ARN). This operation is only supported in stored
-// and cached volume gateway types.
+// its Amazon Resource Name (ARN). This operation is only supported for cached
+// volume gateway types.
 //
 // To list or delete a snapshot, you must use the Amazon EC2 API. For more information,
 // go to DescribeSnapshots (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSnapshots.html)
@@ -2301,13 +2298,14 @@ func (c *StorageGateway) DeleteSnapshotScheduleRequest(input *DeleteSnapshotSche
 // API operation DeleteSnapshotSchedule for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteSnapshotSchedule
 func (c *StorageGateway) DeleteSnapshotSchedule(input *DeleteSnapshotScheduleInput) (*DeleteSnapshotScheduleOutput, error) {
@@ -2347,14 +2345,13 @@ const opDeleteTape = "DeleteTape"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteTapeRequest method.
+//	req, resp := client.DeleteTapeRequest(params)
 //
-//    // Example sending a request using the DeleteTapeRequest method.
-//    req, resp := client.DeleteTapeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteTape
 func (c *StorageGateway) DeleteTapeRequest(input *DeleteTapeInput) (req *request.Request, output *DeleteTapeOutput) {
@@ -2386,13 +2383,14 @@ func (c *StorageGateway) DeleteTapeRequest(input *DeleteTapeInput) (req *request
 // API operation DeleteTape for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteTape
 func (c *StorageGateway) DeleteTape(input *DeleteTapeInput) (*DeleteTapeOutput, error) {
@@ -2432,14 +2430,13 @@ const opDeleteTapeArchive = "DeleteTapeArchive"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteTapeArchiveRequest method.
+//	req, resp := client.DeleteTapeArchiveRequest(params)
 //
-//    // Example sending a request using the DeleteTapeArchiveRequest method.
-//    req, resp := client.DeleteTapeArchiveRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteTapeArchive
 func (c *StorageGateway) DeleteTapeArchiveRequest(input *DeleteTapeArchiveInput) (req *request.Request, output *DeleteTapeArchiveOutput) {
@@ -2471,13 +2468,14 @@ func (c *StorageGateway) DeleteTapeArchiveRequest(input *DeleteTapeArchiveInput)
 // API operation DeleteTapeArchive for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteTapeArchive
 func (c *StorageGateway) DeleteTapeArchive(input *DeleteTapeArchiveInput) (*DeleteTapeArchiveOutput, error) {
@@ -2517,14 +2515,13 @@ const opDeleteTapePool = "DeleteTapePool"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteTapePoolRequest method.
+//	req, resp := client.DeleteTapePoolRequest(params)
 //
-//    // Example sending a request using the DeleteTapePoolRequest method.
-//    req, resp := client.DeleteTapePoolRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteTapePool
 func (c *StorageGateway) DeleteTapePoolRequest(input *DeleteTapePoolInput) (req *request.Request, output *DeleteTapePoolOutput) {
@@ -2557,13 +2554,14 @@ func (c *StorageGateway) DeleteTapePoolRequest(input *DeleteTapePoolInput) (req 
 // API operation DeleteTapePool for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteTapePool
 func (c *StorageGateway) DeleteTapePool(input *DeleteTapePoolInput) (*DeleteTapePoolOutput, error) {
@@ -2603,14 +2601,13 @@ const opDeleteVolume = "DeleteVolume"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteVolumeRequest method.
+//	req, resp := client.DeleteVolumeRequest(params)
 //
-//    // Example sending a request using the DeleteVolumeRequest method.
-//    req, resp := client.DeleteVolumeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteVolume
 func (c *StorageGateway) DeleteVolumeRequest(input *DeleteVolumeInput) (req *request.Request, output *DeleteVolumeOutput) {
@@ -2655,13 +2652,14 @@ func (c *StorageGateway) DeleteVolumeRequest(input *DeleteVolumeInput) (req *req
 // API operation DeleteVolume for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DeleteVolume
 func (c *StorageGateway) DeleteVolume(input *DeleteVolumeInput) (*DeleteVolumeOutput, error) {
@@ -2701,14 +2699,13 @@ const opDescribeAvailabilityMonitorTest = "DescribeAvailabilityMonitorTest"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAvailabilityMonitorTestRequest method.
+//	req, resp := client.DescribeAvailabilityMonitorTestRequest(params)
 //
-//    // Example sending a request using the DescribeAvailabilityMonitorTestRequest method.
-//    req, resp := client.DescribeAvailabilityMonitorTestRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeAvailabilityMonitorTest
 func (c *StorageGateway) DescribeAvailabilityMonitorTestRequest(input *DescribeAvailabilityMonitorTestInput) (req *request.Request, output *DescribeAvailabilityMonitorTestOutput) {
@@ -2741,13 +2738,14 @@ func (c *StorageGateway) DescribeAvailabilityMonitorTestRequest(input *DescribeA
 // API operation DescribeAvailabilityMonitorTest for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeAvailabilityMonitorTest
 func (c *StorageGateway) DescribeAvailabilityMonitorTest(input *DescribeAvailabilityMonitorTestInput) (*DescribeAvailabilityMonitorTestOutput, error) {
@@ -2787,14 +2785,13 @@ const opDescribeBandwidthRateLimit = "DescribeBandwidthRateLimit"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeBandwidthRateLimitRequest method.
+//	req, resp := client.DescribeBandwidthRateLimitRequest(params)
 //
-//    // Example sending a request using the DescribeBandwidthRateLimitRequest method.
-//    req, resp := client.DescribeBandwidthRateLimitRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeBandwidthRateLimit
 func (c *StorageGateway) DescribeBandwidthRateLimitRequest(input *DescribeBandwidthRateLimitInput) (req *request.Request, output *DescribeBandwidthRateLimitOutput) {
@@ -2833,13 +2830,14 @@ func (c *StorageGateway) DescribeBandwidthRateLimitRequest(input *DescribeBandwi
 // API operation DescribeBandwidthRateLimit for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeBandwidthRateLimit
 func (c *StorageGateway) DescribeBandwidthRateLimit(input *DescribeBandwidthRateLimitInput) (*DescribeBandwidthRateLimitOutput, error) {
@@ -2879,14 +2877,13 @@ const opDescribeBandwidthRateLimitSchedule = "DescribeBandwidthRateLimitSchedule
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeBandwidthRateLimitScheduleRequest method.
+//	req, resp := client.DescribeBandwidthRateLimitScheduleRequest(params)
 //
-//    // Example sending a request using the DescribeBandwidthRateLimitScheduleRequest method.
-//    req, resp := client.DescribeBandwidthRateLimitScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeBandwidthRateLimitSchedule
 func (c *StorageGateway) DescribeBandwidthRateLimitScheduleRequest(input *DescribeBandwidthRateLimitScheduleInput) (req *request.Request, output *DescribeBandwidthRateLimitScheduleOutput) {
@@ -2935,13 +2932,14 @@ func (c *StorageGateway) DescribeBandwidthRateLimitScheduleRequest(input *Descri
 // API operation DescribeBandwidthRateLimitSchedule for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeBandwidthRateLimitSchedule
 func (c *StorageGateway) DescribeBandwidthRateLimitSchedule(input *DescribeBandwidthRateLimitScheduleInput) (*DescribeBandwidthRateLimitScheduleOutput, error) {
@@ -2981,14 +2979,13 @@ const opDescribeCache = "DescribeCache"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeCacheRequest method.
+//	req, resp := client.DescribeCacheRequest(params)
 //
-//    // Example sending a request using the DescribeCacheRequest method.
-//    req, resp := client.DescribeCacheRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeCache
 func (c *StorageGateway) DescribeCacheRequest(input *DescribeCacheInput) (req *request.Request, output *DescribeCacheOutput) {
@@ -3023,13 +3020,14 @@ func (c *StorageGateway) DescribeCacheRequest(input *DescribeCacheInput) (req *r
 // API operation DescribeCache for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeCache
 func (c *StorageGateway) DescribeCache(input *DescribeCacheInput) (*DescribeCacheOutput, error) {
@@ -3069,14 +3067,13 @@ const opDescribeCachediSCSIVolumes = "DescribeCachediSCSIVolumes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeCachediSCSIVolumesRequest method.
+//	req, resp := client.DescribeCachediSCSIVolumesRequest(params)
 //
-//    // Example sending a request using the DescribeCachediSCSIVolumesRequest method.
-//    req, resp := client.DescribeCachediSCSIVolumesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeCachediSCSIVolumes
 func (c *StorageGateway) DescribeCachediSCSIVolumesRequest(input *DescribeCachediSCSIVolumesInput) (req *request.Request, output *DescribeCachediSCSIVolumesOutput) {
@@ -3112,13 +3109,14 @@ func (c *StorageGateway) DescribeCachediSCSIVolumesRequest(input *DescribeCached
 // API operation DescribeCachediSCSIVolumes for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeCachediSCSIVolumes
 func (c *StorageGateway) DescribeCachediSCSIVolumes(input *DescribeCachediSCSIVolumesInput) (*DescribeCachediSCSIVolumesOutput, error) {
@@ -3158,14 +3156,13 @@ const opDescribeChapCredentials = "DescribeChapCredentials"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeChapCredentialsRequest method.
+//	req, resp := client.DescribeChapCredentialsRequest(params)
 //
-//    // Example sending a request using the DescribeChapCredentialsRequest method.
-//    req, resp := client.DescribeChapCredentialsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeChapCredentials
 func (c *StorageGateway) DescribeChapCredentialsRequest(input *DescribeChapCredentialsInput) (req *request.Request, output *DescribeChapCredentialsOutput) {
@@ -3198,13 +3195,14 @@ func (c *StorageGateway) DescribeChapCredentialsRequest(input *DescribeChapCrede
 // API operation DescribeChapCredentials for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeChapCredentials
 func (c *StorageGateway) DescribeChapCredentials(input *DescribeChapCredentialsInput) (*DescribeChapCredentialsOutput, error) {
@@ -3244,14 +3242,13 @@ const opDescribeFileSystemAssociations = "DescribeFileSystemAssociations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeFileSystemAssociationsRequest method.
+//	req, resp := client.DescribeFileSystemAssociationsRequest(params)
 //
-//    // Example sending a request using the DescribeFileSystemAssociationsRequest method.
-//    req, resp := client.DescribeFileSystemAssociationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeFileSystemAssociations
 func (c *StorageGateway) DescribeFileSystemAssociationsRequest(input *DescribeFileSystemAssociationsInput) (req *request.Request, output *DescribeFileSystemAssociationsOutput) {
@@ -3283,13 +3280,14 @@ func (c *StorageGateway) DescribeFileSystemAssociationsRequest(input *DescribeFi
 // API operation DescribeFileSystemAssociations for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeFileSystemAssociations
 func (c *StorageGateway) DescribeFileSystemAssociations(input *DescribeFileSystemAssociationsInput) (*DescribeFileSystemAssociationsOutput, error) {
@@ -3329,14 +3327,13 @@ const opDescribeGatewayInformation = "DescribeGatewayInformation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeGatewayInformationRequest method.
+//	req, resp := client.DescribeGatewayInformationRequest(params)
 //
-//    // Example sending a request using the DescribeGatewayInformationRequest method.
-//    req, resp := client.DescribeGatewayInformationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeGatewayInformation
 func (c *StorageGateway) DescribeGatewayInformationRequest(input *DescribeGatewayInformationInput) (req *request.Request, output *DescribeGatewayInformationOutput) {
@@ -3370,13 +3367,14 @@ func (c *StorageGateway) DescribeGatewayInformationRequest(input *DescribeGatewa
 // API operation DescribeGatewayInformation for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeGatewayInformation
 func (c *StorageGateway) DescribeGatewayInformation(input *DescribeGatewayInformationInput) (*DescribeGatewayInformationOutput, error) {
@@ -3416,14 +3414,13 @@ const opDescribeMaintenanceStartTime = "DescribeMaintenanceStartTime"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeMaintenanceStartTimeRequest method.
+//	req, resp := client.DescribeMaintenanceStartTimeRequest(params)
 //
-//    // Example sending a request using the DescribeMaintenanceStartTimeRequest method.
-//    req, resp := client.DescribeMaintenanceStartTimeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeMaintenanceStartTime
 func (c *StorageGateway) DescribeMaintenanceStartTimeRequest(input *DescribeMaintenanceStartTimeInput) (req *request.Request, output *DescribeMaintenanceStartTimeOutput) {
@@ -3455,13 +3452,14 @@ func (c *StorageGateway) DescribeMaintenanceStartTimeRequest(input *DescribeMain
 // API operation DescribeMaintenanceStartTime for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeMaintenanceStartTime
 func (c *StorageGateway) DescribeMaintenanceStartTime(input *DescribeMaintenanceStartTimeInput) (*DescribeMaintenanceStartTimeOutput, error) {
@@ -3501,14 +3499,13 @@ const opDescribeNFSFileShares = "DescribeNFSFileShares"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeNFSFileSharesRequest method.
+//	req, resp := client.DescribeNFSFileSharesRequest(params)
 //
-//    // Example sending a request using the DescribeNFSFileSharesRequest method.
-//    req, resp := client.DescribeNFSFileSharesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeNFSFileShares
 func (c *StorageGateway) DescribeNFSFileSharesRequest(input *DescribeNFSFileSharesInput) (req *request.Request, output *DescribeNFSFileSharesOutput) {
@@ -3540,13 +3537,14 @@ func (c *StorageGateway) DescribeNFSFileSharesRequest(input *DescribeNFSFileShar
 // API operation DescribeNFSFileShares for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeNFSFileShares
 func (c *StorageGateway) DescribeNFSFileShares(input *DescribeNFSFileSharesInput) (*DescribeNFSFileSharesOutput, error) {
@@ -3586,14 +3584,13 @@ const opDescribeSMBFileShares = "DescribeSMBFileShares"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeSMBFileSharesRequest method.
+//	req, resp := client.DescribeSMBFileSharesRequest(params)
 //
-//    // Example sending a request using the DescribeSMBFileSharesRequest method.
-//    req, resp := client.DescribeSMBFileSharesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeSMBFileShares
 func (c *StorageGateway) DescribeSMBFileSharesRequest(input *DescribeSMBFileSharesInput) (req *request.Request, output *DescribeSMBFileSharesOutput) {
@@ -3625,13 +3622,14 @@ func (c *StorageGateway) DescribeSMBFileSharesRequest(input *DescribeSMBFileShar
 // API operation DescribeSMBFileShares for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeSMBFileShares
 func (c *StorageGateway) DescribeSMBFileShares(input *DescribeSMBFileSharesInput) (*DescribeSMBFileSharesOutput, error) {
@@ -3671,14 +3669,13 @@ const opDescribeSMBSettings = "DescribeSMBSettings"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeSMBSettingsRequest method.
+//	req, resp := client.DescribeSMBSettingsRequest(params)
 //
-//    // Example sending a request using the DescribeSMBSettingsRequest method.
-//    req, resp := client.DescribeSMBSettingsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeSMBSettings
 func (c *StorageGateway) DescribeSMBSettingsRequest(input *DescribeSMBSettingsInput) (req *request.Request, output *DescribeSMBSettingsOutput) {
@@ -3710,13 +3707,14 @@ func (c *StorageGateway) DescribeSMBSettingsRequest(input *DescribeSMBSettingsIn
 // API operation DescribeSMBSettings for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeSMBSettings
 func (c *StorageGateway) DescribeSMBSettings(input *DescribeSMBSettingsInput) (*DescribeSMBSettingsOutput, error) {
@@ -3756,14 +3754,13 @@ const opDescribeSnapshotSchedule = "DescribeSnapshotSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeSnapshotScheduleRequest method.
+//	req, resp := client.DescribeSnapshotScheduleRequest(params)
 //
-//    // Example sending a request using the DescribeSnapshotScheduleRequest method.
-//    req, resp := client.DescribeSnapshotScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeSnapshotSchedule
 func (c *StorageGateway) DescribeSnapshotScheduleRequest(input *DescribeSnapshotScheduleInput) (req *request.Request, output *DescribeSnapshotScheduleOutput) {
@@ -3797,13 +3794,14 @@ func (c *StorageGateway) DescribeSnapshotScheduleRequest(input *DescribeSnapshot
 // API operation DescribeSnapshotSchedule for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeSnapshotSchedule
 func (c *StorageGateway) DescribeSnapshotSchedule(input *DescribeSnapshotScheduleInput) (*DescribeSnapshotScheduleOutput, error) {
@@ -3843,14 +3841,13 @@ const opDescribeStorediSCSIVolumes = "DescribeStorediSCSIVolumes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStorediSCSIVolumesRequest method.
+//	req, resp := client.DescribeStorediSCSIVolumesRequest(params)
 //
-//    // Example sending a request using the DescribeStorediSCSIVolumesRequest method.
-//    req, resp := client.DescribeStorediSCSIVolumesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeStorediSCSIVolumes
 func (c *StorageGateway) DescribeStorediSCSIVolumesRequest(input *DescribeStorediSCSIVolumesInput) (req *request.Request, output *DescribeStorediSCSIVolumesOutput) {
@@ -3884,13 +3881,14 @@ func (c *StorageGateway) DescribeStorediSCSIVolumesRequest(input *DescribeStored
 // API operation DescribeStorediSCSIVolumes for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeStorediSCSIVolumes
 func (c *StorageGateway) DescribeStorediSCSIVolumes(input *DescribeStorediSCSIVolumesInput) (*DescribeStorediSCSIVolumesOutput, error) {
@@ -3930,14 +3928,13 @@ const opDescribeTapeArchives = "DescribeTapeArchives"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTapeArchivesRequest method.
+//	req, resp := client.DescribeTapeArchivesRequest(params)
 //
-//    // Example sending a request using the DescribeTapeArchivesRequest method.
-//    req, resp := client.DescribeTapeArchivesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeTapeArchives
 func (c *StorageGateway) DescribeTapeArchivesRequest(input *DescribeTapeArchivesInput) (req *request.Request, output *DescribeTapeArchivesOutput) {
@@ -3978,13 +3975,14 @@ func (c *StorageGateway) DescribeTapeArchivesRequest(input *DescribeTapeArchives
 // API operation DescribeTapeArchives for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeTapeArchives
 func (c *StorageGateway) DescribeTapeArchives(input *DescribeTapeArchivesInput) (*DescribeTapeArchivesOutput, error) {
@@ -4016,15 +4014,14 @@ func (c *StorageGateway) DescribeTapeArchivesWithContext(ctx aws.Context, input 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeTapeArchives operation.
-//    pageNum := 0
-//    err := client.DescribeTapeArchivesPages(params,
-//        func(page *storagegateway.DescribeTapeArchivesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeTapeArchives operation.
+//	pageNum := 0
+//	err := client.DescribeTapeArchivesPages(params,
+//	    func(page *storagegateway.DescribeTapeArchivesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *StorageGateway) DescribeTapeArchivesPages(input *DescribeTapeArchivesInput, fn func(*DescribeTapeArchivesOutput, bool) bool) error {
 	return c.DescribeTapeArchivesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4076,14 +4073,13 @@ const opDescribeTapeRecoveryPoints = "DescribeTapeRecoveryPoints"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTapeRecoveryPointsRequest method.
+//	req, resp := client.DescribeTapeRecoveryPointsRequest(params)
 //
-//    // Example sending a request using the DescribeTapeRecoveryPointsRequest method.
-//    req, resp := client.DescribeTapeRecoveryPointsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeTapeRecoveryPoints
 func (c *StorageGateway) DescribeTapeRecoveryPointsRequest(input *DescribeTapeRecoveryPointsInput) (req *request.Request, output *DescribeTapeRecoveryPointsOutput) {
@@ -4126,13 +4122,14 @@ func (c *StorageGateway) DescribeTapeRecoveryPointsRequest(input *DescribeTapeRe
 // API operation DescribeTapeRecoveryPoints for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeTapeRecoveryPoints
 func (c *StorageGateway) DescribeTapeRecoveryPoints(input *DescribeTapeRecoveryPointsInput) (*DescribeTapeRecoveryPointsOutput, error) {
@@ -4164,15 +4161,14 @@ func (c *StorageGateway) DescribeTapeRecoveryPointsWithContext(ctx aws.Context, 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeTapeRecoveryPoints operation.
-//    pageNum := 0
-//    err := client.DescribeTapeRecoveryPointsPages(params,
-//        func(page *storagegateway.DescribeTapeRecoveryPointsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeTapeRecoveryPoints operation.
+//	pageNum := 0
+//	err := client.DescribeTapeRecoveryPointsPages(params,
+//	    func(page *storagegateway.DescribeTapeRecoveryPointsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *StorageGateway) DescribeTapeRecoveryPointsPages(input *DescribeTapeRecoveryPointsInput, fn func(*DescribeTapeRecoveryPointsOutput, bool) bool) error {
 	return c.DescribeTapeRecoveryPointsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4224,14 +4220,13 @@ const opDescribeTapes = "DescribeTapes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTapesRequest method.
+//	req, resp := client.DescribeTapesRequest(params)
 //
-//    // Example sending a request using the DescribeTapesRequest method.
-//    req, resp := client.DescribeTapesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeTapes
 func (c *StorageGateway) DescribeTapesRequest(input *DescribeTapesInput) (req *request.Request, output *DescribeTapesOutput) {
@@ -4271,13 +4266,14 @@ func (c *StorageGateway) DescribeTapesRequest(input *DescribeTapesInput) (req *r
 // API operation DescribeTapes for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeTapes
 func (c *StorageGateway) DescribeTapes(input *DescribeTapesInput) (*DescribeTapesOutput, error) {
@@ -4309,15 +4305,14 @@ func (c *StorageGateway) DescribeTapesWithContext(ctx aws.Context, input *Descri
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeTapes operation.
-//    pageNum := 0
-//    err := client.DescribeTapesPages(params,
-//        func(page *storagegateway.DescribeTapesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeTapes operation.
+//	pageNum := 0
+//	err := client.DescribeTapesPages(params,
+//	    func(page *storagegateway.DescribeTapesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *StorageGateway) DescribeTapesPages(input *DescribeTapesInput, fn func(*DescribeTapesOutput, bool) bool) error {
 	return c.DescribeTapesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4369,14 +4364,13 @@ const opDescribeUploadBuffer = "DescribeUploadBuffer"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeUploadBufferRequest method.
+//	req, resp := client.DescribeUploadBufferRequest(params)
 //
-//    // Example sending a request using the DescribeUploadBufferRequest method.
-//    req, resp := client.DescribeUploadBufferRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeUploadBuffer
 func (c *StorageGateway) DescribeUploadBufferRequest(input *DescribeUploadBufferInput) (req *request.Request, output *DescribeUploadBufferOutput) {
@@ -4411,13 +4405,14 @@ func (c *StorageGateway) DescribeUploadBufferRequest(input *DescribeUploadBuffer
 // API operation DescribeUploadBuffer for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeUploadBuffer
 func (c *StorageGateway) DescribeUploadBuffer(input *DescribeUploadBufferInput) (*DescribeUploadBufferOutput, error) {
@@ -4457,14 +4452,13 @@ const opDescribeVTLDevices = "DescribeVTLDevices"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeVTLDevicesRequest method.
+//	req, resp := client.DescribeVTLDevicesRequest(params)
 //
-//    // Example sending a request using the DescribeVTLDevicesRequest method.
-//    req, resp := client.DescribeVTLDevicesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeVTLDevices
 func (c *StorageGateway) DescribeVTLDevicesRequest(input *DescribeVTLDevicesInput) (req *request.Request, output *DescribeVTLDevicesOutput) {
@@ -4504,13 +4498,14 @@ func (c *StorageGateway) DescribeVTLDevicesRequest(input *DescribeVTLDevicesInpu
 // API operation DescribeVTLDevices for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeVTLDevices
 func (c *StorageGateway) DescribeVTLDevices(input *DescribeVTLDevicesInput) (*DescribeVTLDevicesOutput, error) {
@@ -4542,15 +4537,14 @@ func (c *StorageGateway) DescribeVTLDevicesWithContext(ctx aws.Context, input *D
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeVTLDevices operation.
-//    pageNum := 0
-//    err := client.DescribeVTLDevicesPages(params,
-//        func(page *storagegateway.DescribeVTLDevicesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeVTLDevices operation.
+//	pageNum := 0
+//	err := client.DescribeVTLDevicesPages(params,
+//	    func(page *storagegateway.DescribeVTLDevicesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *StorageGateway) DescribeVTLDevicesPages(input *DescribeVTLDevicesInput, fn func(*DescribeVTLDevicesOutput, bool) bool) error {
 	return c.DescribeVTLDevicesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4602,14 +4596,13 @@ const opDescribeWorkingStorage = "DescribeWorkingStorage"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeWorkingStorageRequest method.
+//	req, resp := client.DescribeWorkingStorageRequest(params)
 //
-//    // Example sending a request using the DescribeWorkingStorageRequest method.
-//    req, resp := client.DescribeWorkingStorageRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeWorkingStorage
 func (c *StorageGateway) DescribeWorkingStorageRequest(input *DescribeWorkingStorageInput) (req *request.Request, output *DescribeWorkingStorageOutput) {
@@ -4648,13 +4641,14 @@ func (c *StorageGateway) DescribeWorkingStorageRequest(input *DescribeWorkingSto
 // API operation DescribeWorkingStorage for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DescribeWorkingStorage
 func (c *StorageGateway) DescribeWorkingStorage(input *DescribeWorkingStorageInput) (*DescribeWorkingStorageOutput, error) {
@@ -4694,14 +4688,13 @@ const opDetachVolume = "DetachVolume"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DetachVolumeRequest method.
+//	req, resp := client.DetachVolumeRequest(params)
 //
-//    // Example sending a request using the DetachVolumeRequest method.
-//    req, resp := client.DetachVolumeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DetachVolume
 func (c *StorageGateway) DetachVolumeRequest(input *DetachVolumeInput) (req *request.Request, output *DetachVolumeOutput) {
@@ -4737,13 +4730,14 @@ func (c *StorageGateway) DetachVolumeRequest(input *DetachVolumeInput) (req *req
 // API operation DetachVolume for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DetachVolume
 func (c *StorageGateway) DetachVolume(input *DetachVolumeInput) (*DetachVolumeOutput, error) {
@@ -4783,14 +4777,13 @@ const opDisableGateway = "DisableGateway"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisableGatewayRequest method.
+//	req, resp := client.DisableGatewayRequest(params)
 //
-//    // Example sending a request using the DisableGatewayRequest method.
-//    req, resp := client.DisableGatewayRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DisableGateway
 func (c *StorageGateway) DisableGatewayRequest(input *DisableGatewayInput) (req *request.Request, output *DisableGatewayOutput) {
@@ -4828,13 +4821,14 @@ func (c *StorageGateway) DisableGatewayRequest(input *DisableGatewayInput) (req 
 // API operation DisableGateway for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DisableGateway
 func (c *StorageGateway) DisableGateway(input *DisableGatewayInput) (*DisableGatewayOutput, error) {
@@ -4874,14 +4868,13 @@ const opDisassociateFileSystem = "DisassociateFileSystem"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateFileSystemRequest method.
+//	req, resp := client.DisassociateFileSystemRequest(params)
 //
-//    // Example sending a request using the DisassociateFileSystemRequest method.
-//    req, resp := client.DisassociateFileSystemRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DisassociateFileSystem
 func (c *StorageGateway) DisassociateFileSystemRequest(input *DisassociateFileSystemInput) (req *request.Request, output *DisassociateFileSystemOutput) {
@@ -4915,13 +4908,14 @@ func (c *StorageGateway) DisassociateFileSystemRequest(input *DisassociateFileSy
 // API operation DisassociateFileSystem for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/DisassociateFileSystem
 func (c *StorageGateway) DisassociateFileSystem(input *DisassociateFileSystemInput) (*DisassociateFileSystemOutput, error) {
@@ -4961,14 +4955,13 @@ const opJoinDomain = "JoinDomain"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the JoinDomainRequest method.
+//	req, resp := client.JoinDomainRequest(params)
 //
-//    // Example sending a request using the JoinDomainRequest method.
-//    req, resp := client.JoinDomainRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/JoinDomain
 func (c *StorageGateway) JoinDomainRequest(input *JoinDomainInput) (req *request.Request, output *JoinDomainOutput) {
@@ -5000,13 +4993,14 @@ func (c *StorageGateway) JoinDomainRequest(input *JoinDomainInput) (req *request
 // API operation JoinDomain for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/JoinDomain
 func (c *StorageGateway) JoinDomain(input *JoinDomainInput) (*JoinDomainOutput, error) {
@@ -5046,14 +5040,13 @@ const opListAutomaticTapeCreationPolicies = "ListAutomaticTapeCreationPolicies"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAutomaticTapeCreationPoliciesRequest method.
+//	req, resp := client.ListAutomaticTapeCreationPoliciesRequest(params)
 //
-//    // Example sending a request using the ListAutomaticTapeCreationPoliciesRequest method.
-//    req, resp := client.ListAutomaticTapeCreationPoliciesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListAutomaticTapeCreationPolicies
 func (c *StorageGateway) ListAutomaticTapeCreationPoliciesRequest(input *ListAutomaticTapeCreationPoliciesInput) (req *request.Request, output *ListAutomaticTapeCreationPoliciesOutput) {
@@ -5087,13 +5080,14 @@ func (c *StorageGateway) ListAutomaticTapeCreationPoliciesRequest(input *ListAut
 // API operation ListAutomaticTapeCreationPolicies for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListAutomaticTapeCreationPolicies
 func (c *StorageGateway) ListAutomaticTapeCreationPolicies(input *ListAutomaticTapeCreationPoliciesInput) (*ListAutomaticTapeCreationPoliciesOutput, error) {
@@ -5133,14 +5127,13 @@ const opListFileShares = "ListFileShares"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListFileSharesRequest method.
+//	req, resp := client.ListFileSharesRequest(params)
 //
-//    // Example sending a request using the ListFileSharesRequest method.
-//    req, resp := client.ListFileSharesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListFileShares
 func (c *StorageGateway) ListFileSharesRequest(input *ListFileSharesInput) (req *request.Request, output *ListFileSharesOutput) {
@@ -5179,13 +5172,14 @@ func (c *StorageGateway) ListFileSharesRequest(input *ListFileSharesInput) (req 
 // API operation ListFileShares for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListFileShares
 func (c *StorageGateway) ListFileShares(input *ListFileSharesInput) (*ListFileSharesOutput, error) {
@@ -5217,15 +5211,14 @@ func (c *StorageGateway) ListFileSharesWithContext(ctx aws.Context, input *ListF
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListFileShares operation.
-//    pageNum := 0
-//    err := client.ListFileSharesPages(params,
-//        func(page *storagegateway.ListFileSharesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListFileShares operation.
+//	pageNum := 0
+//	err := client.ListFileSharesPages(params,
+//	    func(page *storagegateway.ListFileSharesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *StorageGateway) ListFileSharesPages(input *ListFileSharesInput, fn func(*ListFileSharesOutput, bool) bool) error {
 	return c.ListFileSharesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5277,14 +5270,13 @@ const opListFileSystemAssociations = "ListFileSystemAssociations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListFileSystemAssociationsRequest method.
+//	req, resp := client.ListFileSystemAssociationsRequest(params)
 //
-//    // Example sending a request using the ListFileSystemAssociationsRequest method.
-//    req, resp := client.ListFileSystemAssociationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListFileSystemAssociations
 func (c *StorageGateway) ListFileSystemAssociationsRequest(input *ListFileSystemAssociationsInput) (req *request.Request, output *ListFileSystemAssociationsOutput) {
@@ -5323,13 +5315,14 @@ func (c *StorageGateway) ListFileSystemAssociationsRequest(input *ListFileSystem
 // API operation ListFileSystemAssociations for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListFileSystemAssociations
 func (c *StorageGateway) ListFileSystemAssociations(input *ListFileSystemAssociationsInput) (*ListFileSystemAssociationsOutput, error) {
@@ -5361,15 +5354,14 @@ func (c *StorageGateway) ListFileSystemAssociationsWithContext(ctx aws.Context, 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListFileSystemAssociations operation.
-//    pageNum := 0
-//    err := client.ListFileSystemAssociationsPages(params,
-//        func(page *storagegateway.ListFileSystemAssociationsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListFileSystemAssociations operation.
+//	pageNum := 0
+//	err := client.ListFileSystemAssociationsPages(params,
+//	    func(page *storagegateway.ListFileSystemAssociationsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *StorageGateway) ListFileSystemAssociationsPages(input *ListFileSystemAssociationsInput, fn func(*ListFileSystemAssociationsOutput, bool) bool) error {
 	return c.ListFileSystemAssociationsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5421,14 +5413,13 @@ const opListGateways = "ListGateways"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListGatewaysRequest method.
+//	req, resp := client.ListGatewaysRequest(params)
 //
-//    // Example sending a request using the ListGatewaysRequest method.
-//    req, resp := client.ListGatewaysRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListGateways
 func (c *StorageGateway) ListGatewaysRequest(input *ListGatewaysInput) (req *request.Request, output *ListGatewaysOutput) {
@@ -5476,13 +5467,14 @@ func (c *StorageGateway) ListGatewaysRequest(input *ListGatewaysInput) (req *req
 // API operation ListGateways for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListGateways
 func (c *StorageGateway) ListGateways(input *ListGatewaysInput) (*ListGatewaysOutput, error) {
@@ -5514,15 +5506,14 @@ func (c *StorageGateway) ListGatewaysWithContext(ctx aws.Context, input *ListGat
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListGateways operation.
-//    pageNum := 0
-//    err := client.ListGatewaysPages(params,
-//        func(page *storagegateway.ListGatewaysOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListGateways operation.
+//	pageNum := 0
+//	err := client.ListGatewaysPages(params,
+//	    func(page *storagegateway.ListGatewaysOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *StorageGateway) ListGatewaysPages(input *ListGatewaysInput, fn func(*ListGatewaysOutput, bool) bool) error {
 	return c.ListGatewaysPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5574,14 +5565,13 @@ const opListLocalDisks = "ListLocalDisks"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListLocalDisksRequest method.
+//	req, resp := client.ListLocalDisksRequest(params)
 //
-//    // Example sending a request using the ListLocalDisksRequest method.
-//    req, resp := client.ListLocalDisksRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListLocalDisks
 func (c *StorageGateway) ListLocalDisksRequest(input *ListLocalDisksInput) (req *request.Request, output *ListLocalDisksOutput) {
@@ -5621,13 +5611,14 @@ func (c *StorageGateway) ListLocalDisksRequest(input *ListLocalDisksInput) (req 
 // API operation ListLocalDisks for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListLocalDisks
 func (c *StorageGateway) ListLocalDisks(input *ListLocalDisksInput) (*ListLocalDisksOutput, error) {
@@ -5667,14 +5658,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListTagsForResource
 func (c *StorageGateway) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -5712,13 +5702,14 @@ func (c *StorageGateway) ListTagsForResourceRequest(input *ListTagsForResourceIn
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListTagsForResource
 func (c *StorageGateway) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -5750,15 +5741,14 @@ func (c *StorageGateway) ListTagsForResourceWithContext(ctx aws.Context, input *
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTagsForResource operation.
-//    pageNum := 0
-//    err := client.ListTagsForResourcePages(params,
-//        func(page *storagegateway.ListTagsForResourceOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTagsForResource operation.
+//	pageNum := 0
+//	err := client.ListTagsForResourcePages(params,
+//	    func(page *storagegateway.ListTagsForResourceOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *StorageGateway) ListTagsForResourcePages(input *ListTagsForResourceInput, fn func(*ListTagsForResourceOutput, bool) bool) error {
 	return c.ListTagsForResourcePagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5810,14 +5800,13 @@ const opListTapePools = "ListTapePools"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTapePoolsRequest method.
+//	req, resp := client.ListTapePoolsRequest(params)
 //
-//    // Example sending a request using the ListTapePoolsRequest method.
-//    req, resp := client.ListTapePoolsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListTapePools
 func (c *StorageGateway) ListTapePoolsRequest(input *ListTapePoolsInput) (req *request.Request, output *ListTapePoolsOutput) {
@@ -5862,13 +5851,14 @@ func (c *StorageGateway) ListTapePoolsRequest(input *ListTapePoolsInput) (req *r
 // API operation ListTapePools for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListTapePools
 func (c *StorageGateway) ListTapePools(input *ListTapePoolsInput) (*ListTapePoolsOutput, error) {
@@ -5900,15 +5890,14 @@ func (c *StorageGateway) ListTapePoolsWithContext(ctx aws.Context, input *ListTa
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTapePools operation.
-//    pageNum := 0
-//    err := client.ListTapePoolsPages(params,
-//        func(page *storagegateway.ListTapePoolsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTapePools operation.
+//	pageNum := 0
+//	err := client.ListTapePoolsPages(params,
+//	    func(page *storagegateway.ListTapePoolsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *StorageGateway) ListTapePoolsPages(input *ListTapePoolsInput, fn func(*ListTapePoolsOutput, bool) bool) error {
 	return c.ListTapePoolsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5960,14 +5949,13 @@ const opListTapes = "ListTapes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTapesRequest method.
+//	req, resp := client.ListTapesRequest(params)
 //
-//    // Example sending a request using the ListTapesRequest method.
-//    req, resp := client.ListTapesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListTapes
 func (c *StorageGateway) ListTapesRequest(input *ListTapesInput) (req *request.Request, output *ListTapesOutput) {
@@ -6014,13 +6002,14 @@ func (c *StorageGateway) ListTapesRequest(input *ListTapesInput) (req *request.R
 // API operation ListTapes for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListTapes
 func (c *StorageGateway) ListTapes(input *ListTapesInput) (*ListTapesOutput, error) {
@@ -6052,15 +6041,14 @@ func (c *StorageGateway) ListTapesWithContext(ctx aws.Context, input *ListTapesI
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTapes operation.
-//    pageNum := 0
-//    err := client.ListTapesPages(params,
-//        func(page *storagegateway.ListTapesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTapes operation.
+//	pageNum := 0
+//	err := client.ListTapesPages(params,
+//	    func(page *storagegateway.ListTapesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *StorageGateway) ListTapesPages(input *ListTapesInput, fn func(*ListTapesOutput, bool) bool) error {
 	return c.ListTapesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -6112,14 +6100,13 @@ const opListVolumeInitiators = "ListVolumeInitiators"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListVolumeInitiatorsRequest method.
+//	req, resp := client.ListVolumeInitiatorsRequest(params)
 //
-//    // Example sending a request using the ListVolumeInitiatorsRequest method.
-//    req, resp := client.ListVolumeInitiatorsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListVolumeInitiators
 func (c *StorageGateway) ListVolumeInitiatorsRequest(input *ListVolumeInitiatorsInput) (req *request.Request, output *ListVolumeInitiatorsOutput) {
@@ -6152,13 +6139,14 @@ func (c *StorageGateway) ListVolumeInitiatorsRequest(input *ListVolumeInitiators
 // API operation ListVolumeInitiators for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListVolumeInitiators
 func (c *StorageGateway) ListVolumeInitiators(input *ListVolumeInitiatorsInput) (*ListVolumeInitiatorsOutput, error) {
@@ -6198,14 +6186,13 @@ const opListVolumeRecoveryPoints = "ListVolumeRecoveryPoints"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListVolumeRecoveryPointsRequest method.
+//	req, resp := client.ListVolumeRecoveryPointsRequest(params)
 //
-//    // Example sending a request using the ListVolumeRecoveryPointsRequest method.
-//    req, resp := client.ListVolumeRecoveryPointsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListVolumeRecoveryPoints
 func (c *StorageGateway) ListVolumeRecoveryPointsRequest(input *ListVolumeRecoveryPointsInput) (req *request.Request, output *ListVolumeRecoveryPointsOutput) {
@@ -6243,13 +6230,14 @@ func (c *StorageGateway) ListVolumeRecoveryPointsRequest(input *ListVolumeRecove
 // API operation ListVolumeRecoveryPoints for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListVolumeRecoveryPoints
 func (c *StorageGateway) ListVolumeRecoveryPoints(input *ListVolumeRecoveryPointsInput) (*ListVolumeRecoveryPointsOutput, error) {
@@ -6289,14 +6277,13 @@ const opListVolumes = "ListVolumes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListVolumesRequest method.
+//	req, resp := client.ListVolumesRequest(params)
 //
-//    // Example sending a request using the ListVolumesRequest method.
-//    req, resp := client.ListVolumesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListVolumes
 func (c *StorageGateway) ListVolumesRequest(input *ListVolumesInput) (req *request.Request, output *ListVolumesOutput) {
@@ -6344,13 +6331,14 @@ func (c *StorageGateway) ListVolumesRequest(input *ListVolumesInput) (req *reque
 // API operation ListVolumes for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ListVolumes
 func (c *StorageGateway) ListVolumes(input *ListVolumesInput) (*ListVolumesOutput, error) {
@@ -6382,15 +6370,14 @@ func (c *StorageGateway) ListVolumesWithContext(ctx aws.Context, input *ListVolu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListVolumes operation.
-//    pageNum := 0
-//    err := client.ListVolumesPages(params,
-//        func(page *storagegateway.ListVolumesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListVolumes operation.
+//	pageNum := 0
+//	err := client.ListVolumesPages(params,
+//	    func(page *storagegateway.ListVolumesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *StorageGateway) ListVolumesPages(input *ListVolumesInput, fn func(*ListVolumesOutput, bool) bool) error {
 	return c.ListVolumesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -6442,14 +6429,13 @@ const opNotifyWhenUploaded = "NotifyWhenUploaded"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the NotifyWhenUploadedRequest method.
+//	req, resp := client.NotifyWhenUploadedRequest(params)
 //
-//    // Example sending a request using the NotifyWhenUploadedRequest method.
-//    req, resp := client.NotifyWhenUploadedRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/NotifyWhenUploaded
 func (c *StorageGateway) NotifyWhenUploadedRequest(input *NotifyWhenUploadedInput) (req *request.Request, output *NotifyWhenUploadedOutput) {
@@ -6471,7 +6457,7 @@ func (c *StorageGateway) NotifyWhenUploadedRequest(input *NotifyWhenUploadedInpu
 // NotifyWhenUploaded API operation for AWS Storage Gateway.
 //
 // Sends you notification through CloudWatch Events when all files written to
-// your file share have been uploaded to Amazon S3.
+// your file share have been uploaded to S3. Amazon S3.
 //
 // Storage Gateway can send a notification through Amazon CloudWatch Events
 // when all files written to your file share up to that point in time have been
@@ -6493,13 +6479,14 @@ func (c *StorageGateway) NotifyWhenUploadedRequest(input *NotifyWhenUploadedInpu
 // API operation NotifyWhenUploaded for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/NotifyWhenUploaded
 func (c *StorageGateway) NotifyWhenUploaded(input *NotifyWhenUploadedInput) (*NotifyWhenUploadedOutput, error) {
@@ -6539,14 +6526,13 @@ const opRefreshCache = "RefreshCache"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RefreshCacheRequest method.
+//	req, resp := client.RefreshCacheRequest(params)
 //
-//    // Example sending a request using the RefreshCacheRequest method.
-//    req, resp := client.RefreshCacheRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/RefreshCache
 func (c *StorageGateway) RefreshCacheRequest(input *RefreshCacheInput) (req *request.Request, output *RefreshCacheOutput) {
@@ -6594,9 +6580,17 @@ func (c *StorageGateway) RefreshCacheRequest(input *RefreshCacheInput) (req *req
 // see Getting notified about file operations (https://docs.aws.amazon.com/storagegateway/latest/userguide/monitoring-file-gateway.html#get-notification)
 // in the Storage Gateway User Guide.
 //
-// If you invoke the RefreshCache API when two requests are already being processed,
-// any new request will cause an InvalidGatewayRequestException error because
-// too many requests were sent to the server.
+//   - Wait at least 60 seconds between consecutive RefreshCache API requests.
+//
+//   - RefreshCache does not evict cache entries if invoked consecutively within
+//     60 seconds of a previous RefreshCache request.
+//
+//   - If you invoke the RefreshCache API when two requests are already being
+//     processed, any new request will cause an InvalidGatewayRequestException
+//     error because too many requests were sent to the server.
+//
+// The S3 bucket name does not need to be included when entering the list of
+// folders in the FolderList parameter.
 //
 // For more information, see Getting notified about file operations (https://docs.aws.amazon.com/storagegateway/latest/userguide/monitoring-file-gateway.html#get-notification)
 // in the Storage Gateway User Guide.
@@ -6609,13 +6603,14 @@ func (c *StorageGateway) RefreshCacheRequest(input *RefreshCacheInput) (req *req
 // API operation RefreshCache for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/RefreshCache
 func (c *StorageGateway) RefreshCache(input *RefreshCacheInput) (*RefreshCacheOutput, error) {
@@ -6655,14 +6650,13 @@ const opRemoveTagsFromResource = "RemoveTagsFromResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RemoveTagsFromResourceRequest method.
+//	req, resp := client.RemoveTagsFromResourceRequest(params)
 //
-//    // Example sending a request using the RemoveTagsFromResourceRequest method.
-//    req, resp := client.RemoveTagsFromResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/RemoveTagsFromResource
 func (c *StorageGateway) RemoveTagsFromResourceRequest(input *RemoveTagsFromResourceInput) (req *request.Request, output *RemoveTagsFromResourceOutput) {
@@ -6694,13 +6688,14 @@ func (c *StorageGateway) RemoveTagsFromResourceRequest(input *RemoveTagsFromReso
 // API operation RemoveTagsFromResource for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/RemoveTagsFromResource
 func (c *StorageGateway) RemoveTagsFromResource(input *RemoveTagsFromResourceInput) (*RemoveTagsFromResourceOutput, error) {
@@ -6740,14 +6735,13 @@ const opResetCache = "ResetCache"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ResetCacheRequest method.
+//	req, resp := client.ResetCacheRequest(params)
 //
-//    // Example sending a request using the ResetCacheRequest method.
-//    req, resp := client.ResetCacheRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ResetCache
 func (c *StorageGateway) ResetCacheRequest(input *ResetCacheInput) (req *request.Request, output *ResetCacheOutput) {
@@ -6789,13 +6783,14 @@ func (c *StorageGateway) ResetCacheRequest(input *ResetCacheInput) (req *request
 // API operation ResetCache for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ResetCache
 func (c *StorageGateway) ResetCache(input *ResetCacheInput) (*ResetCacheOutput, error) {
@@ -6835,14 +6830,13 @@ const opRetrieveTapeArchive = "RetrieveTapeArchive"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RetrieveTapeArchiveRequest method.
+//	req, resp := client.RetrieveTapeArchiveRequest(params)
 //
-//    // Example sending a request using the RetrieveTapeArchiveRequest method.
-//    req, resp := client.RetrieveTapeArchiveRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/RetrieveTapeArchive
 func (c *StorageGateway) RetrieveTapeArchiveRequest(input *RetrieveTapeArchiveInput) (req *request.Request, output *RetrieveTapeArchiveOutput) {
@@ -6882,13 +6876,14 @@ func (c *StorageGateway) RetrieveTapeArchiveRequest(input *RetrieveTapeArchiveIn
 // API operation RetrieveTapeArchive for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/RetrieveTapeArchive
 func (c *StorageGateway) RetrieveTapeArchive(input *RetrieveTapeArchiveInput) (*RetrieveTapeArchiveOutput, error) {
@@ -6928,14 +6923,13 @@ const opRetrieveTapeRecoveryPoint = "RetrieveTapeRecoveryPoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RetrieveTapeRecoveryPointRequest method.
+//	req, resp := client.RetrieveTapeRecoveryPointRequest(params)
 //
-//    // Example sending a request using the RetrieveTapeRecoveryPointRequest method.
-//    req, resp := client.RetrieveTapeRecoveryPointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/RetrieveTapeRecoveryPoint
 func (c *StorageGateway) RetrieveTapeRecoveryPointRequest(input *RetrieveTapeRecoveryPointInput) (req *request.Request, output *RetrieveTapeRecoveryPointOutput) {
@@ -6975,13 +6969,14 @@ func (c *StorageGateway) RetrieveTapeRecoveryPointRequest(input *RetrieveTapeRec
 // API operation RetrieveTapeRecoveryPoint for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/RetrieveTapeRecoveryPoint
 func (c *StorageGateway) RetrieveTapeRecoveryPoint(input *RetrieveTapeRecoveryPointInput) (*RetrieveTapeRecoveryPointOutput, error) {
@@ -7021,14 +7016,13 @@ const opSetLocalConsolePassword = "SetLocalConsolePassword"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetLocalConsolePasswordRequest method.
+//	req, resp := client.SetLocalConsolePasswordRequest(params)
 //
-//    // Example sending a request using the SetLocalConsolePasswordRequest method.
-//    req, resp := client.SetLocalConsolePasswordRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/SetLocalConsolePassword
 func (c *StorageGateway) SetLocalConsolePasswordRequest(input *SetLocalConsolePasswordInput) (req *request.Request, output *SetLocalConsolePasswordOutput) {
@@ -7062,13 +7056,14 @@ func (c *StorageGateway) SetLocalConsolePasswordRequest(input *SetLocalConsolePa
 // API operation SetLocalConsolePassword for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/SetLocalConsolePassword
 func (c *StorageGateway) SetLocalConsolePassword(input *SetLocalConsolePasswordInput) (*SetLocalConsolePasswordOutput, error) {
@@ -7108,14 +7103,13 @@ const opSetSMBGuestPassword = "SetSMBGuestPassword"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetSMBGuestPasswordRequest method.
+//	req, resp := client.SetSMBGuestPasswordRequest(params)
 //
-//    // Example sending a request using the SetSMBGuestPasswordRequest method.
-//    req, resp := client.SetSMBGuestPasswordRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/SetSMBGuestPassword
 func (c *StorageGateway) SetSMBGuestPasswordRequest(input *SetSMBGuestPasswordInput) (req *request.Request, output *SetSMBGuestPasswordOutput) {
@@ -7148,13 +7142,14 @@ func (c *StorageGateway) SetSMBGuestPasswordRequest(input *SetSMBGuestPasswordIn
 // API operation SetSMBGuestPassword for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/SetSMBGuestPassword
 func (c *StorageGateway) SetSMBGuestPassword(input *SetSMBGuestPasswordInput) (*SetSMBGuestPasswordOutput, error) {
@@ -7194,14 +7189,13 @@ const opShutdownGateway = "ShutdownGateway"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ShutdownGatewayRequest method.
+//	req, resp := client.ShutdownGatewayRequest(params)
 //
-//    // Example sending a request using the ShutdownGatewayRequest method.
-//    req, resp := client.ShutdownGatewayRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ShutdownGateway
 func (c *StorageGateway) ShutdownGatewayRequest(input *ShutdownGatewayInput) (req *request.Request, output *ShutdownGatewayOutput) {
@@ -7252,13 +7246,14 @@ func (c *StorageGateway) ShutdownGatewayRequest(input *ShutdownGatewayInput) (re
 // API operation ShutdownGateway for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/ShutdownGateway
 func (c *StorageGateway) ShutdownGateway(input *ShutdownGatewayInput) (*ShutdownGatewayOutput, error) {
@@ -7298,14 +7293,13 @@ const opStartAvailabilityMonitorTest = "StartAvailabilityMonitorTest"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartAvailabilityMonitorTestRequest method.
+//	req, resp := client.StartAvailabilityMonitorTestRequest(params)
 //
-//    // Example sending a request using the StartAvailabilityMonitorTestRequest method.
-//    req, resp := client.StartAvailabilityMonitorTestRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/StartAvailabilityMonitorTest
 func (c *StorageGateway) StartAvailabilityMonitorTestRequest(input *StartAvailabilityMonitorTestInput) (req *request.Request, output *StartAvailabilityMonitorTestOutput) {
@@ -7342,13 +7336,14 @@ func (c *StorageGateway) StartAvailabilityMonitorTestRequest(input *StartAvailab
 // API operation StartAvailabilityMonitorTest for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/StartAvailabilityMonitorTest
 func (c *StorageGateway) StartAvailabilityMonitorTest(input *StartAvailabilityMonitorTestInput) (*StartAvailabilityMonitorTestOutput, error) {
@@ -7388,14 +7383,13 @@ const opStartGateway = "StartGateway"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartGatewayRequest method.
+//	req, resp := client.StartGatewayRequest(params)
 //
-//    // Example sending a request using the StartGatewayRequest method.
-//    req, resp := client.StartGatewayRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/StartGateway
 func (c *StorageGateway) StartGatewayRequest(input *StartGatewayInput) (req *request.Request, output *StartGatewayOutput) {
@@ -7437,13 +7431,14 @@ func (c *StorageGateway) StartGatewayRequest(input *StartGatewayInput) (req *req
 // API operation StartGateway for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/StartGateway
 func (c *StorageGateway) StartGateway(input *StartGatewayInput) (*StartGatewayOutput, error) {
@@ -7483,14 +7478,13 @@ const opUpdateAutomaticTapeCreationPolicy = "UpdateAutomaticTapeCreationPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateAutomaticTapeCreationPolicyRequest method.
+//	req, resp := client.UpdateAutomaticTapeCreationPolicyRequest(params)
 //
-//    // Example sending a request using the UpdateAutomaticTapeCreationPolicyRequest method.
-//    req, resp := client.UpdateAutomaticTapeCreationPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateAutomaticTapeCreationPolicy
 func (c *StorageGateway) UpdateAutomaticTapeCreationPolicyRequest(input *UpdateAutomaticTapeCreationPolicyInput) (req *request.Request, output *UpdateAutomaticTapeCreationPolicyOutput) {
@@ -7527,13 +7521,14 @@ func (c *StorageGateway) UpdateAutomaticTapeCreationPolicyRequest(input *UpdateA
 // API operation UpdateAutomaticTapeCreationPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateAutomaticTapeCreationPolicy
 func (c *StorageGateway) UpdateAutomaticTapeCreationPolicy(input *UpdateAutomaticTapeCreationPolicyInput) (*UpdateAutomaticTapeCreationPolicyOutput, error) {
@@ -7573,14 +7568,13 @@ const opUpdateBandwidthRateLimit = "UpdateBandwidthRateLimit"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateBandwidthRateLimitRequest method.
+//	req, resp := client.UpdateBandwidthRateLimitRequest(params)
 //
-//    // Example sending a request using the UpdateBandwidthRateLimitRequest method.
-//    req, resp := client.UpdateBandwidthRateLimitRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateBandwidthRateLimit
 func (c *StorageGateway) UpdateBandwidthRateLimitRequest(input *UpdateBandwidthRateLimitInput) (req *request.Request, output *UpdateBandwidthRateLimitOutput) {
@@ -7622,13 +7616,14 @@ func (c *StorageGateway) UpdateBandwidthRateLimitRequest(input *UpdateBandwidthR
 // API operation UpdateBandwidthRateLimit for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateBandwidthRateLimit
 func (c *StorageGateway) UpdateBandwidthRateLimit(input *UpdateBandwidthRateLimitInput) (*UpdateBandwidthRateLimitOutput, error) {
@@ -7668,14 +7663,13 @@ const opUpdateBandwidthRateLimitSchedule = "UpdateBandwidthRateLimitSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateBandwidthRateLimitScheduleRequest method.
+//	req, resp := client.UpdateBandwidthRateLimitScheduleRequest(params)
 //
-//    // Example sending a request using the UpdateBandwidthRateLimitScheduleRequest method.
-//    req, resp := client.UpdateBandwidthRateLimitScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateBandwidthRateLimitSchedule
 func (c *StorageGateway) UpdateBandwidthRateLimitScheduleRequest(input *UpdateBandwidthRateLimitScheduleInput) (req *request.Request, output *UpdateBandwidthRateLimitScheduleOutput) {
@@ -7710,13 +7704,14 @@ func (c *StorageGateway) UpdateBandwidthRateLimitScheduleRequest(input *UpdateBa
 // API operation UpdateBandwidthRateLimitSchedule for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateBandwidthRateLimitSchedule
 func (c *StorageGateway) UpdateBandwidthRateLimitSchedule(input *UpdateBandwidthRateLimitScheduleInput) (*UpdateBandwidthRateLimitScheduleOutput, error) {
@@ -7756,14 +7751,13 @@ const opUpdateChapCredentials = "UpdateChapCredentials"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateChapCredentialsRequest method.
+//	req, resp := client.UpdateChapCredentialsRequest(params)
 //
-//    // Example sending a request using the UpdateChapCredentialsRequest method.
-//    req, resp := client.UpdateChapCredentialsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateChapCredentials
 func (c *StorageGateway) UpdateChapCredentialsRequest(input *UpdateChapCredentialsInput) (req *request.Request, output *UpdateChapCredentialsOutput) {
@@ -7800,13 +7794,14 @@ func (c *StorageGateway) UpdateChapCredentialsRequest(input *UpdateChapCredentia
 // API operation UpdateChapCredentials for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateChapCredentials
 func (c *StorageGateway) UpdateChapCredentials(input *UpdateChapCredentialsInput) (*UpdateChapCredentialsOutput, error) {
@@ -7846,14 +7841,13 @@ const opUpdateFileSystemAssociation = "UpdateFileSystemAssociation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateFileSystemAssociationRequest method.
+//	req, resp := client.UpdateFileSystemAssociationRequest(params)
 //
-//    // Example sending a request using the UpdateFileSystemAssociationRequest method.
-//    req, resp := client.UpdateFileSystemAssociationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateFileSystemAssociation
 func (c *StorageGateway) UpdateFileSystemAssociationRequest(input *UpdateFileSystemAssociationInput) (req *request.Request, output *UpdateFileSystemAssociationOutput) {
@@ -7885,13 +7879,14 @@ func (c *StorageGateway) UpdateFileSystemAssociationRequest(input *UpdateFileSys
 // API operation UpdateFileSystemAssociation for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateFileSystemAssociation
 func (c *StorageGateway) UpdateFileSystemAssociation(input *UpdateFileSystemAssociationInput) (*UpdateFileSystemAssociationOutput, error) {
@@ -7931,14 +7926,13 @@ const opUpdateGatewayInformation = "UpdateGatewayInformation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateGatewayInformationRequest method.
+//	req, resp := client.UpdateGatewayInformationRequest(params)
 //
-//    // Example sending a request using the UpdateGatewayInformationRequest method.
-//    req, resp := client.UpdateGatewayInformationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateGatewayInformation
 func (c *StorageGateway) UpdateGatewayInformationRequest(input *UpdateGatewayInformationInput) (req *request.Request, output *UpdateGatewayInformationOutput) {
@@ -7975,13 +7969,14 @@ func (c *StorageGateway) UpdateGatewayInformationRequest(input *UpdateGatewayInf
 // API operation UpdateGatewayInformation for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateGatewayInformation
 func (c *StorageGateway) UpdateGatewayInformation(input *UpdateGatewayInformationInput) (*UpdateGatewayInformationOutput, error) {
@@ -8021,14 +8016,13 @@ const opUpdateGatewaySoftwareNow = "UpdateGatewaySoftwareNow"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateGatewaySoftwareNowRequest method.
+//	req, resp := client.UpdateGatewaySoftwareNowRequest(params)
 //
-//    // Example sending a request using the UpdateGatewaySoftwareNowRequest method.
-//    req, resp := client.UpdateGatewaySoftwareNowRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateGatewaySoftwareNow
 func (c *StorageGateway) UpdateGatewaySoftwareNowRequest(input *UpdateGatewaySoftwareNowInput) (req *request.Request, output *UpdateGatewaySoftwareNowOutput) {
@@ -8073,13 +8067,14 @@ func (c *StorageGateway) UpdateGatewaySoftwareNowRequest(input *UpdateGatewaySof
 // API operation UpdateGatewaySoftwareNow for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateGatewaySoftwareNow
 func (c *StorageGateway) UpdateGatewaySoftwareNow(input *UpdateGatewaySoftwareNowInput) (*UpdateGatewaySoftwareNowOutput, error) {
@@ -8119,14 +8114,13 @@ const opUpdateMaintenanceStartTime = "UpdateMaintenanceStartTime"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateMaintenanceStartTimeRequest method.
+//	req, resp := client.UpdateMaintenanceStartTimeRequest(params)
 //
-//    // Example sending a request using the UpdateMaintenanceStartTimeRequest method.
-//    req, resp := client.UpdateMaintenanceStartTimeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateMaintenanceStartTime
 func (c *StorageGateway) UpdateMaintenanceStartTimeRequest(input *UpdateMaintenanceStartTimeInput) (req *request.Request, output *UpdateMaintenanceStartTimeOutput) {
@@ -8159,13 +8153,14 @@ func (c *StorageGateway) UpdateMaintenanceStartTimeRequest(input *UpdateMaintena
 // API operation UpdateMaintenanceStartTime for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateMaintenanceStartTime
 func (c *StorageGateway) UpdateMaintenanceStartTime(input *UpdateMaintenanceStartTimeInput) (*UpdateMaintenanceStartTimeOutput, error) {
@@ -8205,14 +8200,13 @@ const opUpdateNFSFileShare = "UpdateNFSFileShare"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateNFSFileShareRequest method.
+//	req, resp := client.UpdateNFSFileShareRequest(params)
 //
-//    // Example sending a request using the UpdateNFSFileShareRequest method.
-//    req, resp := client.UpdateNFSFileShareRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateNFSFileShare
 func (c *StorageGateway) UpdateNFSFileShareRequest(input *UpdateNFSFileShareInput) (req *request.Request, output *UpdateNFSFileShareOutput) {
@@ -8241,15 +8235,15 @@ func (c *StorageGateway) UpdateNFSFileShareRequest(input *UpdateNFSFileShareInpu
 //
 // Updates the following file share settings:
 //
-//    * Default storage class for your S3 bucket
+//   - Default storage class for your S3 bucket
 //
-//    * Metadata defaults for your S3 bucket
+//   - Metadata defaults for your S3 bucket
 //
-//    * Allowed NFS clients for your file share
+//   - Allowed NFS clients for your file share
 //
-//    * Squash settings
+//   - Squash settings
 //
-//    * Write status of your file share
+//   - Write status of your file share
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -8259,13 +8253,14 @@ func (c *StorageGateway) UpdateNFSFileShareRequest(input *UpdateNFSFileShareInpu
 // API operation UpdateNFSFileShare for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateNFSFileShare
 func (c *StorageGateway) UpdateNFSFileShare(input *UpdateNFSFileShareInput) (*UpdateNFSFileShareOutput, error) {
@@ -8305,14 +8300,13 @@ const opUpdateSMBFileShare = "UpdateSMBFileShare"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSMBFileShareRequest method.
+//	req, resp := client.UpdateSMBFileShareRequest(params)
 //
-//    // Example sending a request using the UpdateSMBFileShareRequest method.
-//    req, resp := client.UpdateSMBFileShareRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSMBFileShare
 func (c *StorageGateway) UpdateSMBFileShareRequest(input *UpdateSMBFileShareInput) (req *request.Request, output *UpdateSMBFileShareOutput) {
@@ -8358,13 +8352,14 @@ func (c *StorageGateway) UpdateSMBFileShareRequest(input *UpdateSMBFileShareInpu
 // API operation UpdateSMBFileShare for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSMBFileShare
 func (c *StorageGateway) UpdateSMBFileShare(input *UpdateSMBFileShareInput) (*UpdateSMBFileShareOutput, error) {
@@ -8404,14 +8399,13 @@ const opUpdateSMBFileShareVisibility = "UpdateSMBFileShareVisibility"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSMBFileShareVisibilityRequest method.
+//	req, resp := client.UpdateSMBFileShareVisibilityRequest(params)
 //
-//    // Example sending a request using the UpdateSMBFileShareVisibilityRequest method.
-//    req, resp := client.UpdateSMBFileShareVisibilityRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSMBFileShareVisibility
 func (c *StorageGateway) UpdateSMBFileShareVisibilityRequest(input *UpdateSMBFileShareVisibilityInput) (req *request.Request, output *UpdateSMBFileShareVisibilityOutput) {
@@ -8443,13 +8437,14 @@ func (c *StorageGateway) UpdateSMBFileShareVisibilityRequest(input *UpdateSMBFil
 // API operation UpdateSMBFileShareVisibility for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSMBFileShareVisibility
 func (c *StorageGateway) UpdateSMBFileShareVisibility(input *UpdateSMBFileShareVisibilityInput) (*UpdateSMBFileShareVisibilityOutput, error) {
@@ -8489,14 +8484,13 @@ const opUpdateSMBLocalGroups = "UpdateSMBLocalGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSMBLocalGroupsRequest method.
+//	req, resp := client.UpdateSMBLocalGroupsRequest(params)
 //
-//    // Example sending a request using the UpdateSMBLocalGroupsRequest method.
-//    req, resp := client.UpdateSMBLocalGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSMBLocalGroups
 func (c *StorageGateway) UpdateSMBLocalGroupsRequest(input *UpdateSMBLocalGroupsInput) (req *request.Request, output *UpdateSMBLocalGroupsOutput) {
@@ -8528,13 +8522,14 @@ func (c *StorageGateway) UpdateSMBLocalGroupsRequest(input *UpdateSMBLocalGroups
 // API operation UpdateSMBLocalGroups for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSMBLocalGroups
 func (c *StorageGateway) UpdateSMBLocalGroups(input *UpdateSMBLocalGroupsInput) (*UpdateSMBLocalGroupsOutput, error) {
@@ -8574,14 +8569,13 @@ const opUpdateSMBSecurityStrategy = "UpdateSMBSecurityStrategy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSMBSecurityStrategyRequest method.
+//	req, resp := client.UpdateSMBSecurityStrategyRequest(params)
 //
-//    // Example sending a request using the UpdateSMBSecurityStrategyRequest method.
-//    req, resp := client.UpdateSMBSecurityStrategyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSMBSecurityStrategy
 func (c *StorageGateway) UpdateSMBSecurityStrategyRequest(input *UpdateSMBSecurityStrategyInput) (req *request.Request, output *UpdateSMBSecurityStrategyOutput) {
@@ -8617,13 +8611,14 @@ func (c *StorageGateway) UpdateSMBSecurityStrategyRequest(input *UpdateSMBSecuri
 // API operation UpdateSMBSecurityStrategy for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSMBSecurityStrategy
 func (c *StorageGateway) UpdateSMBSecurityStrategy(input *UpdateSMBSecurityStrategyInput) (*UpdateSMBSecurityStrategyOutput, error) {
@@ -8663,14 +8658,13 @@ const opUpdateSnapshotSchedule = "UpdateSnapshotSchedule"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSnapshotScheduleRequest method.
+//	req, resp := client.UpdateSnapshotScheduleRequest(params)
 //
-//    // Example sending a request using the UpdateSnapshotScheduleRequest method.
-//    req, resp := client.UpdateSnapshotScheduleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSnapshotSchedule
 func (c *StorageGateway) UpdateSnapshotScheduleRequest(input *UpdateSnapshotScheduleInput) (req *request.Request, output *UpdateSnapshotScheduleOutput) {
@@ -8710,13 +8704,14 @@ func (c *StorageGateway) UpdateSnapshotScheduleRequest(input *UpdateSnapshotSche
 // API operation UpdateSnapshotSchedule for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSnapshotSchedule
 func (c *StorageGateway) UpdateSnapshotSchedule(input *UpdateSnapshotScheduleInput) (*UpdateSnapshotScheduleOutput, error) {
@@ -8756,14 +8751,13 @@ const opUpdateVTLDeviceType = "UpdateVTLDeviceType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateVTLDeviceTypeRequest method.
+//	req, resp := client.UpdateVTLDeviceTypeRequest(params)
 //
-//    // Example sending a request using the UpdateVTLDeviceTypeRequest method.
-//    req, resp := client.UpdateVTLDeviceTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateVTLDeviceType
 func (c *StorageGateway) UpdateVTLDeviceTypeRequest(input *UpdateVTLDeviceTypeInput) (req *request.Request, output *UpdateVTLDeviceTypeOutput) {
@@ -8798,13 +8792,14 @@ func (c *StorageGateway) UpdateVTLDeviceTypeRequest(input *UpdateVTLDeviceTypeIn
 // API operation UpdateVTLDeviceType for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidGatewayRequestException
-//   An exception occurred because an invalid gateway request was issued to the
-//   service. For more information, see the error and message fields.
 //
-//   * InternalServerError
-//   An internal server error has occurred during the request. For more information,
-//   see the error and message fields.
+//   - InvalidGatewayRequestException
+//     An exception occurred because an invalid gateway request was issued to the
+//     service. For more information, see the error and message fields.
+//
+//   - InternalServerError
+//     An internal server error has occurred during the request. For more information,
+//     see the error and message fields.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateVTLDeviceType
 func (c *StorageGateway) UpdateVTLDeviceType(input *UpdateVTLDeviceTypeInput) (*UpdateVTLDeviceTypeOutput, error) {
@@ -8830,19 +8825,19 @@ func (c *StorageGateway) UpdateVTLDeviceTypeWithContext(ctx aws.Context, input *
 
 // A JSON object containing one or more of the following fields:
 //
-//    * ActivateGatewayInput$ActivationKey
+//   - ActivateGatewayInput$ActivationKey
 //
-//    * ActivateGatewayInput$GatewayName
+//   - ActivateGatewayInput$GatewayName
 //
-//    * ActivateGatewayInput$GatewayRegion
+//   - ActivateGatewayInput$GatewayRegion
 //
-//    * ActivateGatewayInput$GatewayTimezone
+//   - ActivateGatewayInput$GatewayTimezone
 //
-//    * ActivateGatewayInput$GatewayType
+//   - ActivateGatewayInput$GatewayType
 //
-//    * ActivateGatewayInput$MediumChangerType
+//   - ActivateGatewayInput$MediumChangerType
 //
-//    * ActivateGatewayInput$TapeDriveType
+//   - ActivateGatewayInput$TapeDriveType
 type ActivateGatewayInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9386,7 +9381,7 @@ func (s *AddUploadBufferOutput) SetGatewayARN(v string) *AddUploadBufferOutput {
 
 // A JSON object containing one or more of the following fields:
 //
-//    * AddWorkingStorageInput$DiskIds
+//   - AddWorkingStorageInput$DiskIds
 type AddWorkingStorageInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9504,8 +9499,6 @@ type AssignTapePoolInput struct {
 	// the pool. When you use your backup application to eject the tape, the tape
 	// is archived directly into the storage class (S3 Glacier or S3 Glacier Deep
 	// Archive) that corresponds to the pool.
-	//
-	// Valid Values: GLACIER | DEEP_ARCHIVE
 	//
 	// PoolId is a required field
 	PoolId *string `min:"1" type:"string" required:"true"`
@@ -10041,8 +10034,6 @@ type AutomaticTapeCreationRule struct {
 	// tape is archived directly into the storage class (S3 Glacier or S3 Glacier
 	// Deep Archive) that corresponds to the pool.
 	//
-	// Valid Values: GLACIER | DEEP_ARCHIVE
-	//
 	// PoolId is a required field
 	PoolId *string `min:"1" type:"string" required:"true"`
 
@@ -10386,6 +10377,12 @@ type CachediSCSIVolume struct {
 	//
 	// This value is not available for volumes created prior to May 13, 2015, until
 	// you store data on the volume.
+	//
+	// If you use a delete tool that overwrites the data on your volume with random
+	// data, your usage will not be reduced. This is because the random data is
+	// not compressible. If you want to reduce the amount of billed storage on your
+	// volume, we recommend overwriting your files with zeros to compress the data
+	// to a negligible amount of actual storage.
 	VolumeUsedInBytes *int64 `type:"long"`
 
 	// An VolumeiSCSIAttributes object that represents a collection of iSCSI attributes
@@ -11037,7 +11034,7 @@ type CreateNFSFileShareInput struct {
 	ClientToken *string `min:"5" type:"string" required:"true"`
 
 	// The default storage class for objects put into an Amazon S3 bucket by the
-	// S3 File Gateway. The default value is S3_INTELLIGENT_TIERING. Optional.
+	// S3 File Gateway. The default value is S3_STANDARD. Optional.
 	//
 	// Valid Values: S3_STANDARD | S3_INTELLIGENT_TIERING | S3_STANDARD_IA | S3_ONEZONE_IA
 	DefaultStorageClass *string `min:"5" type:"string"`
@@ -11477,7 +11474,7 @@ type CreateSMBFileShareInput struct {
 	ClientToken *string `min:"5" type:"string" required:"true"`
 
 	// The default storage class for objects put into an Amazon S3 bucket by the
-	// S3 File Gateway. The default value is S3_INTELLIGENT_TIERING. Optional.
+	// S3 File Gateway. The default value is S3_STANDARD. Optional.
 	//
 	// Valid Values: S3_STANDARD | S3_INTELLIGENT_TIERING | S3_STANDARD_IA | S3_ONEZONE_IA
 	DefaultStorageClass *string `min:"5" type:"string"`
@@ -12054,9 +12051,9 @@ func (s *CreateSnapshotFromVolumeRecoveryPointOutput) SetVolumeRecoveryPointTime
 
 // A JSON object containing one or more of the following fields:
 //
-//    * CreateSnapshotInput$SnapshotDescription
+//   - CreateSnapshotInput$SnapshotDescription
 //
-//    * CreateSnapshotInput$VolumeARN
+//   - CreateSnapshotInput$VolumeARN
 type CreateSnapshotInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12196,15 +12193,15 @@ func (s *CreateSnapshotOutput) SetVolumeARN(v string) *CreateSnapshotOutput {
 
 // A JSON object containing one or more of the following fields:
 //
-//    * CreateStorediSCSIVolumeInput$DiskId
+//   - CreateStorediSCSIVolumeInput$DiskId
 //
-//    * CreateStorediSCSIVolumeInput$NetworkInterfaceId
+//   - CreateStorediSCSIVolumeInput$NetworkInterfaceId
 //
-//    * CreateStorediSCSIVolumeInput$PreserveExistingData
+//   - CreateStorediSCSIVolumeInput$PreserveExistingData
 //
-//    * CreateStorediSCSIVolumeInput$SnapshotId
+//   - CreateStorediSCSIVolumeInput$SnapshotId
 //
-//    * CreateStorediSCSIVolumeInput$TargetName
+//   - CreateStorediSCSIVolumeInput$TargetName
 type CreateStorediSCSIVolumeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12621,8 +12618,6 @@ type CreateTapeWithBarcodeInput struct {
 	// the pool. When you use your backup application to eject the tape, the tape
 	// is archived directly into the storage class (S3 Glacier or S3 Deep Archive)
 	// that corresponds to the pool.
-	//
-	// Valid Values: GLACIER | DEEP_ARCHIVE
 	PoolId *string `min:"1" type:"string"`
 
 	// A list of up to 50 tags that can be assigned to a virtual tape that has a
@@ -12640,7 +12635,7 @@ type CreateTapeWithBarcodeInput struct {
 	// been deleted.
 	//
 	// TapeBarcode is a required field
-	TapeBarcode *string `min:"7" type:"string" required:"true"`
+	TapeBarcode *string `min:"5" type:"string" required:"true"`
 
 	// The size, in bytes, of the virtual tape that you want to create.
 	//
@@ -12690,8 +12685,8 @@ func (s *CreateTapeWithBarcodeInput) Validate() error {
 	if s.TapeBarcode == nil {
 		invalidParams.Add(request.NewErrParamRequired("TapeBarcode"))
 	}
-	if s.TapeBarcode != nil && len(*s.TapeBarcode) < 7 {
-		invalidParams.Add(request.NewErrParamMinLen("TapeBarcode", 7))
+	if s.TapeBarcode != nil && len(*s.TapeBarcode) < 5 {
+		invalidParams.Add(request.NewErrParamMinLen("TapeBarcode", 5))
 	}
 	if s.TapeSizeInBytes == nil {
 		invalidParams.Add(request.NewErrParamRequired("TapeSizeInBytes"))
@@ -12834,8 +12829,6 @@ type CreateTapesInput struct {
 	// the pool. When you use your backup application to eject the tape, the tape
 	// is archived directly into the storage class (S3 Glacier or S3 Glacier Deep
 	// Archive) that corresponds to the pool.
-	//
-	// Valid Values: GLACIER | DEEP_ARCHIVE
 	PoolId *string `min:"1" type:"string"`
 
 	// A list of up to 50 tags that can be assigned to a virtual tape. Each tag
@@ -13116,7 +13109,7 @@ func (s *DeleteAutomaticTapeCreationPolicyOutput) SetGatewayARN(v string) *Delet
 
 // A JSON object containing the following fields:
 //
-//    * DeleteBandwidthRateLimitInput$BandwidthType
+//   - DeleteBandwidthRateLimitInput$BandwidthType
 type DeleteBandwidthRateLimitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13223,9 +13216,9 @@ func (s *DeleteBandwidthRateLimitOutput) SetGatewayARN(v string) *DeleteBandwidt
 
 // A JSON object containing one or more of the following fields:
 //
-//    * DeleteChapCredentialsInput$InitiatorName
+//   - DeleteChapCredentialsInput$InitiatorName
 //
-//    * DeleteChapCredentialsInput$TargetARN
+//   - DeleteChapCredentialsInput$TargetARN
 type DeleteChapCredentialsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -14728,7 +14721,9 @@ type DescribeGatewayInformationOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the Amazon CloudWatch log group that is
-	// used to monitor events in the gateway.
+	// used to monitor events in the gateway. This field only only exist and returns
+	// once it have been chosen and set by the SGW service, based on the OS version
+	// of the gateway VM
 	CloudWatchLogGroupARN *string `type:"string"`
 
 	// Date after which this gateway will not receive software updates for new features
@@ -14784,7 +14779,8 @@ type DescribeGatewayInformationOutput struct {
 
 	// The date on which the last software update was applied to the gateway. If
 	// the gateway has never been updated, this field does not return a value in
-	// the response.
+	// the response. This only only exist and returns once it have been chosen and
+	// set by the SGW service, based on the OS version of the gateway VM
 	LastSoftwareUpdate *string `min:"1" type:"string"`
 
 	// The date on which an update to the gateway is available. This date is in
@@ -14797,7 +14793,7 @@ type DescribeGatewayInformationOutput struct {
 
 	// A list of the metadata cache sizes that the gateway can support based on
 	// its current hardware specifications.
-	SupportedGatewayCapacities []*string `type:"list"`
+	SupportedGatewayCapacities []*string `type:"list" enum:"GatewayCapacity"`
 
 	// A list of up to 50 tags assigned to the gateway, sorted alphabetically by
 	// key name. Each tag is a key-value pair. For a gateway with more than 10 tags
@@ -15006,15 +15002,15 @@ func (s *DescribeMaintenanceStartTimeInput) SetGatewayARN(v string) *DescribeMai
 
 // A JSON object containing the following fields:
 //
-//    * DescribeMaintenanceStartTimeOutput$DayOfMonth
+//   - DescribeMaintenanceStartTimeOutput$DayOfMonth
 //
-//    * DescribeMaintenanceStartTimeOutput$DayOfWeek
+//   - DescribeMaintenanceStartTimeOutput$DayOfWeek
 //
-//    * DescribeMaintenanceStartTimeOutput$HourOfDay
+//   - DescribeMaintenanceStartTimeOutput$HourOfDay
 //
-//    * DescribeMaintenanceStartTimeOutput$MinuteOfHour
+//   - DescribeMaintenanceStartTimeOutput$MinuteOfHour
 //
-//    * DescribeMaintenanceStartTimeOutput$Timezone
+//   - DescribeMaintenanceStartTimeOutput$Timezone
 type DescribeMaintenanceStartTimeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -18037,9 +18033,9 @@ func (s *ListFileSystemAssociationsOutput) SetNextMarker(v string) *ListFileSyst
 
 // A JSON object containing zero or more of the following fields:
 //
-//    * ListGatewaysInput$Limit
+//   - ListGatewaysInput$Limit
 //
-//    * ListGatewaysInput$Marker
+//   - ListGatewaysInput$Marker
 type ListGatewaysInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18478,11 +18474,11 @@ func (s *ListTapePoolsOutput) SetPoolInfos(v []*PoolInfo) *ListTapePoolsOutput {
 
 // A JSON object that contains one or more of the following fields:
 //
-//    * ListTapesInput$Limit
+//   - ListTapesInput$Limit
 //
-//    * ListTapesInput$Marker
+//   - ListTapesInput$Marker
 //
-//    * ListTapesInput$TapeARNs
+//   - ListTapesInput$TapeARNs
 type ListTapesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18553,9 +18549,9 @@ func (s *ListTapesInput) SetTapeARNs(v []*string) *ListTapesInput {
 
 // A JSON object containing the following fields:
 //
-//    * ListTapesOutput$Marker
+//   - ListTapesOutput$Marker
 //
-//    * ListTapesOutput$VolumeInfos
+//   - ListTapesOutput$VolumeInfos
 type ListTapesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -18778,9 +18774,9 @@ func (s *ListVolumeRecoveryPointsOutput) SetVolumeRecoveryPointInfos(v []*Volume
 
 // A JSON object that contains one or more of the following fields:
 //
-//    * ListVolumesInput$Limit
+//   - ListVolumesInput$Limit
 //
-//    * ListVolumesInput$Marker
+//   - ListVolumesInput$Marker
 type ListVolumesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18855,9 +18851,9 @@ func (s *ListVolumesInput) SetMarker(v string) *ListVolumesInput {
 
 // A JSON object containing the following fields:
 //
-//    * ListVolumesOutput$Marker
+//   - ListVolumesOutput$Marker
 //
-//    * ListVolumesOutput$VolumeInfos
+//   - ListVolumesOutput$VolumeInfos
 type ListVolumesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -19021,7 +19017,7 @@ type NFSFileShareInfo struct {
 	ClientList []*string `min:"1" type:"list"`
 
 	// The default storage class for objects put into an Amazon S3 bucket by the
-	// S3 File Gateway. The default value is S3_INTELLIGENT_TIERING. Optional.
+	// S3 File Gateway. The default value is S3_STANDARD. Optional.
 	//
 	// Valid Values: S3_STANDARD | S3_INTELLIGENT_TIERING | S3_STANDARD_IA | S3_ONEZONE_IA
 	DefaultStorageClass *string `min:"5" type:"string"`
@@ -20115,7 +20111,7 @@ type SMBFileShareInfo struct {
 	CaseSensitivity *string `type:"string" enum:"CaseSensitivity"`
 
 	// The default storage class for objects put into an Amazon S3 bucket by the
-	// S3 File Gateway. The default value is S3_INTELLIGENT_TIERING. Optional.
+	// S3 File Gateway. The default value is S3_STANDARD. Optional.
 	//
 	// Valid Values: S3_STANDARD | S3_INTELLIGENT_TIERING | S3_STANDARD_IA | S3_ONEZONE_IA
 	DefaultStorageClass *string `min:"5" type:"string"`
@@ -21308,8 +21304,6 @@ type Tape struct {
 	// pool. When you use your backup application to eject the tape, the tape is
 	// archived directly into the storage class (S3 Glacier or S3 Glacier Deep Archive)
 	// that corresponds to the pool.
-	//
-	// Valid Values: GLACIER | DEEP_ARCHIVE
 	PoolId *string `min:"1" type:"string"`
 
 	// For archiving virtual tapes, indicates how much data remains to be uploaded
@@ -21325,7 +21319,7 @@ type Tape struct {
 	TapeARN *string `min:"50" type:"string"`
 
 	// The barcode that identifies a specific virtual tape.
-	TapeBarcode *string `min:"7" type:"string"`
+	TapeBarcode *string `min:"5" type:"string"`
 
 	// The date the virtual tape was created.
 	TapeCreatedDate *time.Time `type:"timestamp"`
@@ -21468,8 +21462,6 @@ type TapeArchive struct {
 
 	// The ID of the pool that was used to archive the tape. The tapes in this pool
 	// are archived in the S3 storage class that is associated with the pool.
-	//
-	// Valid Values: GLACIER | DEEP_ARCHIVE
 	PoolId *string `min:"1" type:"string"`
 
 	// If the archived tape is subject to tape retention lock, the date that the
@@ -21486,7 +21478,7 @@ type TapeArchive struct {
 	TapeARN *string `min:"50" type:"string"`
 
 	// The barcode that identifies the archived virtual tape.
-	TapeBarcode *string `min:"7" type:"string"`
+	TapeBarcode *string `min:"5" type:"string"`
 
 	// The date the virtual tape was created.
 	TapeCreatedDate *time.Time `type:"timestamp"`
@@ -21619,8 +21611,6 @@ type TapeInfo struct {
 	// the pool. When you use your backup application to eject the tape, the tape
 	// is archived directly into the storage class (S3 Glacier or S3 Glacier Deep
 	// Archive) that corresponds to the pool.
-	//
-	// Valid Values: GLACIER | DEEP_ARCHIVE
 	PoolId *string `min:"1" type:"string"`
 
 	// The date that the tape became subject to tape retention lock.
@@ -21630,7 +21620,7 @@ type TapeInfo struct {
 	TapeARN *string `min:"50" type:"string"`
 
 	// The barcode that identifies a specific virtual tape.
-	TapeBarcode *string `min:"7" type:"string"`
+	TapeBarcode *string `min:"5" type:"string"`
 
 	// The size, in bytes, of a virtual tape.
 	TapeSizeInBytes *int64 `type:"long"`
@@ -21880,9 +21870,9 @@ func (s *UpdateAutomaticTapeCreationPolicyOutput) SetGatewayARN(v string) *Updat
 
 // A JSON object containing one or more of the following fields:
 //
-//    * UpdateBandwidthRateLimitInput$AverageDownloadRateLimitInBitsPerSec
+//   - UpdateBandwidthRateLimitInput$AverageDownloadRateLimitInBitsPerSec
 //
-//    * UpdateBandwidthRateLimitInput$AverageUploadRateLimitInBitsPerSec
+//   - UpdateBandwidthRateLimitInput$AverageUploadRateLimitInBitsPerSec
 type UpdateBandwidthRateLimitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -22101,13 +22091,13 @@ func (s *UpdateBandwidthRateLimitScheduleOutput) SetGatewayARN(v string) *Update
 
 // A JSON object containing one or more of the following fields:
 //
-//    * UpdateChapCredentialsInput$InitiatorName
+//   - UpdateChapCredentialsInput$InitiatorName
 //
-//    * UpdateChapCredentialsInput$SecretToAuthenticateInitiator
+//   - UpdateChapCredentialsInput$SecretToAuthenticateInitiator
 //
-//    * UpdateChapCredentialsInput$SecretToAuthenticateTarget
+//   - UpdateChapCredentialsInput$SecretToAuthenticateTarget
 //
-//    * UpdateChapCredentialsInput$TargetARN
+//   - UpdateChapCredentialsInput$TargetARN
 type UpdateChapCredentialsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -22618,13 +22608,13 @@ func (s *UpdateGatewaySoftwareNowOutput) SetGatewayARN(v string) *UpdateGatewayS
 
 // A JSON object containing the following fields:
 //
-//    * UpdateMaintenanceStartTimeInput$DayOfMonth
+//   - UpdateMaintenanceStartTimeInput$DayOfMonth
 //
-//    * UpdateMaintenanceStartTimeInput$DayOfWeek
+//   - UpdateMaintenanceStartTimeInput$DayOfWeek
 //
-//    * UpdateMaintenanceStartTimeInput$HourOfDay
+//   - UpdateMaintenanceStartTimeInput$HourOfDay
 //
-//    * UpdateMaintenanceStartTimeInput$MinuteOfHour
+//   - UpdateMaintenanceStartTimeInput$MinuteOfHour
 type UpdateMaintenanceStartTimeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -22780,7 +22770,7 @@ type UpdateNFSFileShareInput struct {
 	ClientList []*string `min:"1" type:"list"`
 
 	// The default storage class for objects put into an Amazon S3 bucket by the
-	// S3 File Gateway. The default value is S3_INTELLIGENT_TIERING. Optional.
+	// S3 File Gateway. The default value is S3_STANDARD. Optional.
 	//
 	// Valid Values: S3_STANDARD | S3_INTELLIGENT_TIERING | S3_STANDARD_IA | S3_ONEZONE_IA
 	DefaultStorageClass *string `min:"5" type:"string"`
@@ -23077,7 +23067,7 @@ type UpdateSMBFileShareInput struct {
 	CaseSensitivity *string `type:"string" enum:"CaseSensitivity"`
 
 	// The default storage class for objects put into an Amazon S3 bucket by the
-	// S3 File Gateway. The default value is S3_INTELLIGENT_TIERING. Optional.
+	// S3 File Gateway. The default value is S3_STANDARD. Optional.
 	//
 	// Valid Values: S3_STANDARD | S3_INTELLIGENT_TIERING | S3_STANDARD_IA | S3_ONEZONE_IA
 	DefaultStorageClass *string `min:"5" type:"string"`
@@ -23684,13 +23674,13 @@ func (s *UpdateSMBSecurityStrategyOutput) SetGatewayARN(v string) *UpdateSMBSecu
 
 // A JSON object containing one or more of the following fields:
 //
-//    * UpdateSnapshotScheduleInput$Description
+//   - UpdateSnapshotScheduleInput$Description
 //
-//    * UpdateSnapshotScheduleInput$RecurrenceInHours
+//   - UpdateSnapshotScheduleInput$RecurrenceInHours
 //
-//    * UpdateSnapshotScheduleInput$StartAt
+//   - UpdateSnapshotScheduleInput$StartAt
 //
-//    * UpdateSnapshotScheduleInput$VolumeARN
+//   - UpdateSnapshotScheduleInput$VolumeARN
 type UpdateSnapshotScheduleInput struct {
 	_ struct{} `type:"structure"`
 

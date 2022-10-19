@@ -101,10 +101,10 @@ func sweepObjects(region string) error {
 		}
 
 		// Delete everything including locked objects. Ignore any object errors.
-		err = DeleteAllObjectVersions(conn, bucketName, "", objectLockEnabled, true)
+		_, err = DeleteAllObjectVersions(conn, bucketName, "", objectLockEnabled, true)
 
 		if err != nil {
-			return fmt.Errorf("error listing S3 Bucket (%s) Objects: %s", bucketName, err)
+			return fmt.Errorf("error deleting S3 Bucket (%s) Objects: %s", bucketName, err)
 		}
 	}
 
@@ -141,7 +141,26 @@ func sweepBuckets(region string) error {
 		name := aws.StringValue(bucket.Name)
 
 		sweepable := false
-		prefixes := []string{"tf-acc", "tf-object-test", "tf-test", "tf-emr-bootstrap", "terraform-remote-s3-test"}
+		prefixes := []string{
+			"aws-elastictranscoder-pipeline-tf-test",
+			"danieldreier",
+			"deletemebucket",
+			"images-2021",
+			"klaemmity-",
+			"msk-broker-logs-test",
+			"terraform-remote-s3-test",
+			"tf-acc",
+			"tf-emr-bootstrap",
+			"tf-object-test",
+			"tf-objects-test-bucket",
+			"tf-redshift-logging",
+			"tf-s3",
+			"tf-spot-datafeed",
+			"tf-test",
+			"tftest.applicationversion",
+			"unique-destination-bucket",
+			"unique-source-bucket",
+		}
 
 		for _, prefix := range prefixes {
 			if strings.HasPrefix(name, prefix) {

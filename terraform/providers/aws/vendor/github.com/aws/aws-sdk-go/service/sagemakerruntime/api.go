@@ -27,14 +27,13 @@ const opInvokeEndpoint = "InvokeEndpoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the InvokeEndpointRequest method.
+//	req, resp := client.InvokeEndpointRequest(params)
 //
-//    // Example sending a request using the InvokeEndpointRequest method.
-//    req, resp := client.InvokeEndpointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.sagemaker-2017-05-13/InvokeEndpoint
 func (c *SageMakerRuntime) InvokeEndpointRequest(input *InvokeEndpointInput) (req *request.Request, output *InvokeEndpointOutput) {
@@ -87,27 +86,28 @@ func (c *SageMakerRuntime) InvokeEndpointRequest(input *InvokeEndpointInput) (re
 // API operation InvokeEndpoint for usage and error information.
 //
 // Returned Error Types:
-//   * InternalFailure
-//   An internal failure occurred.
 //
-//   * ServiceUnavailable
-//   The service is unavailable. Try your call again.
+//   - InternalFailure
+//     An internal failure occurred.
 //
-//   * ValidationError
-//   Inspect your request and try again.
+//   - ServiceUnavailable
+//     The service is unavailable. Try your call again.
 //
-//   * ModelError
-//   Model (owned by the customer in the container) returned 4xx or 5xx error
-//   code.
+//   - ValidationError
+//     Inspect your request and try again.
 //
-//   * InternalDependencyException
-//   Your request caused an exception with an internal dependency. Contact customer
-//   support.
+//   - ModelError
+//     Model (owned by the customer in the container) returned 4xx or 5xx error
+//     code.
 //
-//   * ModelNotReadyException
-//   Either a serverless endpoint variant's resources are still being provisioned,
-//   or a multi-model endpoint is still downloading or loading the target model.
-//   Wait and try your request again.
+//   - InternalDependencyException
+//     Your request caused an exception with an internal dependency. Contact customer
+//     support.
+//
+//   - ModelNotReadyException
+//     Either a serverless endpoint variant's resources are still being provisioned,
+//     or a multi-model endpoint is still downloading or loading the target model.
+//     Wait and try your request again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.sagemaker-2017-05-13/InvokeEndpoint
 func (c *SageMakerRuntime) InvokeEndpoint(input *InvokeEndpointInput) (*InvokeEndpointOutput, error) {
@@ -147,14 +147,13 @@ const opInvokeEndpointAsync = "InvokeEndpointAsync"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the InvokeEndpointAsyncRequest method.
+//	req, resp := client.InvokeEndpointAsyncRequest(params)
 //
-//    // Example sending a request using the InvokeEndpointAsyncRequest method.
-//    req, resp := client.InvokeEndpointAsyncRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.sagemaker-2017-05-13/InvokeEndpointAsync
 func (c *SageMakerRuntime) InvokeEndpointAsyncRequest(input *InvokeEndpointAsyncInput) (req *request.Request, output *InvokeEndpointAsyncOutput) {
@@ -202,14 +201,15 @@ func (c *SageMakerRuntime) InvokeEndpointAsyncRequest(input *InvokeEndpointAsync
 // API operation InvokeEndpointAsync for usage and error information.
 //
 // Returned Error Types:
-//   * InternalFailure
-//   An internal failure occurred.
 //
-//   * ServiceUnavailable
-//   The service is unavailable. Try your call again.
+//   - InternalFailure
+//     An internal failure occurred.
 //
-//   * ValidationError
-//   Inspect your request and try again.
+//   - ServiceUnavailable
+//     The service is unavailable. Try your call again.
+//
+//   - ValidationError
+//     Inspect your request and try again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.sagemaker-2017-05-13/InvokeEndpointAsync
 func (c *SageMakerRuntime) InvokeEndpointAsync(input *InvokeEndpointAsyncInput) (*InvokeEndpointAsyncOutput, error) {
@@ -590,6 +590,11 @@ type InvokeEndpointInput struct {
 	// String and GoString methods.
 	CustomAttributes *string `location:"header" locationName:"X-Amzn-SageMaker-Custom-Attributes" type:"string" sensitive:"true"`
 
+	// An optional JMESPath expression used to override the EnableExplanations parameter
+	// of the ClarifyExplainerConfig API. See the EnableExplanations (https://docs.aws.amazon.com/clarify-online-explainability-create-endpoint.html#clarify-online-exaplainability-create-endpoint-enable)
+	// section in the developer guide for more information.
+	EnableExplanations *string `location:"header" locationName:"X-Amzn-SageMaker-Enable-Explanations" min:"1" type:"string"`
+
 	// The name of the endpoint that you specified when you created the endpoint
 	// using the CreateEndpoint (https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateEndpoint.html)
 	// API.
@@ -643,6 +648,9 @@ func (s *InvokeEndpointInput) Validate() error {
 	if s.Body == nil {
 		invalidParams.Add(request.NewErrParamRequired("Body"))
 	}
+	if s.EnableExplanations != nil && len(*s.EnableExplanations) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EnableExplanations", 1))
+	}
 	if s.EndpointName == nil {
 		invalidParams.Add(request.NewErrParamRequired("EndpointName"))
 	}
@@ -686,6 +694,12 @@ func (s *InvokeEndpointInput) SetCustomAttributes(v string) *InvokeEndpointInput
 	return s
 }
 
+// SetEnableExplanations sets the EnableExplanations field's value.
+func (s *InvokeEndpointInput) SetEnableExplanations(v string) *InvokeEndpointInput {
+	s.EnableExplanations = &v
+	return s
+}
+
 // SetEndpointName sets the EndpointName field's value.
 func (s *InvokeEndpointInput) SetEndpointName(v string) *InvokeEndpointInput {
 	s.EndpointName = &v
@@ -723,6 +737,11 @@ type InvokeEndpointOutput struct {
 	//
 	// For information about the format of the response body, see Common Data Formats-Inference
 	// (https://docs.aws.amazon.com/sagemaker/latest/dg/cdf-inference.html).
+	//
+	// If the explainer is activated, the body includes the explanations provided
+	// by the model. For more information, see the Response section under Invoke
+	// the Endpoint (https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-online-explainability-invoke-endpoint.html#clarify-online-explainability-response)
+	// in the Developer Guide.
 	//
 	// Body is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by InvokeEndpointOutput's

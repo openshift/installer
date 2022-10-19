@@ -31,23 +31,48 @@ import (
 // otherwise. If either of the input strings are not valid JSON,
 // false is returned along with an error.
 func PoliciesAreEquivalent(policy1, policy2 string) (bool, error) {
+	// Although "policy" generally equates to JSON, AWS also has pseudo-JSON
+	// policies, such as assume-role policies that can be lists of JSONs. This
+	// only handles a one-length list of JSON:
+	policy1 = strings.TrimSpace(policy1)
+	if strings.HasPrefix(policy1, "[") && strings.HasSuffix(policy1, "]") {
+		policy1 = strings.TrimPrefix(strings.TrimSuffix(policy1, "]"), "[")
+		policy1 = strings.TrimSpace(policy1)
+	}
+	if policy1 == "" {
+		policy1 = "{}"
+	}
+
+	policy2 = strings.TrimSpace(policy2)
+	if strings.HasPrefix(policy2, "[") && strings.HasSuffix(policy2, "]") {
+		policy2 = strings.TrimPrefix(strings.TrimSuffix(policy2, "]"), "[")
+		policy2 = strings.TrimSpace(policy2)
+	}
+	if policy2 == "" {
+		policy2 = "{}"
+	}
+
 	policy1intermediate := &intermediatePolicyDocument{}
 	if err := json.Unmarshal([]byte(policy1), policy1intermediate); err != nil {
-		return false, fmt.Errorf("Error unmarshaling policy: %s", err)
+		return false, fmt.Errorf("unmarshaling policy 1: %s", err)
 	}
 
 	policy2intermediate := &intermediatePolicyDocument{}
 	if err := json.Unmarshal([]byte(policy2), policy2intermediate); err != nil {
-		return false, fmt.Errorf("Error unmarshaling policy: %s", err)
+		return false, fmt.Errorf("unmarshaling policy 2: %s", err)
+	}
+
+	if reflect.DeepEqual(policy1intermediate, policy2intermediate) {
+		return true, nil
 	}
 
 	policy1Doc, err := policy1intermediate.document()
 	if err != nil {
-		return false, fmt.Errorf("Error parsing policy: %s", err)
+		return false, fmt.Errorf("parsing policy 1: %s", err)
 	}
 	policy2Doc, err := policy2intermediate.document()
 	if err != nil {
-		return false, fmt.Errorf("Error parsing policy: %s", err)
+		return false, fmt.Errorf("parsing policy 2: %s", err)
 	}
 
 	return policy1Doc.equals(policy2Doc), nil
@@ -62,19 +87,24 @@ type intermediatePolicyDocument struct {
 func (intermediate *intermediatePolicyDocument) document() (*policyDocument, error) {
 	var statements []*policyStatement
 
-	switch s := intermediate.Statements.(type) {
-	case []interface{}:
-		if err := mapstructure.Decode(s, &statements); err != nil {
-			return nil, fmt.Errorf("Error parsing statement: %s", err)
+	// Decode only non-nil statements to prevent irreversible result when setting values
+	// in Terraform state.
+	// Reference: https://github.com/hashicorp/terraform-provider-aws/issues/22944
+	if intermediate.Statements != nil {
+		switch s := intermediate.Statements.(type) {
+		case []interface{}:
+			if err := mapstructure.Decode(s, &statements); err != nil {
+				return nil, fmt.Errorf("parsing statement 1: %s", err)
+			}
+		case map[string]interface{}:
+			var singleStatement *policyStatement
+			if err := mapstructure.Decode(s, &singleStatement); err != nil {
+				return nil, fmt.Errorf("parsing statement 2: %s", err)
+			}
+			statements = append(statements, singleStatement)
+		default:
+			return nil, errors.New("unknown statement parsing problem")
 		}
-	case map[string]interface{}:
-		var singleStatement *policyStatement
-		if err := mapstructure.Decode(s, &singleStatement); err != nil {
-			return nil, fmt.Errorf("Error parsing statement: %s", err)
-		}
-		statements = append(statements, singleStatement)
-	default:
-		return nil, errors.New("Unknown error parsing statement")
 	}
 
 	document := &policyDocument{
@@ -93,6 +123,10 @@ type policyDocument struct {
 }
 
 func (doc *policyDocument) equals(other *policyDocument) bool {
+	// Prevent panic
+	if doc == nil {
+		return other == nil
+	}
 	// Check the basic fields of the document
 	if doc.Version != other.Version {
 		return false

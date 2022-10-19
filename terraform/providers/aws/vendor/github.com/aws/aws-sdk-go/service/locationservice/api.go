@@ -29,14 +29,13 @@ const opAssociateTrackerConsumer = "AssociateTrackerConsumer"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateTrackerConsumerRequest method.
+//	req, resp := client.AssociateTrackerConsumerRequest(params)
 //
-//    // Example sending a request using the AssociateTrackerConsumerRequest method.
-//    req, resp := client.AssociateTrackerConsumerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/AssociateTrackerConsumer
 func (c *LocationService) AssociateTrackerConsumerRequest(input *AssociateTrackerConsumerInput) (req *request.Request, output *AssociateTrackerConsumerOutput) {
@@ -78,30 +77,31 @@ func (c *LocationService) AssociateTrackerConsumerRequest(input *AssociateTracke
 // API operation AssociateTrackerConsumer for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * ConflictException
-//   The request was unsuccessful because of a conflict.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ConflictException
+//     The request was unsuccessful because of a conflict.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ServiceQuotaExceededException
-//   The operation was denied because the request would exceed the maximum quota
-//   (https://docs.aws.amazon.com/location/latest/developerguide/location-quotas.html)
-//   set for Amazon Location Service.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ServiceQuotaExceededException
+//     The operation was denied because the request would exceed the maximum quota
+//     (https://docs.aws.amazon.com/location/latest/developerguide/location-quotas.html)
+//     set for Amazon Location Service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/AssociateTrackerConsumer
 func (c *LocationService) AssociateTrackerConsumer(input *AssociateTrackerConsumerInput) (*AssociateTrackerConsumerOutput, error) {
@@ -141,14 +141,13 @@ const opBatchDeleteDevicePositionHistory = "BatchDeleteDevicePositionHistory"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchDeleteDevicePositionHistoryRequest method.
+//	req, resp := client.BatchDeleteDevicePositionHistoryRequest(params)
 //
-//    // Example sending a request using the BatchDeleteDevicePositionHistoryRequest method.
-//    req, resp := client.BatchDeleteDevicePositionHistoryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchDeleteDevicePositionHistory
 func (c *LocationService) BatchDeleteDevicePositionHistoryRequest(input *BatchDeleteDevicePositionHistoryInput) (req *request.Request, output *BatchDeleteDevicePositionHistoryOutput) {
@@ -181,22 +180,23 @@ func (c *LocationService) BatchDeleteDevicePositionHistoryRequest(input *BatchDe
 // API operation BatchDeleteDevicePositionHistory for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchDeleteDevicePositionHistory
 func (c *LocationService) BatchDeleteDevicePositionHistory(input *BatchDeleteDevicePositionHistoryInput) (*BatchDeleteDevicePositionHistoryOutput, error) {
@@ -236,14 +236,13 @@ const opBatchDeleteGeofence = "BatchDeleteGeofence"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchDeleteGeofenceRequest method.
+//	req, resp := client.BatchDeleteGeofenceRequest(params)
 //
-//    // Example sending a request using the BatchDeleteGeofenceRequest method.
-//    req, resp := client.BatchDeleteGeofenceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchDeleteGeofence
 func (c *LocationService) BatchDeleteGeofenceRequest(input *BatchDeleteGeofenceInput) (req *request.Request, output *BatchDeleteGeofenceOutput) {
@@ -278,22 +277,23 @@ func (c *LocationService) BatchDeleteGeofenceRequest(input *BatchDeleteGeofenceI
 // API operation BatchDeleteGeofence for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchDeleteGeofence
 func (c *LocationService) BatchDeleteGeofence(input *BatchDeleteGeofenceInput) (*BatchDeleteGeofenceOutput, error) {
@@ -333,14 +333,13 @@ const opBatchEvaluateGeofences = "BatchEvaluateGeofences"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchEvaluateGeofencesRequest method.
+//	req, resp := client.BatchEvaluateGeofencesRequest(params)
 //
-//    // Example sending a request using the BatchEvaluateGeofencesRequest method.
-//    req, resp := client.BatchEvaluateGeofencesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchEvaluateGeofences
 func (c *LocationService) BatchEvaluateGeofencesRequest(input *BatchEvaluateGeofencesInput) (req *request.Request, output *BatchEvaluateGeofencesOutput) {
@@ -371,17 +370,20 @@ func (c *LocationService) BatchEvaluateGeofencesRequest(input *BatchEvaluateGeof
 // a geofenced area, and then publishes one of the following events to Amazon
 // EventBridge:
 //
-//    * ENTER if Amazon Location determines that the tracked device has entered
-//    a geofenced area.
+//   - ENTER if Amazon Location determines that the tracked device has entered
+//     a geofenced area.
 //
-//    * EXIT if Amazon Location determines that the tracked device has exited
-//    a geofenced area.
+//   - EXIT if Amazon Location determines that the tracked device has exited
+//     a geofenced area.
 //
 // The last geofence that a device was observed within is tracked for 30 days
 // after the most recent device position update.
 //
 // Geofence evaluation uses the given device position. It does not account for
 // the optional Accuracy of a DevicePositionUpdate.
+//
+// The DeviceID is used as a string to represent the device. You do not need
+// to have a Tracker associated with the DeviceID.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -391,22 +393,23 @@ func (c *LocationService) BatchEvaluateGeofencesRequest(input *BatchEvaluateGeof
 // API operation BatchEvaluateGeofences for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchEvaluateGeofences
 func (c *LocationService) BatchEvaluateGeofences(input *BatchEvaluateGeofencesInput) (*BatchEvaluateGeofencesOutput, error) {
@@ -446,14 +449,13 @@ const opBatchGetDevicePosition = "BatchGetDevicePosition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchGetDevicePositionRequest method.
+//	req, resp := client.BatchGetDevicePositionRequest(params)
 //
-//    // Example sending a request using the BatchGetDevicePositionRequest method.
-//    req, resp := client.BatchGetDevicePositionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchGetDevicePosition
 func (c *LocationService) BatchGetDevicePositionRequest(input *BatchGetDevicePositionInput) (req *request.Request, output *BatchGetDevicePositionOutput) {
@@ -486,22 +488,23 @@ func (c *LocationService) BatchGetDevicePositionRequest(input *BatchGetDevicePos
 // API operation BatchGetDevicePosition for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchGetDevicePosition
 func (c *LocationService) BatchGetDevicePosition(input *BatchGetDevicePositionInput) (*BatchGetDevicePositionOutput, error) {
@@ -541,14 +544,13 @@ const opBatchPutGeofence = "BatchPutGeofence"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchPutGeofenceRequest method.
+//	req, resp := client.BatchPutGeofenceRequest(params)
 //
-//    // Example sending a request using the BatchPutGeofenceRequest method.
-//    req, resp := client.BatchPutGeofenceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchPutGeofence
 func (c *LocationService) BatchPutGeofenceRequest(input *BatchPutGeofenceInput) (req *request.Request, output *BatchPutGeofenceOutput) {
@@ -583,22 +585,23 @@ func (c *LocationService) BatchPutGeofenceRequest(input *BatchPutGeofenceInput) 
 // API operation BatchPutGeofence for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchPutGeofence
 func (c *LocationService) BatchPutGeofence(input *BatchPutGeofenceInput) (*BatchPutGeofenceOutput, error) {
@@ -638,14 +641,13 @@ const opBatchUpdateDevicePosition = "BatchUpdateDevicePosition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchUpdateDevicePositionRequest method.
+//	req, resp := client.BatchUpdateDevicePositionRequest(params)
 //
-//    // Example sending a request using the BatchUpdateDevicePositionRequest method.
-//    req, resp := client.BatchUpdateDevicePositionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchUpdateDevicePosition
 func (c *LocationService) BatchUpdateDevicePositionRequest(input *BatchUpdateDevicePositionInput) (req *request.Request, output *BatchUpdateDevicePositionOutput) {
@@ -700,22 +702,23 @@ func (c *LocationService) BatchUpdateDevicePositionRequest(input *BatchUpdateDev
 // API operation BatchUpdateDevicePosition for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/BatchUpdateDevicePosition
 func (c *LocationService) BatchUpdateDevicePosition(input *BatchUpdateDevicePositionInput) (*BatchUpdateDevicePositionOutput, error) {
@@ -755,14 +758,13 @@ const opCalculateRoute = "CalculateRoute"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CalculateRouteRequest method.
+//	req, resp := client.CalculateRouteRequest(params)
 //
-//    // Example sending a request using the CalculateRouteRequest method.
-//    req, resp := client.CalculateRouteRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CalculateRoute
 func (c *LocationService) CalculateRouteRequest(input *CalculateRouteInput) (req *request.Request, output *CalculateRouteOutput) {
@@ -795,16 +797,18 @@ func (c *LocationService) CalculateRouteRequest(input *CalculateRouteInput) (req
 //
 // Additional options include:
 //
-//    * Specifying a departure time (https://docs.aws.amazon.com/location/latest/developerguide/departure-time.html)
-//    using either DepartureTime or DepartNow. This calculates a route based
-//    on predictive traffic data at the given time. You can't specify both DepartureTime
-//    and DepartNow in a single request. Specifying both parameters returns
-//    a validation error.
+//   - Specifying a departure time (https://docs.aws.amazon.com/location/latest/developerguide/departure-time.html)
+//     using either DepartureTime or DepartNow. This calculates a route based
+//     on predictive traffic data at the given time. You can't specify both DepartureTime
+//     and DepartNow in a single request. Specifying both parameters returns
+//     a validation error.
 //
-//    * Specifying a travel mode (https://docs.aws.amazon.com/location/latest/developerguide/travel-mode.html)
-//    using TravelMode sets the transportation mode used to calculate the routes.
-//    This also lets you specify additional route preferences in CarModeOptions
-//    if traveling by Car, or TruckModeOptions if traveling by Truck.
+//   - Specifying a travel mode (https://docs.aws.amazon.com/location/latest/developerguide/travel-mode.html)
+//     using TravelMode sets the transportation mode used to calculate the routes.
+//     This also lets you specify additional route preferences in CarModeOptions
+//     if traveling by Car, or TruckModeOptions if traveling by Truck. If you
+//     specify walking for the travel mode and your data provider is Esri, the
+//     start and destination must be within 40km.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -814,22 +818,23 @@ func (c *LocationService) CalculateRouteRequest(input *CalculateRouteInput) (req
 // API operation CalculateRoute for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CalculateRoute
 func (c *LocationService) CalculateRoute(input *CalculateRouteInput) (*CalculateRouteOutput, error) {
@@ -869,14 +874,13 @@ const opCalculateRouteMatrix = "CalculateRouteMatrix"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CalculateRouteMatrixRequest method.
+//	req, resp := client.CalculateRouteMatrixRequest(params)
 //
-//    // Example sending a request using the CalculateRouteMatrixRequest method.
-//    req, resp := client.CalculateRouteMatrixRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CalculateRouteMatrix
 func (c *LocationService) CalculateRouteMatrixRequest(input *CalculateRouteMatrixInput) (req *request.Request, output *CalculateRouteMatrixOutput) {
@@ -899,15 +903,15 @@ func (c *LocationService) CalculateRouteMatrixRequest(input *CalculateRouteMatri
 
 // CalculateRouteMatrix API operation for Amazon Location Service.
 //
-//  Calculates a route matrix (https://docs.aws.amazon.com/location/latest/developerguide/calculate-route-matrix.html)
-//  given the following required parameters: DeparturePositions and DestinationPositions.
-//  CalculateRouteMatrix calculates routes and returns the travel time and travel
-//  distance from each departure position to each destination position in the
-//  request. For example, given departure positions A and B, and destination
-//  positions X and Y, CalculateRouteMatrix will return time and distance for
-//  routes from A to X, A to Y, B to X, and B to Y (in that order). The number
-//  of results returned (and routes calculated) will be the number of DeparturePositions
-//  times the number of DestinationPositions.
+//	Calculates a route matrix (https://docs.aws.amazon.com/location/latest/developerguide/calculate-route-matrix.html)
+//	given the following required parameters: DeparturePositions and DestinationPositions.
+//	CalculateRouteMatrix calculates routes and returns the travel time and travel
+//	distance from each departure position to each destination position in the
+//	request. For example, given departure positions A and B, and destination
+//	positions X and Y, CalculateRouteMatrix will return time and distance for
+//	routes from A to X, A to Y, B to X, and B to Y (in that order). The number
+//	of results returned (and routes calculated) will be the number of DeparturePositions
+//	times the number of DestinationPositions.
 //
 // Your account is charged for each route calculated, not the number of requests.
 //
@@ -918,16 +922,16 @@ func (c *LocationService) CalculateRouteMatrixRequest(input *CalculateRouteMatri
 //
 // Additional options include:
 //
-//    * Specifying a departure time (https://docs.aws.amazon.com/location/latest/developerguide/departure-time.html)
-//    using either DepartureTime or DepartNow. This calculates routes based
-//    on predictive traffic data at the given time. You can't specify both DepartureTime
-//    and DepartNow in a single request. Specifying both parameters returns
-//    a validation error.
+//   - Specifying a departure time (https://docs.aws.amazon.com/location/latest/developerguide/departure-time.html)
+//     using either DepartureTime or DepartNow. This calculates routes based
+//     on predictive traffic data at the given time. You can't specify both DepartureTime
+//     and DepartNow in a single request. Specifying both parameters returns
+//     a validation error.
 //
-//    * Specifying a travel mode (https://docs.aws.amazon.com/location/latest/developerguide/travel-mode.html)
-//    using TravelMode sets the transportation mode used to calculate the routes.
-//    This also lets you specify additional route preferences in CarModeOptions
-//    if traveling by Car, or TruckModeOptions if traveling by Truck.
+//   - Specifying a travel mode (https://docs.aws.amazon.com/location/latest/developerguide/travel-mode.html)
+//     using TravelMode sets the transportation mode used to calculate the routes.
+//     This also lets you specify additional route preferences in CarModeOptions
+//     if traveling by Car, or TruckModeOptions if traveling by Truck.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -937,22 +941,23 @@ func (c *LocationService) CalculateRouteMatrixRequest(input *CalculateRouteMatri
 // API operation CalculateRouteMatrix for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CalculateRouteMatrix
 func (c *LocationService) CalculateRouteMatrix(input *CalculateRouteMatrixInput) (*CalculateRouteMatrixOutput, error) {
@@ -992,14 +997,13 @@ const opCreateGeofenceCollection = "CreateGeofenceCollection"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateGeofenceCollectionRequest method.
+//	req, resp := client.CreateGeofenceCollectionRequest(params)
 //
-//    // Example sending a request using the CreateGeofenceCollectionRequest method.
-//    req, resp := client.CreateGeofenceCollectionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreateGeofenceCollection
 func (c *LocationService) CreateGeofenceCollectionRequest(input *CreateGeofenceCollectionInput) (req *request.Request, output *CreateGeofenceCollectionOutput) {
@@ -1032,22 +1036,23 @@ func (c *LocationService) CreateGeofenceCollectionRequest(input *CreateGeofenceC
 // API operation CreateGeofenceCollection for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ConflictException
-//   The request was unsuccessful because of a conflict.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ConflictException
+//     The request was unsuccessful because of a conflict.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreateGeofenceCollection
 func (c *LocationService) CreateGeofenceCollection(input *CreateGeofenceCollectionInput) (*CreateGeofenceCollectionOutput, error) {
@@ -1087,14 +1092,13 @@ const opCreateMap = "CreateMap"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateMapRequest method.
+//	req, resp := client.CreateMapRequest(params)
 //
-//    // Example sending a request using the CreateMapRequest method.
-//    req, resp := client.CreateMapRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreateMap
 func (c *LocationService) CreateMapRequest(input *CreateMapInput) (req *request.Request, output *CreateMapOutput) {
@@ -1133,22 +1137,23 @@ func (c *LocationService) CreateMapRequest(input *CreateMapInput) (req *request.
 // API operation CreateMap for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ConflictException
-//   The request was unsuccessful because of a conflict.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ConflictException
+//     The request was unsuccessful because of a conflict.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreateMap
 func (c *LocationService) CreateMap(input *CreateMapInput) (*CreateMapOutput, error) {
@@ -1188,14 +1193,13 @@ const opCreatePlaceIndex = "CreatePlaceIndex"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreatePlaceIndexRequest method.
+//	req, resp := client.CreatePlaceIndexRequest(params)
 //
-//    // Example sending a request using the CreatePlaceIndexRequest method.
-//    req, resp := client.CreatePlaceIndexRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreatePlaceIndex
 func (c *LocationService) CreatePlaceIndexRequest(input *CreatePlaceIndexInput) (req *request.Request, output *CreatePlaceIndexOutput) {
@@ -1237,22 +1241,23 @@ func (c *LocationService) CreatePlaceIndexRequest(input *CreatePlaceIndexInput) 
 // API operation CreatePlaceIndex for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ConflictException
-//   The request was unsuccessful because of a conflict.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ConflictException
+//     The request was unsuccessful because of a conflict.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreatePlaceIndex
 func (c *LocationService) CreatePlaceIndex(input *CreatePlaceIndexInput) (*CreatePlaceIndexOutput, error) {
@@ -1292,14 +1297,13 @@ const opCreateRouteCalculator = "CreateRouteCalculator"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateRouteCalculatorRequest method.
+//	req, resp := client.CreateRouteCalculatorRequest(params)
 //
-//    // Example sending a request using the CreateRouteCalculatorRequest method.
-//    req, resp := client.CreateRouteCalculatorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreateRouteCalculator
 func (c *LocationService) CreateRouteCalculatorRequest(input *CreateRouteCalculatorInput) (req *request.Request, output *CreateRouteCalculatorOutput) {
@@ -1341,22 +1345,23 @@ func (c *LocationService) CreateRouteCalculatorRequest(input *CreateRouteCalcula
 // API operation CreateRouteCalculator for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ConflictException
-//   The request was unsuccessful because of a conflict.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ConflictException
+//     The request was unsuccessful because of a conflict.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreateRouteCalculator
 func (c *LocationService) CreateRouteCalculator(input *CreateRouteCalculatorInput) (*CreateRouteCalculatorOutput, error) {
@@ -1396,14 +1401,13 @@ const opCreateTracker = "CreateTracker"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateTrackerRequest method.
+//	req, resp := client.CreateTrackerRequest(params)
 //
-//    // Example sending a request using the CreateTrackerRequest method.
-//    req, resp := client.CreateTrackerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreateTracker
 func (c *LocationService) CreateTrackerRequest(input *CreateTrackerInput) (req *request.Request, output *CreateTrackerOutput) {
@@ -1437,22 +1441,23 @@ func (c *LocationService) CreateTrackerRequest(input *CreateTrackerInput) (req *
 // API operation CreateTracker for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ConflictException
-//   The request was unsuccessful because of a conflict.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ConflictException
+//     The request was unsuccessful because of a conflict.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreateTracker
 func (c *LocationService) CreateTracker(input *CreateTrackerInput) (*CreateTrackerOutput, error) {
@@ -1492,14 +1497,13 @@ const opDeleteGeofenceCollection = "DeleteGeofenceCollection"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteGeofenceCollectionRequest method.
+//	req, resp := client.DeleteGeofenceCollectionRequest(params)
 //
-//    // Example sending a request using the DeleteGeofenceCollectionRequest method.
-//    req, resp := client.DeleteGeofenceCollectionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeleteGeofenceCollection
 func (c *LocationService) DeleteGeofenceCollectionRequest(input *DeleteGeofenceCollectionInput) (req *request.Request, output *DeleteGeofenceCollectionOutput) {
@@ -1536,22 +1540,23 @@ func (c *LocationService) DeleteGeofenceCollectionRequest(input *DeleteGeofenceC
 // API operation DeleteGeofenceCollection for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeleteGeofenceCollection
 func (c *LocationService) DeleteGeofenceCollection(input *DeleteGeofenceCollectionInput) (*DeleteGeofenceCollectionOutput, error) {
@@ -1591,14 +1596,13 @@ const opDeleteMap = "DeleteMap"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteMapRequest method.
+//	req, resp := client.DeleteMapRequest(params)
 //
-//    // Example sending a request using the DeleteMapRequest method.
-//    req, resp := client.DeleteMapRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeleteMap
 func (c *LocationService) DeleteMapRequest(input *DeleteMapInput) (req *request.Request, output *DeleteMapOutput) {
@@ -1635,22 +1639,23 @@ func (c *LocationService) DeleteMapRequest(input *DeleteMapInput) (req *request.
 // API operation DeleteMap for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeleteMap
 func (c *LocationService) DeleteMap(input *DeleteMapInput) (*DeleteMapOutput, error) {
@@ -1690,14 +1695,13 @@ const opDeletePlaceIndex = "DeletePlaceIndex"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeletePlaceIndexRequest method.
+//	req, resp := client.DeletePlaceIndexRequest(params)
 //
-//    // Example sending a request using the DeletePlaceIndexRequest method.
-//    req, resp := client.DeletePlaceIndexRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeletePlaceIndex
 func (c *LocationService) DeletePlaceIndexRequest(input *DeletePlaceIndexInput) (req *request.Request, output *DeletePlaceIndexOutput) {
@@ -1733,22 +1737,23 @@ func (c *LocationService) DeletePlaceIndexRequest(input *DeletePlaceIndexInput) 
 // API operation DeletePlaceIndex for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeletePlaceIndex
 func (c *LocationService) DeletePlaceIndex(input *DeletePlaceIndexInput) (*DeletePlaceIndexOutput, error) {
@@ -1788,14 +1793,13 @@ const opDeleteRouteCalculator = "DeleteRouteCalculator"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteRouteCalculatorRequest method.
+//	req, resp := client.DeleteRouteCalculatorRequest(params)
 //
-//    // Example sending a request using the DeleteRouteCalculatorRequest method.
-//    req, resp := client.DeleteRouteCalculatorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeleteRouteCalculator
 func (c *LocationService) DeleteRouteCalculatorRequest(input *DeleteRouteCalculatorInput) (req *request.Request, output *DeleteRouteCalculatorOutput) {
@@ -1831,22 +1835,23 @@ func (c *LocationService) DeleteRouteCalculatorRequest(input *DeleteRouteCalcula
 // API operation DeleteRouteCalculator for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeleteRouteCalculator
 func (c *LocationService) DeleteRouteCalculator(input *DeleteRouteCalculatorInput) (*DeleteRouteCalculatorOutput, error) {
@@ -1886,14 +1891,13 @@ const opDeleteTracker = "DeleteTracker"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteTrackerRequest method.
+//	req, resp := client.DeleteTrackerRequest(params)
 //
-//    // Example sending a request using the DeleteTrackerRequest method.
-//    req, resp := client.DeleteTrackerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeleteTracker
 func (c *LocationService) DeleteTrackerRequest(input *DeleteTrackerInput) (req *request.Request, output *DeleteTrackerOutput) {
@@ -1931,22 +1935,23 @@ func (c *LocationService) DeleteTrackerRequest(input *DeleteTrackerInput) (req *
 // API operation DeleteTracker for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeleteTracker
 func (c *LocationService) DeleteTracker(input *DeleteTrackerInput) (*DeleteTrackerOutput, error) {
@@ -1986,14 +1991,13 @@ const opDescribeGeofenceCollection = "DescribeGeofenceCollection"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeGeofenceCollectionRequest method.
+//	req, resp := client.DescribeGeofenceCollectionRequest(params)
 //
-//    // Example sending a request using the DescribeGeofenceCollectionRequest method.
-//    req, resp := client.DescribeGeofenceCollectionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribeGeofenceCollection
 func (c *LocationService) DescribeGeofenceCollectionRequest(input *DescribeGeofenceCollectionInput) (req *request.Request, output *DescribeGeofenceCollectionOutput) {
@@ -2026,22 +2030,23 @@ func (c *LocationService) DescribeGeofenceCollectionRequest(input *DescribeGeofe
 // API operation DescribeGeofenceCollection for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribeGeofenceCollection
 func (c *LocationService) DescribeGeofenceCollection(input *DescribeGeofenceCollectionInput) (*DescribeGeofenceCollectionOutput, error) {
@@ -2081,14 +2086,13 @@ const opDescribeMap = "DescribeMap"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeMapRequest method.
+//	req, resp := client.DescribeMapRequest(params)
 //
-//    // Example sending a request using the DescribeMapRequest method.
-//    req, resp := client.DescribeMapRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribeMap
 func (c *LocationService) DescribeMapRequest(input *DescribeMapInput) (req *request.Request, output *DescribeMapOutput) {
@@ -2121,22 +2125,23 @@ func (c *LocationService) DescribeMapRequest(input *DescribeMapInput) (req *requ
 // API operation DescribeMap for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribeMap
 func (c *LocationService) DescribeMap(input *DescribeMapInput) (*DescribeMapOutput, error) {
@@ -2176,14 +2181,13 @@ const opDescribePlaceIndex = "DescribePlaceIndex"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribePlaceIndexRequest method.
+//	req, resp := client.DescribePlaceIndexRequest(params)
 //
-//    // Example sending a request using the DescribePlaceIndexRequest method.
-//    req, resp := client.DescribePlaceIndexRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribePlaceIndex
 func (c *LocationService) DescribePlaceIndexRequest(input *DescribePlaceIndexInput) (req *request.Request, output *DescribePlaceIndexOutput) {
@@ -2216,22 +2220,23 @@ func (c *LocationService) DescribePlaceIndexRequest(input *DescribePlaceIndexInp
 // API operation DescribePlaceIndex for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribePlaceIndex
 func (c *LocationService) DescribePlaceIndex(input *DescribePlaceIndexInput) (*DescribePlaceIndexOutput, error) {
@@ -2271,14 +2276,13 @@ const opDescribeRouteCalculator = "DescribeRouteCalculator"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeRouteCalculatorRequest method.
+//	req, resp := client.DescribeRouteCalculatorRequest(params)
 //
-//    // Example sending a request using the DescribeRouteCalculatorRequest method.
-//    req, resp := client.DescribeRouteCalculatorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribeRouteCalculator
 func (c *LocationService) DescribeRouteCalculatorRequest(input *DescribeRouteCalculatorInput) (req *request.Request, output *DescribeRouteCalculatorOutput) {
@@ -2311,22 +2315,23 @@ func (c *LocationService) DescribeRouteCalculatorRequest(input *DescribeRouteCal
 // API operation DescribeRouteCalculator for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribeRouteCalculator
 func (c *LocationService) DescribeRouteCalculator(input *DescribeRouteCalculatorInput) (*DescribeRouteCalculatorOutput, error) {
@@ -2366,14 +2371,13 @@ const opDescribeTracker = "DescribeTracker"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTrackerRequest method.
+//	req, resp := client.DescribeTrackerRequest(params)
 //
-//    // Example sending a request using the DescribeTrackerRequest method.
-//    req, resp := client.DescribeTrackerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribeTracker
 func (c *LocationService) DescribeTrackerRequest(input *DescribeTrackerInput) (req *request.Request, output *DescribeTrackerOutput) {
@@ -2406,22 +2410,23 @@ func (c *LocationService) DescribeTrackerRequest(input *DescribeTrackerInput) (r
 // API operation DescribeTracker for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribeTracker
 func (c *LocationService) DescribeTracker(input *DescribeTrackerInput) (*DescribeTrackerOutput, error) {
@@ -2461,14 +2466,13 @@ const opDisassociateTrackerConsumer = "DisassociateTrackerConsumer"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateTrackerConsumerRequest method.
+//	req, resp := client.DisassociateTrackerConsumerRequest(params)
 //
-//    // Example sending a request using the DisassociateTrackerConsumerRequest method.
-//    req, resp := client.DisassociateTrackerConsumerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DisassociateTrackerConsumer
 func (c *LocationService) DisassociateTrackerConsumerRequest(input *DisassociateTrackerConsumerInput) (req *request.Request, output *DisassociateTrackerConsumerOutput) {
@@ -2505,22 +2509,23 @@ func (c *LocationService) DisassociateTrackerConsumerRequest(input *Disassociate
 // API operation DisassociateTrackerConsumer for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DisassociateTrackerConsumer
 func (c *LocationService) DisassociateTrackerConsumer(input *DisassociateTrackerConsumerInput) (*DisassociateTrackerConsumerOutput, error) {
@@ -2560,14 +2565,13 @@ const opGetDevicePosition = "GetDevicePosition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDevicePositionRequest method.
+//	req, resp := client.GetDevicePositionRequest(params)
 //
-//    // Example sending a request using the GetDevicePositionRequest method.
-//    req, resp := client.GetDevicePositionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetDevicePosition
 func (c *LocationService) GetDevicePositionRequest(input *GetDevicePositionInput) (req *request.Request, output *GetDevicePositionOutput) {
@@ -2602,22 +2606,23 @@ func (c *LocationService) GetDevicePositionRequest(input *GetDevicePositionInput
 // API operation GetDevicePosition for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetDevicePosition
 func (c *LocationService) GetDevicePosition(input *GetDevicePositionInput) (*GetDevicePositionOutput, error) {
@@ -2657,14 +2662,13 @@ const opGetDevicePositionHistory = "GetDevicePositionHistory"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDevicePositionHistoryRequest method.
+//	req, resp := client.GetDevicePositionHistoryRequest(params)
 //
-//    // Example sending a request using the GetDevicePositionHistoryRequest method.
-//    req, resp := client.GetDevicePositionHistoryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetDevicePositionHistory
 func (c *LocationService) GetDevicePositionHistoryRequest(input *GetDevicePositionHistoryInput) (req *request.Request, output *GetDevicePositionHistoryOutput) {
@@ -2675,7 +2679,7 @@ func (c *LocationService) GetDevicePositionHistoryRequest(input *GetDevicePositi
 		Paginator: &request.Paginator{
 			InputTokens:     []string{"NextToken"},
 			OutputTokens:    []string{"NextToken"},
-			LimitToken:      "",
+			LimitToken:      "MaxResults",
 			TruncationToken: "",
 		},
 	}
@@ -2706,22 +2710,23 @@ func (c *LocationService) GetDevicePositionHistoryRequest(input *GetDevicePositi
 // API operation GetDevicePositionHistory for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetDevicePositionHistory
 func (c *LocationService) GetDevicePositionHistory(input *GetDevicePositionHistoryInput) (*GetDevicePositionHistoryOutput, error) {
@@ -2753,15 +2758,14 @@ func (c *LocationService) GetDevicePositionHistoryWithContext(ctx aws.Context, i
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a GetDevicePositionHistory operation.
-//    pageNum := 0
-//    err := client.GetDevicePositionHistoryPages(params,
-//        func(page *locationservice.GetDevicePositionHistoryOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a GetDevicePositionHistory operation.
+//	pageNum := 0
+//	err := client.GetDevicePositionHistoryPages(params,
+//	    func(page *locationservice.GetDevicePositionHistoryOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LocationService) GetDevicePositionHistoryPages(input *GetDevicePositionHistoryInput, fn func(*GetDevicePositionHistoryOutput, bool) bool) error {
 	return c.GetDevicePositionHistoryPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2813,14 +2817,13 @@ const opGetGeofence = "GetGeofence"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetGeofenceRequest method.
+//	req, resp := client.GetGeofenceRequest(params)
 //
-//    // Example sending a request using the GetGeofenceRequest method.
-//    req, resp := client.GetGeofenceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetGeofence
 func (c *LocationService) GetGeofenceRequest(input *GetGeofenceInput) (req *request.Request, output *GetGeofenceOutput) {
@@ -2853,22 +2856,23 @@ func (c *LocationService) GetGeofenceRequest(input *GetGeofenceInput) (req *requ
 // API operation GetGeofence for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetGeofence
 func (c *LocationService) GetGeofence(input *GetGeofenceInput) (*GetGeofenceOutput, error) {
@@ -2908,14 +2912,13 @@ const opGetMapGlyphs = "GetMapGlyphs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetMapGlyphsRequest method.
+//	req, resp := client.GetMapGlyphsRequest(params)
 //
-//    // Example sending a request using the GetMapGlyphsRequest method.
-//    req, resp := client.GetMapGlyphsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetMapGlyphs
 func (c *LocationService) GetMapGlyphsRequest(input *GetMapGlyphsInput) (req *request.Request, output *GetMapGlyphsOutput) {
@@ -2948,22 +2951,23 @@ func (c *LocationService) GetMapGlyphsRequest(input *GetMapGlyphsInput) (req *re
 // API operation GetMapGlyphs for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetMapGlyphs
 func (c *LocationService) GetMapGlyphs(input *GetMapGlyphsInput) (*GetMapGlyphsOutput, error) {
@@ -3003,14 +3007,13 @@ const opGetMapSprites = "GetMapSprites"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetMapSpritesRequest method.
+//	req, resp := client.GetMapSpritesRequest(params)
 //
-//    // Example sending a request using the GetMapSpritesRequest method.
-//    req, resp := client.GetMapSpritesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetMapSprites
 func (c *LocationService) GetMapSpritesRequest(input *GetMapSpritesInput) (req *request.Request, output *GetMapSpritesOutput) {
@@ -3045,22 +3048,23 @@ func (c *LocationService) GetMapSpritesRequest(input *GetMapSpritesInput) (req *
 // API operation GetMapSprites for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetMapSprites
 func (c *LocationService) GetMapSprites(input *GetMapSpritesInput) (*GetMapSpritesOutput, error) {
@@ -3100,14 +3104,13 @@ const opGetMapStyleDescriptor = "GetMapStyleDescriptor"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetMapStyleDescriptorRequest method.
+//	req, resp := client.GetMapStyleDescriptorRequest(params)
 //
-//    // Example sending a request using the GetMapStyleDescriptorRequest method.
-//    req, resp := client.GetMapStyleDescriptorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetMapStyleDescriptor
 func (c *LocationService) GetMapStyleDescriptorRequest(input *GetMapStyleDescriptorInput) (req *request.Request, output *GetMapStyleDescriptorOutput) {
@@ -3144,22 +3147,23 @@ func (c *LocationService) GetMapStyleDescriptorRequest(input *GetMapStyleDescrip
 // API operation GetMapStyleDescriptor for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetMapStyleDescriptor
 func (c *LocationService) GetMapStyleDescriptor(input *GetMapStyleDescriptorInput) (*GetMapStyleDescriptorOutput, error) {
@@ -3199,14 +3203,13 @@ const opGetMapTile = "GetMapTile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetMapTileRequest method.
+//	req, resp := client.GetMapTileRequest(params)
 //
-//    // Example sending a request using the GetMapTileRequest method.
-//    req, resp := client.GetMapTileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetMapTile
 func (c *LocationService) GetMapTileRequest(input *GetMapTileInput) (req *request.Request, output *GetMapTileOutput) {
@@ -3246,22 +3249,23 @@ func (c *LocationService) GetMapTileRequest(input *GetMapTileInput) (req *reques
 // API operation GetMapTile for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetMapTile
 func (c *LocationService) GetMapTile(input *GetMapTileInput) (*GetMapTileOutput, error) {
@@ -3285,6 +3289,110 @@ func (c *LocationService) GetMapTileWithContext(ctx aws.Context, input *GetMapTi
 	return out, req.Send()
 }
 
+const opGetPlace = "GetPlace"
+
+// GetPlaceRequest generates a "aws/request.Request" representing the
+// client's request for the GetPlace operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetPlace for more information on using the GetPlace
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetPlaceRequest method.
+//	req, resp := client.GetPlaceRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetPlace
+func (c *LocationService) GetPlaceRequest(input *GetPlaceInput) (req *request.Request, output *GetPlaceOutput) {
+	op := &request.Operation{
+		Name:       opGetPlace,
+		HTTPMethod: "GET",
+		HTTPPath:   "/places/v0/indexes/{IndexName}/places/{PlaceId}",
+	}
+
+	if input == nil {
+		input = &GetPlaceInput{}
+	}
+
+	output = &GetPlaceOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Build.PushBackNamed(protocol.NewHostPrefixHandler("places.", nil))
+	req.Handlers.Build.PushBackNamed(protocol.ValidateEndpointHostHandler)
+	return
+}
+
+// GetPlace API operation for Amazon Location Service.
+//
+// Finds a place by its unique ID. A PlaceId is returned by other search operations.
+//
+// A PlaceId is valid only if all of the following are the same in the original
+// search request and the call to GetPlace.
+//
+//   - Customer AWS account
+//
+//   - AWS Region
+//
+//   - Data provider specified in the place index resource
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Location Service's
+// API operation GetPlace for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
+//
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
+//
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
+//
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/GetPlace
+func (c *LocationService) GetPlace(input *GetPlaceInput) (*GetPlaceOutput, error) {
+	req, out := c.GetPlaceRequest(input)
+	return out, req.Send()
+}
+
+// GetPlaceWithContext is the same as GetPlace with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetPlace for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LocationService) GetPlaceWithContext(ctx aws.Context, input *GetPlaceInput, opts ...request.Option) (*GetPlaceOutput, error) {
+	req, out := c.GetPlaceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opListDevicePositions = "ListDevicePositions"
 
 // ListDevicePositionsRequest generates a "aws/request.Request" representing the
@@ -3301,14 +3409,13 @@ const opListDevicePositions = "ListDevicePositions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDevicePositionsRequest method.
+//	req, resp := client.ListDevicePositionsRequest(params)
 //
-//    // Example sending a request using the ListDevicePositionsRequest method.
-//    req, resp := client.ListDevicePositionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListDevicePositions
 func (c *LocationService) ListDevicePositionsRequest(input *ListDevicePositionsInput) (req *request.Request, output *ListDevicePositionsOutput) {
@@ -3347,19 +3454,20 @@ func (c *LocationService) ListDevicePositionsRequest(input *ListDevicePositionsI
 // API operation ListDevicePositions for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListDevicePositions
 func (c *LocationService) ListDevicePositions(input *ListDevicePositionsInput) (*ListDevicePositionsOutput, error) {
@@ -3391,15 +3499,14 @@ func (c *LocationService) ListDevicePositionsWithContext(ctx aws.Context, input 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDevicePositions operation.
-//    pageNum := 0
-//    err := client.ListDevicePositionsPages(params,
-//        func(page *locationservice.ListDevicePositionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListDevicePositions operation.
+//	pageNum := 0
+//	err := client.ListDevicePositionsPages(params,
+//	    func(page *locationservice.ListDevicePositionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LocationService) ListDevicePositionsPages(input *ListDevicePositionsInput, fn func(*ListDevicePositionsOutput, bool) bool) error {
 	return c.ListDevicePositionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3451,14 +3558,13 @@ const opListGeofenceCollections = "ListGeofenceCollections"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListGeofenceCollectionsRequest method.
+//	req, resp := client.ListGeofenceCollectionsRequest(params)
 //
-//    // Example sending a request using the ListGeofenceCollectionsRequest method.
-//    req, resp := client.ListGeofenceCollectionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListGeofenceCollections
 func (c *LocationService) ListGeofenceCollectionsRequest(input *ListGeofenceCollectionsInput) (req *request.Request, output *ListGeofenceCollectionsOutput) {
@@ -3497,19 +3603,20 @@ func (c *LocationService) ListGeofenceCollectionsRequest(input *ListGeofenceColl
 // API operation ListGeofenceCollections for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListGeofenceCollections
 func (c *LocationService) ListGeofenceCollections(input *ListGeofenceCollectionsInput) (*ListGeofenceCollectionsOutput, error) {
@@ -3541,15 +3648,14 @@ func (c *LocationService) ListGeofenceCollectionsWithContext(ctx aws.Context, in
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListGeofenceCollections operation.
-//    pageNum := 0
-//    err := client.ListGeofenceCollectionsPages(params,
-//        func(page *locationservice.ListGeofenceCollectionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListGeofenceCollections operation.
+//	pageNum := 0
+//	err := client.ListGeofenceCollectionsPages(params,
+//	    func(page *locationservice.ListGeofenceCollectionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LocationService) ListGeofenceCollectionsPages(input *ListGeofenceCollectionsInput, fn func(*ListGeofenceCollectionsOutput, bool) bool) error {
 	return c.ListGeofenceCollectionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3601,14 +3707,13 @@ const opListGeofences = "ListGeofences"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListGeofencesRequest method.
+//	req, resp := client.ListGeofencesRequest(params)
 //
-//    // Example sending a request using the ListGeofencesRequest method.
-//    req, resp := client.ListGeofencesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListGeofences
 func (c *LocationService) ListGeofencesRequest(input *ListGeofencesInput) (req *request.Request, output *ListGeofencesOutput) {
@@ -3619,7 +3724,7 @@ func (c *LocationService) ListGeofencesRequest(input *ListGeofencesInput) (req *
 		Paginator: &request.Paginator{
 			InputTokens:     []string{"NextToken"},
 			OutputTokens:    []string{"NextToken"},
-			LimitToken:      "",
+			LimitToken:      "MaxResults",
 			TruncationToken: "",
 		},
 	}
@@ -3647,22 +3752,23 @@ func (c *LocationService) ListGeofencesRequest(input *ListGeofencesInput) (req *
 // API operation ListGeofences for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListGeofences
 func (c *LocationService) ListGeofences(input *ListGeofencesInput) (*ListGeofencesOutput, error) {
@@ -3694,15 +3800,14 @@ func (c *LocationService) ListGeofencesWithContext(ctx aws.Context, input *ListG
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListGeofences operation.
-//    pageNum := 0
-//    err := client.ListGeofencesPages(params,
-//        func(page *locationservice.ListGeofencesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListGeofences operation.
+//	pageNum := 0
+//	err := client.ListGeofencesPages(params,
+//	    func(page *locationservice.ListGeofencesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LocationService) ListGeofencesPages(input *ListGeofencesInput, fn func(*ListGeofencesOutput, bool) bool) error {
 	return c.ListGeofencesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3754,14 +3859,13 @@ const opListMaps = "ListMaps"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListMapsRequest method.
+//	req, resp := client.ListMapsRequest(params)
 //
-//    // Example sending a request using the ListMapsRequest method.
-//    req, resp := client.ListMapsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListMaps
 func (c *LocationService) ListMapsRequest(input *ListMapsInput) (req *request.Request, output *ListMapsOutput) {
@@ -3800,19 +3904,20 @@ func (c *LocationService) ListMapsRequest(input *ListMapsInput) (req *request.Re
 // API operation ListMaps for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListMaps
 func (c *LocationService) ListMaps(input *ListMapsInput) (*ListMapsOutput, error) {
@@ -3844,15 +3949,14 @@ func (c *LocationService) ListMapsWithContext(ctx aws.Context, input *ListMapsIn
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListMaps operation.
-//    pageNum := 0
-//    err := client.ListMapsPages(params,
-//        func(page *locationservice.ListMapsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListMaps operation.
+//	pageNum := 0
+//	err := client.ListMapsPages(params,
+//	    func(page *locationservice.ListMapsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LocationService) ListMapsPages(input *ListMapsInput, fn func(*ListMapsOutput, bool) bool) error {
 	return c.ListMapsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3904,14 +4008,13 @@ const opListPlaceIndexes = "ListPlaceIndexes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPlaceIndexesRequest method.
+//	req, resp := client.ListPlaceIndexesRequest(params)
 //
-//    // Example sending a request using the ListPlaceIndexesRequest method.
-//    req, resp := client.ListPlaceIndexesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListPlaceIndexes
 func (c *LocationService) ListPlaceIndexesRequest(input *ListPlaceIndexesInput) (req *request.Request, output *ListPlaceIndexesOutput) {
@@ -3950,19 +4053,20 @@ func (c *LocationService) ListPlaceIndexesRequest(input *ListPlaceIndexesInput) 
 // API operation ListPlaceIndexes for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListPlaceIndexes
 func (c *LocationService) ListPlaceIndexes(input *ListPlaceIndexesInput) (*ListPlaceIndexesOutput, error) {
@@ -3994,15 +4098,14 @@ func (c *LocationService) ListPlaceIndexesWithContext(ctx aws.Context, input *Li
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListPlaceIndexes operation.
-//    pageNum := 0
-//    err := client.ListPlaceIndexesPages(params,
-//        func(page *locationservice.ListPlaceIndexesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListPlaceIndexes operation.
+//	pageNum := 0
+//	err := client.ListPlaceIndexesPages(params,
+//	    func(page *locationservice.ListPlaceIndexesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LocationService) ListPlaceIndexesPages(input *ListPlaceIndexesInput, fn func(*ListPlaceIndexesOutput, bool) bool) error {
 	return c.ListPlaceIndexesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4054,14 +4157,13 @@ const opListRouteCalculators = "ListRouteCalculators"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListRouteCalculatorsRequest method.
+//	req, resp := client.ListRouteCalculatorsRequest(params)
 //
-//    // Example sending a request using the ListRouteCalculatorsRequest method.
-//    req, resp := client.ListRouteCalculatorsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListRouteCalculators
 func (c *LocationService) ListRouteCalculatorsRequest(input *ListRouteCalculatorsInput) (req *request.Request, output *ListRouteCalculatorsOutput) {
@@ -4100,19 +4202,20 @@ func (c *LocationService) ListRouteCalculatorsRequest(input *ListRouteCalculator
 // API operation ListRouteCalculators for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListRouteCalculators
 func (c *LocationService) ListRouteCalculators(input *ListRouteCalculatorsInput) (*ListRouteCalculatorsOutput, error) {
@@ -4144,15 +4247,14 @@ func (c *LocationService) ListRouteCalculatorsWithContext(ctx aws.Context, input
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListRouteCalculators operation.
-//    pageNum := 0
-//    err := client.ListRouteCalculatorsPages(params,
-//        func(page *locationservice.ListRouteCalculatorsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListRouteCalculators operation.
+//	pageNum := 0
+//	err := client.ListRouteCalculatorsPages(params,
+//	    func(page *locationservice.ListRouteCalculatorsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LocationService) ListRouteCalculatorsPages(input *ListRouteCalculatorsInput, fn func(*ListRouteCalculatorsOutput, bool) bool) error {
 	return c.ListRouteCalculatorsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4204,14 +4306,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListTagsForResource
 func (c *LocationService) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -4245,22 +4346,23 @@ func (c *LocationService) ListTagsForResourceRequest(input *ListTagsForResourceI
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListTagsForResource
 func (c *LocationService) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -4300,14 +4402,13 @@ const opListTrackerConsumers = "ListTrackerConsumers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTrackerConsumersRequest method.
+//	req, resp := client.ListTrackerConsumersRequest(params)
 //
-//    // Example sending a request using the ListTrackerConsumersRequest method.
-//    req, resp := client.ListTrackerConsumersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListTrackerConsumers
 func (c *LocationService) ListTrackerConsumersRequest(input *ListTrackerConsumersInput) (req *request.Request, output *ListTrackerConsumersOutput) {
@@ -4346,22 +4447,23 @@ func (c *LocationService) ListTrackerConsumersRequest(input *ListTrackerConsumer
 // API operation ListTrackerConsumers for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListTrackerConsumers
 func (c *LocationService) ListTrackerConsumers(input *ListTrackerConsumersInput) (*ListTrackerConsumersOutput, error) {
@@ -4393,15 +4495,14 @@ func (c *LocationService) ListTrackerConsumersWithContext(ctx aws.Context, input
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTrackerConsumers operation.
-//    pageNum := 0
-//    err := client.ListTrackerConsumersPages(params,
-//        func(page *locationservice.ListTrackerConsumersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTrackerConsumers operation.
+//	pageNum := 0
+//	err := client.ListTrackerConsumersPages(params,
+//	    func(page *locationservice.ListTrackerConsumersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LocationService) ListTrackerConsumersPages(input *ListTrackerConsumersInput, fn func(*ListTrackerConsumersOutput, bool) bool) error {
 	return c.ListTrackerConsumersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4453,14 +4554,13 @@ const opListTrackers = "ListTrackers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTrackersRequest method.
+//	req, resp := client.ListTrackersRequest(params)
 //
-//    // Example sending a request using the ListTrackersRequest method.
-//    req, resp := client.ListTrackersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListTrackers
 func (c *LocationService) ListTrackersRequest(input *ListTrackersInput) (req *request.Request, output *ListTrackersOutput) {
@@ -4499,19 +4599,20 @@ func (c *LocationService) ListTrackersRequest(input *ListTrackersInput) (req *re
 // API operation ListTrackers for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListTrackers
 func (c *LocationService) ListTrackers(input *ListTrackersInput) (*ListTrackersOutput, error) {
@@ -4543,15 +4644,14 @@ func (c *LocationService) ListTrackersWithContext(ctx aws.Context, input *ListTr
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTrackers operation.
-//    pageNum := 0
-//    err := client.ListTrackersPages(params,
-//        func(page *locationservice.ListTrackersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTrackers operation.
+//	pageNum := 0
+//	err := client.ListTrackersPages(params,
+//	    func(page *locationservice.ListTrackersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *LocationService) ListTrackersPages(input *ListTrackersInput, fn func(*ListTrackersOutput, bool) bool) error {
 	return c.ListTrackersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4603,14 +4703,13 @@ const opPutGeofence = "PutGeofence"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutGeofenceRequest method.
+//	req, resp := client.PutGeofenceRequest(params)
 //
-//    // Example sending a request using the PutGeofenceRequest method.
-//    req, resp := client.PutGeofenceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/PutGeofence
 func (c *LocationService) PutGeofenceRequest(input *PutGeofenceInput) (req *request.Request, output *PutGeofenceOutput) {
@@ -4644,25 +4743,26 @@ func (c *LocationService) PutGeofenceRequest(input *PutGeofenceInput) (req *requ
 // API operation PutGeofence for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * ConflictException
-//   The request was unsuccessful because of a conflict.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ConflictException
+//     The request was unsuccessful because of a conflict.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/PutGeofence
 func (c *LocationService) PutGeofence(input *PutGeofenceInput) (*PutGeofenceOutput, error) {
@@ -4702,14 +4802,13 @@ const opSearchPlaceIndexForPosition = "SearchPlaceIndexForPosition"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SearchPlaceIndexForPositionRequest method.
+//	req, resp := client.SearchPlaceIndexForPositionRequest(params)
 //
-//    // Example sending a request using the SearchPlaceIndexForPositionRequest method.
-//    req, resp := client.SearchPlaceIndexForPositionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/SearchPlaceIndexForPosition
 func (c *LocationService) SearchPlaceIndexForPositionRequest(input *SearchPlaceIndexForPositionInput) (req *request.Request, output *SearchPlaceIndexForPositionOutput) {
@@ -4743,22 +4842,23 @@ func (c *LocationService) SearchPlaceIndexForPositionRequest(input *SearchPlaceI
 // API operation SearchPlaceIndexForPosition for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/SearchPlaceIndexForPosition
 func (c *LocationService) SearchPlaceIndexForPosition(input *SearchPlaceIndexForPositionInput) (*SearchPlaceIndexForPositionOutput, error) {
@@ -4798,14 +4898,13 @@ const opSearchPlaceIndexForSuggestions = "SearchPlaceIndexForSuggestions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SearchPlaceIndexForSuggestionsRequest method.
+//	req, resp := client.SearchPlaceIndexForSuggestionsRequest(params)
 //
-//    // Example sending a request using the SearchPlaceIndexForSuggestionsRequest method.
-//    req, resp := client.SearchPlaceIndexForSuggestionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/SearchPlaceIndexForSuggestions
 func (c *LocationService) SearchPlaceIndexForSuggestionsRequest(input *SearchPlaceIndexForSuggestionsInput) (req *request.Request, output *SearchPlaceIndexForSuggestionsOutput) {
@@ -4848,22 +4947,23 @@ func (c *LocationService) SearchPlaceIndexForSuggestionsRequest(input *SearchPla
 // API operation SearchPlaceIndexForSuggestions for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/SearchPlaceIndexForSuggestions
 func (c *LocationService) SearchPlaceIndexForSuggestions(input *SearchPlaceIndexForSuggestionsInput) (*SearchPlaceIndexForSuggestionsOutput, error) {
@@ -4903,14 +5003,13 @@ const opSearchPlaceIndexForText = "SearchPlaceIndexForText"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SearchPlaceIndexForTextRequest method.
+//	req, resp := client.SearchPlaceIndexForTextRequest(params)
 //
-//    // Example sending a request using the SearchPlaceIndexForTextRequest method.
-//    req, resp := client.SearchPlaceIndexForTextRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/SearchPlaceIndexForText
 func (c *LocationService) SearchPlaceIndexForTextRequest(input *SearchPlaceIndexForTextInput) (req *request.Request, output *SearchPlaceIndexForTextOutput) {
@@ -4953,22 +5052,23 @@ func (c *LocationService) SearchPlaceIndexForTextRequest(input *SearchPlaceIndex
 // API operation SearchPlaceIndexForText for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/SearchPlaceIndexForText
 func (c *LocationService) SearchPlaceIndexForText(input *SearchPlaceIndexForTextInput) (*SearchPlaceIndexForTextOutput, error) {
@@ -5008,14 +5108,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/TagResource
 func (c *LocationService) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -5042,15 +5141,15 @@ func (c *LocationService) TagResourceRequest(input *TagResourceInput) (req *requ
 // Assigns one or more tags (key-value pairs) to the specified Amazon Location
 // Service resource.
 //
-//    <p>Tags can help you organize and categorize your resources. You can also
-//    use them to scope user permissions, by granting a user permission to access
-//    or change only resources with certain tag values.</p> <p>You can use the
-//    <code>TagResource</code> operation with an Amazon Location Service resource
-//    that already has tags. If you specify a new tag key for the resource,
-//    this tag is appended to the tags already associated with the resource.
-//    If you specify a tag key that's already associated with the resource,
-//    the new tag value that you specify replaces the previous value for that
-//    tag. </p> <p>You can associate up to 50 tags with a resource.</p>
+//	<p>Tags can help you organize and categorize your resources. You can also
+//	use them to scope user permissions, by granting a user permission to access
+//	or change only resources with certain tag values.</p> <p>You can use the
+//	<code>TagResource</code> operation with an Amazon Location Service resource
+//	that already has tags. If you specify a new tag key for the resource,
+//	this tag is appended to the tags already associated with the resource.
+//	If you specify a tag key that's already associated with the resource,
+//	the new tag value that you specify replaces the previous value for that
+//	tag. </p> <p>You can associate up to 50 tags with a resource.</p>
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5060,22 +5159,23 @@ func (c *LocationService) TagResourceRequest(input *TagResourceInput) (req *requ
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/TagResource
 func (c *LocationService) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -5115,14 +5215,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UntagResource
 func (c *LocationService) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -5156,22 +5255,23 @@ func (c *LocationService) UntagResourceRequest(input *UntagResourceInput) (req *
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UntagResource
 func (c *LocationService) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -5211,14 +5311,13 @@ const opUpdateGeofenceCollection = "UpdateGeofenceCollection"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateGeofenceCollectionRequest method.
+//	req, resp := client.UpdateGeofenceCollectionRequest(params)
 //
-//    // Example sending a request using the UpdateGeofenceCollectionRequest method.
-//    req, resp := client.UpdateGeofenceCollectionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdateGeofenceCollection
 func (c *LocationService) UpdateGeofenceCollectionRequest(input *UpdateGeofenceCollectionInput) (req *request.Request, output *UpdateGeofenceCollectionOutput) {
@@ -5251,22 +5350,23 @@ func (c *LocationService) UpdateGeofenceCollectionRequest(input *UpdateGeofenceC
 // API operation UpdateGeofenceCollection for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdateGeofenceCollection
 func (c *LocationService) UpdateGeofenceCollection(input *UpdateGeofenceCollectionInput) (*UpdateGeofenceCollectionOutput, error) {
@@ -5306,14 +5406,13 @@ const opUpdateMap = "UpdateMap"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateMapRequest method.
+//	req, resp := client.UpdateMapRequest(params)
 //
-//    // Example sending a request using the UpdateMapRequest method.
-//    req, resp := client.UpdateMapRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdateMap
 func (c *LocationService) UpdateMapRequest(input *UpdateMapInput) (req *request.Request, output *UpdateMapOutput) {
@@ -5346,22 +5445,23 @@ func (c *LocationService) UpdateMapRequest(input *UpdateMapInput) (req *request.
 // API operation UpdateMap for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdateMap
 func (c *LocationService) UpdateMap(input *UpdateMapInput) (*UpdateMapOutput, error) {
@@ -5401,14 +5501,13 @@ const opUpdatePlaceIndex = "UpdatePlaceIndex"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdatePlaceIndexRequest method.
+//	req, resp := client.UpdatePlaceIndexRequest(params)
 //
-//    // Example sending a request using the UpdatePlaceIndexRequest method.
-//    req, resp := client.UpdatePlaceIndexRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdatePlaceIndex
 func (c *LocationService) UpdatePlaceIndexRequest(input *UpdatePlaceIndexInput) (req *request.Request, output *UpdatePlaceIndexOutput) {
@@ -5441,22 +5540,23 @@ func (c *LocationService) UpdatePlaceIndexRequest(input *UpdatePlaceIndexInput) 
 // API operation UpdatePlaceIndex for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdatePlaceIndex
 func (c *LocationService) UpdatePlaceIndex(input *UpdatePlaceIndexInput) (*UpdatePlaceIndexOutput, error) {
@@ -5496,14 +5596,13 @@ const opUpdateRouteCalculator = "UpdateRouteCalculator"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateRouteCalculatorRequest method.
+//	req, resp := client.UpdateRouteCalculatorRequest(params)
 //
-//    // Example sending a request using the UpdateRouteCalculatorRequest method.
-//    req, resp := client.UpdateRouteCalculatorRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdateRouteCalculator
 func (c *LocationService) UpdateRouteCalculatorRequest(input *UpdateRouteCalculatorInput) (req *request.Request, output *UpdateRouteCalculatorOutput) {
@@ -5536,22 +5635,23 @@ func (c *LocationService) UpdateRouteCalculatorRequest(input *UpdateRouteCalcula
 // API operation UpdateRouteCalculator for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdateRouteCalculator
 func (c *LocationService) UpdateRouteCalculator(input *UpdateRouteCalculatorInput) (*UpdateRouteCalculatorOutput, error) {
@@ -5591,14 +5691,13 @@ const opUpdateTracker = "UpdateTracker"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateTrackerRequest method.
+//	req, resp := client.UpdateTrackerRequest(params)
 //
-//    // Example sending a request using the UpdateTrackerRequest method.
-//    req, resp := client.UpdateTrackerRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdateTracker
 func (c *LocationService) UpdateTrackerRequest(input *UpdateTrackerInput) (req *request.Request, output *UpdateTrackerOutput) {
@@ -5631,22 +5730,23 @@ func (c *LocationService) UpdateTrackerRequest(input *UpdateTrackerInput) (req *
 // API operation UpdateTracker for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerException
-//   The request has failed to process because of an unknown server error, exception,
-//   or failure.
 //
-//   * ResourceNotFoundException
-//   The resource that you've entered was not found in your AWS account.
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
 //
-//   * AccessDeniedException
-//   The request was denied because of insufficient access or permissions. Check
-//   with an administrator to verify your permissions.
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
 //
-//   * ValidationException
-//   The input failed to meet the constraints specified by the AWS service.
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
 //
-//   * ThrottlingException
-//   The request was denied because of request throttling.
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdateTracker
 func (c *LocationService) UpdateTracker(input *UpdateTrackerInput) (*UpdateTrackerOutput, error) {
@@ -6661,7 +6761,8 @@ type BatchPutGeofenceRequestEntry struct {
 	// GeofenceId is a required field
 	GeofenceId *string `min:"1" type:"string" required:"true"`
 
-	// Contains the polygon details to specify the position of the geofence.
+	// Contains the details of the position of the geofence. Can be either a polygon
+	// or a circle. Including both will return a validation error.
 	//
 	// Each geofence polygon (https://docs.aws.amazon.com/location-geofences/latest/APIReference/API_GeofenceGeometry.html)
 	// can have a maximum of 1,000 vertices.
@@ -7025,8 +7126,9 @@ type CalculateRouteInput struct {
 	// Valid Values: false | true
 	DepartNow *bool `type:"boolean"`
 
-	// The start position for the route. Defined in WGS 84 (https://earth-info.nga.mil/GandG/wgs84/index.html)
-	// format: [longitude, latitude].
+	// The start position for the route. Defined in World Geodetic System (WGS 84)
+	// (https://earth-info.nga.mil/index.php?dir=wgs84&action=wgs84) format: [longitude,
+	// latitude].
 	//
 	//    * For example, [-123.115, 49.285]
 	//
@@ -7054,8 +7156,9 @@ type CalculateRouteInput struct {
 	//    format: YYYY-MM-DDThh:mm:ss.sssZ. For example, 2020–07-2T12:15:20.000Z+01:00
 	DepartureTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
-	// The finish position for the route. Defined in WGS 84 (https://earth-info.nga.mil/GandG/wgs84/index.html)
-	// format: [longitude, latitude].
+	// The finish position for the route. Defined in World Geodetic System (WGS
+	// 84) (https://earth-info.nga.mil/index.php?dir=wgs84&action=wgs84) format:
+	// [longitude, latitude].
 	//
 	//    * For example, [-122.339, 47.615]
 	//
@@ -7085,7 +7188,8 @@ type CalculateRouteInput struct {
 	IncludeLegGeometry *bool `type:"boolean"`
 
 	// Specifies the mode of transport when calculating a route. Used in estimating
-	// the speed of travel and road compatibility.
+	// the speed of travel and road compatibility. You can choose Car, Truck, or
+	// Walking as options for the TravelMode.
 	//
 	// The TravelMode you specify also determines how you specify route preferences:
 	//
@@ -7772,7 +7876,7 @@ type CalculateRouteTruckModeOptions struct {
 	// Valid Values: false | true
 	AvoidFerries *bool `type:"boolean"`
 
-	// Avoids ferries when calculating routes.
+	// Avoids tolls when calculating routes.
 	//
 	// Default Value: false
 	//
@@ -7828,6 +7932,77 @@ func (s *CalculateRouteTruckModeOptions) SetDimensions(v *TruckDimensions) *Calc
 // SetWeight sets the Weight field's value.
 func (s *CalculateRouteTruckModeOptions) SetWeight(v *TruckWeight) *CalculateRouteTruckModeOptions {
 	s.Weight = v
+	return s
+}
+
+// A circle on the earth, as defined by a center point and a radius.
+type Circle struct {
+	_ struct{} `type:"structure" sensitive:"true"`
+
+	// A single point geometry, specifying the center of the circle, using WGS 84
+	// (https://gisgeography.com/wgs84-world-geodetic-system/) coordinates, in the
+	// form [longitude, latitude].
+	//
+	// Center is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by Circle's
+	// String and GoString methods.
+	//
+	// Center is a required field
+	Center []*float64 `min:"2" type:"list" required:"true" sensitive:"true"`
+
+	// The radius of the circle in meters. Must be greater than zero and no larger
+	// than 100,000 (100 kilometers).
+	//
+	// Radius is a required field
+	Radius *float64 `type:"double" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Circle) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Circle) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Circle) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Circle"}
+	if s.Center == nil {
+		invalidParams.Add(request.NewErrParamRequired("Center"))
+	}
+	if s.Center != nil && len(s.Center) < 2 {
+		invalidParams.Add(request.NewErrParamMinLen("Center", 2))
+	}
+	if s.Radius == nil {
+		invalidParams.Add(request.NewErrParamRequired("Radius"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCenter sets the Center field's value.
+func (s *Circle) SetCenter(v []*float64) *Circle {
+	s.Center = v
+	return s
+}
+
+// SetRadius sets the Radius field's value.
+func (s *Circle) SetRadius(v float64) *Circle {
+	s.Radius = &v
 	return s
 }
 
@@ -8902,12 +9077,12 @@ func (s *CreateTrackerOutput) SetTrackerName(v string) *CreateTrackerOutput {
 //
 // When using Amazon Location Places:
 //
-//    * If using HERE Technologies as a data provider, you can't store results
-//    for locations in Japan by setting IntendedUse to Storage. parameter.
+//   - If using HERE Technologies as a data provider, you can't store results
+//     for locations in Japan by setting IntendedUse to Storage. parameter.
 //
-//    * Under the MobileAssetTracking or MobilAssetManagement pricing plan,
-//    you can't store results from your place index resources by setting IntendedUse
-//    to Storage. This returns a validation exception error.
+//   - Under the MobileAssetTracking or MobilAssetManagement pricing plan,
+//     you can't store results from your place index resources by setting IntendedUse
+//     to Storage. This returns a validation exception error.
 //
 // For more information, see the AWS Service Terms (https://aws.amazon.com/service-terms/)
 // for Amazon Location Service.
@@ -10291,7 +10466,7 @@ type DevicePositionUpdate struct {
 	// DeviceId is a required field
 	DeviceId *string `min:"1" type:"string" required:"true"`
 
-	// The latest device position defined in WGS 84 (https://earth-info.nga.mil/GandG/wgs84/index.html)
+	// The latest device position defined in WGS 84 (https://earth-info.nga.mil/index.php?dir=wgs84&action=wgs84)
 	// format: [X or longitude, Y or latitude].
 	//
 	// Position is a sensitive parameter and its value will be
@@ -10491,10 +10666,20 @@ func (s DisassociateTrackerConsumerOutput) GoString() string {
 
 // Contains the geofence geometry details.
 //
+// A geofence geometry is made up of either a polygon or a circle. Can be either
+// a polygon or a circle. Including both will return a validation error.
+//
 // Amazon Location doesn't currently support polygons with holes, multipolygons,
 // polygons that are wound clockwise, or that cross the antimeridian.
 type GeofenceGeometry struct {
 	_ struct{} `type:"structure"`
+
+	// A circle on the earth, as defined by a center point and a radius.
+	//
+	// Circle is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by GeofenceGeometry's
+	// String and GoString methods.
+	Circle *Circle `type:"structure" sensitive:"true"`
 
 	// An array of 1 or more linear rings. A linear ring is an array of 4 or more
 	// vertices, where the first and last vertex are the same to form a closed boundary.
@@ -10506,6 +10691,8 @@ type GeofenceGeometry struct {
 	// around the ring's center, where the left side is the polygon's exterior.
 	// Inner rings must list their vertices in clockwise order, where the left side
 	// is the polygon's interior.
+	//
+	// A geofence polygon can consist of between 4 and 1,000 vertices.
 	Polygon [][][]*float64 `min:"1" type:"list"`
 }
 
@@ -10533,11 +10720,22 @@ func (s *GeofenceGeometry) Validate() error {
 	if s.Polygon != nil && len(s.Polygon) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Polygon", 1))
 	}
+	if s.Circle != nil {
+		if err := s.Circle.Validate(); err != nil {
+			invalidParams.AddNested("Circle", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetCircle sets the Circle field's value.
+func (s *GeofenceGeometry) SetCircle(v *Circle) *GeofenceGeometry {
+	s.Circle = v
+	return s
 }
 
 // SetPolygon sets the Polygon field's value.
@@ -10562,6 +10760,12 @@ type GetDevicePositionHistoryInput struct {
 	//
 	//    * The time specified for EndTimeExclusive must be after the time for StartTimeInclusive.
 	EndTimeExclusive *time.Time `type:"timestamp" timestampFormat:"iso8601"`
+
+	// An optional limit for the number of device positions returned in a single
+	// call.
+	//
+	// Default value: 100
+	MaxResults *int64 `min:"1" type:"integer"`
 
 	// The pagination token specifying which page of results to return in the response.
 	// If no token is provided, the default page is the first page.
@@ -10611,6 +10815,9 @@ func (s *GetDevicePositionHistoryInput) Validate() error {
 	if s.DeviceId != nil && len(*s.DeviceId) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DeviceId", 1))
 	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
 	if s.NextToken != nil && len(*s.NextToken) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
 	}
@@ -10636,6 +10843,12 @@ func (s *GetDevicePositionHistoryInput) SetDeviceId(v string) *GetDevicePosition
 // SetEndTimeExclusive sets the EndTimeExclusive field's value.
 func (s *GetDevicePositionHistoryInput) SetEndTimeExclusive(v time.Time) *GetDevicePositionHistoryInput {
 	s.EndTimeExclusive = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *GetDevicePositionHistoryInput) SetMaxResults(v int64) *GetDevicePositionHistoryInput {
+	s.MaxResults = &v
 	return s
 }
 
@@ -10939,7 +11152,7 @@ type GetGeofenceOutput struct {
 	// GeofenceId is a required field
 	GeofenceId *string `min:"1" type:"string" required:"true"`
 
-	// Contains the geofence geometry details describing a polygon.
+	// Contains the geofence geometry details describing a polygon or a circle.
 	//
 	// Geometry is a required field
 	Geometry *GeofenceGeometry `type:"structure" required:"true"`
@@ -11040,7 +11253,11 @@ type GetMapGlyphsInput struct {
 	// Valid font stacks for HERE Technologies (https://docs.aws.amazon.com/location/latest/developerguide/HERE.html)
 	// styles:
 	//
-	//    * VectorHereBerlin – Fira GO Regular | Fira GO Bold
+	//    * VectorHereContrast – Fira GO Regular | Fira GO Bold
+	//
+	//    * VectorHereExplore, VectorHereExploreTruck – Firo GO Italic | Fira
+	//    GO Map | Fira GO Map Bold | Noto Sans CJK JP Bold | Noto Sans CJK JP Light
+	//    | Noto Sans CJK JP Regular
 	//
 	// FontStack is a required field
 	FontStack *string `location:"uri" locationName:"FontStack" type:"string" required:"true"`
@@ -11172,7 +11389,7 @@ type GetMapSpritesInput struct {
 	//
 	//    * sprites@2x.png for high pixel density displays
 	//
-	// For the JSON document contain image offsets. Use the following ﬁle names:
+	// For the JSON document containing image offsets. Use the following ﬁle names:
 	//
 	//    * sprites.json
 	//
@@ -11509,6 +11726,133 @@ func (s *GetMapTileOutput) SetContentType(v string) *GetMapTileOutput {
 	return s
 }
 
+type GetPlaceInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// The name of the place index resource that you want to use for the search.
+	//
+	// IndexName is a required field
+	IndexName *string `location:"uri" locationName:"IndexName" min:"1" type:"string" required:"true"`
+
+	// The preferred language used to return results. The value must be a valid
+	// BCP 47 (https://tools.ietf.org/search/bcp47) language tag, for example, en
+	// for English.
+	//
+	// This setting affects the languages used in the results, but not the results
+	// themselves. If no language is specified, or not supported for a particular
+	// result, the partner automatically chooses a language for the result.
+	//
+	// For an example, we'll use the Greek language. You search for a location around
+	// Athens, Greece, with the language parameter set to en. The city in the results
+	// will most likely be returned as Athens.
+	//
+	// If you set the language parameter to el, for Greek, then the city in the
+	// results will more likely be returned as Αθήνα.
+	//
+	// If the data provider does not have a value for Greek, the result will be
+	// in a language that the provider does support.
+	Language *string `location:"querystring" locationName:"language" min:"2" type:"string"`
+
+	// The identifier of the place to find.
+	//
+	// PlaceId is a required field
+	PlaceId *string `location:"uri" locationName:"PlaceId" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetPlaceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetPlaceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetPlaceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetPlaceInput"}
+	if s.IndexName == nil {
+		invalidParams.Add(request.NewErrParamRequired("IndexName"))
+	}
+	if s.IndexName != nil && len(*s.IndexName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IndexName", 1))
+	}
+	if s.Language != nil && len(*s.Language) < 2 {
+		invalidParams.Add(request.NewErrParamMinLen("Language", 2))
+	}
+	if s.PlaceId == nil {
+		invalidParams.Add(request.NewErrParamRequired("PlaceId"))
+	}
+	if s.PlaceId != nil && len(*s.PlaceId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("PlaceId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetIndexName sets the IndexName field's value.
+func (s *GetPlaceInput) SetIndexName(v string) *GetPlaceInput {
+	s.IndexName = &v
+	return s
+}
+
+// SetLanguage sets the Language field's value.
+func (s *GetPlaceInput) SetLanguage(v string) *GetPlaceInput {
+	s.Language = &v
+	return s
+}
+
+// SetPlaceId sets the PlaceId field's value.
+func (s *GetPlaceInput) SetPlaceId(v string) *GetPlaceInput {
+	s.PlaceId = &v
+	return s
+}
+
+type GetPlaceOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Details about the result, such as its address and position.
+	//
+	// Place is a required field
+	Place *Place `type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetPlaceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetPlaceOutput) GoString() string {
+	return s.String()
+}
+
+// SetPlace sets the Place field's value.
+func (s *GetPlaceOutput) SetPlace(v *Place) *GetPlaceOutput {
+	s.Place = v
+	return s
+}
+
 // The request has failed to process because of an unknown server error, exception,
 // or failure.
 type InternalServerException struct {
@@ -11581,18 +11925,18 @@ func (s *InternalServerException) RequestID() string {
 // For example, a route with a departure position and destination position returns
 // one leg with the positions snapped to a nearby road (https://docs.aws.amazon.com/location/latest/developerguide/snap-to-nearby-road.html):
 //
-//    * The StartPosition is the departure position.
+//   - The StartPosition is the departure position.
 //
-//    * The EndPosition is the destination position.
+//   - The EndPosition is the destination position.
 //
 // A route with a waypoint between the departure and destination position returns
 // two legs with the positions snapped to a nearby road:
 //
-//    * Leg 1: The StartPosition is the departure position . The EndPosition
-//    is the waypoint positon.
+//   - Leg 1: The StartPosition is the departure position . The EndPosition
+//     is the waypoint positon.
 //
-//    * Leg 2: The StartPosition is the waypoint position. The EndPosition is
-//    the destination position.
+//   - Leg 2: The StartPosition is the waypoint position. The EndPosition is
+//     the destination position.
 type Leg struct {
 	_ struct{} `type:"structure"`
 
@@ -12157,7 +12501,7 @@ type ListGeofenceResponseEntry struct {
 	// GeofenceId is a required field
 	GeofenceId *string `min:"1" type:"string" required:"true"`
 
-	// Contains the geofence geometry details describing a polygon.
+	// Contains the geofence geometry details describing a polygon or a circle.
 	//
 	// Geometry is a required field
 	Geometry *GeofenceGeometry `type:"structure" required:"true"`
@@ -12241,6 +12585,11 @@ type ListGeofencesInput struct {
 	// CollectionName is a required field
 	CollectionName *string `location:"uri" locationName:"CollectionName" min:"1" type:"string" required:"true"`
 
+	// An optional limit for the number of geofences returned in a single call.
+	//
+	// Default value: 100
+	MaxResults *int64 `min:"1" type:"integer"`
+
 	// The pagination token specifying which page of results to return in the response.
 	// If no token is provided, the default page is the first page.
 	//
@@ -12275,6 +12624,9 @@ func (s *ListGeofencesInput) Validate() error {
 	if s.CollectionName != nil && len(*s.CollectionName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("CollectionName", 1))
 	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
 	if s.NextToken != nil && len(*s.NextToken) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
 	}
@@ -12288,6 +12640,12 @@ func (s *ListGeofencesInput) Validate() error {
 // SetCollectionName sets the CollectionName field's value.
 func (s *ListGeofencesInput) SetCollectionName(v string) *ListGeofencesInput {
 	s.CollectionName = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListGeofencesInput) SetMaxResults(v int64) *ListGeofencesInput {
+	s.MaxResults = &v
 	return s
 }
 
@@ -13383,11 +13741,20 @@ type MapConfiguration struct {
 	//
 	// Valid HERE Technologies map styles (https://docs.aws.amazon.com/location/latest/developerguide/HERE.html):
 	//
-	//    * VectorHereBerlin – The HERE Berlin map style is a high contrast detailed
-	//    base map of the world that blends 3D and 2D rendering. When using HERE
-	//    as your data provider, and selecting the Style VectorHereBerlin, you may
-	//    not use HERE Technologies maps for Asset Management. See the AWS Service
-	//    Terms (https://aws.amazon.com/service-terms/) for Amazon Location Service.
+	//    * VectorHereContrast – The HERE Contrast (Berlin) map style is a high
+	//    contrast detailed base map of the world that blends 3D and 2D rendering.
+	//
+	//    * VectorHereExplore – A default HERE map style containing a neutral,
+	//    global map and its features including roads, buildings, landmarks, and
+	//    water features. It also now includes a fully designed map of Japan.
+	//
+	//    * VectorHereExploreTruck – A global map containing truck restrictions
+	//    and attributes (e.g. width / height / HAZMAT) symbolized with highlighted
+	//    segments and icons on top of HERE Explore to support use cases within
+	//    transport and logistics.
+	//
+	// The VectorHereContrast style has been renamed from VectorHereBerlin. VectorHereBerlin
+	// has been deprecated, but will continue to work in applications that use it.
 	//
 	// Style is a required field
 	Style *string `min:"1" type:"string" required:"true"`
@@ -13435,6 +13802,9 @@ func (s *MapConfiguration) SetStyle(v string) *MapConfiguration {
 
 // Contains details about addresses or points of interest that match the search
 // criteria.
+//
+// Not all details are included with all responses. Some details may only be
+// returned by specific data partners.
 type Place struct {
 	_ struct{} `type:"structure"`
 
@@ -13490,6 +13860,16 @@ type Place struct {
 	// The time zone in which the Place is located. Returned only when using Here
 	// as the selected partner.
 	TimeZone *TimeZone `type:"structure"`
+
+	// For addresses with multiple units, the unit identifier. Can include numbers
+	// and letters, for example 3B or Unit 123.
+	//
+	// Returned only for a place index that uses Esri as a data provider. Is not
+	// returned for SearchPlaceIndexForPosition.
+	UnitNumber *string `type:"string"`
+
+	// For addresses with a UnitNumber, the type of unit. For example, Apartment.
+	UnitType *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -13579,6 +13959,18 @@ func (s *Place) SetSubRegion(v string) *Place {
 // SetTimeZone sets the TimeZone field's value.
 func (s *Place) SetTimeZone(v *TimeZone) *Place {
 	s.TimeZone = v
+	return s
+}
+
+// SetUnitNumber sets the UnitNumber field's value.
+func (s *Place) SetUnitNumber(v string) *Place {
+	s.UnitNumber = &v
+	return s
+}
+
+// SetUnitType sets the UnitType field's value.
+func (s *Place) SetUnitType(v string) *Place {
+	s.UnitType = &v
 	return s
 }
 
@@ -13684,7 +14076,8 @@ type PutGeofenceInput struct {
 	// GeofenceId is a required field
 	GeofenceId *string `location:"uri" locationName:"GeofenceId" min:"1" type:"string" required:"true"`
 
-	// Contains the polygon details to specify the position of the geofence.
+	// Contains the details to specify the position of the geofence. Can be either
+	// a polygon or a circle. Including both will return a validation error.
 	//
 	// Each geofence polygon (https://docs.aws.amazon.com/location-geofences/latest/APIReference/API_GeofenceGeometry.html)
 	// can have a maximum of 1,000 vertices.
@@ -13880,7 +14273,8 @@ func (s *ResourceNotFoundException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// The result for one SnappedDeparturePosition SnappedDestinationPosition pair.
+// The result for the calculated route of one DeparturePosition DestinationPosition
+// pair.
 type RouteMatrixEntry struct {
 	_ struct{} `type:"structure"`
 
@@ -13936,22 +14330,22 @@ func (s *RouteMatrixEntry) SetError(v *RouteMatrixEntryError) *RouteMatrixEntry 
 //
 // The error code can be one of the following:
 //
-//    * RouteNotFound - Unable to find a valid route with the given parameters.
+//   - RouteNotFound - Unable to find a valid route with the given parameters.
 //
-//    * RouteTooLong - Route calculation went beyond the maximum size of a route
-//    and was terminated before completion.
+//   - RouteTooLong - Route calculation went beyond the maximum size of a route
+//     and was terminated before completion.
 //
-//    * PositionsNotFound - One or more of the input positions were not found
-//    on the route network.
+//   - PositionsNotFound - One or more of the input positions were not found
+//     on the route network.
 //
-//    * DestinationPositionNotFound - The destination position was not found
-//    on the route network.
+//   - DestinationPositionNotFound - The destination position was not found
+//     on the route network.
 //
-//    * DeparturePositionNotFound - The departure position was not found on
-//    the route network.
+//   - DeparturePositionNotFound - The departure position was not found on
+//     the route network.
 //
-//    * OtherValidationError - The given inputs were not valid or a route was
-//    not found. More information is given in the error Message
+//   - OtherValidationError - The given inputs were not valid or a route was
+//     not found. More information is given in the error Message
 type RouteMatrixEntryError struct {
 	_ struct{} `type:"structure"`
 
@@ -14012,6 +14406,13 @@ type SearchForPositionResult struct {
 	//
 	// Place is a required field
 	Place *Place `type:"structure" required:"true"`
+
+	// The unique identifier of the place. You can use this with the GetPlace operation
+	// to find the place again later.
+	//
+	// For SearchPlaceIndexForPosition operations, the PlaceId is returned only
+	// by place indexes that use HERE as a data provider.
+	PlaceId *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -14044,10 +14445,23 @@ func (s *SearchForPositionResult) SetPlace(v *Place) *SearchForPositionResult {
 	return s
 }
 
+// SetPlaceId sets the PlaceId field's value.
+func (s *SearchForPositionResult) SetPlaceId(v string) *SearchForPositionResult {
+	s.PlaceId = &v
+	return s
+}
+
 // Contains a place suggestion resulting from a place suggestion query that
 // is run on a place index resource.
 type SearchForSuggestionsResult struct {
 	_ struct{} `type:"structure"`
+
+	// The unique identifier of the place. You can use this with the GetPlace operation
+	// to find the place again later.
+	//
+	// For SearchPlaceIndexForSuggestions operations, the PlaceId is returned by
+	// place indexes that use HERE or Esri as data providers.
+	PlaceId *string `type:"string"`
 
 	// The text of the place suggestion, typically formatted as an address string.
 	//
@@ -14073,6 +14487,12 @@ func (s SearchForSuggestionsResult) GoString() string {
 	return s.String()
 }
 
+// SetPlaceId sets the PlaceId field's value.
+func (s *SearchForSuggestionsResult) SetPlaceId(v string) *SearchForSuggestionsResult {
+	s.PlaceId = &v
+	return s
+}
+
 // SetText sets the Text field's value.
 func (s *SearchForSuggestionsResult) SetText(v string) *SearchForSuggestionsResult {
 	s.Text = &v
@@ -14096,6 +14516,13 @@ type SearchForTextResult struct {
 	//
 	// Place is a required field
 	Place *Place `type:"structure" required:"true"`
+
+	// The unique identifier of the place. You can use this with the GetPlace operation
+	// to find the place again later.
+	//
+	// For SearchPlaceIndexForText operations, the PlaceId is returned only by place
+	// indexes that use HERE as a data provider.
+	PlaceId *string `type:"string"`
 
 	// The relative confidence in the match for a result among the results returned.
 	// For example, if more fields for an address match (including house number,
@@ -14136,6 +14563,12 @@ func (s *SearchForTextResult) SetPlace(v *Place) *SearchForTextResult {
 	return s
 }
 
+// SetPlaceId sets the PlaceId field's value.
+func (s *SearchForTextResult) SetPlaceId(v string) *SearchForTextResult {
+	s.PlaceId = &v
+	return s
+}
+
 // SetRelevance sets the Relevance field's value.
 func (s *SearchForTextResult) SetRelevance(v float64) *SearchForTextResult {
 	s.Relevance = &v
@@ -14154,10 +14587,19 @@ type SearchPlaceIndexForPositionInput struct {
 	// BCP 47 (https://tools.ietf.org/search/bcp47) language tag, for example, en
 	// for English.
 	//
-	// This setting affects the languages used in the results. It does not change
-	// which results are returned. If the language is not specified, or not supported
-	// for a particular result, the partner automatically chooses a language for
-	// the result.
+	// This setting affects the languages used in the results, but not the results
+	// themselves. If no language is specified, or not supported for a particular
+	// result, the partner automatically chooses a language for the result.
+	//
+	// For an example, we'll use the Greek language. You search for a location around
+	// Athens, Greece, with the language parameter set to en. The city in the results
+	// will most likely be returned as Athens.
+	//
+	// If you set the language parameter to el, for Greek, then the city in the
+	// results will more likely be returned as Αθήνα.
+	//
+	// If the data provider does not have a value for Greek, the result will be
+	// in a language that the provider does support.
 	Language *string `min:"2" type:"string"`
 
 	// An optional parameter. The maximum number of results returned per request.
@@ -14436,12 +14878,19 @@ type SearchPlaceIndexForSuggestionsInput struct {
 	// BCP 47 (https://tools.ietf.org/search/bcp47) language tag, for example, en
 	// for English.
 	//
-	// This setting affects the languages used in the results. It does not change
-	// which results are returned. If the language is not specified, or not supported
-	// for a particular result, the partner automatically chooses a language for
-	// the result.
+	// This setting affects the languages used in the results. If no language is
+	// specified, or not supported for a particular result, the partner automatically
+	// chooses a language for the result.
 	//
-	// Used only when the partner selected is Here.
+	// For an example, we'll use the Greek language. You search for Athens, Gr to
+	// get suggestions with the language parameter set to en. The results found
+	// will most likely be returned as Athens, Greece.
+	//
+	// If you set the language parameter to el, for Greek, then the result found
+	// will more likely be returned as Αθήνα, Ελλάδα.
+	//
+	// If the data provider does not have a value for Greek, the result will be
+	// in a language that the provider does support.
 	Language *string `min:"2" type:"string"`
 
 	// An optional parameter. The maximum number of results returned per request.
@@ -14782,10 +15231,19 @@ type SearchPlaceIndexForTextInput struct {
 	// BCP 47 (https://tools.ietf.org/search/bcp47) language tag, for example, en
 	// for English.
 	//
-	// This setting affects the languages used in the results. It does not change
-	// which results are returned. If the language is not specified, or not supported
-	// for a particular result, the partner automatically chooses a language for
-	// the result.
+	// This setting affects the languages used in the results, but not the results
+	// themselves. If no language is specified, or not supported for a particular
+	// result, the partner automatically chooses a language for the result.
+	//
+	// For an example, we'll use the Greek language. You search for Athens, Greece,
+	// with the language parameter set to en. The result found will most likely
+	// be returned as Athens.
+	//
+	// If you set the language parameter to el, for Greek, then the result found
+	// will more likely be returned as Αθήνα.
+	//
+	// If the data provider does not have a value for Greek, the result will be
+	// in a language that the provider does support.
 	Language *string `min:"2" type:"string"`
 
 	// An optional parameter. The maximum number of results returned per request.
@@ -14906,6 +15364,9 @@ type SearchPlaceIndexForTextOutput struct {
 
 	// A list of Places matching the input text. Each result contains additional
 	// information about the specific point of interest.
+	//
+	// Not all response properties are included with all responses. Some properties
+	// may only be returned by specific data partners.
 	//
 	// Results is a required field
 	Results []*SearchForTextResult `type:"list" required:"true"`
@@ -15468,11 +15929,17 @@ type TruckDimensions struct {
 	// The height of the truck.
 	//
 	//    * For example, 4.5.
+	//
+	// For routes calculated with a HERE resource, this value must be between 0
+	// and 50 meters.
 	Height *float64 `type:"double"`
 
 	// The length of the truck.
 	//
 	//    * For example, 15.5.
+	//
+	// For routes calculated with a HERE resource, this value must be between 0
+	// and 300 meters.
 	Length *float64 `type:"double"`
 
 	// Specifies the unit of measurement for the truck dimensions.
@@ -15483,6 +15950,9 @@ type TruckDimensions struct {
 	// The width of the truck.
 	//
 	//    * For example, 4.5.
+	//
+	// For routes calculated with a HERE resource, this value must be between 0
+	// and 50 meters.
 	Width *float64 `type:"double"`
 }
 
