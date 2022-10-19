@@ -13,6 +13,9 @@ import (
 // PlatformStages are the stages to run to provision the infrastructure in PowerVS.
 var PlatformStages = []terraform.Stage{
 	stages.NewStage("powervs",
+		"iaas",
+		[]providers.Provider{providers.IBM}),
+	stages.NewStage("powervs",
 		"cluster",
 		[]providers.Provider{providers.IBM, providers.Ignition, providers.Time}),
 	stages.NewStage("powervs",

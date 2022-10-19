@@ -5,7 +5,10 @@ package powervs
 type Platform struct {
 
 	// ServiceInstanceID is the ID of the Power IAAS instance created from the IBM Cloud Catalog
-	ServiceInstanceID string `json:"serviceInstanceID"`
+	ServiceInstanceID string `json:"serviceInstanceID,omitempty"`
+
+	// ServiceInstanceID is the name of the Power IAAS instance created by the installer
+	ServiceInstanceName string `json:"serviceInstanceName,omitempty"`
 
 	// PowerVSResourceGroup is the resource group in which Power VS resources will be created.
 	PowerVSResourceGroup string `json:"powervsResourceGroup"`

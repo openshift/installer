@@ -240,7 +240,7 @@ func ValidateServiceInstance(client API, ic *types.InstallConfig) error {
 
 	switch ic.PowerVS.ServiceInstanceID {
 	case "":
-		return errors.New("platform:powervs:serviceinstance is empty")
+		break
 	default:
 		found := false
 		for _, serviceInstance := range serviceInstances {

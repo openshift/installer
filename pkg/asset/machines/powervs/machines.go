@@ -28,9 +28,14 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	// Only the service instance is guaranteed to exist and be passed via the install config
 	// The other two, we should standardize a name including the cluster id.
 	image := fmt.Sprintf("rhcos-%s", clusterID)
-	var network string
+	var network, serviceInstanceName string
 	if platform.ClusterOSImage != "" {
 		image = platform.ClusterOSImage
+	}
+	if platform.ServiceInstanceName != "" && platform.ServiceInstanceID == "" {
+		serviceInstanceName = fmt.Sprintf("%s-power-iaas", clusterID)
+	} else if platform.ServiceInstanceName != "" && platform.ServiceInstanceID != "" {
+		return nil, nil, fmt.Errorf("service instance id and name must not be specified together")
 	}
 	if platform.PVSNetworkName != "" {
 		network = platform.PVSNetworkName
@@ -41,7 +46,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		total = *pool.Replicas
 	}
 	var machines []machineapi.Machine
-	machineProvider, err := provider(clusterID, platform, mpool, userDataSecret, image, network)
+	machineProvider, err := provider(clusterID, platform, mpool, userDataSecret, image, network, serviceInstanceName)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to create provider")
 	}
@@ -113,8 +118,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, controlPlaneMachineSet, nil
 }
 
-func provider(clusterID string, platform *powervs.Platform, mpool *powervs.MachinePool, userDataSecret string, image string, network string) (*machinev1.PowerVSMachineProviderConfig, error) {
-
+func provider(clusterID string, platform *powervs.Platform, mpool *powervs.MachinePool, userDataSecret string, image string, network string, serviceInstanceName string) (*machinev1.PowerVSMachineProviderConfig, error) {
 	if clusterID == "" || platform == nil || mpool == nil || userDataSecret == "" || image == "" {
 		return nil, fmt.Errorf("invalid value passed to provider")
 	}
@@ -158,6 +162,9 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 			Type:  machinev1.PowerVSResourceTypeRegEx,
 			RegEx: &dhcpNetRegex,
 		}
+	}
+	if serviceInstanceName != "" {
+		config.ServiceInstance.Name = &serviceInstanceName
 	}
 	return config, nil
 }

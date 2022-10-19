@@ -3559,6 +3559,10 @@ spec:
                     description: ServiceInstanceID is the ID of the Power IAAS instance
                       created from the IBM Cloud Catalog
                     type: string
+                  serviceInstanceName:
+                    description: ServiceInstanceName is the name of the Power IAAS instance
+                      created by the installer
+                    type: string
                   userID:
                     description: UserID is the login for the user's IBM Cloud account.
                     type: string
@@ -3585,7 +3589,6 @@ spec:
                     type: string
                 required:
                 - powervsResourceGroup
-                - serviceInstanceID
                 - userID
                 - zone
                 type: object

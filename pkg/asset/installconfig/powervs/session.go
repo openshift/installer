@@ -123,9 +123,15 @@ func fetchUserDetails(sess *bxsession.Session) (*User, error) {
 }
 
 // NewBxClient func returns bluemix client
-func NewBxClient(survey bool) (*BxClient, error) {
+func NewBxClient(survey bool, provisioned ...bool) (*BxClient, error) {
 	c := &BxClient{}
-	sv, err := getSessionVars(survey)
+	var sv SessionVars
+	var err error
+	if len(provisioned) == 1 {
+		sv, err = getSessionVars(survey, true)
+	} else {
+		sv, err = getSessionVars(survey)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +175,7 @@ func NewBxClient(survey bool) (*BxClient, error) {
 	return c, nil
 }
 
-func getSessionVars(survey bool) (SessionVars, error) {
+func getSessionVars(survey bool, provisioned ...bool) (SessionVars, error) {
 	var sv SessionVars
 	var ss SessionStore
 
@@ -186,6 +192,9 @@ func getSessionVars(survey bool) (SessionVars, error) {
 	sv.Region = ss.DefaultRegion
 	sv.Zone = ss.DefaultZone
 	sv.ServiceInstanceID = ss.ServiceInstanceID
+	if len(provisioned) == 1 && provisioned[0] == true {
+		sv.ServiceInstanceID = "provisioned"
+	}
 	sv.PowerVSResourceGroup = ss.PowerVSResourceGroup
 
 	// Grab variables from the users environment
@@ -503,7 +512,9 @@ func ValidateCapacityWithPools(controlPlanes []machinev1beta1.Machine, computes 
 func (c *BxClient) ValidateCapacity(ctx context.Context, controlPlanes []machinev1beta1.Machine, computes []machinev1beta1.MachineSet, serviceInstanceID string) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
-
+	if serviceInstanceID == "" {
+		return nil
+	}
 	systemPools, err := c.GetSystemPools(ctx, serviceInstanceID)
 	if err != nil {
 		return errors.Wrap(err, "failed to get system pools")
@@ -692,6 +703,7 @@ func getSecondSessionVarsFromUser(psv *SessionVars, pss *SessionStore) error {
 		defer cancel()
 
 		serviceInstances, err := client.ListServiceInstances(ctx)
+		serviceInstances = append(serviceInstances, "Installer provisioned")
 		if err != nil {
 			return fmt.Errorf("failed to list serviceInstances: %w", err)
 		}
@@ -723,6 +735,9 @@ func getSecondSessionVarsFromUser(psv *SessionVars, pss *SessionStore) error {
 				Transform: serviceTransform,
 			},
 		}, &psv.ServiceInstanceID)
+		if psv.ServiceInstanceID == "provisioned" {
+			psv.ServiceInstanceID = ""
+		}
 		if err != nil {
 			return fmt.Errorf("survey.ask failed with: %w", err)
 		}

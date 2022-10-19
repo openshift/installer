@@ -184,7 +184,11 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	)
 
 	// We need to prompt for missing variables because NewPISession requires them!
-	bxClient, err = powervs.NewBxClient(true)
+	if metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID == "" {
+		bxClient, err = powervs.NewBxClient(true, true)
+	} else {
+		bxClient, err = powervs.NewBxClient(true)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -673,10 +677,18 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		if err != nil {
 			return fmt.Errorf("loadSDKServices: listServiceInstances: %w", err)
 		}
-		if len(serviceInstances.list()) == 1 {
-			// The status field has been reused with the GUID
-			o.ServiceGUID = serviceInstances.list()[0].status
-			o.Logger.Debugf("loadSDKServices: o.ServiceGUID = %v", o.ServiceGUID)
+		numFound := len(serviceInstances.list())
+		if numFound == 0 {
+			return fmt.Errorf("loadSDKServices: listServiceInstances: Service Instance with name containing %v not found", o.InfraID)
+		}
+		ServiceCRN, err := crn.Parse(serviceInstances.list()[0].id)
+		if err != nil {
+			return errors.Wrap(err, "Failed to parse Power VS Service Instance CRN")
+		}
+		o.ServiceGUID = ServiceCRN.ServiceInstance
+
+		if numFound > 1 {
+			o.Logger.Warnf("loadSDKServices: listServiceInstances: Found more than one Service Instance with name containing %v. Targetting %v.", o.InfraID, o.ServiceGUID)
 		}
 	}
 

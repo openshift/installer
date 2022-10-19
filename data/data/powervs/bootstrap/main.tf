@@ -30,7 +30,7 @@ module "vm" {
   proc_type             = var.powervs_proc_type
   image_id              = var.boot_image_id
   sys_type              = var.powervs_sys_type
-  cloud_instance_id     = var.powervs_cloud_instance_id
+  cloud_instance_id     = var.cloud_instance_id
   dhcp_network_id       = var.dhcp_network_id
   dhcp_id               = var.dhcp_id
   proxy_server_ip       = var.proxy_server_ip

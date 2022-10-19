@@ -36,7 +36,7 @@ module "pi_network" {
   source = "./power_network"
 
   cluster_id        = var.cluster_id
-  cloud_instance_id = var.powervs_cloud_instance_id
+  cloud_instance_id = var.cloud_instance_id
   resource_group    = var.powervs_resource_group
   pvs_network_name  = var.powervs_network_name
   machine_cidr      = var.machine_v4_cidrs[0]
@@ -50,7 +50,7 @@ resource "ibm_pi_key" "cluster_key" {
   provider             = ibm.powervs
   pi_key_name          = "${var.cluster_id}-key"
   pi_ssh_key           = var.powervs_ssh_key
-  pi_cloud_instance_id = var.powervs_cloud_instance_id
+  pi_cloud_instance_id = var.cloud_instance_id
 }
 
 module "master" {
@@ -58,7 +58,7 @@ module "master" {
     ibm = ibm.powervs
   }
   source            = "./master"
-  cloud_instance_id = var.powervs_cloud_instance_id
+  cloud_instance_id = var.cloud_instance_id
   cluster_id        = var.cluster_id
   resource_group    = var.powervs_resource_group
   instance_count    = var.master_count
@@ -87,7 +87,7 @@ module "master" {
 resource "ibm_pi_image" "boot_image" {
   provider                  = ibm.powervs
   pi_image_name             = "rhcos-${var.cluster_id}"
-  pi_cloud_instance_id      = var.powervs_cloud_instance_id
+  pi_cloud_instance_id      = var.cloud_instance_id
   pi_image_bucket_name      = var.powervs_image_bucket_name
   pi_image_bucket_access    = "public"
   pi_image_bucket_region    = var.powervs_cos_region
@@ -98,7 +98,7 @@ resource "ibm_pi_image" "boot_image" {
 data "ibm_pi_dhcp" "dhcp_service" {
   provider             = ibm.powervs
   depends_on           = [module.master]
-  pi_cloud_instance_id = var.powervs_cloud_instance_id
+  pi_cloud_instance_id = var.cloud_instance_id
   pi_dhcp_id           = module.pi_network.dhcp_id
 }
 
