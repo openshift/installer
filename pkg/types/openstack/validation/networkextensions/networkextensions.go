@@ -44,10 +44,10 @@ func Get(networkClient *gophercloud.ServiceClient) ([]extensions.Extension, erro
 //     `standard-attr-tag` extension.
 //
 // We need to check that:
-//   1. `standard-attr-tag` extension is enabled
-//   2. `standard-attr-tag` covers all the necessary resources (from the
-//           extension description) or that the `tag` and `tag-ext`
-//           extensions are enabled as well
+//  1. `standard-attr-tag` extension is enabled
+//  2. `standard-attr-tag` covers all the necessary resources (from the
+//     extension description) or that the `tag` and `tag-ext`
+//     extensions are enabled as well
 func Validate(availableExtensions []extensions.Extension) error {
 	var (
 		standardAttrTagEnabled      = false
