@@ -15,6 +15,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/mock"
 )
 
@@ -30,6 +31,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 			name: "missing-config",
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedError: "missing configuration or manifest file",
 		},
@@ -37,6 +39,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 			name: "valid configuration",
 			dependencies: []asset.Asset{
 				getValidOptionalInstallConfig(),
+				getValidAgentConfig(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
@@ -62,6 +65,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 			name: "proxy valid configuration",
 			dependencies: []asset.Asset{
 				getProxyValidOptionalInstallConfig(),
+				getValidAgentConfig(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
@@ -81,6 +85,34 @@ func TestInfraEnv_Generate(t *testing.T) {
 						Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
 						Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
 					},
+				},
+			},
+		},
+		{
+			name: "Additional NTP sources",
+			dependencies: []asset.Asset{
+				getProxyValidOptionalInstallConfig(),
+				getValidAgentConfigWithAdditionalNTPSources(),
+			},
+			expectedConfig: &aiv1beta1.InfraEnv{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+				},
+				Spec: aiv1beta1.InfraEnvSpec{
+					Proxy:            getProxy(getProxyValidOptionalInstallConfig()),
+					SSHAuthorizedKey: strings.Trim(TestSSHKey, "|\n\t"),
+					PullSecretRef: &corev1.LocalObjectReference{
+						Name: getPullSecretName(getProxyValidOptionalInstallConfig()),
+					},
+					NMStateConfigLabelSelector: metav1.LabelSelector{
+						MatchLabels: getNMStateConfigLabels(getProxyValidOptionalInstallConfig()),
+					},
+					ClusterRef: &aiv1beta1.ClusterReference{
+						Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
+						Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+					},
+					AdditionalNTPSources: getValidAgentConfigWithAdditionalNTPSources().Config.AdditionalNTPSources,
 				},
 			},
 		},

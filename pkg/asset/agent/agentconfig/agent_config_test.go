@@ -315,6 +315,22 @@ rendezvousIP: not-a-valid-ip`,
 			expectedFound: false,
 			expectedError: "invalid Agent Config configuration: rendezvousIP: Invalid value: \"not-a-valid-ip\": \"not-a-valid-ip\" is not a valid IP",
 		},
+		{
+			name: "invalid-additionalNTPSourceDomain",
+			data: `
+apiVersion: v1alpha1
+metadata:
+  name: agent-config-cluster0
+additionalNTPSources:
+  - 0.fedora.pool.ntp.org
+  - 1.fedora.pool.ntp.org
+  - 192.168.111.14
+  - fd10:39:192:1::1337
+  - invalid_pool.ntp.org
+rendezvousIP: 192.168.111.80`,
+			expectedFound: false,
+			expectedError: "invalid Agent Config configuration: AdditionalNTPSources[4]: Invalid value: \"invalid_pool.ntp.org\": NTP source is not a valid domain name nor a valid IP",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
