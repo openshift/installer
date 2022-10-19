@@ -1,5 +1,4 @@
-//go:build okd
-// +build okd
+//go:build okd || fcos || scos
 
 package rhcos
 
