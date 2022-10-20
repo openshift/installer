@@ -227,13 +227,13 @@ func ValidateEnabledServices(ctx context.Context, client API, project string) er
 		"cloudresourcemanager.googleapis.com",
 		"dns.googleapis.com",
 		"iam.googleapis.com",
-		"iamcredentials.googleapis.com")
+		"iamcredentials.googleapis.com",
+		"serviceusage.googleapis.com")
 	optionalServices := sets.NewString("cloudapis.googleapis.com",
 		"servicemanagement.googleapis.com",
 		"deploymentmanager.googleapis.com",
 		"storage-api.googleapis.com",
-		"storage-component.googleapis.com",
-		"serviceusage.googleapis.com")
+		"storage-component.googleapis.com")
 	projectServices, err := client.GetEnabledServices(ctx, project)
 
 	if err != nil {
