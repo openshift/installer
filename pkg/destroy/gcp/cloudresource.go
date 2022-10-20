@@ -6,6 +6,7 @@ import "github.com/openshift/installer/pkg/types/gcp"
 type cloudResource struct {
 	key      string
 	name     string
+	project  string
 	status   string
 	typeName string
 	url      string

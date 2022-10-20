@@ -9,7 +9,8 @@ import (
 // Metadata converts an install configuration to GCP metadata.
 func Metadata(config *types.InstallConfig) *gcp.Metadata {
 	return &gcp.Metadata{
-		Region:    config.Platform.GCP.Region,
-		ProjectID: config.Platform.GCP.ProjectID,
+		Region:           config.Platform.GCP.Region,
+		ProjectID:        config.Platform.GCP.ProjectID,
+		NetworkProjectID: config.Platform.GCP.NetworkProjectID,
 	}
 }
