@@ -884,7 +884,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		finder := vsphereconfig.NewFinder(vim25Client)
 
 		for _, fd := range installConfig.Config.VSphere.FailureDomains {
-
 			// Must use the Managed Object ID for a port group (e.g. dvportgroup-5258)
 			// instead of the name since port group names aren't always unique in vSphere.
 			// https://bugzilla.redhat.com/show_bug.cgi?id=1918005
@@ -900,14 +899,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
-		networkID, err = vsphereconfig.GetNetworkMoID(context.TODO(),
-			vim25Client,
-			finder,
-			controlPlaneConfigs[0].Workspace.Datacenter,
-			installConfig.Config.VSphere.Cluster,
-			controlPlaneConfigs[0].Network.Devices[0].NetworkName)
-		if err != nil {
-			return errors.Wrap(err, "failed to get vSphere network ID")
+		// We only need this for the legacy non-zonal terraform
+		if len(installConfig.Config.VSphere.FailureDomains) == 0 {
+			networkID, err = vsphereconfig.GetNetworkMoID(context.TODO(),
+				vim25Client,
+				finder,
+				controlPlaneConfigs[0].Workspace.Datacenter,
+				installConfig.Config.VSphere.Cluster,
+				controlPlaneConfigs[0].Network.Devices[0].NetworkName)
+			if err != nil {
+				return errors.Wrap(err, "failed to get vSphere network ID")
+			}
 		}
 
 		// Set this flag to use an existing folder specified in the install-config. Otherwise, create one.

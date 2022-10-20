@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"regexp"
 	"time"
 
 	"github.com/pkg/errors"
@@ -89,11 +90,21 @@ func getNetworks(ctx context.Context, ccr *object.ClusterComputeResource) ([]typ
 // GetClusterNetworks returns a slice of Managed Object references for vSphere networks in the given Datacenter
 // and Cluster.
 func GetClusterNetworks(ctx context.Context, finder Finder, datacenter, cluster string) ([]types.ManagedObjectReference, error) {
+	var path string
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	// Get vSphere Cluster resource in the given Datacenter.
-	path := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
+	// What if cluster is already a path?
+	clusterPathRegexp := regexp.MustCompile(`^/(.*?)/host/(.*?)$`)
+	clusterPathParts := clusterPathRegexp.FindStringSubmatch(cluster)
+
+	if clusterPathParts == nil {
+		// Get vSphere Cluster resource in the given Datacenter.
+		path = fmt.Sprintf("/%s/host/%s", datacenter, cluster)
+	} else {
+		path = cluster
+	}
+
 	ccr, err := finder.ClusterComputeResource(context.TODO(), path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not find vSphere cluster at %s", path)
