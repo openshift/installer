@@ -45,7 +45,7 @@ data "aws_partition" "current" {}
 data "aws_ebs_default_kms_key" "current" {}
 
 resource "aws_s3_bucket" "ignition" {
-  bucket = var.aws_ignition_bucket
+  bucket = "${var.cluster_id}${var.aws_ignition_bucket}"
 
   tags = merge(
     {
@@ -59,7 +59,7 @@ resource "aws_s3_bucket" "ignition" {
   }
 }
 
-resource "aws_s3_bucket_acl" ignition {
+resource "aws_s3_bucket_acl" "ignition" {
   bucket = aws_s3_bucket.ignition.id
   acl    = "private"
 }
@@ -122,8 +122,8 @@ EOF
 
 resource "aws_iam_role_policy" "bootstrap" {
   count = var.aws_master_iam_role_name == "" ? 1 : 0
-  name = "${var.cluster_id}-bootstrap-policy"
-  role = aws_iam_role.bootstrap[0].id
+  name  = "${var.cluster_id}-bootstrap-policy"
+  role  = aws_iam_role.bootstrap[0].id
 
   policy = <<EOF
 {

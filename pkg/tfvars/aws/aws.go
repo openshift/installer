@@ -19,6 +19,7 @@ type config struct {
 	CustomEndpoints              map[string]string `json:"custom_endpoints,omitempty"`
 	ExtraTags                    map[string]string `json:"aws_extra_tags,omitempty"`
 	BootstrapInstanceType        string            `json:"aws_bootstrap_instance_type,omitempty"`
+	BootstrapS3BucketPrefix      string            `json:"aws_bootstrap_s3_bucket_prefix,omitempty"`
 	MasterInstanceType           string            `json:"aws_master_instance_type,omitempty"`
 	MasterAvailabilityZones      []string          `json:"aws_master_availability_zones"`
 	WorkerAvailabilityZones      []string          `json:"aws_worker_availability_zones"`

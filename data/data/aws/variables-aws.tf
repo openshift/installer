@@ -25,6 +25,12 @@ variable "aws_bootstrap_instance_type" {
   description = "Instance type for the bootstrap node. Example: `m4.large`."
 }
 
+variable "aws_bootstrap_s3_bucket_prefix" {
+  type        = string
+  default     = ""
+  description = "Prefix value for bootstrap s3 bucket name."
+}
+
 variable "aws_master_instance_type" {
   type        = string
   description = "Instance type for the master node(s). Example: `m4.large`."
@@ -53,12 +59,12 @@ EOF
 }
 
 variable "aws_master_root_volume_type" {
-  type = string
+  type        = string
   description = "The type of volume for the root block device of master nodes."
 }
 
 variable "aws_master_root_volume_size" {
-  type = string
+  type        = string
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
@@ -157,13 +163,13 @@ EOF
 }
 
 variable "aws_master_iam_role_name" {
-  type = string
+  type        = string
   description = "The name of the IAM role that will be attached to master instances."
-  default = ""
+  default     = ""
 }
 
 variable "aws_worker_iam_role_name" {
-  type = string
+  type        = string
   description = "The name of the IAM role that will be attached to worker instances."
-  default = ""
+  default     = ""
 }
