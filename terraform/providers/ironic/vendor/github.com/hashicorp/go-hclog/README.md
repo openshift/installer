@@ -17,11 +17,8 @@ JSON output mode for production.
 
 ## Stability Note
 
-While this library is fully open source and HashiCorp will be maintaining it
-(since we are and will be making extensive use of it), the API and output
-format is subject to minor changes as we fully bake and vet it in our projects.
-This notice will be removed once it's fully integrated into our major projects
-and no further changes are anticipated.
+This library has reached 1.0 stability. Its API can be considered solidified
+and promised through future versions.
 
 ## Installation and Docs
 
@@ -102,7 +99,7 @@ into all the callers.
 ### Using `hclog.Fmt()`
 
 ```go
-var int totalBandwidth = 200
+totalBandwidth := 200
 appLogger.Info("total bandwidth exceeded", "bandwidth", hclog.Fmt("%d GB/s", totalBandwidth))
 ```
 
@@ -132,7 +129,7 @@ Alternatively, you may configure the system-wide logger:
 
 ```go
 // log the standard logger from 'import "log"'
-log.SetOutput(appLogger.Writer(&hclog.StandardLoggerOptions{InferLevels: true}))
+log.SetOutput(appLogger.StandardWriter(&hclog.StandardLoggerOptions{InferLevels: true}))
 log.SetPrefix("")
 log.SetFlags(0)
 
@@ -146,3 +143,6 @@ log.Printf("[DEBUG] %d", 42)
 Notice that if `appLogger` is initialized with the `INFO` log level _and_ you
 specify `InferLevels: true`, you will not see any output here. You must change
 `appLogger` to `DEBUG` to see output. See the docs for more information.
+
+If the log lines start with a timestamp you can use the
+`InferLevelsWithTimestamp` option to try and ignore them.

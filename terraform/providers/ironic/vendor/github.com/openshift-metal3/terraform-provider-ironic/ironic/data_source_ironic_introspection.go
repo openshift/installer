@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/baremetalintrospection/v1/introspection"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // Schema resource for an introspection data source, that has some selected details about the node exposed.
