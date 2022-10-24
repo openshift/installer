@@ -164,6 +164,15 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.defaultDatastore: Required value: must specify the default datastore$`,
 		},
 		{
+			name: "Invalid folder path",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Folder = "test-folder"
+				return p
+			}(),
+			expectedError: `^test-path\.folder: Invalid value: "test-folder": folder must be absolute path: expected prefix /test-datacenter/vm/`,
+		},
+		{
 			name: "Capital letters in vCenter",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
