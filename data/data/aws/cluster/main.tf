@@ -11,8 +11,8 @@ locals {
 provider "aws" {
   region = var.aws_region
 
-  skip_region_validation = true
-
+  skip_region_validation      = true
+  skip_credentials_validation = true
   endpoints {
     ec2     = lookup(var.custom_endpoints, "ec2", null)
     elb     = lookup(var.custom_endpoints, "elasticloadbalancing", null)
