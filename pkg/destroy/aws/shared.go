@@ -108,6 +108,8 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 				o.Logger.Debugf("No matches in %s for %s: shared, removing client", *tagClient.Config.Region, key)
 				continue
 			}
+			// appending the tag client here but it needs to be removed if there is a InvalidParameterException when trying to
+			// untag below since that only leads to an infinite loop error.
 			nextTagClients = append(nextTagClients, tagClient)
 
 			for i := 0; i < len(arns); i += 20 {
@@ -117,6 +119,11 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 				}
 				result, err := tagClient.UntagResourcesWithContext(ctx, request)
 				if err != nil {
+					var awsErr awserr.Error
+					ok := errors.As(err, &awsErr)
+					if ok && awsErr.Code() == resourcegroupstaggingapi.ErrorCodeInvalidParameterException {
+						nextTagClients = nextTagClients[:len(nextTagClients)-1]
+					}
 					err = errors.Wrap(err, "untag shared resources")
 					o.Logger.Info(err)
 					continue
