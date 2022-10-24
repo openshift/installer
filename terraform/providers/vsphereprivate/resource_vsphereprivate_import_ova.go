@@ -163,8 +163,6 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 	}
 	importOvaParams.Folder = folderObj
 
-	clusterPath := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
-
 	// Find the resource pool object by using its path provided by install-config,
 	// or generated in pkg/asset/machines/vsphere/machines.go
 	resourcePoolObj, err := finder.ResourcePool(ctx, resourcePool)
@@ -173,8 +171,15 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 	}
 	importOvaParams.ResourcePool = resourcePoolObj
 
-	// Find the cluster object by the datacenter and cluster name to
-	// generate the path e.g. /datacenter/host/cluster
+	clusterPathRegexp := regexp.MustCompile("^\\/(.*?)\\/host\\/(.*?)$")
+	clusterPathParts := clusterPathRegexp.FindStringSubmatch(cluster)
+
+	clusterPath := cluster
+	if clusterPathParts == nil {
+		// Find the cluster object by the datacenter and cluster name to
+		// generate the path e.g. /datacenter/host/cluster
+		clusterPath = fmt.Sprintf("/%s/host/%s", datacenter, cluster)
+	}
 	clusterComputeResource, err := finder.ClusterComputeResource(ctx, clusterPath)
 	if err != nil {
 		return nil, err
