@@ -3234,6 +3234,7 @@ spec:
                                 in which the virtual machine is created/located.
                               maxLength: 2048
                               minLength: 1
+                              pattern: ^/.*?/vm/.*?
                               type: string
                             networks:
                               description: networks is the list of networks within
@@ -3271,6 +3272,7 @@ spec:
                     description: Folder is the absolute path of the folder that will
                       be used and/or created for virtual machines. The absolute path
                       is of the form /<datacenter>/vm/<folder>/<subfolder>.
+                    pattern: ^/.*?/vm/.*?
                     type: string
                   ingressVIP:
                     description: 'DeprecatedIngressVIP is the virtual IP address for
