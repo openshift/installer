@@ -2,12 +2,12 @@ package gcp
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -235,14 +235,9 @@ func ValidateEnabledServices(ctx context.Context, client API, project string) er
 		"storage-api.googleapis.com",
 		"storage-component.googleapis.com")
 	projectServices, err := client.GetEnabledServices(ctx, project)
-
 	if err != nil {
-		var gErr *googleapi.Error
-		if errors.As(err, &gErr) {
-			if gErr.Code == http.StatusForbidden {
-				logrus.Warn("Permission denied. Unable to fetch enabled services for project.")
-				return nil
-			}
+		if IsForbidden(err) {
+			return errors.Wrap(err, "unable to fetch enabled services for project. Make sure 'serviceusage.googleapis.com' is enabled")
 		}
 		return err
 	}
