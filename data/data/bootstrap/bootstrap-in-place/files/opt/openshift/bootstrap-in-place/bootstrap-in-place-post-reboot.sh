@@ -12,6 +12,18 @@ function wait_for_api {
   done
 }
 
+# This is required since the progress service (https://github.com/openshift/installer/blob/dd9047c4c119e942331f702a4b7da85c60042da5/data/data/bootstrap/files/usr/local/bin/report-progress.sh#L22-L33),
+# usually dedicated to creating the bootstrap ConfigMap, will fail to create this configmap in case of bootstrap-in-place single node deployment, 
+# due to the lack of a control plane when bootkube is complete
+function signal_bootstrap_complete {
+  until oc get cm bootstrap -n kube-system &> /dev/null
+  do
+    echo "Creating bootstrap configmap ..."
+    oc create cm bootstrap -n kube-system --from-literal status=complete || true
+    sleep 5
+  done
+}
+
 function restart_kubelet {
   echo "Restarting kubelet"
   until [ "$(oc get pod -n openshift-kube-apiserver-operator --selector='app=kube-apiserver-operator' -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
@@ -64,6 +76,7 @@ function clean {
 }
 
 wait_for_api
+signal_bootstrap_complete
 approve_csr
 restart_kubelet
 wait_for_cvo
