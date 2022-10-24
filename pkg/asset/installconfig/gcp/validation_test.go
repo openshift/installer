@@ -1,11 +1,13 @@
 package gcp
 
 import (
+	"context"
 	"fmt"
-	googleoauth "golang.org/x/oauth2/google"
 	"net"
 	"strings"
 	"testing"
+
+	googleoauth "golang.org/x/oauth2/google"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -420,20 +422,19 @@ func TestGCPEnabledServicesList(t *testing.T) {
 	}{{
 		name:     "No services present",
 		services: nil,
-		err: "following required services are not enabled in this project storage-component.googleapis.com," +
-			" servicemanagement.googleapis.com, storage-api.googleapis.com, compute.googleapis.com," +
-			" cloudapis.googleapis.com, dns.googleapis.com, iam.googleapis.com, iamcredentials.googleapis.com," +
-			" serviceusage.googleapis.com, cloudresourcemanager.googleapis.com",
+		err:      "the following required services are not enabled in this project: cloudresourcemanager.googleapis.com,compute.googleapis.com,dns.googleapis.com,iam.googleapis.com,iamcredentials.googleapis.com,serviceusage.googleapis.com",
 	}, {
 		name: "All pre-existing",
-		services: []string{"compute.googleapis.com",
+		services: []string{
+			"compute.googleapis.com",
 			"cloudresourcemanager.googleapis.com", "dns.googleapis.com",
 			"iam.googleapis.com", "iamcredentials.googleapis.com", "serviceusage.googleapis.com",
-			"deploymentmanager.googleapis.com"},
+			"deploymentmanager.googleapis.com",
+		},
 	}, {
 		name:     "Some services present",
 		services: []string{"compute.googleapis.com"},
-		err:      "enable all services before creating the cluster",
+		err:      "the following required services are not enabled in this project: cloudresourcemanager.googleapis.com,dns.googleapis.com,iam.googleapis.com,iamcredentials.googleapis.com,serviceusage.googleapis.com",
 	}}
 
 	for _, test := range cases {
@@ -443,11 +444,11 @@ func TestGCPEnabledServicesList(t *testing.T) {
 			gcpClient := mock.NewMockAPI(mockCtrl)
 
 			gcpClient.EXPECT().GetEnabledServices(gomock.Any(), gomock.Any()).Return(test.services, nil).AnyTimes()
-			err := ValidateEnabledServices(nil, gcpClient, "")
+			err := ValidateEnabledServices(context.TODO(), gcpClient, "")
 			if test.err == "" {
 				assert.NoError(t, err)
 			} else {
-				assert.Error(t, err)
+				assert.Regexp(t, test.err, err)
 			}
 		})
 	}
