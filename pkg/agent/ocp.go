@@ -24,6 +24,7 @@ type ClusterOpenShiftAPIClient struct {
 	ctx          context.Context
 	config       *rest.Config
 	configPath   string
+	cvResVersion string
 }
 
 const (
@@ -85,7 +86,10 @@ func (ocp *ClusterOpenShiftAPIClient) AreClusterOperatorsInitialized() (bool, er
 	} else if cov1helpers.IsStatusConditionTrue(version.Status.Conditions, configv1.OperatorProgressing) {
 		lastError = cov1helpers.FindStatusCondition(version.Status.Conditions, configv1.OperatorProgressing).Message
 	}
-	logrus.Debugf("Still waiting for the cluster to initialize: %s", lastError)
+	if version.ResourceVersion != ocp.cvResVersion {
+		logrus.Debugf("Still waiting for the cluster to initialize: %s", lastError)
+		ocp.cvResVersion = version.ResourceVersion
+	}
 
 	return false, nil
 }
