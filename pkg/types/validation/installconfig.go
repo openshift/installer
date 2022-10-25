@@ -1006,6 +1006,14 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 			if len(c.GCP.CreateFirewallRules) > 0 && c.GCP.CreateFirewallRules != gcp.CreateFirewallRulesEnabled {
 				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "createFirewallRules"), errMsg))
 			}
+
+			if c.GCP.PrivateDNSZone != nil && len(c.GCP.PrivateDNSZone.ProjectID) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "privateDNSZone", "projectID"), errMsg))
+			}
+
+			if c.GCP.PublicDNSZone != nil && len(c.GCP.PublicDNSZone.ProjectID) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "publicDNSZone", "projectID"), errMsg))
+			}
 		}
 
 		if c.VSphere != nil {
