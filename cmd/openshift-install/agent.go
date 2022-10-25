@@ -24,6 +24,7 @@ func newAgentCmd() *cobra.Command {
 
 	agentCmd.AddCommand(newAgentCreateCmd())
 	agentCmd.AddCommand(agent.NewWaitForCmd())
+	agentCmd.AddCommand(agent.NewLogsCmd())
 	return agentCmd
 }
 
