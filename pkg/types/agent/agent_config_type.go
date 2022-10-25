@@ -18,6 +18,10 @@ type Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// AdditionalNTPSources is a list of NTP sources (hostname or IP) to be added to all cluster
+	// hosts. They are added to any NTP sources that were configured through other means.
+	// +optional
+	AdditionalNTPSources []string `json:"additionalNTPSources,omitempty"`
 	// ip address of node0
 	RendezvousIP string `json:"rendezvousIP,omitempty"`
 	Hosts        []Host `json:"hosts,omitempty"`

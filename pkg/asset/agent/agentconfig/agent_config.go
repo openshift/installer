@@ -161,6 +161,10 @@ func (a *AgentConfig) validateAgent() field.ErrorList {
 		allErrs = append(allErrs, err...)
 	}
 
+	if err := a.validateAdditionalNTPSources(field.NewPath("AdditionalNTPSources"), a.Config.AdditionalNTPSources); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
 	return allErrs
 }
 
@@ -255,6 +259,22 @@ func (a *AgentConfig) validateRoles(hostPath *field.Path, host agent.Host) field
 
 	if len(host.Role) > 0 && host.Role != "master" && host.Role != "worker" {
 		allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), "host role has incorrect value. Role must either be 'master' or 'worker'"))
+	}
+
+	return allErrs
+}
+
+func (a *AgentConfig) validateAdditionalNTPSources(additionalNTPSourcesPath *field.Path, sources []string) field.ErrorList {
+	var allErrs field.ErrorList
+
+	for i, source := range sources {
+		domainNameErr := validate.DomainName(source, true)
+		if domainNameErr != nil {
+			ipErr := validate.IP(source)
+			if ipErr != nil {
+				allErrs = append(allErrs, field.Invalid(additionalNTPSourcesPath.Index(i), source, "NTP source is not a valid domain name nor a valid IP"))
+			}
+		}
 	}
 
 	return allErrs

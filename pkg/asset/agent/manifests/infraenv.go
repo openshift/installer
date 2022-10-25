@@ -14,6 +14,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 )
 
 var (
@@ -38,6 +39,7 @@ func (*InfraEnv) Name() string {
 func (*InfraEnv) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
+		&agentconfig.AgentConfig{},
 	}
 }
 
@@ -45,7 +47,8 @@ func (*InfraEnv) Dependencies() []asset.Asset {
 func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(installConfig)
+	agentConfig := &agentconfig.AgentConfig{}
+	dependencies.Get(installConfig, agentConfig)
 
 	if installConfig.Config != nil {
 		infraEnv := &aiv1beta1.InfraEnv{
@@ -69,6 +72,10 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 		}
 		if installConfig.Config.Proxy != nil {
 			infraEnv.Spec.Proxy = getProxy(installConfig)
+		}
+
+		if agentConfig.Config != nil {
+			infraEnv.Spec.AdditionalNTPSources = agentConfig.Config.AdditionalNTPSources
 		}
 		i.Config = infraEnv
 

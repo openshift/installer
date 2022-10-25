@@ -258,6 +258,15 @@ func getValidAgentConfig() *agentconfig.AgentConfig {
 	}
 }
 
+func getValidAgentConfigWithAdditionalNTPSources() *agentconfig.AgentConfig {
+	validAC := getValidAgentConfig()
+	validAC.Config.AdditionalNTPSources = []string{
+		"0.fedora.pool.ntp.org",
+		"1.fedora.pool.ntp.org",
+	}
+	return validAC
+}
+
 func getValidDHCPAgentConfigNoHosts() *agentconfig.AgentConfig {
 	return &agentconfig.AgentConfig{
 		Config: &agenttypes.Config{
