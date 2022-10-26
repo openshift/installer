@@ -2064,6 +2064,40 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 		},
+		{
+			name: "GCP XPN SHOULD return an error if used WITHOUT tech preview",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.NetworkProjectID = "myNetworkProject"
+				c.Platform.GCP.ControlPlaneSubnet = "controlPlaneSubnet"
+				c.Platform.GCP.ComputeSubnet = "computeSubnet"
+				c.Platform.GCP.Network = "vpc"
+				c.CredentialsMode = "Passthrough"
+
+				return c
+			}(),
+			expectedError: "platform.gcp.networkProjectID: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field",
+		},
+		{
+			name: "GCP XPN SHOULD NOT return an error if used WITH tech preview",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.NetworkProjectID = "myNetworkProject"
+				c.Platform.GCP.ControlPlaneSubnet = "controlPlaneSubnet"
+				c.Platform.GCP.ComputeSubnet = "computeSubnet"
+				c.Platform.GCP.Network = "vpc"
+				c.CredentialsMode = "Passthrough"
+				c.FeatureSet = "TechPreviewNoUpgrade"
+
+				return c
+			}(),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
