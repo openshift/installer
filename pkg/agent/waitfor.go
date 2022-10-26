@@ -35,7 +35,7 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 		}
 
 		if err != nil {
-			if exitOnErr == true {
+			if exitOnErr {
 				lastErr = err
 				cancel()
 			} else {

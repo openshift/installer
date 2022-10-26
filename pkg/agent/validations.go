@@ -2,138 +2,112 @@ package agent
 
 import (
 	"encoding/json"
-	"fmt"
-	"reflect"
-	"sort"
 
 	"github.com/openshift/assisted-service/api/common"
 	"github.com/openshift/assisted-service/models"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
+// These validation status strings are defined to match the ones from assisted-service/internal.
+// These statuses are the statuses that mattered to us for this implementation.
+// Cluster: https://github.com/openshift/assisted-service/blob/master/internal/cluster/validator.go
+// Host: https://github.com/openshift/assisted-service/blob/master/internal/host/validator.go
 const (
 	validationFailure string = "failure"
 	validationError   string = "error"
+	validationSuccess string = "success"
 )
 
-// Re-using Assisted UI host validation labels (see https://github.com/openshift-assisted/assisted-ui-lib)
-// for logging human-friendly messages in case of validation failures
-var hostValidationLabels = map[string]string{
-	"odf-requirements-satisfied":                      "ODF requirements",
-	"disk-encryption-requirements-satisfied":          "Disk encryption requirements",
-	"compatible-with-cluster-platform":                "",
-	"has-default-route":                               "Default route to host",
-	"sufficient-network-latency-requirement-for-role": "Network latency",
-	"sufficient-packet-loss-requirement-for-role":     "Packet loss",
-	"has-inventory":                                   "Hardware information",
-	"has-min-cpu-cores":                               "Minimum CPU cores",
-	"has-min-memory":                                  "Minimum Memory",
-	"has-min-valid-disks":                             "Minimum disks of required size",
-	"has-cpu-cores-for-role":                          "Minimum CPU cores for selected role",
-	"has-memory-for-role":                             "Minimum memory for selected role",
-	"hostname-unique":                                 "Unique hostname",
-	"hostname-valid":                                  "Valid hostname",
-	"connected":                                       "Connected",
-	"media-connected":                                 "Media Connected",
-	"machine-cidr-defined":                            "Machine CIDR",
-	"belongs-to-machine-cidr":                         "Belongs to machine CIDR",
-	"ignition-downloadable":                           "Ignition file downloadable",
-	"belongs-to-majority-group":                       "Belongs to majority connected group",
-	"valid-platform-network-settings":                 "Platform network settings",
-	"ntp-synced":                                      "NTP synchronization",
-	"container-images-available":                      "Container images availability",
-	"lso-requirements-satisfied":                      "LSO requirements",
-	"ocs-requirements-satisfied":                      "OCS requirements",
-	"sufficient-installation-disk-speed":              "Installation disk speed",
-	"cnv-requirements-satisfied":                      "CNV requirements",
-	"api-domain-name-resolved-correctly":              "API domain name resolution",
-	"api-int-domain-name-resolved-correctly":          "API internal domain name resolution",
-	"apps-domain-name-resolved-correctly":             "Application ingress domain name resolution",
-	"dns-wildcard-not-configured":                     "DNS wildcard not configured",
-	"non-overlapping-subnets":                         "Non overlapping subnets",
-	"vsphere-disk-uuid-enabled":                       "Vsphere disk uuidenabled",
+type validationResults struct {
+	ClusterValidationHistory map[string]*validationResultHistory
+	HostValidationHistory    map[string]map[string]*validationResultHistory
 }
 
-type validationTrace struct {
-	header   string
-	category string
-	label    string
-	message  string
+type validationResultHistory struct {
+	numFailures     int
+	seen            bool
+	currentStatus   string
+	currentMessage  string
+	previousStatus  string
+	previousMessage string
 }
 
-var previousValidations []validationTrace
-
-func logValidationsStatus(errorMsg string, validations string, log *logrus.Logger) []validationTrace {
-
-	traces := []validationTrace{}
-	if validations == "" {
-		return traces
+func checkValidations(cluster *models.Cluster, validationResults *validationResults, log *logrus.Logger) error {
+	clusterLogPrefix := "Cluster validation: "
+	updatedClusterValidationHistory, err := updateValidationResultHistory(clusterLogPrefix, cluster.ValidationsInfo, validationResults.ClusterValidationHistory, log)
+	if err != nil {
+		return err
 	}
+	validationResults.ClusterValidationHistory = updatedClusterValidationHistory
+
+	for _, h := range cluster.Hosts {
+		hostLogPrefix := "Host " + h.RequestedHostname + " validation: "
+		if _, ok := validationResults.HostValidationHistory[h.RequestedHostname]; !ok {
+			validationResults.HostValidationHistory[h.RequestedHostname] = make(map[string]*validationResultHistory)
+		}
+		updatedHostValidationHistory, err := updateValidationResultHistory(hostLogPrefix, h.ValidationsInfo, validationResults.HostValidationHistory[h.RequestedHostname], log)
+		if err != nil {
+			return err
+		}
+		validationResults.HostValidationHistory[h.RequestedHostname] = updatedHostValidationHistory
+	}
+	return nil
+}
+
+func updateValidationResultHistory(logPrefix string, validationsInfoString string, validationHistory map[string]*validationResultHistory, log *logrus.Logger) (map[string]*validationResultHistory, error) {
 
 	validationsInfo := common.ValidationsStatus{}
-	err := json.Unmarshal([]byte(validations), &validationsInfo)
+	err := json.Unmarshal([]byte(validationsInfoString), &validationsInfo)
 	if err != nil {
-		return []validationTrace{{header: errorMsg, message: "unable to verify validations"}}
+		return nil, errors.Wrap(err, "unable to verify validations")
 	}
 
-	for category, validationResults := range validationsInfo {
+	for _, validationResults := range validationsInfo {
 		for _, r := range validationResults {
+			// If validation ID does not exist create it
+			if _, ok := validationHistory[r.ID]; !ok {
+				validationHistory[r.ID] = &validationResultHistory{}
+			}
+			validationHistory[r.ID].previousMessage = validationHistory[r.ID].currentMessage
+			validationHistory[r.ID].previousStatus = validationHistory[r.ID].currentStatus
+			validationHistory[r.ID].currentMessage = r.Message
+			validationHistory[r.ID].currentStatus = r.Status
 			switch r.Status {
 			case validationFailure, validationError:
-				label := r.ID
-				if v, ok := hostValidationLabels[r.ID]; ok {
-					label = v
-				}
-
-				traces = append(traces, validationTrace{
-					header:   errorMsg,
-					category: category,
-					label:    label,
-					message:  r.Message,
-				})
+				validationHistory[r.ID].numFailures++
 			}
+			logValidationHistory(logPrefix, validationHistory[r.ID], log)
 		}
 	}
-
-	return traces
+	return validationHistory, nil
 }
 
-func checkHostsValidations(cluster *models.Cluster, log *logrus.Logger) bool {
-
-	var currentValidations []validationTrace
-
-	currentValidations = append(currentValidations, logValidationsStatus("Validation failure found for cluster", cluster.ValidationsInfo, log)...)
-	for _, h := range cluster.Hosts {
-		currentValidations = append(currentValidations, logValidationsStatus(fmt.Sprintf("Validation failure found for %s", h.RequestedHostname), h.ValidationsInfo, log)...)
+func logValidationHistory(logPrefix string, history *validationResultHistory, log *logrus.Logger) {
+	// First time we print something
+	if !history.seen {
+		history.seen = true
+		switch history.currentStatus {
+		case validationSuccess:
+			log.Debug(logPrefix + history.currentMessage)
+		case validationFailure, validationError:
+			log.Warning(logPrefix + history.currentMessage)
+		default:
+			log.Trace(logPrefix + history.currentMessage)
+		}
+		return
 	}
-
-	sort.Slice(currentValidations, func(i, j int) bool {
-		if currentValidations[i].header != currentValidations[j].header {
-			return currentValidations[i].header < currentValidations[j].header
-		}
-		if currentValidations[i].category != currentValidations[j].category {
-			return currentValidations[i].category < currentValidations[j].category
-		}
-		return currentValidations[i].label < currentValidations[j].label
-	})
-
-	if !reflect.DeepEqual(currentValidations, previousValidations) {
-		previousValidations = currentValidations
-
-		if len(previousValidations) == 0 {
-			log.Info("Pre-installation validations are OK")
-			return true
-		}
-
-		log.Debug("Checking for validation failures ----------------------------------------------")
-		for _, v := range previousValidations {
-			log.WithFields(logrus.Fields{
-				"category": v.category,
-				"label":    v.label,
-				"message":  v.message,
-			}).Debug(v.header)
+	// We have already printed something
+	if history.currentMessage != history.previousMessage {
+		switch history.currentStatus {
+		case validationSuccess:
+			if history.previousStatus == validationError || history.previousStatus == validationFailure {
+				log.Info(logPrefix + history.currentMessage)
+			}
+		case validationFailure, validationError:
+			log.Warning(logPrefix + history.currentMessage)
+		default:
+			log.Trace(logPrefix + history.currentMessage)
 		}
 	}
-
-	return len(previousValidations) == 0
 }

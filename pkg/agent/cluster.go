@@ -55,6 +55,7 @@ type clusterInstallStatusHistory struct {
 	ClusterConsoleRouteURLCreated                       bool
 	ClusterInstallComplete                              bool
 	NotReadyTime                                        time.Time
+	ValidationResults                                   *validationResults
 }
 
 // NewCluster initializes a Cluster object
@@ -105,6 +106,11 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 		ClusterInstallComplete:                              false,
 	}
 
+	cvalidationresults := &validationResults{
+		ClusterValidationHistory: make(map[string]*validationResultHistory),
+		HostValidationHistory:    make(map[string]map[string]*validationResultHistory),
+	}
+
 	czero.Ctx = ctx
 	czero.API = capi
 	czero.clusterID = nil
@@ -112,6 +118,7 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 	czero.assetDir = assetDir
 	czero.clusterConsoleRouteURL = ""
 	czero.installHistory = cinstallstatushistory
+	czero.installHistory.ValidationResults = cvalidationresults
 	return czero, nil
 }
 
@@ -214,8 +221,10 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 			}
 		}
 
-		if !checkHostsValidations(clusterMetadata, logrus.StandardLogger()) {
-			return false, false, nil
+		validationsErr := checkValidations(clusterMetadata, czero.installHistory.ValidationResults, logrus.StandardLogger())
+		if validationsErr != nil {
+			return false, false, errors.Wrap(validationsErr, "cluster host validations failed")
+
 		}
 
 		// Print most recent event associated with the clusterInfraEnvID
@@ -239,25 +248,24 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 			czero.installHistory.RestAPIInfraEnvEventList = eventList
 		}
 
-	}
+		// both API's are not available
+		if !agentRestAPILive && !clusterKubeAPILive {
+			logrus.Trace("Current API Status: Node Zero Agent API: down, Cluster Kube API: down")
+			if !czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
+				logrus.Debug("Node zero Agent Rest API never initialized. Cluster API never initialized")
+				logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
+				time.Sleep(30 * time.Second)
+				return false, false, nil
+			}
 
-	// both API's are not available
-	if !agentRestAPILive && !clusterKubeAPILive {
-		logrus.Trace("Current API Status: Node Zero Agent API: down, Cluster Kube API: down")
-		if !czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
-			logrus.Debug("Node zero Agent Rest API never initialized. Cluster API never initialized")
-			logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
-			time.Sleep(30 * time.Second)
-			return false, false, nil
+			if czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
+				logrus.Debug("Cluster API never initialized")
+				logrus.Debugf("Cluster install status from Agent Rest API last seen was: %s", czero.installHistory.RestAPIPreviousClusterStatus)
+				return false, false, errors.New("cluster bootstrap did not complete")
+			}
 		}
 
-		if czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
-			logrus.Debug("Cluster API never initialized")
-			logrus.Debugf("Cluster install status from Agent Rest API last seen was: %s", czero.installHistory.RestAPIPreviousClusterStatus)
-			return false, false, errors.New("cluster bootstrap did not complete")
-		}
 	}
-
 	logrus.Trace("cluster bootstrap is not complete")
 	return false, false, nil
 }
