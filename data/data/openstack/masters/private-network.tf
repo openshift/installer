@@ -89,6 +89,7 @@ resource "openstack_networking_port_v2" "api_port" {
 }
 
 resource "openstack_networking_port_v2" "ingress_port" {
+  count       = var.openstack_api_load_balancer_type != "BGP" ? 0 : 1
   name        = "${var.cluster_id}-ingress-port"
   description = local.description
 
@@ -134,15 +135,15 @@ resource "openstack_networking_trunk_v2" "masters" {
 // as expected.
 
 resource "openstack_networking_floatingip_associate_v2" "api_fip" {
-  count       = length(var.openstack_api_floating_ip) == 0 ? 0 : 1
-  port_id     = openstack_networking_port_v2.api_port.id
+  count       = (var.openstack_api_load_balancer_type != "BGP" || length(var.openstack_api_floating_ip) == 0) ? 0 : 1
+  port_id     = openstack_networking_port_v2.api_port[0].id
   floating_ip = var.openstack_api_floating_ip
   depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
 }
 
 resource "openstack_networking_floatingip_associate_v2" "ingress_fip" {
-  count       = length(var.openstack_ingress_floating_ip) == 0 ? 0 : 1
-  port_id     = openstack_networking_port_v2.ingress_port.id
+  count       = (var.openstack_api_load_balancer_type != "BGP" || length(var.openstack_ingress_floating_ip) == 0) ? 0 : 1
+  port_id     = openstack_networking_port_v2.ingress_port[0].id
   floating_ip = var.openstack_ingress_floating_ip
   depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
 }
