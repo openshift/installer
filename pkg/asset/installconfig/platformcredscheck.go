@@ -12,6 +12,7 @@ import (
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -97,7 +98,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "creating Azure session")
 		}
-		if azureSession.Credentials.ClientCertificatePath != "" && ic.Config.CredentialsMode != "manual" {
+		if azureSession.Credentials.ClientCertificatePath != "" && ic.Config.CredentialsMode != types.ManualCredentialsMode {
 			return fmt.Errorf("authentication with client certificates is only supported in manual credentials mode")
 		}
 	case ovirt.Name:
