@@ -83,27 +83,17 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 	capi.OpenShift = ocpclient
 
 	cinstallstatushistory := &clusterInstallStatusHistory{
-		RestAPISeen:                                         false,
-		RestAPIClusterStatusAddingHostsSeen:                 false,
-		RestAPIClusterStatusCancelledSeen:                   false,
-		RestAPIClusterStatusInstallingSeen:                  false,
-		RestAPIClusterStatusInstallingPendingUserActionSeen: false,
-		RestAPIClusterStatusInsufficientSeen:                false,
-		RestAPIClusterStatusFinalizingSeen:                  false,
-		RestAPIClusterStatusErrorSeen:                       false,
-		RestAPIClusterStatusPendingForInputSeen:             false,
-		RestAPIClusterStatusPreparingForInstallationSeen:    false,
-		RestAPIClusterStatusReadySeen:                       false,
-		RestAPIInfraEnvEventList:                            nil,
-		RestAPIPreviousClusterStatus:                        "",
-		RestAPIPreviousEventMessage:                         "",
-		RestAPIHostValidationsPassed:                        false,
-		ClusterKubeAPISeen:                                  false,
-		ClusterBootstrapComplete:                            false,
-		ClusterOperatorsInitialized:                         false,
-		ClusterConsoleRouteCreated:                          false,
-		ClusterConsoleRouteURLCreated:                       false,
-		ClusterInstallComplete:                              false,
+		RestAPISeen:                   false,
+		RestAPIInfraEnvEventList:      nil,
+		RestAPIPreviousClusterStatus:  "",
+		RestAPIPreviousEventMessage:   "",
+		RestAPIHostValidationsPassed:  false,
+		ClusterKubeAPISeen:            false,
+		ClusterBootstrapComplete:      false,
+		ClusterOperatorsInitialized:   false,
+		ClusterConsoleRouteCreated:    false,
+		ClusterConsoleRouteURLCreated: false,
+		ClusterInstallComplete:        false,
 	}
 
 	cvalidationresults := &validationResults{
@@ -122,6 +112,7 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 	return czero, nil
 }
 
+// IsBootstrapComplete (is-bootstrap-complete, exit-on-error, returned-error)
 // IsBootstrapComplete Determine if the cluster has completed the bootstrap process.
 func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
@@ -135,6 +126,29 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 		logrus.Trace(errors.Wrap(clusterKubeAPIErr, "Cluster Kube API is not available"))
 	}
 
+	agentRestAPILive, agentRestAPIErr := czero.API.Rest.IsRestAPILive()
+	if agentRestAPIErr != nil {
+		logrus.Trace(errors.Wrap(agentRestAPIErr, "Agent Rest API is not available"))
+	}
+
+	// Both API's are not available
+	if !agentRestAPILive && !clusterKubeAPILive {
+		logrus.Trace("Current API Status: Node Zero Agent API: down, Cluster Kube API: down")
+		if !czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
+			logrus.Debug("Node zero Agent Rest API never initialized. Cluster API never initialized")
+			logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
+			time.Sleep(30 * time.Second)
+			return false, false, nil
+		}
+
+		if czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
+			logrus.Debug("Cluster API never initialized")
+			logrus.Debugf("Cluster install status from Agent Rest API last seen was: %s", czero.installHistory.RestAPIPreviousClusterStatus)
+			return false, false, errors.New("cluster bootstrap did not complete")
+		}
+	}
+
+	// Kube API is available
 	if clusterKubeAPILive {
 
 		// First time we see the cluster Kube API
@@ -154,11 +168,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 		}
 	}
 
-	agentRestAPILive, agentRestAPIErr := czero.API.Rest.IsRestAPILive()
-	if agentRestAPIErr != nil {
-		logrus.Trace(errors.Wrap(agentRestAPIErr, "Agent Rest API is not available"))
-	}
-
+	// Agent Rest API is available
 	if agentRestAPILive {
 
 		// First time we see the agent Rest API
@@ -208,9 +218,6 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 		czero.installHistory.RestAPIPreviousClusterStatus = *clusterMetadata.Status
 
-		// Update Install History object when we see these states
-		czero.updateInstallHistoryClusterStatus(clusterMetadata)
-
 		installing, _ := czero.IsInstalling(*clusterMetadata.Status)
 		if !installing {
 			errored, _ := czero.HasErrored(*clusterMetadata.Status)
@@ -248,24 +255,8 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 			czero.installHistory.RestAPIInfraEnvEventList = eventList
 		}
 
-		// both API's are not available
-		if !agentRestAPILive && !clusterKubeAPILive {
-			logrus.Trace("Current API Status: Node Zero Agent API: down, Cluster Kube API: down")
-			if !czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
-				logrus.Debug("Node zero Agent Rest API never initialized. Cluster API never initialized")
-				logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
-				time.Sleep(30 * time.Second)
-				return false, false, nil
-			}
-
-			if czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
-				logrus.Debug("Cluster API never initialized")
-				logrus.Debugf("Cluster install status from Agent Rest API last seen was: %s", czero.installHistory.RestAPIPreviousClusterStatus)
-				return false, false, errors.New("cluster bootstrap did not complete")
-			}
-		}
-
 	}
+
 	logrus.Trace("cluster bootstrap is not complete")
 	return false, false, nil
 }
@@ -362,7 +353,7 @@ func (czero *Cluster) HasErrored(status string) (bool, string) {
 		models.ClusterStatusCancelled:                   false,
 		models.ClusterStatusInstalling:                  false,
 		models.ClusterStatusInstallingPendingUserAction: true,
-		models.ClusterStatusInsufficient:                true,
+		models.ClusterStatusInsufficient:                false,
 		models.ClusterStatusError:                       true,
 		models.ClusterStatusFinalizing:                  false,
 		models.ClusterStatusPendingForInput:             false,
@@ -442,37 +433,11 @@ func humanFriendlyClusterInstallStatus(status string) string {
 		models.ClusterStatusFinalizing:                  "Finalizing cluster installation",
 		models.ClusterStatusInstalling:                  "Cluster installation in progress",
 		models.ClusterStatusInstallingPendingUserAction: "Cluster has hosts requiring user input",
-		models.ClusterStatusInsufficient:                "Cluster is not ready for install. Check host validations",
+		models.ClusterStatusInsufficient:                "Cluster is not ready for install. Check validations",
 		models.ClusterStatusPendingForInput:             "User input is required to continue cluster installation",
 		models.ClusterStatusPreparingForInstallation:    "Preparing cluster for installation",
 		models.ClusterStatusReady:                       "Cluster is ready for install",
 	}
 	return clusterStoppedInstallingStates[status]
 
-}
-
-// Update the install history struct when we see the status from the Agent Rest API
-func (czero *Cluster) updateInstallHistoryClusterStatus(cluster *models.Cluster) {
-	switch *cluster.Status {
-	case models.ClusterStatusAddingHosts:
-		czero.installHistory.RestAPIClusterStatusAddingHostsSeen = true
-	case models.ClusterStatusCancelled:
-		czero.installHistory.RestAPIClusterStatusCancelledSeen = true
-	case models.ClusterStatusError:
-		czero.installHistory.RestAPIClusterStatusErrorSeen = true
-	case models.ClusterStatusFinalizing:
-		czero.installHistory.RestAPIClusterStatusFinalizingSeen = true
-	case models.ClusterStatusInsufficient:
-		czero.installHistory.RestAPIClusterStatusInsufficientSeen = true
-	case models.ClusterStatusInstalling:
-		czero.installHistory.RestAPIClusterStatusInstallingSeen = true
-	case models.ClusterStatusInstallingPendingUserAction:
-		czero.installHistory.RestAPIClusterStatusInstallingPendingUserActionSeen = true
-	case models.ClusterStatusPendingForInput:
-		czero.installHistory.RestAPIClusterStatusPendingForInputSeen = true
-	case models.ClusterStatusPreparingForInstallation:
-		czero.installHistory.RestAPIClusterStatusPreparingForInstallationSeen = true
-	case models.ClusterStatusReady:
-		czero.installHistory.RestAPIClusterStatusReadySeen = true
-	}
 }
