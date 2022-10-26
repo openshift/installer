@@ -29,6 +29,9 @@ The following `install-config.yaml` properties are available:
 * `capabilities` (optional [capabilities](#capabilities)): Capabilities configures the installation of optional core cluster components.
 * `controlPlane` (optional [machine-pool](#machine-pools)): The configuration for the machines that comprise the control plane.
 * `compute` (optional array of [machine-pools](#machine-pools)): The configuration for the machines that comprise the compute nodes.
+* `featureSet` (optional string): A feature set as defined in the [OpenShift API](https://github.com/openshift/api/blob/013a7b8bf9b3d57d0642b8f14122f881635ed5a3/config/v1/types_feature.go#L28-L43). Notably, `TechPreviewNoUpgrade` can be used to enable Installer features protected by a Tech Preview feature gate. Feature
+sets will be applied to the cluster--not just the Installer--and may affect the supportability and upgradability of the cluster, depending on the specified
+feature set.
 * `fips` (optional boolean): Enables FIPS mode (default false).
 * `imageContentSources` (optional array of objects): Sources and repositories for the release-image content.
     Each entry in the array is an object with the following properties:
