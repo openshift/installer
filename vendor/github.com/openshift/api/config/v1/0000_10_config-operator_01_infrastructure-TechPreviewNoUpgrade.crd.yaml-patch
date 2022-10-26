@@ -22,8 +22,3 @@
 - op: add
   path: /spec/versions/name=v1/schema/openAPIV3Schema/properties/spec/properties/platformSpec/properties/vsphere/properties/nodeNetworking/properties/internal/properties/networkSubnetCidr/items/format
   value: cidr
-- op: add
-  path: /spec/versions/name=v1/schema/openAPIV3Schema/properties/spec/properties/platformSpec/properties/openstack/properties/apiLoadBalancer/properties/bgp/properties/speakers/items/properties/peers/items/properties/ip/anyOf
-  value:
-    - format: ipv4
-    - format: ipv6

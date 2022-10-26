@@ -1290,8 +1290,21 @@ func (OpenStackAPILoadBalancer) SwaggerDoc() map[string]string {
 	return map_OpenStackAPILoadBalancer
 }
 
+var map_OpenStackFailureDomain = map[string]string{
+	"":            "OpenStackFailureDomain specifies a failure domain for an OpenStack server. Specifically, it specifies a set of values which will be set on all machines using the failure domain.",
+	"name":        "name is an arbitrary, unique name for this failure domain. This name can be used to refer to this failure domain when building a BGP speaker configuration.",
+	"computeZone": "computeZone specifies the OpenStack Compute availability zone for all servers in this failure domain.\n\nIf not specified the servers are provisioned without reference to availability zones. Server placement is delegated to the OpenStack defaults. ",
+	"storageZone": "storageZone specifies the OpenStack storage availability zone for all volumes in this failure domain.\n\nIf not specified the volumes are provisioned without reference to availability zones. Volume placement is delegated to the OpenStack defaults. ",
+	"subnetID":    "subnetID specifies an OpenStack subnet ID which will be attached as the first NIC of every server in this failure domain.",
+}
+
+func (OpenStackFailureDomain) SwaggerDoc() map[string]string {
+	return map_OpenStackFailureDomain
+}
+
 var map_OpenStackPlatformSpec = map[string]string{
 	"":                "OpenStackPlatformSpec holds the desired state of the OpenStack infrastructure provider. This only includes fields that can be modified in the cluster.",
+	"failureDomains":  "failureDomains is a list of failure domains available to Machines. Each failure domain has a name that can be referenced in Machines; Machines referencing a failure domain will be set the corresponding failure domain values. If no failure domain is defined, Machines can't reference any. If a Machine doesn't reference a failure domain, it is spun in the cluster subnet, using the OpenStack default availability zones.",
 	"apiLoadBalancer": "apiLoadBalancer defines how traffic destined to the OpenShift API is routed to the API servers. When omitted, this means no opinion and the platform is left to choose a reasonable default. This default is subject to change over time. The current default configuration uses VRRP.",
 }
 

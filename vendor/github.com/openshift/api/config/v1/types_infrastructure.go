@@ -514,9 +514,8 @@ type OpenStackAPIBGPPeer struct {
 	// ip is the IP address of the peer, as reachable from the Control
 	// plane machine. It may be either IPv4 or IPv6
 	//
+	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:Required
-	// + ---
-	// + {IPv4 or IPv6} validation in crd.yaml-patch
 	IP string `json:"ip"`
 
 	// password for BGP authentication against the peer
@@ -564,9 +563,64 @@ type OpenStackAPIBGPConfiguration struct {
 	Speakers []OpenStackAPIBGPSpeaker `json:"speakers"`
 }
 
+// OpenStackFailureDomain specifies a failure domain for an OpenStack server.
+// Specifically, it specifies a set of values which will be set on all machines
+// using the failure domain.
+type OpenStackFailureDomain struct {
+	// name is an arbitrary, unique name for this failure domain. This name
+	// can be used to refer to this failure domain when building a BGP
+	// speaker configuration.
+	//
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// computeZone specifies the OpenStack Compute availability zone for
+	// all servers in this failure domain.
+	//
+	// If not specified the servers are provisioned without reference to
+	// availability zones. Server placement is delegated to the OpenStack
+	// defaults.
+	// +optional
+	// + ---
+	// + TODO: define behaviour in case only one of computeZone and
+	// + storageZone is set.
+	ComputeZone string `json:"computeZone,omitempty"`
+
+	// storageZone specifies the OpenStack storage availability zone for
+	// all volumes in this failure domain.
+	//
+	// If not specified the volumes are provisioned without reference to
+	// availability zones. Volume placement is delegated to the OpenStack
+	// defaults.
+	// +optional
+	// + ---
+	// + TODO: define behaviour in case only one of computeZone and
+	// + storageZone is set.
+	StorageZone string `json:"storageZone,omitempty"`
+
+	// subnetID specifies an OpenStack subnet ID which will be attached as
+	// the first NIC of every server in this failure domain.
+	//
+	// +optional
+	SubnetID string `json:"subnetID,omitempty"`
+}
+
 // OpenStackPlatformSpec holds the desired state of the OpenStack infrastructure provider.
 // This only includes fields that can be modified in the cluster.
 type OpenStackPlatformSpec struct {
+	// failureDomains is a list of failure domains available to Machines.
+	// Each failure domain has a name that can be referenced in Machines;
+	// Machines referencing a failure domain will be set the corresponding
+	// failure domain values.
+	// If no failure domain is defined, Machines can't reference any. If a
+	// Machine doesn't reference a failure domain, it is spun in the
+	// cluster subnet, using the OpenStack default availability zones.
+	//
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	FailureDomains []OpenStackFailureDomain `json:"failureDomains,omitempty"`
+
 	// apiLoadBalancer defines how traffic destined to the OpenShift API is
 	// routed to the API servers.
 	// When omitted, this means no opinion and the platform is left to
