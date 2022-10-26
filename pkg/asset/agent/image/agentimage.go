@@ -3,6 +3,7 @@ package image
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,14 +13,13 @@ import (
 )
 
 const (
-	// TODO: Make this relative to the directory passed as --dir rather than
-	// the current working directory
-	agentISOFilename = "agent.iso"
+	agentISOFilename = "agent.%s.iso"
 )
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
 type AgentImage struct {
 	imageReader isoeditor.ImageReader
+	cpuArch     string
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -52,6 +52,7 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	}
 
 	a.imageReader = custom
+	a.cpuArch = ignition.CPUArch
 	return nil
 }
 
@@ -64,7 +65,7 @@ func (a *AgentImage) PersistToFile(directory string) error {
 	}
 
 	defer a.imageReader.Close()
-	agentIsoFile := filepath.Join(directory, agentISOFilename)
+	agentIsoFile := filepath.Join(directory, fmt.Sprintf(agentISOFilename, a.cpuArch))
 
 	// Remove symlink if it exists
 	os.Remove(agentIsoFile)
