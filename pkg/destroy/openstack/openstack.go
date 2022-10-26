@@ -1,7 +1,10 @@
 package openstack
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -89,6 +92,14 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 // Run is the entrypoint to start the uninstall process.
 func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	opts := openstackdefaults.DefaultClientOpts(o.Cloud)
+	w, err := os.OpenFile("tls-secrets.txt", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	opts.HTTPClient = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				KeyLogWriter: w,
+			},
+		},
+	}
 
 	// Check that the cloud has the minimum requirements for the destroy
 	// script to work properly.
@@ -131,7 +142,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	// we want to remove routers as the last thing as it requires detaching the
 	// FIPs and that will cause it impossible to track which FIPs are tied to
 	// LBs being deleted.
-	err := deleteRouterRunner(opts, o.Filter, o.Logger)
+	err = deleteRouterRunner(opts, o.Filter, o.Logger)
 	if err != nil {
 		return nil, err
 	}
@@ -1054,8 +1065,10 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 		return false, nil
 	}
 
+	logger.Debug("Extracting container name")
 	allContainers, err := containers.ExtractNames(allPages)
 	if err != nil {
+		logger.Debug("BOOM")
 		logger.Error(err)
 		return false, nil
 	}
