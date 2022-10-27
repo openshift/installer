@@ -57,6 +57,10 @@ func checkValidations(cluster *models.Cluster, validationResults *validationResu
 
 func updateValidationResultHistory(logPrefix string, validationsInfoString string, validationHistory map[string]*validationResultHistory, log *logrus.Logger) (map[string]*validationResultHistory, error) {
 
+	if validationsInfoString == "" {
+		return validationHistory, nil
+	}
+
 	validationsInfo := common.ValidationsStatus{}
 	err := json.Unmarshal([]byte(validationsInfoString), &validationsInfo)
 	if err != nil {
