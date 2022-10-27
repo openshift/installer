@@ -8,6 +8,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -143,10 +144,7 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, compute.Architecture))
 		}
 
-		if compute.Platform.AWS != nil || compute.Platform.AlibabaCloud != nil || compute.Platform.Azure != nil ||
-			compute.Platform.BareMetal != nil || compute.Platform.GCP != nil || compute.Platform.IBMCloud != nil ||
-			compute.Platform.Libvirt != nil || compute.Platform.Nutanix != nil || compute.Platform.OpenStack != nil ||
-			compute.Platform.Ovirt != nil || compute.Platform.PowerVS != nil || compute.Platform.VSphere != nil {
+		if compute.Platform != (types.MachinePoolPlatform{}) {
 			fieldPath := field.NewPath(fmt.Sprintf("Compute[%d]", i), "Platform")
 			logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
 		}
@@ -163,23 +161,19 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.ControlPlane.Architecture))
 	}
 
-	if installConfig.ControlPlane.Platform.AWS != nil || installConfig.ControlPlane.Platform.AlibabaCloud != nil ||
-		installConfig.ControlPlane.Platform.Azure != nil || installConfig.ControlPlane.Platform.BareMetal != nil ||
-		installConfig.ControlPlane.Platform.GCP != nil || installConfig.ControlPlane.Platform.IBMCloud != nil ||
-		installConfig.ControlPlane.Platform.Libvirt != nil || installConfig.ControlPlane.Platform.Nutanix != nil ||
-		installConfig.ControlPlane.Platform.OpenStack != nil || installConfig.ControlPlane.Platform.Ovirt != nil ||
-		installConfig.ControlPlane.Platform.PowerVS != nil || installConfig.ControlPlane.Platform.VSphere != nil {
+	if installConfig.ControlPlane.Platform != (types.MachinePoolPlatform{}) {
 		fieldPath := field.NewPath("ControlPlane", "Platform")
 		logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
 	}
 
 	switch installConfig.Platform.Name() {
+
 	case baremetal.Name:
 		baremetal := installConfig.Platform.BareMetal
 		// +kubebuilder:default="qemu:///system". Set from generic install config code
 		if baremetal.LibvirtURI != "qemu:///system" {
 			fieldPath := field.NewPath("Platform", "Baremetal", "LibvirtURI")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.LibvirtURI))
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.LibvirtURI))
 		}
 		if baremetal.ClusterProvisioningIP != "" {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ClusterProvisioningIP")
@@ -191,7 +185,7 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		}
 		if baremetal.BootstrapProvisioningIP != "" {
 			fieldPath := field.NewPath("Platform", "Baremetal", "BootstrapProvisioningIP")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapProvisioningIP))
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapProvisioningIP))
 		}
 		if baremetal.ExternalBridge != "" {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ExternalBridge")
@@ -277,19 +271,93 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		}
 		if baremetal.BootstrapOSImage != "" {
 			fieldPath := field.NewPath("Platform", "Baremetal", "BootstrapOSImage")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapOSImage))
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapOSImage))
 		}
-		if baremetal.ClusterOSImage != "" {
-			fieldPath := field.NewPath("Platform", "Baremetal", "ClusterOSImage")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ClusterOSImage))
-		}
+		// ClusterOSImage is ignored even in IPI now, so we probably don't need to check it at all.
+
 		if baremetal.BootstrapExternalStaticIP != "" {
 			fieldPath := field.NewPath("Platform", "Baremetal", "BootstrapExternalStaticIP")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapExternalStaticIP))
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapExternalStaticIP))
 		}
 		if baremetal.BootstrapExternalStaticGateway != "" {
 			fieldPath := field.NewPath("Platform", "Baremetal", "BootstrapExternalStaticGateway")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapExternalStaticGateway))
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapExternalStaticGateway))
 		}
+	case vsphere.Name:
+		vspherePlatform := installConfig.Platform.VSphere
+
+		if vspherePlatform.VCenter != "" {
+			fieldPath := field.NewPath("Platform", "VSphere", "VCenter")
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.VCenter))
+		}
+		if vspherePlatform.Username != "" {
+			fieldPath := field.NewPath("Platform", "VSphere", "Username")
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Username))
+		}
+		if vspherePlatform.Password != "" {
+			fieldPath := field.NewPath("Platform", "VSphere", "Password")
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Password))
+		}
+		if vspherePlatform.Datacenter != "" {
+			fieldPath := field.NewPath("Platform", "VSphere", "Datacenter")
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Datacenter))
+		}
+		if vspherePlatform.DefaultDatastore != "" {
+			fieldPath := field.NewPath("Platform", "VSphere", "DefaultDatastore")
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DefaultDatastore))
+		}
+		if vspherePlatform.Folder != "" {
+			fieldPath := field.NewPath("Platform", "VSphere", "Folder")
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Folder))
+		}
+		if vspherePlatform.Cluster != "" {
+			fieldPath := field.NewPath("Platform", "VSphere", "Cluster")
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Cluster))
+		}
+		if vspherePlatform.ResourcePool != "" {
+			fieldPath := field.NewPath("Platform", "VSphere", "ResourcePool")
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.ResourcePool))
+		}
+		if vspherePlatform.ClusterOSImage != "" {
+			fieldPath := field.NewPath("Platform", "VSphere", "ClusterOSImage")
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.ClusterOSImage))
+		}
+		if vspherePlatform.DefaultMachinePlatform != &(vsphere.MachinePool{}) {
+			fieldPath := field.NewPath("Platform", "VSphere", "DefaultMachinePlatform")
+			logrus.Debugf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.DefaultMachinePlatform))
+		}
+		if vspherePlatform.Network != "" {
+			fieldPath := field.NewPath("Platform", "VSphere", "Network")
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Network))
+		}
+		if vspherePlatform.DiskType != "" {
+			fieldPath := field.NewPath("Platform", "VSphere", "DiskType")
+			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DiskType))
+		}
+		if len(vspherePlatform.VCenters) > 1 {
+			fieldPath := field.NewPath("Platform", "VSphere", "VCenters")
+			logrus.Debugf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.VCenters))
+		}
+		if len(vspherePlatform.FailureDomains) > 1 {
+			fieldPath := field.NewPath("Platform", "VSphere", "FailureDomains")
+			logrus.Debugf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.FailureDomains))
+		}
+	}
+	// "External" is the default set from generic install config code
+	if installConfig.Publish != "External" {
+		fieldPath := field.NewPath("Publish")
+		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.Publish))
+	}
+	if installConfig.CredentialsMode != "" {
+		fieldPath := field.NewPath("CredentialsMode")
+		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.CredentialsMode))
+	}
+	if installConfig.BootstrapInPlace.InstallationDisk != "" {
+		fieldPath := field.NewPath("BootstrapInPlace", "InstallationDisk")
+		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.BootstrapInPlace.InstallationDisk))
+	}
+	if installConfig.Capabilities != &(types.Capabilities{}) {
+		fieldPath := field.NewPath("Publish")
+		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.Publish))
 	}
 }
