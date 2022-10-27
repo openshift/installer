@@ -2,7 +2,6 @@ package manifests
 
 import (
 	"github.com/openshift/installer/pkg/asset/agent"
-	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/version"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
@@ -52,19 +51,4 @@ func getNMStateConfigLabels(ic *agent.OptionalInstallConfig) map[string]string {
 func getClusterImageSetReferenceName() string {
 	versionString, _ := version.Version()
 	return "openshift-" + versionString
-}
-
-// getVIPs returns a string representation of the platform's API VIP and Ingress VIP.
-// It returns an empty string if the platform does not configure a VIP
-func getVIPs(p *types.Platform) (string, string) {
-	switch {
-	case p == nil:
-		return "", ""
-	case p.BareMetal != nil:
-		return p.BareMetal.APIVIPs[0], p.BareMetal.IngressVIPs[0]
-	case p.VSphere != nil:
-		return p.VSphere.APIVIPs[0], p.VSphere.IngressVIPs[0]
-	default:
-		return "", ""
-	}
 }

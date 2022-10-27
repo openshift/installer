@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -36,6 +37,38 @@ var (
 type AgentClusterInstall struct {
 	File   *asset.File
 	Config *hiveext.AgentClusterInstall
+}
+
+type agentClusterInstallOnPremPlatform struct {
+	// APIVIPs contains the VIP(s) to use for internal API communication. In
+	// dual stack clusters it contains an IPv4 and IPv6 address, otherwise only
+	// one VIP
+	APIVIPs []string `json:"apiVIPs,omitempty"`
+
+	// IngressVIPs contains the VIP(s) to use for ingress traffic. In dual stack
+	// clusters it contains an IPv4 and IPv6 address, otherwise only one VIP
+	IngressVIPs []string `json:"ingressVIPs,omitempty"`
+}
+
+type agentClusterInstallPlatform struct {
+	// BareMetal is the configuration used when installing on bare metal.
+	// +optional
+	BareMetal *agentClusterInstallOnPremPlatform `json:"baremetal,omitempty"`
+	// VSphere is the configuration used when installing on vSphere.
+	// +optional
+	VSphere *agentClusterInstallOnPremPlatform `json:"vsphere,omitempty"`
+}
+
+// Used to generate InstallConfig overrides for Assisted Service to apply
+type agentClusterInstallInstallConfigOverrides struct {
+	// FIPS configures https://www.nist.gov/itl/fips-general-information
+	//
+	// +kubebuilder:default=false
+	// +optional
+	FIPS bool `json:"fips,omitempty"`
+	// Platform is the configuration for the specific platform upon which to
+	// perform the installation.
+	Platform *agentClusterInstallPlatform `json:"platform,omitempty"`
 }
 
 var _ asset.WritableAsset = (*AgentClusterInstall)(nil)
@@ -112,22 +145,49 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			},
 		}
 
+		icOverridden := false
+		icOverrides := agentClusterInstallInstallConfigOverrides{}
 		if installConfig.Config.FIPS {
-			agentClusterInstall.SetAnnotations(map[string]string{
-				installConfigOverrides: `{ "fips": true }`,
-			})
+			icOverridden = true
+			icOverrides.FIPS = installConfig.Config.FIPS
+		}
+
+		if installConfig.Config.Platform.BareMetal != nil {
+			if len(installConfig.Config.Platform.BareMetal.APIVIPs) > 1 {
+				icOverridden = true
+				icOverrides.Platform = &agentClusterInstallPlatform{
+					BareMetal: &agentClusterInstallOnPremPlatform{
+						APIVIPs:     installConfig.Config.Platform.BareMetal.APIVIPs,
+						IngressVIPs: installConfig.Config.Platform.BareMetal.IngressVIPs,
+					},
+				}
+			}
+			agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.BareMetal.APIVIPs[0]
+			agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.BareMetal.IngressVIPs[0]
+		} else if installConfig.Config.Platform.VSphere != nil {
+			if len(installConfig.Config.Platform.VSphere.APIVIPs) > 1 {
+				icOverridden = true
+				icOverrides.Platform = &agentClusterInstallPlatform{
+					VSphere: &agentClusterInstallOnPremPlatform{
+						APIVIPs:     installConfig.Config.Platform.VSphere.APIVIPs,
+						IngressVIPs: installConfig.Config.Platform.VSphere.IngressVIPs,
+					},
+				}
+			}
+			agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.VSphere.APIVIPs[0]
+			agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.VSphere.IngressVIPs[0]
 		}
 
 		setNetworkType(agentClusterInstall, installConfig.Config, "NetworkType is not specified in InstallConfig.")
 
-		// TODO: Handle the case where both IPv4 and IPv6 VIPs are specified
-		apiVIP, ingressVIP := getVIPs(&installConfig.Config.Platform)
-
-		// set APIVIP and IngressVIP only for non SNO cluster for Baremetal and Vsphere platforms
-		// SNO cluster is determined by number of ControlPlaneAgents which should be 1
-		if int(*installConfig.Config.ControlPlane.Replicas) > 1 && apiVIP != "" && ingressVIP != "" {
-			agentClusterInstall.Spec.APIVIP = apiVIP
-			agentClusterInstall.Spec.IngressVIP = ingressVIP
+		if icOverridden {
+			overrides, err := json.Marshal(icOverrides)
+			if err != nil {
+				return errors.Wrap(err, "failed to marshal AgentClusterInstall installConfigOverrides")
+			}
+			agentClusterInstall.SetAnnotations(map[string]string{
+				installConfigOverrides: fmt.Sprintf("%s", overrides),
+			})
 		}
 
 		a.Config = agentClusterInstall
