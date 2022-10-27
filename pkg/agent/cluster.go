@@ -123,7 +123,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 	clusterKubeAPILive, clusterKubeAPIErr := czero.API.Kube.IsKubeAPILive()
 	if clusterKubeAPIErr != nil {
-		logrus.Trace(errors.Wrap(clusterKubeAPIErr, "Cluster Kube API is not available"))
+		logrus.Trace(errors.Wrap(clusterKubeAPIErr, "Bootstrap Kube API is not available"))
 	}
 
 	agentRestAPILive, agentRestAPIErr := czero.API.Rest.IsRestAPILive()
@@ -133,16 +133,16 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 	// Both API's are not available
 	if !agentRestAPILive && !clusterKubeAPILive {
-		logrus.Trace("Current API Status: Node Zero Agent API: down, Cluster Kube API: down")
+		logrus.Trace("Current API Status: Agent Rest API: down, Bootstrap Kube API: down")
 		if !czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
-			logrus.Debug("Node zero Agent Rest API never initialized. Cluster API never initialized")
+			logrus.Debug("Agent Rest API never initialized. Bootstrap Kube API never initialized")
 			logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
 			time.Sleep(30 * time.Second)
 			return false, false, nil
 		}
 
 		if czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
-			logrus.Debug("Cluster API never initialized")
+			logrus.Debug("Bootstrap Kube API never initialized")
 			logrus.Debugf("Cluster install status from Agent Rest API last seen was: %s", czero.installHistory.RestAPIPreviousClusterStatus)
 			return false, false, errors.New("cluster bootstrap did not complete")
 		}
@@ -153,7 +153,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 		// First time we see the cluster Kube API
 		if !czero.installHistory.ClusterKubeAPISeen {
-			logrus.Info("Cluster Kube API Initialized")
+			logrus.Info("Bootstrap Kube API Initialized")
 			czero.installHistory.ClusterKubeAPISeen = true
 		}
 
