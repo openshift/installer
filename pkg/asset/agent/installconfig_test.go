@@ -280,7 +280,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			},
 		},
 		{
-			name: "valid configuration for baremetal platform for HA cluster - deprecated fields",
+			name: "valid configuration for baremetal platform for HA cluster - deprecated and unused fields",
 			data: `
 apiVersion: v1
 metadata:
@@ -296,26 +296,41 @@ networking:
   serviceNetwork: 
   - 172.30.0.0/16
 compute:
-  - architecture: amd64
-    hyperthreading: Enabled
+  - architecture: arm64
+    hyperthreading: Disabled
     name: worker
     platform: {}
     replicas: 2
 controlPlane:
-  architecture: amd64
-  hyperthreading: Enabled
+  architecture: arm64
+  hyperthreading: Disabled
   name: master
   platform: {}
   replicas: 3
 platform:
   baremetal:
+    libvirtURI: qemu+ssh://root@52.116.73.24/system
+    clusterProvisioningIP: "192.168.122.90"
+    bootstrapProvisioningIP: "192.168.122.91"
+    externalBridge: "somevalue"
     externalMACAddress: "52:54:00:f6:b4:02"
+    provisioningNetwork: "Disabled"
+    provisioningBridge: br0
     provisioningMACAddress: "52:54:00:6e:3b:02"
+    provisioningNetworkInterface: "eth11"
+    provisioningDHCPExternal: true
+    provisioningDHCPRange: 172.22.0.10,172.22.0.254
     apiVIP: 192.168.122.10
     ingressVIP: 192.168.122.11
+    bootstrapOSImage: https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd
+    clusterOSImage: https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8
+    bootstrapExternalStaticIP: 192.1168.122.50
+    bootstrapExternalStaticGateway: gateway
     hosts:
       - name: host1
         bootMACAddress: 52:54:01:aa:aa:a1
+        bmc:
+          address: addr
       - name: host2
         bootMACAddress: 52:54:01:bb:bb:b1
       - name: host3
@@ -352,40 +367,43 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
 					Replicas:       pointer.Int64Ptr(3),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
+					Hyperthreading: types.HyperthreadingDisabled,
+					Architecture:   types.ArchitectureARM64,
 				},
 				Compute: []types.MachinePool{
 					{
 						Name:           "worker",
 						Replicas:       pointer.Int64Ptr(2),
-						Hyperthreading: types.HyperthreadingEnabled,
-						Architecture:   types.ArchitectureAMD64,
+						Hyperthreading: types.HyperthreadingDisabled,
+						Architecture:   types.ArchitectureARM64,
 					},
 				},
 				Platform: types.Platform{
 					BareMetal: &baremetal.Platform{
-						LibvirtURI:              "qemu:///system",
-						ClusterProvisioningIP:   "172.22.0.3",
-						BootstrapProvisioningIP: "172.22.0.2",
-						ExternalBridge:          "baremetal",
-						ExternalMACAddress:      "52:54:00:f6:b4:02",
-						ProvisioningNetwork:     "Managed",
-						ProvisioningBridge:      "provisioning",
-						ProvisioningMACAddress:  "52:54:00:6e:3b:02",
-						ProvisioningDHCPRange:   "172.22.0.10,172.22.0.254",
+						LibvirtURI:                         "qemu+ssh://root@52.116.73.24/system",
+						ClusterProvisioningIP:              "192.168.122.90",
+						BootstrapProvisioningIP:            "192.168.122.91",
+						ExternalBridge:                     "somevalue",
+						ExternalMACAddress:                 "52:54:00:f6:b4:02",
+						ProvisioningNetwork:                "Disabled",
+						ProvisioningBridge:                 "br0",
+						ProvisioningMACAddress:             "52:54:00:6e:3b:02",
+						ProvisioningDHCPRange:              "172.22.0.10,172.22.0.254",
+						DeprecatedProvisioningDHCPExternal: true,
 						ProvisioningNetworkCIDR: &ipnet.IPNet{
 							IPNet: net.IPNet{
-								IP:   []byte("\xac\x16\x00\x00"),
-								Mask: []byte("\xff\xff\xff\x00"),
+								IP:   []byte("\xc0\xa8\x7a\x00"),
+								Mask: []byte("\xff\xff\xfe\x00"),
 							},
 						},
+						ProvisioningNetworkInterface: "eth11",
 						Hosts: []*baremetal.Host{
 							{
 								Name:            "host1",
 								BootMACAddress:  "52:54:01:aa:aa:a1",
 								BootMode:        "UEFI",
 								HardwareProfile: "default",
+								BMC:             baremetal.BMC{Address: "addr"},
 							},
 							{
 								Name:            "host2",
@@ -411,10 +429,14 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 								BootMode:        "UEFI",
 								HardwareProfile: "default",
 							}},
-						DeprecatedAPIVIP:     "192.168.122.10",
-						APIVIPs:              []string{"192.168.122.10"},
-						DeprecatedIngressVIP: "192.168.122.11",
-						IngressVIPs:          []string{"192.168.122.11"},
+						DeprecatedAPIVIP:               "192.168.122.10",
+						APIVIPs:                        []string{"192.168.122.10"},
+						DeprecatedIngressVIP:           "192.168.122.11",
+						IngressVIPs:                    []string{"192.168.122.11"},
+						BootstrapOSImage:               "https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd",
+						ClusterOSImage:                 "https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8",
+						BootstrapExternalStaticIP:      "192.1168.122.50",
+						BootstrapExternalStaticGateway: "gateway",
 					},
 				},
 				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
