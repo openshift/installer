@@ -288,59 +288,59 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 
 		if vspherePlatform.VCenter != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "VCenter")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.VCenter))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.VCenter))
 		}
 		if vspherePlatform.Username != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Username")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Username))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Username))
 		}
 		if vspherePlatform.Password != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Password")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Password))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Password))
 		}
 		if vspherePlatform.Datacenter != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Datacenter")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Datacenter))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Datacenter))
 		}
 		if vspherePlatform.DefaultDatastore != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "DefaultDatastore")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DefaultDatastore))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DefaultDatastore))
 		}
 		if vspherePlatform.Folder != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Folder")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Folder))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Folder))
 		}
 		if vspherePlatform.Cluster != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Cluster")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Cluster))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Cluster))
 		}
 		if vspherePlatform.ResourcePool != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "ResourcePool")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.ResourcePool))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.ResourcePool))
 		}
 		if vspherePlatform.ClusterOSImage != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "ClusterOSImage")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.ClusterOSImage))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.ClusterOSImage))
 		}
 		if vspherePlatform.DefaultMachinePlatform != &(vsphere.MachinePool{}) {
 			fieldPath := field.NewPath("Platform", "VSphere", "DefaultMachinePlatform")
-			logrus.Debugf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.DefaultMachinePlatform))
+			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.DefaultMachinePlatform))
 		}
 		if vspherePlatform.Network != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Network")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Network))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Network))
 		}
 		if vspherePlatform.DiskType != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "DiskType")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DiskType))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DiskType))
 		}
 		if len(vspherePlatform.VCenters) > 1 {
 			fieldPath := field.NewPath("Platform", "VSphere", "VCenters")
-			logrus.Debugf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.VCenters))
+			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.VCenters))
 		}
 		if len(vspherePlatform.FailureDomains) > 1 {
 			fieldPath := field.NewPath("Platform", "VSphere", "FailureDomains")
-			logrus.Debugf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.FailureDomains))
+			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.FailureDomains))
 		}
 	}
 	// "External" is the default set from generic install config code
@@ -352,12 +352,12 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		fieldPath := field.NewPath("CredentialsMode")
 		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.CredentialsMode))
 	}
-	if installConfig.BootstrapInPlace.InstallationDisk != "" {
+	if installConfig.BootstrapInPlace != nil && installConfig.BootstrapInPlace.InstallationDisk != "" {
 		fieldPath := field.NewPath("BootstrapInPlace", "InstallationDisk")
 		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.BootstrapInPlace.InstallationDisk))
 	}
 	if installConfig.Capabilities != &(types.Capabilities{}) {
-		fieldPath := field.NewPath("Publish")
-		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.Publish))
+		fieldPath := field.NewPath("Capabilities")
+		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.Capabilities))
 	}
 }
