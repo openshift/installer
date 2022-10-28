@@ -14,14 +14,17 @@ set -euo pipefail
 RELEASE_IMAGE={{.ReleaseImage}}
 
 echo "Pulling $RELEASE_IMAGE..."
+release_image_issue="/etc/issue.d/50_release-image.issue"
 while true
 do
     record_service_stage_start "pull-release-image"
     if podman pull --quiet "$RELEASE_IMAGE"
     then
+        rm -f "${release_image_issue}"
         record_service_stage_success
         break
     else
+        printf '\n\\e{lightred}Unable to pull OpenShift release image\\e{reset}\n' >"${release_image_issue}"
         record_service_stage_failure
         echo "Pull failed. Retrying $RELEASE_IMAGE..."
     fi
@@ -37,6 +40,7 @@ case $host_arch in
 esac
 
 if [[ "$image_arch" != "$host_arch" ]]; then
+    printf '\n\\e{lightred}Release image arch %s does not match host arch %s\\e{reset}\n' "${image_arch}" "${host_arch}" >"${release_image_issue}"
     record_service_stage_failure
     echo "ERROR: release image arch $image_arch does not match host arch $host_arch"
     exit 1
