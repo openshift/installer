@@ -97,3 +97,15 @@ func RegionShortNames() []string {
 	}
 	return keys
 }
+
+// ValidateVPCRegion validates that given VPC region is known/tested.
+func ValidateVPCRegion(region string) bool {
+	found := false
+	for r := range Regions {
+		if region == Regions[r].VPCRegion {
+			found = true
+			break
+		}
+	}
+	return found
+}
