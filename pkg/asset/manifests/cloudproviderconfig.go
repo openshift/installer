@@ -251,7 +251,10 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
-		if vpcRegion, err = powervstypes.VPCRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
+		vpcZone := installConfig.Config.PowerVS.VPCZone
+		if vpcZone != "" {
+			vpcRegion, err = powervstypes.VPCRegionForVPCZone(vpcZone)
+		} else if vpcRegion, err = powervstypes.VPCRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
 			return err
 		}
 

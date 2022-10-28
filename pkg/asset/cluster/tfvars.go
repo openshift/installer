@@ -62,6 +62,7 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/powervs"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -825,6 +826,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig)
 		}
 
+		var vpcRegion string
+		vpcZone := installConfig.Config.PowerVS.VPCZone
+		if vpcZone != "" {
+			vpcRegion, err = powervstypes.VPCRegionForVPCZone(vpcZone)
+		} else if vpcRegion, err = powervstypes.VPCRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
+			return err
+		}
+
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
@@ -837,6 +846,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ImageBucketName:      osImage[0],
 				ImageBucketFileName:  osImage[1],
 				NetworkName:          installConfig.Config.PowerVS.PVSNetworkName,
+				VPCRegion:            vpcRegion,
+				VPCZone:              vpcZone,
 				VPCName:              installConfig.Config.PowerVS.VPCName,
 				VPCSubnetName:        vpcSubnet,
 				VPCPermitted:         vpcPermitted,

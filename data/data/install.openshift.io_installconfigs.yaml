@@ -3089,6 +3089,11 @@ spec:
                     items:
                       type: string
                     type: array
+                  vpcZone:
+                    description: VPCZone specifies the IBM Cloud zone in which to
+                      create VPC resources. Leave unset to allow installer to select
+                      the closest VPC region.
+                    type: string
                   zone:
                     description: Zone specifies the IBM Cloud colo region where the
                       cluster will be created. At this time, only single-zone clusters
