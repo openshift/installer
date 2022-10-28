@@ -34,5 +34,5 @@ else
     rendezvousHostMessage="This host is not the rendezvous host. The rendezvous host is at {{.NodeZeroIP}}."
 fi
 mkdir -p /etc/motd.d/
-echo $rendezvousHostMessage > /etc/motd.d/50-rendezvous-host
-echo $rendezvousHostMessage > /etc/issue.d/50-rendezvous-host.issue
+echo $rendezvousHostMessage > /etc/motd.d/60-rendezvous-host
+echo $rendezvousHostMessage > /etc/issue.d/60-rendezvous-host.issue
