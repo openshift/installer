@@ -998,8 +998,14 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
 		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
 
-		if c.GCP != nil && len(c.GCP.NetworkProjectID) > 0 {
-			allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "networkProjectID"), errMsg))
+		if c.GCP != nil {
+			if len(c.GCP.NetworkProjectID) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "networkProjectID"), errMsg))
+			}
+
+			if len(c.GCP.CreateFirewallRules) > 0 && c.GCP.CreateFirewallRules != gcp.CreateFirewallRulesEnabled {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "createFirewallRules"), errMsg))
+			}
 		}
 
 		if c.VSphere != nil {
