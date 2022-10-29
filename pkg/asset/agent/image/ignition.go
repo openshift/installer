@@ -214,6 +214,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		"selinux.service",
 		"set-hostname.service",
 		"start-cluster-installation.service",
+		"install-status.service",
 	}
 
 	// Enable pre-network-manager-config.service only when there are network configs defined
