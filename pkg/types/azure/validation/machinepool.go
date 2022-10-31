@@ -38,10 +38,8 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		}
 	}
 
-	allErrs = append(allErrs, ValidateEncryptionAtHost(p, platform.CloudName, fldPath.Child("defaultMachinePlatform"))...)
-	if p.OSDisk.DiskEncryptionSet != nil {
-		allErrs = append(allErrs, ValidateDiskEncryption(p, platform.CloudName, fldPath.Child("defaultMachinePlatform"))...)
-	}
+	allErrs = append(allErrs, ValidateEncryptionAtHost(p, platform.CloudName, fldPath.Child("osDisk"))...)
+	allErrs = append(allErrs, ValidateDiskEncryption(p, platform.CloudName, fldPath.Child("osDisk", "encryptionAtHost"))...)
 
 	if p.VMNetworkingType != "" {
 		acceleratedNetworkingOptions := sets.NewString(string(azure.VMnetworkingTypeAccelerated), string(azure.VMNetworkingTypeBasic))

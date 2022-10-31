@@ -47,43 +47,33 @@ func TestValidateDiskEncryption(t *testing.T) {
 			name:      "invalid disk encryption set (platform is stack cloud)",
 			pool:      validDiskEncryptionMachinePool(),
 			cloudName: azure.StackCloud,
-			expected:  fmt.Sprintf(`diskEncryptionSet.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: disk encryption sets are not supported on this platform`, subscriptionID, resourceGroup, diskEncryptionSetName),
+			expected:  fmt.Sprintf(`azure.osDisk.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: disk encryption sets are not supported on this platform`, subscriptionID, resourceGroup, diskEncryptionSetName),
 		},
 		{
-			name: "invalid disk encryption set (invalid subscription ID)",
-			pool: func() *azure.MachinePool {
-				p := validDiskEncryptionMachinePool()
-				p.OSDisk.DiskEncryptionSet.SubscriptionID = "invalid"
-				return p
-			}(),
-			cloudName: azure.PublicCloud,
-			expected:  `subscriptionID: Invalid value: "invalid": invalid subscription ID format`,
-		},
-		{
-			name: "invalid disk encryption set (invalid resource group)",
-			pool: func() *azure.MachinePool {
-				p := validDiskEncryptionMachinePool()
-				p.OSDisk.DiskEncryptionSet.ResourceGroup = ""
-				return p
-			}(),
-			cloudName: azure.PublicCloud,
-			expected:  `resourceGroup: Invalid value: "": invalid resource group format`,
-		},
-		{
-			name: "invalid disk encryption set (invalid name)",
+			name: "invalid disk encryption set (missing name)",
 			pool: func() *azure.MachinePool {
 				p := validDiskEncryptionMachinePool()
 				p.OSDisk.DiskEncryptionSet.Name = ""
 				return p
 			}(),
 			cloudName: azure.PublicCloud,
-			expected:  `diskEncryptionSetName: Invalid value: "": invalid name format`,
+			expected:  `azure.osDisk.diskEncryptionSet.name: Required value: name is required when specifying a diskEncryptionSet`,
+		},
+		{
+			name: "invalid disk encryption set (missing resource group)",
+			pool: func() *azure.MachinePool {
+				p := validDiskEncryptionMachinePool()
+				p.OSDisk.DiskEncryptionSet.ResourceGroup = ""
+				return p
+			}(),
+			cloudName: azure.PublicCloud,
+			expected:  `azure.osDisk.diskEncryptionSet.resourceGroup: Required value: resourceGroup is required when specifying a diskEncryptionSet`,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateDiskEncryption(tc.pool, tc.cloudName, field.NewPath("test-path")).ToAggregate()
+			err := ValidateDiskEncryption(tc.pool, tc.cloudName, field.NewPath("azure").Child("osDisk", "diskEncryptionSet")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
@@ -118,13 +108,13 @@ func TestValidateEncryptionAtHost(t *testing.T) {
 				return p
 			}(),
 			cloudName: azure.StackCloud,
-			expected:  `encryptionAtHost: Invalid value: true: encryption at host is not supported on this platform`,
+			expected:  `azure.osDisk.encryptionAtHost: Invalid value: true: encryption at host is not supported on this platform`,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateEncryptionAtHost(tc.pool, tc.cloudName, field.NewPath("test-path")).ToAggregate()
+			err := ValidateEncryptionAtHost(tc.pool, tc.cloudName, field.NewPath("azure").Child("osDisk", "encryptionAtHost")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
