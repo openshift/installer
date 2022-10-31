@@ -132,7 +132,8 @@ func (search *iamUserSearch) arns(ctx context.Context) ([]string, error) {
 }
 
 // findIAMRoles returns the IAM roles for the cluster.
-//     deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
+//
+//	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
 func findIAMRoles(ctx context.Context, search *iamRoleSearch, deleted sets.String, logger logrus.FieldLogger) (sets.String, error) {
 	logger.Debug("search for IAM roles")
 	resources, _, err := search.find(ctx)
@@ -144,7 +145,8 @@ func findIAMRoles(ctx context.Context, search *iamRoleSearch, deleted sets.Strin
 }
 
 // findIAMUsers returns the IAM users for the cluster.
-//     deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
+//
+//	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
 func findIAMUsers(ctx context.Context, search *iamUserSearch, deleted sets.String, logger logrus.FieldLogger) (sets.String, error) {
 	logger.Debug("search for IAM users")
 	resources, err := search.arns(ctx)
