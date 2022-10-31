@@ -103,6 +103,7 @@ resource "azurerm_shared_image" "cluster" {
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.azure_region
   os_type             = "Linux"
+  architecture        = var.azure_vm_architecture
 
   identifier {
     publisher = "RedHat"
