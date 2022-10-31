@@ -147,6 +147,7 @@ func tagsFromResourceTags(clusterID string, resourceTags map[string]string) ([]m
 		{Key: fmt.Sprintf("kubernetes.io/cluster/%s", clusterID), Value: "owned"},
 		{Key: "GISV", Value: "ocp"},
 		{Key: "sigs.k8s.io/cloud-provider-alibaba/origin", Value: "ocp"},
+		{Key: "ack.aliyun.com", Value: clusterID},
 	}
 	forbiddenTags := sets.NewString()
 	for idx := range tags {
