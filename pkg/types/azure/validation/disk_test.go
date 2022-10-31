@@ -10,9 +10,11 @@ import (
 )
 
 var (
-	subscriptionID        = "aF675309-bE11-cD22-aF33-bE3606808909"
-	resourceGroup         = "Test-res.o(ur)Ce_gRoup"
-	diskEncryptionSetName = "teSt-encrypTion_Set"
+	subscriptionID        = "08675309-1111-2222-3333-303606808909"
+	resourceGroup         = "test-resource-group"
+	diskEncryptionSetName = "test-encryption-set"
+	diskEncryptionSetID   = fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/diskEncryptionSets/%s",
+		subscriptionID, resourceGroup, diskEncryptionSetName)
 )
 
 func validDiskEncryptionMachinePool() *azure.MachinePool {
@@ -45,7 +47,7 @@ func TestValidateDiskEncryption(t *testing.T) {
 			name:      "invalid disk encryption set (platform is stack cloud)",
 			pool:      validDiskEncryptionMachinePool(),
 			cloudName: azure.StackCloud,
-			expected:  fmt.Sprintf(`diskEncryptionSet.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:".+", Name:"%s"}: disk encryption sets are not supported on this platform`, subscriptionID, diskEncryptionSetName),
+			expected:  fmt.Sprintf(`diskEncryptionSet.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: disk encryption sets are not supported on this platform`, subscriptionID, resourceGroup, diskEncryptionSetName),
 		},
 		{
 			name: "invalid disk encryption set (invalid subscription ID)",

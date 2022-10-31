@@ -10,16 +10,16 @@ import (
 
 var (
 	// RxDiskEncryptionSetID is a regular expression that validates a disk encryption set ID.
-	RxDiskEncryptionSetID = regexp.MustCompile(`(?i)^/subscriptions/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/resourceGroups/([-a-zA-Z0-9_().]{0,89}[-a-zA-Z0-9_()])/providers/Microsoft\.Compute/diskEncryptionSets/([-a-zA-Z0-9_]{1,80})$`)
+	RxDiskEncryptionSetID = regexp.MustCompile(`(?i)^/subscriptions/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/resourceGroups/([-a-z0-9_().]{0,89}[-a-z0-9_()])/providers/Microsoft\.Compute/diskEncryptionSets/([-a-z0-9_]{1,80})$`)
 
 	// RxSubscriptionID is a regular expression that validates a subscription ID.
-	RxSubscriptionID = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+	RxSubscriptionID = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 
 	// RxResourceGroup is a regular expression that validates a resource group.
-	RxResourceGroup = regexp.MustCompile(`^[-a-zA-Z0-9_().]{0,89}[-a-zA-Z0-9_()]$`)
+	RxResourceGroup = regexp.MustCompile(`^[-a-z0-9_().]{0,89}[-a-z0-9_()]$`)
 
 	// RxDiskEncryptionSetName is a regular expression that validates a disk encryption set name
-	RxDiskEncryptionSetName = regexp.MustCompile(`^[-a-zA-Z0-9_]{1,80}$`)
+	RxDiskEncryptionSetName = regexp.MustCompile(`^[-a-z0-9_]{1,80}$`)
 )
 
 // ValidateDiskEncryption checks that the specified disk encryption configuration is valid.
