@@ -51,18 +51,19 @@ type agentTemplateData struct {
 	PullSecret      string
 	// PullSecretToken is token to use for authentication when AUTH_TYPE=rhsso
 	// in assisted-service
-	PullSecretToken     string
-	NodeZeroIP          string
-	AssistedServiceHost string
-	APIVIP              string
-	ControlPlaneAgents  int
-	WorkerAgents        int
-	ReleaseImages       string
-	ReleaseImage        string
-	ReleaseImageMirror  string
-	HaveMirrorConfig    bool
-	InfraEnvID          string
-	OSImage             *models.OsImage
+	PullSecretToken           string
+	NodeZeroIP                string
+	AssistedServiceHost       string
+	APIVIP                    string
+	ControlPlaneAgents        int
+	WorkerAgents              int
+	ReleaseImages             string
+	ReleaseImage              string
+	ReleaseImageMirror        string
+	HaveMirrorConfig          bool
+	PublicContainerRegistries string
+	InfraEnvID                string
+	OSImage                   *models.OsImage
 }
 
 // Name returns the human-friendly name of the asset.
@@ -132,6 +133,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	registryCABundle := &mirror.CaBundle{}
 	dependencies.Get(registriesConfig, registryCABundle)
 
+	publicContainerRegistries := getPublicContainerRegistries(registriesConfig)
+
 	releaseImageMirror := getMirrorFromRelease(agentManifests.ClusterImageSet.Spec.ReleaseImage, registriesConfig)
 
 	infraEnvID := uuid.New().String()
@@ -150,6 +153,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		agentManifests.ClusterImageSet.Spec.ReleaseImage,
 		releaseImageMirror,
 		len(registriesConfig.MirrorConfig) > 0,
+		publicContainerRegistries,
 		agentManifests.AgentClusterInstall,
 		infraEnvID,
 		osImage)
@@ -237,7 +241,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 }
 
 func getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage,
-	releaseImageMirror string, haveMirrorConfig bool,
+	releaseImageMirror string, haveMirrorConfig bool, publicContainerRegistries string,
 	agentClusterInstall *hiveext.AgentClusterInstall,
 	infraEnvID string,
 	osImage *models.OsImage) *agentTemplateData {
@@ -248,21 +252,22 @@ func getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage,
 	}
 
 	return &agentTemplateData{
-		ServiceProtocol:     serviceBaseURL.Scheme,
-		ServiceBaseURL:      serviceBaseURL.String(),
-		PullSecret:          pullSecret,
-		PullSecretToken:     "",
-		NodeZeroIP:          serviceBaseURL.Hostname(),
-		AssistedServiceHost: serviceBaseURL.Host,
-		APIVIP:              agentClusterInstall.Spec.APIVIP,
-		ControlPlaneAgents:  agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
-		WorkerAgents:        agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
-		ReleaseImages:       releaseImageList,
-		ReleaseImage:        releaseImage,
-		ReleaseImageMirror:  releaseImageMirror,
-		HaveMirrorConfig:    haveMirrorConfig,
-		InfraEnvID:          infraEnvID,
-		OSImage:             osImage,
+		ServiceProtocol:           serviceBaseURL.Scheme,
+		ServiceBaseURL:            serviceBaseURL.String(),
+		PullSecret:                pullSecret,
+		PullSecretToken:           "",
+		NodeZeroIP:                serviceBaseURL.Hostname(),
+		AssistedServiceHost:       serviceBaseURL.Host,
+		APIVIP:                    agentClusterInstall.Spec.APIVIP,
+		ControlPlaneAgents:        agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
+		WorkerAgents:              agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
+		ReleaseImages:             releaseImageList,
+		ReleaseImage:              releaseImage,
+		ReleaseImageMirror:        releaseImageMirror,
+		HaveMirrorConfig:          haveMirrorConfig,
+		PublicContainerRegistries: publicContainerRegistries,
+		InfraEnvID:                infraEnvID,
+		OSImage:                   osImage,
 	}
 }
 
@@ -458,4 +463,22 @@ func getMirrorFromRelease(releaseImage string, registriesConfig *mirror.Registri
 	}
 
 	return releaseImageMirror
+}
+
+func getPublicContainerRegistries(registriesConfig *mirror.RegistriesConf) string {
+
+	if len(registriesConfig.MirrorConfig) > 0 {
+		registries := []string{}
+		for _, config := range registriesConfig.MirrorConfig {
+			location := strings.SplitN(config.Location, "/", 2)[0]
+
+			allRegs := fmt.Sprint(registries)
+			if !strings.Contains(allRegs, location) {
+				registries = append(registries, location)
+			}
+		}
+		return strings.Join(registries, ",")
+	}
+
+	return "quay.io"
 }
