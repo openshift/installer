@@ -2,6 +2,7 @@
 Description=Agent-based installer hostname update service
 Wants=network-online.target
 After=local-fs.target
+Before=node-zero.service
 
 [Service]
 ExecStart=/usr/local/bin/set-hostname.sh
