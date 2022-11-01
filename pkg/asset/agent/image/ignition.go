@@ -14,6 +14,7 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/api/v1beta1"
@@ -230,7 +231,10 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	addHostConfig(&config, agentConfigAsset)
 
-	addExtraManifests(&config, extraManifests)
+	err = addExtraManifests(&config, extraManifests)
+	if err != nil {
+		return err
+	}
 
 	a.Config = &config
 	return nil
@@ -363,7 +367,7 @@ func addHostConfig(config *igntypes.Config, agentConfig *agentconfig.AgentConfig
 	return nil
 }
 
-func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraManifests) {
+func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraManifests) error {
 
 	user := "root"
 	mode := 0644
@@ -382,9 +386,32 @@ func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraM
 	})
 
 	for _, file := range extraManifests.FileList {
-		extraFile := ignition.FileFromBytes(filepath.Join(extraManifestPath, filepath.Base(file.Filename)), user, mode, file.Data)
-		config.Storage.Files = append(config.Storage.Files, extraFile)
+
+		type unstructured map[string]interface{}
+
+		yamlList, err := manifests.GetMultipleYamls[unstructured](file.Data)
+		if err != nil {
+			return errors.Wrapf(err, "could not decode YAML for %s", file.Filename)
+		}
+
+		for n, manifest := range yamlList {
+			m, err := yaml.Marshal(manifest)
+			if err != nil {
+				return err
+			}
+
+			base := filepath.Base(file.Filename)
+			ext := filepath.Ext(file.Filename)
+			baseWithoutExt := strings.TrimSuffix(base, ext)
+			baseFileName := filepath.Join(extraManifestPath, baseWithoutExt)
+			fileName := fmt.Sprintf("%s-%d%s", baseFileName, n, ext)
+
+			extraFile := ignition.FileFromBytes(fileName, user, mode, m)
+			config.Storage.Files = append(config.Storage.Files, extraFile)
+		}
 	}
+
+	return nil
 }
 
 func getOSImagesInfo(cpuArch string) (*models.OsImage, error) {
