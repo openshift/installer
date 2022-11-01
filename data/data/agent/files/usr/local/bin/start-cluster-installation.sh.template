@@ -35,9 +35,9 @@ num_known_hosts() {
         for status in ${host_status}; do
             if [[ "${status}" == "known" ]]; then
                 ((known_hosts+=1))
-                echo "Hosts known and ready for cluster installation (${known_hosts}/${total_required_nodes})" 1>&2
             fi
         done
+        echo "Hosts known and ready for cluster installation (${known_hosts}/${total_required_nodes})" 1>&2
     fi
     echo "${known_hosts}"
 }
