@@ -29,6 +29,12 @@ EOF
     echo "Created file ${NODE0_PATH}"
 
     rendezvousHostMessage="This host {{.NodeZeroIP}} is the rendezvous host."
+
+    cat <<EOF >/etc/motd
+The primary service is assisted-service.service. To watch its status, run:
+
+  journalctl -u assisted-service.service
+EOF
 else
 
     rendezvousHostMessage="This host is not the rendezvous host. The rendezvous host is at {{.NodeZeroIP}}."
