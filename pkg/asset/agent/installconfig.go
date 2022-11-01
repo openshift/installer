@@ -62,6 +62,10 @@ func (a *OptionalInstallConfig) validateInstallConfig(installConfig *types.Insta
 		allErrs = append(allErrs, err...)
 	}
 
+	if err := a.validateSupportedArchs(installConfig); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
 	warnUnusedConfig(installConfig)
 
 	if err := a.validateSNOConfiguration(installConfig); err != nil {
@@ -79,6 +83,26 @@ func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.
 	if installConfig.Platform.Name() != "" && !IsSupportedPlatform(installConfig.Platform.Name()) {
 		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.Name(), SupportedPlatforms))
 	}
+	return allErrs
+}
+
+func (a *OptionalInstallConfig) validateSupportedArchs(installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+
+	fieldPath := field.NewPath("ControlPlane", "Architecture")
+
+	if string(installConfig.ControlPlane.Architecture) != types.ArchitectureAMD64 {
+		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Architecture, []string{"x86-64", "x86_64", types.ArchitectureAMD64}))
+	}
+
+	for i, compute := range installConfig.Compute {
+		fieldPath := field.NewPath(fmt.Sprintf("Compute[%d]", i), "Architecture")
+
+		if string(compute.Architecture) != types.ArchitectureAMD64 {
+			allErrs = append(allErrs, field.NotSupported(fieldPath, compute.Architecture, []string{"x86-64", "x86_64", types.ArchitectureAMD64}))
+		}
+	}
+
 	return allErrs
 }
 
@@ -138,11 +162,6 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			fieldPath := field.NewPath(fmt.Sprintf("Compute[%d]", i), "Hyperthreading")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, compute.Hyperthreading))
 		}
-		// kubebuilder:default=amd64. Set from generic install config code
-		if compute.Architecture != types.ArchitectureAMD64 && compute.Architecture != "x86_64" {
-			fieldPath := field.NewPath(fmt.Sprintf("Compute[%d]", i), "Architecture")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, compute.Architecture))
-		}
 
 		if compute.Platform != (types.MachinePoolPlatform{}) {
 			fieldPath := field.NewPath(fmt.Sprintf("Compute[%d]", i), "Platform")
@@ -153,12 +172,6 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 	if installConfig.ControlPlane.Hyperthreading != "Enabled" {
 		fieldPath := field.NewPath("ControlPlane", "Hyperthreading")
 		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.ControlPlane.Hyperthreading))
-	}
-
-	// kubebuilder:default=amd64. Set from generic install config code
-	if installConfig.ControlPlane.Architecture != types.ArchitectureAMD64 && installConfig.ControlPlane.Architecture != "x86_64" {
-		fieldPath := field.NewPath("ControlPlane", "Architecture")
-		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.ControlPlane.Architecture))
 	}
 
 	if installConfig.ControlPlane.Platform != (types.MachinePoolPlatform{}) {
