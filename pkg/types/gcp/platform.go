@@ -35,6 +35,7 @@ type Platform struct {
 	// Region specifies the GCP region where the cluster will be created.
 	Region string `json:"region"`
 
+	// CreateFirewallRules is currently TechPreview.
 	// CreateFirewallRules specifies if the installer should create the
 	// cluster firewall rules in the gcp cloud network.
 	// +optional

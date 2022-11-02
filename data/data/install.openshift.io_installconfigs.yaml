@@ -2202,8 +2202,9 @@ spec:
                       of the subnet.
                     type: string
                   createFirewallRules:
-                    description: CreateFirewallRules specifies if the installer should
-                      create the cluster firewall rules in the gcp cloud network.
+                    description: CreateFirewallRules is currently TechPreview. CreateFirewallRules
+                      specifies if the installer should create the cluster firewall
+                      rules in the gcp cloud network.
                     enum:
                     - Enabled
                     - Disabled
