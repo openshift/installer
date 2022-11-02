@@ -238,7 +238,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: Unsupported value: \"arm64\": supported values: \"x86-64\", \"x86_64\", \"amd64\", Compute[0].Architecture: Unsupported value: \"arm64\": supported values: \"x86-64\", \"x86_64\", \"amd64\"]",
+			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: Unsupported value: \"arm64\": supported values: \"amd64\", Compute[0].Architecture: Unsupported value: \"arm64\": supported values: \"amd64\"]",
 		},
 		{
 			name: "valid configuration for none platform for sno",
@@ -324,13 +324,13 @@ networking:
   serviceNetwork: 
   - 172.30.0.0/16
 compute:
-  - architecture: x86_64
+  - architecture: amd64
     hyperthreading: Disabled
     name: worker
     platform: {}
     replicas: 2
 controlPlane:
-  architecture: x86_64
+  architecture: amd64
   hyperthreading: Disabled
   name: master
   platform: {}
