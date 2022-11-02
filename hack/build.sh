@@ -34,6 +34,7 @@ if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version
      exit 1
 fi
 
+export CGO_ENABLED=0
 # build terraform binaries before setting environment variables since it messes up make
 make -C terraform all
 
@@ -48,7 +49,6 @@ GOFLAGS="${GOFLAGS:--mod=vendor}"
 LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/version.Raw=${GIT_TAG} -X github.com/openshift/installer/pkg/version.Commit=${GIT_COMMIT} -X github.com/openshift/installer/pkg/version.defaultArch=${DEFAULT_ARCH}"
 TAGS="${TAGS:-}"
 OUTPUT="${OUTPUT:-bin/openshift-install}"
-export CGO_ENABLED=0
 
 case "${MODE}" in
 release)
