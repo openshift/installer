@@ -89,7 +89,8 @@ func credentialsFromFileOrUser(cloudEnv *azureenv.Environment) (*Credentials, er
 	os.Setenv(azureAuthEnv, authFilePath)
 	_, err := auth.NewAuthorizerFromFileWithResource(cloudEnv.ResourceManagerEndpoint)
 	if err != nil {
-		logrus.Debug("Could not get an azure authorizer from file. Asking user to provide authentication info")
+		logrus.Infof("Could not get an azure authorizer from file: %s", err.Error())
+		logrus.Infof("Asking user to provide authentication info")
 		credentials, err := askForCredentials()
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to retrieve credentials from user")
