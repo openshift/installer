@@ -189,7 +189,7 @@ func validateManagedZones(client API, ic *types.InstallConfig, fieldPath *field.
 
 	if ic.GCP.PrivateDNSZone != nil && ic.GCP.PrivateDNSZone.ID != "" {
 		project := findProject(ic.GCP.PrivateDNSZone, ic.GCP.ProjectID)
-		returnedZone, err := findDNSZone(client, ic.Platform.GCP.PrivateDNSZone, ic.GCP.ProjectID)
+		returnedZone, err := findDNSZone(client, ic.Platform.GCP.PrivateDNSZone, project)
 		if err != nil {
 			switch {
 			case IsNotFound(err):
