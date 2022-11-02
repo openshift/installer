@@ -115,7 +115,6 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
 	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), c.Networking, c)...)
-	fixAMD64ArchSupport(c.ControlPlane, c.Compute)
 	if c.ControlPlane != nil {
 		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
 	} else {
@@ -148,19 +147,6 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 	allErrs = append(allErrs, validateFeatureSet(c)...)
 
 	return allErrs
-}
-
-func fixAMD64ArchSupport(controlPlane *types.MachinePool, compute []types.MachinePool) {
-	// "AMD64" is the name chosen by AMD for their 64-bit extension to the Intel x86 instruction set.
-	//  Before release, it was called "x86-64" or "x86_64", and some distributions still use these names
-	if controlPlane != nil && (controlPlane.Architecture == "x86-64" || controlPlane.Architecture == "x86_64") {
-		controlPlane.Architecture = types.ArchitectureAMD64
-	}
-	for i, c := range compute {
-		if c.Architecture == "x86-64" || c.Architecture == "x86_64" {
-			compute[i].Architecture = types.ArchitectureAMD64
-		}
-	}
 }
 
 // ipAddressType indicates the address types provided for a given field
