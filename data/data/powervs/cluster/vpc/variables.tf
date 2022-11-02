@@ -3,6 +3,11 @@ variable "cluster_id" {
   description = "The ID created by the installer to uniquely identify the created cluster."
 }
 
+variable "publish_strategy" {
+  type        = string
+  description = "Publishing strategy used by cluster. Internal or External"
+}
+
 variable "resource_group" {
   type        = string
   description = "The name of the Power VS resource group to which the user belongs."
@@ -30,3 +35,14 @@ variable "vpc_name" {
   default     = ""
 }
 
+variable "vpc_gateway_name" {
+  type        = string
+  description = "Name of the pre-existing VPC gateway."
+  default     = ""
+}
+
+variable "vpc_gateway_attached" {
+  type        = bool
+  description = "Boolean indicating if the pre-existing VPC gateway already attached."
+  default     = false
+}

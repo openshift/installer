@@ -3,11 +3,13 @@ package powervs
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
+	"github.com/IBM/networking-go-sdk/dnssvcsv1"
 	"github.com/IBM/networking-go-sdk/dnszonesv1"
 	"github.com/IBM/networking-go-sdk/resourcerecordsv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
@@ -26,16 +28,22 @@ type API interface {
 	GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string, publish types.PublishingStrategy) ([]DNSRecordResponse, error)
 	GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error)
 	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]DNSZoneResponse, error)
+	GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error)
+	GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error)
+	GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vpcv1.PublicGateway, error)
+	GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error)
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetAPIKey() string
+	SetVPCServiceURLForRegion(ctx context.Context, region string) error
 }
 
 // Client makes calls to the PowerVS API.
 type Client struct {
-	APIKey        string
-	managementAPI *resourcemanagerv2.ResourceManagerV2
-	controllerAPI *resourcecontrollerv2.ResourceControllerV2
-	vpcAPI        *vpcv1.VpcV1
+	APIKey         string
+	managementAPI  *resourcemanagerv2.ResourceManagerV2
+	controllerAPI  *resourcecontrollerv2.ResourceControllerV2
+	vpcAPI         *vpcv1.VpcV1
+	dnsServicesAPI *dnssvcsv1.DnsSvcsV1
 }
 
 // cisServiceID is the Cloud Internet Services' catalog service ID.
@@ -93,6 +101,7 @@ func (c *Client) loadSDKServices() error {
 		c.loadResourceManagementAPI,
 		c.loadResourceControllerAPI,
 		c.loadVPCV1API,
+		c.loadDNSServicesAPI,
 	}
 
 	// Call all the load functions.
@@ -287,6 +296,120 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 	return allZones, nil
 }
 
+// GetDNSInstancePermittedNetworks gets the permitted VPC networks for a DNS Services instance
+func (c *Client) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	listPermittedNetworksOptions := c.dnsServicesAPI.NewListPermittedNetworksOptions(dnsID, dnsZone)
+	permittedNetworks, _, err := c.dnsServicesAPI.ListPermittedNetworksWithContext(ctx, listPermittedNetworksOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	networks := []string{}
+	for _, network := range permittedNetworks.PermittedNetworks {
+		networks = append(networks, *network.PermittedNetwork.VpcCrn)
+	}
+	return networks, nil
+}
+
+// GetVPCByName gets a VPC by its name.
+func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	listRegionsOptions := c.vpcAPI.NewListRegionsOptions()
+	listRegionsResponse, _, err := c.vpcAPI.ListRegionsWithContext(ctx, listRegionsOptions)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list vpc regions")
+	}
+
+	for _, region := range listRegionsResponse.Regions {
+		err := c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to set vpc api service url")
+		}
+
+		vpcs, detailedResponse, err := c.vpcAPI.ListVpcsWithContext(ctx, c.vpcAPI.NewListVpcsOptions())
+		if err != nil {
+			if detailedResponse.GetStatusCode() != http.StatusNotFound {
+				return nil, err
+			}
+		} else {
+			for _, vpc := range vpcs.Vpcs {
+				if *vpc.Name == vpcName {
+					return &vpc, nil
+				}
+			}
+		}
+	}
+
+	return nil, errors.New("failed to find VPC")
+}
+
+// GetPublicGatewayByVPC gets all PublicGateways in a region
+func (c *Client) GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vpcv1.PublicGateway, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	vpc, err := c.GetVPCByName(ctx, vpcName)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get VPC")
+	}
+
+	vpcCRN, err := crn.Parse(*vpc.CRN)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse VPC CRN")
+	}
+
+	err = c.SetVPCServiceURLForRegion(ctx, vpcCRN.Region)
+	if err != nil {
+		return nil, err
+	}
+
+	listPublicGatewaysOptions := c.vpcAPI.NewListPublicGatewaysOptions()
+	publicGatewayCollection, detailedResponse, err := c.vpcAPI.ListPublicGatewaysWithContext(ctx, listPublicGatewaysOptions)
+	if err != nil {
+		return nil, err
+	} else if detailedResponse.GetStatusCode() == http.StatusNotFound {
+		return nil, errors.New("failed to find publicGateways")
+	}
+	for _, gw := range publicGatewayCollection.PublicGateways {
+		if *vpc.ID == *gw.VPC.ID {
+			return &gw, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// GetSubnetByName gets a VPC Subnet by its name and region.
+func (c *Client) GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	err := c.SetVPCServiceURLForRegion(ctx, region)
+	if err != nil {
+		return nil, err
+	}
+
+	listSubnetsOptions := c.vpcAPI.NewListSubnetsOptions()
+	subnetCollection, detailedResponse, err := c.vpcAPI.ListSubnetsWithContext(ctx, listSubnetsOptions)
+	if err != nil {
+		return nil, err
+	} else if detailedResponse.GetStatusCode() == http.StatusNotFound {
+		return nil, errors.New("failed to find VPC Subnet")
+	}
+	for _, subnet := range subnetCollection.Subnets {
+		if subnetName == *subnet.Name {
+			return &subnet, nil
+		}
+	}
+
+	return nil, errors.New("failed to find VPC Subnet")
+}
+
 func (c *Client) loadResourceManagementAPI() error {
 	authenticator := &core.IamAuthenticator{
 		ApiKey: c.APIKey,
@@ -328,6 +451,34 @@ func (c *Client) loadVPCV1API() error {
 		return err
 	}
 	c.vpcAPI = vpcService
+	return nil
+}
+
+func (c *Client) loadDNSServicesAPI() error {
+	authenticator := &core.IamAuthenticator{
+		ApiKey: c.APIKey,
+	}
+	dnsService, err := dnssvcsv1.NewDnsSvcsV1(&dnssvcsv1.DnsSvcsV1Options{
+		Authenticator: authenticator,
+	})
+	if err != nil {
+		return err
+	}
+	c.dnsServicesAPI = dnsService
+	return nil
+}
+
+// SetVPCServiceURLForRegion will set the VPC Service URL to a specific IBM Cloud Region, in order to access Region scoped resources
+func (c *Client) SetVPCServiceURLForRegion(ctx context.Context, region string) error {
+	regionOptions := c.vpcAPI.NewGetRegionOptions(region)
+	vpcRegion, _, err := c.vpcAPI.GetRegionWithContext(ctx, regionOptions)
+	if err != nil {
+		return err
+	}
+	err = c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *vpcRegion.Endpoint))
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
