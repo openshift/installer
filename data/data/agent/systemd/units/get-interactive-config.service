@@ -1,0 +1,19 @@
+[Unit]
+Description=Get interactive user configuration at boot
+After=network-pre.target NetworkManager.service
+Before=network.target network.service
+
+[Service]
+Type=oneshot
+TTYPath=/dev/tty15
+ExecStartPre=/usr/bin/chvt 15
+ExecStart=/usr/local/bin/get-interactive-config.sh
+ExecStartPost=/usr/bin/chvt 1
+TimeoutStartSec=0
+StandardInput=tty
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+[Install]
+WantedBy=default.target
+RequiredBy=sshd.service systemd-logind.service getty@tty1.service

@@ -208,6 +208,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		"assisted-service-pod.service",
 		"assisted-service.service",
 		"create-cluster-and-infraenv.service",
+		"get-interactive-config.service",
 		"node-zero.service",
 		"multipathd.service",
 		"selinux.service",
