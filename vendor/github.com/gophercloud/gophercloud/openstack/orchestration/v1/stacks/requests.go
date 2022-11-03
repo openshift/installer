@@ -253,6 +253,9 @@ type ListOpts struct {
 	// ShowNested set to `true` to include nested stacks in the list.
 	ShowNested bool `q:"show_nested"`
 
+	// ShowHidden set to `true` to include hiddened stacks in the list.
+	ShowHidden bool `q:"show_hidden"`
+
 	// Tags lists stacks that contain one or more simple string tags.
 	Tags string `q:"tags"`
 
