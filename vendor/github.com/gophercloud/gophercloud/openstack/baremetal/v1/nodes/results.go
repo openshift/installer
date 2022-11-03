@@ -48,6 +48,23 @@ func ExtractNodesInto(r pagination.Page, v interface{}) error {
 	return r.(NodePage).Result.ExtractIntoSlicePtr(v, "nodes")
 }
 
+// Extract interprets a BIOSSettingsResult as an array of BIOSSetting structs, if possible.
+func (r ListBIOSSettingsResult) Extract() ([]BIOSSetting, error) {
+	var s struct {
+		Settings []BIOSSetting `json:"bios"`
+	}
+
+	err := r.ExtractInto(&s)
+	return s.Settings, err
+}
+
+// Extract interprets a SingleBIOSSettingResult as a BIOSSetting struct, if possible.
+func (r GetBIOSSettingResult) Extract() (*BIOSSetting, error) {
+	var s SingleBIOSSetting
+	err := r.ExtractInto(&s)
+	return &s.Setting, err
+}
+
 // Node represents a node in the OpenStack Bare Metal API.
 type Node struct {
 	// Whether automated cleaning is enabled or disabled on this node.
@@ -145,6 +162,9 @@ type Node struct {
 	// For more details, see: https://docs.openstack.org/ironic/latest/install/configure-nova-flavors.html
 	ResourceClass string `json:"resource_class"`
 
+	// BIOS interface for a Node, e.g. “redfish”.
+	BIOSInterface string `json:"bios_interface"`
+
 	// Boot interface for a Node, e.g. “pxe”.
 	BootInterface string `json:"boot_interface"`
 
@@ -192,6 +212,9 @@ type Node struct {
 
 	// A string or UUID of the tenant who owns the baremetal node.
 	Owner string `json:"owner"`
+
+	// Static network configuration to use during deployment and cleaning.
+	NetworkData map[string]interface{} `json:"network_data"`
 }
 
 // NodePage abstracts the raw results of making a List() request against
@@ -270,7 +293,7 @@ type BootDeviceResult struct {
 	gophercloud.Result
 }
 
-// BootDeviceResult is the response from a GetBootDevice operation. Call its Extract
+// SetBootDeviceResult is the response from a SetBootDevice operation. Call its Extract
 // method to interpret it as a BootDeviceOpts struct.
 type SetBootDeviceResult struct {
 	gophercloud.ErrResult
@@ -288,6 +311,18 @@ type ChangePowerStateResult struct {
 	gophercloud.ErrResult
 }
 
+// ListBIOSSettingsResult is the response from a ListBIOSSettings operation. Call its Extract
+// method to interpret it as an array of BIOSSetting structs.
+type ListBIOSSettingsResult struct {
+	gophercloud.Result
+}
+
+// GetBIOSSettingResult is the response from a GetBIOSSetting operation. Call its Extract
+// method to interpret it as a BIOSSetting struct.
+type GetBIOSSettingResult struct {
+	gophercloud.Result
+}
+
 // Each element in the response will contain a “result” variable, which will have a value of “true” or “false”, and
 // also potentially a reason. A value of nil indicates that the Node’s driver does not support that interface.
 type DriverValidation struct {
@@ -298,6 +333,7 @@ type DriverValidation struct {
 //  Ironic validates whether the Node’s driver has enough information to manage the Node. This polls each interface on
 //  the driver, and returns the status of that interface as an DriverValidation struct.
 type NodeValidation struct {
+	BIOS       DriverValidation `json:"bios"`
 	Boot       DriverValidation `json:"boot"`
 	Console    DriverValidation `json:"console"`
 	Deploy     DriverValidation `json:"deploy"`
@@ -308,6 +344,51 @@ type NodeValidation struct {
 	RAID       DriverValidation `json:"raid"`
 	Rescue     DriverValidation `json:"rescue"`
 	Storage    DriverValidation `json:"storage"`
+}
+
+// A particular BIOS setting for a node in the OpenStack Bare Metal API.
+type BIOSSetting struct {
+
+	// Identifier for the BIOS setting.
+	Name string `json:"name"`
+
+	// Value of the BIOS setting.
+	Value string `json:"value"`
+
+	// The following fields are returned in microversion 1.74 or later
+	// when using the `details` option
+
+	// The type of setting - Enumeration, String, Integer, or Boolean.
+	AttributeType string `json:"attribute_type"`
+
+	// The allowable value for an Enumeration type setting.
+	AllowableValues []string `json:"allowable_values"`
+
+	// The lowest value for an Integer type setting.
+	LowerBound *int `json:"lower_bound"`
+
+	// The highest value for an Integer type setting.
+	UpperBound *int `json:"upper_bound"`
+
+	// Minimum length for a String type setting.
+	MinLength *int `json:"min_length"`
+
+	// Maximum length for a String type setting.
+	MaxLength *int `json:"max_length"`
+
+	// Whether or not this setting is read only.
+	ReadOnly *bool `json:"read_only"`
+
+	// Whether or not a reset is required after changing this setting.
+	ResetRequired *bool `json:"reset_required"`
+
+	// Whether or not this setting's value is unique to this node, e.g.
+	// a serial number.
+	Unique *bool `json:"unique"`
+}
+
+type SingleBIOSSetting struct {
+	Setting BIOSSetting
 }
 
 // ChangeStateResult is the response from any state change operation. Call its ExtractErr

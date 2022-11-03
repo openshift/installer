@@ -57,3 +57,11 @@ func provisionStateURL(client *gophercloud.ServiceClient, id string) string {
 func raidConfigURL(client *gophercloud.ServiceClient, id string) string {
 	return statesResourceURL(client, id, "raid")
 }
+
+func biosListSettingsURL(client *gophercloud.ServiceClient, id string) string {
+	return client.ServiceURL("nodes", id, "bios")
+}
+
+func biosGetSettingURL(client *gophercloud.ServiceClient, id string, setting string) string {
+	return client.ServiceURL("nodes", id, "bios", setting)
+}
