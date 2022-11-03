@@ -621,12 +621,12 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 		return err
 	}
 
+	if err := addRouterCAToClusterCA(ctx, config, rootOpts.dir); err != nil {
+		return err
+	}
+
 	consoleURL, err := getConsole(ctx, config)
-	if err == nil {
-		if err = addRouterCAToClusterCA(ctx, config, rootOpts.dir); err != nil {
-			return err
-		}
-	} else {
+	if err != nil {
 		logrus.Warnf("Cluster does not have a console available: %v", err)
 	}
 
