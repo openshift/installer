@@ -270,11 +270,17 @@ func (o *ClusterUninstaller) findResources() (err error) {
 	}
 	if len(tagResources) > 0 {
 		var deletedResources []ResourceArn
+		convertedResources := make(map[string]bool)
 		for _, resource := range tagResources {
-			arn, err := convertResourceArn(resource.ResourceARN)
+			var resourceArn string = resource.ResourceARN
+			if convertedResources[resourceArn] {
+				continue
+			}
+			arn, err := convertResourceArn(resourceArn)
 			if err != nil {
 				continue
 			}
+			convertedResources[resourceArn] = true
 			deletedResources = append(deletedResources, arn)
 		}
 
