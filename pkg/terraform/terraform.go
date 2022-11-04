@@ -28,8 +28,10 @@ func newTFExec(datadir string, terraformDir string) (*tfexec.Terraform, error) {
 	// terraform-exec will not accept debug logs unless a log file path has
 	// been specified. And it makes sense since the logging is very verbose.
 	if path, ok := os.LookupEnv("TF_LOG_PATH"); ok {
-		tf.SetLog(os.Getenv("TF_LOG"))
 		tf.SetLogPath(path)
+		tf.SetLog(os.Getenv("TF_LOG"))
+		tf.SetLogCore(os.Getenv("TF_LOG_CORE"))
+		tf.SetLogProvider(os.Getenv("TF_LOG_PROVIDER"))
 	}
 
 	// Add terraform info logs to the installer log
