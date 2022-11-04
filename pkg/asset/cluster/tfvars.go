@@ -385,7 +385,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 
 		instanceServiceAccount := ""
-		if installConfig.Config.CredentialsMode == types.PassthroughCredentialsMode {
+
+		// Passthrough service accounts are only needed for GCP XPN.
+		ic := installConfig.Config
+		if len(ic.GCP.NetworkProjectID) > 0 && ic.CredentialsMode == types.PassthroughCredentialsMode {
 			var found bool
 			serviceAccount := make(map[string]interface{})
 			err := json.Unmarshal([]byte(sess.Credentials.JSON), &serviceAccount)

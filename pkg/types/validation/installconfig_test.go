@@ -2012,6 +2012,92 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: "platform.gcp.createFirewallRules: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field",
 		},
+		{
+			name: "GCP BYO PUBLIC DNS SHOULD return error if used WITHOUT tech preview",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.PublicDNSZone = &gcp.DNSZone{
+					ID:        "myZone",
+					ProjectID: "myProject",
+				}
+
+				return c
+			}(),
+			expectedError: "platform.gcp.publicDNSZone.projectID: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field",
+		},
+		{
+			name: "GCP BYO PRIVATE DNS SHOULD return error if used WITHOUT tech preview",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
+					ID:        "myZone",
+					ProjectID: "myProject",
+				}
+
+				return c
+			}(),
+			expectedError: "platform.gcp.privateDNSZone.projectID: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field",
+		},
+		{
+			name: "GCP BYO DNS should NOT return error if used WITH tech preview",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.PublicDNSZone = &gcp.DNSZone{
+					ID:        "myZone",
+					ProjectID: "myProject",
+				}
+				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
+					ID:        "myZone",
+					ProjectID: "myProject",
+				}
+				c.FeatureSet = "TechPreviewNoUpgrade"
+
+				return c
+			}(),
+		},
+		{
+			name: "GCP XPN SHOULD return an error if used WITHOUT tech preview",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.NetworkProjectID = "myNetworkProject"
+				c.Platform.GCP.ControlPlaneSubnet = "controlPlaneSubnet"
+				c.Platform.GCP.ComputeSubnet = "computeSubnet"
+				c.Platform.GCP.Network = "vpc"
+				c.CredentialsMode = "Passthrough"
+
+				return c
+			}(),
+			expectedError: "platform.gcp.networkProjectID: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field",
+		},
+		{
+			name: "GCP XPN SHOULD NOT return an error if used WITH tech preview",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.NetworkProjectID = "myNetworkProject"
+				c.Platform.GCP.ControlPlaneSubnet = "controlPlaneSubnet"
+				c.Platform.GCP.ComputeSubnet = "computeSubnet"
+				c.Platform.GCP.Network = "vpc"
+				c.CredentialsMode = "Passthrough"
+				c.FeatureSet = "TechPreviewNoUpgrade"
+
+				return c
+			}(),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

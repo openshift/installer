@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 
@@ -96,7 +97,8 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 	}
 
 	instanceServiceAccount := fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID)
-	if credentialsMode == types.PassthroughCredentialsMode {
+	// Passthrough service accounts are only needed for GCP XPN.
+	if len(platform.NetworkProjectID) > 0 && credentialsMode == types.PassthroughCredentialsMode {
 		sess, err := gcpconfig.GetSession(context.TODO())
 		if err != nil {
 			return nil, err
