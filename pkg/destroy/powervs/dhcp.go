@@ -3,7 +3,10 @@ package powervs
 import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"math"
 	"strings"
+	"time"
 )
 
 const (
@@ -72,7 +75,7 @@ func (o *ClusterUninstaller) destroyDHCPNetwork(item cloudResource) error {
 	_, err = o.dhcpClient.Get(item.id)
 	if err != nil {
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted DHCP network %q", item.name)
+		o.Logger.Infof("Deleted DHCP Network %q", item.name)
 		return nil
 	}
 
@@ -85,7 +88,7 @@ func (o *ClusterUninstaller) destroyDHCPNetwork(item cloudResource) error {
 	}
 
 	o.deletePendingItems(item.typeName, []cloudResource{item})
-	o.Logger.Infof("Deleted DHCP network %q", item.name)
+	o.Logger.Infof("Deleted DHCP Network %q", item.name)
 
 	return nil
 }
@@ -93,44 +96,74 @@ func (o *ClusterUninstaller) destroyDHCPNetwork(item cloudResource) error {
 // destroyDHCPNetworks searches for DHCP networks that are in a previous list
 // the cluster's infra ID.
 func (o *ClusterUninstaller) destroyDHCPNetworks() error {
-	found, err := o.listDHCPNetworks()
+	firstPassList, err := o.listDHCPNetworks()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(dhcpTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
+
+	items := o.insertPendingItems(dhcpTypeName, firstPassList.list())
 
 	ctx, _ := o.contextWithTimeout()
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyDHCPNetworks: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
-
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted DHCP network %q", item.name)
-				continue
-			}
-			err := o.destroyDHCPNetwork(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyDHCPNetworks: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(dhcpTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.destroyDHCPNetwork(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyDHCPNetworks: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(dhcpTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyDHCPNetworks: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroyDHCPNetworks: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listDHCPNetworks()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyDHCPNetworks: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyDHCPNetworks: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }

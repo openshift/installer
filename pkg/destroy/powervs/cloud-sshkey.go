@@ -2,11 +2,13 @@ package powervs
 
 import (
 	"context"
-	"strings"
-
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"math"
+	"strings"
+	"time"
 )
 
 const (
@@ -16,13 +18,6 @@ const (
 // listCloudSSHKeys lists images in the vpc.
 func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 	o.Logger.Debugf("Listing Cloud SSHKeys")
-
-	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("listCloudSSHKeys: case <-o.Context.Done()")
-		return nil, o.Context.Err() // we're cancelled, abort
-	default:
-	}
 
 	// https://raw.githubusercontent.com/IBM/vpc-go-sdk/master/vpcv1/vpc_v1.go
 	var (
@@ -38,6 +33,13 @@ func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 	)
 
 	ctx, _ = o.contextWithTimeout()
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("listCloudSSHKeys: case <-ctx.Done()")
+		return nil, o.Context.Err() // we're cancelled, abort
+	default:
+	}
 
 	listKeysOptions = o.vpcSvc.NewListKeysOptions()
 	listKeysOptions.SetLimit(perPage)
@@ -122,22 +124,20 @@ func (o *ClusterUninstaller) deleteCloudSSHKey(item cloudResource) error {
 
 	ctx, _ = o.contextWithTimeout()
 
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("deleteCloudSSHKey: case <-ctx.Done()")
+		return o.Context.Err() // we're cancelled, abort
+	default:
+	}
+
 	getKeyOptions = o.vpcSvc.NewGetKeyOptions(item.id)
 
 	_, _, err = o.vpcSvc.GetKey(getKeyOptions)
 	if err != nil {
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted Cloud sshKey %q", item.name)
+		o.Logger.Infof("Deleted Cloud SSHKey %q", item.name)
 		return nil
-	}
-
-	o.Logger.Debugf("Deleting Cloud sshKey %q", item.name)
-
-	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("deleteCloudSSHKey: case <-o.Context.Done()")
-		return o.Context.Err() // we're cancelled, abort
-	default:
 	}
 
 	deleteKeyOptions = o.vpcSvc.NewDeleteKeyOptions(item.id)
@@ -147,50 +147,83 @@ func (o *ClusterUninstaller) deleteCloudSSHKey(item cloudResource) error {
 		return errors.Wrapf(err, "failed to delete sshKey %s", item.name)
 	}
 
+	o.Logger.Infof("Deleted Cloud SSHKey %q", item.name)
+	o.deletePendingItems(item.typeName, []cloudResource{item})
+
 	return nil
 }
 
-// destroyCloudSSHKeys removes all image resources that have a name prefixed
+// destroyCloudSSHKeys removes all key resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyCloudSSHKeys() error {
-	found, err := o.listCloudSSHKeys()
+	firstPassList, err := o.listCloudSSHKeys()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(cloudSSHKeyTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
+
+	items := o.insertPendingItems(cloudSSHKeyTypeName, firstPassList.list())
 
 	ctx, _ := o.contextWithTimeout()
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyCloudSSHKeys: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
-
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted sshKey %q", item.name)
-				continue
-			}
-			err := o.deleteCloudSSHKey(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyCloudSSHKeys: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(cloudSSHKeyTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.deleteCloudSSHKey(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyCloudSSHKeys: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(cloudSSHKeyTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyCloudSSHKeys: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroyCloudSSHKeys: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listCloudSSHKeys()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyCloudSSHKeys: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyCloudSSHKeys: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }

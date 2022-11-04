@@ -3,8 +3,10 @@ package powervs
 import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/pkg/errors"
-	"log"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"math"
 	"strings"
+	"time"
 )
 
 // listCloudConnections lists cloud connections in the cloud.
@@ -22,16 +24,18 @@ func (o *ClusterUninstaller) listCloudConnections() (cloudResources, error) {
 
 	o.Logger.Debugf("Listing Cloud Connections")
 
+	ctx, _ := o.contextWithTimeout()
+
 	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("listCloudConnections: case <-o.Context.Done()")
+	case <-ctx.Done():
+		o.Logger.Debugf("listCloudConnections: case <-ctx.Done()")
 		return nil, o.Context.Err() // we're cancelled, abort
 	default:
 	}
 
 	cloudConnections, err = o.cloudConnectionClient.GetAll()
 	if err != nil {
-		log.Fatalf("Failed to list cloud connections: %v", err)
+		return nil, errors.Wrapf(err, "failed to list cloud connections")
 	}
 
 	var foundOne = false
@@ -47,7 +51,7 @@ func (o *ClusterUninstaller) listCloudConnections() (cloudResources, error) {
 				errors.Errorf("Failed to delete cloud connection (%s): %v", *cloudConnection.CloudConnectionID, err)
 			}
 
-			o.Logger.Debugf("listCloudConnections: jobReference.ID = %s\n", *jobReference.ID)
+			o.Logger.Debugf("listCloudConnections: jobReference.ID = %s", *jobReference.ID)
 
 			result = append(result, cloudResource{
 				key:      *jobReference.ID,
@@ -71,44 +75,82 @@ func (o *ClusterUninstaller) listCloudConnections() (cloudResources, error) {
 // destroyCloudConnections removes all cloud connections that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyCloudConnections() error {
-	found, err := o.listCloudConnections()
+	firstPassList, err := o.listCloudConnections()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(jobTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
+
+	items := o.insertPendingItems(jobTypeName, firstPassList.list())
 
 	ctx, _ := o.contextWithTimeout()
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyCloudConnections: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
-
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted job %q", item.name)
-				continue
-			}
-			err := o.deleteJob(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyCloudConnections: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(jobTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			result, err2 := o.deleteJob(item)
+			switch result {
+			case DeleteJobSuccess:
+				o.Logger.Debugf("destroyCloudConnections: deleteJob returns DeleteJobSuccess")
+				return true, nil
+			case DeleteJobRunning:
+				o.Logger.Debugf("destroyCloudConnections: deleteJob returns DeleteJobRunning")
+				return false, nil
+			case DeleteJobError:
+				o.Logger.Debugf("destroyCloudConnections: deleteJob returns DeleteJobError: %v", err2)
+				return false, err2
+			default:
+				return false, errors.Errorf("destroyCloudConnections: deleteJob unknown result enum %v", result)
+			}
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyCloudConnections: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(jobTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyCloudConnections: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroyCloudConnections: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listCloudConnections()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyCloudConnections: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyCloudConnections: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }

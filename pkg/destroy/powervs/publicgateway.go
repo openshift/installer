@@ -2,11 +2,13 @@ package powervs
 
 import (
 	"context"
-	"strings"
-
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"math"
+	"strings"
+	"time"
 )
 
 const (
@@ -16,8 +18,8 @@ const (
 // listAttachedSubnets lists subnets attached to the specified publicGateway.
 func (o *ClusterUninstaller) listAttachedSubnets(publicGatewayID string) (cloudResources, error) {
 	o.Logger.Debugf("Finding subnets attached to public gateway %s", publicGatewayID)
-	ctx, cancel := o.contextWithTimeout()
-	defer cancel()
+
+	ctx, _ := o.contextWithTimeout()
 
 	options := o.vpcSvc.NewListSubnetsOptions()
 	resources, _, err := o.vpcSvc.ListSubnetsWithContext(ctx, options)
@@ -60,8 +62,8 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 	ctx, _ = o.contextWithTimeout()
 
 	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("listPublicGateways: case <-o.Context.Done()")
+	case <-ctx.Done():
+		o.Logger.Debugf("listPublicGateways: case <-ctx.Done()")
 		return nil, o.Context.Err() // we're cancelled, abort
 	default:
 	}
@@ -143,23 +145,21 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 func (o *ClusterUninstaller) deletePublicGateway(item cloudResource) error {
 	ctx, _ := o.contextWithTimeout()
 
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("deletePublicGateway: case <-ctx.Done()")
+		return o.Context.Err() // we're cancelled, abort
+	default:
+	}
+
 	getPublicGatewayOptions := o.vpcSvc.NewGetPublicGatewayOptions(item.id)
 
 	_, _, err := o.vpcSvc.GetPublicGatewayWithContext(ctx, getPublicGatewayOptions)
 	if err != nil {
 		o.Logger.Debugf("deletePublicGateway: publicGateway %q no longer exists", item.name)
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted publicGateway %q", item.name)
+		o.Logger.Infof("Deleted Public Gateway %q", item.name)
 		return nil
-	}
-
-	o.Logger.Debugf("Deleting publicGateway %q", item.name)
-
-	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("deletePublicGateway: case <-o.Context.Done()")
-		return o.Context.Err() // we're cancelled, abort
-	default:
 	}
 
 	// Detach gateway from any subnets using it
@@ -183,50 +183,83 @@ func (o *ClusterUninstaller) deletePublicGateway(item cloudResource) error {
 		return errors.Wrapf(err, "failed to delete publicGateway %s", item.name)
 	}
 
+	o.Logger.Infof("Deleted Public Gateway %q", item.name)
+	o.deletePendingItems(item.typeName, []cloudResource{item})
+
 	return nil
 }
 
 // destroyPublicGateways removes all publicGateway resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyPublicGateways() error {
-	found, err := o.listPublicGateways()
+	firstPassList, err := o.listPublicGateways()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(publicGatewayTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
+
+	items := o.insertPendingItems(publicGatewayTypeName, firstPassList.list())
 
 	ctx, _ := o.contextWithTimeout()
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyPublicGateways: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
-
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted publicGateway %q", item.name)
-				continue
-			}
-			err := o.deletePublicGateway(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyPublicGateways: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(publicGatewayTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.deletePublicGateway(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyPublicGateways: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(publicGatewayTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyPublicGateways: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroyPublicGateways: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listPublicGateways()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyPublicGateways: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyPublicGateways: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }
