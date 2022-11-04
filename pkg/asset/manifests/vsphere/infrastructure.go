@@ -1,6 +1,8 @@
 package vsphere
 
 import (
+	"fmt"
+
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
@@ -35,7 +37,7 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig) *configv1.VSpherePlat
 					Datacenter:     topology.Datacenter,
 					ComputeCluster: topology.ComputeCluster,
 					Networks:       topology.Networks,
-					Datastore:      topology.Datastore,
+					Datastore:      fmt.Sprintf("/%s/datastore/%s", topology.Datacenter, topology.Datastore),
 					ResourcePool:   topology.ResourcePool,
 					Folder:         topology.Folder,
 				},
