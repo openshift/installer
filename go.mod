@@ -262,7 +262,7 @@ replace k8s.io/client-go => k8s.io/client-go v0.25.0
 replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 
 // Use BGP config from https://github.com/openshift/api/pull/1321
-replace github.com/openshift/api => github.com/shiftstack/api v0.0.0-20221026154226-2bc540efa72a
+replace github.com/openshift/api => github.com/shiftstack/api v0.0.0-20221203003222-27ae90479536
 
 replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0
 

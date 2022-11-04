@@ -84,6 +84,7 @@ spec:
                         minLength: 1
                         type: string
                       weight:
+                        default: 100
                         description: weight as an integer between 0 and 256, default 100, that specifies the target's relative weight against other target reference objects. 0 suppresses requests to this backend.
                         format: int32
                         maximum: 256
@@ -218,6 +219,7 @@ spec:
                       minLength: 1
                       type: string
                     weight:
+                      default: 100
                       description: weight as an integer between 0 and 256, default 100, that specifies the target's relative weight against other target reference objects. 0 suppresses requests to this backend.
                       format: int32
                       maximum: 256

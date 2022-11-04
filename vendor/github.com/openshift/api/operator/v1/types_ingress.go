@@ -319,6 +319,11 @@ type NodePlacement struct {
 	//
 	// These defaults are subject to change.
 	//
+	// Note that using nodeSelector.matchExpressions is not supported.  Only
+	// nodeSelector.matchLabels may be used.  This is a limitation of the
+	// Kubernetes API: the pod spec does not allow complex expressions for
+	// node selectors.
+	//
 	// +optional
 	NodeSelector *metav1.LabelSelector `json:"nodeSelector,omitempty"`
 
