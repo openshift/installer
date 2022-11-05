@@ -10,6 +10,10 @@ function gather_agent_data() {
 	( >&2 echo -n "Gathering agent installation data" )
 	mkdir -p "${ARTIFACTS_DIR}/etc"
 	cp -a /etc/assisted{,-service} "${ARTIFACTS_DIR}/etc/"
+	# Redact pull secrets
+	for manifest in "${ARTIFACTS_DIR}"/etc/assisted/manifests/*; do
+		sed -i -e '/"auth":/ s/: *"[A-Za-z0-9+/]*=*"/: "<redacted>"/g' "${manifest}"
+	done
 	( >&2 echo -n ".")
 	mkdir "${ARTIFACTS_DIR}/etc/containers"
 	cp -a /etc/containers/registries.conf "${ARTIFACTS_DIR}/etc/containers/"
