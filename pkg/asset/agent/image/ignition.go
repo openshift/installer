@@ -47,12 +47,9 @@ type Ignition struct {
 // agentTemplateData is the data used to replace values in agent template
 // files.
 type agentTemplateData struct {
-	ServiceProtocol string
-	ServiceBaseURL  string
-	PullSecret      string
-	// PullSecretToken is token to use for authentication when AUTH_TYPE=rhsso
-	// in assisted-service
-	PullSecretToken           string
+	ServiceProtocol           string
+	ServiceBaseURL            string
+	PullSecret                string
 	NodeZeroIP                string
 	AssistedServiceHost       string
 	APIVIP                    string
@@ -259,7 +256,6 @@ func getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage,
 		ServiceProtocol:           serviceBaseURL.Scheme,
 		ServiceBaseURL:            serviceBaseURL.String(),
 		PullSecret:                pullSecret,
-		PullSecretToken:           "",
 		NodeZeroIP:                serviceBaseURL.Hostname(),
 		AssistedServiceHost:       serviceBaseURL.Host,
 		APIVIP:                    agentClusterInstall.Spec.APIVIP,
