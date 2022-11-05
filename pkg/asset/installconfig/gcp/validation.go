@@ -388,11 +388,9 @@ func ValidateEnabledServices(ctx context.Context, client API, project string) er
 		"storage-api.googleapis.com",
 		"storage-component.googleapis.com")
 	projectServices, err := client.GetEnabledServices(ctx, project)
-
 	if err != nil {
 		if IsForbidden(err) {
-			logrus.Warn("Permission denied. Unable to fetch enabled services for project.")
-			return nil
+			return errors.Wrap(err, "unable to fetch enabled services for project. Make sure 'serviceusage.googleapis.com' is enabled")
 		}
 		return err
 	}
