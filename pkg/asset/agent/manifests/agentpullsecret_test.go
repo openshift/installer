@@ -45,7 +45,7 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
 				},
 				StringData: map[string]string{
-					".dockerconfigjson": testSecret,
+					".dockerconfigjson": "{\n  \"auths\": {\n    \"cloud.openshift.com\": {\n      \"auth\": \"b3BlUTA=\",\n      \"email\": \"test@redhat.com\"\n    }\n  }\n}",
 				},
 			},
 		},
@@ -109,7 +109,7 @@ stringData:
 					Namespace: "cluster-0",
 				},
 				StringData: map[string]string{
-					".dockerconfigjson": "{\"auths\":{\"cloud.test\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}",
+					".dockerconfigjson": "{\n  \"auths\": {\n    \"cloud.test\": {\n      \"auth\": \"c3VwZXItc2VjcmV0Cg==\"\n    }\n  }\n}",
 				},
 			},
 		},
