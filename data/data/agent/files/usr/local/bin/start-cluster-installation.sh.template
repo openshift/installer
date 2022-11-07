@@ -58,11 +58,13 @@ if [[ "${APIVIP}" != "" ]]; then
     fi
 fi
 
-while [[ "${cluster_status}" != "ready" ]]
+while [[ "${cluster_status}" != "installed" ]]
 do
+    sleep 5
     cluster_status=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].status)
     echo "Cluster status: ${cluster_status}" 1>&2
-    sleep 5
+    # Start the cluster install, if it transitions back to Ready due to a failure,
+    # then it will be restarted
     if [[ "${cluster_status}" == "ready" ]]; then
         echo "Starting cluster installation..." 1>&2
         curl -s -S -X POST "${BASE_URL}/clusters/${cluster_id}/actions/install" \
