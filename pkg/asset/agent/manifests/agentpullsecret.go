@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/validate"
 	"github.com/pkg/errors"
 )
 
@@ -124,13 +125,17 @@ func (a *AgentPullSecret) finish() error {
 }
 
 func (a *AgentPullSecret) validatePullSecret() field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if err := a.validateSecretIsNotEmpty(); err != nil {
-		allErrs = append(allErrs, err...)
+		return err
 	}
 
-	return allErrs
+	fieldPath := field.NewPath("StringData")
+	dockerConfig := a.Config.StringData[pullSecretKey]
+	if err := validate.ImagePullSecret(dockerConfig); err != nil {
+		return field.ErrorList{field.Invalid(fieldPath, dockerConfig, err.Error())}
+	}
+
+	return field.ErrorList{}
 }
 
 func (a *AgentPullSecret) validateSecretIsNotEmpty() field.ErrorList {
