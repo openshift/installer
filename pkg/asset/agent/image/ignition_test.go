@@ -64,6 +64,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	releaseImageMirror := "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 	infraEnvID := "random-infra-env-id"
 	haveMirrorConfig := true
+	publicContainerRegistries := "quay.io,registry.ci.openshift.org"
 
 	releaseImageList, err := releaseImageList(clusterImageSet.Spec.ReleaseImage, "x86_64")
 	assert.NoError(t, err)
@@ -79,7 +80,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 		Version:          &ver,
 	}
 
-	templateData := getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, agentClusterInstall, infraEnvID, osImage)
+	templateData := getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, "http://"+nodeZeroIP+":8090/", templateData.ServiceBaseURL)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -93,6 +94,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, releaseImage, templateData.ReleaseImage)
 	assert.Equal(t, releaseImageMirror, templateData.ReleaseImageMirror)
 	assert.Equal(t, haveMirrorConfig, templateData.HaveMirrorConfig)
+	assert.Equal(t, publicContainerRegistries, templateData.PublicContainerRegistries)
 	assert.Equal(t, infraEnvID, templateData.InfraEnvID)
 	assert.Equal(t, osImage, templateData.OSImage)
 }
@@ -659,6 +661,86 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 			mirror := getMirrorFromRelease(tc.release, &tc.registriesConf)
 
 			assert.Equal(t, tc.expectedMirror, mirror)
+
+		})
+	}
+}
+
+func TestIgnition_getPublicContainerRegistries(t *testing.T) {
+
+	cases := []struct {
+		name               string
+		registriesConf     mirror.RegistriesConf
+		expectedRegistries string
+	}{
+		{
+			name:               "no-mirror",
+			registriesConf:     mirror.RegistriesConf{},
+			expectedRegistries: "quay.io",
+		},
+		{
+			name: "mirror-one-entry",
+			registriesConf: mirror.RegistriesConf{
+				File: &asset.File{
+					Filename: "registries.conf",
+					Data:     []byte(""),
+				},
+				MirrorConfig: []mirror.RegistriesConfig{
+					{
+						Location: "some.registry.org/release",
+						Mirror:   "some.mirror.org",
+					},
+				},
+			},
+			expectedRegistries: "some.registry.org",
+		},
+		{
+			name: "mirror-multiple-entries",
+			registriesConf: mirror.RegistriesConf{
+				File: &asset.File{
+					Filename: "registries.conf",
+					Data:     []byte(""),
+				},
+				MirrorConfig: []mirror.RegistriesConfig{
+					{
+						Location: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+						Mirror:   "localhost:5000/openshift4/openshift/release",
+					},
+					{
+						Location: "registry.ci.openshift.org/ocp/release",
+						Mirror:   "localhost:5000/openshift-release-dev/ocp-release",
+					},
+				},
+			},
+			expectedRegistries: "quay.io,registry.ci.openshift.org",
+		},
+		{
+			name: "duplicate-entries",
+			registriesConf: mirror.RegistriesConf{
+				File: &asset.File{
+					Filename: "registries.conf",
+					Data:     []byte(""),
+				},
+				MirrorConfig: []mirror.RegistriesConfig{
+					{
+						Location: "registry.ci.openshift.org/ocp-v4.0-art-dev",
+						Mirror:   "localhost:5000/openshift4/openshift/release",
+					},
+					{
+						Location: "registry.ci.openshift.org/ocp/release",
+						Mirror:   "localhost:5000/openshift-release-dev/ocp-release",
+					},
+				},
+			},
+			expectedRegistries: "registry.ci.openshift.org",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			publicContainerRegistries := getPublicContainerRegistries(&tc.registriesConf)
+
+			assert.Equal(t, tc.expectedRegistries, publicContainerRegistries)
 
 		})
 	}
