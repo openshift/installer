@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -66,15 +67,6 @@ func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
 		}
 		a.Config = secret
 
-		secretData, err := yaml.Marshal(secret)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal agent secret")
-		}
-
-		a.File = &asset.File{
-			Filename: agentPullSecretFilename,
-			Data:     secretData,
-		}
 	}
 
 	return a.finish()
@@ -103,7 +95,7 @@ func (a *AgentPullSecret) Load(f asset.FileFetcher) (bool, error) {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", agentPullSecretFilename)
 	}
 
-	a.File, a.Config = file, config
+	a.Config = config
 	if err = a.finish(); err != nil {
 		return false, err
 	}
@@ -121,7 +113,34 @@ func (a *AgentPullSecret) finish() error {
 		return errors.Wrapf(err, "invalid PullSecret configuration")
 	}
 
+	// Normalise the JSON formatting so that we can redact the file reliably
+	normal, err := normalizeDockerConfig(a.Config.StringData[pullSecretKey])
+	if err != nil {
+		return err
+	}
+	a.Config.StringData[pullSecretKey] = normal
+
+	secretData, err := yaml.Marshal(a.Config)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal agent secret")
+	}
+	a.File = &asset.File{
+		Filename: agentPullSecretFilename,
+		Data:     secretData,
+	}
 	return nil
+}
+
+func normalizeDockerConfig(stringData string) (string, error) {
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(stringData), &data); err != nil {
+		return stringData, err
+	}
+	normal, err := json.MarshalIndent(data, "", "  ")
+	if err == nil {
+		stringData = string(normal)
+	}
+	return stringData, err
 }
 
 func (a *AgentPullSecret) validatePullSecret() field.ErrorList {
