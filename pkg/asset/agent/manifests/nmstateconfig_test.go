@@ -165,14 +165,13 @@ func TestNMStateConfig_Generate(t *testing.T) {
 				assert.Equal(t, "cluster-manifests/nmstateconfig.yaml", configFile.Filename)
 
 				// Split up the file into multiple YAMLs if it contains NMStateConfig for more than one node
-				var decoder nmStateConfigYamlDecoder
-				yamlList, err := getMultipleYamls(configFile.Data, &decoder)
+				yamlList, err := GetMultipleYamls[aiv1beta1.NMStateConfig](configFile.Data)
 
 				assert.NoError(t, err)
 				assert.Equal(t, len(tc.expectedConfig), len(yamlList))
 
 				for i := range tc.expectedConfig {
-					assert.Equal(t, tc.expectedConfig[i], yamlList[i])
+					assert.Equal(t, *tc.expectedConfig[i], yamlList[i])
 
 				}
 				assert.Equal(t, len(tc.expectedConfig), len(asset.StaticNetworkConfig))
