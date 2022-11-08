@@ -35,6 +35,8 @@ type Platform struct {
 	DefaultDatastore string `json:"defaultDatastore"`
 	// Folder is the absolute path of the folder that will be used and/or created for
 	// virtual machines. The absolute path is of the form /<datacenter>/vm/<folder>/<subfolder>.
+	// +kubebuilder:validation:Pattern=`^/.*?/vm/.*?`
+	// +optional
 	Folder string `json:"folder,omitempty"`
 	// Cluster is the name of the cluster virtual machines will be cloned into.
 	Cluster string `json:"cluster,omitempty"`
@@ -163,10 +165,11 @@ type Topology struct {
 	// +kubebuilder:validation:Pattern=`^/.*?/host/.*?/Resources.*`
 	// +optional
 	ResourcePool string `json:"resourcePool,omitempty"`
-	// folder is the name or inventory path of the folder in which the
+	// folder is the inventory path of the folder in which the
 	// virtual machine is created/located.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=2048
+	// +kubebuilder:validation:Pattern=`^/.*?/vm/.*?`
 	// +optional
 	Folder string `json:"folder,omitempty"`
 }

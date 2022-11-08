@@ -3,7 +3,6 @@ package vsphere
 import (
 	"encoding/json"
 	"fmt"
-
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
@@ -76,7 +75,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	// The vSphere provider needs the relativepath of the folder,
 	// so get the relPath from the absolute path. Absolute path is always of the form
 	// /<datacenter>/vm/<folder_path> so we can split on "vm/".
-	folderRelPath := strings.SplitAfterN(controlPlaneConfig.Workspace.Folder, "vm/", 2)[1]
+
+	folderPathList := strings.SplitAfterN(controlPlaneConfig.Workspace.Folder, "vm/", 2)
+
+	// This should never happen
+	if len(folderPathList) <= 1 {
+		return nil, errors.Errorf("control plane folder is not defined as a path %s", controlPlaneConfig.Workspace.Folder)
+	}
+	folderRelPath := folderPathList[1]
 
 	vcenterZones := convertVCentersToMap(sources.InstallConfig.Config.VSphere.VCenters)
 	datacentersFolders := createDatacenterFolderMap(sources.InfraID, sources.InstallConfig.Config.VSphere.FailureDomains)
@@ -117,6 +123,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 // The datacenter could be reused but a folder could be
 // unique - the key then becomes a string that contains
 // both the datacenter name and the folder to be created.
+
 func createDatacenterFolderMap(infraID string, failureDomains []vtypes.FailureDomain) map[string]*folder {
 	folders := make(map[string]*folder)
 
@@ -130,10 +137,9 @@ func createDatacenterFolderMap(infraID string, failureDomains []vtypes.FailureDo
 		if tempFolder.Name == "" {
 			tempFolder.Name = infraID
 			failureDomains[i].Topology.Folder = infraID
+			key := fmt.Sprintf("%s-%s", tempFolder.Datacenter, tempFolder.Name)
+			folders[key] = tempFolder
 		}
-
-		key := fmt.Sprintf("%s-%s", tempFolder.Datacenter, tempFolder.Name)
-		folders[key] = tempFolder
 	}
 	return folders
 }

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -123,6 +125,7 @@ type importOvaParams struct {
 
 func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool, datastore, network, folder string) (*importOvaParams, error) {
 	var ccrMo mo.ClusterComputeResource
+	var folderPath string
 
 	ctx, cancel := context.WithTimeout(context.TODO(), defaultAPITimeout)
 	defer cancel()
@@ -137,8 +140,23 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 	}
 	importOvaParams.Datacenter = dcObj
 
+	// First check if the folder contains the datacenter
+	// If so check the regex
+	if strings.Contains(folder, datacenter) {
+		folderPathRegexp := regexp.MustCompile("^\\/(.*?)\\/vm\\/(.*?)$")
+		folderPathParts := folderPathRegexp.FindStringSubmatch(folder)
+
+		if folderPathParts != nil {
+			folderPath = folder
+		} else {
+			return nil, errors.Errorf("folder path is incorrect, please provide a full path.")
+		}
+
+	} else {
+		folderPath = fmt.Sprintf("/%s/vm/%s", datacenter, folder)
+	}
+
 	// Create an absolute path to the folder in case the provided folder is nested.
-	folderPath := fmt.Sprintf("/%s/vm/%s", datacenter, folder)
 	folderObj, err := finder.Folder(ctx, folderPath)
 	if err != nil {
 		return nil, err
