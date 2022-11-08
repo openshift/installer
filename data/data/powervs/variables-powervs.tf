@@ -87,6 +87,24 @@ variable "powervs_vpc_name" {
   default     = ""
 }
 
+variable "powervs_vpc_permitted" {
+  type        = bool
+  description = "Specifies whether an existing VPC is already a Permitted Network for DNS Instance, for Private clusters."
+  default     = false
+}
+
+variable "powervs_vpc_gateway_attached" {
+  type        = bool
+  description = "Specifies whether an existing gateway is already attached to an existing VPC."
+  default     = false
+}
+
+variable "powervs_vpc_gateway_name" {
+  type        = string
+  description = "The name of a pre-created VPC gateway. Must be in $powervs_vpc_region"
+  default     = ""
+}
+
 variable "powervs_vpc_subnet_name" {
   type        = string
   description = "The name of a pre-created IBM Cloud Subnet. Must be in $powervs_vpc_region"

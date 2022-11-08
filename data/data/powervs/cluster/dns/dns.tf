@@ -38,7 +38,7 @@ data "ibm_dns_zones" "dns_zones" {
 }
 
 resource "ibm_dns_permitted_network" "permit_vpc_network_for_dns" {
-  count       = var.publish_strategy == "Internal" ? 1 : 0
+  count       = var.publish_strategy == "Internal" && ! var.vpc_permitted ? 1 : 0
   instance_id = var.service_id
   zone_id     = local.dns_zone.zone_id
   vpc_crn     = var.vpc_crn

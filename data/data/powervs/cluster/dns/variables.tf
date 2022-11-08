@@ -53,6 +53,11 @@ variable "vpc_zone" {
   description = "The IBM Cloud zone in which the VPC is created."
 }
 
+variable "vpc_permitted" {
+  type        = bool
+  description = "Specifies whether an existing VPC is already a Permitted Network for DNS Instance, for Private clusters."
+}
+
 variable "dns_vm_image_name" {
   type        = string
   description = "The image name for the DNS VM."

@@ -30,6 +30,10 @@ runcmd:
   - systemctl enable named.service
   - systemctl start named.service
 %{ if is_proxy ~}
+  - echo 'acl ibm_endpoints dstdomain .cloud.ibm.com' > /tmp/squid.conf
+  - echo 'http_access deny !ibm_endpoints' >> /tmp/squid.conf
+  - cat /etc/squid/squid.conf >> /tmp/squid.conf
+  - mv -f /tmp/squid.conf /etc/squid/squid.conf
   - service httpd start
   - service squid start
 %{ endif ~}

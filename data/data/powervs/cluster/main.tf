@@ -18,12 +18,15 @@ module "vpc" {
   }
   source = "./vpc"
 
-  cluster_id      = var.cluster_id
-  resource_group  = var.powervs_resource_group
-  vpc_zone        = var.powervs_vpc_zone
-  vpc_subnet_name = var.powervs_vpc_subnet_name
-  vpc_name        = var.powervs_vpc_name
-  wait_for_vpc    = var.powervs_wait_for_vpc
+  cluster_id           = var.cluster_id
+  publish_strategy     = var.powervs_publish_strategy
+  resource_group       = var.powervs_resource_group
+  vpc_zone             = var.powervs_vpc_zone
+  vpc_subnet_name      = var.powervs_vpc_subnet_name
+  vpc_name             = var.powervs_vpc_name
+  vpc_gateway_name     = var.powervs_vpc_gateway_name
+  vpc_gateway_attached = var.powervs_vpc_gateway_attached
+  wait_for_vpc         = var.powervs_wait_for_vpc
 }
 
 module "pi_network" {
@@ -40,6 +43,7 @@ module "pi_network" {
   cloud_conn_name   = var.powervs_ccon_name
   vpc_crn           = module.vpc.vpc_crn
   dns_server        = module.dns.dns_server
+  enable_snat       = var.powervs_enable_snat
 }
 
 resource "ibm_pi_key" "cluster_key" {
@@ -132,6 +136,7 @@ module "dns" {
   vpc_subnet_id              = module.vpc.vpc_subnet_id
   vpc_zone                   = module.vpc.vpc_zone
   vpc_region                 = var.powervs_vpc_region
+  vpc_permitted              = var.powervs_vpc_permitted
   ssh_key                    = var.powervs_ssh_key
   publish_strategy           = var.powervs_publish_strategy
   enable_snat                = var.powervs_enable_snat

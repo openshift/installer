@@ -784,13 +784,31 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 
-		var cisCRN, dnsCRN string
+		var (
+			cisCRN, dnsCRN, vpcGatewayName, vpcSubnet string
+			vpcPermitted, vpcGatewayAttached          bool
+		)
+		if len(installConfig.Config.PowerVS.VPCSubnets) > 0 {
+			vpcSubnet = installConfig.Config.PowerVS.VPCSubnets[0]
+		}
 		switch installConfig.Config.Publish {
 		case types.InternalPublishingStrategy:
 			// Get DNSInstanceCRN from InstallConfig metadata
 			dnsCRN, err = installConfig.PowerVS.DNSInstanceCRN(ctx)
 			if err != nil {
 				return err
+			}
+
+			// If the VPC already exists and the cluster is Private, check if the VPC is already a Permitted Network on DNS Instance
+			if installConfig.Config.PowerVS.VPCName != "" {
+				vpcPermitted, err = installConfig.PowerVS.IsVPCPermittedNetwork(ctx, installConfig.Config.Platform.PowerVS.VPCName, installConfig.Config.BaseDomain)
+				if err != nil {
+					return err
+				}
+				vpcGatewayName, vpcGatewayAttached, err = installConfig.PowerVS.GetExistingVPCGateway(ctx, installConfig.Config.Platform.PowerVS.VPCName, vpcSubnet)
+				if err != nil {
+					return err
+				}
 			}
 		case types.ExternalPublishingStrategy:
 			// Get CISInstanceCRN from InstallConfig metadata
@@ -807,11 +825,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig)
 		}
 
-		var vpcSubnet string
-		if len(installConfig.Config.PowerVS.VPCSubnets) > 0 {
-			vpcSubnet = installConfig.Config.PowerVS.VPCSubnets[0]
-		}
-
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
@@ -826,6 +839,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				NetworkName:          installConfig.Config.PowerVS.PVSNetworkName,
 				VPCName:              installConfig.Config.PowerVS.VPCName,
 				VPCSubnetName:        vpcSubnet,
+				VPCPermitted:         vpcPermitted,
+				VPCGatewayName:       vpcGatewayName,
+				VPCGatewayAttached:   vpcGatewayAttached,
 				CloudConnectionName:  installConfig.Config.PowerVS.CloudConnectionName,
 				CISInstanceCRN:       cisCRN,
 				DNSInstanceCRN:       dnsCRN,
