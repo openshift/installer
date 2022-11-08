@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 
@@ -404,23 +405,27 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		}
 	}
 
-	if p.Hosts == nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("hosts"), p.Hosts, "bare metal hosts are missing"))
+	pathName, _ := os.Executable()
+	if !strings.Contains(pathName, "agent") {
+		if p.Hosts == nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("hosts"), p.Hosts, "bare metal hosts are missing"))
+		}
 	}
 
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
-	if err := validateHostsCount(p.Hosts, c); err != nil {
-		allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
+	if !strings.Contains(pathName, "agent") {
+		if err := validateHostsCount(p.Hosts, c); err != nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
+		}
+		allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
+		allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath.Child("Hosts"))...)
+		allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath.Child("Hosts"))...)
+
+		allErrs = append(allErrs, validateHostsName(p.Hosts, fldPath.Child("Hosts"))...)
 	}
-
-	allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
-	allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath.Child("Hosts"))...)
-	allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath.Child("Hosts"))...)
-
-	allErrs = append(allErrs, validateHostsName(p.Hosts, fldPath.Child("Hosts"))...)
 
 	return allErrs
 }
