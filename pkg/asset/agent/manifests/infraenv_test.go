@@ -51,7 +51,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 						Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
 						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
 					},
-					SSHAuthorizedKey: strings.Trim(TestSSHKey, "|\n\t"),
+					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
 						Name: getPullSecretName(getValidOptionalInstallConfig()),
 					},
@@ -74,7 +74,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
 					Proxy:            getProxy(getProxyValidOptionalInstallConfig()),
-					SSHAuthorizedKey: strings.Trim(TestSSHKey, "|\n\t"),
+					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
 						Name: getPullSecretName(getProxyValidOptionalInstallConfig()),
 					},
@@ -101,7 +101,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
 					Proxy:            getProxy(getProxyValidOptionalInstallConfig()),
-					SSHAuthorizedKey: strings.Trim(TestSSHKey, "|\n\t"),
+					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
 						Name: getPullSecretName(getProxyValidOptionalInstallConfig()),
 					},

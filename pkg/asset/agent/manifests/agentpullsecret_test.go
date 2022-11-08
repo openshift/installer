@@ -45,7 +45,7 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
 				},
 				StringData: map[string]string{
-					".dockerconfigjson": TestSecret,
+					".dockerconfigjson": testSecret,
 				},
 			},
 		},
@@ -97,7 +97,7 @@ metadata:
   name: pull-secret
   namespace: cluster-0
 stringData:
-  .dockerconfigjson: c3VwZXItc2VjcmV0Cg==`,
+  .dockerconfigjson: '{"auths":{"cloud.test":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}'`,
 			expectedFound: true,
 			expectedConfig: &corev1.Secret{
 				TypeMeta: v1.TypeMeta{
@@ -109,7 +109,7 @@ stringData:
 					Namespace: "cluster-0",
 				},
 				StringData: map[string]string{
-					".dockerconfigjson": "c3VwZXItc2VjcmV0Cg==",
+					".dockerconfigjson": "{\"auths\":{\"cloud.test\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}",
 				},
 			},
 		},

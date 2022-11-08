@@ -21,11 +21,9 @@ import (
 )
 
 var (
-	// TestSSHKey provides a ssh key for unit tests
-	TestSSHKey = `|
+	testSSHKey = `|
 	ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain`
-	// TestSecret provides a ssh key for unit tests
-	TestSecret = `'{"auths":{"cloud.openshift.com":{"auth":"b3BlUTA=","email":"test@redhat.com"}}}`
+	testSecret = `{"auths":{"cloud.openshift.com":{"auth":"b3BlUTA=","email":"test@redhat.com"}}}`
 )
 
 // GetValidOptionalInstallConfig returns a valid optional install config
@@ -41,8 +39,8 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 					Namespace: "cluster-0",
 				},
 				BaseDomain: "testing.com",
-				PullSecret: TestSecret,
-				SSHKey:     TestSSHKey,
+				PullSecret: testSecret,
+				SSHKey:     testSSHKey,
 				ControlPlane: &types.MachinePool{
 					Name:     "master",
 					Replicas: pointer.Int64Ptr(3),
@@ -102,8 +100,8 @@ func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
 					Namespace: "cluster-0",
 				},
 				BaseDomain: "testing.com",
-				PullSecret: TestSecret,
-				SSHKey:     TestSSHKey,
+				PullSecret: testSecret,
+				SSHKey:     testSSHKey,
 				ControlPlane: &types.MachinePool{
 					Name:     "master",
 					Replicas: pointer.Int64Ptr(3),
@@ -383,7 +381,7 @@ func getGoodACI() *hiveext.AgentClusterInstall {
 				ServiceNetwork: []string{"172.30.0.0/16"},
 				NetworkType:    "OVNKubernetes",
 			},
-			SSHPublicKey: strings.Trim(TestSSHKey, "|\n\t"),
+			SSHPublicKey: strings.Trim(testSSHKey, "|\n\t"),
 			ProvisionRequirements: hiveext.ProvisionRequirements{
 				ControlPlaneAgents: 3,
 				WorkerAgents:       5,
