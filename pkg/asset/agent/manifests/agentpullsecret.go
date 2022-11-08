@@ -15,10 +15,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	agentPullSecretName     = "pull-secret"
-	agentPullSecretFilename = filepath.Join(clusterManifestDir, fmt.Sprintf("%s.yaml", agentPullSecretName))
+const (
+	pullSecretKey       = ".dockerconfigjson"
+	agentPullSecretName = "pull-secret"
 )
+
+var agentPullSecretFilename = filepath.Join(clusterManifestDir, fmt.Sprintf("%s.yaml", agentPullSecretName))
 
 // AgentPullSecret generates the pull-secret file used by the agent installer.
 type AgentPullSecret struct {
@@ -58,7 +60,7 @@ func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
 				Namespace: getObjectMetaNamespace(installConfig),
 			},
 			StringData: map[string]string{
-				".dockerconfigjson": installConfig.Config.PullSecret,
+				pullSecretKey: installConfig.Config.PullSecret,
 			},
 		}
 		a.Config = secret
@@ -142,7 +144,7 @@ func (a *AgentPullSecret) validateSecretIsNotEmpty() field.ErrorList {
 		return allErrs
 	}
 
-	pullSecret, ok := a.Config.StringData[".dockerconfigjson"]
+	pullSecret, ok := a.Config.StringData[pullSecretKey]
 	if !ok {
 		allErrs = append(allErrs, field.Required(fieldPath, "the pull secret key '.dockerconfigjson' is not defined"))
 		return allErrs
