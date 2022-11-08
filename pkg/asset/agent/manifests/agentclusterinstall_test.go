@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"github.com/openshift/installer/pkg/types"
 	"os"
 	"testing"
 
@@ -32,6 +33,12 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodFIPSACI.SetAnnotations(map[string]string{
 		installConfigOverrides: `{"fips":true}`,
 	})
+
+	installConfigWithProxy := getValidOptionalInstallConfig()
+	installConfigWithProxy.Config.Proxy = (*types.Proxy)(getProxy(getProxyValidOptionalInstallConfig()))
+
+	goodProxyACI := getGoodACI()
+	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig()))
 
 	goodACIDualStackVIPs := getGoodACIDualStack()
 	goodACIDualStackVIPs.SetAnnotations(map[string]string{
@@ -71,6 +78,13 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				installConfigWithFIPS,
 			},
 			expectedConfig: goodFIPSACI,
+		},
+		{
+			name: "valid configuration with proxy",
+			dependencies: []asset.Asset{
+				installConfigWithProxy,
+			},
+			expectedConfig: goodProxyACI,
 		},
 		{
 			name: "valid configuration dual stack",
