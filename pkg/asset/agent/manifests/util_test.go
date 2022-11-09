@@ -154,6 +154,13 @@ func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
 	}
 }
 
+func getValidOptionalInstallConfigDualStackDualVIPs() *agent.OptionalInstallConfig {
+	installConfig := getValidOptionalInstallConfigDualStack()
+	installConfig.Config.Platform.BareMetal.APIVIPs = append(installConfig.Config.Platform.BareMetal.APIVIPs, "2001:db8:1111:2222:ffff:ffff:ffff:cafe")
+	installConfig.Config.Platform.BareMetal.IngressVIPs = append(installConfig.Config.Platform.BareMetal.IngressVIPs, "2001:db8:1111:2222:ffff:ffff:ffff:dead")
+	return installConfig
+}
+
 // getProxyValidOptionalInstallConfig returns a valid optional install config for proxied installation
 func getProxyValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	validIC := getValidOptionalInstallConfig()
@@ -386,6 +393,20 @@ func getGoodACI() *hiveext.AgentClusterInstall {
 			PlatformType: hiveext.PlatformType(baremetal.Name),
 		},
 	}
+	return goodACI
+}
+
+func getGoodACIDualStack() *hiveext.AgentClusterInstall {
+	goodACI := getGoodACI()
+	goodACI.Spec.Networking.MachineNetwork = append(goodACI.Spec.Networking.MachineNetwork, hiveext.MachineNetworkEntry{
+		CIDR: "2001:db8:5dd8:c956::/64",
+	})
+	goodACI.Spec.Networking.ClusterNetwork = append(goodACI.Spec.Networking.ClusterNetwork, hiveext.ClusterNetworkEntry{
+		CIDR:       "2001:db8:1111:2222::/64",
+		HostPrefix: 64,
+	})
+	goodACI.Spec.Networking.ServiceNetwork = append(goodACI.Spec.Networking.ServiceNetwork, "fd02::/112")
+
 	return goodACI
 }
 
