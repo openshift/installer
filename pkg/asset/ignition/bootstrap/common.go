@@ -84,6 +84,7 @@ type bootstrapTemplateData struct {
 	BootstrapNodeIP       string
 	APIServerURL          string
 	APIIntServerURL       string
+	FeatureSet            configv1.FeatureSet
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -312,6 +313,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		BootstrapNodeIP:       bootstrapNodeIP,
 		APIServerURL:          apiURL,
 		APIIntServerURL:       apiIntURL,
+		FeatureSet:            installConfig.Config.FeatureSet,
 	}
 }
 
