@@ -405,18 +405,17 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		}
 	}
 
-	pathName, _ := os.Executable()
-	if !strings.Contains(pathName, "agent") {
-		if p.Hosts == nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("hosts"), p.Hosts, "bare metal hosts are missing"))
-		}
+	agentBasedInstallation := len(os.Args) > 1 && os.Args[1] == "agent"
+
+	if !agentBasedInstallation && p.Hosts == nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("hosts"), p.Hosts, "bare metal hosts are missing"))
 	}
 
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
-	if !strings.Contains(pathName, "agent") {
+	if !agentBasedInstallation {
 		if err := validateHostsCount(p.Hosts, c); err != nil {
 			allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
 		}
