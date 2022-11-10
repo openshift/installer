@@ -1,8 +1,26 @@
 #!/bin/bash
 
+function redact_pull_secret_sed() {
+	# Produce a sed script to redact any of the pull secrets we know about.
+	# The journal export format is binary, so the redacted output must be
+	# the same length as the input.
+	jq -r '.auths[].auth' </root/.docker/config.json | sed -f <(cat <<EOF
+h
+s/.*/s#\0#/
+x
+s/././g
+s/^.\{10\}/<redacted>/
+s/.*/\0#g/
+x
+G
+s/\n//
+EOF
+)
+}
+
 function gather_journal() {
 	( >&2 echo -n "Gathering node journal" )
-	journalctl -o export > "${ARTIFACTS_DIR}/journal.export"
+	journalctl -o export | sed -f <(redact_pull_secret_sed) >"${ARTIFACTS_DIR}/journal.export"
 	( >&2 echo " Done")
 }
 
