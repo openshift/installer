@@ -2528,6 +2528,12 @@ spec:
                     maxItems: 2
                     type: array
                     uniqueItems: true
+                  bootstrapExternalStaticDNS:
+                    description: BootstrapExternalStaticDNS is the static network
+                      DNS of the bootstrap node. This can be useful in environments
+                      without a DHCP server.
+                    format: ip
+                    type: string
                   bootstrapExternalStaticGateway:
                     description: BootstrapExternalStaticGateway is the static network
                       gateway of the bootstrap node. This can be useful in environments
