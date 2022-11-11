@@ -474,22 +474,20 @@ func RetrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.N
 }
 
 func getMirrorFromRelease(releaseImage string, registriesConfig *mirror.RegistriesConf) string {
-
-	releaseImageMirror := ""
 	source := regexp.MustCompile(`^(.+?)(@sha256)?:(.+)`).FindStringSubmatch(releaseImage)
 	for _, config := range registriesConfig.MirrorConfig {
 		if config.Location == source[1] {
 			// include the tag with the build release image
 			if len(source) == 4 {
 				// Has Sha256
-				releaseImageMirror = fmt.Sprintf("%s%s:%s", config.Mirror, source[2], source[3])
+				return fmt.Sprintf("%s%s:%s", config.Mirror, source[2], source[3])
 			} else if len(source) == 3 {
-				releaseImageMirror = fmt.Sprintf("%s:%s", config.Mirror, source[2])
+				return fmt.Sprintf("%s:%s", config.Mirror, source[2])
 			}
 		}
 	}
 
-	return releaseImageMirror
+	return ""
 }
 
 func getPublicContainerRegistries(registriesConfig *mirror.RegistriesConf) string {
