@@ -209,8 +209,8 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 		if *clusterMetadata.Status == models.ClusterStatusReady {
 			stuck, err := czero.IsClusterStuckInReady()
-			if stuck {
-				return false, true, err
+			if err != nil {
+				return false, stuck, err
 			}
 		} else {
 			czero.installHistory.NotReadyTime = time.Now()
@@ -315,9 +315,10 @@ func (czero *Cluster) IsInstallComplete() (bool, error) {
 // IsClusterStuckInReady Determine if the cluster has stopped transitioning out of the Ready state
 func (czero *Cluster) IsClusterStuckInReady() (bool, error) {
 
-	// If the status changes back to Ready from Installing it indicates an error
+	// If the status changes back to Ready from Installing it indicates an error. This condition
+	// will be retried
 	if czero.installHistory.RestAPIPreviousClusterStatus == models.ClusterStatusPreparingForInstallation {
-		return true, errors.New("failed to prepare cluster installation")
+		return false, errors.New("failed to prepare cluster installation, retrying")
 	}
 
 	// Check if stuck in Ready state
