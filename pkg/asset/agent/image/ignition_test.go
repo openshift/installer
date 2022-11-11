@@ -654,6 +654,40 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 			},
 			expectedMirror: "localhost:5000/openshift-release-dev/ocp-release@sha256:300bce8246cf880e792e106607925de0a404484637627edf5f517375517d54a4",
 		},
+		{
+			name:    "mirror-match-digest-full",
+			release: "registry.ci.openshift.org/ocp/release@sha256:6ce62cfe19d0d4dea361ce94982b2c1eaaa66d704fddae82b6eaba32c1e8b1fd",
+			registriesConf: mirror.RegistriesConf{
+				File: &asset.File{
+					Filename: "registries.conf",
+					Data:     []byte(""),
+				},
+				MirrorConfig: []mirror.RegistriesConfig{
+					{
+						Location: "registry.ci.openshift.org/ocp/release",
+						Mirror:   "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+					},
+				},
+			},
+			expectedMirror: "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image@sha256:6ce62cfe19d0d4dea361ce94982b2c1eaaa66d704fddae82b6eaba32c1e8b1fd",
+		},
+		{
+                        name:    "mirror-match-digest-partial",
+                        release: "registry.ci.openshift.org/ocp/release@sha256:6ce62cfe19d0d4dea361ce94982b2c1eaaa66d704fddae82b6eaba32c1e8b1fd",
+                        registriesConf: mirror.RegistriesConf{
+                                File: &asset.File{
+                                        Filename: "registries.conf",
+                                        Data:     []byte(""),
+                                },
+                                MirrorConfig: []mirror.RegistriesConfig{
+                                        {
+                                                Location: "registry.ci.openshift.org/ocp",
+                                                Mirror:   "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+                                        },
+                                },
+                        },
+                        expectedMirror: "",
+                },
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
