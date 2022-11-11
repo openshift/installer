@@ -1,4 +1,5 @@
 resource "aws_security_group" "worker" {
+  name        = "${var.cluster_id}-worker-sg"
   vpc_id      = data.aws_vpc.cluster_vpc.id
   description = local.description
 

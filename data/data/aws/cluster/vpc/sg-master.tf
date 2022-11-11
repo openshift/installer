@@ -1,4 +1,5 @@
 resource "aws_security_group" "master" {
+  name        = "${var.cluster_id}-master-sg"
   vpc_id      = data.aws_vpc.cluster_vpc.id
   description = local.description
 
