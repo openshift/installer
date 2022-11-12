@@ -152,6 +152,10 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			icOverrides.FIPS = installConfig.Config.FIPS
 		}
 
+		if installConfig.Config.Proxy != nil {
+			agentClusterInstall.Spec.Proxy = (*hiveext.Proxy)(getProxy(installConfig))
+		}
+
 		if installConfig.Config.Platform.BareMetal != nil {
 			if len(installConfig.Config.Platform.BareMetal.APIVIPs) > 1 {
 				icOverridden = true
