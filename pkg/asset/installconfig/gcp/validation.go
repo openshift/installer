@@ -2,12 +2,12 @@ package gcp
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -221,32 +221,34 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 }
 
 //ValidateEnabledServices gets all the enabled services for a project and validate if any of the required services are not enabled.
+//also warns the user if optional services are not enabled.
 func ValidateEnabledServices(ctx context.Context, client API, project string) error {
-	services := sets.NewString("compute.googleapis.com",
-		"cloudapis.googleapis.com",
+	requiredServices := sets.NewString("compute.googleapis.com",
 		"cloudresourcemanager.googleapis.com",
 		"dns.googleapis.com",
 		"iam.googleapis.com",
-		"iamcredentials.googleapis.com",
-		"servicemanagement.googleapis.com",
 		"serviceusage.googleapis.com",
+		"iamcredentials.googleapis.com")
+	optionalServices := sets.NewString("cloudapis.googleapis.com",
+		"servicemanagement.googleapis.com",
+		"deploymentmanager.googleapis.com",
 		"storage-api.googleapis.com",
 		"storage-component.googleapis.com")
 	projectServices, err := client.GetEnabledServices(ctx, project)
-
 	if err != nil {
-		var gErr *googleapi.Error
-		if errors.As(err, &gErr) {
-			if gErr.Code == http.StatusForbidden {
-				logrus.Warn("Permission denied. Unable to fetch enabled services for project.")
-				return nil
-			}
+		if IsForbidden(err) {
+			return errors.Wrap(err, "unable to fetch enabled services for project. Make sure 'serviceusage.googleapis.com' is enabled")
 		}
 		return err
 	}
 
-	if remaining := services.Difference(sets.NewString(projectServices...)); remaining.Len() > 0 {
+	if remaining := requiredServices.Difference(sets.NewString(projectServices...)); remaining.Len() > 0 {
 		return fmt.Errorf("the following required services are not enabled in this project: %s",
+			strings.Join(remaining.List(), ","))
+	}
+
+	if remaining := optionalServices.Difference(sets.NewString(projectServices...)); remaining.Len() > 0 {
+		logrus.Warnf("the following optional services are not enabled in this project: %s",
 			strings.Join(remaining.List(), ","))
 	}
 	return nil
