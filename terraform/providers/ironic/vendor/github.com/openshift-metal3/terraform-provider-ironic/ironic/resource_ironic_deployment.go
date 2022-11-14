@@ -15,7 +15,7 @@ import (
 	utils "github.com/gophercloud/utils/openstack/baremetal/v1/nodes"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/go-version"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // Schema resource definition for an Ironic deployment.
@@ -192,10 +192,13 @@ func fetchFullIgnition(userDataURL string, userDataCaCert string, userDataHeader
 				return "", err
 			}
 			caCertPool.AppendCertsFromPEM(caCert)
-
+			// disable "G402 (CWE-295): TLS MinVersion too low. (Confidence: HIGH, Severity: HIGH)"
+			// #nosec G402
 			transport.TLSClientConfig = &tls.Config{RootCAs: caCertPool}
 		} else {
 			// Disable certificate verification
+			// disable "G402 (CWE-295): TLS MinVersion too low. (Confidence: HIGH, Severity: HIGH)"
+			// #nosec G402
 			transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 		}
 
