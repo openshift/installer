@@ -1568,3 +1568,6 @@ sigs.k8s.io/yaml
 # github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20220928142635-a40422bdea61
 # github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20220928142635-a40422bdea61
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
+# github.com/nmstate/nmstate/rust/src/go/nmstate v0.0.0-20221114091822-200958151252
+## explicit; go 1.18
+github.com/nmstate/nmstate/rust/src/go/nmstate

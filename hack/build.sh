@@ -34,7 +34,7 @@ if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version
      exit 1
 fi
 
-export CGO_ENABLED=0
+export CGO_ENABLED=${CGO_ENABLED:-0}
 # build terraform binaries before setting environment variables since it messes up make
 make -C terraform all
 
@@ -47,6 +47,8 @@ GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
 DEFAULT_ARCH="${DEFAULT_ARCH:-amd64}"
 GOFLAGS="${GOFLAGS:--mod=vendor}"
 LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/version.Raw=${GIT_TAG} -X github.com/openshift/installer/pkg/version.Commit=${GIT_COMMIT} -X github.com/openshift/installer/pkg/version.defaultArch=${DEFAULT_ARCH}"
+CGO_CFLAGS="${CGOFLAGS:-$(pkg-config nmstate --cflags)}"
+CGO_LDFLAGS="${CGO_LDFLAGS:-$(pkg-config nmstate --libs)} -ldl -lrt -static"
 TAGS="${TAGS:-}"
 OUTPUT="${OUTPUT:-bin/openshift-install}"
 
@@ -72,5 +74,13 @@ then
 	export CGO_ENABLED=1
 fi
 
+if [ "$CGO_ENABLED" = "1" ]; then
+	export CGO_CFLAGS
+	export CGO_LDFLAGS
+fi
+
 # shellcheck disable=SC2086
+echo "$CGO_ENABLED"
+echo "$CGO_CFLAGS"
+echo "$CGO_LDFLAGS"
 go build ${GOFLAGS} -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install

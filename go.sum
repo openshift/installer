@@ -1108,6 +1108,8 @@ github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d/go.mod h1:o96d
 github.com/neelance/astrewrite v0.0.0-20160511093645-99348263ae86/go.mod h1:kHJEU3ofeGjhHklVoIGuVj85JJwZ6kWPaJwCIxgnFmo=
 github.com/neelance/sourcemap v0.0.0-20151028013722-8c68805598ab/go.mod h1:Qr6/a/Q4r9LP1IltGz7tA7iOK1WonHEYhu1HRBA7ZiM=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
+github.com/nmstate/nmstate/rust/src/go/nmstate v0.0.0-20221114091822-200958151252 h1:9DFU/aVd6iQZJ0sxAjpQyL+cGNKUT2MlHrs4R/uhxfE=
+github.com/nmstate/nmstate/rust/src/go/nmstate v0.0.0-20221114091822-200958151252/go.mod h1:+V7mCwK24P5oGufZaSOl2707IiCbgJYpGohmKupvwBw=
 github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64 h1:s6XG+YzY6du/VXWdc+/rj8mj/ccEdqYSEHYrmwyZvVg=
 github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64/go.mod h1:LD0OSxwLPjf375SCAIp70NQRbTPeqKKlM64vx03burs=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=

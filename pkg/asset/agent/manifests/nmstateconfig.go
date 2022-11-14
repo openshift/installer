@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/nmstate/nmstate/rust/src/go/nmstate"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
@@ -69,6 +70,13 @@ func (*NMStateConfig) Dependencies() []asset.Asset {
 // Generate generates the NMStateConfig manifest.
 func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 
+	// TODO: Sample nmstate call to be replaced with the config generation
+	nm := nmstate.New()
+	state, err := nm.RetrieveNetState()
+	if err != nil {
+		err = fmt.Errorf("Failed to use NMState to get system state")
+	}
+	logrus.Println(state)
 	agentConfig := &agentconfig.AgentConfig{}
 	installConfig := &agent.OptionalInstallConfig{}
 	dependencies.Get(agentConfig, installConfig)
