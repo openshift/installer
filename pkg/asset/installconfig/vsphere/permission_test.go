@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/vim25/mo"
 	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -189,7 +190,13 @@ func TestPermissionValidate(t *testing.T) {
 	invalidDatacenterInstallConfig := validIPIInstallConfig("DC0", "")
 	invalidDatacenterInstallConfig.VSphere.Datacenter = "invalid"
 
-	username := validInstallConfig.VSphere.Username
+	sessionMgr := session.NewManager(client)
+	userSession, err := sessionMgr.UserSession(ctx)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	username := userSession.UserName
 
 	validPermissionsAuthManagerClient, err := buildAuthManagerClient(ctx, mockCtrl, finder, username, nil, nil, nil)
 	if err != nil {
@@ -487,7 +494,6 @@ func TestPermissionValidate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			validationCtx := &validationContext{
-				User:        username,
 				AuthManager: test.authManager,
 				Finder:      finder,
 				Client:      client,
