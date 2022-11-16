@@ -2,7 +2,7 @@
 # Example:  ./hack/go-test.sh
 
 if [ "$IS_CONTAINER" != "" ]; then
-  go test ./cmd/... ./data/... ./pkg/... "${@}"
+  go test -short ./cmd/... ./data/... ./pkg/... "${@}"
 else
   podman run --rm \
     --env IS_CONTAINER=TRUE \
