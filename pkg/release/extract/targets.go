@@ -45,7 +45,7 @@ func generate() []extractTarget {
 			Command: "terraform",
 			OS:      "linux",
 			Arch:    "amd64",
-			Mapping: extract.Mapping{Image: "installer-artifacts", From: "usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform"},
+			Mapping: extract.Mapping{Image: "installer-artifacts", From: "usr/share/openshift/linux_amd64/terraform/terraform"},
 		},
 	}
 
@@ -71,5 +71,5 @@ func tfProvCommand(provName, os, arch string) string {
 }
 
 func srcImgPath(provName, os, arch string) string {
-	return fmt.Sprintf("usr/share/openshift/%s_%s/openshift-install/terraform/bin/terraform-provider-%s.zip", os, arch, provName)
+	return fmt.Sprintf("usr/share/openshift/%s_%s/terraform/terraform-provider-%s.zip", os, arch, provName)
 }
