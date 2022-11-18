@@ -1,5 +1,14 @@
-Generated from https://github.com/Azure/azure-rest-api-specs/tree/3c764635e7d442b3e74caf593029fcd440b3ef82//specification/storage/resource-manager/readme.md tag: `package-2016-01`
+# Change History
 
-Code generator @microsoft.azure/autorest.go@2.1.171
+## Additive Changes
 
+### New Funcs
 
+1. AccountKey.MarshalJSON() ([]byte, error)
+1. AccountListKeysResult.MarshalJSON() ([]byte, error)
+1. AccountListResult.MarshalJSON() ([]byte, error)
+1. AccountProperties.MarshalJSON() ([]byte, error)
+1. CheckNameAvailabilityResult.MarshalJSON() ([]byte, error)
+1. Endpoints.MarshalJSON() ([]byte, error)
+1. Usage.MarshalJSON() ([]byte, error)
+1. UsageName.MarshalJSON() ([]byte, error)
