@@ -25,8 +25,36 @@ WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN GOOS=linux GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
+# This is one potential solution, where we would extract the plugins from the installer-artifacts image.
+# We should be able to extract from any image in the release image & it would probably be more
+# efficient in terms of build time to NOT use this image, but for a PoC it is easier to do it here
+# and keep everything in one place.
+FROM quay.io/padillon/installer-artifacts:latest AS todo
+ARG TAGS=""
+WORKDIR /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/
+COPY . .
+
 FROM registry.ci.openshift.org/ocp/4.12:installer
 COPY --from=macbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac/openshift-install
 COPY --from=macarmbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac_arm64/openshift-install
 COPY --from=linuxbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/linux_amd64/openshift-install
 COPY --from=linuxarmbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/linux_arm64/openshift-install
+
+# See comment above from todo stage. This is one potential solution but probably not ideal.
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-alicloud.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-alicloud.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-aws.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-aws.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-azurerm.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-azurerm.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-azurestack.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-azurestack.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-google.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-google.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-ibm.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-ibm.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-ignition.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-ignition.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-ironic.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-ironic.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-libvirt.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-libvirt.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-local.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-local.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-nutanix.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-nutanix.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-openstack.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-openstack.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-ovirt.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-ovirt.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-time.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-time.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-vsphere.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-vsphere.zip
+COPY --from=todo /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-vsphereprivate.zip /usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-vsphereprivate.zip
