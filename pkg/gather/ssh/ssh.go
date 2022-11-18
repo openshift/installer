@@ -2,7 +2,6 @@
 package ssh
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -100,7 +99,7 @@ func PullFileTo(client *ssh.Client, remotePath, localPath string) error {
 // It does not return any intermediate errors if at least one private key was loaded.
 func defaultPrivateSSHKeys() (map[string]interface{}, error) {
 	d := filepath.Join(os.Getenv("HOME"), ".ssh")
-	paths, err := ioutil.ReadDir(d)
+	paths, err := os.ReadDir(d)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read directory %q", d)
 	}
@@ -124,7 +123,7 @@ func LoadPrivateSSHKeys(paths []string) (map[string]interface{}, error) {
 	var errs []error
 	keys := make(map[string]interface{})
 	for _, path := range paths {
-		data, err := ioutil.ReadFile(path)
+		data, err := os.ReadFile(path)
 		if err != nil {
 			errs = append(errs, errors.Wrapf(err, "failed to read %q", path))
 			continue

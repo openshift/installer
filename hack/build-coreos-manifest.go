@@ -8,7 +8,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -24,7 +23,7 @@ const (
 )
 
 func run() error {
-	bootimages, err := ioutil.ReadFile(streamJSON)
+	bootimages, err := os.ReadFile(streamJSON)
 	if err != nil {
 		return err
 	}
@@ -58,7 +57,7 @@ func run() error {
 		return err
 	}
 
-	err = ioutil.WriteFile(dest, b, 0644)
+	err = os.WriteFile(dest, b, 0o644)
 	if err != nil {
 		return err
 	}

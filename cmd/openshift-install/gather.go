@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -95,7 +94,7 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 	if err := assetStore.Fetch(bootstrapSSHKeyPair); err != nil {
 		return "", errors.Wrapf(err, "failed to fetch %s", bootstrapSSHKeyPair.Name())
 	}
-	tmpfile, err := ioutil.TempFile("", "bootstrap-ssh")
+	tmpfile, err := os.CreateTemp("", "bootstrap-ssh")
 	if err != nil {
 		return "", err
 	}

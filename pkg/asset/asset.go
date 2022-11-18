@@ -2,7 +2,6 @@ package asset
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -59,7 +58,7 @@ func PersistToFile(asset WritableAsset, directory string) error {
 		if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
 			return errors.Wrap(err, "failed to create dir")
 		}
-		if err := ioutil.WriteFile(path, f.Data, 0640); err != nil {
+		if err := os.WriteFile(path, f.Data, 0o640); err != nil {
 			return errors.Wrap(err, "failed to write file")
 		}
 	}

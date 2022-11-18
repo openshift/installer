@@ -1,7 +1,7 @@
 package openstack
 
 import (
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -83,7 +83,7 @@ secret-namespace = kube-system
 
 	if caCertFile := cloudConfig.CACertFile; caCertFile != "" {
 		cloudProviderConfigData += "ca-file = /etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem\n"
-		caFile, err := ioutil.ReadFile(caCertFile)
+		caFile, err := os.ReadFile(caCertFile)
 		if err != nil {
 			return "", "", Error{err, "failed to read clouds.yaml ca-cert from disk"}
 		}

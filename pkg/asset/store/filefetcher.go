@@ -1,7 +1,7 @@
 package store
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -13,7 +13,7 @@ type fileFetcher struct {
 
 // FetchByName returns the file with the given name.
 func (f *fileFetcher) FetchByName(name string) (*asset.File, error) {
-	data, err := ioutil.ReadFile(filepath.Join(f.directory, name))
+	data, err := os.ReadFile(filepath.Join(f.directory, name))
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (f *fileFetcher) FetchByPattern(pattern string) (files []*asset.File, err e
 
 	files = make([]*asset.File, 0, len(matches))
 	for _, path := range matches {
-		data, err := ioutil.ReadFile(path)
+		data, err := os.ReadFile(path)
 		if err != nil {
 			return nil, err
 		}

@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/url"
 
 	"github.com/coreos/stream-metadata-go/stream"
@@ -25,7 +25,7 @@ func FetchRawCoreOSStream(ctx context.Context) ([]byte, error) {
 	}
 	defer file.Close()
 
-	body, err := ioutil.ReadAll(file)
+	body, err := io.ReadAll(file)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read CoreOS stream metadata")
 	}

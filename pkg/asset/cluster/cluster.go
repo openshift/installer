@@ -3,7 +3,6 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -169,7 +168,7 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 
 func (c *Cluster) applyStage(platform string, stage terraform.Stage, terraformDir string, tfvarsFiles []*asset.File) (*asset.File, error) {
 	// Copy the terraform.tfvars to a temp directory which will contain the terraform plan.
-	tmpDir, err := ioutil.TempDir("", fmt.Sprintf("openshift-install-%s-", stage.Name()))
+	tmpDir, err := os.MkdirTemp("", fmt.Sprintf("openshift-install-%s-", stage.Name()))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create temp dir for terraform execution")
 	}
@@ -177,7 +176,7 @@ func (c *Cluster) applyStage(platform string, stage terraform.Stage, terraformDi
 
 	var extraOpts []tfexec.ApplyOption
 	for _, file := range tfvarsFiles {
-		if err := ioutil.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0600); err != nil {
+		if err := os.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0o600); err != nil {
 			return nil, err
 		}
 		extraOpts = append(extraOpts, tfexec.VarFile(filepath.Join(tmpDir, file.Filename)))
@@ -193,7 +192,7 @@ func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform
 	applyErr := terraform.Apply(tmpDir, platform, stage, terraformDir, opts...)
 
 	// Write the state file to the install directory even if the apply failed.
-	if data, err := ioutil.ReadFile(filepath.Join(tmpDir, terraform.StateFilename)); err == nil {
+	if data, err := os.ReadFile(filepath.Join(tmpDir, terraform.StateFilename)); err == nil {
 		c.FileList = append(c.FileList, &asset.File{
 			Filename: stage.StateFilename(),
 			Data:     data,

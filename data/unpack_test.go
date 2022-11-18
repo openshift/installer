@@ -2,7 +2,7 @@ package data
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -16,7 +16,7 @@ func TestUnpack(t *testing.T) {
 	}
 
 	expected := "# Bootstrap Module"
-	content, err := ioutil.ReadFile(filepath.Join(path, "baremetal", "bootstrap", "README.md"))
+	content, err := os.ReadFile(filepath.Join(path, "baremetal", "bootstrap", "README.md"))
 	if err != nil {
 		t.Fatal(err)
 	}

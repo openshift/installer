@@ -3,7 +3,6 @@ package bootstrap
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -74,7 +73,7 @@ func Destroy(dir string) (err error) {
 			continue
 		}
 
-		tempDir, err := ioutil.TempDir("", fmt.Sprintf("openshift-install-%s-", stage.Name()))
+		tempDir, err := os.MkdirTemp("", fmt.Sprintf("openshift-install-%s-", stage.Name()))
 		if err != nil {
 			return errors.Wrap(err, "failed to create temporary directory for Terraform execution")
 		}
@@ -115,10 +114,10 @@ func Destroy(dir string) (err error) {
 }
 
 func copy(from string, to string) error {
-	data, err := ioutil.ReadFile(from)
+	data, err := os.ReadFile(from)
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(to, data, 0666)
+	return os.WriteFile(to, data, 0666)
 }

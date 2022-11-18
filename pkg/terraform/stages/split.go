@@ -3,7 +3,6 @@ package stages
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -119,7 +118,7 @@ func GetTerraformOutputs(s SplitStage, directory string) (map[string]interface{}
 		return nil, errors.Wrapf(err, "could not find outputs file %q", outputsFilePath)
 	}
 
-	outputsFile, err := ioutil.ReadFile(outputsFilePath)
+	outputsFile, err := os.ReadFile(outputsFilePath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read outputs file %q", outputsFilePath)
 	}

@@ -1,7 +1,7 @@
 package explain
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -46,7 +46,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 	defer file.Close()
 
-	raw, err := ioutil.ReadAll(file)
+	raw, err := io.ReadAll(file)
 	if err != nil {
 		return errors.Wrap(err, "failed to read InstallConfig CRD")
 	}

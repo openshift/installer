@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -173,8 +173,8 @@ func TestUpdateValidationHistory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test logger
-			var logger = &logrus.Logger{
-				Out:       ioutil.Discard,
+			logger := &logrus.Logger{
+				Out:       io.Discard,
 				Formatter: new(logrus.TextFormatter),
 				Hooks:     make(logrus.LevelHooks),
 				Level:     logrus.DebugLevel,
@@ -291,8 +291,8 @@ func TestLogValidationHistory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test logger
-			var logger = &logrus.Logger{
-				Out:       ioutil.Discard,
+			logger := &logrus.Logger{
+				Out:       io.Discard,
 				Formatter: new(logrus.TextFormatter),
 				Hooks:     make(logrus.LevelHooks),
 				Level:     logrus.TraceLevel,

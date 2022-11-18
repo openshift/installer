@@ -3,7 +3,7 @@ package manifests
 import (
 	"context"
 	"encoding/base64"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -212,7 +212,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		}
 
 		if len(conf.CABundle) == 0 && len(conf.CAFile) > 0 {
-			content, err := ioutil.ReadFile(conf.CAFile)
+			content, err := os.ReadFile(conf.CAFile)
 			if err != nil {
 				return errors.Wrapf(err, "failed to read the cert file: %s", conf.CAFile)
 			}
