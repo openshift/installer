@@ -106,30 +106,7 @@ type ExtractOptions struct {
 func (o *ExtractOptions) Extract(command string) error {
 	// Available targets is treated as a GA API and may not be changed without backwards
 	// compatibility of at least N-2 releases.
-	availableTargets := []extractTarget{
-		{
-			Command: "terraform",
-			OS:      "linux",
-			Arch:    "amd64",
-			Mapping: extract.Mapping{Image: "installer-artifacts", From: "usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform"},
-		},
-		{
-			Command: "terraform-provider-aws_1.0.0_linux_amd64.zip",
-			OS:      "linux",
-			Arch:    "amd64",
-			Mapping: extract.Mapping{Image: "installer-artifacts", From: "usr/share/openshift/linux_amd64/openshift-install/terraform/bin/terraform-provider-aws.zip"},
-		},
-		{
-			OS:      "linux",
-			Arch:    "amd64",
-			Command: "oc",
-			Mapping: extract.Mapping{Image: "cli-artifacts", From: "usr/share/openshift/linux_amd64/oc"},
 
-			LinkTo:               []string{"kubectl"},
-			InjectReleaseVersion: true,
-			ArchiveFormat:        "openshift-client-linux-amd64-%s.tar.gz",
-		},
-	}
 	fmt.Println("EXTRACTING")
 	currentArch := runtime.GOARCH
 	currentOS := runtime.GOOS
