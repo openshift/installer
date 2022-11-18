@@ -55,6 +55,14 @@ RUN curl -sSL "${ALIYUN_URI}" --output /tmp/aliyun-cli-linux-latest-amd64.tgz &&
   tar --directory=/bin/ -xvf /tmp/aliyun-cli-linux-latest-amd64.tgz && \
   rm -f /tmp/aliyun-cli-linux-latest-amd64.tgz
 
+# Download the latest IBM Cloud release binary
+ARG IBMCLI_URI=https://clis.cloud.ibm.com/install/linux
+RUN curl -fsSL ${IBMCLI_URI} | sh && \
+    ibmcloud plugin install vpc-infrastructure -f && \
+    ibmcloud plugin install cloud-dns-services -f && \
+    ibmcloud plugin install cloud-internet-services -f && \
+    chmod -R g=u "$HOME/.bluemix/"
+
 RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
 RUN python get-pip.py 'pip<21.0'
 RUN python -m pip install pyopenssl
