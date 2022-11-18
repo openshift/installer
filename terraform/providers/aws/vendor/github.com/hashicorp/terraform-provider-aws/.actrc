@@ -1,2 +1,0 @@
-# Needed for testing our workflows
--P ubuntu-latest=ghcr.io/catthehacker/ubuntu:full-18.04

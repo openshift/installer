@@ -1,6 +1,0 @@
-*~
-.*.swp
-.idea
-.vscode
-dist/
-terraform-provider-time
