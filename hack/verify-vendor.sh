@@ -22,15 +22,15 @@ if [ "$IS_CONTAINER" != "" ]; then
   # Verify the sub-modules for the terraform providers.
   # The -compat=1.18 is needed for the openstack provider. The provider uses golang.org/x/mod, which go 1.18 selects
   # as v0.3.0 but go 1.16 selects as v0.4.2.
-  find terraform/providers -maxdepth 1 -mindepth 1 -print0 | while read -r -d '' dir
-  do
-    verify_module "$dir" "1.18"
-  done
+  # find terraform/providers -maxdepth 1 -mindepth 1 -print0 | while read -r -d '' dir
+  # do
+  #   verify_module "$dir" "1.18"
+  # done
 
-  # Verify the terraform sub-module.
-  verify_module "terraform/terraform"
+  # # Verify the terraform sub-module.
+  # verify_module "terraform/terraform"
 
-  git diff --exit-code
+  # git diff --exit-code
 else
   podman run --rm \
     --env IS_CONTAINER=TRUE \
