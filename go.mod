@@ -87,7 +87,6 @@ require (
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.27.4
 	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be
-	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/oauth2 v0.0.0-20220622183110-fd043fe589d2
 	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec
 	google.golang.org/api v0.91.0
