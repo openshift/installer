@@ -213,6 +213,34 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", Platform: Invalid value: \"aws\": Platform should be set to none if the ControlPlane.Replicas is 1 and total number of Compute.Replicas is 0]",
 		},
 		{
+			name: "invalid architecture for SNO cluster",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+compute:
+  - architecture: arm64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: arm64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 1
+platform:
+  none : {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: Unsupported value: \"arm64\": supported values: \"amd64\", Compute[0].Architecture: Unsupported value: \"arm64\": supported values: \"amd64\"]",
+		},
+		{
 			name: "valid configuration for none platform for sno",
 			data: `
 apiVersion: v1
@@ -296,13 +324,13 @@ networking:
   serviceNetwork: 
   - 172.30.0.0/16
 compute:
-  - architecture: arm64
+  - architecture: amd64
     hyperthreading: Disabled
     name: worker
     platform: {}
     replicas: 2
 controlPlane:
-  architecture: arm64
+  architecture: amd64
   hyperthreading: Disabled
   name: master
   platform: {}
@@ -368,14 +396,14 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					Name:           "master",
 					Replicas:       pointer.Int64Ptr(3),
 					Hyperthreading: types.HyperthreadingDisabled,
-					Architecture:   types.ArchitectureARM64,
+					Architecture:   types.ArchitectureAMD64,
 				},
 				Compute: []types.MachinePool{
 					{
 						Name:           "worker",
 						Replicas:       pointer.Int64Ptr(2),
 						Hyperthreading: types.HyperthreadingDisabled,
-						Architecture:   types.ArchitectureARM64,
+						Architecture:   types.ArchitectureAMD64,
 					},
 				},
 				Platform: types.Platform{
