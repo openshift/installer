@@ -1,7 +1,9 @@
 package openstack
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -1044,6 +1046,14 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 		logger.Error(err)
 		return false, nil
 	}
+
+	// Gophercloud may fail to parse swift response when served over HTTP2
+	// Disable HTTP2 by setting an empty TLSNextProto
+	// https://issues.redhat.com/browse/OCPBUGS-3933
+	transport := conn.HTTPClient.Transport.(*http.Transport).Clone()
+	transport.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
+	conn.HTTPClient.Transport = transport
+
 	listOpts := containers.ListOpts{Full: false}
 
 	allPages, err := containers.List(conn, listOpts).AllPages()
