@@ -3,6 +3,9 @@ package vsphere
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"net"
 	"regexp"
 	"strings"
 	"time"
@@ -69,6 +72,21 @@ func ValidateMultiZoneForProvisioning(ic *types.InstallConfig) error {
 	err := ValidateForProvisioning(ic)
 	if err != nil {
 		return err
+	}
+
+	// If APIVIPs and IngressVIPs is equal to zero
+	// then don't validate the VIPs.
+	// Instead, ensure there is a configured
+	// DNS record for api and test if the load
+	// balancer is configured.
+
+	// The VIP parameters within the Infrastructure status object
+	// will be empty. This will cause MCO to not deploy
+	// the static pods: haproxy, keepalived and coredns.
+	// This will allow the use of an external load balancer
+	// and RHCOS nodes to be on multiple L2 segments.
+	if len(ic.Platform.VSphere.APIVIPs) == 0 && len(ic.Platform.VSphere.IngressVIPs) == 0 {
+		allErrs = append(allErrs, ensureLoadBalancerDNS(ic, field.NewPath("platform"))...)
 	}
 
 	var clients = make(map[string]*validationContext, 0)
@@ -410,4 +428,60 @@ func validateVcenterPrivileges(validationCtx *validationContext, fldPath *field.
 		return field.ErrorList{field.InternalError(fldPath, err)}
 	}
 	return field.ErrorList{}
+}
+
+func ensureLoadBalancerDNS(installConfig *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	var lastErr error
+	var uris []string
+	dialTimeout := time.Second
+	tcpTimeout := time.Second * 10
+	errorCount := 0
+	errList := field.ErrorList{}
+	tcpContext, cancel := context.WithTimeout(context.TODO(), tcpTimeout)
+	defer cancel()
+
+	uris = append(uris, fmt.Sprintf("api.%s", installConfig.ClusterDomain()))
+	uris = append(uris, fmt.Sprintf("api-int.%s", installConfig.ClusterDomain()))
+
+	apiURIPort := fmt.Sprintf("%s:%s", uris[0], "6443")
+
+	// DNS lookup uri
+	for _, u := range uris {
+		logrus.Debugf("Performing DNS Lookup: %s", u)
+		_, err := net.LookupHost(u)
+		// Append error if DNS entry does not exist
+		if err != nil {
+			errList = append(errList, field.Invalid(fldPath, u, err.Error()))
+		}
+	}
+
+	// If the load balancer is configured properly even
+	// without members we should be available to make
+	// a connection to port 6443. Check for 10 seconds
+	// emit debug message every 2 failures. If unavailable
+	// after timeout emit warning only.
+	wait.Until(func() {
+		conn, err := net.DialTimeout("tcp", apiURIPort, dialTimeout)
+		if err == nil {
+			conn.Close()
+			cancel()
+		} else {
+			lastErr = err
+			if errorCount == 2 {
+				logrus.Debug("Still waiting for load balancer...")
+				errorCount = 0
+			} else {
+				errorCount++
+			}
+		}
+	}, 2*time.Second, tcpContext.Done())
+
+	err := tcpContext.Err()
+	if err != nil && err != context.Canceled {
+		if lastErr != nil {
+			logrus.Warnf("Installation may fail, load balancer not available: %v", lastErr)
+		}
+	}
+
+	return errList
 }
