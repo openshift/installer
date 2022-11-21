@@ -72,6 +72,7 @@ In addition, it covers the installation with the default CNI (OVNKubernetes), as
 - [Connecting workers nodes and pods to an IPv6 network](connect_nodes_to_ipv6_network.md)
 - [Connecting worker nodes to a dedicated Manila network](connect_nodes_to_manila_network.md)
 - [Learn about the OpenShift on OpenStack networking infrastructure design](../../design/openstack/networking-infrastructure.md)
+- [Deploying OpenShift vGPU workers](vgpu.md)
 
 ## OpenStack Requirements
 
