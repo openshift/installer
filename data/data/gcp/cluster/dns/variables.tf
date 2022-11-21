@@ -33,21 +33,6 @@ variable "public_endpoints" {
   description = "If the cluster should have externally accessible resources."
 }
 
-variable "private_zone_name" {
-  description = "The name of the private managed DNS zone"
-  type        = string
-}
-
-variable "create_private_zone" {
-  type        = bool
-  description = "Create a private managed zone."
-}
-
-variable "create_private_zone_records" {
-  type        = bool
-  description = "Create records for the private managed zone."
-}
-
 variable "create_public_zone_records" {
   type        = bool
   description = "Create records for the public managed zone."

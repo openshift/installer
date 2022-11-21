@@ -85,12 +85,6 @@ variable "gcp_master_root_volume_size" {
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
-variable "gcp_private_zone_name" {
-  type = string
-  default = ""
-  description = "The name of the private DNS zone to use for this cluster"
-}
-
 variable "gcp_public_zone_name" {
   type = string
   default = null
@@ -150,18 +144,6 @@ variable "gcp_create_firewall_rules" {
   type = bool
   default = true
   description = "Create the cluster's network firewall rules."
-}
-
-variable "gcp_create_private_zone" {
-  type = bool
-  default = true
-  description = "Create a private managed zone."
-}
-
-variable "gcp_create_private_zone_records" {
-  type = bool
-  default = true
-  description = "Create records for the private managed zone."
 }
 
 variable "gcp_create_public_zone_records" {

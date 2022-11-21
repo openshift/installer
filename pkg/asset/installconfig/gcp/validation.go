@@ -161,7 +161,7 @@ func findDNSZone(client API, zone *gcp.DNSZone, project string) (*dns.ManagedZon
 	return returnedZone, nil
 }
 
-// validateManagedZones will validate the public and private managed zones if they exist.
+// validateManagedZones will validate the public managed zones if they exist.
 func validateManagedZones(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -187,54 +187,7 @@ func validateManagedZones(client API, ic *types.InstallConfig, fieldPath *field.
 		}
 	}
 
-	if ic.GCP.PrivateDNSZone != nil && ic.GCP.PrivateDNSZone.ID != "" {
-		project := findProject(ic.GCP.PrivateDNSZone, ic.GCP.ProjectID)
-		returnedZone, err := findDNSZone(client, ic.Platform.GCP.PrivateDNSZone, project)
-		if err != nil {
-			switch {
-			case IsNotFound(err):
-				allErrs = append(allErrs, field.NotFound(field.NewPath("clusterDomain"), errors.Wrapf(err, "dns zone (%s/%s)", project, ic.ClusterDomain()).Error()))
-			case IsForbidden(err):
-				errMsg := errors.Wrapf(err, "unable to fetch private dns zone information: %s", ic.ClusterDomain()).Error()
-				allErrs = append(allErrs, field.Invalid(fieldPath.Child("privateDNSZone").Child("id"), ic.GCP.PrivateDNSZone.ID, errMsg))
-			default:
-				allErrs = append(allErrs, field.InternalError(field.NewPath("clusterDomain"), err))
-			}
-		} else {
-			if !strings.EqualFold(strings.TrimSuffix(returnedZone.DnsName, "."), strings.TrimSuffix(ic.ClusterDomain(), ".")) {
-				errMsg := fmt.Sprintf("dns zone %s did not match expected %s", returnedZone.DnsName, ic.ClusterDomain())
-				allErrs = append(allErrs, field.Invalid(fieldPath.Child("privateManagedZone"), ic.GCP.PrivateDNSZone.ID, errMsg))
-			}
-		}
-	}
-
 	return allErrs
-}
-
-// ValidatePreExistingPrivateDNS ensure that the PrivateZone exists in the cluster domain
-func ValidatePreExistingPrivateDNS(client API, ic *types.InstallConfig) error {
-	record := fmt.Sprintf("api.%s.", strings.TrimSuffix(ic.ClusterDomain(), "."))
-	project := findProject(ic.GCP.PrivateDNSZone, ic.GCP.ProjectID)
-
-	if ic.GCP.PrivateDNSZone != nil && ic.GCP.PrivateDNSZone.ID != "" {
-		zone, err := client.GetDNSZoneByName(context.TODO(), project, ic.GCP.PrivateDNSZone.ID)
-		if err != nil {
-			return fmt.Errorf("failed to find public zone in project %s", project)
-		}
-
-		rrSets, err := client.GetRecordSets(context.TODO(), project, zone.Name)
-		if err != nil {
-			return field.InternalError(field.NewPath("baseDomain"), err)
-		}
-
-		for _, r := range rrSets {
-			if strings.EqualFold(r.Name, record) {
-				errMsg := fmt.Sprintf("record %s already exists in DNS Zone (%s/%s) and might be in use by another cluster, please remove it to continue", record, project, zone.Name)
-				return field.Invalid(field.NewPath("metadata", "name"), ic.ObjectMeta.Name, errMsg)
-			}
-		}
-	}
-	return nil
 }
 
 // ValidatePreExistingPublicDNS ensure no pre-existing DNS record exists in the public

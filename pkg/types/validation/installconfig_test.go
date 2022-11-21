@@ -2036,7 +2036,6 @@ func TestValidateInstallConfig(t *testing.T) {
 					GCP: validGCPPlatform(),
 				}
 				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
-					ID:        "myZone",
 					ProjectID: "myProject",
 				}
 
@@ -2056,13 +2055,33 @@ func TestValidateInstallConfig(t *testing.T) {
 					ProjectID: "myProject",
 				}
 				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
-					ID:        "myZone",
 					ProjectID: "myProject",
 				}
 				c.FeatureSet = "TechPreviewNoUpgrade"
 
 				return c
 			}(),
+		},
+		{
+			name: "GCP BYO Private DNS Invalid with ID",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.PublicDNSZone = &gcp.DNSZone{
+					ID:        "myZone",
+					ProjectID: "myProject",
+				}
+				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
+					ProjectID: "myProject",
+					ID:        "IDShouldNotExist",
+				}
+				c.FeatureSet = "TechPreviewNoUpgrade"
+
+				return c
+			}(),
+			expectedError: "platform.gcp.privateDNSZone.id: Forbidden: do not provide an ID for the private DNS zone.",
 		},
 		{
 			name: "GCP XPN SHOULD return an error if used WITHOUT tech preview",
