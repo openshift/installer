@@ -44,5 +44,12 @@ then
 	export CGO_ENABLED=1
 fi
 
+case $(go env GOARCH) in
+ppc64le)
+	LDFLAGS="${LDFLAGS} -linkmode=external"
+	export CGO_ENABLED=1
+	;;
+esac
+
 # shellcheck disable=SC2086
 go build ${GOFLAGS} -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
