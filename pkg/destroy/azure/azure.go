@@ -9,6 +9,7 @@ import (
 	"time"
 
 	azurestackdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 	"github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns"
 	"github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns"
@@ -16,6 +17,11 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
+	azurekiota "github.com/microsoft/kiota-authentication-azure-go"
+	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
+	"github.com/microsoftgraph/msgraph-sdk-go/applications"
+	"github.com/microsoftgraph/msgraph-sdk-go/models"
+	"github.com/microsoftgraph/msgraph-sdk-go/serviceprincipals"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -34,6 +40,7 @@ type ClusterUninstaller struct {
 	TenantID        string
 	GraphAuthorizer autorest.Authorizer
 	Authorizer      autorest.Authorizer
+	AuthProvider    *azurekiota.AzureIdentityAuthenticationProvider
 	Environment     azureenv.Environment
 	CloudName       azure.CloudEnvironment
 
@@ -50,9 +57,10 @@ type ClusterUninstaller struct {
 	privateZonesClient      privatedns.PrivateZonesClient
 	serviceprincipalsClient graphrbac.ServicePrincipalsClient
 	applicationsClient      graphrbac.ApplicationsClient
+	msgraphClient           *msgraphsdk.GraphServiceClient
 }
 
-func (o *ClusterUninstaller) configureClients() {
+func (o *ClusterUninstaller) configureClients() error {
 	o.resourceGroupsClient = resources.NewGroupsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
 	o.resourceGroupsClient.Authorizer = o.Authorizer
 
@@ -73,6 +81,14 @@ func (o *ClusterUninstaller) configureClients() {
 
 	o.applicationsClient = graphrbac.NewApplicationsClientWithBaseURI(o.Environment.GraphEndpoint, o.TenantID)
 	o.applicationsClient.Authorizer = o.GraphAuthorizer
+
+	adapter, err := msgraphsdk.NewGraphRequestAdapter(o.AuthProvider)
+	if err != nil {
+		return err
+	}
+	o.msgraphClient = msgraphsdk.NewGraphServiceClient(adapter)
+
+	return nil
 }
 
 // New returns an Azure destroyer from ClusterMetadata.
@@ -96,6 +112,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		TenantID:                    session.Credentials.TenantID,
 		GraphAuthorizer:             session.GraphAuthorizer,
 		Authorizer:                  session.Authorizer,
+		AuthProvider:                session.AuthProvider,
 		Environment:                 session.Environment,
 		InfraID:                     metadata.InfraID,
 		ResourceGroupName:           group,
@@ -110,7 +127,10 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	var errs []error
 	var err error
 
-	o.configureClients()
+	err = o.configureClients()
+	if err != nil {
+		return nil, err
+	}
 
 	// 2 hours
 	timeout := 120 * time.Minute
@@ -186,7 +206,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		waitCtx,
 		func(ctx context.Context) {
 			o.Logger.Debugf("deleting application registrations")
-			err = deleteApplicationRegistrations(ctx, o.applicationsClient, o.serviceprincipalsClient, o.Logger, o.InfraID)
+			err = deleteApplicationRegistrationsWithFallback(ctx, o.msgraphClient, o.applicationsClient, o.serviceprincipalsClient, o.Logger, o.InfraID)
 			if err != nil {
 				o.Logger.Debug(err)
 				if isAuthError(err) {
@@ -522,6 +542,15 @@ func isAuthError(err error) bool {
 		}
 	}
 
+	// https://github.com/Azure/azure-sdk-for-go/issues/16736
+	// https://github.com/Azure/azure-sdk-for-go/blob/sdk/azidentity/v1.1.0/sdk/azidentity/errors.go#L36
+	var authErr *azidentity.AuthenticationFailedError
+	if errors.As(err, &authErr) {
+		if authErr.RawResponse.StatusCode >= 400 && authErr.RawResponse.StatusCode <= 403 {
+			return true
+		}
+	}
+
 	return false
 }
 
@@ -543,11 +572,11 @@ func isResourceGroupBlockedError(err error) bool {
 	return false
 }
 
-func deleteApplicationRegistrations(ctx context.Context, appClient graphrbac.ApplicationsClient, spClient graphrbac.ServicePrincipalsClient, logger logrus.FieldLogger, infraID string) error {
+func deleteApplicationRegistrationsLegacy(ctx context.Context, appClient graphrbac.ApplicationsClient, spClient graphrbac.ServicePrincipalsClient, logger logrus.FieldLogger, infraID string) error {
 	errorList := []error{}
 
 	tag := fmt.Sprintf("kubernetes.io_cluster.%s=owned", infraID)
-	servicePrincipals, err := getServicePrincipalsByTag(ctx, spClient, tag, infraID)
+	servicePrincipals, err := getServicePrincipalsByTagLegacy(ctx, spClient, tag, infraID)
 	if err != nil {
 		if isAuthError(err) {
 			return err
@@ -588,7 +617,7 @@ func deleteApplicationRegistrations(ctx context.Context, appClient graphrbac.App
 	return utilerrors.NewAggregate(errorList)
 }
 
-func getServicePrincipalsByTag(ctx context.Context, spClient graphrbac.ServicePrincipalsClient, matchTag, infraID string) ([]graphrbac.ServicePrincipal, error) {
+func getServicePrincipalsByTagLegacy(ctx context.Context, spClient graphrbac.ServicePrincipalsClient, matchTag, infraID string) ([]graphrbac.ServicePrincipal, error) {
 	matchedSPs := []graphrbac.ServicePrincipal{}
 
 	infraFilter := fmt.Sprintf("startswith(displayName,'%s')", infraID)
@@ -609,4 +638,78 @@ func getServicePrincipalsByTag(ctx context.Context, spClient graphrbac.ServicePr
 	}
 
 	return matchedSPs, nil
+}
+
+func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, infraID string, logger logrus.FieldLogger) error {
+	var errorList []error
+
+	tag := fmt.Sprintf("kubernetes.io_cluster.%s=owned", infraID)
+	servicePrincipals, err := getServicePrincipalsByTag(ctx, graphClient, tag, infraID)
+	if err != nil {
+		return errors.Wrap(err, "failed to gather list of Service Principals by tag")
+	}
+
+	for _, sp := range servicePrincipals {
+		appID := *sp.GetAppId()
+		logger := logger.WithField("appId eq '%s'", appID)
+
+		filter := fmt.Sprintf("appId eq '%s'", appID)
+		listQuery := applications.ApplicationsRequestBuilderGetRequestConfiguration{
+			QueryParameters: &applications.ApplicationsRequestBuilderGetQueryParameters{
+				Filter: &filter,
+			},
+		}
+
+		resp, err := graphClient.Applications().Get(ctx, &listQuery)
+		if err != nil {
+			if isAuthError(err) {
+				return err
+			}
+			errorList = append(errorList, err)
+			continue
+		}
+
+		apps := resp.GetValue()
+		if len(apps) != 1 {
+			err = fmt.Errorf("should have received only a single matching AppID, received %d instead", len(apps))
+			errorList = append(errorList, err)
+		}
+
+		err = graphClient.ApplicationsById(*apps[0].GetId()).Delete(ctx, nil)
+		if err != nil {
+			if isAuthError(err) {
+				return err
+			}
+			errorList = append(errorList, err)
+			continue
+		}
+		logger.Info("deleted")
+	}
+
+	return utilerrors.NewAggregate(errorList)
+}
+
+func getServicePrincipalsByTag(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, matchTag, infraID string) ([]models.ServicePrincipalable, error) {
+	filter := fmt.Sprintf("startswith(displayName, '%s' and tags/any(s:s eq '%s')", infraID, matchTag)
+	listQuery := serviceprincipals.ServicePrincipalsRequestBuilderGetRequestConfiguration{
+		QueryParameters: &serviceprincipals.ServicePrincipalsRequestBuilderGetQueryParameters{
+			Filter: &filter,
+		},
+	}
+
+	resp, err := graphClient.ServicePrincipals().Get(ctx, &listQuery)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetValue(), nil
+}
+
+func deleteApplicationRegistrationsWithFallback(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, appClient graphrbac.ApplicationsClient, spClient graphrbac.ServicePrincipalsClient, logger logrus.FieldLogger, infraID string) error {
+	// Try using MSGraph API calls first
+	err := deleteApplicationRegistrations(ctx, graphClient, infraID, logger)
+	if isAuthError(err) {
+		// If we see an Auth error, then let's try the deprecated AD Graph API
+		err = deleteApplicationRegistrationsLegacy(ctx, appClient, spClient, logger, infraID)
+	}
+	return err
 }
