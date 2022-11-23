@@ -3,20 +3,18 @@
 package openstack
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 // PreTerraform performs any infrastructure initialization which must
 // happen before Terraform creates the remaining infrastructure.
-func PreTerraform(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
+func PreTerraform() error {
 	// Terraform runs in a different directory but we want to allow people to
 	// use clouds.yaml files in their local directory. Emulate this by setting
 	// the necessary environment variable to point to this file if (a) the user
