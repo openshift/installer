@@ -141,10 +141,13 @@ then
 
 	rm --recursive --force config-bootstrap
 
-	ADDITIONAL_FLAGS=""
+	ADDITIONAL_FLAGS=()
 	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
-		ADDITIONAL_FLAGS="--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml"
+		ADDITIONAL_FLAGS+=("--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml")
 	fi
+	{{- if .FeatureSet }}
+	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
+	{{- end}}
 
 	bootkube_podman_run \
 		--name config-render \
@@ -156,7 +159,7 @@ then
 		--config-output-file=/assets/config-bootstrap/config \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/config-bootstrap \
-		${ADDITIONAL_FLAGS}
+		"${ADDITIONAL_FLAGS[@]}"
 
 	cp config-bootstrap/manifests/* manifests/
 
