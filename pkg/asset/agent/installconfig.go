@@ -243,6 +243,10 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		}
 
 		for i, host := range baremetal.Hosts {
+			if host.Name != "" {
+				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "Name")
+				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.Name))
+			}
 			if host.BMC.Username != "" {
 				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BMC", "Username")
 				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.BMC.Username))
@@ -262,6 +266,10 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			if host.Role != "" {
 				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "Role")
 				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.Role))
+			}
+			if host.BootMACAddress != "" {
+				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BootMACAddress")
+				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.BootMACAddress))
 			}
 			if host.HardwareProfile != "" {
 				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "HardwareProfile")
