@@ -9,6 +9,7 @@ import (
 	"time"
 
 	azurestackdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 	"github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns"
@@ -21,6 +22,7 @@ import (
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/microsoftgraph/msgraph-sdk-go/applications"
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
+	"github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors"
 	"github.com/microsoftgraph/msgraph-sdk-go/serviceprincipals"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -640,12 +642,32 @@ func getServicePrincipalsByTagLegacy(ctx context.Context, spClient graphrbac.Ser
 	return matchedSPs, nil
 }
 
+func extractAzureError(err error) string {
+	var oDataErr odataerrors.ODataErrorable
+	if errors.As(err, &oDataErr) {
+		dErr := oDataErr.GetError()
+		return fmt.Sprintf("[ODataError] code=%s: msg=%s", *dErr.GetCode(), *dErr.GetMessage())
+	}
+
+	var authErr *azidentity.AuthenticationFailedError
+	if errors.As(err, &authErr) {
+		return fmt.Sprintf("[aziErr] %s: raw=%v", authErr.Error(), authErr.RawResponse)
+	}
+
+	var coreErr azcore.ResponseError
+	if errors.As(err, &coreErr) {
+		return fmt.Sprintf("[azCoreErr] %s: code=%d %s raw=%v", coreErr.Error(), coreErr.StatusCode, coreErr.ErrorCode, coreErr.RawResponse)
+	}
+	return fmt.Sprintf("[unknown] %s", err.Error())
+}
+
 func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, infraID string, logger logrus.FieldLogger) error {
 	var errorList []error
 
 	tag := fmt.Sprintf("kubernetes.io_cluster.%s=owned", infraID)
 	servicePrincipals, err := getServicePrincipalsByTag(ctx, graphClient, tag, infraID)
 	if err != nil {
+		logger.Debug(extractAzureError(err))
 		return errors.Wrap(err, "failed to gather list of Service Principals by tag")
 	}
 
@@ -662,6 +684,7 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 
 		resp, err := graphClient.Applications().Get(ctx, &listQuery)
 		if err != nil {
+			logger.Debug(extractAzureError(err))
 			if isAuthError(err) {
 				return err
 			}
@@ -677,6 +700,7 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 
 		err = graphClient.ApplicationsById(*apps[0].GetId()).Delete(ctx, nil)
 		if err != nil {
+			logger.Debug(extractAzureError(err))
 			if isAuthError(err) {
 				return err
 			}
@@ -707,7 +731,8 @@ func getServicePrincipalsByTag(ctx context.Context, graphClient *msgraphsdk.Grap
 func deleteApplicationRegistrationsWithFallback(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, appClient graphrbac.ApplicationsClient, spClient graphrbac.ServicePrincipalsClient, logger logrus.FieldLogger, infraID string) error {
 	// Try using MSGraph API calls first
 	err := deleteApplicationRegistrations(ctx, graphClient, infraID, logger)
-	if isAuthError(err) {
+	// if isAuthError(err) {
+	if err != nil {
 		// If we see an Auth error, then let's try the deprecated AD Graph API
 		err = deleteApplicationRegistrationsLegacy(ctx, appClient, spClient, logger, infraID)
 	}
