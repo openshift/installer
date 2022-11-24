@@ -23,14 +23,19 @@ import (
 // stage and the second list is the list of resources that are not terminated.
 //
 //	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
-func findEC2Instances(ctx context.Context, ec2Client *ec2.EC2, deleted sets.String, filters []Filter, logger logrus.FieldLogger) ([]string, []string, error) {
-	if ec2Client.Config.Region == nil {
+func findEC2Instances(ctx context.Context, ec2Client *EC2Client, deleted sets.String, filters []Filter, logger logrus.FieldLogger) ([]string, []string, error) {
+	region := ec2Client.client.Config.Region
+	if region == nil {
 		return nil, nil, errors.New("EC2 client does not have region configured")
 	}
+	return findEC2InstancesWithRegion(ctx, ec2Client, deleted, filters, logger, *region)
+}
 
-	partition, ok := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), *ec2Client.Config.Region)
+// This is defined separately so it can be unit tested
+func findEC2InstancesWithRegion(ctx context.Context, ec2Client EC2API, deleted sets.String, filters []Filter, logger logrus.FieldLogger, region string) ([]string, []string, error) {
+	partition, ok := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region)
 	if !ok {
-		return nil, nil, errors.Errorf("no partition found for region %q", *ec2Client.Config.Region)
+		return nil, nil, errors.Errorf("no partition found for region %q", region)
 	}
 
 	var resourcesRunning []string
@@ -44,9 +49,7 @@ func findEC2Instances(ctx context.Context, ec2Client *ec2.EC2, deleted sets.Stri
 				Values: []*string{aws.String(value)},
 			})
 		}
-		err := ec2Client.DescribeInstancesPagesWithContext(
-			ctx,
-			&ec2.DescribeInstancesInput{Filters: instanceFilters},
+		err := ec2Client.DescribeInstancesPages(ctx, instanceFilters,
 			func(results *ec2.DescribeInstancesOutput, lastPage bool) bool {
 				for _, reservation := range results.Reservations {
 					if reservation.OwnerId == nil {
@@ -59,7 +62,7 @@ func findEC2Instances(ctx context.Context, ec2Client *ec2.EC2, deleted sets.Stri
 						}
 
 						instanceLogger := logger.WithField("instance", *instance.InstanceId)
-						arn := fmt.Sprintf("arn:%s:ec2:%s:%s:instance/%s", partition.ID(), *ec2Client.Config.Region, *reservation.OwnerId, *instance.InstanceId)
+						arn := fmt.Sprintf("arn:%s:ec2:%s:%s:instance/%s", partition.ID(), region, *reservation.OwnerId, *instance.InstanceId)
 						if *instance.State.Name == "terminated" {
 							if !deleted.Has(arn) {
 								instanceLogger.Info("Terminated")
@@ -86,7 +89,7 @@ func findEC2Instances(ctx context.Context, ec2Client *ec2.EC2, deleted sets.Stri
 }
 
 func deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
-	client := ec2.New(session)
+	client := NewEC2Client(session, logger)
 
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
@@ -96,126 +99,47 @@ func deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logge
 
 	switch resourceType {
 	case "dhcp-options":
-		return deleteEC2DHCPOptions(ctx, client, id, logger)
+		return client.DeleteDhcpOptions(ctx, id)
 	case "elastic-ip":
-		return deleteEC2ElasticIP(ctx, client, id, logger)
+		return client.DeleteElasticIP(ctx, id)
 	case "image":
-		return deleteEC2Image(ctx, client, id, logger)
+		return client.DeleteImage(ctx, id)
 	case "instance":
 		return terminateEC2Instance(ctx, client, iam.New(session), id, logger)
 	case "internet-gateway":
-		return deleteEC2InternetGateway(ctx, client, id, logger)
+		return client.DeleteInternetGateway(ctx, id)
 	case "natgateway":
-		return deleteEC2NATGateway(ctx, client, id, logger)
+		return client.DeleteNATGateway(ctx, id)
 	case "placement-group":
-		return deleteEC2PlacementGroup(ctx, client, id, logger)
+		return client.DeletePlacementGroup(ctx, id)
 	case "route-table":
 		return deleteEC2RouteTable(ctx, client, id, logger)
 	case "security-group":
-		return deleteEC2SecurityGroup(ctx, client, id, logger)
+		return client.DeleteSecurityGroup(ctx, id)
 	case "snapshot":
-		return deleteEC2Snapshot(ctx, client, id, logger)
+		return client.DeleteSnapshot(ctx, id)
 	case "network-interface":
-		return deleteEC2NetworkInterface(ctx, client, id, logger)
+		return client.DeleteNetworkInterface(ctx, id)
 	case "subnet":
-		return deleteEC2Subnet(ctx, client, id, logger)
+		return client.DeleteSubnet(ctx, id)
 	case "volume":
-		return deleteEC2Volume(ctx, client, id, logger)
+		return client.DeleteVolume(ctx, id)
 	case "vpc":
 		return deleteEC2VPC(ctx, client, elb.New(session), elbv2.New(session), id, logger)
 	case "vpc-endpoint":
-		return deleteEC2VPCEndpoint(ctx, client, id, logger)
+		return client.DeleteVPCEndpoint(ctx, id)
 	case "vpc-peering-connection":
-		return deleteEC2VPCPeeringConnection(ctx, client, id, logger)
+		return client.DeleteVPCPeeringConnection(ctx, id)
 	case "vpc-endpoint-service":
-		return deleteEC2VPCEndpointService(ctx, client, id, logger)
+		return client.DeleteVPCEndpointService(ctx, id)
 	default:
 		return errors.Errorf("unrecognized EC2 resource type %s", resourceType)
 	}
 }
 
-func deleteEC2DHCPOptions(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteDhcpOptionsWithContext(ctx, &ec2.DeleteDhcpOptionsInput{
-		DhcpOptionsId: &id,
-	})
+func terminateEC2Instance(ctx context.Context, ec2Client EC2API, iamClient *iam.IAM, id string, logger logrus.FieldLogger) error {
+	response, err := ec2Client.DescribeInstances(ctx, id)
 	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidDhcpOptionsID.NotFound" {
-			return nil
-		}
-		return err
-	}
-
-	logger.Info("Deleted")
-	return nil
-}
-
-func deleteEC2Image(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	// tag the snapshots used by the AMI so that the snapshots are matched
-	// by the filter and deleted
-	response, err := client.DescribeImagesWithContext(ctx, &ec2.DescribeImagesInput{
-		ImageIds: []*string{&id},
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidAMIID.NotFound" {
-			return nil
-		}
-		return err
-	}
-	for _, image := range response.Images {
-		var snapshots []*string
-		for _, bdm := range image.BlockDeviceMappings {
-			if bdm.Ebs != nil && bdm.Ebs.SnapshotId != nil {
-				snapshots = append(snapshots, bdm.Ebs.SnapshotId)
-			}
-		}
-		if len(snapshots) != 0 {
-			_, err = client.CreateTagsWithContext(ctx, &ec2.CreateTagsInput{
-				Resources: snapshots,
-				Tags:      image.Tags,
-			})
-			if err != nil {
-				return errors.Wrapf(err, "tagging snapshots for %s", id)
-			}
-		}
-	}
-
-	_, err = client.DeregisterImageWithContext(ctx, &ec2.DeregisterImageInput{
-		ImageId: &id,
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidAMIID.NotFound" {
-			return nil
-		}
-		return err
-	}
-
-	logger.Info("Deleted")
-	return nil
-}
-
-func deleteEC2ElasticIP(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.ReleaseAddressWithContext(ctx, &ec2.ReleaseAddressInput{
-		AllocationId: aws.String(id),
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidAllocationID.NotFound" {
-			return nil
-		}
-		return err
-	}
-
-	logger.Info("Released")
-	return nil
-}
-
-func terminateEC2Instance(ctx context.Context, ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger logrus.FieldLogger) error {
-	response, err := ec2Client.DescribeInstancesWithContext(ctx, &ec2.DescribeInstancesInput{
-		InstanceIds: []*string{aws.String(id)},
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidInstanceID.NotFound" {
-			return nil
-		}
 		return err
 	}
 
@@ -230,7 +154,7 @@ func terminateEC2Instance(ctx context.Context, ec2Client *ec2.EC2, iamClient *ia
 	return nil
 }
 
-func terminateEC2InstanceByInstance(ctx context.Context, ec2Client *ec2.EC2, iamClient *iam.IAM, instance *ec2.Instance, logger logrus.FieldLogger) error {
+func terminateEC2InstanceByInstance(ctx context.Context, ec2Client EC2API, iamClient *iam.IAM, instance *ec2.Instance, logger logrus.FieldLogger) error {
 	// Ignore instances that are already terminated
 	if instance.State == nil || *instance.State.Name == "terminated" {
 		return nil
@@ -248,9 +172,7 @@ func terminateEC2InstanceByInstance(ctx context.Context, ec2Client *ec2.EC2, iam
 		}
 	}
 
-	_, err := ec2Client.TerminateInstancesWithContext(ctx, &ec2.TerminateInstancesInput{
-		InstanceIds: []*string{instance.InstanceId},
-	})
+	err := ec2Client.TerminateInstances(ctx, instance.InstanceId)
 	if err != nil {
 		return err
 	}
@@ -259,73 +181,14 @@ func terminateEC2InstanceByInstance(ctx context.Context, ec2Client *ec2.EC2, iam
 	return nil
 }
 
-func deleteEC2InternetGateway(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	response, err := client.DescribeInternetGatewaysWithContext(ctx, &ec2.DescribeInternetGatewaysInput{
-		InternetGatewayIds: []*string{aws.String(id)},
-	})
-	if err != nil {
-		return err
-	}
-
-	for _, gateway := range response.InternetGateways {
-		for _, vpc := range gateway.Attachments {
-			if vpc.VpcId == nil {
-				logger.Warn("gateway does not have a VPC ID")
-				continue
-			}
-			_, err := client.DetachInternetGatewayWithContext(ctx, &ec2.DetachInternetGatewayInput{
-				InternetGatewayId: gateway.InternetGatewayId,
-				VpcId:             vpc.VpcId,
-			})
-			if err == nil {
-				logger.WithField("vpc", *vpc.VpcId).Debug("Detached")
-			} else if err.(awserr.Error).Code() != "Gateway.NotAttached" {
-				return errors.Wrapf(err, "detaching from %s", *vpc.VpcId)
-			}
-		}
-	}
-
-	_, err = client.DeleteInternetGatewayWithContext(ctx, &ec2.DeleteInternetGatewayInput{
-		InternetGatewayId: &id,
-	})
-	if err != nil {
-		return err
-	}
-
-	logger.Info("Deleted")
-	return nil
-}
-
-func deleteEC2NATGateway(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteNatGatewayWithContext(ctx, &ec2.DeleteNatGatewayInput{
-		NatGatewayId: aws.String(id),
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "NatGatewayNotFound" {
-			return nil
-		}
-		return err
-	}
-
-	logger.Info("Deleted")
-	return nil
-}
-
-func deleteEC2NATGatewaysByVPC(ctx context.Context, client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
+func deleteEC2NATGatewaysByVPC(ctx context.Context, client EC2API, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeNatGatewaysPagesWithContext(
+	err := client.DescribeNatGatewaysPages(
 		ctx,
-		&ec2.DescribeNatGatewaysInput{
-			Filter: []*ec2.Filter{
-				{
-					Name:   aws.String("vpc-id"),
-					Values: []*string{&vpc},
-				},
-			},
-		},
+		vpc,
 		func(results *ec2.DescribeNatGatewaysOutput, lastPage bool) bool {
 			for _, gateway := range results.NatGateways {
-				err := deleteEC2NATGateway(ctx, client, *gateway.NatGatewayId, logger.WithField("NAT gateway", *gateway.NatGatewayId))
+				err := client.DeleteNATGateway(ctx, *gateway.NatGatewayId)
 				if err != nil {
 					if lastError != nil {
 						logger.Debug(err)
@@ -347,37 +210,9 @@ func deleteEC2NATGatewaysByVPC(ctx context.Context, client *ec2.EC2, vpc string,
 	return err
 }
 
-func deleteEC2PlacementGroup(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	response, err := client.DescribePlacementGroupsWithContext(ctx, &ec2.DescribePlacementGroupsInput{
-		GroupIds: []*string{aws.String(id)},
-	})
+func deleteEC2RouteTable(ctx context.Context, client EC2API, id string, logger logrus.FieldLogger) error {
+	response, err := client.DescribeRouteTables(ctx, id)
 	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidPlacementGroup.Unknown" {
-			return nil
-		}
-		return err
-	}
-
-	for _, placementGroup := range response.PlacementGroups {
-		if _, err := client.DeletePlacementGroupWithContext(ctx, &ec2.DeletePlacementGroupInput{
-			GroupName: placementGroup.GroupName,
-		}); err != nil {
-			return err
-		}
-	}
-
-	logger.Info("Deleted")
-	return nil
-}
-
-func deleteEC2RouteTable(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	response, err := client.DescribeRouteTablesWithContext(ctx, &ec2.DescribeRouteTablesInput{
-		RouteTableIds: []*string{aws.String(id)},
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidRouteTableID.NotFound" {
-			return nil
-		}
 		return err
 	}
 
@@ -391,7 +226,7 @@ func deleteEC2RouteTable(ctx context.Context, client *ec2.EC2, id string, logger
 	return nil
 }
 
-func deleteEC2RouteTableObject(ctx context.Context, client *ec2.EC2, table *ec2.RouteTable, logger logrus.FieldLogger) error {
+func deleteEC2RouteTableObject(ctx context.Context, client EC2API, table *ec2.RouteTable, logger logrus.FieldLogger) error {
 	hasMain := false
 	for _, association := range table.Associations {
 		if *association.Main {
@@ -399,9 +234,7 @@ func deleteEC2RouteTableObject(ctx context.Context, client *ec2.EC2, table *ec2.
 			hasMain = true
 			continue
 		}
-		_, err := client.DisassociateRouteTableWithContext(ctx, &ec2.DisassociateRouteTableInput{
-			AssociationId: association.RouteTableAssociationId,
-		})
+		err := client.DisassociateRouteTable(ctx, *association.RouteTableAssociationId)
 		if err != nil {
 			return errors.Wrapf(err, "dissociating %s", *association.RouteTableAssociationId)
 		}
@@ -414,9 +247,7 @@ func deleteEC2RouteTableObject(ctx context.Context, client *ec2.EC2, table *ec2.
 		return nil
 	}
 
-	_, err := client.DeleteRouteTableWithContext(ctx, &ec2.DeleteRouteTableInput{
-		RouteTableId: table.RouteTableId,
-	})
+	err := client.DeleteRouteTable(ctx, *table.RouteTableId)
 	if err != nil {
 		return err
 	}
@@ -425,18 +256,9 @@ func deleteEC2RouteTableObject(ctx context.Context, client *ec2.EC2, table *ec2.
 	return nil
 }
 
-func deleteEC2RouteTablesByVPC(ctx context.Context, client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
+func deleteEC2RouteTablesByVPC(ctx context.Context, client EC2API, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeRouteTablesPagesWithContext(
-		ctx,
-		&ec2.DescribeRouteTablesInput{
-			Filters: []*ec2.Filter{
-				{
-					Name:   aws.String("vpc-id"),
-					Values: []*string{&vpc},
-				},
-			},
-		},
+	err := client.DescribeRouteTablesPages(ctx, vpc,
 		func(results *ec2.DescribeRouteTablesOutput, lastPage bool) bool {
 			for _, table := range results.RouteTables {
 				err := deleteEC2RouteTableObject(ctx, client, table, logger.WithField("table", *table.RouteTableId))
@@ -461,33 +283,9 @@ func deleteEC2RouteTablesByVPC(ctx context.Context, client *ec2.EC2, vpc string,
 	return err
 }
 
-func deleteEC2SecurityGroup(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	response, err := client.DescribeSecurityGroupsWithContext(ctx, &ec2.DescribeSecurityGroupsInput{
-		GroupIds: []*string{aws.String(id)},
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidGroup.NotFound" {
-			return nil
-		}
-		return err
-	}
-
-	for _, group := range response.SecurityGroups {
-		err = deleteEC2SecurityGroupObject(ctx, client, group, logger)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func deleteEC2SecurityGroupObject(ctx context.Context, client *ec2.EC2, group *ec2.SecurityGroup, logger logrus.FieldLogger) error {
+func deleteEC2SecurityGroupObject(ctx context.Context, client EC2API, group *ec2.SecurityGroup, logger logrus.FieldLogger) error {
 	if len(group.IpPermissions) > 0 {
-		_, err := client.RevokeSecurityGroupIngressWithContext(ctx, &ec2.RevokeSecurityGroupIngressInput{
-			GroupId:       group.GroupId,
-			IpPermissions: group.IpPermissions,
-		})
+		err := client.RevokeSecurityGroupIngress(ctx, group)
 		if err != nil {
 			return errors.Wrap(err, "revoking ingress permissions")
 		}
@@ -495,10 +293,7 @@ func deleteEC2SecurityGroupObject(ctx context.Context, client *ec2.EC2, group *e
 	}
 
 	if len(group.IpPermissionsEgress) > 0 {
-		_, err := client.RevokeSecurityGroupEgressWithContext(ctx, &ec2.RevokeSecurityGroupEgressInput{
-			GroupId:       group.GroupId,
-			IpPermissions: group.IpPermissionsEgress,
-		})
+		err := client.RevokeSecurityGroupEgress(ctx, group)
 		if err != nil {
 			return errors.Wrap(err, "revoking egress permissions")
 		}
@@ -510,13 +305,8 @@ func deleteEC2SecurityGroupObject(ctx context.Context, client *ec2.EC2, group *e
 		return nil
 	}
 
-	_, err := client.DeleteSecurityGroupWithContext(ctx, &ec2.DeleteSecurityGroupInput{
-		GroupId: group.GroupId,
-	})
+	err := client.DeleteSecurityGroup(ctx, *group.GroupId)
 	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidGroup.NotFound" {
-			return nil
-		}
 		return err
 	}
 
@@ -524,18 +314,9 @@ func deleteEC2SecurityGroupObject(ctx context.Context, client *ec2.EC2, group *e
 	return nil
 }
 
-func deleteEC2SecurityGroupsByVPC(ctx context.Context, client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
+func deleteEC2SecurityGroupsByVPC(ctx context.Context, client EC2API, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeSecurityGroupsPagesWithContext(
-		ctx,
-		&ec2.DescribeSecurityGroupsInput{
-			Filters: []*ec2.Filter{
-				{
-					Name:   aws.String("vpc-id"),
-					Values: []*string{&vpc},
-				},
-			},
-		},
+	err := client.DescribeSecurityGroupsPages(ctx, vpc,
 		func(results *ec2.DescribeSecurityGroupsOutput, lastPage bool) bool {
 			for _, group := range results.SecurityGroups {
 				err := deleteEC2SecurityGroupObject(ctx, client, group, logger.WithField("security group", *group.GroupId))
@@ -560,10 +341,8 @@ func deleteEC2SecurityGroupsByVPC(ctx context.Context, client *ec2.EC2, vpc stri
 	return err
 }
 
-func deleteEC2Snapshot(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteSnapshotWithContext(ctx, &ec2.DeleteSnapshotInput{
-		SnapshotId: &id,
-	})
+func deleteEC2Snapshot(ctx context.Context, client EC2API, id string, logger logrus.FieldLogger) error {
+	err := client.DeleteSnapshot(ctx, id)
 	if err != nil {
 		if err.(awserr.Error).Code() == "InvalidSnapshot.NotFound" {
 			return nil
@@ -575,36 +354,12 @@ func deleteEC2Snapshot(ctx context.Context, client *ec2.EC2, id string, logger l
 	return nil
 }
 
-func deleteEC2NetworkInterface(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteNetworkInterfaceWithContext(ctx, &ec2.DeleteNetworkInterfaceInput{
-		NetworkInterfaceId: aws.String(id),
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidNetworkInterfaceID.NotFound" {
-			return nil
-		}
-		return err
-	}
-
-	logger.Info("Deleted")
-	return nil
-}
-
-func deleteEC2NetworkInterfaceByVPC(ctx context.Context, client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
+func deleteEC2NetworkInterfaceByVPC(ctx context.Context, client EC2API, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeNetworkInterfacesPagesWithContext(
-		ctx,
-		&ec2.DescribeNetworkInterfacesInput{
-			Filters: []*ec2.Filter{
-				{
-					Name:   aws.String("vpc-id"),
-					Values: []*string{&vpc},
-				},
-			},
-		},
+	err := client.DescribeNetworkInterfacesPages(ctx, vpc,
 		func(results *ec2.DescribeNetworkInterfacesOutput, lastPage bool) bool {
 			for _, networkInterface := range results.NetworkInterfaces {
-				err := deleteEC2NetworkInterface(ctx, client, *networkInterface.NetworkInterfaceId, logger.WithField("network interface", *networkInterface.NetworkInterfaceId))
+				err := client.DeleteNetworkInterface(ctx, *networkInterface.NetworkInterfaceId)
 				if err != nil {
 					if lastError != nil {
 						logger.Debug(lastError)
@@ -626,36 +381,12 @@ func deleteEC2NetworkInterfaceByVPC(ctx context.Context, client *ec2.EC2, vpc st
 	return err
 }
 
-func deleteEC2Subnet(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteSubnetWithContext(ctx, &ec2.DeleteSubnetInput{
-		SubnetId: aws.String(id),
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidSubnetID.NotFound" {
-			return nil
-		}
-		return err
-	}
-
-	logger.Info("Deleted")
-	return nil
-}
-
-func deleteEC2SubnetsByVPC(ctx context.Context, client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
+func deleteEC2SubnetsByVPC(ctx context.Context, client EC2API, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeSubnetsPagesWithContext(
-		ctx,
-		&ec2.DescribeSubnetsInput{
-			Filters: []*ec2.Filter{
-				{
-					Name:   aws.String("vpc-id"),
-					Values: []*string{&vpc},
-				},
-			},
-		},
+	err := client.DescribeSubnetsPages(ctx, vpc,
 		func(results *ec2.DescribeSubnetsOutput, lastPage bool) bool {
 			for _, subnet := range results.Subnets {
-				err := deleteEC2Subnet(ctx, client, *subnet.SubnetId, logger.WithField("subnet", *subnet.SubnetId))
+				err := client.DeleteSubnet(ctx, *subnet.SubnetId)
 				if err != nil {
 					err = errors.Wrapf(err, "deleting EC2 subnet %s", *subnet.SubnetId)
 					if lastError != nil {
@@ -677,22 +408,7 @@ func deleteEC2SubnetsByVPC(ctx context.Context, client *ec2.EC2, vpc string, fai
 	return lastError
 }
 
-func deleteEC2Volume(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteVolumeWithContext(ctx, &ec2.DeleteVolumeInput{
-		VolumeId: aws.String(id),
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidVolume.NotFound" {
-			return nil
-		}
-		return err
-	}
-
-	logger.Info("Deleted")
-	return nil
-}
-
-func deleteEC2VPC(ctx context.Context, ec2Client *ec2.EC2, elbClient *elb.ELB, elbv2Client *elbv2.ELBV2, id string, logger logrus.FieldLogger) error {
+func deleteEC2VPC(ctx context.Context, ec2Client EC2API, elbClient *elb.ELB, elbv2Client *elbv2.ELBV2, id string, logger logrus.FieldLogger) error {
 	// first delete any Load Balancers under this VPC (not all of them are tagged)
 	v1lbError := deleteElasticLoadBalancerClassicByVPC(ctx, elbClient, id, logger)
 	v2lbError := deleteElasticLoadBalancerV2ByVPC(ctx, elbv2Client, id, logger)
@@ -706,7 +422,7 @@ func deleteEC2VPC(ctx context.Context, ec2Client *ec2.EC2, elbClient *elb.ELB, e
 	}
 
 	for _, child := range []struct {
-		helper   func(ctx context.Context, client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error
+		helper   func(ctx context.Context, client EC2API, vpc string, failFast bool, logger logrus.FieldLogger) error
 		failFast bool
 	}{
 		{helper: deleteEC2NATGatewaysByVPC, failFast: true},      // not always tagged
@@ -722,9 +438,7 @@ func deleteEC2VPC(ctx context.Context, ec2Client *ec2.EC2, elbClient *elb.ELB, e
 		}
 	}
 
-	_, err := ec2Client.DeleteVpcWithContext(ctx, &ec2.DeleteVpcInput{
-		VpcId: aws.String(id),
-	})
+	err := ec2Client.DeleteVPC(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -733,68 +447,18 @@ func deleteEC2VPC(ctx context.Context, ec2Client *ec2.EC2, elbClient *elb.ELB, e
 	return nil
 }
 
-func deleteEC2VPCEndpoint(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteVpcEndpointsWithContext(ctx, &ec2.DeleteVpcEndpointsInput{
-		VpcEndpointIds: []*string{aws.String(id)},
-	})
-	if err != nil {
-		return errors.Wrapf(err, "cannot delete VPC endpoint %s", id)
-	}
-
-	logger.Info("Deleted")
-	return nil
-}
-
-func deleteEC2VPCEndpointsByVPC(ctx context.Context, client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
-	response, err := client.DescribeVpcEndpointsWithContext(ctx, &ec2.DescribeVpcEndpointsInput{
-		Filters: []*ec2.Filter{
-			{
-				Name:   aws.String("vpc-id"),
-				Values: []*string{aws.String(vpc)},
-			},
-		},
-	})
+func deleteEC2VPCEndpointsByVPC(ctx context.Context, client EC2API, vpc string, failFast bool, logger logrus.FieldLogger) error {
+	response, err := client.DescribeVpcEndpoints(ctx, vpc)
 	if err != nil {
 		return err
 	}
 
 	for _, endpoint := range response.VpcEndpoints {
-		err := deleteEC2VPCEndpoint(ctx, client, *endpoint.VpcEndpointId, logger.WithField("VPC endpoint", *endpoint.VpcEndpointId))
+		err := client.DeleteVPCEndpoint(ctx, *endpoint.VpcEndpointId)
 		if err != nil {
-			if err.(awserr.Error).Code() == "InvalidVpcID.NotFound" {
-				return nil
-			}
 			return err
 		}
 	}
 
-	return nil
-}
-
-func deleteEC2VPCPeeringConnection(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteVpcPeeringConnectionWithContext(ctx, &ec2.DeleteVpcPeeringConnectionInput{
-		VpcPeeringConnectionId: &id,
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidVpcPeeringConnectionID.NotFound" {
-			return nil
-		}
-		return errors.Wrapf(err, "cannot delete VPC Peering Connection %s", id)
-	}
-	logger.Info("Deleted")
-	return nil
-}
-
-func deleteEC2VPCEndpointService(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteVpcEndpointServiceConfigurationsWithContext(ctx, &ec2.DeleteVpcEndpointServiceConfigurationsInput{
-		ServiceIds: aws.StringSlice([]string{id}),
-	})
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidVpcEndpointService.NotFound" {
-			return nil
-		}
-		return errors.Wrapf(err, "cannot delete VPC Endpoint Service %s", id)
-	}
-	logger.Info("Deleted")
 	return nil
 }

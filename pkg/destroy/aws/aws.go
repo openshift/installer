@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/efs"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
@@ -177,7 +176,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	// Terminate EC2 instances. The instances need to be terminated first so that we can ensure that there is nothing
 	// running on the cluster creating new resources while we are attempting to delete resources, which could leak
 	// the new resources.
-	ec2Client := ec2.New(awsSession)
+	ec2Client := NewEC2Client(awsSession, o.Logger)
 	lastTerminateTime := time.Now()
 	err = wait.PollImmediateUntil(
 		time.Second*10,
@@ -812,7 +811,6 @@ func getAccessPoints(ctx context.Context, client *efs.EFS, apID string) ([]strin
 				accessPointIDs = append(accessPointIDs, *apName)
 			}
 			return !lastPage
-
 		},
 	)
 	if err != nil {
