@@ -714,7 +714,7 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 }
 
 func getServicePrincipalsByTag(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, matchTag, infraID string) ([]models.ServicePrincipalable, error) {
-	filter := fmt.Sprintf("startswith(displayName, '%s' and tags/any(s:s eq '%s')", infraID, matchTag)
+	filter := fmt.Sprintf("startswith(displayName, '%s') and tags/any(s:s eq '%s')", infraID, matchTag)
 	listQuery := serviceprincipals.ServicePrincipalsRequestBuilderGetRequestConfiguration{
 		QueryParameters: &serviceprincipals.ServicePrincipalsRequestBuilderGetQueryParameters{
 			Filter: &filter,
