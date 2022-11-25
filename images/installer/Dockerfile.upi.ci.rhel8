@@ -51,14 +51,6 @@ RUN curl -sSL "${ALIYUN_URI}" --output /tmp/aliyun-cli-linux-latest-amd64.tgz &&
   tar --directory=/bin/ -xvf /tmp/aliyun-cli-linux-latest-amd64.tgz && \
   rm -f /tmp/aliyun-cli-linux-latest-amd64.tgz
 
-# Download the latest IBM Cloud release binary
-ARG IBMCLI_URI=https://clis.cloud.ibm.com/install/linux
-RUN curl -fsSL ${IBMCLI_URI} | sh && \
-    ibmcloud plugin install vpc-infrastructure -f && \
-    ibmcloud plugin install cloud-dns-services -f && \
-    ibmcloud plugin install cloud-internet-services -f && \
-    chmod -R g=u "$HOME/.bluemix/"
-
 # Not packaged, but required by gcloud. See https://cloud.google.com/sdk/crypto
 RUN pip-3 install cryptography
 
@@ -82,7 +74,20 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
     ./aws/install -b /bin && \
     rm -rf ./aws awscliv2.zip
 
-RUN mkdir /output && chown 1000:1000 /output
+# Download the latest IBM Cloud release binary
+ARG IBMCLI_URI=https://clis.cloud.ibm.com/install/linux
+RUN mkdir /output && HOME=/output && \ 
+    echo "-4" > $HOME/.curlrc && \
+    curl -fsSL ${IBMCLI_URI} | sh && \    
+    ibmcloud plugin install vpc-infrastructure -f && \
+    ibmcloud plugin install cloud-dns-services -f && \
+    ibmcloud plugin install cloud-internet-services -f && \
+    cp /usr/local/bin/ibmcloud /bin/ibmcloud && \
+    rm -f $HOME/.curlrc && \
+    ibmcloud version && \
+    ibmcloud plugin list
+
+RUN chown -R 1000:1000 /output
 USER 1000:1000
 ENV PATH /bin
 ENV HOME /output
