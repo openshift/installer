@@ -1,4 +1,5 @@
-// +build appengine js
+//go:build appengine || js || nacl || wasm
+// +build appengine js nacl wasm
 
 package isatty
 
