@@ -154,7 +154,11 @@ func findIAMUsers(ctx context.Context, search *iamUserSearch, deleted sets.Strin
 
 func deleteIAM(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
 	client := NewIAMClient(session, logger)
+	return deleteIAMWithClient(ctx, client, arn, logger)
+}
 
+// This is defined as a separate function so it can be tested with a mocked client
+func deleteIAMWithClient(ctx context.Context, client IAMAPI, arn arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
 		return err
@@ -220,22 +224,12 @@ func deleteIAMInstanceProfile(ctx context.Context, client IAMAPI, profileARN arn
 	return nil
 }
 
-func deleteIAMRole(ctx context.Context, client IAMAPI, roleARN arn.ARN, logger logrus.FieldLogger) error {
-	resourceType, name, err := splitSlash("resource", roleARN.Resource)
-	if err != nil {
-		return err
-	}
-	logger = logger.WithField("name", name)
-
-	if resourceType != "role" {
-		return errors.Errorf("%s ARN passed to deleteIAMRole: %s", resourceType, roleARN.String())
-	}
-
+func deleteRolePolicies(ctx context.Context, client IAMAPI, role string, logger logrus.FieldLogger) error {
 	var lastError error
-	err = client.ListRolePoliciesPages(ctx, name,
+	err := client.ListRolePoliciesPages(ctx, role,
 		func(results *iam.ListRolePoliciesOutput, lastPage bool) bool {
 			for _, policy := range results.PolicyNames {
-				err := client.DeleteRolePolicy(ctx, name, *policy)
+				err := client.DeleteRolePolicy(ctx, role, *policy)
 				if err != nil {
 					if lastError != nil {
 						logger.Debug(lastError)
@@ -256,10 +250,15 @@ func deleteIAMRole(ctx context.Context, client IAMAPI, roleARN arn.ARN, logger l
 		return errors.Wrap(err, "listing IAM role policies")
 	}
 
-	err = client.ListAttachedRolePoliciesPages(ctx, name,
+	return nil
+}
+
+func deleteAttachedRolePolicies(ctx context.Context, client IAMAPI, role string, logger logrus.FieldLogger) error {
+	var lastError error
+	err := client.ListAttachedRolePoliciesPages(ctx, role,
 		func(results *iam.ListAttachedRolePoliciesOutput, lastPage bool) bool {
 			for _, policy := range results.AttachedPolicies {
-				err := client.DetachRolePolicy(ctx, name, *policy.PolicyArn)
+				err := client.DetachRolePolicy(ctx, role, *policy.PolicyArn)
 				if err != nil {
 					if lastError != nil {
 						logger.Debug(lastError)
@@ -280,7 +279,12 @@ func deleteIAMRole(ctx context.Context, client IAMAPI, roleARN arn.ARN, logger l
 		return errors.Wrap(err, "listing attached IAM role policies")
 	}
 
-	err = client.ListInstanceProfilesForRolePages(ctx, name,
+	return nil
+}
+
+func deleteInstanceProfilesForRole(ctx context.Context, client IAMAPI, role string, logger logrus.FieldLogger) error {
+	var lastError error
+	err := client.ListInstanceProfilesForRolePages(ctx, role,
 		func(results *iam.ListInstanceProfilesForRoleOutput, lastPage bool) bool {
 			for _, profile := range results.InstanceProfiles {
 				parsed, err := arn.Parse(*profile.Arn)
@@ -312,6 +316,35 @@ func deleteIAMRole(ctx context.Context, client IAMAPI, roleARN arn.ARN, logger l
 		return errors.Wrap(err, "listing IAM instance profiles")
 	}
 
+	return nil
+}
+
+func deleteIAMRole(ctx context.Context, client IAMAPI, roleARN arn.ARN, logger logrus.FieldLogger) error {
+	resourceType, name, err := splitSlash("resource", roleARN.Resource)
+	if err != nil {
+		return err
+	}
+	logger = logger.WithField("name", name)
+
+	if resourceType != "role" {
+		return errors.Errorf("%s ARN passed to deleteIAMRole: %s", resourceType, roleARN.String())
+	}
+
+	err = deleteRolePolicies(ctx, client, name, logger)
+	if err != nil {
+		return err
+	}
+
+	err = deleteAttachedRolePolicies(ctx, client, name, logger)
+	if err != nil {
+		return err
+	}
+
+	err = deleteInstanceProfilesForRole(ctx, client, name, logger)
+	if err != nil {
+		return err
+	}
+
 	err = client.DeleteRole(ctx, name)
 	if err != nil {
 		return err
@@ -321,7 +354,7 @@ func deleteIAMRole(ctx context.Context, client IAMAPI, roleARN arn.ARN, logger l
 	return nil
 }
 
-func deleteIAMUser(ctx context.Context, client IAMAPI, id string, logger logrus.FieldLogger) error {
+func deleteUserPolicies(ctx context.Context, client IAMAPI, id string, logger logrus.FieldLogger) error {
 	var lastError error
 	err := client.ListUserPoliciesPages(ctx, id,
 		func(results *iam.ListUserPoliciesOutput, lastPage bool) bool {
@@ -347,7 +380,12 @@ func deleteIAMUser(ctx context.Context, client IAMAPI, id string, logger logrus.
 		return errors.Wrap(err, "listing IAM user policies")
 	}
 
-	err = client.ListAccessKeysPages(ctx, id,
+	return nil
+}
+
+func deleteAccessKeys(ctx context.Context, client IAMAPI, id string, logger logrus.FieldLogger) error {
+	var lastError error
+	err := client.ListAccessKeysPages(ctx, id,
 		func(results *iam.ListAccessKeysOutput, lastPage bool) bool {
 			for _, key := range results.AccessKeyMetadata {
 				err := client.DeleteAccessKey(ctx, id, *key.AccessKeyId)
@@ -368,6 +406,20 @@ func deleteIAMUser(ctx context.Context, client IAMAPI, id string, logger logrus.
 	}
 	if err != nil {
 		return errors.Wrap(err, "listing IAM access keys")
+	}
+
+	return nil
+}
+
+func deleteIAMUser(ctx context.Context, client IAMAPI, id string, logger logrus.FieldLogger) error {
+	err := deleteUserPolicies(ctx, client, id, logger)
+	if err != nil {
+		return err
+	}
+
+	err = deleteAccessKeys(ctx, client, id, logger)
+	if err != nil {
+		return err
 	}
 
 	err = client.DeleteUser(ctx, id)
