@@ -3,7 +3,6 @@ package aws
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -14,7 +13,7 @@ import (
 )
 
 type iamRoleSearch struct {
-	client    *iam.IAM
+	client    IAMAPI
 	filters   []Filter
 	logger    logrus.FieldLogger
 	unmatched map[string]struct{}
@@ -26,9 +25,7 @@ func (search *iamRoleSearch) find(ctx context.Context) (arns []string, names []s
 	}
 
 	var lastError error
-	err := search.client.ListRolesPagesWithContext(
-		ctx,
-		&iam.ListRolesInput{},
+	err := search.client.ListRolesPages(ctx,
 		func(results *iam.ListRolesOutput, lastPage bool) bool {
 			search.logger.Debugf("iterating over a page of %d IAM roles", len(results.Roles))
 			for _, role := range results.Roles {
@@ -37,7 +34,7 @@ func (search *iamRoleSearch) find(ctx context.Context) (arns []string, names []s
 				}
 
 				// Unfortunately role.Tags is empty from ListRoles, so we need to query each one
-				response, err := search.client.GetRoleWithContext(ctx, &iam.GetRoleInput{RoleName: role.RoleName})
+				response, err := search.client.GetRole(ctx, *role.RoleName)
 				if err != nil {
 					if err.(awserr.Error).Code() == iam.ErrCodeNoSuchEntityException {
 						search.unmatched[*role.Arn] = exists
@@ -73,7 +70,7 @@ func (search *iamRoleSearch) find(ctx context.Context) (arns []string, names []s
 }
 
 type iamUserSearch struct {
-	client    *iam.IAM
+	client    IAMAPI
 	filters   []Filter
 	logger    logrus.FieldLogger
 	unmatched map[string]struct{}
@@ -86,9 +83,7 @@ func (search *iamUserSearch) arns(ctx context.Context) ([]string, error) {
 
 	arns := []string{}
 	var lastError error
-	err := search.client.ListUsersPagesWithContext(
-		ctx,
-		&iam.ListUsersInput{},
+	err := search.client.ListUsersPages(ctx,
 		func(results *iam.ListUsersOutput, lastPage bool) bool {
 			search.logger.Debugf("iterating over a page of %d IAM users", len(results.Users))
 			for _, user := range results.Users {
@@ -97,7 +92,7 @@ func (search *iamUserSearch) arns(ctx context.Context) ([]string, error) {
 				}
 
 				// Unfortunately user.Tags is empty from ListUsers, so we need to query each one
-				response, err := search.client.GetUserWithContext(ctx, &iam.GetUserInput{UserName: aws.String(*user.UserName)})
+				response, err := search.client.GetUser(ctx, *user.UserName)
 				if err != nil {
 					if err.(awserr.Error).Code() == iam.ErrCodeNoSuchEntityException {
 						search.unmatched[*user.Arn] = exists
@@ -158,7 +153,7 @@ func findIAMUsers(ctx context.Context, search *iamUserSearch, deleted sets.Strin
 }
 
 func deleteIAM(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
-	client := iam.New(session)
+	client := NewIAMClient(session, logger)
 
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
@@ -178,10 +173,8 @@ func deleteIAM(ctx context.Context, session *session.Session, arn arn.ARN, logge
 	}
 }
 
-func deleteIAMInstanceProfileByName(ctx context.Context, client *iam.IAM, name *string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteInstanceProfileWithContext(ctx, &iam.DeleteInstanceProfileInput{
-		InstanceProfileName: name,
-	})
+func deleteIAMInstanceProfileByName(ctx context.Context, client IAMAPI, name *string, logger logrus.FieldLogger) error {
+	err := client.DeleteInstanceProfile(ctx, *name)
 	if err != nil {
 		if err.(awserr.Error).Code() == iam.ErrCodeNoSuchEntityException {
 			return nil
@@ -192,7 +185,7 @@ func deleteIAMInstanceProfileByName(ctx context.Context, client *iam.IAM, name *
 	return err
 }
 
-func deleteIAMInstanceProfile(ctx context.Context, client *iam.IAM, profileARN arn.ARN, logger logrus.FieldLogger) error {
+func deleteIAMInstanceProfile(ctx context.Context, client IAMAPI, profileARN arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, name, err := splitSlash("resource", profileARN.Resource)
 	if err != nil {
 		return err
@@ -202,9 +195,7 @@ func deleteIAMInstanceProfile(ctx context.Context, client *iam.IAM, profileARN a
 		return errors.Errorf("%s ARN passed to deleteIAMInstanceProfile: %s", resourceType, profileARN.String())
 	}
 
-	response, err := client.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{
-		InstanceProfileName: &name,
-	})
+	response, err := client.GetInstanceProfile(ctx, name)
 	if err != nil {
 		if err.(awserr.Error).Code() == iam.ErrCodeNoSuchEntityException {
 			return nil
@@ -214,10 +205,7 @@ func deleteIAMInstanceProfile(ctx context.Context, client *iam.IAM, profileARN a
 	profile := response.InstanceProfile
 
 	for _, role := range profile.Roles {
-		_, err = client.RemoveRoleFromInstanceProfileWithContext(ctx, &iam.RemoveRoleFromInstanceProfileInput{
-			InstanceProfileName: profile.InstanceProfileName,
-			RoleName:            role.RoleName,
-		})
+		err = client.RemoveRoleFromInstanceProfile(ctx, *profile.InstanceProfileName, *role.RoleName)
 		if err != nil {
 			return errors.Wrapf(err, "dissociating %s", *role.RoleName)
 		}
@@ -232,7 +220,7 @@ func deleteIAMInstanceProfile(ctx context.Context, client *iam.IAM, profileARN a
 	return nil
 }
 
-func deleteIAMRole(ctx context.Context, client *iam.IAM, roleARN arn.ARN, logger logrus.FieldLogger) error {
+func deleteIAMRole(ctx context.Context, client IAMAPI, roleARN arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, name, err := splitSlash("resource", roleARN.Resource)
 	if err != nil {
 		return err
@@ -244,15 +232,10 @@ func deleteIAMRole(ctx context.Context, client *iam.IAM, roleARN arn.ARN, logger
 	}
 
 	var lastError error
-	err = client.ListRolePoliciesPagesWithContext(
-		ctx,
-		&iam.ListRolePoliciesInput{RoleName: &name},
+	err = client.ListRolePoliciesPages(ctx, name,
 		func(results *iam.ListRolePoliciesOutput, lastPage bool) bool {
 			for _, policy := range results.PolicyNames {
-				_, err := client.DeleteRolePolicyWithContext(ctx, &iam.DeleteRolePolicyInput{
-					RoleName:   &name,
-					PolicyName: policy,
-				})
+				err := client.DeleteRolePolicy(ctx, name, *policy)
 				if err != nil {
 					if lastError != nil {
 						logger.Debug(lastError)
@@ -273,15 +256,10 @@ func deleteIAMRole(ctx context.Context, client *iam.IAM, roleARN arn.ARN, logger
 		return errors.Wrap(err, "listing IAM role policies")
 	}
 
-	err = client.ListAttachedRolePoliciesPagesWithContext(
-		ctx,
-		&iam.ListAttachedRolePoliciesInput{RoleName: &name},
+	err = client.ListAttachedRolePoliciesPages(ctx, name,
 		func(results *iam.ListAttachedRolePoliciesOutput, lastPage bool) bool {
 			for _, policy := range results.AttachedPolicies {
-				_, err := client.DetachRolePolicyWithContext(ctx, &iam.DetachRolePolicyInput{
-					RoleName:  &name,
-					PolicyArn: policy.PolicyArn,
-				})
+				err := client.DetachRolePolicy(ctx, name, *policy.PolicyArn)
 				if err != nil {
 					if lastError != nil {
 						logger.Debug(lastError)
@@ -302,9 +280,7 @@ func deleteIAMRole(ctx context.Context, client *iam.IAM, roleARN arn.ARN, logger
 		return errors.Wrap(err, "listing attached IAM role policies")
 	}
 
-	err = client.ListInstanceProfilesForRolePagesWithContext(
-		ctx,
-		&iam.ListInstanceProfilesForRoleInput{RoleName: &name},
+	err = client.ListInstanceProfilesForRolePages(ctx, name,
 		func(results *iam.ListInstanceProfilesForRoleOutput, lastPage bool) bool {
 			for _, profile := range results.InstanceProfiles {
 				parsed, err := arn.Parse(*profile.Arn)
@@ -336,7 +312,7 @@ func deleteIAMRole(ctx context.Context, client *iam.IAM, roleARN arn.ARN, logger
 		return errors.Wrap(err, "listing IAM instance profiles")
 	}
 
-	_, err = client.DeleteRoleWithContext(ctx, &iam.DeleteRoleInput{RoleName: &name})
+	err = client.DeleteRole(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -345,17 +321,12 @@ func deleteIAMRole(ctx context.Context, client *iam.IAM, roleARN arn.ARN, logger
 	return nil
 }
 
-func deleteIAMUser(ctx context.Context, client *iam.IAM, id string, logger logrus.FieldLogger) error {
+func deleteIAMUser(ctx context.Context, client IAMAPI, id string, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.ListUserPoliciesPagesWithContext(
-		ctx,
-		&iam.ListUserPoliciesInput{UserName: &id},
+	err := client.ListUserPoliciesPages(ctx, id,
 		func(results *iam.ListUserPoliciesOutput, lastPage bool) bool {
 			for _, policy := range results.PolicyNames {
-				_, err := client.DeleteUserPolicyWithContext(ctx, &iam.DeleteUserPolicyInput{
-					UserName:   &id,
-					PolicyName: policy,
-				})
+				err := client.DeleteUserPolicy(ctx, id, *policy)
 				if err != nil {
 					if lastError != nil {
 						logger.Debug(lastError)
@@ -376,15 +347,10 @@ func deleteIAMUser(ctx context.Context, client *iam.IAM, id string, logger logru
 		return errors.Wrap(err, "listing IAM user policies")
 	}
 
-	err = client.ListAccessKeysPagesWithContext(
-		ctx,
-		&iam.ListAccessKeysInput{UserName: &id},
+	err = client.ListAccessKeysPages(ctx, id,
 		func(results *iam.ListAccessKeysOutput, lastPage bool) bool {
 			for _, key := range results.AccessKeyMetadata {
-				_, err := client.DeleteAccessKeyWithContext(ctx, &iam.DeleteAccessKeyInput{
-					UserName:    &id,
-					AccessKeyId: key.AccessKeyId,
-				})
+				err := client.DeleteAccessKey(ctx, id, *key.AccessKeyId)
 				if err != nil {
 					if lastError != nil {
 						logger.Debug(lastError)
@@ -404,9 +370,7 @@ func deleteIAMUser(ctx context.Context, client *iam.IAM, id string, logger logru
 		return errors.Wrap(err, "listing IAM access keys")
 	}
 
-	_, err = client.DeleteUserWithContext(ctx, &iam.DeleteUserInput{
-		UserName: &id,
-	})
+	err = client.DeleteUser(ctx, id)
 	if err != nil {
 		return err
 	}

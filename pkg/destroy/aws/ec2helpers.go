@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/elbv2"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -105,7 +104,8 @@ func deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logge
 	case "image":
 		return client.DeleteImage(ctx, id)
 	case "instance":
-		return terminateEC2Instance(ctx, client, iam.New(session), id, logger)
+		iamClient := NewIAMClient(session, logger)
+		return terminateEC2Instance(ctx, client, iamClient, id, logger)
 	case "internet-gateway":
 		return client.DeleteInternetGateway(ctx, id)
 	case "natgateway":
@@ -137,7 +137,7 @@ func deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logge
 	}
 }
 
-func terminateEC2Instance(ctx context.Context, ec2Client EC2API, iamClient *iam.IAM, id string, logger logrus.FieldLogger) error {
+func terminateEC2Instance(ctx context.Context, ec2Client EC2API, iamClient IAMAPI, id string, logger logrus.FieldLogger) error {
 	response, err := ec2Client.DescribeInstances(ctx, id)
 	if err != nil {
 		return err
@@ -154,7 +154,7 @@ func terminateEC2Instance(ctx context.Context, ec2Client EC2API, iamClient *iam.
 	return nil
 }
 
-func terminateEC2InstanceByInstance(ctx context.Context, ec2Client EC2API, iamClient *iam.IAM, instance *ec2.Instance, logger logrus.FieldLogger) error {
+func terminateEC2InstanceByInstance(ctx context.Context, ec2Client EC2API, iamClient IAMAPI, instance *ec2.Instance, logger logrus.FieldLogger) error {
 	// Ignore instances that are already terminated
 	if instance.State == nil || *instance.State.Name == "terminated" {
 		return nil

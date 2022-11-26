@@ -148,7 +148,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		}
 	}
 
-	iamClient := iam.New(awsSession)
+	iamClient := NewIAMClient(awsSession, o.Logger)
 	iamRoleSearch := &iamRoleSearch{
 		client:  iamClient,
 		filters: o.Filters,
@@ -263,7 +263,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 func (o *ClusterUninstaller) findResourcesToDelete(
 	ctx context.Context,
 	tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
-	iamClient *iam.IAM,
+	iamClient IAMAPI,
 	iamRoleSearch *iamRoleSearch,
 	iamUserSearch *iamUserSearch,
 	deleted sets.String,
@@ -356,12 +356,12 @@ func (o *ClusterUninstaller) findResourcesByTag(
 // findUntaggableResources returns the resources for the cluster that cannot be tagged.
 //
 //	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
-func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, iamClient *iam.IAM, deleted sets.String) (sets.String, error) {
+func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, iamClient IAMAPI, deleted sets.String) (sets.String, error) {
 	resources := sets.NewString()
 	o.Logger.Debug("search for IAM instance profiles")
 	for _, profileType := range []string{"master", "worker", "bootstrap"} {
 		profile := fmt.Sprintf("%s-%s-profile", o.ClusterID, profileType)
-		response, err := iamClient.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{InstanceProfileName: &profile})
+		response, err := iamClient.GetInstanceProfile(ctx, profile)
 		if err != nil {
 			if err.(awserr.Error).Code() == iam.ErrCodeNoSuchEntityException {
 				continue
