@@ -1,6 +1,7 @@
 package agentconfig
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -66,6 +67,8 @@ hosts:
   # https://docs.openshift.com/container-platform/4.10/installing/installing_bare_metal_ipi/ipi-install-installation-workflow.html#root-device-hints_ipi-install-installation-workflow
   rootDeviceHints:
     deviceName: /dev/sda
+  # A json list containing arguments to pass to coreos-installer
+  installerArgs: '["--append-karg", "ip=192.0.2.2::192.0.2.254:255.255.255.0:core0.example.com:enp1s0:none", "--save-partindex", "1", "-n"]'
   # interfaces are used to identify the host to apply this configuration to
   interfaces:
     - macAddress: 00:00:00:00:00:00
@@ -204,6 +207,10 @@ func (a *AgentConfig) validateHosts() field.ErrorList {
 		if err := a.validateRoles(hostPath, host); err != nil {
 			allErrs = append(allErrs, err...)
 		}
+
+		if err := a.validateInstallerArgs(hostPath, host); err != nil {
+			allErrs = append(allErrs, err...)
+		}
 	}
 
 	return allErrs
@@ -264,6 +271,19 @@ func (a *AgentConfig) validateRoles(hostPath *field.Path, host agent.Host) field
 	return allErrs
 }
 
+func (a *AgentConfig) validateInstallerArgs(hostPath *field.Path, host agent.Host) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if len(host.InstallerArgs) > 0 {
+		var installerArgs []string
+		if err := json.Unmarshal([]byte(host.InstallerArgs), &installerArgs); err != nil {
+			allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), "failed to parse installerArgs"))
+		}
+	}
+
+	return allErrs
+}
+
 func (a *AgentConfig) validateAdditionalNTPSources(additionalNTPSourcesPath *field.Path, sources []string) field.ErrorList {
 	var allErrs field.ErrorList
 
@@ -317,6 +337,10 @@ func (a *AgentConfig) HostConfigFiles() (HostConfigFileMap, error) {
 
 		if len(host.Role) > 0 {
 			files[filepath.Join(name, "role")] = []byte(host.Role)
+		}
+
+		if len(host.InstallerArgs) > 0 {
+			files[filepath.Join(name, "installerArgs")] = []byte(host.InstallerArgs)
 		}
 	}
 	return files, nil
