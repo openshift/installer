@@ -9,8 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/elb"
-	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -124,7 +122,7 @@ func deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logge
 	case "volume":
 		return client.DeleteVolume(ctx, id)
 	case "vpc":
-		return deleteEC2VPC(ctx, client, elb.New(session), elbv2.New(session), id, logger)
+		return deleteEC2VPC(ctx, client, session, id, logger)
 	case "vpc-endpoint":
 		return client.DeleteVPCEndpoint(ctx, id)
 	case "vpc-peering-connection":
@@ -394,17 +392,11 @@ func deleteEC2SubnetsByVPC(ctx context.Context, client EC2API, vpc string, failF
 	return lastError
 }
 
-func deleteEC2VPC(ctx context.Context, ec2Client EC2API, elbClient *elb.ELB, elbv2Client *elbv2.ELBV2, id string, logger logrus.FieldLogger) error {
+func deleteEC2VPC(ctx context.Context, ec2Client EC2API, session *session.Session, id string, logger logrus.FieldLogger) error {
 	// first delete any Load Balancers under this VPC (not all of them are tagged)
-	v1lbError := deleteElasticLoadBalancerClassicByVPC(ctx, elbClient, id, logger)
-	v2lbError := deleteElasticLoadBalancerV2ByVPC(ctx, elbv2Client, id, logger)
-	if v1lbError != nil {
-		if v2lbError != nil {
-			logger.Info(v2lbError)
-		}
-		return v1lbError
-	} else if v2lbError != nil {
-		return v2lbError
+	err := deleteElasticLoadBalancingByVPC(ctx, session, id, logger)
+	if err != nil {
+		return err
 	}
 
 	for _, child := range []struct {
@@ -424,7 +416,7 @@ func deleteEC2VPC(ctx context.Context, ec2Client EC2API, elbClient *elb.ELB, elb
 		}
 	}
 
-	err := ec2Client.DeleteVPC(ctx, id)
+	err = ec2Client.DeleteVPC(ctx, id)
 	if err != nil {
 		return err
 	}
