@@ -36,6 +36,8 @@ var (
 	)
 )
 
+const invalidARNResource = "random-type/random-name"
+
 func TestDeleteInstanceProfileByName(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	iamClient := mock.NewMockIAMAPI(mockCtrl)
@@ -113,7 +115,7 @@ func TestDeleteInstanceProfile(t *testing.T) {
 		arn.Resource = "instance-profile/not-found-role"
 	}
 	invalidTypeARN := func(arn *arn.ARN) {
-		arn.Resource = "random-type/random-name"
+		arn.Resource = invalidARNResource
 	}
 
 	cases := []struct {
@@ -648,7 +650,7 @@ func TestDeleteIAMRole(t *testing.T) {
 		arn.Resource = "role/role-not-found-fails"
 	}
 	invalidTypeARN := func(arn *arn.ARN) {
-		arn.Resource = "random-type/random-name"
+		arn.Resource = invalidARNResource
 	}
 
 	cases := []struct {
@@ -682,7 +684,7 @@ func TestDeleteIAMRole(t *testing.T) {
 			errorMsg:  "listing IAM instance profiles: .*",
 		},
 		{
-			name:      "Delete Role suceeds",
+			name:      "Delete Role succeeds",
 			editFuncs: editARNFuncs{validRoleARN},
 			errorMsg:  "",
 		},
@@ -1119,7 +1121,7 @@ func TestDeleteIAM(t *testing.T) {
 	iamClient := mock.NewMockIAMAPI(mockCtrl)
 
 	invalidTypeARN := func(arn *arn.ARN) {
-		arn.Resource = "random-type/random-name"
+		arn.Resource = invalidARNResource
 	}
 
 	cases := []struct {
