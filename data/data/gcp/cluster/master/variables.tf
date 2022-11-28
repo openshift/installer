@@ -67,3 +67,15 @@ variable "root_volume_kms_key_link" {
 variable "zones" {
   type = list
 }
+
+variable "enable_confidential_compute" {
+  type        = bool
+  description = "Defines whether the instance should have confidential compute enabled."
+  default     = false
+}
+
+variable "on_host_maintenance" {
+  type        = string
+  description = "The behavior when a maintenance event occurs."
+  default     = ""
+}

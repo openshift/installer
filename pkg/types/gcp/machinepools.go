@@ -1,5 +1,7 @@
 package gcp
 
+import "github.com/openshift/api/machine/v1beta1"
+
 // MachinePool stores the configuration for a machine pool installed on GCP.
 type MachinePool struct {
 	// Zones is list of availability zones that can be used.
@@ -22,6 +24,15 @@ type MachinePool struct {
 	//
 	// +optional
 	Tags []string `json:"tags,omitempty"`
+
+	// OnHostMaintenance determines the behavior when a maintenance event occurs that might cause the instance to reboot.
+	// +optional
+	OnHostMaintenance v1beta1.GCPHostMaintenanceType `json:"onHostMaintenance,omitempty"`
+
+	// EnableConfidentialCompute Defines whether the instance should have confidential compute enabled.
+	// If enabled OnHostMaintenance is required to be set to "Terminate".
+	// +optional
+	EnableConfidentialCompute bool `json:"enableConfidentialCompute,omitempty"`
 }
 
 // OSDisk defines the disk for machines on GCP.
@@ -76,6 +87,15 @@ func (a *MachinePool) Set(required *MachinePool) {
 		}
 		a.EncryptionKey.Set(required.EncryptionKey)
 	}
+
+	if required.OnHostMaintenance != "" {
+		a.OnHostMaintenance = required.OnHostMaintenance
+	}
+
+	if required.EnableConfidentialCompute {
+		a.EnableConfidentialCompute = required.EnableConfidentialCompute
+	}
+
 }
 
 // EncryptionKeyReference describes the encryptionKey to use for a disk's encryption.
