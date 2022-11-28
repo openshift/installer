@@ -106,11 +106,11 @@ func TestDeleteEC2SecurityGroupObject(t *testing.T) {
 		DoAndReturn(func(_ context.Context, g *ec2.SecurityGroup) error {
 			switch len(g.IpPermissionsEgress) {
 			case 0:
-				return errors.New("Should not be called")
+				return errors.New("should not be called")
 			case 1:
 				return nil
 			default:
-				return errors.New("Egress revoke error")
+				return errors.New("egress revoke error")
 			}
 		}).
 		AnyTimes()
@@ -120,11 +120,11 @@ func TestDeleteEC2SecurityGroupObject(t *testing.T) {
 		DoAndReturn(func(_ context.Context, g *ec2.SecurityGroup) error {
 			switch len(g.IpPermissions) {
 			case 0:
-				return errors.New("Should not be called")
+				return errors.New("should not be called")
 			case 1:
 				return nil
 			default:
-				return errors.New("Ingress revoke error")
+				return errors.New("ingress revoke error")
 			}
 		}).
 		AnyTimes()
@@ -218,7 +218,7 @@ func TestDeleteRouteTableObject(t *testing.T) {
 			errorMsg:  "dissociating ",
 		},
 		{
-			name:      "RouteTable with main associaton is not deleted",
+			name:      "RouteTable with main association is not deleted",
 			editFuncs: editTableFuncs{addAssociation, addMainAssociation},
 			errorMsg:  "",
 		},
