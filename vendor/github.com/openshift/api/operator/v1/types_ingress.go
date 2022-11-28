@@ -319,6 +319,11 @@ type NodePlacement struct {
 	//
 	// These defaults are subject to change.
 	//
+	// Note that using nodeSelector.matchExpressions is not supported.  Only
+	// nodeSelector.matchLabels may be used.  This is a limitation of the
+	// Kubernetes API: the pod spec does not allow complex expressions for
+	// node selectors.
+	//
 	// +optional
 	NodeSelector *metav1.LabelSelector `json:"nodeSelector,omitempty"`
 
@@ -1499,7 +1504,7 @@ type IngressControllerTuningOptions struct {
 	// 2000-2000000.
 	//
 	// If this field is empty or 0, the IngressController will use
-	// the default value of 20000, but the default is subject to
+	// the default value of 50000, but the default is subject to
 	// change in future releases.
 	//
 	// If the value is -1 then HAProxy will dynamically compute a
@@ -1507,7 +1512,7 @@ type IngressControllerTuningOptions struct {
 	// container. Selecting -1 (i.e., auto) will result in a large
 	// value being computed (~520000 on OpenShift >=4.10 clusters)
 	// and therefore each HAProxy process will incur significant
-	// memory usage compared to the current default of 20000.
+	// memory usage compared to the current default of 50000.
 	//
 	// Setting a value that is greater than the current operating
 	// system limit will prevent the HAProxy process from
