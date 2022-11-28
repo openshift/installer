@@ -163,3 +163,15 @@ variable "gcp_private_zone_project" {
   default = ""
   description = "Project where the private managed zone will exist."
 }
+
+variable "gcp_master_enable_confidential_compute" {
+  type = bool
+  description = "Defines whether the instance should have confidential compute enabled."
+  default = false
+}
+
+variable "gcp_master_on_host_maintenance" {
+  type = string
+  description = "The behavior when a maintenance event occurs."
+  default = ""
+}

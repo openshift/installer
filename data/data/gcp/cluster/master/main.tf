@@ -61,6 +61,19 @@ resource "google_compute_instance" "master" {
     kms_key_self_link = var.root_volume_kms_key_link
   }
 
+  dynamic "confidential_instance_config" {
+    for_each = var.enable_confidential_compute ? [1] : []
+    content {
+      enable_confidential_compute = true
+    }
+  }
+
+  dynamic "scheduling" {
+    for_each = var.on_host_maintenance != "" ? [1] : []
+    content {
+      on_host_maintenance = var.on_host_maintenance
+    }
+  }
   network_interface {
     subnetwork = var.subnet
   }

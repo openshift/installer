@@ -140,11 +140,13 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Email:  instanceServiceAccount,
 			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
 		}},
-		Tags:        append(mpool.Tags, []string{fmt.Sprintf("%s-%s", clusterID, role)}...),
-		MachineType: mpool.InstanceType,
-		Region:      platform.Region,
-		Zone:        az,
-		ProjectID:   platform.ProjectID,
+		Tags:                      append(mpool.Tags, []string{fmt.Sprintf("%s-%s", clusterID, role)}...),
+		MachineType:               mpool.InstanceType,
+		Region:                    platform.Region,
+		Zone:                      az,
+		ProjectID:                 platform.ProjectID,
+		EnableConfidentialCompute: mpool.EnableConfidentialCompute,
+		OnHostMaintenance:         mpool.OnHostMaintenance,
 	}, nil
 }
 

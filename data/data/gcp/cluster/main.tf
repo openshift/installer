@@ -33,6 +33,9 @@ module "master" {
   subnet          = module.network.master_subnet
   zones           = distinct(var.gcp_master_availability_zones)
 
+  enable_confidential_compute = var.gcp_master_enable_confidential_compute
+  on_host_maintenance         = var.gcp_master_on_host_maintenance
+
   root_volume_size = var.gcp_master_root_volume_size
   root_volume_type = var.gcp_master_root_volume_type
 
