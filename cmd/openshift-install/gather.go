@@ -52,6 +52,7 @@ to debug the installation failures`,
 var gatherBootstrapOpts struct {
 	bootstrap    string
 	masters      []string
+	proxyURL     string
 	sshKeys      []string
 	skipAnalysis bool
 }
@@ -82,6 +83,7 @@ func newGatherBootstrapCmd() *cobra.Command {
 	cmd.PersistentFlags().StringArrayVar(&gatherBootstrapOpts.masters, "master", []string{}, "Hostnames or IPs of all control plane hosts")
 	cmd.PersistentFlags().StringArrayVar(&gatherBootstrapOpts.sshKeys, "key", []string{}, "Path to SSH private keys that should be used for authentication. If no key was provided, SSH private keys from user's environment will be used")
 	cmd.PersistentFlags().BoolVar(&gatherBootstrapOpts.skipAnalysis, "skipAnalysis", false, "Skip analysis of the gathered data")
+	cmd.PersistentFlags().StringVar(&gatherBootstrapOpts.proxyURL, "proxy", "", "Proxy URL to use when fetching logs from bootstrap host. Format must be ${scheme}://$(username):$(password)@${address}:${port}")
 	return cmd
 }
 
@@ -134,15 +136,16 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 			}
 		}
 	}
+	proxyURL := gatherBootstrapOpts.proxyURL
 
 	if bootstrap == "" {
 		return "", errors.New("must provide bootstrap host address")
 	}
 
-	return gatherBootstrap(bootstrap, port, masters, directory)
+	return gatherBootstrap(bootstrap, port, masters, directory, proxyURL)
 }
 
-func gatherBootstrap(bootstrap string, port int, masters []string, directory string) (string, error) {
+func gatherBootstrap(bootstrap string, port int, masters []string, directory string, proxyURL string) (string, error) {
 	gatherID := time.Now().Format("20060102150405")
 
 	serialLogBundle := filepath.Join(directory, fmt.Sprintf("serial-log-bundle-%s.tar.gz", gatherID))
@@ -162,7 +165,7 @@ func gatherBootstrap(bootstrap string, port int, masters []string, directory str
 	}
 
 	logrus.Info("Pulling debug logs from the bootstrap machine")
-	client, err := ssh.NewClient("core", net.JoinHostPort(bootstrap, strconv.Itoa(port)), gatherBootstrapOpts.sshKeys)
+	client, err := ssh.NewClient("core", net.JoinHostPort(bootstrap, strconv.Itoa(port)), gatherBootstrapOpts.sshKeys, proxyURL)
 	if err != nil {
 		if errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, syscall.ETIMEDOUT) {
 			return "", errors.Wrap(err, "failed to connect to the bootstrap machine")

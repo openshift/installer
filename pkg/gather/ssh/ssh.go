@@ -2,6 +2,12 @@
 package ssh
 
 import (
+	"bufio"
+	"crypto/tls"
+	"fmt"
+	"net"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,21 +17,37 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
+	"golang.org/x/net/proxy"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	"github.com/openshift/installer/pkg/lineprinter"
 )
 
+type httpProxy struct {
+	host     string
+	haveAuth bool
+	username string
+	password string
+	forward  proxy.Dialer
+}
+
+type httpsDialer struct{}
+
+// Dialer for HTTPS.
+var HTTPSDialer = httpsDialer{}
+
+// TLS configuration needed for HTTPS dialer.
+var TLSConfig = &tls.Config{}
+
 // NewClient creates a new SSH client which can be used to SSH to address using user and the keys.
-//
 // if keys list is empty, it tries to load the keys from the user's environment.
-func NewClient(user, address string, keys []string) (*ssh.Client, error) {
+func NewClient(user, address string, keys []string, proxyURL string) (*ssh.Client, error) {
 	ag, agentType, err := getAgent(keys)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to initialize the SSH agent")
 	}
 
-	client, err := ssh.Dial("tcp", address, &ssh.ClientConfig{
+	sshConfig := &ssh.ClientConfig{
 		User: user,
 		Auth: []ssh.AuthMethod{
 			// Use a callback rather than PublicKeys
@@ -34,20 +56,50 @@ func NewClient(user, address string, keys []string) (*ssh.Client, error) {
 			ssh.PublicKeysCallback(ag.Signers),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	})
-	if err != nil {
-		if strings.Contains(err.Error(), "ssh: handshake failed: ssh: unable to authenticate") {
-			if agentType == "agent" {
-				return nil, errors.Wrap(err, "failed to use pre-existing agent, make sure the appropriate keys exist in the agent for authentication")
-			}
-			return nil, errors.Wrap(err, "failed to use the provided keys for authentication")
-		}
-		return nil, err
 	}
+
+	var client *ssh.Client
+	if proxyURL != "" {
+		parsedURL, err := url.Parse(proxyURL)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse proxy URL")
+		}
+		proxy.RegisterDialerType("http", newHTTPProxy)
+		proxy.RegisterDialerType("https", newHTTPSProxy)
+		httpDialer, err := proxy.FromURL(parsedURL, proxy.Direct)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create HTTP dialer")
+		}
+		httpConn, err := httpDialer.Dial("tcp", address)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to dial HTTP proxy")
+		}
+		ncc, chans, reqs, err := ssh.NewClientConn(httpConn, address, sshConfig)
+		if err != nil {
+			return nil, handleAgentError(err, agentType)
+		}
+		client = ssh.NewClient(ncc, chans, reqs)
+	} else {
+		client, err = ssh.Dial("tcp", address, sshConfig)
+		if err != nil {
+			return nil, handleAgentError(err, agentType)
+		}
+	}
+
 	if err := agent.ForwardToAgent(client, ag); err != nil {
 		return nil, errors.Wrap(err, "failed to forward agent")
 	}
 	return client, nil
+}
+
+func handleAgentError(err error, agentType string) error {
+	if strings.Contains(err.Error(), "ssh: handshake failed: ssh: unable to authenticate") {
+		if agentType == "agent" {
+			return errors.Wrap(err, "failed to use pre-existing agent, make sure the appropriate keys exist in the agent for authentication")
+		}
+		return errors.Wrap(err, "failed to use the provided keys for authentication")
+	}
+	return err
 }
 
 // Run uses an SSH client to execute commands.
@@ -140,4 +192,86 @@ func LoadPrivateSSHKeys(paths []string) (map[string]interface{}, error) {
 		return keys, err
 	}
 	return keys, nil
+}
+
+// newHTTPProxy creates a new httpProxy populated with credentials if any is available.
+func newHTTPProxy(uri *url.URL, forward proxy.Dialer) (proxy.Dialer, error) {
+	proxyDialer := new(httpProxy)
+	proxyDialer.host = uri.Host
+	proxyDialer.forward = forward
+	if uri.User != nil {
+		proxyDialer.haveAuth = true
+		proxyDialer.username = uri.User.Username()
+		proxyDialer.password, _ = uri.User.Password()
+	}
+
+	return proxyDialer, nil
+}
+
+// newHTTPSProxy creates a new httpProxy populated with credentials using HTTPS dialer.
+func newHTTPSProxy(uri *url.URL, forward proxy.Dialer) (proxy.Dialer, error) {
+	return newHTTPProxy(uri, HTTPSDialer)
+}
+
+// Dial is a custom dialer for the ssh client that will use HTTP CONNECT method via TLS handshake.
+func (d httpsDialer) Dial(network, addr string) (c net.Conn, err error) {
+	c, err = tls.Dial(network, addr, TLSConfig)
+	if err != nil {
+		fmt.Println(err)
+		c.Close()
+		return nil, errors.Wrap(err, "failed to connect to proxy")
+	}
+	return c, nil
+}
+
+// Dial is a custom dialer for the ssh client that will use HTTP CONNECT method
+// to establish a connection to the proxy. This is needed because the net/proxy module
+// only supports SOCKS5 proxies.
+func (s *httpProxy) Dial(network, addr string) (net.Conn, error) {
+	c, err := s.forward.Dial(network, s.host)
+	if c == nil {
+		return nil, errors.Wrap(err, "failed to connect to proxy")
+	}
+	if err != nil {
+		c.Close()
+		return nil, err
+	}
+
+	reqURL, err := url.Parse("http://" + addr)
+	if err != nil {
+		c.Close()
+		return nil, err
+	}
+	reqURL.Scheme = ""
+
+	req, err := http.NewRequest("CONNECT", reqURL.String(), nil)
+	if err != nil {
+		c.Close()
+		return nil, err
+	}
+	req.Close = false
+	if s.haveAuth {
+		req.SetBasicAuth(s.username, s.password)
+	}
+
+	err = req.Write(c)
+	if err != nil {
+		c.Close()
+		return nil, err
+	}
+
+	resp, err := http.ReadResponse(bufio.NewReader(c), req)
+	if err != nil {
+		c.Close()
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		c.Close()
+		errMsg := fmt.Sprintf("error when connecting to proxy, StatusCode [%d]", resp.StatusCode)
+		err := errors.Wrap(err, errMsg)
+		return nil, err
+	}
+
+	return c, nil
 }

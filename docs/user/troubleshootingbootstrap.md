@@ -34,6 +34,12 @@ Flags:
   -h, --help                 help for bootstrap
       --key stringArray      Path to SSH private keys that should be used for authentication. If no key was provided, SSH private keys from user's environment will be used
       --master stringArray   Hostnames or IPs of all control plane hosts
+      --proxy string         Proxy URL to use when fetching logs from bootstrap host. Format must be ${scheme}://$(username):$(password)@${address}:${port}
+      --skipAnalysis         Skip analysis of the gathered data
+
+Global Flags:
+      --dir string         assets directory (default ".")
+      --log-level string   log level (e.g. "debug | info | warn | error") (default "info")
 ```
 
 An example of a invocation for a cluster with three control-plane machines would be,
@@ -50,6 +56,15 @@ An example of a invocation for a cluster with three control-plane machines would
 
 ```sh
 openshift-install gather bootstrap --key ${KEY_1} --key ${KEY_2} --bootstrap ${BOOTSTRAP_HOST_IP} --master ${CONTROL_PLANE_1_HOST_IP} --master ${CONTROL_PLANE_2_HOST_IP} --master ${CONTROL_PLANE_3_HOST_IP}
+```
+
+### Gather bootstrap through a proxy
+
+If SSH port is authorized in the list of rules to configure to which ports the proxy can establish a connection, it's possible to gather the bootstrap logs
+through the proxy, for example in a disconnected environment.
+
+```sh
+openshift-install gather bootstrap --bootstrap ${BOOTSTRAP_HOST_IP} --proxy https://foo:mysecret@proxy.host
 ```
 
 ## Understanding the bootstrap failure log bundle

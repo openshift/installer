@@ -441,8 +441,9 @@ func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster) error {
 func (czero *Cluster) CanSSHToNodeZero() bool {
 	ip := czero.API.Rest.NodeZeroIP
 	port := 22
+	proxyURL := ""
 
-	_, err := ssh.NewClient("core", net.JoinHostPort(ip, strconv.Itoa(port)), czero.API.Rest.NodeSSHKey)
+	_, err := ssh.NewClient("core", net.JoinHostPort(ip, strconv.Itoa(port)), czero.API.Rest.NodeSSHKey, proxyURL)
 	if err != nil {
 		logrus.Debugf("Failed to connect to the Rendezvous Host: %s", err)
 	}
