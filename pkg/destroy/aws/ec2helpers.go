@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -339,19 +338,6 @@ func deleteEC2SecurityGroupsByVPC(ctx context.Context, client EC2API, vpc string
 		return lastError
 	}
 	return err
-}
-
-func deleteEC2Snapshot(ctx context.Context, client EC2API, id string, logger logrus.FieldLogger) error {
-	err := client.DeleteSnapshot(ctx, id)
-	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidSnapshot.NotFound" {
-			return nil
-		}
-		return err
-	}
-
-	logger.Info("Deleted")
-	return nil
 }
 
 func deleteEC2NetworkInterfaceByVPC(ctx context.Context, client EC2API, vpc string, failFast bool, logger logrus.FieldLogger) error {
