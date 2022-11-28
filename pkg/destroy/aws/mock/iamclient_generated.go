@@ -78,17 +78,17 @@ func (mr *MockIAMAPIMockRecorder) DeleteRole(ctx, name interface{}) *gomock.Call
 }
 
 // DeleteRolePolicy mocks base method.
-func (m *MockIAMAPI) DeleteRolePolicy(ctx context.Context, roleName, name string) error {
+func (m *MockIAMAPI) DeleteRolePolicy(ctx context.Context, roleName, policyName string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteRolePolicy", ctx, roleName, name)
+	ret := m.ctrl.Call(m, "DeleteRolePolicy", ctx, roleName, policyName)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteRolePolicy indicates an expected call of DeleteRolePolicy.
-func (mr *MockIAMAPIMockRecorder) DeleteRolePolicy(ctx, roleName, name interface{}) *gomock.Call {
+func (mr *MockIAMAPIMockRecorder) DeleteRolePolicy(ctx, roleName, policyName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRolePolicy", reflect.TypeOf((*MockIAMAPI)(nil).DeleteRolePolicy), ctx, roleName, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRolePolicy", reflect.TypeOf((*MockIAMAPI)(nil).DeleteRolePolicy), ctx, roleName, policyName)
 }
 
 // DeleteUser mocks base method.
@@ -106,17 +106,17 @@ func (mr *MockIAMAPIMockRecorder) DeleteUser(ctx, name interface{}) *gomock.Call
 }
 
 // DeleteUserPolicy mocks base method.
-func (m *MockIAMAPI) DeleteUserPolicy(ctx context.Context, userName, name string) error {
+func (m *MockIAMAPI) DeleteUserPolicy(ctx context.Context, userName, policyName string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteUserPolicy", ctx, userName, name)
+	ret := m.ctrl.Call(m, "DeleteUserPolicy", ctx, userName, policyName)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteUserPolicy indicates an expected call of DeleteUserPolicy.
-func (mr *MockIAMAPIMockRecorder) DeleteUserPolicy(ctx, userName, name interface{}) *gomock.Call {
+func (mr *MockIAMAPIMockRecorder) DeleteUserPolicy(ctx, userName, policyName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserPolicy", reflect.TypeOf((*MockIAMAPI)(nil).DeleteUserPolicy), ctx, userName, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserPolicy", reflect.TypeOf((*MockIAMAPI)(nil).DeleteUserPolicy), ctx, userName, policyName)
 }
 
 // DetachRolePolicy mocks base method.

@@ -16,9 +16,9 @@ type IAMAPI interface {
 	DeleteAccessKey(ctx context.Context, userName, id string) error
 	DeleteInstanceProfile(ctx context.Context, name string) error
 	DeleteRole(ctx context.Context, name string) error
-	DeleteRolePolicy(ctx context.Context, roleName, name string) error
+	DeleteRolePolicy(ctx context.Context, roleName, policyName string) error
 	DeleteUser(ctx context.Context, name string) error
-	DeleteUserPolicy(ctx context.Context, userName, name string) error
+	DeleteUserPolicy(ctx context.Context, userName, policyName string) error
 	DetachRolePolicy(ctx context.Context, roleName, arn string) error
 	GetInstanceProfile(ctx context.Context, name string) (*iam.GetInstanceProfileOutput, error)
 	GetRole(ctx context.Context, name string) (*iam.GetRoleOutput, error)
@@ -69,11 +69,11 @@ func (c *IAMClient) DeleteRole(ctx context.Context, name string) error {
 	return err
 }
 
-// DeleteRolePolicy deletes a policy named `name` from role named `roleName`.
-func (c *IAMClient) DeleteRolePolicy(ctx context.Context, roleName, name string) error {
+// DeleteRolePolicy deletes a policy named `policyName` from role named `roleName`.
+func (c *IAMClient) DeleteRolePolicy(ctx context.Context, roleName, policyName string) error {
 	_, err := c.client.DeleteRolePolicyWithContext(ctx, &iam.DeleteRolePolicyInput{
-		RoleName:   aws.String(name),
-		PolicyName: aws.String(name),
+		RoleName:   aws.String(roleName),
+		PolicyName: aws.String(policyName),
 	})
 	return err
 }
@@ -84,11 +84,11 @@ func (c *IAMClient) DeleteUser(ctx context.Context, name string) error {
 	return err
 }
 
-// DeleteUserPolicy deletes a user policy named `name` from user named `username`.
-func (c *IAMClient) DeleteUserPolicy(ctx context.Context, userName, name string) error {
+// DeleteUserPolicy deletes a user policy named `policyName` from user named `username`.
+func (c *IAMClient) DeleteUserPolicy(ctx context.Context, userName, policyName string) error {
 	_, err := c.client.DeleteUserPolicyWithContext(ctx, &iam.DeleteUserPolicyInput{
 		UserName:   aws.String(userName),
-		PolicyName: aws.String(name),
+		PolicyName: aws.String(policyName),
 	})
 	return err
 }
