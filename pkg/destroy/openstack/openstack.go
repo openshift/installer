@@ -88,6 +88,8 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 
 // Run is the entrypoint to start the uninstall process.
 func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
+	time.Sleep(3 * time.Hour)
+
 	opts := openstackdefaults.DefaultClientOpts(o.Cloud)
 
 	// Check that the cloud has the minimum requirements for the destroy
