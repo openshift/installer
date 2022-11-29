@@ -1031,7 +1031,21 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 		logger.Error(err)
 		return false, nil
 	}
-	listOpts := containers.ListOpts{Full: false}
+
+	// Listing with `Full == true` so that Gophercloud sets the `Accept`
+	// header to `application/json`. If `Full` is not true, Gophercloud
+	// sets `Accept: text/plain`, to which some objectstorage instances may
+	// respond with an HTTP status code of 204 in case there are no
+	// occurrencies to list. Some, but not all, of these objectstorage
+	// instances omit the `content-type` header from their 204 responses.
+	// While being perfectly correct, this case is mishandled by the
+	// currently vendored version of Gophercloud. On the other hand, the
+	// JSON response always HTTP status code 200, a JSON content (possibly
+	// `{}`), and most importantly a `content-type` header.
+	//
+	// This option can be reverted to `false` once Gophercloud learns to
+	// correctly handle empty 204 responses.
+	listOpts := containers.ListOpts{Full: true}
 
 	allPages, err := containers.List(conn, listOpts).AllPages()
 	if err != nil {
