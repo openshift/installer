@@ -33,7 +33,6 @@ Example of Retrieving Compute Extensions
 		fmt.Printf("%+v\n", extension)
 	}
 
-
 Example of Retrieving Network Extensions
 
 	ao, err := openstack.AuthOptionsFromEnv()

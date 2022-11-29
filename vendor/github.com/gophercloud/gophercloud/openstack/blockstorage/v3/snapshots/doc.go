@@ -4,7 +4,6 @@ OpenStack Block Storage service. A snapshot is a point in time copy of the
 data contained in an external storage volume, and can be controlled
 programmatically.
 
-
 Example to list Snapshots
 
 	allPages, err := snapshots.List(client, snapshots.ListOpts{}).AllPages()
