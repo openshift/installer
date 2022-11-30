@@ -43,12 +43,13 @@ data "azurerm_resource_group" "network" {
 }
 
 resource "azurerm_storage_account" "cluster" {
-  name                     = "cluster${var.random_storage_account_suffix}"
-  resource_group_name      = data.azurerm_resource_group.main.name
-  location                 = var.azure_region
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  min_tls_version          = contains(local.environments_with_min_tls_version, var.azure_environment) ? "TLS1_2" : null
+  name                            = "cluster${var.random_storage_account_suffix}"
+  resource_group_name             = data.azurerm_resource_group.main.name
+  location                        = var.azure_region
+  account_tier                    = "Standard"
+  account_replication_type        = "LRS"
+  min_tls_version                 = contains(local.environments_with_min_tls_version, var.azure_environment) ? "TLS1_2" : null
+  allow_nested_items_to_be_public = false
 }
 
 resource "azurerm_user_assigned_identity" "main" {
