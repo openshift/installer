@@ -1,8 +1,26 @@
 #!/bin/bash
 
+function redact_pull_secret_sed() {
+	# Produce a sed script to redact any of the pull secrets we know about.
+	# The journal export format is binary, so the redacted output must be
+	# the same length as the input.
+	jq -r '.auths[].auth' </root/.docker/config.json | sed -f <(cat <<EOF
+h
+s/.*/s#\0#/
+x
+s/././g
+s/^.\{10\}/<redacted>/
+s/.*/\0#g/
+x
+G
+s/\n//
+EOF
+)
+}
+
 function gather_journal() {
 	( >&2 echo -n "Gathering node journal" )
-	journalctl -o export > "${ARTIFACTS_DIR}/journal.export"
+	journalctl -o export | sed -f <(redact_pull_secret_sed) >"${ARTIFACTS_DIR}/journal.export"
 	( >&2 echo " Done")
 }
 
@@ -10,6 +28,10 @@ function gather_agent_data() {
 	( >&2 echo -n "Gathering agent installation data" )
 	mkdir -p "${ARTIFACTS_DIR}/etc"
 	cp -a /etc/assisted{,-service} "${ARTIFACTS_DIR}/etc/"
+	# Redact pull secrets
+	for manifest in "${ARTIFACTS_DIR}"/etc/assisted/manifests/*; do
+		sed -i -e '/"auth":/ s/: *"[A-Za-z0-9+/]*=*"/: "<redacted>"/g' "${manifest}"
+	done
 	( >&2 echo -n ".")
 	mkdir "${ARTIFACTS_DIR}/etc/containers"
 	cp -a /etc/containers/registries.conf "${ARTIFACTS_DIR}/etc/containers/"

@@ -45,7 +45,7 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
 				},
 				StringData: map[string]string{
-					".dockerconfigjson": TestSecret,
+					".dockerconfigjson": "{\n  \"auths\": {\n    \"cloud.openshift.com\": {\n      \"auth\": \"b3BlUTA=\",\n      \"email\": \"test@redhat.com\"\n    }\n  }\n}",
 				},
 			},
 		},
@@ -97,7 +97,7 @@ metadata:
   name: pull-secret
   namespace: cluster-0
 stringData:
-  .dockerconfigjson: c3VwZXItc2VjcmV0Cg==`,
+  .dockerconfigjson: '{"auths":{"cloud.test":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}'`,
 			expectedFound: true,
 			expectedConfig: &corev1.Secret{
 				TypeMeta: v1.TypeMeta{
@@ -109,7 +109,7 @@ stringData:
 					Namespace: "cluster-0",
 				},
 				StringData: map[string]string{
-					".dockerconfigjson": "c3VwZXItc2VjcmV0Cg==",
+					".dockerconfigjson": "{\n  \"auths\": {\n    \"cloud.test\": {\n      \"auth\": \"c3VwZXItc2VjcmV0Cg==\"\n    }\n  }\n}",
 				},
 			},
 		},
@@ -144,6 +144,18 @@ metadata:
 stringData:
   .dockerconfigjson:`,
 			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret does not contain any data",
+		},
+		{
+			name: "bad-secret-format",
+			data: `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pull-secret
+  namespace: cluster-0
+stringData:
+  .dockerconfigjson: 'foo'`,
+			expectedError: "invalid PullSecret configuration: StringData: Invalid value: \"foo\": invalid character 'o' in literal false (expecting 'a')",
 		},
 		{
 			name:       "file-not-found",
