@@ -84,7 +84,6 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, "http://"+nodeZeroIP+":8090/", templateData.ServiceBaseURL)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
-	assert.Equal(t, "", templateData.PullSecretToken)
 	assert.Equal(t, nodeZeroIP, templateData.NodeZeroIP)
 	assert.Equal(t, nodeZeroIP+":8090", templateData.AssistedServiceHost)
 	assert.Equal(t, agentClusterInstall.Spec.APIVIP, templateData.APIVIP)
