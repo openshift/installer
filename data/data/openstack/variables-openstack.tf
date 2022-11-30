@@ -374,3 +374,9 @@ variable "openstack_worker_server_group_policy" {
   type        = string
   description = "Policy of the server groups for the worker nodes."
 }
+
+variable "openstack_control_plane_load_balancer_type" {
+  type        = string
+  default     = ""
+  description = "The load balancer for the control plane VIPs."
+}

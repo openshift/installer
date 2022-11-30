@@ -27,11 +27,11 @@ networking:
   - 172.30.0.0/16
 platform:
   openstack:
-    apiLoadBalancer:
+    controlPlaneLoadBalancer:
       type: BGP
       bgp:
         speakers:
-        - failureDomain: default
+        - subnetCIDR: 192.168.0.0/24
           peers:
           - ip: 192.168.0.1
             password: changeme

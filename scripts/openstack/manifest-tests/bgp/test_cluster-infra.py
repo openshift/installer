@@ -20,23 +20,23 @@ class TestClusterInfraObject(unittest.TestCase):
 
     def failure_domains(self):
         """Assert that the Cluster infrastructure object contains the BGP configuration."""
-        self.assertIn("apiLoadBalancer", cluster_infra["spec"]["platformSpec"]["openstack"])
+        self.assertIn("controlPlaneLoadBalancer", cluster_infra["spec"]["platformSpec"]["openstack"])
 
-        apiLoadBalancer = cluster_infra["spec"]["platformSpec"]["openstack"]["apiLoadBalancer"]
+        controlPlaneLoadBalancer = cluster_infra["spec"]["platformSpec"]["openstack"]["controlPlaneLoadBalancer"]
 
-        self.assertIn("type", apiLoadBalancer)
-        self.assertEqual("BGP", apiLoadBalancer["type"])
-        self.assertIn("bgp", apiLoadBalancer)
-        self.assertIn("speakers", apiLoadBalancer["bgp"])
-        self.assertEqual(1, len(apiLoadBalancer["bgp"]["speakers"]))
-        self.assertIn("failureDomain", apiLoadBalancer["bgp"]["speakers"][0])
-        self.assertEqual("default", apiLoadBalancer["bgp"]["speakers"][0]["failureDomain"])
-        self.assertIn("peers", apiLoadBalancer["bgp"]["speakers"][0])
-        self.assertEqual(1, len(apiLoadBalancer["bgp"]["speakers"][0]["peers"]))
-        self.assertIn("ip", apiLoadBalancer["bgp"]["speakers"][0]["peers"][0])
-        self.assertEqual("192.168.0.1", apiLoadBalancer["bgp"]["speakers"][0]["peers"][0]["ip"])
-        self.assertIn("password", apiLoadBalancer["bgp"]["speakers"][0]["peers"][0])
-        self.assertEqual("changeme", apiLoadBalancer["bgp"]["speakers"][0]["peers"][0]["password"])
+        self.assertIn("type", controlPlaneLoadBalancer)
+        self.assertEqual("BGP", controlPlaneLoadBalancer["type"])
+        self.assertIn("bgp", controlPlaneLoadBalancer)
+        self.assertIn("speakers", controlPlaneLoadBalancer["bgp"])
+        self.assertEqual(1, len(controlPlaneLoadBalancer["bgp"]["speakers"]))
+        self.assertIn("subnetCIDR", controlPlaneLoadBalancer["bgp"]["speakers"][0])
+        self.assertEqual("192.168.0.0/10", controlPlaneLoadBalancer["bgp"]["speakers"][0]["subnetCIDR"])
+        self.assertIn("peers", controlPlaneLoadBalancer["bgp"]["speakers"][0])
+        self.assertEqual(1, len(controlPlaneLoadBalancer["bgp"]["speakers"][0]["peers"]))
+        self.assertIn("ip", controlPlaneLoadBalancer["bgp"]["speakers"][0]["peers"][0])
+        self.assertEqual("192.168.0.1", controlPlaneLoadBalancer["bgp"]["speakers"][0]["peers"][0]["ip"])
+        self.assertIn("password", controlPlaneLoadBalancer["bgp"]["speakers"][0]["peers"][0])
+        self.assertEqual("changeme", controlPlaneLoadBalancer["bgp"]["speakers"][0]["peers"][0]["password"])
 
 
 if __name__ == '__main__':

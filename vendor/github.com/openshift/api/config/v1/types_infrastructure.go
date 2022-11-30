@@ -505,49 +505,61 @@ type BareMetalPlatformStatus struct {
 	NodeDNSIP string `json:"nodeDNSIP,omitempty"`
 }
 
-// BGPPeer describes a BGP peer.
+// BGPPeer describes the configuration of a BGP peering neighbor.
 type BGPPeer struct {
-	// asn is the Autonomous System Number of the peer.
+	// asn specifies the remote autonomous system number to peer with the remote router.
 	//
-	// +optional
-	ASN string `json:"asn,omitempty"`
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=4294967295
+	// +kubebuilder:validation:Required
+	// +required
+	ASN uint32 `json:"asn"`
 
-	// ip is the IP address of the peer, as reachable from the cluster.
+	// ip is the IP address of the BGP neighbor and has to be reachable from the node.
 	// It may be either IPv4 or IPv6.
 	//
+	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:Required
-	// + ---
-	// + {IPv4 or IPv6} validation in crd.yaml-patch
+	// +required
 	IP string `json:"ip"`
 
-	// password for BGP authentication against the peer.
+	// password to be used with the tcp socket that is being used to connect to the remote peer
 	//
 	// +optional
 	Password string `json:"password,omitempty"`
 }
 
-// OpenStackBGPSpeaker describes the BGP speaker configuration for a given
-// OpenStack subnet.
+// BGPSpeaker defines how a BGP speaker will be configured. Each speaker will result into a
+// BGP protocol process with the specified ASN, for a unique subnet.
+// Each speaker has a list of peers, which will be configured as BGP neighbors.
 type BGPSpeaker struct {
 	// subnetCIDR is the CIDR which this BGP configuration applies to.
 	//
 	// + Validation is applied via a patch, we validate the format as cidr
 	// +kubebuilder:validation:Required
+	// +required
 	SubnetCIDR string `json:"subnetCIDR"`
 
-	// asn specifies the Autonomous System number to be used by the BGP
-	// speaker. If this field is not set, the cluster will assign an
-	// arbitrary number.
+	// asn specifies the local autonomous system number that will be used to peer
+	// with remote routers.
 	//
-	// +optional
-	ASN string `json:"asn"`
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=4294967295
+	// +kubebuilder:validation:Required
+	// +required
+	ASN uint32 `json:"asn"`
 
-	// peers is a list of all BGP peers of the speaker of the subnet.
+	// peers is a list of the BGP peers that need to be configured for a the speaker
+	// for a specific subnet.
 	//
 	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:Required
+	// +required
 	Peers []BGPPeer `json:"peers"`
 }
 
+// ControlPlaneBGPConfiguration defines the general BGP configuration for the control plane.
+// It contains the list of BGP speakers that will be configured on the control plane nodes.
 type ControlPlaneBGPConfiguration struct {
 	// speakers is a list of BGP speaker configurations. We require a
 	// speaker configuration for every control plane subnet.
@@ -556,29 +568,29 @@ type ControlPlaneBGPConfiguration struct {
 	// +kubebuilder:validation:MinItems:=1
 	// +listType=map
 	// +listMapKey=subnetCIDR
+	// +required
 	Speakers []BGPSpeaker `json:"speakers"`
 }
 
+// ControlPlaneLoadBalancer defines the configuration for the control plane load balancers.
 type ControlPlaneLoadBalancer struct {
-	// controlPlaneLoadBalancerType defines the type of load-balancer which will be
+	// type defines the type of load balancer which will be
 	// configured for the control plane VIPs. Permitted values are `VRRP` and
 	// `BGP`.
 	// When omitted, this means no opinion and the platform is left to
 	// choose a reasonable default.
-	// The current default value is `VRRP`.
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="VRRP";"BGP"
 	// +kubebuilder:validation:Required
+	// +optional
 	ControlPlaneLoadBalancerType string `json:"type,omitempty"`
 
-	// BGPSpeakers is a list of BGP speaker configurations. We require a
+	// BGP refers to the list of BGP speaker configurations. We require a
 	// speaker configuration for every subnet where we want to peer.
 	// The list must contain at least one item.
 	//
-	// +kubebuilder:validation:MinItems:=1
-	// +listType=map
-	// +listMapKey=subnetCIDR
+	// +optional
 	BGP *ControlPlaneBGPConfiguration `json:"bgp,omitempty"`
 }
 
@@ -593,7 +605,7 @@ type OpenStackPlatformSpec struct {
 	// The current default configuration uses VRRP.
 	//
 	// +optional
-	ControlPlaneLoadBalancer ControlPlaneLoadBalancer `json:"controlPlaneLoadBalancer"`
+	ControlPlaneLoadBalancer ControlPlaneLoadBalancer `json:"controlPlaneLoadBalancer,omitempty"`
 }
 
 // OpenStackPlatformStatus holds the current status of the OpenStack infrastructure provider.

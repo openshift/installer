@@ -1001,6 +1001,7 @@ func (InsightsOperatorStatus) SwaggerDoc() map[string]string {
 
 var map_InsightsReport = map[string]string{
 	"":             "insightsReport provides Insights health check report based on the most recently sent Insights data.",
+	"downloadedAt": "downloadedAt is the time when the last Insights report was downloaded. An empty value means that there has not been any Insights report downloaded yet and it usually appears in disconnected clusters (or clusters when the Insights data gathering is disabled).",
 	"healthChecks": "healthChecks provides basic information about active Insights health checks in a cluster.",
 }
 

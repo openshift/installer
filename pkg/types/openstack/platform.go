@@ -115,13 +115,8 @@ type Platform struct {
 	// +optional
 	MachinesSubnet string `json:"machinesSubnet,omitempty"`
 
-	// apiLoadBalancer defines how traffic destined to the OpenShift API is
-	// routed to the API servers.
-	// When omitted, this means no opinion and the platform is left to
-	// choose a reasonable default. This default is subject to change over
-	// time.
-	// The current default configuration uses VRRP.
+	// ControlPlaneLoadBalancer defines how traffic designed for the control plane should be load balanced.
 	//
 	// +optional
-	APILoadBalancer APILoadBalancer `json:"apiLoadBalancer"`
+	ControlPlaneLoadBalancer ControlPlaneLoadBalancer `json:"controlPlaneLoadBalancer,omitempty"`
 }

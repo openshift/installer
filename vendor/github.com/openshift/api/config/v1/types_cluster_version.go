@@ -45,8 +45,17 @@ type ClusterVersionSpec struct {
 	// the current version does not match the desired version). The set of
 	// recommended update values is listed as part of available updates in
 	// status, and setting values outside that range may cause the upgrade
-	// to fail. You may specify the version field without setting image if
-	// an update exists with that version in the availableUpdates or history.
+	// to fail.
+	//
+	// Some of the fields are inter-related with restrictions and meanings described here.
+	// 1. image is specified, version is specified, architecture is specified. API validation error.
+	// 2. image is specified, version is specified, architecture is not specified. You should not do this. version is silently ignored and image is used.
+	// 3. image is specified, version is not specified, architecture is specified. API validation error.
+	// 4. image is specified, version is not specified, architecture is not specified. image is used.
+	// 5. image is not specified, version is specified, architecture is specified. version and desired architecture are used to select an image.
+	// 6. image is not specified, version is specified, architecture is not specified. version and current architecture are used to select an image.
+	// 7. image is not specified, version is not specified, architecture is specified. API validation error.
+	// 8. image is not specified, version is not specified, architecture is not specified. API validation error.
 	//
 	// If an upgrade fails the operator will halt and report status
 	// about the failing component. Setting the desired update value back to
@@ -191,7 +200,7 @@ type UpdateHistory struct {
 	// +nullable
 	CompletionTime *metav1.Time `json:"completionTime"`
 
-	// version is a semantic versioning identifying the update version. If the
+	// version is a semantic version identifying the update version. If the
 	// requested image does not define a version, or if a failure occurs
 	// retrieving the image, this value may be empty.
 	//
@@ -223,6 +232,16 @@ type UpdateHistory struct {
 
 // ClusterID is string RFC4122 uuid.
 type ClusterID string
+
+// ClusterVersionArchitecture enumerates valid cluster architectures.
+// +kubebuilder:validation:Enum="Multi";""
+type ClusterVersionArchitecture string
+
+const (
+	// ClusterVersionArchitectureMulti identifies a multi architecture. A multi
+	// architecture cluster is capable of running nodes with multiple architectures.
+	ClusterVersionArchitectureMulti ClusterVersionArchitecture = "Multi"
+)
 
 // ClusterVersionCapability enumerates optional, core cluster components.
 // +kubebuilder:validation:Enum=openshift-samples;baremetal;marketplace;Console;Insights;Storage;CSISnapshot
@@ -406,17 +425,33 @@ type ComponentOverride struct {
 type URL string
 
 // Update represents an administrator update request.
+// +kubebuilder:validation:XValidation:rule="has(self.architecture) && has(self.image) ? (self.architecture == '' || self.image == '') : true",message="cannot set both Architecture and Image"
+// +kubebuilder:validation:XValidation:rule="has(self.architecture) && self.architecture != '' ? self.version != '' : true",message="Version must be set if Architecture is set"
 // +k8s:deepcopy-gen=true
 type Update struct {
-	// version is a semantic versioning identifying the update version. When this
-	// field is part of spec, version is optional if image is specified.
+	// architecture is an optional field that indicates the desired
+	// value of the cluster architecture. In this context cluster
+	// architecture means either a single architecture or a multi
+	// architecture. architecture can only be set to Multi thereby
+	// only allowing updates from single to multi architecture. If
+	// architecture is set, image cannot be set and version must be
+	// set.
+	// Valid values are 'Multi' and empty.
+	//
+	// +optional
+	Architecture ClusterVersionArchitecture `json:"architecture"`
+
+	// version is a semantic version identifying the update version.
+	// version is ignored if image is specified and required if
+	// architecture is specified.
 	//
 	// +optional
 	Version string `json:"version"`
 
-	// image is a container image location that contains the update. When this
-	// field is part of spec, image is optional if version is specified and the
-	// availableUpdates field contains a matching version.
+	// image is a container image location that contains the update.
+	// image should be used when the desired version does not exist in availableUpdates or history.
+	// When image is set, version is ignored. When image is set, version should be empty.
+	// When image is set, architecture cannot be specified.
 	//
 	// +optional
 	Image string `json:"image"`
@@ -435,7 +470,7 @@ type Update struct {
 // Release represents an OpenShift release image and associated metadata.
 // +k8s:deepcopy-gen=true
 type Release struct {
-	// version is a semantic versioning identifying the update version. When this
+	// version is a semantic version identifying the update version. When this
 	// field is part of spec, version is optional if image is specified.
 	// +required
 	Version string `json:"version"`

@@ -579,7 +579,7 @@ func (ClusterVersionList) SwaggerDoc() map[string]string {
 var map_ClusterVersionSpec = map[string]string{
 	"":              "ClusterVersionSpec is the desired version state of the cluster. It includes the version the cluster should be at, how the cluster is identified, and where the cluster should look for version updates.",
 	"clusterID":     "clusterID uniquely identifies this cluster. This is expected to be an RFC4122 UUID value (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx in hexadecimal values). This is a required field.",
-	"desiredUpdate": "desiredUpdate is an optional field that indicates the desired value of the cluster version. Setting this value will trigger an upgrade (if the current version does not match the desired version). The set of recommended update values is listed as part of available updates in status, and setting values outside that range may cause the upgrade to fail. You may specify the version field without setting image if an update exists with that version in the availableUpdates or history.\n\nIf an upgrade fails the operator will halt and report status about the failing component. Setting the desired update value back to the previous version will cause a rollback to be attempted. Not all rollbacks will succeed.",
+	"desiredUpdate": "desiredUpdate is an optional field that indicates the desired value of the cluster version. Setting this value will trigger an upgrade (if the current version does not match the desired version). The set of recommended update values is listed as part of available updates in status, and setting values outside that range may cause the upgrade to fail.\n\nSome of the fields are inter-related with restrictions and meanings described here. 1. image is specified, version is specified, architecture is specified. API validation error. 2. image is specified, version is specified, architecture is not specified. You should not do this. version is silently ignored and image is used. 3. image is specified, version is not specified, architecture is specified. API validation error. 4. image is specified, version is not specified, architecture is not specified. image is used. 5. image is not specified, version is specified, architecture is specified. version and desired architecture are used to select an image. 6. image is not specified, version is specified, architecture is not specified. version and current architecture are used to select an image. 7. image is not specified, version is not specified, architecture is specified. API validation error. 8. image is not specified, version is not specified, architecture is not specified. API validation error.\n\nIf an upgrade fails the operator will halt and report status about the failing component. Setting the desired update value back to the previous version will cause a rollback to be attempted. Not all rollbacks will succeed.",
 	"upstream":      "upstream may be used to specify the preferred update server. By default it will use the appropriate update server for the cluster and region.",
 	"channel":       "channel is an identifier for explicitly requesting that a non-default set of updates be applied to this cluster. The default channel will be contain stable updates that are appropriate for production clusters.",
 	"capabilities":  "capabilities configures the installation of optional, core cluster components.  A null value here is identical to an empty object; see the child properties for default semantics.",
@@ -653,7 +653,7 @@ func (PromQLClusterCondition) SwaggerDoc() map[string]string {
 
 var map_Release = map[string]string{
 	"":         "Release represents an OpenShift release image and associated metadata.",
-	"version":  "version is a semantic versioning identifying the update version. When this field is part of spec, version is optional if image is specified.",
+	"version":  "version is a semantic version identifying the update version. When this field is part of spec, version is optional if image is specified.",
 	"image":    "image is a container image location that contains the update. When this field is part of spec, image is optional if version is specified and the availableUpdates field contains a matching version.",
 	"url":      "url contains information about this release. This URL is set by the 'url' metadata property on a release or the metadata returned by the update API and should be displayed as a link in user interfaces. The URL field may not be set for test or nightly releases.",
 	"channels": "channels is the set of Cincinnati channels to which the release currently belongs.",
@@ -664,10 +664,11 @@ func (Release) SwaggerDoc() map[string]string {
 }
 
 var map_Update = map[string]string{
-	"":        "Update represents an administrator update request.",
-	"version": "version is a semantic versioning identifying the update version. When this field is part of spec, version is optional if image is specified.",
-	"image":   "image is a container image location that contains the update. When this field is part of spec, image is optional if version is specified and the availableUpdates field contains a matching version.",
-	"force":   "force allows an administrator to update to an image that has failed verification or upgradeable checks. This option should only be used when the authenticity of the provided image has been verified out of band because the provided image will run with full administrative access to the cluster. Do not use this flag with images that comes from unknown or potentially malicious sources.",
+	"":             "Update represents an administrator update request.",
+	"architecture": "architecture is an optional field that indicates the desired value of the cluster architecture. In this context cluster architecture means either a single architecture or a multi architecture. architecture can only be set to Multi thereby only allowing updates from single to multi architecture. If architecture is set, image cannot be set and version must be set. Valid values are 'Multi' and empty.",
+	"version":      "version is a semantic version identifying the update version. version is ignored if image is specified and required if architecture is specified.",
+	"image":        "image is a container image location that contains the update. image should be used when the desired version does not exist in availableUpdates or history. When image is set, version is ignored. When image is set, version should be empty. When image is set, architecture cannot be specified.",
+	"force":        "force allows an administrator to update to an image that has failed verification or upgradeable checks. This option should only be used when the authenticity of the provided image has been verified out of band because the provided image will run with full administrative access to the cluster. Do not use this flag with images that comes from unknown or potentially malicious sources.",
 }
 
 func (Update) SwaggerDoc() map[string]string {
@@ -679,7 +680,7 @@ var map_UpdateHistory = map[string]string{
 	"state":          "state reflects whether the update was fully applied. The Partial state indicates the update is not fully applied, while the Completed state indicates the update was successfully rolled out at least once (all parts of the update successfully applied).",
 	"startedTime":    "startedTime is the time at which the update was started.",
 	"completionTime": "completionTime, if set, is when the update was fully applied. The update that is currently being applied will have a null completion time. Completion time will always be set for entries that are not the current update (usually to the started time of the next update).",
-	"version":        "version is a semantic versioning identifying the update version. If the requested image does not define a version, or if a failure occurs retrieving the image, this value may be empty.",
+	"version":        "version is a semantic version identifying the update version. If the requested image does not define a version, or if a failure occurs retrieving the image, this value may be empty.",
 	"image":          "image is a container image location that contains the update. This value is always populated.",
 	"verified":       "verified indicates whether the provided update was properly verified before it was installed. If this is false the cluster may not be trusted. Verified does not cover upgradeable checks that depend on the cluster state at the time when the update target was accepted.",
 	"acceptedRisks":  "acceptedRisks records risks which were accepted to initiate the update. For example, it may menition an Upgradeable=False or missing signature that was overriden via desiredUpdate.force, or an update that was initiated despite not being in the availableUpdates set of recommended update targets.",
@@ -1070,10 +1071,10 @@ func (AzurePlatformStatus) SwaggerDoc() map[string]string {
 }
 
 var map_BGPPeer = map[string]string{
-	"":         "BGPPeer describes a BGP peer.",
-	"asn":      "asn is the Autonomous System Number of the peer.",
-	"ip":       "ip is the IP address of the peer, as reachable from the cluster. It may be either IPv4 or IPv6.",
-	"password": "password for BGP authentication against the peer.",
+	"":         "BGPPeer describes the configuration of a BGP peering neighbor.",
+	"asn":      "asn specifies the remote autonomous system number to peer with the remote router.",
+	"ip":       "ip is the IP address of the BGP neighbor and has to be reachable from the node. It may be either IPv4 or IPv6.",
+	"password": "password to be used with the tcp socket that is being used to connect to the remote peer",
 }
 
 func (BGPPeer) SwaggerDoc() map[string]string {
@@ -1081,10 +1082,10 @@ func (BGPPeer) SwaggerDoc() map[string]string {
 }
 
 var map_BGPSpeaker = map[string]string{
-	"":           "OpenStackBGPSpeaker describes the BGP speaker configuration for a given OpenStack subnet.",
+	"":           "BGPSpeaker defines how a BGP speaker will be configured. Each speaker will result into a BGP protocol process with the specified ASN, for a unique subnet. Each speaker has a list of peers, which will be configured as BGP neighbors.",
 	"subnetCIDR": "subnetCIDR is the CIDR which this BGP configuration applies to.",
-	"asn":        "asn specifies the Autonomous System number to be used by the BGP speaker. If this field is not set, the cluster will assign an arbitrary number.",
-	"peers":      "peers is a list of all BGP peers of the speaker of the subnet.",
+	"asn":        "asn specifies the local autonomous system number that will be used to peer with remote routers.",
+	"peers":      "peers is a list of the BGP peers that need to be configured for a the speaker for a specific subnet.",
 }
 
 func (BGPSpeaker) SwaggerDoc() map[string]string {
@@ -1113,6 +1114,7 @@ func (BareMetalPlatformStatus) SwaggerDoc() map[string]string {
 }
 
 var map_ControlPlaneBGPConfiguration = map[string]string{
+	"":         "ControlPlaneBGPConfiguration defines the general BGP configuration for the control plane. It contains the list of BGP speakers that will be configured on the control plane nodes.",
 	"speakers": "speakers is a list of BGP speaker configurations. We require a speaker configuration for every control plane subnet. The list must contain at least one item.",
 }
 
@@ -1121,8 +1123,9 @@ func (ControlPlaneBGPConfiguration) SwaggerDoc() map[string]string {
 }
 
 var map_ControlPlaneLoadBalancer = map[string]string{
-	"type": "controlPlaneLoadBalancerType defines the type of load-balancer which will be configured for the control plane VIPs. Permitted values are `VRRP` and `BGP`. When omitted, this means no opinion and the platform is left to choose a reasonable default. The current default value is `VRRP`.",
-	"bgp":  "BGPSpeakers is a list of BGP speaker configurations. We require a speaker configuration for every subnet where we want to peer. The list must contain at least one item.",
+	"":     "ControlPlaneLoadBalancer defines the configuration for the control plane load balancers.",
+	"type": "type defines the type of load balancer which will be configured for the control plane VIPs. Permitted values are `VRRP` and `BGP`. When omitted, this means no opinion and the platform is left to choose a reasonable default.",
+	"bgp":  "BGP refers to the list of BGP speaker configurations. We require a speaker configuration for every subnet where we want to peer. The list must contain at least one item.",
 }
 
 func (ControlPlaneLoadBalancer) SwaggerDoc() map[string]string {
