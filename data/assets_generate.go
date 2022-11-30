@@ -6,8 +6,9 @@ package main
 import (
 	"log"
 
-	"github.com/openshift/installer/data"
 	"github.com/shurcooL/vfsgen"
+
+	"github.com/openshift/installer/data"
 )
 
 func main() {

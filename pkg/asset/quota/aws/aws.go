@@ -6,9 +6,10 @@ import (
 	"sort"
 	"strings"
 
-	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
+
+	machineapi "github.com/openshift/api/machine/v1beta1"
 
 	"github.com/openshift/installer/pkg/quota"
 	"github.com/openshift/installer/pkg/types"

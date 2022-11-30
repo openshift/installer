@@ -2,7 +2,6 @@ package ovirt
 
 import (
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
-
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )

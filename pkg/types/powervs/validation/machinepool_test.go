@@ -1,12 +1,13 @@
 package validation
 
 import (
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"testing"
 
-	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/types/powervs"
 )
 
 func TestValidateMachinePool(t *testing.T) {

@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/baremetal"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestMastersSelectionByRole(t *testing.T) {

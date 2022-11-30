@@ -4,9 +4,10 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	configv1 "github.com/openshift/api/config/v1"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"

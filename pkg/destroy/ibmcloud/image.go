@@ -4,9 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/pkg/errors"
 )
 
 const imageTypeName = "image"

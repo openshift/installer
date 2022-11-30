@@ -4,7 +4,6 @@ import (
 	"regexp"
 
 	"github.com/pkg/errors"
-
 	"google.golang.org/api/googleapi"
 	storage "google.golang.org/api/storage/v1"
 )

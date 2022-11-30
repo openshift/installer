@@ -3,8 +3,9 @@ package image
 import (
 	"testing"
 
-	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/openshift/installer/pkg/asset/agent/mirror"
 )
 
 func TestGetIcspContents(t *testing.T) {

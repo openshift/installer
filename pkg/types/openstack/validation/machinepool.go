@@ -1,8 +1,9 @@
 package validation
 
 import (
-	"github.com/openshift/installer/pkg/types/openstack"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 var validServerGroupPolicies = []string{

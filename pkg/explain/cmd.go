@@ -5,9 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"github.com/openshift/installer/data"
 )
 
 // NewCmd returns a subcommand for explain

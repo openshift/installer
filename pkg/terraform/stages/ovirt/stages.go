@@ -6,13 +6,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/openshift/installer/pkg/terraform/providers"
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"
 	"github.com/openshift/installer/pkg/types"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"

@@ -8,7 +8,6 @@ import (
 	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
-
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 )
 

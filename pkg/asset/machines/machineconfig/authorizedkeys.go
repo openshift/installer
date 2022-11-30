@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
-	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 
 	"github.com/openshift/installer/pkg/asset/ignition"
 )

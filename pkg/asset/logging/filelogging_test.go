@@ -3,10 +3,11 @@ package logging
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
-	"github.com/stretchr/testify/assert"
 )
 
 func getAsset(filename string) *asset.File {

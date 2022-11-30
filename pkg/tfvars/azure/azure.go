@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
+
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 )

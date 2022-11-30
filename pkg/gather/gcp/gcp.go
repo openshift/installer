@@ -10,17 +10,15 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	googleoauth "golang.org/x/oauth2/google"
+	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/option"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	gcpsession "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/gather"
 	"github.com/openshift/installer/pkg/gather/providers"
 	"github.com/openshift/installer/pkg/types"
-
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-
-	googleoauth "golang.org/x/oauth2/google"
-	compute "google.golang.org/api/compute/v1"
-	"google.golang.org/api/option"
 )
 
 // Gather holds options for resources we want to gather.

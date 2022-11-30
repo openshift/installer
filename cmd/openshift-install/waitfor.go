@@ -4,11 +4,12 @@ import (
 	"context"
 	"path/filepath"
 
-	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
+
+	timer "github.com/openshift/installer/pkg/metrics/timer"
 )
 
 func newWaitForCmd() *cobra.Command {

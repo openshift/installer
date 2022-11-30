@@ -6,14 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	machineapi "github.com/openshift/api/machine/v1beta1"
-	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
-
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	machineapi "github.com/openshift/api/machine/v1beta1"
+
+	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )

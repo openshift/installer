@@ -1,14 +1,15 @@
 package openstack
 
 import (
-	"github.com/sirupsen/logrus"
-
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/sirupsen/logrus"
+	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
+
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	operv1 "github.com/openshift/api/operator/v1"
+
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	"github.com/openshift/installer/pkg/quota"
-	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 )
 
 // These numbers should reflect what is documented here:

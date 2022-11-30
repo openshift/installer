@@ -1,8 +1,9 @@
 package powervs
 
 import (
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 const (

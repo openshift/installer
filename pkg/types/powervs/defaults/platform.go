@@ -2,7 +2,6 @@ package defaults
 
 import (
 	"github.com/openshift/installer/pkg/ipnet"
-
 	"github.com/openshift/installer/pkg/types/powervs"
 )
 

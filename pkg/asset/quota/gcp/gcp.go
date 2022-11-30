@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
+
 	"github.com/openshift/installer/pkg/quota"
 	"github.com/openshift/installer/pkg/types"
 )

@@ -1,9 +1,11 @@
 package agent
 
 import (
-	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
-	"github.com/openshift/installer/pkg/types/baremetal"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+
+	"github.com/openshift/installer/pkg/types/baremetal"
 )
 
 // AgentConfigVersion is the version supported by this package.

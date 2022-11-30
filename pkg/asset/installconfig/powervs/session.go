@@ -11,9 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openshift/installer/pkg/types/powervs"
-	"github.com/pkg/errors"
-
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/IBM-Cloud/bluemix-go"
 	"github.com/IBM-Cloud/bluemix-go/api/account/accountv2"
@@ -25,8 +22,10 @@ import (
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/form3tech-oss/jwt-go"
-
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/openshift/installer/pkg/types/powervs"
 )
 
 var (

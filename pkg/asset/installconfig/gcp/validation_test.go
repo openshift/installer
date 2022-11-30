@@ -8,10 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	googleoauth "golang.org/x/oauth2/google"
-
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	googleoauth "golang.org/x/oauth2/google"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"

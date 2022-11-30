@@ -3,12 +3,15 @@ package vsphere
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
+	"github.com/pkg/errors"
+
 	machineapi "github.com/openshift/api/machine/v1beta1"
+
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	vtypes "github.com/openshift/installer/pkg/types/vsphere"
-	"github.com/pkg/errors"
-	"strings"
 )
 
 type folder struct {

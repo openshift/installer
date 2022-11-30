@@ -3,11 +3,11 @@ package gcp
 import (
 	"fmt"
 
-	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
-
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
+
+	"github.com/openshift/installer/pkg/types/gcp"
 )
 
 const (

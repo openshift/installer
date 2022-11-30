@@ -8,21 +8,23 @@ import (
 	"path/filepath"
 	"strings"
 
-	operv1 "github.com/openshift/api/operator/v1"
-	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
-	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
-	hivev1 "github.com/openshift/hive/apis/hive/v1"
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent"
-	"github.com/openshift/installer/pkg/ipnet"
-	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/defaults"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
+
+	operv1 "github.com/openshift/api/operator/v1"
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	hivev1 "github.com/openshift/hive/apis/hive/v1"
+
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/defaults"
 )
 
 const (

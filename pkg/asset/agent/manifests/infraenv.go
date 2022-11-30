@@ -6,11 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
+
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"

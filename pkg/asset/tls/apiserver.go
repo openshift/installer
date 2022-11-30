@@ -5,9 +5,10 @@ import (
 	"crypto/x509/pkix"
 	"net"
 
+	"github.com/pkg/errors"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/pkg/errors"
 )
 
 // KubeAPIServerToKubeletSignerCertKey is a key/cert pair that signs the kube-apiserver to kubelet client certs.

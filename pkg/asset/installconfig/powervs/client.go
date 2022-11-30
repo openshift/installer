@@ -17,8 +17,9 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
+
+	"github.com/openshift/installer/pkg/types"
 )
 
 //go:generate mockgen -source=./client.go -destination=./mock/powervsclient_generated.go -package=mock

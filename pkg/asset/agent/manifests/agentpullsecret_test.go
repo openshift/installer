@@ -5,14 +5,15 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent"
-	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
+
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/mock"
 )
 
 func TestAgentPullSecret_Generate(t *testing.T) {

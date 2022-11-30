@@ -1,10 +1,11 @@
 package powervs
 
 import (
-	"github.com/IBM-Cloud/power-go-client/power/models"
-	"github.com/pkg/errors"
 	"log"
 	"strings"
+
+	"github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/pkg/errors"
 )
 
 // listCloudConnections lists cloud connections in the cloud.

@@ -2,6 +2,7 @@ package defaults
 
 import (
 	operv1 "github.com/openshift/api/operator/v1"
+
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"

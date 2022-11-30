@@ -27,6 +27,9 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
+	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
+	"github.com/openshift/library-go/pkg/route/routeapihelpers"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -37,8 +40,6 @@ import (
 	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
-	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
-	"github.com/openshift/library-go/pkg/route/routeapihelpers"
 )
 
 type target struct {

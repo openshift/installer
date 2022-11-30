@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/openshift/installer/pkg/asset"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/openshift/installer/pkg/asset"
 )
 
 type mockCertKey struct {

@@ -1,9 +1,10 @@
 package powervs
 
 import (
+	"strings"
+
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 const (

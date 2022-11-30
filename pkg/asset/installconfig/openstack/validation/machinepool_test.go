@@ -3,12 +3,12 @@ package validation
 import (
 	"testing"
 
-	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	logrusTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 const (

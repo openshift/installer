@@ -1,11 +1,12 @@
 package powervs
 
 import (
+	gohttp "net/http"
+	"strings"
+
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
-	gohttp "net/http"
-	"strings"
 )
 
 const subnetTypeName = "subnet"

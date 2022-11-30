@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
+
 	"github.com/openshift/installer/pkg/asset"
 )
 

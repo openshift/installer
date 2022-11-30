@@ -7,10 +7,9 @@ import (
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
-
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // DeleteGlanceImage deletes the image with the specified name

@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
+
 	machinev1 "github.com/openshift/api/machine/v1"
+
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/powervs"
 )

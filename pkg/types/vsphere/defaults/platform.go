@@ -2,6 +2,7 @@ package defaults
 
 import (
 	"fmt"
+
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
