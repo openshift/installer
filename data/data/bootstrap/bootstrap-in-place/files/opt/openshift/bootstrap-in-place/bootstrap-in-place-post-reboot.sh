@@ -50,6 +50,18 @@ function wait_for_cvo {
   done
 }
 
+function restore_cvo_overrides {
+    echo "Restoring CVO overrides"
+    until \
+        oc patch clusterversion.config.openshift.io version \
+            --type=merge \
+            --patch-file=/opt/openshift/original_cvo_overrides.patch
+    do
+        echo "Trying again to restore CVO overrides ..."
+        sleep 10
+    done
+}
+
 function clean {
   if [ -d "/etc/kubernetes/bootstrap-secrets" ]; then
      rm -rf /etc/kubernetes/bootstrap-*
@@ -63,6 +75,7 @@ function clean {
 }
 
 wait_for_api
+restore_cvo_overrides
 approve_csr
 restart_kubelet
 wait_for_cvo
