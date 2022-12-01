@@ -3,13 +3,13 @@ package azure
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"strings"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
@@ -188,6 +188,9 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 
 	if platform.CloudName == azure.StackCloud {
 		spec.AvailabilitySet = fmt.Sprintf("%s-cluster", clusterID)
+
+		// Public Azure has moved to use image galleries, but ASH is still using managed images.
+		spec.Image.ResourceID = fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
 	}
 
 	return spec, nil
