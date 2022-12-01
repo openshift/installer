@@ -45,6 +45,9 @@ storage:
       contents:
         local: bin/installer-gather.sh
       mode: 0555
+    - path: /opt/openshift/original_cvo_overrides.patch
+      contents:
+        local: original_cvo_overrides.patch
 systemd:
   units:
     - name: bootkube.service
