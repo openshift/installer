@@ -98,3 +98,6 @@ require (
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2064702
 replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20221010152910-d6f0a8c073c2
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2100495
+replace golang.org/x/text => golang.org/x/text v0.3.7

@@ -778,7 +778,7 @@ golang.org/x/net/websocket
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.7
+# golang.org/x/text v0.3.7 => golang.org/x/text v0.3.7
 ## explicit; go 1.17
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
@@ -896,3 +896,4 @@ gopkg.in/go-playground/validator.v9
 ## explicit; go 1.15
 gopkg.in/yaml.v2
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
+# golang.org/x/text => golang.org/x/text v0.3.7
