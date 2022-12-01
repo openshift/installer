@@ -87,7 +87,7 @@ RUN mkdir /output && HOME=/output && \
     ibmcloud version && \
     ibmcloud plugin list
 
-RUN chown -R 1000:1000 /output
+RUN chown 1000:1000 /output && chmod -R g=u "$HOME/.bluemix/"
 USER 1000:1000
 ENV PATH /bin
 ENV HOME /output
