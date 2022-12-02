@@ -42,7 +42,7 @@ func newLegacyDNSClient(session *azconfig.Session, resourceGroup string) *legacy
 // Takes a subscription ID and parses the resource group out of it.
 // A subscription ID has the format "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/xxxx-xxxxx-rg/providers/...".
 // Splitting the string on '/' gives us the following slice:
-// parts[0] = ''
+// parts[0] = ”
 // parts[1] = 'subscriptions'
 // parts[2] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
 // parts[3] = 'resourceGroups'

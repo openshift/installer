@@ -258,8 +258,9 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 }
 
 // findResourcesToDelete returns the resources that should be deleted.
-//     tagClients - clients of the tagging API to use to search for resources.
-//     deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
+//
+//	tagClients - clients of the tagging API to use to search for resources.
+//	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
 func (o *ClusterUninstaller) findResourcesToDelete(
 	ctx context.Context,
 	tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
@@ -313,8 +314,9 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 }
 
 // findResourcesByTag returns the resources with tags that satisfy the filters.
-//     tagClients - clients of the tagging API to use to search for resources.
-//     deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
+//
+//	tagClients - clients of the tagging API to use to search for resources.
+//	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
 func (o *ClusterUninstaller) findResourcesByTag(
 	ctx context.Context,
 	tagClient *resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
@@ -353,7 +355,8 @@ func (o *ClusterUninstaller) findResourcesByTag(
 }
 
 // findUntaggableResources returns the resources for the cluster that cannot be tagged.
-//     deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
+//
+//	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
 func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, iamClient *iam.IAM, deleted sets.String) (sets.String, error) {
 	resources := sets.NewString()
 	o.Logger.Debug("search for IAM instance profiles")
@@ -375,7 +378,9 @@ func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, iamCli
 }
 
 // deleteResources deletes the specified resources.
-//     resources - the resources to be deleted.
+//
+//	resources - the resources to be deleted.
+//
 // The first return is the ARNs of the resources that were successfully deleted
 func (o *ClusterUninstaller) deleteResources(ctx context.Context, awsSession *session.Session, resources []string, tracker *errorTracker) (sets.String, error) {
 	deleted := sets.NewString()
