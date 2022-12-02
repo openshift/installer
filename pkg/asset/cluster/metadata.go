@@ -2,7 +2,7 @@ package cluster
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -136,7 +136,7 @@ func (m *Metadata) Load(f asset.FileFetcher) (found bool, err error) {
 // LoadMetadata loads the cluster metadata from an asset directory.
 func LoadMetadata(dir string) (*types.ClusterMetadata, error) {
 	path := filepath.Join(dir, metadataFileName)
-	raw, err := ioutil.ReadFile(path)
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

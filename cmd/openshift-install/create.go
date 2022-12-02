@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/x509"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -603,7 +602,7 @@ func logComplete(directory, consoleURL string) error {
 	}
 	kubeconfig := filepath.Join(absDir, "auth", "kubeconfig")
 	pwFile := filepath.Join(absDir, "auth", "kubeadmin-password")
-	pw, err := ioutil.ReadFile(pwFile)
+	pw, err := os.ReadFile(pwFile)
 	if err != nil {
 		return err
 	}

@@ -4,8 +4,8 @@ package openstack
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 
 	"github.com/gophercloud/gophercloud"
@@ -70,7 +70,7 @@ func TFVars(
 	var caCert string
 	// Get the ca-cert-bundle key if there is a value for cacert in clouds.yaml
 	if caPath := cloud.CloudConfig.CACertFile; caPath != "" {
-		caFile, err := ioutil.ReadFile(caPath)
+		caFile, err := os.ReadFile(caPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read clouds.yaml ca-cert from disk: %w", err)
 		}

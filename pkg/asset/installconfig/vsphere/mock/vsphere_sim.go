@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/pem"
 	"errors"
-	"io/ioutil"
 	"os"
 
 	"github.com/vmware/govmomi/find"
@@ -39,7 +38,7 @@ func GetClient(server *simulator.Server) (*vim25.Client, *session.Manager, error
 		Headers: nil,
 		Bytes:   server.TLS.Certificates[0].Certificate[0],
 	}
-	tempFile, err := ioutil.TempFile(tmpCAdir, "*.pem")
+	tempFile, err := os.CreateTemp(tmpCAdir, "*.pem")
 	if err != nil {
 		return nil, nil, err
 	}

@@ -2,7 +2,7 @@ package agent
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -400,7 +400,7 @@ func (czero *Cluster) PrintInstallationComplete() error {
 	}
 	kubeconfig := filepath.Join(absDir, "auth", "kubeconfig")
 	pwFile := filepath.Join(absDir, "auth", "kubeadmin-password")
-	pw, err := ioutil.ReadFile(pwFile)
+	pw, err := os.ReadFile(pwFile)
 	if err != nil {
 		return err
 	}

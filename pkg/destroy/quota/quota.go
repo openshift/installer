@@ -2,7 +2,7 @@ package quota
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/openshift/installer/pkg/types"
@@ -23,7 +23,7 @@ func WriteQuota(dir string, quota *types.ClusterQuota) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal quota")
 	}
-	if err := ioutil.WriteFile(path, raw, 0777); err != nil {
+	if err := os.WriteFile(path, raw, 0o777); err != nil {
 		return errors.Wrap(err, "failed to write quota")
 	}
 	return nil

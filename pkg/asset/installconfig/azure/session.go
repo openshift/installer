@@ -2,7 +2,6 @@ package azure
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
@@ -224,7 +223,7 @@ func saveCredentials(credentials Credentials, filePath string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(filePath, jsonCreds, 0600)
+	return os.WriteFile(filePath, jsonCreds, 0o600)
 }
 
 func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Credentials) (*Session, error) {

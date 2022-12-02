@@ -1,7 +1,7 @@
 package store
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -89,7 +89,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			tempDir := t.TempDir()
 
 			for name, contents := range tc.files {
-				if err := ioutil.WriteFile(filepath.Join(tempDir, name), []byte(contents), 0666); err != nil {
+				if err := os.WriteFile(filepath.Join(tempDir, name), []byte(contents), 0666); err != nil {
 					t.Fatalf("could not write the %s file: %v", name, err)
 				}
 			}

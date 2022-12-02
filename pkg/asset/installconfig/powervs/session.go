@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	gohttp "net/http"
 	"os"
 	"path/filepath"
@@ -291,7 +290,7 @@ func getPISessionVarsFromAuthFile(pisv *PISessionVars) error {
 		return nil
 	}
 
-	content, err := ioutil.ReadFile(authFilePath)
+	content, err := os.ReadFile(authFilePath)
 	if err != nil {
 		return err
 	}
@@ -404,7 +403,7 @@ func savePISessionVars(pisv *PISessionVars) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(authFilePath, jsonVars, 0600)
+	return os.WriteFile(authFilePath, jsonVars, 0o600)
 }
 
 func getEnv(envs []string) string {
