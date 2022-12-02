@@ -453,14 +453,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			publicZoneName = publicZone.Name
 		}
 
-		// Setup defaults for private DNS Zone
-		createPrivateZone := true
-		createPrivateZoneRecords := true
-		privateZoneName := ""
 		privateZoneProject := ""
-		if installConfig.Config.GCP.PrivateDNSZone != nil && installConfig.Config.GCP.PrivateDNSZone.ID != "" {
-			createPrivateZone = false
-			privateZoneName = installConfig.Config.GCP.PrivateDNSZone.ID
+		if installConfig.Config.GCP.PrivateDNSZone != nil && installConfig.Config.GCP.PrivateDNSZone.ProjectID != "" {
 			privateZoneProject = installConfig.Config.GCP.PrivateDNSZone.ProjectID
 		}
 
@@ -484,22 +478,19 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		imageURL := fmt.Sprintf("https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz", img.Name)
 		data, err := gcptfvars.TFVars(
 			gcptfvars.TFVarsSources{
-				Auth:                     auth,
-				MasterConfigs:            masterConfigs,
-				WorkerConfigs:            workerConfigs,
-				CreateFirewallRules:      createFirewallRules,
-				CreatePrivateZone:        createPrivateZone,
-				CreatePrivateZoneRecords: createPrivateZoneRecords,
-				CreatePublicZoneRecords:  createPublicZoneRecords,
-				ImageURI:                 imageURL,
-				ImageLicenses:            installConfig.Config.GCP.Licenses,
-				InstanceServiceAccount:   instanceServiceAccount,
-				PreexistingNetwork:       preexistingnetwork,
-				PrivateZoneName:          privateZoneName,
-				PrivateZoneProject:       privateZoneProject,
-				PublicZoneName:           publicZoneName,
-				PublicZoneProject:        publicZoneProject,
-				PublishStrategy:          installConfig.Config.Publish,
+				Auth:                    auth,
+				MasterConfigs:           masterConfigs,
+				WorkerConfigs:           workerConfigs,
+				CreateFirewallRules:     createFirewallRules,
+				CreatePublicZoneRecords: createPublicZoneRecords,
+				ImageURI:                imageURL,
+				ImageLicenses:           installConfig.Config.GCP.Licenses,
+				InstanceServiceAccount:  instanceServiceAccount,
+				PreexistingNetwork:      preexistingnetwork,
+				PrivateZoneProject:      privateZoneProject,
+				PublicZoneName:          publicZoneName,
+				PublicZoneProject:       publicZoneProject,
+				PublishStrategy:         installConfig.Config.Publish,
 			},
 		)
 		if err != nil {

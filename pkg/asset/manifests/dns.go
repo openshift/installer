@@ -160,17 +160,17 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		}
 
 		// Set the private zone
+		privateZoneID := fmt.Sprintf("%s-private-zone", clusterID.InfraID)
 		switch {
-		case installConfig.Config.GCP.PrivateDNSZone != nil && installConfig.Config.GCP.PrivateDNSZone.ID != "":
+		case installConfig.Config.GCP.PrivateDNSZone != nil:
 			// Use the provided zone if specified.
-			zoneID := installConfig.Config.GCP.PrivateDNSZone.ID
 			if installConfig.Config.GCP.PrivateDNSZone.ProjectID != "" && installConfig.Config.GCP.ProjectID != installConfig.Config.GCP.PrivateDNSZone.ProjectID {
-				zoneID = combineGCPZoneInfo(installConfig.Config.GCP.PrivateDNSZone.ProjectID, installConfig.Config.GCP.PrivateDNSZone.ID)
+				privateZoneID = combineGCPZoneInfo(installConfig.Config.GCP.PrivateDNSZone.ProjectID, privateZoneID)
 			}
-			config.Spec.PublicZone = &configv1.DNSZone{ID: zoneID}
+			config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
 		default:
 			// Use the installer created private zone.
-			config.Spec.PrivateZone = &configv1.DNSZone{ID: fmt.Sprintf("%s-private-zone", clusterID.InfraID)}
+			config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
 		}
 
 	case ibmcloudtypes.Name:

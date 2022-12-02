@@ -141,7 +141,6 @@ func validInstallConfig() *types.InstallConfig {
 					ProjectID: validProjectName,
 				},
 				PrivateDNSZone: &gcp.DNSZone{
-					ID:        validPrivateZone,
 					ProjectID: validProjectName,
 				},
 			},
