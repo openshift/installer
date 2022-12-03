@@ -43,7 +43,7 @@ type Config struct {
 
 // Release is the interface to use the oc command to the get image info
 type Release interface {
-	GetBaseIso(log logrus.FieldLogger, releaseImage, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (string, error)
+	GetBaseIso(releaseImage, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (string, error)
 }
 
 type release struct {
@@ -64,10 +64,10 @@ const (
 )
 
 // Get the CoreOS ISO from the releaseImage
-func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
+func (r *release) GetBaseIso(releaseImage, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
 
 	// Get the machine-os-images pullspec from the release and use that to get the CoreOS ISO
-	image, err := r.getImageFromRelease(log, machineOsImageName, releaseImage, pullSecret, mirrorConfig)
+	image, err := r.getImageFromRelease(machineOsImageName, releaseImage, pullSecret, mirrorConfig)
 	if err != nil {
 		return "", err
 	}
@@ -84,42 +84,42 @@ func (r *release) GetBaseIso(log logrus.FieldLogger, releaseImage, pullSecret, a
 		return "", err
 	}
 	if cachedFile != "" {
-		log.Info("Verifying cached file")
-		valid, err := r.verifyCacheFile(log, image, cachedFile, pullSecret, architecture, mirrorConfig)
+		logrus.Info("Verifying cached file")
+		valid, err := r.verifyCacheFile(image, cachedFile, pullSecret, architecture, mirrorConfig)
 		if err != nil {
 			return "", err
 		}
 		if valid {
-			log.Infof("Using cached Base ISO %s", cachedFile)
+			logrus.Infof("Using cached Base ISO %s", cachedFile)
 			return cachedFile, nil
 		}
 	}
 
 	// Get the base ISO from the payload
-	path, err := r.extractFileFromImage(log, image, filename, cacheDir, pullSecret, mirrorConfig)
+	path, err := r.extractFileFromImage(image, filename, cacheDir, pullSecret, mirrorConfig)
 	if err != nil {
 		return "", err
 	}
-	log.Infof("Base ISO obtained from release and cached at %s", path)
+	logrus.Infof("Base ISO obtained from release and cached at %s", path)
 	return path, err
 }
 
-func (r *release) getImageFromRelease(log logrus.FieldLogger, imageName, releaseImage, pullSecret string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
+func (r *release) getImageFromRelease(imageName, releaseImage, pullSecret string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
 	// This requires the 'oc' command so make sure its available
 	_, err := exec.LookPath("oc")
 	var cmd string
 	if err != nil {
 		if len(mirrorConfig) > 0 {
-			log.Warning("Unable to validate mirror config because \"oc\" command is not available")
+			logrus.Warning("Unable to validate mirror config because \"oc\" command is not available")
 		} else {
-			log.Debug("Skipping ISO extraction; \"oc\" command is not available")
+			logrus.Debug("Skipping ISO extraction; \"oc\" command is not available")
 		}
 		return "", err
 	}
 
 	if len(mirrorConfig) > 0 {
-		log.Debugf("Using mirror configuration")
-		icspFile, err := getIcspFileFromRegistriesConfig(log, mirrorConfig)
+		logrus.Debugf("Using mirror configuration")
+		icspFile, err := getIcspFileFromRegistriesConfig(mirrorConfig)
 		if err != nil {
 			return "", err
 		}
@@ -129,21 +129,23 @@ func (r *release) getImageFromRelease(log logrus.FieldLogger, imageName, release
 		cmd = fmt.Sprintf(templateGetImage, imageName, true, releaseImage)
 	}
 
-	log.Debugf("Fetching image from OCP release (%s)", cmd)
-	image, err := execute(log, r.executer, pullSecret, cmd)
+	logrus.Debugf("Fetching image from OCP release (%s)", cmd)
+	image, err := execute(r.executer, pullSecret, cmd)
 	if err != nil {
+		if strings.Contains(err.Error(), "unknown flag: --icsp-file") {
+			logrus.Warning("Using older version of \"oc\" that does not support mirroring")
+		}
 		return "", err
 	}
 
 	return image, nil
 }
 
-func (r *release) extractFileFromImage(log logrus.FieldLogger, image, file, cacheDir, pullSecret string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
+func (r *release) extractFileFromImage(image, file, cacheDir, pullSecret string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
 
 	var cmd string
 	if len(mirrorConfig) > 0 {
-		log.Debugf("Using mirror configuration")
-		icspFile, err := getIcspFileFromRegistriesConfig(log, mirrorConfig)
+		icspFile, err := getIcspFileFromRegistriesConfig(mirrorConfig)
 		if err != nil {
 			return "", err
 		}
@@ -153,8 +155,8 @@ func (r *release) extractFileFromImage(log logrus.FieldLogger, image, file, cach
 		cmd = fmt.Sprintf(templateImageExtract, file, cacheDir, image)
 	}
 
-	log.Debugf("extracting %s to %s, %s", file, cacheDir, cmd)
-	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, execute, log, r.executer, pullSecret, cmd)
+	logrus.Debugf("extracting %s to %s, %s", file, cacheDir, cmd)
+	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, execute, r.executer, pullSecret, cmd)
 	if err != nil {
 		return "", err
 	}
@@ -198,7 +200,7 @@ func matchingHash(imageSha []byte, sha string) bool {
 }
 
 // Check if there is a different base ISO in the release payload
-func (r *release) verifyCacheFile(log logrus.FieldLogger, image, file, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (bool, error) {
+func (r *release) verifyCacheFile(image, file, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (bool, error) {
 	// Get hash of cached file
 	f, err := os.Open(file)
 	if err != nil {
@@ -228,9 +230,9 @@ func (r *release) verifyCacheFile(log logrus.FieldLogger, image, file, pullSecre
 	defer os.RemoveAll(tempDir)
 
 	shaFilename := fmt.Sprintf(coreOsSha256FileName, architecture)
-	shaFile, err := r.extractFileFromImage(log, image, shaFilename, tempDir, pullSecret, mirrorConfig)
+	shaFile, err := r.extractFileFromImage(image, shaFilename, tempDir, pullSecret, mirrorConfig)
 	if err != nil {
-		log.Debug("Could not get SHA from payload for cache comparison")
+		logrus.Debug("Could not get SHA from payload for cache comparison")
 		return false, nil
 	}
 
@@ -247,7 +249,7 @@ func (r *release) verifyCacheFile(log logrus.FieldLogger, image, file, pullSecre
 	return false, nil
 }
 
-func execute(log logrus.FieldLogger, executer executer.Executer, pullSecret, command string) (string, error) {
+func execute(executer executer.Executer, pullSecret, command string) (string, error) {
 
 	ps, err := executer.TempFile("", "registry-config")
 	if err != nil {
@@ -277,14 +279,14 @@ func execute(log logrus.FieldLogger, executer executer.Executer, pullSecret, com
 }
 
 // Create a temporary file containing the ImageContentPolicySources
-func getIcspFileFromRegistriesConfig(log logrus.FieldLogger, mirrorConfig []mirror.RegistriesConfig) (string, error) {
+func getIcspFileFromRegistriesConfig(mirrorConfig []mirror.RegistriesConfig) (string, error) {
 
 	contents, err := getIcspContents(mirrorConfig)
 	if err != nil {
 		return "", err
 	}
 	if contents == nil {
-		log.Debugf("No registry entries to build ICSP file")
+		logrus.Debugf("No registry entries to build ICSP file")
 		return "", nil
 	}
 
@@ -292,7 +294,7 @@ func getIcspFileFromRegistriesConfig(log logrus.FieldLogger, mirrorConfig []mirr
 	if err != nil {
 		return "", err
 	}
-	log.Debugf("Building ICSP file from registries.conf with contents %s", contents)
+
 	if _, err := icspFile.Write(contents); err != nil {
 		icspFile.Close()
 		os.Remove(icspFile.Name())
