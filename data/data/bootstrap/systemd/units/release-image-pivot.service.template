@@ -3,6 +3,7 @@
 Description=Pivot bootstrap to the OpenShift Release Image
 Wants=release-image.service
 After=release-image.service
+Before=bootkube.service
 
 [Service]
 Type=oneshot
