@@ -175,3 +175,9 @@ variable "gcp_master_on_host_maintenance" {
   description = "The behavior when a maintenance event occurs."
   default = ""
 }
+
+variable "gcp_master_enable_secure_boot" {
+  type        = bool
+  description = "Verify the digital signature of all boot components."
+  default     = false
+}

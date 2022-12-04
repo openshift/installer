@@ -47,6 +47,7 @@ type config struct {
 	ControlPlaneTags          []string `json:"gcp_control_plane_tags,omitempty"`
 	OnHostMaintenance         string   `json:"gcp_master_on_host_maintenance,omitempty"`
 	EnableConfidentialCompute bool     `json:"gcp_master_enable_confidential_compute,omitempty"`
+	EnableSecureBoot          bool     `json:"gcp_master_enable_secure_boot,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -100,7 +101,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ControlPlaneTags:          masterConfig.Tags,
 		EnableConfidentialCompute: masterConfig.EnableConfidentialCompute,
 		OnHostMaintenance:         string(masterConfig.OnHostMaintenance),
+		EnableSecureBoot:          masterConfig.EnableSecureBoot,
 	}
+
 	cfg.PreexistingImage = true
 	if len(sources.ImageLicenses) > 0 {
 		cfg.PreexistingImage = false

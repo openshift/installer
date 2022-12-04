@@ -74,6 +74,14 @@ resource "google_compute_instance" "master" {
       on_host_maintenance = var.on_host_maintenance
     }
   }
+
+  dynamic "shielded_instance_config" {
+    for_each = var.enable_secure_boot ? [1] : []
+    content {
+      enable_secure_boot = true
+    }
+  }
+
   network_interface {
     subnetwork = var.subnet
   }

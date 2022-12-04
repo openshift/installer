@@ -35,6 +35,7 @@ module "master" {
 
   enable_confidential_compute = var.gcp_master_enable_confidential_compute
   on_host_maintenance         = var.gcp_master_on_host_maintenance
+  enable_secure_boot          = var.gcp_master_enable_secure_boot
 
   root_volume_size = var.gcp_master_root_volume_size
   root_volume_type = var.gcp_master_root_volume_type

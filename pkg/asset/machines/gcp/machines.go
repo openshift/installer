@@ -115,7 +115,6 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			return nil, errors.New("could not find google service account")
 		}
 	}
-
 	return &machineapi.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -147,6 +146,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		ProjectID:                 platform.ProjectID,
 		EnableConfidentialCompute: mpool.EnableConfidentialCompute,
 		OnHostMaintenance:         mpool.OnHostMaintenance,
+		EnableSecureBoot:          mpool.EnableSecureBoot,
 	}, nil
 }
 

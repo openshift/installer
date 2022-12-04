@@ -33,6 +33,11 @@ type MachinePool struct {
 	// If enabled OnHostMaintenance is required to be set to "Terminate".
 	// +optional
 	EnableConfidentialCompute bool `json:"enableConfidentialCompute,omitempty"`
+
+	// EnableSecureBoot Verify the digital signature of all boot components, and halt the boot process if signature verification fails.
+	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
+	// +optional
+	EnableSecureBoot bool `json:"enableSecureBoot,omitempty"`
 }
 
 // OSDisk defines the disk for machines on GCP.
@@ -92,10 +97,8 @@ func (a *MachinePool) Set(required *MachinePool) {
 		a.OnHostMaintenance = required.OnHostMaintenance
 	}
 
-	if required.EnableConfidentialCompute {
-		a.EnableConfidentialCompute = required.EnableConfidentialCompute
-	}
-
+	a.EnableConfidentialCompute = required.EnableConfidentialCompute
+	a.EnableSecureBoot = required.EnableSecureBoot
 }
 
 // EncryptionKeyReference describes the encryptionKey to use for a disk's encryption.

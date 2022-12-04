@@ -79,3 +79,9 @@ variable "on_host_maintenance" {
   description = "The behavior when a maintenance event occurs."
   default     = ""
 }
+
+variable "enable_secure_boot" {
+  type        = bool
+  description = "Verify the digital signature of all boot components."
+  default     = false
+}
