@@ -100,6 +100,11 @@ type GCPMachineProviderSpec struct {
 	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
 	// +optional
 	EnableConfidentialCompute bool `json:"enableConfidentialCompute,omitempty"`
+
+	// EnableSecureBoot Verify the digital signature of all boot components, and halt the boot process if signature verification fails.
+	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
+	// +optional
+	EnableSecureBoot bool `json:"enableSecureBoot,omitempty"`
 }
 
 // GCPDisk describes disks for GCP.
