@@ -28,10 +28,20 @@ func newTFExec(datadir string, terraformDir string) (*tfexec.Terraform, error) {
 	// terraform-exec will not accept debug logs unless a log file path has
 	// been specified. And it makes sense since the logging is very verbose.
 	if path, ok := os.LookupEnv("TF_LOG_PATH"); ok {
-		tf.SetLogPath(path)
-		tf.SetLog(os.Getenv("TF_LOG"))
-		tf.SetLogCore(os.Getenv("TF_LOG_CORE"))
-		tf.SetLogProvider(os.Getenv("TF_LOG_PROVIDER"))
+		// These might fail if tf cli does not have a compatible version. Since
+		// the exact same check is repeated, we just have to verify error once
+		// for all calls
+		if err := tf.SetLog(os.Getenv("TF_LOG")); err != nil {
+			// We want to skip setting the log path since tf-exec lib will
+			// default to TRACE log levels which can risk leaking sensitive
+			// data
+			logrus.Infof("Skipping setting terraform log levels: %v", err)
+		} else {
+			tf.SetLogCore(os.Getenv("TF_LOG_CORE"))         //nolint:errcheck
+			tf.SetLogProvider(os.Getenv("TF_LOG_PROVIDER")) //nolint:errcheck
+			// This never returns any errors despite its signature
+			tf.SetLogPath(path) //nolint:errcheck
+		}
 	}
 
 	// Add terraform info logs to the installer log
