@@ -76,7 +76,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				cluster.PrintInfraEnvRestAPIEventList()
 				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
 				if err2 != nil {
-					logrus.Errorf("Attempted to gather ClusterOperator status after wait failure: %s. Agent-based installer succeeded with the cluster installation but the error is caused due to Cluster Operator's status availability conditions.", err2)
+					logrus.Errorf("Attempted to gather ClusterOperator status after wait failure: %s. Openshift installer succeeded with the cluster installation but the error is caused due to Cluster Operator's status availability conditions.", err2)
 				}
 				logrus.Error(`Cluster initialization failed because one or more operators are not functioning properly.
 				The cluster should be accessible for troubleshooting as detailed in the documentation linked below,

@@ -86,7 +86,8 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			err = waitForInstallComplete(ctx, config, rootOpts.dir)
 			if err != nil {
 				if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
-					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
+					logrus.Errorf("Attempted to gather ClusterOperator status after wait failure: %s. Openshift installer succeeded with the cluster installation but the error is caused due to Cluster Operator's status availability conditions.", err2)
+
 				}
 				logTroubleshootingLink()
 				logrus.Error(err)
