@@ -3,6 +3,7 @@ package alibabacloud
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -966,6 +967,15 @@ func (o *ClusterUninstaller) listEcsInstance(instanceIDs []string) (response *ec
 	return
 }
 
+func (o *ClusterUninstaller) deleteEcsInstance(instanceIDs []string, logger logrus.FieldLogger) error {
+	logger.WithField("ecsIDs", instanceIDs).Debug("Deleting ECS instances")
+	request := ecs.CreateDeleteInstancesRequest()
+	request.InstanceId = &instanceIDs
+	request.Force = "true"
+	_, err := o.ecsClient.DeleteInstances(request)
+	return err
+}
+
 func (o *ClusterUninstaller) modifyDeletionProtection(instanceID string, logger logrus.FieldLogger) (err error) {
 	logger.WithField("ecsID", instanceID).Debug("Turn off the deletion protection")
 	request := ecs.CreateModifyInstanceAttributeRequest()
@@ -1001,32 +1011,35 @@ func (o *ClusterUninstaller) deleteEcsInstances(logger logrus.FieldLogger) (err 
 		instanceIDs = append(instanceIDs, instanceArn.ResourceID)
 	}
 
-	err = o.modifyECSInstancesDeletionProtection(instanceIDs, logger)
-	if err != nil {
-		return err
-	}
+	// The paramater InstanceIds of DeleteInstances and DescribeInstances consists of up to 100 instance IDs
+	maxInstanceCount := 100
+	splitIDs := splitArray(instanceIDs, maxInstanceCount)
 
-	logger.WithField("ecsIDs", instanceIDs).Debug("Deleting ECS instances")
-	request := ecs.CreateDeleteInstancesRequest()
-	request.InstanceId = &instanceIDs
-	request.Force = "true"
-	_, err = o.ecsClient.DeleteInstances(request)
-	if err != nil {
-		return err
+	for _, ids := range splitIDs {
+		err = o.modifyECSInstancesDeletionProtection(ids, logger)
+		if err != nil {
+			return err
+		}
+		err = o.deleteEcsInstance(ids, logger)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = wait.Poll(
 		5*time.Second,
 		5*time.Minute,
 		func() (bool, error) {
-			response, err := o.listEcsInstance(instanceIDs)
-			if err != nil {
-				return false, err
+			for _, ids := range splitIDs {
+				response, err := o.listEcsInstance(ids)
+				if err != nil {
+					return false, err
+				}
+				if response.TotalCount != 0 {
+					return false, nil
+				}
 			}
-			if response.TotalCount == 0 {
-				return true, nil
-			}
-			return false, nil
+			return true, nil
 		},
 	)
 
@@ -1471,4 +1484,18 @@ func convertResourceArn(arn string) (resourceArn ResourceArn, err error) {
 	resourceArn.ResourceID = _arn[1]
 	resourceArn.Arn = arn
 	return resourceArn, nil
+}
+
+func splitArray(arr []string, size int) [][]string {
+	var numRows = int(math.Ceil(float64(len(arr)) / float64(size)))
+
+	var result = make([][]string, 0)
+	for i := 0; i < numRows; i++ {
+		if i == numRows-1 {
+			result = append(result, arr[i*size:])
+		} else {
+			result = append(result, arr[i*size:(i+1)*size])
+		}
+	}
+	return result
 }
