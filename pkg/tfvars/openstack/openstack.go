@@ -13,6 +13,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	installconfig_openstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -22,9 +23,6 @@ import (
 	types_openstack "github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/pkg/errors"
-	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
-
-	"sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 )
 
 type config struct {
@@ -77,7 +75,7 @@ func TFVars(
 		caCert = string(caFile)
 	}
 
-	var masterSpecs []*openstackprovider.OpenstackProviderSpec
+	var masterSpecs []*machinev1alpha1.OpenstackProviderSpec
 	{
 		masters, err := mastersAsset.Machines()
 		if err != nil {
@@ -85,11 +83,11 @@ func TFVars(
 		}
 
 		for _, master := range masters {
-			masterSpecs = append(masterSpecs, master.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec))
+			masterSpecs = append(masterSpecs, master.Spec.ProviderSpec.Value.Object.(*machinev1alpha1.OpenstackProviderSpec))
 		}
 	}
 
-	var workerSpecs []*openstackprovider.OpenstackProviderSpec
+	var workerSpecs []*machinev1alpha1.OpenstackProviderSpec
 	{
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
@@ -97,7 +95,7 @@ func TFVars(
 		}
 
 		for _, worker := range workers {
-			workerSpecs = append(workerSpecs, worker.Spec.Template.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec))
+			workerSpecs = append(workerSpecs, worker.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1alpha1.OpenstackProviderSpec))
 		}
 	}
 	// Only considering the first Compute machinepool here, because
@@ -141,7 +139,7 @@ func TFVars(
 	)
 }
 
-func tfVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, workerConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mastermpool, workermpool, defaultmpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy) ([]byte, error) {
+func tfVars(masterConfigs []*machinev1alpha1.OpenstackProviderSpec, workerConfigs []*machinev1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mastermpool, workermpool, defaultmpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy) ([]byte, error) {
 	zones := []string{}
 	seen := map[string]bool{}
 	for _, config := range masterConfigs {

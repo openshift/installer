@@ -4,11 +4,11 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	"github.com/openshift/installer/pkg/quota"
-	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 )
 
 // These numbers should reflect what is documented here:
@@ -63,13 +63,13 @@ func Constraints(ci *validation.CloudInfo, controlPlanes []machineapi.Machine, c
 	return aggregate(constraints)
 }
 
-func getOpenstackProviderSpec(spec *machineapi.ProviderSpec) *openstackprovider.OpenstackProviderSpec {
+func getOpenstackProviderSpec(spec *machineapi.ProviderSpec) *machinev1alpha1.OpenstackProviderSpec {
 	if spec.Value == nil {
 		logrus.Warnf("Empty ProviderSpec")
 		return nil
 	}
 
-	return spec.Value.Object.(*openstackprovider.OpenstackProviderSpec)
+	return spec.Value.Object.(*machinev1alpha1.OpenstackProviderSpec)
 }
 
 func machineConstraints(ci *validation.CloudInfo, machine *machineapi.Machine, networkType string) []quota.Constraint {
