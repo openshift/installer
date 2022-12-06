@@ -55,7 +55,8 @@
     "infraLoadBalancerName" : "[parameters('baseName')]",
     "sshKeyPath" : "/home/capi/.ssh/authorized_keys",
     "identityName" : "[concat(parameters('baseName'), '-identity')]",
-    "imageName" : "[concat(parameters('baseName'), '-image')]",
+    "galleryName": "[concat('gallery_', replace(parameters('baseName'), '-', '_'))]",
+    "imageName" : "[parameters('baseName')]",
     "copy" : [
       {
         "name" : "vmNames",
@@ -130,7 +131,7 @@
                 },
                 "storageProfile" : {
                   "imageReference": {
-                    "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]"
+                    "id": "[resourceId('Microsoft.Compute/galleries/images', variables('galleryName'), variables('imageName'))]"
                   },
                   "osDisk" : {
                     "name": "[concat(variables('vmNames')[copyIndex()],'_OSDisk')]",

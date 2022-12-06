@@ -50,7 +50,8 @@
     "identityName" : "[concat(parameters('baseName'), '-identity')]",
     "vmName" : "[concat(parameters('baseName'), '-bootstrap')]",
     "nicName" : "[concat(variables('vmName'), '-nic')]",
-    "imageName" : "[concat(parameters('baseName'), '-image')]",
+    "galleryName": "[concat('gallery_', replace(parameters('baseName'), '-', '_'))]",
+    "imageName" : "[parameters('baseName')]",
     "clusterNsgName" : "[concat(if(not(empty(parameters('vnetBaseName'))), parameters('vnetBaseName'), parameters('baseName')), '-nsg')]",
     "sshPublicIpAddressName" : "[concat(variables('vmName'), '-ssh-pip')]"
   },
@@ -132,7 +133,7 @@
         },
         "storageProfile" : {
           "imageReference": {
-            "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]"
+            "id": "[resourceId('Microsoft.Compute/galleries/images', variables('galleryName'), variables('imageName'))]"
           },
           "osDisk" : {
             "name": "[concat(variables('vmName'),'_OSDisk')]",
