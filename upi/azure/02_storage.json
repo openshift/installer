@@ -18,7 +18,8 @@
   },
   "variables" : {
     "location" : "[resourceGroup().location]",
-    "imageName" : "[concat(parameters('baseName'), '-image')]"
+    "imageName" : "[concat(parameters('baseName'), '-image')]",
+    "imageNameGen2" : "[concat(parameters('baseName'), '-gen2')]"
   },
   "resources" : [
     {
@@ -27,6 +28,23 @@
       "name": "[variables('imageName')]",
       "location" : "[variables('location')]",
       "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "osType": "Linux",
+            "osState": "Generalized",
+            "blobUri": "[parameters('vhdBlobURL')]",
+            "storageAccountType": "Standard_LRS"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/images",
+      "name": "[variables('imageNameGen2')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "hyperVGeneration": "V2",
         "storageProfile": {
           "osDisk": {
             "osType": "Linux",
