@@ -77,6 +77,7 @@ type bootstrapTemplateData struct {
 	PlatformData          platformTemplateData
 	BootstrapInPlace      *types.BootstrapInPlace
 	UseIPv6ForNodeIP      bool
+	UseDualForNodeIP      bool
 	IsFCOS                bool
 	IsSCOS                bool
 	IsOKD                 bool
@@ -280,6 +281,15 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	platformFirstAPIVIP := firstAPIVIP(&installConfig.Config.Platform)
 	APIIntVIPonIPv6 := utilsnet.IsIPv6String(platformFirstAPIVIP)
 
+	networkStack := 0
+	for _, snet := range installConfig.Config.ServiceNetwork {
+		if snet.IP.To4() != nil {
+			networkStack |= 1
+		} else {
+			networkStack |= 2
+		}
+	}
+
 	// Set cluster profile
 	clusterProfile := ""
 	if cp := os.Getenv("OPENSHIFT_INSTALL_EXPERIMENTAL_CLUSTER_PROFILE"); cp != "" {
@@ -307,6 +317,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		ClusterProfile:        clusterProfile,
 		BootstrapInPlace:      bootstrapInPlaceConfig,
 		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
+		UseDualForNodeIP:      networkStack == 3,
 		IsFCOS:                installConfig.Config.IsFCOS(),
 		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
