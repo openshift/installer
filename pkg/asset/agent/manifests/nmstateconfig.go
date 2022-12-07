@@ -180,9 +180,7 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 		nmStateConfigList = append(nmStateConfigList, &nmStateConfig)
 	}
 
-	log := logrus.New()
-	log.Level = logrus.WarnLevel
-	staticNetworkConfigGenerator := staticnetworkconfig.New(log.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
+	staticNetworkConfigGenerator := staticnetworkconfig.New(logrus.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
 
 	// Validate the network config using nmstatectl
 	if err = staticNetworkConfigGenerator.ValidateStaticConfigParams(context.Background(), staticNetworkConfig); err != nil {
@@ -268,8 +266,8 @@ func GetNodeZeroIP(nmStateConfigs []*aiv1beta1.NMStateConfig) (string, error) {
 
 // GetNMIgnitionFiles returns the list of NetworkManager configuration files
 func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) ([]staticnetworkconfig.StaticNetworkConfigData, error) {
-	log := logrus.New()
-	staticNetworkConfigGenerator := staticnetworkconfig.New(log.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
+
+	staticNetworkConfigGenerator := staticnetworkconfig.New(logrus.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
 
 	networkConfigStr, err := staticNetworkConfigGenerator.FormatStaticNetworkConfigForDB(staticNetworkConfig)
 	if err != nil {
