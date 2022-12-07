@@ -22,7 +22,6 @@ import (
 )
 
 type validationContext struct {
-	User        string
 	AuthManager AuthManager
 	Finder      Finder
 	Client      *vim25.Client
@@ -51,7 +50,6 @@ func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConf
 			}
 
 			validationCtx := validationContext{
-				User:        vcenter.Username,
 				AuthManager: newAuthManager(vim25Client),
 				Finder:      find.NewFinder(vim25Client),
 				Client:      vim25Client,
@@ -179,7 +177,6 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 
 	finder := NewFinder(vim25Client)
 	validationCtx := &validationContext{
-		User:        ic.VSphere.Username,
 		AuthManager: newAuthManager(vim25Client),
 		Finder:      finder,
 		Client:      vim25Client,
