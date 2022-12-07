@@ -77,3 +77,41 @@ func (mr *MockAuthManagerMockRecorder) Reference() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reference", reflect.TypeOf((*MockAuthManager)(nil).Reference))
 }
+
+// MockSessionManager is a mock of SessionManager interface.
+type MockSessionManager struct {
+	ctrl     *gomock.Controller
+	recorder *MockSessionManagerMockRecorder
+}
+
+// MockSessionManagerMockRecorder is the mock recorder for MockSessionManager.
+type MockSessionManagerMockRecorder struct {
+	mock *MockSessionManager
+}
+
+// NewMockSessionManager creates a new mock instance.
+func NewMockSessionManager(ctrl *gomock.Controller) *MockSessionManager {
+	mock := &MockSessionManager{ctrl: ctrl}
+	mock.recorder = &MockSessionManagerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSessionManager) EXPECT() *MockSessionManagerMockRecorder {
+	return m.recorder
+}
+
+// UserSession mocks base method.
+func (m *MockSessionManager) UserSession(ctx context.Context) (*types.UserSession, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserSession", ctx)
+	ret0, _ := ret[0].(*types.UserSession)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserSession indicates an expected call of UserSession.
+func (mr *MockSessionManagerMockRecorder) UserSession(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserSession", reflect.TypeOf((*MockSessionManager)(nil).UserSession), ctx)
+}
