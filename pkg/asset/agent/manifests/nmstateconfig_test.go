@@ -20,9 +20,11 @@ import (
 func TestNMStateConfig_Generate(t *testing.T) {
 
 	cases := []struct {
-		name           string
-		dependencies   []asset.Asset
-		expectedConfig []*aiv1beta1.NMStateConfig
+		name               string
+		dependencies       []asset.Asset
+		requiresNmstatectl bool
+		expectedConfig     []*aiv1beta1.NMStateConfig
+		expectedError      string
 	}{
 		{
 			name: "agent-config does not contain networkConfig",
@@ -30,7 +32,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 				getValidDHCPAgentConfigNoHosts(),
 				getValidOptionalInstallConfig(),
 			},
-			expectedConfig: nil,
+			requiresNmstatectl: false,
+			expectedConfig:     nil,
+			expectedError:      "",
 		},
 		{
 			name: "valid dhcp agent config with some hosts without networkconfig",
@@ -38,6 +42,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 				getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig(),
 				getValidOptionalInstallConfig(),
 			},
+			requiresNmstatectl: true,
 			expectedConfig: []*aiv1beta1.NMStateConfig{
 				{
 					TypeMeta: metav1.TypeMeta{
@@ -57,11 +62,12 @@ func TestNMStateConfig_Generate(t *testing.T) {
 							},
 						},
 						NetConfig: aiv1beta1.NetConfig{
-							Raw: unmarshalJSON([]byte("interfaces:")),
+							Raw: unmarshalJSON([]byte(rawNMStateConfigNoIP)),
 						},
 					},
 				},
 			},
+			expectedError: "",
 		},
 		{
 			name: "valid config",
@@ -70,6 +76,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 				getValidAgentConfig(),
 				getValidOptionalInstallConfig(),
 			},
+			requiresNmstatectl: true,
 			expectedConfig: []*aiv1beta1.NMStateConfig{
 				{
 					TypeMeta: metav1.TypeMeta{
@@ -93,7 +100,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 							},
 						},
 						NetConfig: aiv1beta1.NetConfig{
-							Raw: unmarshalJSON([]byte("interfaces:")),
+							Raw: unmarshalJSON([]byte(rawNMStateConfig)),
 						},
 					},
 				},
@@ -115,7 +122,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 							},
 						},
 						NetConfig: aiv1beta1.NetConfig{
-							Raw: unmarshalJSON([]byte("interfaces:")),
+							Raw: unmarshalJSON([]byte(rawNMStateConfig)),
 						},
 					},
 				},
@@ -137,11 +144,22 @@ func TestNMStateConfig_Generate(t *testing.T) {
 							},
 						},
 						NetConfig: aiv1beta1.NetConfig{
-							Raw: unmarshalJSON([]byte("interfaces:")),
+							Raw: unmarshalJSON([]byte(rawNMStateConfig)),
 						},
 					},
 				},
 			},
+			expectedError: "",
+		},
+		{
+			name: "invalid networkConfig",
+			dependencies: []asset.Asset{
+				getInValidAgentConfig(),
+				getValidOptionalInstallConfig(),
+			},
+			requiresNmstatectl: true,
+			expectedConfig:     nil,
+			expectedError:      "failed to validate network yaml",
 		},
 	}
 	for _, tc := range cases {
@@ -153,7 +171,18 @@ func TestNMStateConfig_Generate(t *testing.T) {
 			asset := &NMStateConfig{}
 			err := asset.Generate(parents)
 
-			if len(tc.expectedConfig) == 0 {
+			// Check if the test failed because nmstatectl is not available in CI
+			if tc.requiresNmstatectl {
+				_, execErr := exec.LookPath("nmstatectl")
+				if execErr != nil {
+					assert.ErrorContains(t, err, "executable file not found")
+					t.Skip("No nmstatectl binary available")
+				}
+			}
+
+			if tc.expectedError != "" {
+				assert.ErrorContains(t, err, tc.expectedError)
+			} else if len(tc.expectedConfig) == 0 {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedConfig, asset.Config)
 			} else {
