@@ -20,6 +20,7 @@ import (
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/microsoftgraph/msgraph-sdk-go/applications"
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
+	"github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors"
 	"github.com/microsoftgraph/msgraph-sdk-go/serviceprincipals"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -197,10 +198,11 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 			o.Logger.Debugf("deleting application registrations")
 			err = deleteApplicationRegistrations(ctx, o.msgraphClient, o.Logger, o.InfraID)
 			if err != nil {
-				o.Logger.Debug(err)
+				oDataErr := extractODataError(err)
+				o.Logger.Debug(oDataErr)
 				if isAuthError(err) {
 					cancel()
-					errs = append(errs, errors.Wrap(err, "unable to authenticate when deleting application registrations and their service principals"))
+					errs = append(errs, errors.Wrap(oDataErr, "unable to authenticate when deleting application registrations and their service principals"))
 				}
 				return
 			}
@@ -559,6 +561,20 @@ func isResourceGroupBlockedError(err error) bool {
 	}
 
 	return false
+}
+
+// Errors returned by the new Azure SDK are not very helpful. They just say
+// "error status code received from the API". This function unwraps the
+// ODataErr, if possible, and returns a new error with a more friendly "code:
+// message" format.
+func extractODataError(err error) error {
+	var oDataErr *odataerrors.ODataError
+	if errors.As(err, &oDataErr) {
+		if typed := oDataErr.GetError(); typed != nil {
+			return fmt.Errorf("%s: %s", *typed.GetCode(), *typed.GetMessage())
+		}
+	}
+	return err
 }
 
 func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, logger logrus.FieldLogger, infraID string) error {
