@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -77,7 +78,18 @@ func (a *AgentImage) PersistToFile(directory string) error {
 	defer output.Close()
 
 	_, err = io.Copy(output, a.imageReader)
-	return err
+	if err != nil {
+		return err
+	}
+
+	rendezvousIP := GetRendezvousIP()
+
+	err = ioutil.WriteFile(filepath.Join(directory, "rendezvousIP"), []byte(rendezvousIP), 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Name returns the human-friendly name of the asset.
