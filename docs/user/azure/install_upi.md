@@ -195,8 +195,9 @@ Given the size of the RHCOS VHD, it's not possible to run the deployments with t
 We must copy and store it in a storage container instead. To do so, first create a blob storage container and then copy the VHD.
 
 ```sh
+export OCP_ARCH="x86_64" # or "aarch64"
 az storage container create --name vhd --account-name ${CLUSTER_NAME}sa
-export VHD_URL=$(openshift-install coreos print-stream-json | jq -r '.architectures.x86_64."rhel-coreos-extensions"."azure-disk".url')
+export VHD_URL=$(openshift-install coreos print-stream-json | jq -r --arg arch "$OCP_ARCH" '.architectures[$arch]."rhel-coreos-extensions"."azure-disk".url')
 az storage blob copy start --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY --destination-blob "rhcos.vhd" --destination-container vhd --source-uri "$VHD_URL"
 ```
 
@@ -288,11 +289,15 @@ Create the deployment using the `az` client:
 
 ```sh
 export VHD_BLOB_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c vhd -n "rhcos.vhd" -o tsv`
+export STORAGE_ACCOUNT_ID=`az storage account show -g ${RESOURCE_GROUP} --name ${CLUSTER_NAME}sa --query id -o tsv`
+export AZ_ARCH=`echo $OCP_ARCH | sed 's/x86_64/x64/;s/aarch64/Arm64/'`
 
 az deployment group create -g $RESOURCE_GROUP \
   --template-file "02_storage.json" \
   --parameters vhdBlobURL="$VHD_BLOB_URL" \
-  --parameters baseName="$INFRA_ID"
+  --parameters baseName="$INFRA_ID" \
+  --parameters storageAccount="${CLUSTER_NAME}sa" \
+  --parameters architecture="$AZ_ARCH"
 ```
 
 ## Deploy the load balancers
