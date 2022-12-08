@@ -5,7 +5,8 @@ locals {
     {
       "GISV"                                      = "ocp",
       "sigs.k8s.io/cloud-provider-alibaba/origin" = "ocp",
-      "kubernetes.io/cluster/${var.cluster_id}"   = "owned"
+      "kubernetes.io/cluster/${var.cluster_id}"   = "owned",
+      "ack.aliyun.com"                            = var.cluster_id
     },
     var.ali_extra_tags,
   )
