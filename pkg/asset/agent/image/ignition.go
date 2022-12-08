@@ -61,6 +61,7 @@ type agentTemplateData struct {
 	HaveMirrorConfig          bool
 	PublicContainerRegistries string
 	InfraEnvID                string
+	ClusterName               string
 	OSImage                   *models.OsImage
 }
 
@@ -144,7 +145,12 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	}
 	a.CPUArch = *osImage.CPUArchitecture
 
+	clusterName := fmt.Sprintf("%s.%s",
+		agentManifests.ClusterDeployment.Spec.ClusterName,
+		agentManifests.ClusterDeployment.Spec.BaseDomain)
+
 	agentTemplateData := getTemplateData(
+		clusterName,
 		agentManifests.GetPullSecretData(),
 		nodeZeroIP,
 		releaseImageList,
@@ -214,6 +220,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		"selinux.service",
 		"set-hostname.service",
 		"start-cluster-installation.service",
+		"install-status.service",
 	}
 
 	// Enable pre-network-manager-config.service only when there are network configs defined
@@ -241,7 +248,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-func getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage,
+func getTemplateData(name, pullSecret, nodeZeroIP, releaseImageList, releaseImage,
 	releaseImageMirror string, haveMirrorConfig bool, publicContainerRegistries string,
 	agentClusterInstall *hiveext.AgentClusterInstall,
 	infraEnvID string,
@@ -267,6 +274,7 @@ func getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage,
 		HaveMirrorConfig:          haveMirrorConfig,
 		PublicContainerRegistries: publicContainerRegistries,
 		InfraEnvID:                infraEnvID,
+		ClusterName:               name,
 		OSImage:                   osImage,
 	}
 }
