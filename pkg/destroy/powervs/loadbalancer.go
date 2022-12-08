@@ -1,12 +1,14 @@
 package powervs
 
 import (
-	"net/http"
-	"strings"
-
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"math"
+	"net/http"
+	"strings"
+	"time"
 )
 
 const loadBalancerTypeName = "load balancer"
@@ -18,8 +20,8 @@ func (o *ClusterUninstaller) listLoadBalancers() (cloudResources, error) {
 	ctx, _ := o.contextWithTimeout()
 
 	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("listLoadBalancers: case <-o.Context.Done()")
+	case <-ctx.Done():
+		o.Logger.Debugf("listLoadBalancers: case <-ctx.Done()")
 		return nil, o.Context.Err() // we're cancelled, abort
 	default:
 	}
@@ -63,13 +65,25 @@ func (o *ClusterUninstaller) deleteLoadBalancer(item cloudResource) error {
 	var response *core.DetailedResponse
 	var err error
 
+	ctx, _ := o.contextWithTimeout()
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("deleteLoadBalancer: case <-ctx.Done()")
+		return o.Context.Err() // we're cancelled, abort
+	default:
+	}
+
 	getOptions = o.vpcSvc.NewGetLoadBalancerOptions(item.id)
 	lb, response, err = o.vpcSvc.GetLoadBalancer(getOptions)
 
+	if err == nil && response.StatusCode == http.StatusNoContent {
+		return nil
+	}
 	if err != nil && response != nil && response.StatusCode == http.StatusNotFound {
 		// The resource is gone.
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted load balancer %q", item.name)
+		o.Logger.Infof("Deleted Load Balancer %q", item.name)
 		return nil
 	}
 	if err != nil && response != nil && response.StatusCode == http.StatusInternalServerError {
@@ -89,23 +103,15 @@ func (o *ClusterUninstaller) deleteLoadBalancer(item cloudResource) error {
 		return nil
 	}
 
-	o.Logger.Debugf("Deleting load balancer %q", item.name)
-
-	ctx, _ := o.contextWithTimeout()
-
-	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("deleteLoadBalancer: case <-o.Context.Done()")
-		return o.Context.Err() // we're cancelled, abort
-	default:
-	}
-
 	deleteOptions := o.vpcSvc.NewDeleteLoadBalancerOptions(item.id)
-	_, err = o.vpcSvc.DeleteLoadBalancerWithContext(ctx, deleteOptions)
 
+	_, err = o.vpcSvc.DeleteLoadBalancerWithContext(ctx, deleteOptions)
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete load balancer %s", item.name)
 	}
+
+	o.Logger.Infof("Deleted Load Balancer %q", item.name)
+	o.deletePendingItems(item.typeName, []cloudResource{item})
 
 	return nil
 }
@@ -113,44 +119,74 @@ func (o *ClusterUninstaller) deleteLoadBalancer(item cloudResource) error {
 // destroyLoadBalancers removes all load balancer resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyLoadBalancers() error {
-	found, err := o.listLoadBalancers()
+	firstPassList, err := o.listLoadBalancers()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(loadBalancerTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
+
+	items := o.insertPendingItems(loadBalancerTypeName, firstPassList.list())
 
 	ctx, _ := o.contextWithTimeout()
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyLoadBalancers: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
-
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted load balancer %q", item.name)
-				continue
-			}
-			err := o.deleteLoadBalancer(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyLoadBalancers: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(loadBalancerTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.deleteLoadBalancer(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyLoadBalancers: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(loadBalancerTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyLoadBalancers: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroyLoadBalancers: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listLoadBalancers()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyLoadBalancers: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyLoadBalancers: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }

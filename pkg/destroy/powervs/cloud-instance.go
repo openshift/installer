@@ -5,7 +5,10 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"math"
 	"strings"
+	"time"
 )
 
 const (
@@ -46,7 +49,7 @@ func (o *ClusterUninstaller) listCloudInstances() (cloudResources, error) {
 	if !foundOne {
 		o.Logger.Debugf("listCloudInstances: NO matching virtual instance against: %s", o.InfraID)
 		for _, instance := range resources.Instances {
-			o.Logger.Debugf("listInstances: only found virtual instance: %s", *instance.Name)
+			o.Logger.Debugf("listCloudInstances: only found virtual instance: %s", *instance.Name)
 		}
 	}
 
@@ -70,7 +73,7 @@ func (o *ClusterUninstaller) destroyCloudInstance(item cloudResource) error {
 	_, _, err = o.vpcSvc.GetInstanceWithContext(ctx, getInstanceOptions)
 	if err != nil {
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted Cloud instance %q", item.name)
+		o.Logger.Infof("Deleted Cloud Instance %q", item.name)
 		return nil
 	}
 
@@ -85,7 +88,7 @@ func (o *ClusterUninstaller) destroyCloudInstance(item cloudResource) error {
 	}
 
 	o.deletePendingItems(item.typeName, []cloudResource{item})
-	o.Logger.Infof("Deleted Cloud instance %q", item.name)
+	o.Logger.Infof("Deleted Cloud Instance %q", item.name)
 
 	return nil
 }
@@ -93,44 +96,73 @@ func (o *ClusterUninstaller) destroyCloudInstance(item cloudResource) error {
 // destroyCloudInstances searches for Cloud instances that have a name that starts with
 // the cluster's infra ID.
 func (o *ClusterUninstaller) destroyCloudInstances() error {
-	found, err := o.listCloudInstances()
+	firstPassList, err := o.listCloudInstances()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(cloudInstanceTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
+
+	items := o.insertPendingItems(cloudInstanceTypeName, firstPassList.list())
 
 	ctx, _ := o.contextWithTimeout()
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyCloudInstances: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
-
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted Cloud instance %q", item.name)
-				continue
-			}
-			err := o.destroyCloudInstance(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyCloudInstances: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(cloudInstanceTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.destroyCloudInstance(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyCloudInstances: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(cloudInstanceTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyCloudInstances: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroyCloudInstances: %d undeleted items pending", len(items))
+	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listCloudInstances()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyCloudInstances: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyCloudInstances: ExponentialBackoffWithContext (list) returns ", err)
 	}
 
 	return nil

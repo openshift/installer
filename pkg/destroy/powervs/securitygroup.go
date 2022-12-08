@@ -1,12 +1,14 @@
 package powervs
 
 import (
-	"net/http"
-	"strings"
-
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"math"
+	"net/http"
+	"strings"
+	"time"
 )
 
 const securityGroupTypeName = "security group"
@@ -18,8 +20,8 @@ func (o *ClusterUninstaller) listSecurityGroups() (cloudResources, error) {
 	ctx, _ := o.contextWithTimeout()
 
 	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("listSecurityGroups: case <-o.Context.Done()")
+	case <-ctx.Done():
+		o.Logger.Debugf("listSecurityGroups: case <-ctx.Done()")
 		return nil, o.Context.Err() // we're cancelled, abort
 	default:
 	}
@@ -62,13 +64,22 @@ func (o *ClusterUninstaller) deleteSecurityGroup(item cloudResource) error {
 	var response *core.DetailedResponse
 	var err error
 
+	ctx, _ := o.contextWithTimeout()
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("deleteSecurityGroup: case <-ctx.Done()")
+		return o.Context.Err() // we're cancelled, abort
+	default:
+	}
+
 	getOptions = o.vpcSvc.NewGetSecurityGroupOptions(item.id)
 	_, response, err = o.vpcSvc.GetSecurityGroup(getOptions)
 
 	if err != nil && response != nil && response.StatusCode == http.StatusNotFound {
 		// The resource is gone
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted security group %q", item.name)
+		o.Logger.Infof("Deleted Security Group %q", item.name)
 		return nil
 	}
 	if err != nil && response != nil && response.StatusCode == http.StatusInternalServerError {
@@ -76,23 +87,15 @@ func (o *ClusterUninstaller) deleteSecurityGroup(item cloudResource) error {
 		return nil
 	}
 
-	o.Logger.Debugf("Deleting security group %q", item.name)
-
-	ctx, _ := o.contextWithTimeout()
-
-	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("deleteSecurityGroup: case <-o.Context.Done()")
-		return o.Context.Err() // we're cancelled, abort
-	default:
-	}
-
 	deleteOptions := o.vpcSvc.NewDeleteSecurityGroupOptions(item.id)
-	_, err = o.vpcSvc.DeleteSecurityGroupWithContext(ctx, deleteOptions)
 
+	_, err = o.vpcSvc.DeleteSecurityGroupWithContext(ctx, deleteOptions)
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete security group %s", item.name)
 	}
+
+	o.Logger.Infof("Deleted Security Group %q", item.name)
+	o.deletePendingItems(item.typeName, []cloudResource{item})
 
 	return nil
 }
@@ -100,44 +103,74 @@ func (o *ClusterUninstaller) deleteSecurityGroup(item cloudResource) error {
 // destroySecurityGroups removes all security group resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroySecurityGroups() error {
-	found, err := o.listSecurityGroups()
+	firstPassList, err := o.listSecurityGroups()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(securityGroupTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
+
+	items := o.insertPendingItems(securityGroupTypeName, firstPassList.list())
 
 	ctx, _ := o.contextWithTimeout()
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroySecurityGroups: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
-
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted security group %q", item.name)
-				continue
-			}
-			err = o.deleteSecurityGroup(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroySecurityGroups: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(securityGroupTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.deleteSecurityGroup(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroySecurityGroups: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(securityGroupTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyServiceInstances: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroySecurityGroups: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listSecurityGroups()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroySecurityGroups: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroySecurityGroups: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }

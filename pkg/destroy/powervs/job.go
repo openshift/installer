@@ -1,10 +1,12 @@
 package powervs
 
 import (
-	"strings"
-
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"math"
+	"strings"
+	"time"
 )
 
 const jobTypeName = "job"
@@ -17,9 +19,11 @@ func (o *ClusterUninstaller) listJobs() (cloudResources, error) {
 
 	o.Logger.Debugf("Listing jobs")
 
+	ctx, _ := o.contextWithTimeout()
+
 	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("listJobs: case <-o.Context.Done()")
+	case <-ctx.Done():
+		o.Logger.Debugf("listJobs: case <-ctx.Done()")
 		return nil, o.Context.Err() // we're cancelled, abort
 	default:
 	}
@@ -50,91 +54,146 @@ func (o *ClusterUninstaller) listJobs() (cloudResources, error) {
 	return cloudResources{}.insert(result...), nil
 }
 
-func (o *ClusterUninstaller) deleteJob(item cloudResource) error {
+// DeleteJobResult The different states deleting a job can take.
+type DeleteJobResult int
+
+const (
+	// DeleteJobSuccess A job has finished successfully.
+	DeleteJobSuccess DeleteJobResult = iota
+
+	// DeleteJobRunning A job is currently running.
+	DeleteJobRunning
+
+	// DeleteJobError A job has resulted in an error.
+	DeleteJobError
+)
+
+func (o *ClusterUninstaller) deleteJob(item cloudResource) (DeleteJobResult, error) {
 	var job *models.Job
 	var err error
+
+	ctx, _ := o.contextWithTimeout()
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("deleteJob: case <-ctx.Done()")
+		return DeleteJobError, o.Context.Err() // we're cancelled, abort
+	default:
+	}
 
 	job, err = o.jobClient.Get(item.id)
 	if err != nil {
 		o.Logger.Debugf("listJobs: deleteJob: job %q no longer exists", item.name)
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted job %q", item.name)
-		return nil
+		o.Logger.Infof("Deleted Job %q", item.name)
+		return DeleteJobSuccess, nil
 	}
 
-	if strings.EqualFold(*job.Status.State, "completed") {
+	switch *job.Status.State {
+	case "completed":
+		//		err = o.jobClient.Delete(item.id)
+		//		if err != nil {
+		//			return DeleteJobError, errors.Wrapf(err, "failed to delete job %s", item.name)
+		//		}
+
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted job %q", item.name)
-		return nil
-	}
+		o.Logger.Debugf("Deleting job %q", item.name)
 
-	if strings.EqualFold(*job.Status.State, "failed") {
-		return errors.Wrapf(err, "job %v has failed", item.id)
-	}
+		return DeleteJobSuccess, nil
 
-	if !strings.EqualFold(*job.Status.State, "active") {
+	case "active":
 		o.Logger.Debugf("Waiting for job %q to delete (status is %q)", item.name, *job.Status.State)
-		return nil
-	}
+		return DeleteJobRunning, nil
 
-	o.Logger.Debugf("Deleting job %q", item.name)
+	case "failed":
+		err = errors.Errorf("@TODO we cannot query error message inside the job")
+		return DeleteJobError, errors.Wrapf(err, "job %v has failed", item.id)
 
-	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("deleteJob: case <-o.Context.Done()")
-		return o.Context.Err() // we're cancelled, abort
 	default:
+		o.Logger.Debugf("Default waiting for job %q to delete (status is %q)", item.name, *job.Status.State)
+		return DeleteJobRunning, nil
 	}
-
-	err = o.jobClient.Delete(item.id)
-	if err != nil {
-		return errors.Wrapf(err, "failed to delete job %s", item.name)
-	}
-
-	return nil
 }
 
 // destroyJobs removes all job resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyJobs() error {
-	found, err := o.listJobs()
+	firstPassList, err := o.listJobs()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(jobTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
+
+	items := o.insertPendingItems(jobTypeName, firstPassList.list())
 
 	ctx, _ := o.contextWithTimeout()
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyJobs: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
-
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted job %q", item.name)
-				continue
-			}
-			err := o.deleteJob(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyJobs: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(jobTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			result, err2 := o.deleteJob(item)
+			switch result {
+			case DeleteJobSuccess:
+				o.Logger.Debugf("destroyJobs: deleteJob returns DeleteJobSuccess")
+				return true, nil
+			case DeleteJobRunning:
+				o.Logger.Debugf("destroyJobs: deleteJob returns DeleteJobRunning")
+				return false, nil
+			case DeleteJobError:
+				o.Logger.Debugf("destroyJobs: deleteJob returns DeleteJobError: %v", err2)
+				return false, err2
+			default:
+				return false, errors.Errorf("destroyJobs: deleteJob unknown result enum %v", result)
+			}
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyJobs: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(jobTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyJobs: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroyJobs: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listJobs()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyJobs: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyJobs: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }

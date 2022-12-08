@@ -4,8 +4,11 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"math"
 	gohttp "net/http"
 	"strings"
+	"time"
 )
 
 const vpcTypeName = "vpc"
@@ -14,9 +17,11 @@ const vpcTypeName = "vpc"
 func (o *ClusterUninstaller) listVPCs() (cloudResources, error) {
 	o.Logger.Debugf("Listing VPCs")
 
+	ctx, _ := o.contextWithTimeout()
+
 	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("listVPCs: case <-o.Context.Done()")
+	case <-ctx.Done():
+		o.Logger.Debugf("listVPCs: case <-ctx.Done()")
 		return nil, o.Context.Err() // we're cancelled, abort
 	default:
 	}
@@ -60,32 +65,36 @@ func (o *ClusterUninstaller) deleteVPC(item cloudResource) error {
 	var deleteResponse *core.DetailedResponse
 	var err error
 
+	ctx, _ := o.contextWithTimeout()
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("deleteVPC: case <-ctx.Done()")
+		return o.Context.Err() // we're cancelled, abort
+	default:
+	}
+
 	getOptions = o.vpcSvc.NewGetVPCOptions(item.id)
 	_, getResponse, err = o.vpcSvc.GetVPC(getOptions)
+
+	o.Logger.Debugf("deleteVPC: getResponse = %v", getResponse)
+	o.Logger.Debugf("deleteVPC: err = %v", err)
 
 	// Sadly, there is no way to get the status of this VPC to check on the results of the
 	// delete call.
 
+	if err == nil && getResponse.StatusCode == gohttp.StatusNoContent {
+		return nil
+	}
 	if err != nil && getResponse != nil && getResponse.StatusCode == gohttp.StatusNotFound {
 		// The resource is gone
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted vpc %q", item.name)
+		o.Logger.Infof("Deleted VPC %q", item.name)
 		return nil
 	}
 	if err != nil && getResponse != nil && getResponse.StatusCode == gohttp.StatusInternalServerError {
 		o.Logger.Infof("deleteVPC: internal server error")
 		return nil
-	}
-
-	o.Logger.Debugf("Deleting vpc %q", item.name)
-
-	ctx, _ := o.contextWithTimeout()
-
-	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("deleteVPC: case <-o.Context.Done()")
-		return o.Context.Err() // we're cancelled, abort
-	default:
 	}
 
 	deleteOptions := o.vpcSvc.NewDeleteVPCOptions(item.id)
@@ -96,50 +105,83 @@ func (o *ClusterUninstaller) deleteVPC(item cloudResource) error {
 		return errors.Wrapf(err, "failed to delete vpc %s", item.name)
 	}
 
+	o.Logger.Infof("Deleted VPC %q", item.name)
+	o.deletePendingItems(item.typeName, []cloudResource{item})
+
 	return nil
 }
 
 // destroyVPCs removes all vpc resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyVPCs() error {
-	found, err := o.listVPCs()
+	firstPassList, err := o.listVPCs()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(vpcTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
+
+	items := o.insertPendingItems(vpcTypeName, firstPassList.list())
 
 	ctx, _ := o.contextWithTimeout()
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyVPCs: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
-
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted vpc %q", item.name)
-				continue
-			}
-			err = o.deleteVPC(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyVPCs: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(vpcTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.deleteVPC(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyVPCs: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(vpcTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyVPCs: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroyVPCs: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listVPCs()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyVPCs: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyVPCs: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }

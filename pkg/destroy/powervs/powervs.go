@@ -3,6 +3,7 @@ package powervs
 import (
 	"context"
 	"fmt"
+	"math"
 	gohttp "net/http"
 	"strings"
 	"sync"
@@ -40,8 +41,19 @@ import (
 
 var (
 	defaultTimeout = 30 * time.Minute
-	stageTimeout   = 5 * time.Minute
+	stageTimeout   = 15 * time.Minute
 )
+
+func leftInContext(ctx context.Context) time.Duration {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return math.MaxInt64
+	}
+
+	duration := time.Until(deadline)
+
+	return duration
+}
 
 const (
 	// cisServiceID is the Cloud Internet Services' catalog service ID.
@@ -183,6 +195,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	logger.Debugf("powervs.New: metadata.InfraID = %v", metadata.InfraID)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.BaseDomain = %v", metadata.ClusterPlatformMetadata.PowerVS.BaseDomain)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.CISInstanceCRN = %v", metadata.ClusterPlatformMetadata.PowerVS.CISInstanceCRN)
+	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.DNSInstanceCRN = %v", metadata.ClusterPlatformMetadata.PowerVS.DNSInstanceCRN)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup = %v", metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Region = %v", metadata.ClusterPlatformMetadata.PowerVS.Region)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = %v", metadata.ClusterPlatformMetadata.PowerVS.VPCRegion)
@@ -296,12 +309,15 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "Images", execute: o.destroyImages},
 		{name: "VPCs", execute: o.destroyVPCs},
+	}, {
 		{name: "Security Groups", execute: o.destroySecurityGroups},
 	}, {
 		{name: "Cloud Object Storage Instances", execute: o.destroyCOSInstances},
-		{name: "DNS Records", execute: o.destroyDNSRecords},
 		{name: "Cloud SSH Keys", execute: o.destroyCloudSSHKeys},
 		{name: "Power SSH Keys", execute: o.destroyPowerSSHKeys},
+	}, {
+		{name: "DNS Records", execute: o.destroyDNSRecords},
+		{name: "DNS Resource Records", execute: o.destroyResourceRecords},
 	}}
 
 	for _, stage := range stagedFuncs {
@@ -701,21 +717,13 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		return fmt.Errorf("loadSDKServices: loadSDKServices: creating ControllerV2 Service: %v", err)
 	}
 
-	authenticator = &core.IamAuthenticator{
-		ApiKey: o.APIKey,
-	}
-
-	authenticator = &core.IamAuthenticator{
-		ApiKey: o.APIKey,
-	}
-
-	err = authenticator.Validate()
-	if err != nil {
-	}
-
 	// Either CISInstanceCRN is set or DNSInstanceCRN is set. Both should not be set at the same time,
 	// but check both just to be safe.
 	if len(o.CISInstanceCRN) > 0 {
+		authenticator = &core.IamAuthenticator{
+			ApiKey: o.APIKey,
+		}
+
 		err = authenticator.Validate()
 		if err != nil {
 		}
@@ -791,6 +799,10 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	}
 
 	if len(o.DNSInstanceCRN) > 0 {
+		authenticator = &core.IamAuthenticator{
+			ApiKey: o.APIKey,
+		}
+
 		err = authenticator.Validate()
 		if err != nil {
 		}
@@ -866,6 +878,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			return fmt.Errorf("loadSDKServices: loadSDKServices: Failed to instantiate resourceRecordsSvc: %v", err)
 		}
 	}
+
 	return nil
 }
 

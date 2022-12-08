@@ -1,10 +1,12 @@
 package powervs
 
 import (
-	"strings"
-
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"math"
+	"strings"
+	"time"
 )
 
 const imageTypeName = "image"
@@ -13,9 +15,11 @@ const imageTypeName = "image"
 func (o *ClusterUninstaller) listImages() (cloudResources, error) {
 	o.Logger.Debugf("Listing images")
 
+	ctx, _ := o.contextWithTimeout()
+
 	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("listImages: case <-o.Context.Done()")
+	case <-ctx.Done():
+		o.Logger.Debugf("listImages: case <-ctx.Done()")
 		return nil, o.Context.Err() // we're cancelled, abort
 	default:
 	}
@@ -55,11 +59,20 @@ func (o *ClusterUninstaller) deleteImage(item cloudResource) error {
 	var img *models.Image
 	var err error
 
+	ctx, _ := o.contextWithTimeout()
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("deleteImage: case <-ctx.Done()")
+		return o.Context.Err() // we're cancelled, abort
+	default:
+	}
+
 	img, err = o.imageClient.Get(item.id)
 	if err != nil {
 		o.Logger.Debugf("listImages: deleteImage: image %q no longer exists", item.name)
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted image %q", item.name)
+		o.Logger.Infof("Deleted Image %q", item.name)
 		return nil
 	}
 
@@ -68,19 +81,13 @@ func (o *ClusterUninstaller) deleteImage(item cloudResource) error {
 		return nil
 	}
 
-	o.Logger.Debugf("Deleting image %q", item.name)
-
-	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("deleteImage: case <-o.Context.Done()")
-		return o.Context.Err() // we're cancelled, abort
-	default:
-	}
-
 	err = o.imageClient.Delete(item.id)
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete image %s", item.name)
 	}
+
+	o.Logger.Infof("Deleted Image %q", item.name)
+	o.deletePendingItems(item.typeName, []cloudResource{item})
 
 	return nil
 }
@@ -88,44 +95,77 @@ func (o *ClusterUninstaller) deleteImage(item cloudResource) error {
 // destroyImages removes all image resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyImages() error {
-	found, err := o.listImages()
+	firstPassList, err := o.listImages()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(imageTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
+
+	items := o.insertPendingItems(imageTypeName, firstPassList.list())
+	for _, item := range items {
+		o.Logger.Debugf("destroyImages: firstPassList: %v / %v", item.name, item.id)
+	}
 
 	ctx, _ := o.contextWithTimeout()
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyImages: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
-
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted image %q", item.name)
-				continue
-			}
-			err := o.deleteImage(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyImages: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(imageTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.deleteImage(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyImages: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(imageTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyImages: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroyImages: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listImages()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyImages: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyImages: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }
