@@ -211,7 +211,7 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path) field.Erro
 		}
 		// Folder in failuredomain is optional
 		if len(failureDomain.Topology.Folder) != 0 {
-			folderPathRegexp := regexp.MustCompile("^\\/(.*?)\\/vm\\/(.*?)$")
+			folderPathRegexp := regexp.MustCompile(`^\/(.*?)\/vm\/(.*?)$`)
 			folderPathParts := folderPathRegexp.FindStringSubmatch(failureDomain.Topology.Folder)
 			if len(folderPathParts) < 3 {
 				return append(allErrs, field.Invalid(topologyFld.Child("folder"), failureDomain.Topology.Folder, "full path of folder must be provided in format /<datacenter>/vm/<folder>"))
@@ -226,7 +226,7 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path) field.Erro
 			allErrs = append(allErrs, field.Required(topologyFld.Child("computeCluster"), "must specify a computeCluster"))
 		} else {
 			computeCluster := failureDomain.Topology.ComputeCluster
-			clusterPathRegexp := regexp.MustCompile("^\\/(.*?)\\/host\\/(.*?)$")
+			clusterPathRegexp := regexp.MustCompile(`^\/(.*?)\/host\/(.*?)$`)
 			clusterPathParts := clusterPathRegexp.FindStringSubmatch(computeCluster)
 			if len(clusterPathParts) < 3 {
 				return append(allErrs, field.Invalid(topologyFld.Child("computeCluster"), computeCluster, "full path of compute cluster must be provided in format /<datacenter>/host/<cluster>"))
@@ -240,7 +240,7 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path) field.Erro
 
 		if len(failureDomain.Topology.ResourcePool) != 0 {
 			resourcePool := failureDomain.Topology.ResourcePool
-			resourcePoolRegexp := regexp.MustCompile("^\\/(.*?)\\/host\\/(.*?)\\/(.*?)$")
+			resourcePoolRegexp := regexp.MustCompile(`^\/(.*?)\/host\/(.*?)\/(.*?)$`)
 			resourcePoolPathParts := resourcePoolRegexp.FindStringSubmatch(resourcePool)
 			if len(resourcePoolPathParts) < 4 {
 				return append(allErrs, field.Invalid(topologyFld.Child("resourcePool"), resourcePool, "full path of resource pool must be provided in format /<datacenter>/host/<cluster>/..."))
