@@ -25,7 +25,7 @@ check_services() {
         read -ra show_services <<<"${not_started}"
         {
             printf '\\e{cyan}Waiting for services:\\e{reset}'
-            systemctl --no-legend list-units --all "${show_services[@]}" | awk '{printf("\n[\\e{cyan}%s\\e{reset}]", $4); for (i=5; i<=NF; i++) {if (i>5 || $i != "start") printf(" %s", $i)}}'
+            systemctl --no-legend list-units --all "${show_services[@]}" | awk '{sub("dead", "not started", $4); printf("\n[\\e{cyan}%s\\e{reset}]", $4); for (i=5; i<=NF; i++) {if (i>5 || $i != "start") printf(" %s", $i)}}'
         } | set_issue "${services_issue}"
     fi
 }
