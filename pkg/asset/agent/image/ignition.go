@@ -38,12 +38,11 @@ const hostnamesPath = "/etc/assisted/hostnames"
 const nmConnectionsPath = "/etc/assisted/network"
 const extraManifestPath = "/etc/assisted/extra-manifests"
 
-var RendezvousIP string
-
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
-	Config  *igntypes.Config
-	CPUArch string
+	Config       *igntypes.Config
+	CPUArch      string
+	RendezvousIP string
 }
 
 // agentTemplateData is the data used to replace values in agent template
@@ -125,7 +124,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	logrus.Infof("The rendezvous host IP (node0 IP) is %s", nodeZeroIP)
 
-	RendezvousIP = nodeZeroIP
+	a.RendezvousIP = nodeZeroIP
 
 	// TODO: don't hard-code target arch
 	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, archName)
@@ -515,9 +514,4 @@ func getPublicContainerRegistries(registriesConfig *mirror.RegistriesConf) strin
 	}
 
 	return "quay.io"
-}
-
-// Get the rendezvousIP
-func GetRendezvousIP() string {
-	return RendezvousIP
 }
