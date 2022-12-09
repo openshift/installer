@@ -82,9 +82,9 @@ do
                 -H 'accept: application/json' \
                 -d ''
             echo "Cluster installation started" 1>&2
-            printf '\\e{lightgreen}Cluster installation started\\e{reset}' | set_issue "${status_issue}"
-            ;;
+            ;&
         "installed" | "preparing-for-installation" | "installing")
+            printf '\\e{lightgreen}Cluster installation in progress\\e{reset}' | set_issue "${status_issue}"
             ;;
         *)
             printf '\\e{lightred}Installation cannot proceed:\\e{reset} Cluster status: %s' "${cluster_status}" | set_issue "${status_issue}"
