@@ -7,6 +7,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/asset/installconfig"
+	assetstore "github.com/openshift/installer/pkg/asset/store"
 )
 
 // WaitForBootstrapComplete Wait for the bootstrap process to complete on
@@ -77,6 +81,14 @@ func WaitForInstallComplete(assetDir string) (*Cluster, error) {
 	}
 
 	timeout := 90 * time.Minute
+	// Wait longer for baremetal, due to length of time it takes to boot
+	if assetStore, err := assetstore.NewStore(assetDir); err == nil {
+		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
+			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
+				timeout = 120 * time.Minute
+			}
+		}
+	}
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
 
