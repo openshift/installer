@@ -180,16 +180,6 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 		nmStateConfigList = append(nmStateConfigList, &nmStateConfig)
 	}
 
-	level := logrus.GetLevel()
-	logrus.SetLevel(logrus.WarnLevel)
-	staticNetworkConfigGenerator := staticnetworkconfig.New(logrus.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
-	defer logrus.SetLevel(level)
-
-	// Validate the network config using nmstatectl
-	if err = staticNetworkConfigGenerator.ValidateStaticConfigParams(context.Background(), staticNetworkConfig); err != nil {
-		return false, errors.Wrapf(err, "staticNetwork configuration is not valid")
-	}
-
 	n.File, n.StaticNetworkConfig, n.Config = file, staticNetworkConfig, nmStateConfigList
 	if err = n.finish(); err != nil {
 		return false, err
@@ -199,8 +189,26 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 
 func (n *NMStateConfig) finish() error {
 
-	if err := n.validateNMStateConfig().ToAggregate(); err != nil {
-		return errors.Wrapf(err, "invalid NMStateConfig configuration")
+	if err := n.validateWithNMStateCtl(); err != nil {
+		return err
+	}
+
+	if errList := n.validateNMStateConfig().ToAggregate(); errList != nil {
+		return errors.Wrapf(errList, "invalid NMStateConfig configuration")
+	}
+	return nil
+}
+
+func (n *NMStateConfig) validateWithNMStateCtl() error {
+
+	level := logrus.GetLevel()
+	logrus.SetLevel(logrus.WarnLevel)
+	staticNetworkConfigGenerator := staticnetworkconfig.New(logrus.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
+	defer logrus.SetLevel(level)
+
+	// Validate the network config using nmstatectl
+	if err := staticNetworkConfigGenerator.ValidateStaticConfigParams(context.Background(), n.StaticNetworkConfig); err != nil {
+		return errors.Wrapf(err, "staticNetwork configuration is not valid")
 	}
 	return nil
 }
