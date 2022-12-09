@@ -392,6 +392,7 @@ metadata:
 				"/usr/local/bin/extract-agent.sh",
 				"/usr/local/bin/get-container-images.sh",
 				"/usr/local/bin/install-status.sh",
+				"/usr/local/bin/issue_status.sh",
 				"/usr/local/bin/set-hostname.sh",
 				"/usr/local/bin/start-agent.sh",
 				"/usr/local/bin/start-cluster-installation.sh",
