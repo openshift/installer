@@ -15,6 +15,7 @@ import (
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/jongio/azidext/go/azidext"
+	azurekiota "github.com/microsoft/kiota-authentication-azure-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -30,10 +31,10 @@ var (
 
 // Session is an object representing session for subscription
 type Session struct {
-	GraphAuthorizer autorest.Authorizer
-	Authorizer      autorest.Authorizer
-	Credentials     Credentials
-	Environment     azureenv.Environment
+	Authorizer   autorest.Authorizer
+	Credentials  Credentials
+	Environment  azureenv.Environment
+	AuthProvider *azurekiota.AzureIdentityAuthenticationProvider
 }
 
 // Credentials is the data type for credentials as understood by the azure sdk
@@ -263,6 +264,11 @@ func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Crede
 		return nil, errors.Wrap(err, "failed to get client credentials from secret")
 	}
 
+	authProvider, err := azurekiota.NewAzureIdentityAuthenticationProvider(cred)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get Azidentity authentication provider")
+	}
+
 	// Use an adapter so azidentity in the Azure SDK can be used as
 	// Authorizer when calling the Azure Management Packages, which we
 	// currently use. Once the Azure SDK clients (found in /sdk) move to
@@ -270,13 +276,12 @@ func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Crede
 	// creds directly without the authorizer. The schedule is here:
 	// https://azure.github.io/azure-sdk/releases/latest/index.html#go
 	authorizer := azidext.NewTokenCredentialAdapter(cred, []string{endpointToScope(cloudEnv.TokenAudience)})
-	graphAuthorizer := azidext.NewTokenCredentialAdapter(cred, []string{endpointToScope(cloudEnv.GraphEndpoint)})
 
 	return &Session{
-		GraphAuthorizer: graphAuthorizer,
-		Authorizer:      authorizer,
-		Credentials:     *credentials,
-		Environment:     cloudEnv,
+		Authorizer:   authorizer,
+		Credentials:  *credentials,
+		Environment:  cloudEnv,
+		AuthProvider: authProvider,
 	}, nil
 }
 
@@ -307,6 +312,11 @@ func newSessionFromCertificates(cloudEnv azureenv.Environment, credentials *Cred
 		return nil, errors.Wrap(err, "failed to get client credentials from certificate")
 	}
 
+	authProvider, err := azurekiota.NewAzureIdentityAuthenticationProvider(cred)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get Azidentity authentication provider")
+	}
+
 	// Use an adapter so azidentity in the Azure SDK can be used as
 	// Authorizer when calling the Azure Management Packages, which we
 	// currently use. Once the Azure SDK clients (found in /sdk) move to
@@ -314,13 +324,12 @@ func newSessionFromCertificates(cloudEnv azureenv.Environment, credentials *Cred
 	// creds directly without the authorizer. The schedule is here:
 	// https://azure.github.io/azure-sdk/releases/latest/index.html#go
 	authorizer := azidext.NewTokenCredentialAdapter(cred, []string{endpointToScope(cloudEnv.TokenAudience)})
-	graphAuthorizer := azidext.NewTokenCredentialAdapter(cred, []string{endpointToScope(cloudEnv.GraphEndpoint)})
 
 	return &Session{
-		GraphAuthorizer: graphAuthorizer,
-		Authorizer:      authorizer,
-		Credentials:     *credentials,
-		Environment:     cloudEnv,
+		Authorizer:   authorizer,
+		Credentials:  *credentials,
+		Environment:  cloudEnv,
+		AuthProvider: authProvider,
 	}, nil
 }
 
