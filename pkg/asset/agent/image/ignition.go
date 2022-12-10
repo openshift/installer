@@ -40,8 +40,9 @@ const extraManifestPath = "/etc/assisted/extra-manifests"
 
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
-	Config  *igntypes.Config
-	CPUArch string
+	Config       *igntypes.Config
+	CPUArch      string
+	RendezvousIP string
 }
 
 // agentTemplateData is the data used to replace values in agent template
@@ -120,7 +121,10 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
+
 	logrus.Infof("The rendezvous host IP (node0 IP) is %s", nodeZeroIP)
+
+	a.RendezvousIP = nodeZeroIP
 
 	// TODO: don't hard-code target arch
 	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, archName)

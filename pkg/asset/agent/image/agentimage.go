@@ -18,8 +18,9 @@ const (
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
 type AgentImage struct {
-	imageReader isoeditor.ImageReader
-	cpuArch     string
+	imageReader  isoeditor.ImageReader
+	cpuArch      string
+	rendezvousIP string
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -53,6 +54,8 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 
 	a.imageReader = custom
 	a.cpuArch = ignition.CPUArch
+	a.rendezvousIP = ignition.RendezvousIP
+
 	return nil
 }
 
@@ -77,7 +80,16 @@ func (a *AgentImage) PersistToFile(directory string) error {
 	defer output.Close()
 
 	_, err = io.Copy(output, a.imageReader)
-	return err
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filepath.Join(directory, "rendezvousIP"), []byte(a.rendezvousIP), 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Name returns the human-friendly name of the asset.
