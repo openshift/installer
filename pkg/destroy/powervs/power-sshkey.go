@@ -15,7 +15,8 @@ const powerSSHKeyTypeName = "powerSshKey"
 func (o *ClusterUninstaller) listPowerSSHKeys() (cloudResources, error) {
 	o.Logger.Debugf("Listing Power SSHKeys")
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -62,7 +63,8 @@ func (o *ClusterUninstaller) listPowerSSHKeys() (cloudResources, error) {
 func (o *ClusterUninstaller) deletePowerSSHKey(item cloudResource) error {
 	var err error
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -103,7 +105,8 @@ func (o *ClusterUninstaller) destroyPowerSSHKeys() error {
 
 	items := o.insertPendingItems(powerSSHKeyTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

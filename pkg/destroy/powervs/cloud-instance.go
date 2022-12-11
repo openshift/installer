@@ -19,7 +19,8 @@ const (
 func (o *ClusterUninstaller) listCloudInstances() (cloudResources, error) {
 	o.Logger.Debugf("Listing virtual Cloud service instances")
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	options := o.vpcSvc.NewListInstancesOptions()
 
@@ -66,7 +67,8 @@ func (o *ClusterUninstaller) destroyCloudInstance(item cloudResource) error {
 		response              *core.DetailedResponse
 	)
 
-	ctx, _ = o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	getInstanceOptions = o.vpcSvc.NewGetInstanceOptions(item.id)
 
@@ -107,7 +109,8 @@ func (o *ClusterUninstaller) destroyCloudInstances() error {
 
 	items := o.insertPendingItems(cloudInstanceTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

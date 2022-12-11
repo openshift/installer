@@ -107,7 +107,8 @@ func (o *ClusterUninstaller) destroyDHCPNetworks() error {
 
 	items := o.insertPendingItems(dhcpTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

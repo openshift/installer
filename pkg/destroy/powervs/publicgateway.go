@@ -19,7 +19,8 @@ const (
 func (o *ClusterUninstaller) listAttachedSubnets(publicGatewayID string) (cloudResources, error) {
 	o.Logger.Debugf("Finding subnets attached to public gateway %s", publicGatewayID)
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	options := o.vpcSvc.NewListSubnetsOptions()
 	resources, _, err := o.vpcSvc.ListSubnetsWithContext(ctx, options)
@@ -59,7 +60,8 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 
 	o.Logger.Debugf("Listing publicGateways")
 
-	ctx, _ = o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -143,7 +145,8 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 }
 
 func (o *ClusterUninstaller) deletePublicGateway(item cloudResource) error {
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -203,7 +206,8 @@ func (o *ClusterUninstaller) destroyPublicGateways() error {
 
 	items := o.insertPendingItems(publicGatewayTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

@@ -17,7 +17,8 @@ const loadBalancerTypeName = "load balancer"
 func (o *ClusterUninstaller) listLoadBalancers() (cloudResources, error) {
 	o.Logger.Debugf("Listing load balancers")
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -65,7 +66,8 @@ func (o *ClusterUninstaller) deleteLoadBalancer(item cloudResource) error {
 	var response *core.DetailedResponse
 	var err error
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -130,7 +132,8 @@ func (o *ClusterUninstaller) destroyLoadBalancers() error {
 
 	items := o.insertPendingItems(loadBalancerTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

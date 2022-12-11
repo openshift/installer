@@ -24,7 +24,8 @@ func (o *ClusterUninstaller) listCloudConnections() (cloudResources, error) {
 
 	o.Logger.Debugf("Listing Cloud Connections")
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -86,7 +87,8 @@ func (o *ClusterUninstaller) destroyCloudConnections() error {
 
 	items := o.insertPendingItems(jobTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

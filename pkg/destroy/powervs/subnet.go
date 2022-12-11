@@ -17,7 +17,8 @@ const subnetTypeName = "subnet"
 func (o *ClusterUninstaller) listSubnets() (cloudResources, error) {
 	o.Logger.Debugf("Listing Subnets")
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -64,7 +65,8 @@ func (o *ClusterUninstaller) deleteSubnet(item cloudResource) error {
 	var response *core.DetailedResponse
 	var err error
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -113,7 +115,8 @@ func (o *ClusterUninstaller) destroySubnets() error {
 
 	items := o.insertPendingItems(subnetTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

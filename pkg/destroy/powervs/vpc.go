@@ -17,7 +17,8 @@ const vpcTypeName = "vpc"
 func (o *ClusterUninstaller) listVPCs() (cloudResources, error) {
 	o.Logger.Debugf("Listing VPCs")
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -65,7 +66,8 @@ func (o *ClusterUninstaller) deleteVPC(item cloudResource) error {
 	var deleteResponse *core.DetailedResponse
 	var err error
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -125,7 +127,8 @@ func (o *ClusterUninstaller) destroyVPCs() error {
 
 	items := o.insertPendingItems(vpcTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

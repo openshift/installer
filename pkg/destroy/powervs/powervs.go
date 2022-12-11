@@ -240,7 +240,9 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	var ok bool
 	var err error
 
-	ctx, _ = o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
 	if ctx == nil {
 		return nil, errors.Wrap(err, "powervs.Run: contextWithTimeout returns nil")
 	}
@@ -369,7 +371,9 @@ func (o *ClusterUninstaller) executeStageFunction(f struct {
 	var ok bool
 	var err error
 
-	ctx, _ = o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
 	if ctx == nil {
 		return errors.Wrap(err, "executeStageFunction contextWithTimeout returns nil")
 	}
@@ -520,34 +524,32 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		return fmt.Errorf("loadSDKServices: loadSDKServices: o.piSession is nil")
 	}
 
-	ctx, _ := o.contextWithTimeout()
-
-	o.instanceClient = instance.NewIBMPIInstanceClient(ctx, o.piSession, o.ServiceGUID)
+	o.instanceClient = instance.NewIBMPIInstanceClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.instanceClient == nil {
 		return fmt.Errorf("loadSDKServices: loadSDKServices: o.instanceClient is nil")
 	}
 
-	o.imageClient = instance.NewIBMPIImageClient(ctx, o.piSession, o.ServiceGUID)
+	o.imageClient = instance.NewIBMPIImageClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.imageClient == nil {
 		return fmt.Errorf("loadSDKServices: loadSDKServices: o.imageClient is nil")
 	}
 
-	o.jobClient = instance.NewIBMPIJobClient(ctx, o.piSession, o.ServiceGUID)
+	o.jobClient = instance.NewIBMPIJobClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.jobClient == nil {
 		return fmt.Errorf("loadSDKServices: loadSDKServices: o.jobClient is nil")
 	}
 
-	o.keyClient = instance.NewIBMPIKeyClient(ctx, o.piSession, o.ServiceGUID)
+	o.keyClient = instance.NewIBMPIKeyClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.keyClient == nil {
 		return fmt.Errorf("loadSDKServices: loadSDKServices: o.keyClient is nil")
 	}
 
-	o.cloudConnectionClient = instance.NewIBMPICloudConnectionClient(ctx, o.piSession, o.ServiceGUID)
+	o.cloudConnectionClient = instance.NewIBMPICloudConnectionClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.cloudConnectionClient == nil {
 		return fmt.Errorf("loadSDKServices: loadSDKServices: o.cloudConnectionClient is nil")
 	}
 
-	o.dhcpClient = instance.NewIBMPIDhcpClient(ctx, o.piSession, o.ServiceGUID)
+	o.dhcpClient = instance.NewIBMPIDhcpClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.dhcpClient == nil {
 		return fmt.Errorf("loadSDKServices: loadSDKServices: o.dhcpClient is nil")
 	}
@@ -625,6 +627,9 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		if err != nil {
 			return fmt.Errorf("loadSDKServices: loadSDKServices: creating zonesSvc: %v", err)
 		}
+
+		ctx, cancel := o.contextWithTimeout()
+		defer cancel()
 
 		// Get the Zone ID
 		zoneOptions := o.zonesSvc.NewListZonesOptions()
