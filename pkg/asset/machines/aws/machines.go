@@ -18,6 +18,21 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
+type machineProviderInput struct {
+	clusterID      string
+	region         string
+	subnet         string
+	instanceType   string
+	osImage        string
+	zone           string
+	role           string
+	userDataSecret string
+	root           *aws.EC2RootVolume
+	imds           aws.EC2Metadata
+	userTags       map[string]string
+	publicSubnet   bool
+}
+
 // Machines returns a list of machines for a machinepool.
 func Machines(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, role, userDataSecret string, userTags map[string]string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
@@ -37,19 +52,20 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 		if len(subnets) > 0 && !ok {
 			return nil, nil, errors.Errorf("no subnet for zone %s", zone)
 		}
-		provider, err := provider(
-			clusterID,
-			region,
-			subnet,
-			mpool.InstanceType,
-			&mpool.EC2RootVolume,
-			mpool.EC2Metadata,
-			mpool.AMIID,
-			zone,
-			role,
-			userDataSecret,
-			userTags,
-		)
+		provider, err := provider(&machineProviderInput{
+			clusterID:      clusterID,
+			region:         region,
+			subnet:         subnet,
+			instanceType:   mpool.InstanceType,
+			osImage:        mpool.AMIID,
+			zone:           zone,
+			role:           role,
+			userDataSecret: userDataSecret,
+			root:           &mpool.EC2RootVolume,
+			imds:           mpool.EC2Metadata,
+			userTags:       userTags,
+			publicSubnet:   false,
+		})
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -98,7 +114,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 			}}
 		} else {
 			domain.Subnet.Type = machinev1.AWSIDReferenceType
-			domain.Subnet.ID = pointer.StringPtr(subnet)
+			domain.Subnet.ID = pointer.String(subnet)
 		}
 		failureDomains = append(failureDomains, domain)
 	}
@@ -153,8 +169,8 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 	return machines, controlPlaneMachineSet, nil
 }
 
-func provider(clusterID string, region string, subnet string, instanceType string, root *aws.EC2RootVolume, imds aws.EC2Metadata, osImage string, zone, role, userDataSecret string, userTags map[string]string) (*machineapi.AWSMachineProviderConfig, error) {
-	tags, err := tagsFromUserTags(clusterID, userTags)
+func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, error) {
+	tags, err := tagsFromUserTags(in.clusterID, in.userTags)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create machineapi.TagSpecifications from UserTags")
 	}
@@ -163,51 +179,59 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 			APIVersion: "machine.openshift.io/v1beta1",
 			Kind:       "AWSMachineProviderConfig",
 		},
-		InstanceType: instanceType,
+		InstanceType: in.instanceType,
 		BlockDevices: []machineapi.BlockDeviceMappingSpec{
 			{
 				EBS: &machineapi.EBSBlockDeviceSpec{
-					VolumeType: pointer.StringPtr(root.Type),
-					VolumeSize: pointer.Int64Ptr(int64(root.Size)),
-					Iops:       pointer.Int64Ptr(int64(root.IOPS)),
-					Encrypted:  pointer.BoolPtr(true),
-					KMSKey:     machineapi.AWSResourceReference{ARN: pointer.StringPtr(root.KMSKeyARN)},
+					VolumeType: pointer.String(in.root.Type),
+					VolumeSize: pointer.Int64(int64(in.root.Size)),
+					Iops:       pointer.Int64(int64(in.root.IOPS)),
+					Encrypted:  pointer.Bool(true),
+					KMSKey:     machineapi.AWSResourceReference{ARN: pointer.String(in.root.KMSKeyARN)},
 				},
 			},
 		},
-		Tags:               tags,
-		IAMInstanceProfile: &machineapi.AWSResourceReference{ID: pointer.StringPtr(fmt.Sprintf("%s-%s-profile", clusterID, role))},
-		UserDataSecret:     &corev1.LocalObjectReference{Name: userDataSecret},
-		CredentialsSecret:  &corev1.LocalObjectReference{Name: "aws-cloud-credentials"},
-		Placement:          machineapi.Placement{Region: region, AvailabilityZone: zone},
+		Tags: tags,
+		IAMInstanceProfile: &machineapi.AWSResourceReference{
+			ID: pointer.String(fmt.Sprintf("%s-%s-profile", in.clusterID, in.role)),
+		},
+		UserDataSecret:    &corev1.LocalObjectReference{Name: in.userDataSecret},
+		CredentialsSecret: &corev1.LocalObjectReference{Name: "aws-cloud-credentials"},
+		Placement:         machineapi.Placement{Region: in.region, AvailabilityZone: in.zone},
 		SecurityGroups: []machineapi.AWSResourceReference{{
 			Filters: []machineapi.Filter{{
 				Name:   "tag:Name",
-				Values: []string{fmt.Sprintf("%s-%s-sg", clusterID, role)},
+				Values: []string{fmt.Sprintf("%s-%s-sg", in.clusterID, in.role)},
 			}},
 		}},
 	}
 
-	if subnet == "" {
+	subnetName := fmt.Sprintf("%s-private-%s", in.clusterID, in.zone)
+	if in.publicSubnet {
+		config.PublicIP = pointer.Bool(in.publicSubnet)
+		subnetName = fmt.Sprintf("%s-public-%s", in.clusterID, in.zone)
+	}
+
+	if in.subnet == "" {
 		config.Subnet.Filters = []machineapi.Filter{{
 			Name:   "tag:Name",
-			Values: []string{fmt.Sprintf("%s-private-%s", clusterID, zone)},
+			Values: []string{subnetName},
 		}}
 	} else {
-		config.Subnet.ID = pointer.StringPtr(subnet)
+		config.Subnet.ID = pointer.String(in.subnet)
 	}
 
-	if osImage == "" {
+	if in.osImage == "" {
 		config.AMI.Filters = []machineapi.Filter{{
 			Name:   "tag:Name",
-			Values: []string{fmt.Sprintf("%s-ami-%s", clusterID, region)},
+			Values: []string{fmt.Sprintf("%s-ami-%s", in.clusterID, in.region)},
 		}}
 	} else {
-		config.AMI.ID = pointer.StringPtr(osImage)
+		config.AMI.ID = pointer.String(in.osImage)
 	}
 
-	if imds.Authentication != "" {
-		config.MetadataServiceOptions.Authentication = machineapi.MetadataServiceAuthentication(imds.Authentication)
+	if in.imds.Authentication != "" {
+		config.MetadataServiceOptions.Authentication = machineapi.MetadataServiceAuthentication(in.imds.Authentication)
 	}
 
 	return config, nil
