@@ -12,6 +12,9 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform string) {
 	if platform == libvirt.Name {
 		defaultReplicaCount = 1
 	}
+	if p.Name == types.MachinePoolEdgeRoleName {
+		defaultReplicaCount = 0
+	}
 	if p.Replicas == nil {
 		p.Replicas = &defaultReplicaCount
 	}
@@ -21,4 +24,23 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform string) {
 	if p.Architecture == "" {
 		p.Architecture = version.DefaultArch()
 	}
+}
+
+// CreateEdgeMachinePoolDefaults create the edge compute pool when it is not already defined.
+func CreateEdgeMachinePoolDefaults(pools []types.MachinePool, platform string, replicas int64) *types.MachinePool {
+	edgePoolDefined := false
+	for _, compute := range pools {
+		if compute.Name == types.MachinePoolEdgeRoleName {
+			edgePoolDefined = true
+		}
+	}
+	if edgePoolDefined {
+		return nil
+	}
+	pool := &types.MachinePool{
+		Name:     types.MachinePoolEdgeRoleName,
+		Replicas: &replicas,
+	}
+	SetMachinePoolDefaults(pool, platform)
+	return pool
 }

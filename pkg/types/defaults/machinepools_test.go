@@ -4,21 +4,29 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/utils/pointer"
 
 	"github.com/openshift/installer/pkg/types"
 )
 
 func defaultMachinePool(name string) *types.MachinePool {
+	repCount := int64(3)
 	return &types.MachinePool{
 		Name:           name,
-		Replicas:       pointer.Int64Ptr(3),
+		Replicas:       &repCount,
 		Hyperthreading: types.HyperthreadingEnabled,
 		Architecture:   types.ArchitectureAMD64,
 	}
 }
 
+func defaultEdgeMachinePool(name string) *types.MachinePool {
+	pool := defaultMachinePool(name)
+	defaultEdgeReplicaCount := int64(0)
+	pool.Replicas = &defaultEdgeReplicaCount
+	return pool
+}
+
 func TestSetMahcinePoolDefaults(t *testing.T) {
+	defaultEdgeReplicaCount := int64(0)
 	cases := []struct {
 		name     string
 		pool     *types.MachinePool
@@ -31,20 +39,47 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 			expected: defaultMachinePool(""),
 		},
 		{
+			name:     "empty",
+			pool:     &types.MachinePool{Replicas: &defaultEdgeReplicaCount},
+			expected: defaultEdgeMachinePool(""),
+		},
+		{
 			name:     "default",
 			pool:     defaultMachinePool("test-name"),
 			expected: defaultMachinePool("test-name"),
 		},
 		{
+			name:     "default",
+			pool:     defaultEdgeMachinePool("test-name"),
+			expected: defaultEdgeMachinePool("test-name"),
+		},
+		{
 			name: "non-default replicas",
 			pool: func() *types.MachinePool {
 				p := defaultMachinePool("test-name")
-				p.Replicas = pointer.Int64Ptr(5)
+				repCount := int64(5)
+				p.Replicas = &repCount
 				return p
 			}(),
 			expected: func() *types.MachinePool {
 				p := defaultMachinePool("test-name")
-				p.Replicas = pointer.Int64Ptr(5)
+				repCount := int64(5)
+				p.Replicas = &repCount
+				return p
+			}(),
+		},
+		{
+			name: "non-default replicas",
+			pool: func() *types.MachinePool {
+				p := defaultEdgeMachinePool("test-name")
+				repCount := int64(5)
+				p.Replicas = &repCount
+				return p
+			}(),
+			expected: func() *types.MachinePool {
+				p := defaultEdgeMachinePool("test-name")
+				repCount := int64(5)
+				p.Replicas = &repCount
 				return p
 			}(),
 		},
@@ -54,7 +89,8 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 			platform: "libvirt",
 			expected: func() *types.MachinePool {
 				p := defaultMachinePool("")
-				p.Replicas = pointer.Int64Ptr(1)
+				repCount := int64(1)
+				p.Replicas = &repCount
 				return p
 			}(),
 		},
@@ -67,6 +103,19 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 			}(),
 			expected: func() *types.MachinePool {
 				p := defaultMachinePool("test-name")
+				p.Hyperthreading = types.HyperthreadingMode("test-hyperthreading")
+				return p
+			}(),
+		},
+		{
+			name: "non-default hyperthreading",
+			pool: func() *types.MachinePool {
+				p := defaultEdgeMachinePool("test-name")
+				p.Hyperthreading = types.HyperthreadingMode("test-hyperthreading")
+				return p
+			}(),
+			expected: func() *types.MachinePool {
+				p := defaultEdgeMachinePool("test-name")
 				p.Hyperthreading = types.HyperthreadingMode("test-hyperthreading")
 				return p
 			}(),

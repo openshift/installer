@@ -7,10 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
+
+	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
 
-// availabilityZones retrieves a list of availability zones for the given region.
-func availabilityZones(ctx context.Context, session *session.Session, region string) ([]string, error) {
+// describeAvailabilityZones retrieves a list of all zones for the given region.
+func describeAvailabilityZones(ctx context.Context, session *session.Session, region string) ([]*ec2.AvailabilityZone, error) {
 	client := ec2.New(session, aws.NewConfig().WithRegion(region))
 	resp, err := client.DescribeAvailabilityZonesWithContext(ctx, &ec2.DescribeAvailabilityZonesInput{
 		Filters: []*ec2.Filter{
@@ -25,12 +27,21 @@ func availabilityZones(ctx context.Context, session *session.Session, region str
 		},
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching availability zones")
+		return nil, errors.Wrap(err, "fetching zones")
 	}
 
+	return resp.AvailabilityZones, nil
+}
+
+// availabilityZones retrieves a list of zones type 'availability-zone' for the region.
+func availabilityZones(ctx context.Context, session *session.Session, region string) ([]string, error) {
+	azs, err := describeAvailabilityZones(ctx, session, region)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching availability zones")
+	}
 	zones := []string{}
-	for _, zone := range resp.AvailabilityZones {
-		if *zone.ZoneType == "availability-zone" {
+	for _, zone := range azs {
+		if *zone.ZoneType == typesaws.AvailabilityZoneType {
 			zones = append(zones, *zone.ZoneName)
 		}
 	}

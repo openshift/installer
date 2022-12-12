@@ -6,6 +6,13 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 )
 
+const (
+	// VolumeTypeGp2 is the type of EBS volume for General Purpose SSD gp2.
+	VolumeTypeGp2 = "gp2"
+	// VolumeTypeGp3 is the type of EBS volume for General Purpose SSD gp3.
+	VolumeTypeGp3 = "gp3"
+)
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
