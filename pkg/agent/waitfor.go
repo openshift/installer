@@ -8,9 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
+	"github.com/openshift/installer/pkg/types/baremetal"
 )
 
 // WaitForBootstrapComplete Wait for the bootstrap process to complete on
