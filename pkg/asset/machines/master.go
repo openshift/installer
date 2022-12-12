@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 
+	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
@@ -46,6 +47,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -110,12 +112,6 @@ const (
 
 	// masterUserDataFileName is the filename used for the control plane machine sets.
 	controlPlaneMachineSetFileName = "99_openshift-machine-api_master-control-plane-machine-set.yaml"
-)
-
-// AWS specific constants.
-const (
-	defaultAWSInstanceSize                       = "xlarge"
-	defaultAWSSingleNodeControlPlaneInstanceSize = "2xlarge"
 )
 
 var (
@@ -209,7 +205,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			}
 		}
 
-		mpool := defaultAWSMachinePoolPlatform()
+		mpool := defaultAWSMachinePoolPlatform("master")
 
 		osImage := strings.SplitN(string(*rhcosImage), ",", 2)
 		osImageID := osImage[0]
@@ -236,21 +232,14 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 
 		if mpool.InstanceType == "" {
-			// If the control plane is single node, we need to use a larger
-			// instance type for that node, as the minimum requirement for
-			// single-node control-plane nodes is 8 cores, and xlarge only has
-			// 4. Unfortunately 2xlarge has twice as much RAM as we need, but
-			// we default to it because AWS doesn't offer an 8-core 16GiB
-			// instance type
-			instanceSize := defaultAWSInstanceSize
+			topology := configv1.HighlyAvailableTopologyMode
 			if pool.Replicas != nil && *pool.Replicas == 1 {
-				instanceSize = defaultAWSSingleNodeControlPlaneInstanceSize
+				topology = configv1.SingleReplicaTopologyMode
 			}
-
-			mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, instanceSize), mpool.Zones)
+			mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsdefaults.InstanceTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, topology), mpool.Zones)
 			if err != nil {
 				logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
-				mpool.InstanceType = awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, instanceSize)[0]
+				mpool.InstanceType = awsdefaults.InstanceTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, topology)[0]
 			}
 		}
 
