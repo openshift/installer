@@ -357,6 +357,19 @@ github.com/coreos/stream-metadata-go/stream/rhcos
 github.com/coreos/vcontext/path
 github.com/coreos/vcontext/report
 github.com/coreos/vcontext/tree
+# github.com/daixiang0/gci v0.9.0
+## explicit; go 1.18
+github.com/daixiang0/gci
+github.com/daixiang0/gci/cmd/gci
+github.com/daixiang0/gci/pkg/config
+github.com/daixiang0/gci/pkg/format
+github.com/daixiang0/gci/pkg/gci
+github.com/daixiang0/gci/pkg/io
+github.com/daixiang0/gci/pkg/log
+github.com/daixiang0/gci/pkg/parse
+github.com/daixiang0/gci/pkg/section
+github.com/daixiang0/gci/pkg/specificity
+github.com/daixiang0/gci/pkg/utils
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
@@ -613,6 +626,11 @@ github.com/hashicorp/terraform-exec/tfexec
 # github.com/hashicorp/terraform-json v0.14.0
 ## explicit; go 1.13
 github.com/hashicorp/terraform-json
+# github.com/hexops/gotextdiff v1.0.3
+## explicit; go 1.16
+github.com/hexops/gotextdiff
+github.com/hexops/gotextdiff/myers
+github.com/hexops/gotextdiff/span
 # github.com/imdario/mergo v0.3.12
 ## explicit; go 1.13
 github.com/imdario/mergo
@@ -9000,6 +9018,7 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 ## explicit
+golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec
 ## explicit; go 1.17
