@@ -6,14 +6,14 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/asset/installconfig/powervs/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
-	"github.com/stretchr/testify/assert"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type editFunctions []func(ic *types.InstallConfig)

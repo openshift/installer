@@ -5,8 +5,9 @@ import (
 	"strings"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
-	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
 // ValidateMachinePool validates the MachinePool.

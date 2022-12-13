@@ -8,6 +8,12 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
@@ -19,13 +25,6 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apimachinery/pkg/util/intstr"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -61,6 +60,7 @@ import (
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 )
 
 const (

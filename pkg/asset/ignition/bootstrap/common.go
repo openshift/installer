@@ -18,12 +18,12 @@ import (
 	"github.com/containers/image/pkg/sysregistriesv2"
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
 	utilsnet "k8s.io/utils/net"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"

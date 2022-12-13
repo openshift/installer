@@ -2,7 +2,6 @@ package gcp
 
 import (
 	"github.com/pkg/errors"
-
 	compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 )

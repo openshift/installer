@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"
 	"github.com/openshift/installer/pkg/types"
 )

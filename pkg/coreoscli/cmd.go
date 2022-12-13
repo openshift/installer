@@ -4,8 +4,9 @@ import (
 	"context"
 	"os"
 
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/spf13/cobra"
+
+	"github.com/openshift/installer/pkg/rhcos"
 )
 
 // printStreamJSON is the implementation of print-stream-json

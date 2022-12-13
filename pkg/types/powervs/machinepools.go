@@ -1,8 +1,9 @@
 package powervs
 
 import (
-	machinev1 "github.com/openshift/api/machine/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	machinev1 "github.com/openshift/api/machine/v1"
 )
 
 // MachinePool stores the configuration for a machine pool installed on IBM Power VS.

@@ -9,19 +9,19 @@ import (
 	"os"
 	"path/filepath"
 
-	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
-	"github.com/openshift/assisted-service/models"
-	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	k8syaml "sigs.k8s.io/yaml"
 
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	"github.com/openshift/assisted-service/models"
+	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
-	k8syaml "sigs.k8s.io/yaml"
 )
 
 var (

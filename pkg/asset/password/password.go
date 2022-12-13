@@ -6,8 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/openshift/installer/pkg/asset"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/openshift/installer/pkg/asset"
 )
 
 var (

@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestExtraManifests_Load(t *testing.T) {

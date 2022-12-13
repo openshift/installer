@@ -14,7 +14,6 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	azuresession "github.com/openshift/installer/pkg/asset/installconfig/azure"

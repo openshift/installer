@@ -13,7 +13,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
-
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/vsphere"

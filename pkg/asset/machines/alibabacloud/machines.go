@@ -4,15 +4,14 @@ package alibabacloud
 import (
 	"fmt"
 
-	machinev1 "github.com/openshift/api/machine/v1"
-	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
-
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	machinev1 "github.com/openshift/api/machine/v1"
+	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 )

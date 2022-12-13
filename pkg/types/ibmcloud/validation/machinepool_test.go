@@ -3,9 +3,10 @@ package validation
 import (
 	"testing"
 
-	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
 var (

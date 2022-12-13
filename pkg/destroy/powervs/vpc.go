@@ -1,14 +1,15 @@
 package powervs
 
 import (
-	"github.com/IBM/go-sdk-core/v5/core"
-	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"math"
 	gohttp "net/http"
 	"strings"
 	"time"
+
+	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const vpcTypeName = "vpc"

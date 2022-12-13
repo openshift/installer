@@ -2,11 +2,12 @@ package powervs
 
 import (
 	"github.com/hashicorp/terraform-exec/tfexec"
+	"github.com/pkg/errors"
+
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
-	"github.com/pkg/errors"
 )
 
 // PlatformStages are the stages to run to provision the infrastructure in PowerVS.

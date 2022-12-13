@@ -7,9 +7,9 @@ import (
 	"net"
 	"net/url"
 
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )

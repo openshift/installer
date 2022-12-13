@@ -7,9 +7,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/openshift/installer/pkg/ipnet"
-
 	"github.com/apparentlymart/go-cidr/cidr"
+
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 )

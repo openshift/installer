@@ -1,9 +1,9 @@
 package validation
 
 import (
-	"github.com/openshift/installer/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/validate"
 )

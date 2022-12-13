@@ -3,8 +3,9 @@ package manifests
 import (
 	"fmt"
 
-	"github.com/openshift/installer/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/openshift/installer/pkg/types"
 )
 
 type configurationObject struct {

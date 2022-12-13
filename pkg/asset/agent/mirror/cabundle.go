@@ -5,10 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/manifests"
-	"github.com/pkg/errors"
 )
 
 var (

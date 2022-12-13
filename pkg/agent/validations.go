@@ -3,10 +3,11 @@ package agent
 import (
 	"encoding/json"
 
-	"github.com/openshift/assisted-service/api/common"
-	"github.com/openshift/assisted-service/models"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/openshift/assisted-service/api/common"
+	"github.com/openshift/assisted-service/models"
 )
 
 // These validation status strings are defined to match the ones from assisted-service/internal.

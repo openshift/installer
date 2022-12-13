@@ -10,11 +10,14 @@ import (
 
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/destroy"
+	"github.com/openshift/installer/pkg/destroy/bootstrap"
+	quotaasset "github.com/openshift/installer/pkg/destroy/quota"
+	"github.com/openshift/installer/pkg/metrics/timer"
+
 	_ "github.com/openshift/installer/pkg/destroy/alibabacloud"
 	_ "github.com/openshift/installer/pkg/destroy/aws"
 	_ "github.com/openshift/installer/pkg/destroy/azure"
 	_ "github.com/openshift/installer/pkg/destroy/baremetal"
-	"github.com/openshift/installer/pkg/destroy/bootstrap"
 	_ "github.com/openshift/installer/pkg/destroy/gcp"
 	_ "github.com/openshift/installer/pkg/destroy/ibmcloud"
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
@@ -22,9 +25,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
 	_ "github.com/openshift/installer/pkg/destroy/powervs"
-	quotaasset "github.com/openshift/installer/pkg/destroy/quota"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
-	"github.com/openshift/installer/pkg/metrics/timer"
 )
 
 func newDestroyCmd() *cobra.Command {

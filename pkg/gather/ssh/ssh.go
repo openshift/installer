@@ -6,14 +6,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/openshift/installer/pkg/lineprinter"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
-
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+
+	"github.com/openshift/installer/pkg/lineprinter"
 )
 
 // NewClient creates a new SSH client which can be used to SSH to address using user and the keys.

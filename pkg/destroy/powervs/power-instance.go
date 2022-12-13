@@ -1,11 +1,12 @@
 package powervs
 
 import (
-	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"math"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (

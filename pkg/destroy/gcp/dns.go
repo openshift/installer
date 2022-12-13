@@ -6,9 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/sets"
-
 	dns "google.golang.org/api/dns/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 type dnsZone struct {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types/ovirt"

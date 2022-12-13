@@ -6,8 +6,8 @@
 
 package tools
 
-import ( // dependency of hack/go-fmt.sh
-	_ "github.com/daixiang0/gci"
+import (
+	_ "github.com/daixiang0/gci" // dependency of hack/go-fmt.sh
 	// used to generate mocks
 	_ "github.com/golang/mock/mockgen"
 	// dependency of hack/go-lint.sh

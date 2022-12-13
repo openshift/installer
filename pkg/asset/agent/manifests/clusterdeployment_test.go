@@ -5,16 +5,17 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	hivev1 "github.com/openshift/hive/apis/hive/v1"
-	hivev1agent "github.com/openshift/hive/apis/hive/v1/agent"
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent"
-	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
+
+	hivev1 "github.com/openshift/hive/apis/hive/v1"
+	hivev1agent "github.com/openshift/hive/apis/hive/v1/agent"
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/mock"
 )
 
 func TestClusterDeployment_Generate(t *testing.T) {

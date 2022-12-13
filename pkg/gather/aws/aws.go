@@ -22,7 +22,6 @@ import (
 	"github.com/openshift/installer/pkg/gather"
 	"github.com/openshift/installer/pkg/gather/providers"
 	"github.com/openshift/installer/pkg/types"
-
 	"github.com/openshift/installer/pkg/version"
 )
 

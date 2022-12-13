@@ -2,15 +2,16 @@ package powervs
 
 import (
 	"fmt"
+	"math"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/IBM/go-sdk-core/v5/core"
 	// https://github.com/IBM/platform-services-go-sdk/blob/v0.18.16/resourcecontrollerv2/resource_controller_v2.go
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"math"
-	"net/http"
-	"strings"
-	"time"
 )
 
 const cosTypeName = "cos instance"

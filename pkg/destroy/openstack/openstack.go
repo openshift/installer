@@ -5,11 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openshift/installer/pkg/destroy/providers"
-	"github.com/openshift/installer/pkg/types"
-	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
-	"github.com/openshift/installer/pkg/types/openstack/validation/networkextensions"
-
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/snapshots"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes"
@@ -37,6 +32,11 @@ import (
 	"github.com/sirupsen/logrus"
 	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	"github.com/openshift/installer/pkg/destroy/providers"
+	"github.com/openshift/installer/pkg/types"
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/types/openstack/validation/networkextensions"
 )
 
 const (

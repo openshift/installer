@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"net"
 
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // ValidatePlatform checks that the specified platform is valid.

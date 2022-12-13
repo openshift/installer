@@ -11,6 +11,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	installconfig_openstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"

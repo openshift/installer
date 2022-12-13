@@ -7,12 +7,12 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"

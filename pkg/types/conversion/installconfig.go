@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	utilsslice "k8s.io/utils/strings/slices"
 
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -15,7 +16,6 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	utilsslice "k8s.io/utils/strings/slices"
 )
 
 // ConvertInstallConfig is modeled after the k8s conversion schemes, which is
