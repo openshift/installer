@@ -23,7 +23,7 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, rhcosVersion string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
 		return nil, fmt.Errorf("non-Azure configuration: %q", configPlatform)
 	}
@@ -50,7 +50,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		if len(azs) > 0 {
 			azIndex = int(idx) % len(azs)
 		}
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities, rhcosVersion)
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities, useImageGallery)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -82,7 +82,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, rhcosVersion string) (*machineapi.AzureMachineProviderSpec, error) {
+func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, useImageGallery bool) (*machineapi.AzureMachineProviderSpec, error) {
 	var az *string
 	if len(mpool.Zones) > 0 && azIdx != nil {
 		az = &mpool.Zones[*azIdx]
@@ -110,15 +110,17 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		image.Offer = mpool.OSImage.Offer
 		image.SKU = mpool.OSImage.SKU
 		image.Version = mpool.OSImage.Version
-	} else {
+	} else if useImageGallery {
 		// image gallery names cannot have dashes
 		galleryName := strings.Replace(clusterID, "-", "_", -1)
 		id := clusterID
 		if hyperVGen == "V2" {
 			id += "-gen2"
 		}
-		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/%s", rg, galleryName, id, rhcosVersion)
+		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/latest", rg, galleryName, id)
 		image.ResourceID = imageID
+	} else {
+		image.ResourceID = fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
 	}
 
 	networkResourceGroup, virtualNetwork, subnet, err := getNetworkInfo(platform, clusterID, role)
@@ -188,9 +190,6 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 
 	if platform.CloudName == azure.StackCloud {
 		spec.AvailabilitySet = fmt.Sprintf("%s-cluster", clusterID)
-
-		// Public Azure has moved to use image galleries, but ASH is still using managed images.
-		spec.Image.ResourceID = fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
 	}
 
 	return spec, nil
