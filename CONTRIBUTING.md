@@ -57,6 +57,13 @@ The coding style suggested by the Golang community is used in installer. See the
 
 Terraform has similar standards, and you can run `terraform fmt` to rewrite Terraform files to the canonical format.
 
+### Import order
+
+The Golang import statements are organized into 4 sections: standard, default, prefix("github.com/openshift"), and blank imports with the [gci tool][gci-tool]. To automatically sort the imports run:
+```sh
+hack/go-fmt.sh .
+```
+
 ## Commit Message Format
 
 We follow a rough convention for commit messages that is designed to answer two
@@ -95,6 +102,7 @@ Some unit tests use mocks that are generated with gomock. If the underlying inte
 hack/go-genmock.sh
 ```
 
+[gci-tool]: https://github.com/daixiang0/gci
 [golang-style]: https://github.com/golang/go/wiki/CodeReviewComments
 [new-issue]: https://github.com/openshift/installer/issues/new
 [podman-install]: https://podman.io/getting-started/installation
