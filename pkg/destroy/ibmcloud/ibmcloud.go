@@ -131,13 +131,17 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}{{
 		{name: "Stop instances", execute: o.stopInstances},
 	}, {
+		// Instances must occur before LB cleanup
 		{name: "Instances", execute: o.destroyInstances},
 		{name: "Disks", execute: o.destroyDisks},
 	}, {
+		// LB's must occur before Subnet cleanup
 		{name: "Load Balancers", execute: o.destroyLoadBalancers},
 	}, {
 		{name: "Subnets", execute: o.destroySubnets},
 	}, {
+		// Public Gateways must occur before FIP's cleanup
+		// Security Groups must occur before VPC cleanup
 		{name: "Images", execute: o.destroyImages},
 		{name: "Public Gateways", execute: o.destroyPublicGateways},
 		{name: "Security Groups", execute: o.destroySecurityGroups},
@@ -147,10 +151,14 @@ func (o *ClusterUninstaller) destroyCluster() error {
 		{name: "Dedicated Hosts", execute: o.destroyDedicatedHosts},
 		{name: "VPCs", execute: o.destroyVPCs},
 	}, {
+		// IAM must occur before COS cleanup
+		{name: "IAM Authorizations", execute: o.destroyIAMAuthorizations},
+	}, {
+		// COS must occur before RG cleanup
 		{name: "Cloud Object Storage Instances", execute: o.destroyCOSInstances},
 		{name: "Dedicated Host Groups", execute: o.destroyDedicatedHostGroups},
+	}, {
 		{name: "DNS Records", execute: o.destroyDNSRecords},
-		{name: "IAM Authorizations", execute: o.destroyIAMAuthorizations},
 		{name: "Resource Groups", execute: o.destroyResourceGroups},
 	}}
 
