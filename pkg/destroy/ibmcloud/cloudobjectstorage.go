@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/pkg/errors"
 )
 
 const cosTypeName = "cos instance"
+
+// Resource ID collected via following command using IBM Cloud CLI:
+// $ ibmcloud catalog service cloud-object-storage --output json | jq -r '.[].id' .
 const cosResourceID = "dff97f5c-bc5e-4455-b470-411c3edbe49c"
 
 // listCOSInstances lists COS service instances
@@ -49,25 +53,82 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 	return cloudResources{}.insert(result...), nil
 }
 
-func (o *ClusterUninstaller) deleteCOSInstance(item cloudResource) error {
-	o.Logger.Debugf("Deleting COS instance %q", item.name)
+func (o *ClusterUninstaller) findReclaimedCOSInstance(item cloudResource) (*resourcecontrollerv2.ResourceInstance, *resourcecontrollerv2.Reclamation) {
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 
-	options := o.controllerSvc.NewDeleteResourceInstanceOptions(item.id)
-	options.SetRecursive(true)
-	details, err := o.controllerSvc.DeleteResourceInstanceWithContext(ctx, options)
+	reclamationOptions := o.controllerSvc.NewListReclamationsOptions()
+	reclamation, response, err := o.controllerSvc.ListReclamationsWithContext(ctx, reclamationOptions)
+	if err != nil {
+		o.Logger.Debugf("Failed listing reclamations: %v, with response: %v", err, response)
+		return nil, nil
+	}
 
-	if err != nil && details != nil && details.StatusCode == http.StatusNotFound {
+	o.Logger.Debugf("Checking reclamations for COS Instance: %s", item.name)
+	for _, reclamation := range reclamation.Resources {
+		getOptions := o.controllerSvc.NewGetResourceInstanceOptions(*reclamation.ResourceInstanceID)
+		cosInstance, _, err := o.controllerSvc.GetResourceInstanceWithContext(ctx, getOptions)
+		if err != nil {
+			o.Logger.Debugf("Failed checking if reclamation is for COS Instance %s: %v", item.name, err)
+			return nil, nil
+		}
+
+		if *cosInstance.Name == item.name {
+			o.Logger.Debugf("Found reclamation for COS Instance %s - %s", item.name, *reclamation.ID)
+			return cosInstance, &reclamation
+		}
+	}
+
+	return nil, nil
+}
+
+func (o *ClusterUninstaller) deleteCOSInstance(item cloudResource) error {
+	o.Logger.Debugf("Deleting COS instance %s", item.name)
+
+	cosInstance, _ := o.findReclaimedCOSInstance(item)
+	if cosInstance != nil {
 		// The resource is gone
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted COS instance %q", item.name)
+		o.Logger.Infof("Deleted COS Instance %s", item.name)
 		return nil
 	}
 
-	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete COS instance %s", item.name)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
+	getOptions := o.controllerSvc.NewGetResourceInstanceOptions(item.id)
+	_, getResponse, err := o.controllerSvc.GetResourceInstanceWithContext(ctx, getOptions)
+	if err != nil {
+		if getResponse != nil && getResponse.StatusCode == http.StatusNotFound {
+			// The resource is gone
+			o.deletePendingItems(item.typeName, []cloudResource{item})
+			o.Logger.Infof("Deleted COS Instance %s", item.name)
+			return nil
+		}
+
+		return errors.Wrapf(err, "Failed to delete COS Instance %s", item.name)
 	}
+
+	deleteOptions := o.controllerSvc.NewDeleteResourceInstanceOptions(item.id)
+	deleteOptions.SetRecursive(true)
+	deleteResponse, err := o.controllerSvc.DeleteResourceInstanceWithContext(ctx, deleteOptions)
+	if err != nil && deleteResponse != nil && deleteResponse.StatusCode != http.StatusNotFound {
+		return errors.Wrapf(err, "Failed to delete COS Instance %s", item.name)
+	}
+
+	cosInstance, reclamation := o.findReclaimedCOSInstance(item)
+	if cosInstance != nil {
+		o.Logger.Infof("Reclaiming COS Instance %s: Reclamation: %s", item.name, *reclamation.ID)
+		reclamationOptions := o.controllerSvc.NewRunReclamationActionOptions(*reclamation.ID, "reclaim")
+		_, _, err := o.controllerSvc.RunReclamationActionWithContext(ctx, reclamationOptions)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to reclaim COS Instance: %s", item.name)
+		}
+		o.Logger.Infof("Deleted COS Instance Reclamation: %s - %s", item.name, *reclamation.ID)
+	}
+
+	o.deletePendingItems(item.typeName, []cloudResource{item})
+	o.Logger.Infof("Deleted COS Instance %s", item.name)
 
 	return nil
 }
@@ -86,7 +147,7 @@ func (o *ClusterUninstaller) destroyCOSInstances() error {
 		if _, ok := found[item.key]; !ok {
 			// This item has finished deletion.
 			o.deletePendingItems(item.typeName, []cloudResource{item})
-			o.Logger.Infof("Deleted COS instance %q", item.name)
+			o.Logger.Infof("Deleted COS instance %s", item.name)
 			continue
 		}
 		err = o.deleteCOSInstance(item)
