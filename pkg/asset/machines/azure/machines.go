@@ -120,7 +120,11 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/latest", rg, galleryName, id)
 		image.ResourceID = imageID
 	} else {
-		image.ResourceID = fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
+		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
+		if hyperVGen == "V2" && platform.CloudName != azure.StackCloud {
+			imageID += "-gen2"
+		}
+		image.ResourceID = imageID
 	}
 
 	networkResourceGroup, virtualNetwork, subnet, err := getNetworkInfo(platform, clusterID, role)
