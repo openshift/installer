@@ -73,7 +73,7 @@ var (
 		name: "PXE-Image",
 		command: &cobra.Command{
 			Use:   "pxe-image",
-			Short: "Generates a PXE bootable image containing all the information needed to deploy a cluster",
+			Short: "Generates PXE bootable images containing all the information needed to deploy a cluster",
 			Args:  cobra.ExactArgs(0),
 		},
 		assets: []asset.WritableAsset{
