@@ -69,7 +69,21 @@ var (
 		},
 	}
 
-	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget}
+	agentPXEImageTarget = target{
+		name: "PXE-Image",
+		command: &cobra.Command{
+			Use:   "pxe-image",
+			Short: "Generates a PXE bootable image containing all the information needed to deploy a cluster",
+			Args:  cobra.ExactArgs(0),
+		},
+		assets: []asset.WritableAsset{
+			&image.AgentPXEImage{},
+			&kubeconfig.AgentAdminClient{},
+			&password.KubeadminPassword{},
+		},
+	}
+
+	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEImageTarget}
 )
 
 func newAgentCreateCmd() *cobra.Command {

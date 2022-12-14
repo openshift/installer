@@ -299,7 +299,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 			logrus.Fatal(err)
 		}
 		switch cmd.Name() {
-		case "cluster", "image":
+		case "cluster", "image", "pxe-image":
 		default:
 			logrus.Infof(logging.LogCreatedFiles(cmd.Name(), rootOpts.dir, targets))
 		}
