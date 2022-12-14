@@ -7,11 +7,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
+	config "github.com/openshift/installer/pkg/asset/agent/agentconfig"
 )
 
 const (
@@ -27,6 +29,7 @@ type AgentPXEFiles struct {
 	imageReader isoeditor.ImageReader
 	cpuArch     string
 	isoPath     string
+	ipxeBaseURL string
 }
 
 var _ asset.WritableAsset = (*AgentPXEFiles)(nil)
@@ -35,6 +38,7 @@ var _ asset.WritableAsset = (*AgentPXEFiles)(nil)
 func (a *AgentPXEFiles) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&Ignition{},
+		&config.AgentConfig{},
 		&BaseIso{},
 	}
 }
@@ -43,6 +47,9 @@ func (a *AgentPXEFiles) Dependencies() []asset.Asset {
 func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	ignition := &Ignition{}
 	dependencies.Get(ignition)
+
+	agentconfig := &config.AgentConfig{}
+	dependencies.Get(agentconfig)
 
 	baseImage := &BaseIso{}
 	dependencies.Get(baseImage)
@@ -76,6 +83,7 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 
 	a.imageReader = custom
 	a.cpuArch = ignition.CPUArch
+	a.ipxeBaseURL = strings.Trim(agentconfig.Config.IPxeBaseURL, "/")
 
 	return nil
 }
@@ -118,6 +126,13 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
+	if a.ipxeBaseURL != "" {
+		err = a.createiPXEScript(a.cpuArch, a.ipxeBaseURL, pxeAssetsFullPath)
+		if err != nil {
+			return err
+		}
+	}
+
 	logrus.Infof("PXE-files created in: %s", pxeAssetsFullPath)
 
 	return nil
@@ -141,7 +156,7 @@ func (a *AgentPXEFiles) Files() []*asset.File {
 	return []*asset.File{}
 }
 
-func (a *AgentPXEFiles) extractPXEFileFromISO(isoPath string, srcfilename string, dstfilename string) error {
+func (a *AgentPXEFiles) extractPXEFileFromISO(isoPath, srcfilename, dstfilename string) error {
 	fileReader, err := isoeditor.GetFileFromISO(isoPath, srcfilename)
 	if err != nil {
 		return err
@@ -166,6 +181,29 @@ func (a *AgentPXEFiles) copy(filepath string, src io.Reader) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (a *AgentPXEFiles) createiPXEScript(cpuArch, ipxeBaseURL, pxeAssetsFullPath string) error {
+	iPXEScriptTemplate := `#!ipxe
+initrd --name initrd %s/%s
+kernel %s/%s initrd=initrd coreos.live.rootfs_url=%s/%s ignition.firstboot ignition.platform.id=metal
+boot
+`
+
+	iPXEScript := fmt.Sprintf(iPXEScriptTemplate, ipxeBaseURL,
+		fmt.Sprintf("agent-%s.%s.img", initrdimg, cpuArch), ipxeBaseURL,
+		fmt.Sprintf("agent-%s", vmlinuz), ipxeBaseURL,
+		fmt.Sprintf("agent-%s.%s", rootfsimg, cpuArch))
+
+	iPXEFile := fmt.Sprintf("agent.%s.ipxe", a.cpuArch)
+
+	err := os.WriteFile(filepath.Join(pxeAssetsFullPath, iPXEFile), []byte(iPXEScript), 0600)
+	if err != nil {
+		return err
+	}
+	logrus.Infof("Created iPXE script %s in %s directory", iPXEFile, pxeAssetsFullPath)
 
 	return nil
 }

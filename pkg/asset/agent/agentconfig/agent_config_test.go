@@ -34,6 +34,7 @@ apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
+ipxeBaseURL: http://user-specified-pxe-infra.com
 hosts:
   - hostname: control-0.example.org
     role: master
@@ -55,7 +56,7 @@ hosts:
       interfaces:`,
 
 			expectedFound:  true,
-			expectedConfig: agentConfig().hosts(defaultAgentHost("control-0.example.org")),
+			expectedConfig: agentConfig().hosts(defaultAgentHost("control-0.example.org")).ipxeBaseURL("http://user-specified-pxe-infra.com"),
 		},
 		{
 			name: "valid-config-multiple-nodes",
@@ -335,6 +336,28 @@ rendezvousIP: not-a-valid-ip`,
 			expectedError: "invalid Agent Config configuration: rendezvousIP: Invalid value: \"not-a-valid-ip\": \"not-a-valid-ip\" is not a valid IP",
 		},
 		{
+			name: "empty-ipxeBaseURL",
+			data: `
+apiVersion: v1alpha1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80`,
+
+			expectedFound:  true,
+			expectedConfig: agentConfig(),
+		},
+		{
+			name: "invalid-ipxeBaseURL",
+			data: `
+apiVersion: v1alpha1
+metadata:
+  name: agent-config-cluster0
+ipxeBaseURL: not-a-valid-url`,
+
+			expectedFound: false,
+			expectedError: "invalid Agent Config configuration: ipxeBaseURL: Invalid value: \"not-a-valid-url\": invalid URI \"not-a-valid-url\" (no scheme)",
+		},
+		{
 			name: "invalid-additionalNTPSourceDomain",
 			data: `
 apiVersion: v1beta1
@@ -492,6 +515,11 @@ func (acb *AgentConfigBuilder) hosts(builders ...*AgentHostBuilder) *AgentConfig
 
 func (acb *AgentConfigBuilder) rendezvousIP(ip string) *AgentConfigBuilder {
 	acb.Config.RendezvousIP = ip
+	return acb
+}
+
+func (acb *AgentConfigBuilder) ipxeBaseURL(url string) *AgentConfigBuilder {
+	acb.Config.IPxeBaseURL = url
 	return acb
 }
 

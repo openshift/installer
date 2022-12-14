@@ -23,9 +23,10 @@ var (
 
 // AgentConfig reads the agent-config.yaml file.
 type AgentConfig struct {
-	File     *asset.File
-	Config   *agent.Config
-	Template string
+	File        *asset.File
+	Config      *agent.Config
+	Template    string
+	IPxeBaseURL string
 }
 
 var _ asset.WritableAsset = (*AgentConfig)(nil)
@@ -58,6 +59,7 @@ metadata:
   namespace: cluster0
 # All fields are optional
 rendezvousIP: your-node0-ip
+ipxeBaseURL: http://user-specified-pxe-infra.com
 additionalNTPSources:
 - 0.rhel.pool.ntp.org
 - 1.rhel.pool.ntp.org
@@ -101,7 +103,7 @@ func (a *AgentConfig) PersistToFile(directory string) error {
 	templatePath := filepath.Join(directory, agentConfigFilename)
 	templateByte := []byte(a.Template)
 
-	err := os.WriteFile(templatePath, templateByte, 0644)
+	err := os.WriteFile(templatePath, templateByte, 0600)
 	if err != nil {
 		return err
 	}
@@ -170,6 +172,10 @@ func (a *AgentConfig) validateAgent() field.ErrorList {
 	}
 
 	if err := a.validateRendevousIPNotWorker(a.Config.RendezvousIP, a.Config.Hosts); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	if err := a.validateIPXEBaseURL(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
@@ -302,6 +308,22 @@ func (a *AgentConfig) validateRendevousIPNotWorker(rendezvousIP string, hosts []
 				}
 			}
 		}
+	}
+	return allErrs
+}
+
+func (a *AgentConfig) validateIPXEBaseURL() field.ErrorList {
+	var allErrs field.ErrorList
+
+	ipxeBaseURL := field.NewPath("ipxeBaseURL")
+
+	// empty PxeBaseURL is fine
+	if a.Config.IPxeBaseURL == "" {
+		return nil
+	}
+
+	if err := validate.URI(a.Config.IPxeBaseURL); err != nil {
+		allErrs = append(allErrs, field.Invalid(ipxeBaseURL, a.Config.IPxeBaseURL, err.Error()))
 	}
 
 	return allErrs

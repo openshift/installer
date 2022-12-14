@@ -84,6 +84,8 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 
 	testscript.Run(t, testscript.Params{
 		Dir: testFolder,
+		// Uncomment below line to help debug the testcases
+		// TestWork: true,
 
 		Setup: func(e *testscript.Env) error {
 			// This is required to allow proper
