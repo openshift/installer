@@ -9,9 +9,10 @@ import (
 	"path/filepath"
 
 	"github.com/diskfs/go-diskfs/filesystem"
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/sirupsen/logrus"
 )
 
 const (
