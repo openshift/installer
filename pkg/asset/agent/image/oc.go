@@ -66,7 +66,6 @@ const (
 
 // Get the CoreOS ISO from the releaseImage
 func (r *release) GetBaseIso(releaseImage, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
-
 	// Get the machine-os-images pullspec from the release and use that to get the CoreOS ISO
 	image, err := r.getImageFromRelease(machineOsImageName, releaseImage, pullSecret, mirrorConfig)
 	if err != nil {
@@ -143,7 +142,6 @@ func (r *release) getImageFromRelease(imageName, releaseImage, pullSecret string
 }
 
 func (r *release) extractFileFromImage(image, file, cacheDir, pullSecret string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
-
 	var cmd string
 	if len(mirrorConfig) > 0 {
 		icspFile, err := getIcspFileFromRegistriesConfig(mirrorConfig)
@@ -168,7 +166,6 @@ func (r *release) extractFileFromImage(image, file, cacheDir, pullSecret string,
 
 // Get hash from rhcos.json
 func getHashFromInstaller(architecture string) (bool, string) {
-
 	// Get hash from metadata in the installer
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
@@ -251,7 +248,6 @@ func (r *release) verifyCacheFile(image, file, pullSecret, architecture string, 
 }
 
 func execute(executer executer.Executer, pullSecret, command string) (string, error) {
-
 	ps, err := executer.TempFile("", "registry-config")
 	if err != nil {
 		return "", err
@@ -281,7 +277,6 @@ func execute(executer executer.Executer, pullSecret, command string) (string, er
 
 // Create a temporary file containing the ImageContentPolicySources
 func getIcspFileFromRegistriesConfig(mirrorConfig []mirror.RegistriesConfig) (string, error) {
-
 	contents, err := getIcspContents(mirrorConfig)
 	if err != nil {
 		return "", err
@@ -308,7 +303,6 @@ func getIcspFileFromRegistriesConfig(mirrorConfig []mirror.RegistriesConfig) (st
 
 // Convert the data in registries.conf into ICSP format
 func getIcspContents(mirrorConfig []mirror.RegistriesConfig) ([]byte, error) {
-
 	icsp := operatorv1alpha1.ImageContentSourcePolicy{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorv1alpha1.SchemeGroupVersion.String(),

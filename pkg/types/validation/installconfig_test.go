@@ -31,6 +31,8 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+const TechPreviewNoUpgrade = "TechPreviewNoUpgrade"
+
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -2058,7 +2060,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
 					ProjectID: "myProject",
 				}
-				c.FeatureSet = "TechPreviewNoUpgrade"
+				c.FeatureSet = TechPreviewNoUpgrade
 
 				return c
 			}(),
@@ -2078,7 +2080,7 @@ func TestValidateInstallConfig(t *testing.T) {
 					ProjectID: "myProject",
 					ID:        "IDShouldNotExist",
 				}
-				c.FeatureSet = "TechPreviewNoUpgrade"
+				c.FeatureSet = TechPreviewNoUpgrade
 
 				return c
 			}(),
@@ -2113,7 +2115,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.GCP.ComputeSubnet = "computeSubnet"
 				c.Platform.GCP.Network = "vpc"
 				c.CredentialsMode = "Passthrough"
-				c.FeatureSet = "TechPreviewNoUpgrade"
+				c.FeatureSet = TechPreviewNoUpgrade
 
 				return c
 			}(),

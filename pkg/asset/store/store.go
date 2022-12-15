@@ -183,7 +183,7 @@ func (s *storeImpl) saveStateFile() error {
 	if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
 		return err
 	}
-	if err := os.WriteFile(path, data, 0o640); err != nil {
+	if err := os.WriteFile(path, data, 0o640); err != nil { //nolint:gosec // no sensitive info
 		return err
 	}
 	return nil

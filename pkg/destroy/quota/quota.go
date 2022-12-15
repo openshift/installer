@@ -24,7 +24,7 @@ func WriteQuota(dir string, quota *types.ClusterQuota) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal quota")
 	}
-	if err := os.WriteFile(path, raw, 0o777); err != nil {
+	if err := os.WriteFile(path, raw, 0o777); err != nil { //nolint:gosec // no sensitive info
 		return errors.Wrap(err, "failed to write quota")
 	}
 	return nil

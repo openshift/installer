@@ -24,7 +24,7 @@ import (
 var (
 	testSSHKey = `|
 	ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain`
-	testSecret = `{"auths":{"cloud.openshift.com":{"auth":"b3BlUTA=","email":"test@redhat.com"}}}`
+	testSecret = `{"auths":{"cloud.openshift.com":{"auth":"b3BlUTA=","email":"test@redhat.com"}}}` //nolint:gosec // not real credentials
 
 	rawNMStateConfig = `
     interfaces:
@@ -56,7 +56,7 @@ var (
         state: up
         mac-address: 52:54:01:aa:aa:a1`
 
-	// config with route but no interface is invalid
+	// config with route but no interface is invalid.
 	invalidRawNMStateConfig = `
     routes:
       config:

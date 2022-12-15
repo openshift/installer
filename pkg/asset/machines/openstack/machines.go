@@ -109,7 +109,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 }
 
 func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool, rootVolumeAZ string) (*machinev1alpha1.OpenstackProviderSpec, error) {
-	var networks []machinev1alpha1.NetworkParam
+	var networks []machinev1alpha1.NetworkParam //nolint:prealloc // declared here for the conditional initialization
 	if platform.MachinesSubnet != "" {
 		networks = []machinev1alpha1.NetworkParam{{
 			Subnets: []machinev1alpha1.SubnetParam{{

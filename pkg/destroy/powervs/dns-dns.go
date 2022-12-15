@@ -33,7 +33,7 @@ func (o *ClusterUninstaller) listDNSRecords() (cloudResources, error) {
 		foundOne       = false
 		perPage  int64 = 20
 		page     int64 = 1
-		moreData bool  = true
+		moreData       = true
 	)
 
 	dnsRecordsOptions := o.dnsRecordsSvc.NewListAllDnsRecordsOptions()
@@ -41,6 +41,11 @@ func (o *ClusterUninstaller) listDNSRecords() (cloudResources, error) {
 	dnsRecordsOptions.Page = &page
 
 	result := []cloudResource{}
+
+	dnsMatcher, err := regexp.Compile(fmt.Sprintf(`.*\Q%s.%s\E$`, o.ClusterName, o.BaseDomain))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build DNS records matcher")
+	}
 
 	for moreData {
 		dnsResources, detailedResponse, err := o.dnsRecordsSvc.ListAllDnsRecordsWithContext(ctx, dnsRecordsOptions)
@@ -50,9 +55,8 @@ func (o *ClusterUninstaller) listDNSRecords() (cloudResources, error) {
 
 		for _, record := range dnsResources.Result {
 			// Match all of the cluster's DNS records
-			exp := fmt.Sprintf(`.*\Q%s.%s\E$`, o.ClusterName, o.BaseDomain)
-			nameMatches, _ := regexp.Match(exp, []byte(*record.Name))
-			contentMatches, _ := regexp.Match(exp, []byte(*record.Content))
+			nameMatches := dnsMatcher.Match([]byte(*record.Name))
+			contentMatches := dnsMatcher.Match([]byte(*record.Content))
 			if nameMatches || contentMatches {
 				foundOne = true
 				o.Logger.Debugf("listDNSRecords: FOUND: %v, %v", *record.ID, *record.Name)

@@ -200,7 +200,6 @@ func (n *NMStateConfig) finish() error {
 }
 
 func (n *NMStateConfig) validateWithNMStateCtl() error {
-
 	level := logrus.GetLevel()
 	logrus.SetLevel(logrus.WarnLevel)
 	staticNetworkConfigGenerator := staticnetworkconfig.New(logrus.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})

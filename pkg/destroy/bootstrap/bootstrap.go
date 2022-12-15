@@ -119,5 +119,5 @@ func copy(from string, to string) error {
 		return err
 	}
 
-	return os.WriteFile(to, data, 0666)
+	return os.WriteFile(to, data, 0o666) //nolint:gosec // state file doesn't need to be 0600
 }

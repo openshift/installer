@@ -89,7 +89,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			tempDir := t.TempDir()
 
 			for name, contents := range tc.files {
-				if err := os.WriteFile(filepath.Join(tempDir, name), []byte(contents), 0666); err != nil {
+				if err := os.WriteFile(filepath.Join(tempDir, name), []byte(contents), 0o666); err != nil { //nolint:gosec // no sensitive data
 					t.Fatalf("could not write the %s file: %v", name, err)
 				}
 			}
