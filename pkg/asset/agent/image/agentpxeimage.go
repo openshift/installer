@@ -8,12 +8,17 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/sirupsen/logrus"
 )
 
-var (
+const (
+	initrdimg = "initrd.img"
+	rootfsimg = "rootfs.img"
+	vmlinuz   = "vmlinuz"
+	tmp       = "/tmp"
 	// pxeAssetsPath is the path where pxe image assets are created.
 	pxeAssetsPath = "pxe"
 )
@@ -41,38 +46,40 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	baseImage := &BaseIso{}
 	dependencies.Get(baseImage)
 
+	isoGetter := newGetIso(GetIsoPluggable)
+	isoPath, err := isoGetter.getter()
+	if err != nil {
+		return err
+	}
+
+	err = a.extractPXEFileFromISOInTmp(isoPath, initrdimg)
+	if err != nil {
+		return err
+	}
+
 	ignitionByte, err := json.Marshal(ignition.Config)
 	if err != nil {
 		return err
 	}
 
 	ignitionContent := &isoeditor.IgnitionContent{Config: ignitionByte}
-
-	isoGetter := newGetIso(GetIsoPluggable)
-	isoPath, err := isoGetter.getter()
-
-	if err != nil {
-		return err
-	}
-
-	workDir, err := GetCacheDir(imageDataType)
-	if err != nil {
-		return err
-	}
-
-	err = isoeditor.Extract(isoPath, workDir)
-	if err != nil {
-		return err
-	}
-
-	irfsPath := filepath.Join(workDir, "images/pxeboot/initrd.img")
-	custom, err := isoeditor.NewInitRamFSStreamReader(irfsPath, ignitionContent)
-
+	filepath := fmt.Sprintf("%s%s", tmp, initrdimg)
+	custom, err := isoeditor.NewInitRamFSStreamReader(filepath, ignitionContent)
 	if err != nil {
 		return err
 	}
 
 	a.imageReader = custom
+
+	err = a.extractPXEFileFromISOInTmp(isoPath, rootfsimg)
+	if err != nil {
+		return err
+	}
+
+	err = a.extractPXEFileFromISOInTmp(isoPath, vmlinuz)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -87,8 +94,6 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 
 	defer a.imageReader.Close()
 
-	agentInitrdFile := filepath.Join(pxeAssetsPath, "agent-initrd.img")
-
 	// Remove symlink if it exists
 	os.RemoveAll(pxeAssetsPath)
 
@@ -97,6 +102,7 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
+	agentInitrdFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s", initrdimg))
 	output, err := os.Create(agentInitrdFile)
 	if err != nil {
 		return err
@@ -108,28 +114,17 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
-	workDir, err := GetCacheDir(imageDataType)
+	err = a.copyFiles(tmp, rootfsimg)
 	if err != nil {
 		return err
 	}
 
-	srcDir := filepath.Join(workDir, "images/pxeboot")
-	err = a.copyFiles(srcDir, "rootfs.img")
-	if err != nil {
-		return err
-	}
-
-	err = a.copyFiles(srcDir, "vmlinuz")
+	err = a.copyFiles(tmp, vmlinuz)
 	if err != nil {
 		return err
 	}
 
 	logrus.Info("Created PXE files in pxe directory")
-
-	os.RemoveAll(filepath.Join(workDir, "coreos"))
-	os.RemoveAll(filepath.Join(workDir, "EFI"))
-	os.RemoveAll(filepath.Join(workDir, "images"))
-	os.RemoveAll(filepath.Join(workDir, "isolinux"))
 
 	return nil
 }
@@ -150,6 +145,37 @@ func (a *AgentPXEFiles) Load(f asset.FileFetcher) (bool, error) {
 func (a *AgentPXEFiles) Files() []*asset.File {
 	// Return empty array because File will never be loaded.
 	return []*asset.File{}
+}
+
+func (a *AgentPXEFiles) extractPXEFileFromISOInTmp(isoPath string, file string) error {
+
+	filepath := fmt.Sprintf("images/pxeboot/%s", file)
+	fileReader, err := isoeditor.GetFileFromISO(isoPath, filepath)
+	if err != nil {
+		return err
+	}
+	defer fileReader.Close()
+
+	filepath = fmt.Sprintf("%s%s", tmp, file)
+	err = a.copyInTmp(filepath, fileReader)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *AgentPXEFiles) copyInTmp(filepath string, fileReader filesystem.File) error {
+	output, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer output.Close()
+
+	_, err = io.Copy(output, fileReader)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *AgentPXEFiles) copyFiles(srcDir string, filename string) error {
