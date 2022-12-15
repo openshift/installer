@@ -37,7 +37,7 @@ func (a *Image) Generate(dependencies asset.Parents) error {
 		}
 		logrus.Debugf("Using internal constant for release image %s", pullSpec)
 	}
-	a.PullSpec = "registry.ci.openshift.org/rhcos-devel/ocp-4.12-9.0:4.12.0-ec.4"
+	a.PullSpec = "registry.ci.openshift.org/rhcos-devel/ocp-4.12-9.0:4.12.0-rc.2"
 
 	ref, err := dockerref.ParseNamed(pullSpec)
 	if err != nil {
