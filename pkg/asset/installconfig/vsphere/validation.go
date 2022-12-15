@@ -3,18 +3,18 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"net"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/vim25"
 	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"

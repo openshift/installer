@@ -13,6 +13,7 @@ import (
 	"github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
@@ -30,7 +31,6 @@ import (
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/version"
-	"github.com/pkg/errors"
 )
 
 const manifestPath = "/etc/assisted/manifests"

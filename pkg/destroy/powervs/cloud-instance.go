@@ -2,13 +2,14 @@ package powervs
 
 import (
 	"context"
+	"math"
+	"strings"
+	"time"
+
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"math"
-	"strings"
-	"time"
 )
 
 const (

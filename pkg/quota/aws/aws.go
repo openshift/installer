@@ -8,9 +8,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/servicequotas"
+	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/quota"
-	"github.com/pkg/errors"
 )
 
 // Load load the quota information for a region. It provides information

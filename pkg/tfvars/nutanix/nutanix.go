@@ -3,9 +3,9 @@ package nutanix
 import (
 	"encoding/json"
 
-	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/pkg/errors"
 
+	machinev1 "github.com/openshift/api/machine/v1"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 )
 

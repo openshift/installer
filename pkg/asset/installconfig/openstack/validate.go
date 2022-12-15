@@ -3,6 +3,7 @@ package openstack
 import (
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
@@ -10,7 +11,6 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/openshift/installer/pkg/types/openstack/validation/networkextensions"
-	"github.com/sirupsen/logrus"
 )
 
 // Validate validates the given installconfig for OpenStack platform

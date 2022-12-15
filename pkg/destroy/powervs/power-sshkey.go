@@ -1,12 +1,13 @@
 package powervs
 
 import (
-	"github.com/IBM-Cloud/power-go-client/power/models"
-	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"math"
 	"strings"
 	"time"
+
+	"github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const powerSSHKeyTypeName = "powerSshKey"

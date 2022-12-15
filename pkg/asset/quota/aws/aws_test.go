@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/openshift/installer/pkg/quota"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/openshift/installer/pkg/quota"
 )
 
 func Test_aggregate(t *testing.T) {

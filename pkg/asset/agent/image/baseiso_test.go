@@ -3,10 +3,11 @@ package image
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestInfraBaseIso_Generate(t *testing.T) {

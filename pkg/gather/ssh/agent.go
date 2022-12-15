@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh/agent"
-
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 )
 

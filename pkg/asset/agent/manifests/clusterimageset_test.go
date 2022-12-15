@@ -6,15 +6,16 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
+
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 func TestClusterImageSet_Generate(t *testing.T) {

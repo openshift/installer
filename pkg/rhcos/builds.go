@@ -12,8 +12,9 @@ import (
 	"net/url"
 
 	"github.com/coreos/stream-metadata-go/stream"
-	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
+
+	"github.com/openshift/installer/data"
 )
 
 // FetchRawCoreOSStream returns the raw stream metadata for the

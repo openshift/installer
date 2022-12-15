@@ -6,10 +6,11 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/openshift/installer/pkg/types/powervs"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/types/powervs"
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.

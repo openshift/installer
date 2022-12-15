@@ -6,14 +6,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ghodss/yaml"
+	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/baremetal/defaults"
-
-	"github.com/ghodss/yaml"
-	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 /*

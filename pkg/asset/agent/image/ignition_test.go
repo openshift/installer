@@ -10,7 +10,10 @@ import (
 	"testing"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/vincent-petithory/dataurl"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
@@ -23,9 +26,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types/agent"
-	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Unable to test Generate because bootstrap.AddStorageFiles

@@ -1,23 +1,23 @@
 package manifests
 
 import (
-	"github.com/openshift/installer/pkg/types"
 	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
-	hivev1 "github.com/openshift/hive/apis/hive/v1"
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/types/baremetal"
-
-	"github.com/openshift/installer/pkg/asset/agent"
-	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
+
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	hivev1 "github.com/openshift/hive/apis/hive/v1"
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/baremetal"
 )
 
 func TestAgentClusterInstall_Generate(t *testing.T) {

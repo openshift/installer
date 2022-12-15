@@ -3,11 +3,11 @@ package gcp
 import (
 	"fmt"
 
-	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
+	"google.golang.org/api/iam/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"google.golang.org/api/iam/v1"
+	"github.com/openshift/installer/pkg/types/gcp"
 )
 
 // listServiceAccounts retrieves all service accounts with a display name prefixed with the cluster's

@@ -6,8 +6,9 @@ import (
 	"strings"
 
 	"github.com/go-yaml/yaml"
-	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	cloudconfig "k8s.io/cloud-provider-vsphere/pkg/common/config"
+
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 const (

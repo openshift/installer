@@ -1,9 +1,9 @@
 package openstack
 
 import (
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	operv1 "github.com/openshift/api/operator/v1"

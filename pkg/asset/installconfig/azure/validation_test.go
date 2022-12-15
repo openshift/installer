@@ -12,12 +12,13 @@ import (
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	"github.com/openshift/installer/pkg/asset/installconfig/azure/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
-	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 type editFunctions []func(ic *types.InstallConfig)

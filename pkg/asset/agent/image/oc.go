@@ -15,14 +15,15 @@ import (
 	"strings"
 	"time"
 
-	operatorv1alpha1 "github.com/openshift/api/operator/v1alpha1"
-	"github.com/openshift/assisted-service/pkg/executer"
-	"github.com/openshift/installer/pkg/asset/agent/mirror"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/sirupsen/logrus"
 	"github.com/thedevsaddam/retry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
+
+	operatorv1alpha1 "github.com/openshift/api/operator/v1alpha1"
+	"github.com/openshift/assisted-service/pkg/executer"
+	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/rhcos"
 )
 
 const (

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/assisted-service/pkg/executer"
 	"github.com/openshift/installer/pkg/asset"
@@ -15,7 +16,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/rhcos"
-	"github.com/sirupsen/logrus"
 )
 
 // BaseIso generates the base ISO file for the image

@@ -5,6 +5,13 @@ import (
 	"net"
 	"testing"
 
+	"github.com/pborman/uuid"
+	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/pointer"
+	utilsslice "k8s.io/utils/strings/slices"
+
 	configv1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -22,12 +29,6 @@ import (
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	"github.com/pborman/uuid"
-	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/pointer"
-	utilsslice "k8s.io/utils/strings/slices"
 )
 
 func validInstallConfig() *types.InstallConfig {

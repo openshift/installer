@@ -5,9 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/sets"
-
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 func (o *ClusterUninstaller) getProjectIAMPolicy() (*resourcemanager.Policy, error) {

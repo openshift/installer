@@ -7,12 +7,11 @@
 package tools
 
 import (
-	// dependency of hack/go-lint.sh
-	_ "golang.org/x/lint"
-
-	// dependency of generating CRD for install-config
-	_ "sigs.k8s.io/controller-tools/cmd/controller-gen"
-
+	_ "github.com/daixiang0/gci" // dependency of hack/go-fmt.sh
 	// used to generate mocks
 	_ "github.com/golang/mock/mockgen"
+	// dependency of hack/go-lint.sh
+	_ "golang.org/x/lint"
+	// dependency of generating CRD for install-config
+	_ "sigs.k8s.io/controller-tools/cmd/controller-gen"
 )

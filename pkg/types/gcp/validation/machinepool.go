@@ -6,10 +6,11 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/gcp"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/gcp"
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.

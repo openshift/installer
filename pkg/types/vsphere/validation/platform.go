@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
-
 	"github.com/openshift/installer/pkg/validate"
 )
 

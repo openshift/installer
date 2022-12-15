@@ -16,7 +16,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/ulikunitz/xz"
-
 	"golang.org/x/sys/unix"
 )
 

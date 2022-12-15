@@ -6,10 +6,11 @@ import (
 	"sort"
 	"time"
 
-	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/pkg/errors"
 	compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
+
+	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 )
 
 // AvailabilityZones retrieves a list of availability zones for the given project and region.

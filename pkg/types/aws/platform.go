@@ -2,6 +2,7 @@ package aws
 
 import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
+
 	configv1 "github.com/openshift/api/config/v1"
 )
 

@@ -4,12 +4,12 @@ package openstack
 import (
 	"sync"
 
-	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
-	"github.com/pkg/errors"
-
 	"github.com/ghodss/yaml"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 var onceLoggers = map[string]*sync.Once{}

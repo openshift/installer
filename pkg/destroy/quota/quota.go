@@ -5,9 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/openshift/installer/pkg/types"
 )
 
 const (

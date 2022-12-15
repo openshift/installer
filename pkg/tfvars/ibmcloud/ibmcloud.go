@@ -3,11 +3,11 @@ package ibmcloud
 import (
 	"encoding/json"
 
-	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
+	"github.com/pkg/errors"
 
+	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/pkg/errors"
 )
 
 // Auth is the collection of credentials that will be used by terrform.

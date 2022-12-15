@@ -7,13 +7,14 @@ import (
 	"strings"
 
 	"github.com/containers/image/pkg/sysregistriesv2"
+	"github.com/pelletier/go-toml"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
-	"github.com/pelletier/go-toml"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 var (

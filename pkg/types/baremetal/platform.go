@@ -1,8 +1,9 @@
 package baremetal
 
 import (
-	"github.com/openshift/installer/pkg/ipnet"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
+	"github.com/openshift/installer/pkg/ipnet"
 )
 
 // BMC stores the information about a baremetal host's management controller.

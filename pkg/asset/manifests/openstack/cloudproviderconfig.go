@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
+
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/types"
 )

@@ -2,13 +2,14 @@ package powervs
 
 import (
 	"fmt"
-	"github.com/IBM/go-sdk-core/v4/core"
-	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"math"
 	"net/http"
 	"regexp"
 	"time"
+
+	"github.com/IBM/go-sdk-core/v4/core"
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
