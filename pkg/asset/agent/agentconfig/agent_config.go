@@ -97,7 +97,7 @@ func (a *AgentConfig) PersistToFile(directory string) error {
 	templatePath := filepath.Join(directory, agentConfigFilename)
 	templateByte := []byte(a.Template)
 
-	err := os.WriteFile(templatePath, templateByte, 0644)
+	err := os.WriteFile(templatePath, templateByte, 0600)
 	if err != nil {
 		return err
 	}
