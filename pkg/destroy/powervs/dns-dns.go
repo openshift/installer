@@ -20,7 +20,8 @@ const (
 func (o *ClusterUninstaller) listDNSRecords() (cloudResources, error) {
 	o.Logger.Debugf("Listing DNS records")
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -102,7 +103,8 @@ func (o *ClusterUninstaller) destroyDNSRecord(item cloudResource) error {
 		err      error
 	)
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -157,7 +159,8 @@ func (o *ClusterUninstaller) destroyDNSRecords() error {
 
 	items := o.insertPendingItems(cisDNSRecordTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

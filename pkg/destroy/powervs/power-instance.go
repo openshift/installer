@@ -89,7 +89,8 @@ func (o *ClusterUninstaller) destroyPowerInstances() error {
 
 	items := o.insertPendingItems(powerInstanceTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

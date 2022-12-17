@@ -20,7 +20,8 @@ func (o *ClusterUninstaller) listJobs() (cloudResources, error) {
 
 	o.Logger.Debugf("Listing jobs")
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -73,7 +74,8 @@ func (o *ClusterUninstaller) deleteJob(item cloudResource) (DeleteJobResult, err
 	var job *models.Job
 	var err error
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -130,7 +132,8 @@ func (o *ClusterUninstaller) destroyJobs() error {
 
 	items := o.insertPendingItems(jobTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

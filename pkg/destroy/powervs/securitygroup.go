@@ -18,7 +18,8 @@ const securityGroupTypeName = "security group"
 func (o *ClusterUninstaller) listSecurityGroups() (cloudResources, error) {
 	o.Logger.Debugf("Listing security groups")
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -65,7 +66,8 @@ func (o *ClusterUninstaller) deleteSecurityGroup(item cloudResource) error {
 	var response *core.DetailedResponse
 	var err error
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -115,7 +117,8 @@ func (o *ClusterUninstaller) destroySecurityGroups() error {
 
 	items := o.insertPendingItems(securityGroupTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

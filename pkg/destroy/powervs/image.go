@@ -16,7 +16,8 @@ const imageTypeName = "image"
 func (o *ClusterUninstaller) listImages() (cloudResources, error) {
 	o.Logger.Debugf("Listing images")
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -60,7 +61,8 @@ func (o *ClusterUninstaller) deleteImage(item cloudResource) error {
 	var img *models.Image
 	var err error
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -110,7 +112,8 @@ func (o *ClusterUninstaller) destroyImages() error {
 		o.Logger.Debugf("destroyImages: firstPassList: %v / %v", item.name, item.id)
 	}
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {

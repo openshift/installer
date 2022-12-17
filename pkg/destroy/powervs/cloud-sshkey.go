@@ -33,7 +33,8 @@ func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 		sshKey           vpcv1.Key
 	)
 
-	ctx, _ = o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -123,7 +124,8 @@ func (o *ClusterUninstaller) deleteCloudSSHKey(item cloudResource) error {
 		err              error
 	)
 
-	ctx, _ = o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	select {
 	case <-ctx.Done():
@@ -168,7 +170,8 @@ func (o *ClusterUninstaller) destroyCloudSSHKeys() error {
 
 	items := o.insertPendingItems(cloudSSHKeyTypeName, firstPassList.list())
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	for _, item := range items {
 		select {
