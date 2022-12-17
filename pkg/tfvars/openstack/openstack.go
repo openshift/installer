@@ -303,7 +303,6 @@ func isOctaviaSupported(serviceCatalog *tokens.ServiceCatalog) (bool, error) {
 //     parse the token and extract the service catalog: (ExtractServiceCatalog())
 //  2. In getGlancePublicURL we iterate through the catalog and find "public" endpoint for "image".
 func getBootstrapShim(cloud string, infraID string, serviceCatalog *tokens.ServiceCatalog, proxy *types.Proxy, bootstrapIgn string, userCA string) (string, error) {
-
 	clientConfigCloud, err := clientconfig.GetCloudFromYAML(openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return "", err

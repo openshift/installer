@@ -413,7 +413,7 @@ func (o *ClusterUninstaller) executeStageFunction(f struct {
 func (o *ClusterUninstaller) loadSDKServices() error {
 	var (
 		bxSession             *bxsession.Session
-		tokenProviderEndpoint string = "https://iam.cloud.ibm.com"
+		tokenProviderEndpoint = "https://iam.cloud.ibm.com" //nolint:gosec // not a credential despite `token` in its name
 		tokenRefresher        *authentication.IAMAuthRepository
 		err                   error
 		ctrlv2                controllerv2.ResourceControllerAPIV2

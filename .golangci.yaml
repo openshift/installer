@@ -1,14 +1,14 @@
 run:
-  timeout: 10m
+  timeout: 20m
   skip-dirs:
-  - ^bin/
-  - ^data/data/
-  - ^docs/
-  - ^hack/
-  - ^images/
-  - ^scripts/
-  - ^terraform/
-  - ^upi/
+  - ^bin
+  - ^data/data
+  - ^docs
+  - ^hack
+  - ^images
+  - ^scripts
+  - ^terraform
+  - ^upi
   go: '1.18'
   modules-download-mode: vendor
 output:

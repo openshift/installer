@@ -84,7 +84,7 @@ func (a *AgentImage) PersistToFile(directory string) error {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(directory, "rendezvousIP"), []byte(a.rendezvousIP), 0644)
+	err = os.WriteFile(filepath.Join(directory, "rendezvousIP"), []byte(a.rendezvousIP), 0o644) //nolint:gosec // no sensitive info
 	if err != nil {
 		return err
 	}

@@ -17,7 +17,7 @@ import (
 const cosTypeName = "cos instance"
 
 // $ ibmcloud catalog service cloud-object-storage --output json | jq -r '.[].id'
-// dff97f5c-bc5e-4455-b470-411c3edbe49c
+// dff97f5c-bc5e-4455-b470-411c3edbe49c.
 const cosResourceID = "dff97f5c-bc5e-4455-b470-411c3edbe49c"
 
 // listCOSInstances lists COS service instances.

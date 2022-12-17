@@ -1049,7 +1049,7 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 	// header to `application/json`. If `Full` is not true, Gophercloud
 	// sets `Accept: text/plain`, to which some objectstorage instances may
 	// respond with an HTTP status code of 204 in case there are no
-	// occurrencies to list. Some, but not all, of these objectstorage
+	// occurrences to list. Some, but not all, of these objectstorage
 	// instances omit the `content-type` header from their 204 responses.
 	// While being perfectly correct, this case is mishandled by the
 	// currently vendored version of Gophercloud. On the other hand, the

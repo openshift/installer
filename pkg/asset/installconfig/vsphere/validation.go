@@ -474,7 +474,7 @@ func ensureLoadBalancerDNS(installConfig *types.InstallConfig, fldPath *field.Pa
 	}, 2*time.Second, tcpContext.Done())
 
 	err := tcpContext.Err()
-	if err != nil && err != context.Canceled {
+	if err != nil && !errors.Is(err, context.Canceled) {
 		if lastErr != nil {
 			logrus.Warnf("Installation may fail, load balancer not available: %v", lastErr)
 		}

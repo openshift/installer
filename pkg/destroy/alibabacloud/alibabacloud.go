@@ -272,7 +272,7 @@ func (o *ClusterUninstaller) findResources() (err error) {
 		var deletedResources []ResourceArn
 		convertedResources := make(map[string]bool)
 		for _, resource := range tagResources {
-			var resourceArn string = resource.ResourceARN
+			resourceArn := resource.ResourceARN
 			if convertedResources[resourceArn] {
 				continue
 			}

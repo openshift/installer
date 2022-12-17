@@ -48,7 +48,7 @@ func TestFetchByName(t *testing.T) {
 			tempDir := t.TempDir()
 
 			for filename, data := range tt.files {
-				err := os.WriteFile(filepath.Join(tempDir, filename), data, 0666)
+				err := os.WriteFile(filepath.Join(tempDir, filename), data, 0o666) //nolint:gosec // no sensitive data
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -96,7 +96,7 @@ func TestFetchByPattern(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		err := os.WriteFile(filepath.Join(tempDir, path), data, 0666)
+		err := os.WriteFile(filepath.Join(tempDir, path), data, 0o666) //nolint:gosec // no sensitive data
 		if err != nil {
 			t.Fatal(err)
 		}

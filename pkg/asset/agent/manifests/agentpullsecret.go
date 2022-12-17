@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	pullSecretKey       = ".dockerconfigjson"
+	pullSecretKey       = ".dockerconfigjson" //nolint:gosec // not a secret despite the word
 	agentPullSecretName = "pull-secret"
 )
 
@@ -47,7 +47,6 @@ func (*AgentPullSecret) Dependencies() []asset.Asset {
 
 // Generate generates the AgentPullSecret manifest.
 func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
-
 	installConfig := &agent.OptionalInstallConfig{}
 	dependencies.Get(installConfig)
 
@@ -104,7 +103,6 @@ func (a *AgentPullSecret) Load(f asset.FileFetcher) (bool, error) {
 }
 
 func (a *AgentPullSecret) finish() error {
-
 	if a.Config == nil {
 		return errors.New("missing configuration or manifest file")
 	}
@@ -158,7 +156,6 @@ func (a *AgentPullSecret) validatePullSecret() field.ErrorList {
 }
 
 func (a *AgentPullSecret) validateSecretIsNotEmpty() field.ErrorList {
-
 	var allErrs field.ErrorList
 
 	fieldPath := field.NewPath("StringData")

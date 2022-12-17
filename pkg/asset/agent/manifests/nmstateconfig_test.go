@@ -18,7 +18,6 @@ import (
 )
 
 func TestNMStateConfig_Generate(t *testing.T) {
-
 	cases := []struct {
 		name               string
 		dependencies       []asset.Asset
@@ -72,7 +71,6 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "valid config",
 			dependencies: []asset.Asset{
-
 				getValidAgentConfig(),
 				getValidOptionalInstallConfig(),
 			},
@@ -164,7 +162,6 @@ func TestNMStateConfig_Generate(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-
 			parents := asset.Parents{}
 			parents.Add(tc.dependencies...)
 
@@ -180,12 +177,13 @@ func TestNMStateConfig_Generate(t *testing.T) {
 				}
 			}
 
-			if tc.expectedError != "" {
+			switch {
+			case tc.expectedError != "":
 				assert.ErrorContains(t, err, tc.expectedError)
-			} else if len(tc.expectedConfig) == 0 {
+			case len(tc.expectedConfig) == 0:
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedConfig, asset.Config)
-			} else {
+			default:
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedConfig, asset.Config)
 				assert.NotEmpty(t, asset.Files())
@@ -201,18 +199,14 @@ func TestNMStateConfig_Generate(t *testing.T) {
 
 				for i := range tc.expectedConfig {
 					assert.Equal(t, *tc.expectedConfig[i], yamlList[i])
-
 				}
 				assert.Equal(t, len(tc.expectedConfig), len(asset.StaticNetworkConfig))
 			}
-
 		})
 	}
-
 }
 
 func TestNMStateConfig_LoadedFromDisk(t *testing.T) {
-
 	cases := []struct {
 		name               string
 		data               string

@@ -4,8 +4,8 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,6 +17,7 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/pkg/diff"
 	"github.com/rogpeppe/go-internal/testscript"
+	"github.com/stretchr/testify/assert"
 	"github.com/vincent-petithory/dataurl"
 )
 
@@ -28,6 +29,7 @@ import (
 // rooted at rootPath. Folders that do not contain a test file (.txt or .txtar)
 // are ignored.
 func runAllIntegrationTests(t *testing.T, rootPath string) {
+	t.Helper()
 	suites := []string{}
 
 	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
@@ -35,7 +37,7 @@ func runAllIntegrationTests(t *testing.T, rootPath string) {
 			return err
 		}
 		if d.IsDir() {
-			files, err := ioutil.ReadDir(path)
+			files, err := os.ReadDir(path)
 			if err != nil {
 				return err
 			}
@@ -69,13 +71,16 @@ func generateTestName(path string) string {
 }
 
 func runIntegrationTest(t *testing.T, testFolder string) {
+	t.Helper()
 
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	projectDir, _ := os.Getwd()
-	homeDir, _ := os.UserHomeDir()
+	projectDir, err := os.Getwd()
+	assert.NoError(t, err)
+	homeDir, err := os.UserHomeDir()
+	assert.NoError(t, err)
 
 	testscript.Run(t, testscript.Params{
 		Dir: testFolder,
@@ -105,7 +110,7 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 
 // [!] isoCmp `isoPath` `isoFile` `expectedFile` check that the content of the file
 // `isoFile` - extracted from the ISO embedded ignition configuration file referenced
-// by `isoPath` - matches the content of the local file `expectedFile`
+// by `isoPath` - matches the content of the local file `expectedFile`.
 func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 3 {
 		ts.Fatalf("usage: isocmp isoPath file1 file2")
@@ -119,7 +124,7 @@ func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Check(err)
 
 	eFilePathAbs := filepath.Join(workDir, eFilePath)
-	eData, err := ioutil.ReadFile(eFilePathAbs)
+	eData, err := os.ReadFile(eFilePathAbs)
 	ts.Check(err)
 
 	aText := string(aData)
@@ -193,7 +198,7 @@ func readIgnitionFromISO(isoPath string) (*igntypes.Config, error) {
 		return nil, err
 	}
 
-	rawContent, err := ioutil.ReadAll(cpioReader)
+	rawContent, err := io.ReadAll(cpioReader)
 	if err != nil {
 		return nil, err
 	}
