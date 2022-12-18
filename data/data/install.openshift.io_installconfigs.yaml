@@ -74,6 +74,7 @@ spec:
                   - Insights
                   - Storage
                   - CSISnapshot
+                  - NodeTuning
                   type: string
                 type: array
               baselineCapabilitySet:
@@ -84,6 +85,7 @@ spec:
                 - None
                 - v4.11
                 - v4.12
+                - v4.13
                 - vCurrent
                 type: string
             type: object
@@ -391,6 +393,17 @@ spec:
                           required:
                           - DiskSizeGB
                           type: object
+                        secureBoot:
+                          description: SecureBoot Defines whether the instance should
+                            have secure boot enabled. secure boot Verify the digital
+                            signature of all boot components, and halt the boot process
+                            if signature verification fails. If omitted, the platform
+                            chooses a default, which is subject to change over time,
+                            currently that default is false.
+                          enum:
+                          - Enabled
+                          - Disabled
+                          type: string
                         tags:
                           description: Tags defines a set of network tags which will
                             be added to instances in the machineset
@@ -1038,6 +1051,17 @@ spec:
                         required:
                         - DiskSizeGB
                         type: object
+                      secureBoot:
+                        description: SecureBoot Defines whether the instance should
+                          have secure boot enabled. secure boot Verify the digital
+                          signature of all boot components, and halt the boot process
+                          if signature verification fails. If omitted, the platform
+                          chooses a default, which is subject to change over time,
+                          currently that default is false.
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
                       tags:
                         description: Tags defines a set of network tags which will
                           be added to instances in the machineset
@@ -2264,6 +2288,17 @@ spec:
                         required:
                         - DiskSizeGB
                         type: object
+                      secureBoot:
+                        description: SecureBoot Defines whether the instance should
+                          have secure boot enabled. secure boot Verify the digital
+                          signature of all boot components, and halt the boot process
+                          if signature verification fails. If omitted, the platform
+                          chooses a default, which is subject to change over time,
+                          currently that default is false.
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
                       tags:
                         description: Tags defines a set of network tags which will
                           be added to instances in the machineset
