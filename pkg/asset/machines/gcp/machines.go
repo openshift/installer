@@ -172,7 +172,10 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			return nil, errors.New("could not find google service account")
 		}
 	}
-
+	shieldedInstanceConfig := machineapi.GCPShieldedInstanceConfig{}
+	if mpool.SecureBoot == string(machineapi.SecureBootPolicyEnabled) {
+		shieldedInstanceConfig.SecureBoot = machineapi.SecureBootPolicyEnabled
+	}
 	return &machineapi.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -197,11 +200,12 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Email:  instanceServiceAccount,
 			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
 		}},
-		Tags:        append(mpool.Tags, []string{fmt.Sprintf("%s-%s", clusterID, role)}...),
-		MachineType: mpool.InstanceType,
-		Region:      platform.Region,
-		Zone:        az,
-		ProjectID:   platform.ProjectID,
+		Tags:                   append(mpool.Tags, []string{fmt.Sprintf("%s-%s", clusterID, role)}...),
+		MachineType:            mpool.InstanceType,
+		Region:                 platform.Region,
+		Zone:                   az,
+		ProjectID:              platform.ProjectID,
+		ShieldedInstanceConfig: shieldedInstanceConfig,
 	}, nil
 }
 
