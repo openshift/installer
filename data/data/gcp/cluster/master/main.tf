@@ -61,6 +61,15 @@ resource "google_compute_instance" "master" {
     kms_key_self_link = var.root_volume_kms_key_link
   }
 
+
+  dynamic "shielded_instance_config" {
+    for_each = var.secure_boot != "" ? [1] : []
+
+    content {
+      enable_secure_boot = var.secure_boot == "Enabled"
+    }
+  }
+
   network_interface {
     subnetwork = var.subnet
   }

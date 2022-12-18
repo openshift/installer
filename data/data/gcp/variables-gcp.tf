@@ -163,3 +163,9 @@ variable "gcp_private_zone_project" {
   default = ""
   description = "Project where the private managed zone will exist."
 }
+
+variable "gcp_master_secure_boot" {
+  type = string
+  description = "Verify the digital signature of all boot components."
+  default = ""
+}

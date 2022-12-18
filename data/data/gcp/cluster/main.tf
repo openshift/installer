@@ -32,6 +32,7 @@ module "master" {
   ignition        = var.ignition_master
   subnet          = module.network.master_subnet
   zones           = distinct(var.gcp_master_availability_zones)
+  secure_boot     = var.gcp_master_secure_boot
 
   root_volume_size = var.gcp_master_root_volume_size
   root_volume_type = var.gcp_master_root_volume_type
