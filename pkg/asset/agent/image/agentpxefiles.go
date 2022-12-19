@@ -169,7 +169,6 @@ func (a *AgentPXEFiles) extractPXEFileFromISO(isoPath string, srcfilename string
 		return err
 	}
 	return nil
-
 }
 
 func (a *AgentPXEFiles) copy(filepath string, fileReader filesystem.File) error {
