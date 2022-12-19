@@ -83,7 +83,7 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-// PersistToFile writes the PXE assets in the assets folder named pxe
+// PersistToFile writes the PXE assets in the assets folder named pxe.
 func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	// If the imageReader is not set then it means that either one of the AgentPXEFiles
 	// dependencies or the asset itself failed for some reason
