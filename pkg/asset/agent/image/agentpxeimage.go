@@ -52,35 +52,14 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	tmpdir, err := os.MkdirTemp("", "pxe")
+	tmpdir, err := os.MkdirTemp("", pxeAssetsPath)
 	if err != nil {
 		return err
 	}
 	defer os.RemoveAll(tmpdir)
 
-	os.RemoveAll(pxeAssetsPath)
-
-	err = os.Mkdir(pxeAssetsPath, 0644)
-	if err != nil {
-		return err
-	}
-
 	srcfilename := fmt.Sprintf("images/pxeboot/%s", initrdimg)
 	dstfilename := filepath.Join(tmpdir, initrdimg)
-	err = a.extractPXEFileFromISO(isoPath, srcfilename, dstfilename)
-	if err != nil {
-		return err
-	}
-
-	srcfilename = fmt.Sprintf("images/pxeboot/%s", rootfsimg)
-	dstfilename = filepath.Join(pxeAssetsPath, rootfsimg)
-	err = a.extractPXEFileFromISO(isoPath, srcfilename, dstfilename)
-	if err != nil {
-		return err
-	}
-
-	srcfilename = fmt.Sprintf("images/pxeboot/%s", vmlinuz)
-	dstfilename = filepath.Join(pxeAssetsPath, vmlinuz)
 	err = a.extractPXEFileFromISO(isoPath, srcfilename, dstfilename)
 	if err != nil {
 		return err
@@ -114,6 +93,14 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 
 	defer a.imageReader.Close()
 
+	os.RemoveAll(pxeAssetsPath)
+
+	pxeAssetsPath := filepath.Join(directory, pxeAssetsPath)
+	err := os.Mkdir(pxeAssetsPath, 0750)
+	if err != nil {
+		return err
+	}
+
 	agentInitrdFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s", initrdimg))
 	output, err := os.Create(agentInitrdFile)
 	if err != nil {
@@ -122,6 +109,26 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	defer output.Close()
 
 	_, err = io.Copy(output, a.imageReader)
+	if err != nil {
+		return err
+	}
+
+	isoGetter := newGetIso(GetIsoPluggable)
+	isoPath, err := isoGetter.getter()
+	if err != nil {
+		return err
+	}
+
+	srcfilename := fmt.Sprintf("images/pxeboot/%s", rootfsimg)
+	agentRootfsimgFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s", rootfsimg))
+	err = a.extractPXEFileFromISO(isoPath, srcfilename, agentRootfsimgFile)
+	if err != nil {
+		return err
+	}
+
+	srcfilename = fmt.Sprintf("images/pxeboot/%s", vmlinuz)
+	agentVmlinuzFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s", vmlinuz))
+	err = a.extractPXEFileFromISO(isoPath, srcfilename, agentVmlinuzFile)
 	if err != nil {
 		return err
 	}
