@@ -157,7 +157,6 @@ func (a *AgentPXEFiles) Files() []*asset.File {
 }
 
 func (a *AgentPXEFiles) extractPXEFileFromISO(isoPath string, srcfilename string, dstfilename string) error {
-
 	fileReader, err := isoeditor.GetFileFromISO(isoPath, srcfilename)
 	if err != nil {
 		return err
