@@ -4,9 +4,9 @@ exec openshift-install agent create pxe-files --dir $WORK
 
 stderr 'The rendezvous host IP \(node0 IP\) is 192.168.111.20'
 
-exists $WORK/pxe/agent-initrd.img
-exists $WORK/pxe/agent-rootfs.img
-exists $WORK/pxe/agent-vmlinuz
+exists $WORK/pxe/agent-initrd.x86_64.img
+exists $WORK/pxe/agent-rootfs.x86_64.img
+exists $WORK/pxe/agent-vmlinuz.x86_64
 exists $WORK/auth/kubeconfig
 exists $WORK/auth/kubeadmin-password
 

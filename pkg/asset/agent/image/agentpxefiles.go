@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	initrdimg = "initrd.img"
-	rootfsimg = "rootfs.img"
+	initrdimg = "initrd"
+	rootfsimg = "rootfs"
 	vmlinuz   = "vmlinuz"
 	// pxeAssetsPath is the path where pxe files are created.
 	pxeAssetsPath = "pxe"
@@ -26,6 +26,7 @@ const (
 // AgentPXEFiles is an asset that generates the bootable image used to install clusters.
 type AgentPXEFiles struct {
 	imageReader isoeditor.ImageReader
+	cpuArch     string
 }
 
 var _ asset.WritableAsset = (*AgentPXEFiles)(nil)
@@ -58,8 +59,8 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	}
 	defer os.RemoveAll(tmpdir)
 
-	srcfilename := fmt.Sprintf("images/pxeboot/%s", initrdimg)
-	dstfilename := filepath.Join(tmpdir, initrdimg)
+	srcfilename := fmt.Sprintf("images/pxeboot/%s.img", initrdimg)
+	dstfilename := filepath.Join(tmpdir, fmt.Sprintf("%s.img", initrdimg))
 	err = a.extractPXEFileFromISO(isoPath, srcfilename, dstfilename)
 	if err != nil {
 		return err
@@ -72,13 +73,14 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 
 	ignitionContent := &isoeditor.IgnitionContent{Config: ignitionByte}
 
-	fname := filepath.Join(tmpdir, initrdimg)
+	fname := filepath.Join(tmpdir, fmt.Sprintf("%s.img", initrdimg))
 	custom, err := isoeditor.NewInitRamFSStreamReader(fname, ignitionContent)
 	if err != nil {
 		return err
 	}
 
 	a.imageReader = custom
+	a.cpuArch = ignition.CPUArch
 
 	return nil
 }
@@ -101,7 +103,7 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
-	agentInitrdFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s", initrdimg))
+	agentInitrdFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s.%s.img", initrdimg, a.cpuArch))
 	output, err := os.Create(agentInitrdFile)
 	if err != nil {
 		return err
@@ -119,21 +121,21 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
-	srcfilename := fmt.Sprintf("images/pxeboot/%s", rootfsimg)
-	agentRootfsimgFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s", rootfsimg))
+	srcfilename := fmt.Sprintf("images/pxeboot/%s.img", rootfsimg)
+	agentRootfsimgFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s.%s.img", rootfsimg, a.cpuArch))
 	err = a.extractPXEFileFromISO(isoPath, srcfilename, agentRootfsimgFile)
 	if err != nil {
 		return err
 	}
 
 	srcfilename = fmt.Sprintf("images/pxeboot/%s", vmlinuz)
-	agentVmlinuzFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s", vmlinuz))
+	agentVmlinuzFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s.%s", vmlinuz, a.cpuArch))
 	err = a.extractPXEFileFromISO(isoPath, srcfilename, agentVmlinuzFile)
 	if err != nil {
 		return err
 	}
 
-	logrus.Info("Created PXE files in pxe directory")
+	logrus.Infof("Created PXE files in %s directory", pxeAssetsPath)
 
 	return nil
 }
