@@ -19,8 +19,7 @@ const (
 	initrdimg = "initrd.img"
 	rootfsimg = "rootfs.img"
 	vmlinuz   = "vmlinuz"
-	tmp       = "/tmp"
-	// pxeAssetsPath is the path where pxe image assets are created.
+	// pxeAssetsPath is the path where pxe files are created.
 	pxeAssetsPath = "pxe"
 )
 
@@ -53,7 +52,36 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	err = a.extractPXEFileFromISOInTmp(isoPath, initrdimg)
+	tmpdir, err := os.MkdirTemp("", "pxe")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmpdir)
+
+	os.RemoveAll(pxeAssetsPath)
+
+	err = os.Mkdir(pxeAssetsPath, 0644)
+	if err != nil {
+		return err
+	}
+
+	srcfilename := fmt.Sprintf("images/pxeboot/%s", initrdimg)
+	dstfilename := filepath.Join(tmpdir, initrdimg)
+	err = a.extractPXEFileFromISO(isoPath, srcfilename, dstfilename)
+	if err != nil {
+		return err
+	}
+
+	srcfilename = fmt.Sprintf("images/pxeboot/%s", rootfsimg)
+	dstfilename = filepath.Join(pxeAssetsPath, rootfsimg)
+	err = a.extractPXEFileFromISO(isoPath, srcfilename, dstfilename)
+	if err != nil {
+		return err
+	}
+
+	srcfilename = fmt.Sprintf("images/pxeboot/%s", vmlinuz)
+	dstfilename = filepath.Join(pxeAssetsPath, vmlinuz)
+	err = a.extractPXEFileFromISO(isoPath, srcfilename, dstfilename)
 	if err != nil {
 		return err
 	}
@@ -64,23 +92,14 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	}
 
 	ignitionContent := &isoeditor.IgnitionContent{Config: ignitionByte}
-	filepath := fmt.Sprintf("%s%s", tmp, initrdimg)
-	custom, err := isoeditor.NewInitRamFSStreamReader(filepath, ignitionContent)
+
+	fname := filepath.Join(tmpdir, initrdimg)
+	custom, err := isoeditor.NewInitRamFSStreamReader(fname, ignitionContent)
 	if err != nil {
 		return err
 	}
 
 	a.imageReader = custom
-
-	err = a.extractPXEFileFromISOInTmp(isoPath, rootfsimg)
-	if err != nil {
-		return err
-	}
-
-	err = a.extractPXEFileFromISOInTmp(isoPath, vmlinuz)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -95,14 +114,6 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 
 	defer a.imageReader.Close()
 
-	// Remove symlink if it exists
-	os.RemoveAll(pxeAssetsPath)
-
-	err := os.Mkdir(pxeAssetsPath, 0644)
-	if err != nil {
-		return err
-	}
-
 	agentInitrdFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s", initrdimg))
 	output, err := os.Create(agentInitrdFile)
 	if err != nil {
@@ -115,16 +126,6 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
-	err = a.copyFiles(tmp, rootfsimg)
-	if err != nil {
-		return err
-	}
-
-	err = a.copyFiles(tmp, vmlinuz)
-	if err != nil {
-		return err
-	}
-
 	logrus.Info("Created PXE files in pxe directory")
 
 	return nil
@@ -132,7 +133,7 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 
 // Name returns the human-friendly name of the asset.
 func (a *AgentPXEFiles) Name() string {
-	return "Agent Installer PXE Image"
+	return "Agent Installer PXE Files"
 }
 
 // Load returns the PXE image from disk.
@@ -148,24 +149,23 @@ func (a *AgentPXEFiles) Files() []*asset.File {
 	return []*asset.File{}
 }
 
-func (a *AgentPXEFiles) extractPXEFileFromISOInTmp(isoPath string, file string) error {
+func (a *AgentPXEFiles) extractPXEFileFromISO(isoPath string, srcfilename string, dstfilename string) error {
 
-	filepath := fmt.Sprintf("images/pxeboot/%s", file)
-	fileReader, err := isoeditor.GetFileFromISO(isoPath, filepath)
+	fileReader, err := isoeditor.GetFileFromISO(isoPath, srcfilename)
 	if err != nil {
 		return err
 	}
 	defer fileReader.Close()
 
-	filepath = fmt.Sprintf("%s%s", tmp, file)
-	err = a.copyInTmp(filepath, fileReader)
+	err = a.copy(dstfilename, fileReader)
 	if err != nil {
 		return err
 	}
 	return nil
+
 }
 
-func (a *AgentPXEFiles) copyInTmp(filepath string, fileReader filesystem.File) error {
+func (a *AgentPXEFiles) copy(filepath string, fileReader filesystem.File) error {
 	output, err := os.Create(filepath)
 	if err != nil {
 		return err
@@ -173,26 +173,6 @@ func (a *AgentPXEFiles) copyInTmp(filepath string, fileReader filesystem.File) e
 	defer output.Close()
 
 	_, err = io.Copy(output, fileReader)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *AgentPXEFiles) copyFiles(srcDir string, filename string) error {
-	sourceFile, err := os.Open(filepath.Join(srcDir, filename))
-	if err != nil {
-		return err
-	}
-	defer sourceFile.Close()
-
-	destinationFile, err := os.Create(filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s", filename)))
-	if err != nil {
-		return err
-	}
-	defer destinationFile.Close()
-
-	_, err = io.Copy(destinationFile, sourceFile)
 	if err != nil {
 		return err
 	}
