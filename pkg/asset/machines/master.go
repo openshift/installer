@@ -138,7 +138,6 @@ func (m *Master) Dependencies() []asset.Asset {
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
-		new(rhcos.Release),
 		&machine.Master{},
 	}
 }
@@ -149,9 +148,8 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
-	rhcosRelease := new(rhcos.Release)
 	mign := &machine.Master{}
-	dependencies.Get(clusterID, installConfig, rhcosImage, rhcosRelease, mign)
+	dependencies.Get(clusterID, installConfig, rhcosImage, mign)
 
 	masterUserDataSecretName := "master-user-data"
 
@@ -370,8 +368,9 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		useImageGallery := installConfig.Azure.CloudName != azuretypes.StackCloud
 
-		machines, err = azure.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName, capabilities, rhcosRelease.GetAzureReleaseVersion())
+		machines, err = azure.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName, capabilities, useImageGallery)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
