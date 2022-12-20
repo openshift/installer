@@ -1,16 +1,5 @@
 package gcp
 
-// CreateFirewallRules specifies if the installer should create firewall rules.
-// +kubebuilder:validation:Enum="Enabled";"Disabled"
-type CreateFirewallRules string
-
-const (
-	// CreateFirewallRulesEnabled is Enabled
-	CreateFirewallRulesEnabled CreateFirewallRules = "Enabled"
-	// CreateFirewallRulesDisabled is Disabled
-	CreateFirewallRulesDisabled CreateFirewallRules = "Disabled"
-)
-
 // DNSZone stores the information common and required to create DNS zones including
 // the project and id/name of the zone.
 type DNSZone struct {
@@ -34,12 +23,6 @@ type Platform struct {
 
 	// Region specifies the GCP region where the cluster will be created.
 	Region string `json:"region"`
-
-	// CreateFirewallRules is currently TechPreview.
-	// CreateFirewallRules specifies if the installer should create the
-	// cluster firewall rules in the gcp cloud network.
-	// +optional
-	CreateFirewallRules CreateFirewallRules `json:"createFirewallRules,omitempty"`
 
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on GCP for machine pools which do not define their own

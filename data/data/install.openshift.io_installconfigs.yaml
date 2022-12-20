@@ -2201,14 +2201,6 @@ spec:
                       control plane will be deployed. The value should be the name
                       of the subnet.
                     type: string
-                  createFirewallRules:
-                    description: CreateFirewallRules is currently TechPreview. CreateFirewallRules
-                      specifies if the installer should create the cluster firewall
-                      rules in the gcp cloud network.
-                    enum:
-                    - Enabled
-                    - Disabled
-                    type: string
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on GCP for machine pools which do not define

@@ -66,6 +66,10 @@ import (
 )
 
 const (
+	// GCPFirewallPermission is the role/permission to create or skip the creation of
+	// firewall rules for GCP during an xpn installation.
+	GCPFirewallPermission = "compute.firewalls.create"
+
 	// TfVarsFileName is the filename for Terraform variables.
 	TfVarsFileName = "terraform.tfvars.json"
 
@@ -407,6 +411,22 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			ServiceAccount:   string(sess.Credentials.JSON),
 		}
 
+		// In the case of a shared vpn, the firewall rules should only be created if the user has permissions to do so
+		createFirewallRules := true
+		if installConfig.Config.GCP.NetworkProjectID != "" {
+			client, err := gcpconfig.NewClient(context.Background())
+			if err != nil {
+				return err
+			}
+			permissions, err := client.GetProjectPermissions(context.Background(), installConfig.Config.GCP.NetworkProjectID, []string{
+				GCPFirewallPermission,
+			})
+			if err != nil {
+				return err
+			}
+			createFirewallRules = permissions.Has(GCPFirewallPermission)
+		}
+
 		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
@@ -424,11 +444,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec)
 		}
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
-
-		createFirewallRules := true
-		if installConfig.Config.GCP.CreateFirewallRules == gcp.CreateFirewallRulesDisabled {
-			createFirewallRules = false
-		}
 
 		// Setup defaults for public dns zone
 		createPublicZoneRecords := true
