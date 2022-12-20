@@ -20,7 +20,8 @@ import (
 
 // BaseIso generates the base ISO file for the image
 type BaseIso struct {
-	File *asset.File
+	File        *asset.File
+	baseISOPath string
 }
 
 const (
@@ -131,6 +132,7 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 		if err == nil {
 			logrus.Debugf("Extracted base ISO image %s from release payload", baseIsoFileName)
 			i.File = &asset.File{Filename: baseIsoFileName}
+			i.baseISOPath = baseIsoFileName
 			return nil
 		}
 		if !errors.Is(err, &exec.Error{}) { // Already warned about missing oc binary

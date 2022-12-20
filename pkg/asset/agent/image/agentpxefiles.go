@@ -27,6 +27,7 @@ const (
 type AgentPXEFiles struct {
 	imageReader isoeditor.ImageReader
 	cpuArch     string
+	isoPath     string
 }
 
 var _ asset.WritableAsset = (*AgentPXEFiles)(nil)
@@ -47,11 +48,7 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	baseImage := &BaseIso{}
 	dependencies.Get(baseImage)
 
-	isoGetter := newGetIso(GetIsoPluggable)
-	isoPath, err := isoGetter.getter()
-	if err != nil {
-		return err
-	}
+	a.isoPath = baseImage.baseISOPath
 
 	tmpdir, err := os.MkdirTemp("", pxeAssetsPath)
 	if err != nil {
@@ -61,7 +58,7 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 
 	srcfilename := fmt.Sprintf("images/pxeboot/%s.img", initrdimg)
 	dstfilename := filepath.Join(tmpdir, fmt.Sprintf("%s.img", initrdimg))
-	err = a.extractPXEFileFromISO(isoPath, srcfilename, dstfilename)
+	err = a.extractPXEFileFromISO(a.isoPath, srcfilename, dstfilename)
 	if err != nil {
 		return err
 	}
@@ -94,10 +91,10 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	}
 
 	defer a.imageReader.Close()
+	pxeAssetsPath := filepath.Join(directory, pxeAssetsPath)
 
 	os.RemoveAll(pxeAssetsPath)
 
-	pxeAssetsPath := filepath.Join(directory, pxeAssetsPath)
 	err := os.Mkdir(pxeAssetsPath, 0750)
 	if err != nil {
 		return err
@@ -115,22 +112,16 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
-	isoGetter := newGetIso(GetIsoPluggable)
-	isoPath, err := isoGetter.getter()
-	if err != nil {
-		return err
-	}
-
 	srcfilename := fmt.Sprintf("images/pxeboot/%s.img", rootfsimg)
 	agentRootfsimgFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s.%s.img", rootfsimg, a.cpuArch))
-	err = a.extractPXEFileFromISO(isoPath, srcfilename, agentRootfsimgFile)
+	err = a.extractPXEFileFromISO(a.isoPath, srcfilename, agentRootfsimgFile)
 	if err != nil {
 		return err
 	}
 
 	srcfilename = fmt.Sprintf("images/pxeboot/%s", vmlinuz)
 	agentVmlinuzFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s.%s", vmlinuz, a.cpuArch))
-	err = a.extractPXEFileFromISO(isoPath, srcfilename, agentVmlinuzFile)
+	err = a.extractPXEFileFromISO(a.isoPath, srcfilename, agentVmlinuzFile)
 	if err != nil {
 		return err
 	}
