@@ -58,6 +58,17 @@
       "metadata" : {
         "description" : "Size of the Master VM OS disk, in GB"
       }
+    },
+    "hyperVGen": {
+      "type": "string",
+      "metadata": {
+        "description": "VM generation image to use"
+      },
+      "defaultValue": "V2",
+      "allowedValues": [
+        "V1",
+        "V2"
+      ]
     }
   },
   "variables" : {
@@ -71,7 +82,7 @@
     "sshKeyPath" : "/home/core/.ssh/authorized_keys",
     "identityName" : "[concat(parameters('baseName'), '-identity')]",
     "galleryName": "[concat('gallery_', replace(parameters('baseName'), '-', '_'))]",
-    "imageName" : "[parameters('baseName')]",
+    "imageName" : "[concat(parameters('baseName'), if(equals(parameters('hyperVGen'), 'V2'), '-gen2', ''))]",
     "copy" : [
       {
         "name" : "vmNames",

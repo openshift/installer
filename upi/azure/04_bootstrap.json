@@ -36,6 +36,17 @@
       "metadata" : {
         "description" : "The size of the Bootstrap Virtual Machine"
       }
+    },
+    "hyperVGen": {
+      "type": "string",
+      "metadata": {
+        "description": "VM generation image to use"
+      },
+      "defaultValue": "V2",
+      "allowedValues": [
+        "V1",
+        "V2"
+      ]
     }
   },
   "variables" : {
@@ -51,7 +62,7 @@
     "vmName" : "[concat(parameters('baseName'), '-bootstrap')]",
     "nicName" : "[concat(variables('vmName'), '-nic')]",
     "galleryName": "[concat('gallery_', replace(parameters('baseName'), '-', '_'))]",
-    "imageName" : "[parameters('baseName')]",
+    "imageName" : "[concat(parameters('baseName'), if(equals(parameters('hyperVGen'), 'V2'), '-gen2', ''))]",
     "clusterNsgName" : "[concat(if(not(empty(parameters('vnetBaseName'))), parameters('vnetBaseName'), parameters('baseName')), '-nsg')]",
     "sshPublicIpAddressName" : "[concat(variables('vmName'), '-ssh-pip')]"
   },
