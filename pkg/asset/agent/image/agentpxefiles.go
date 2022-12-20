@@ -91,16 +91,16 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	}
 
 	defer a.imageReader.Close()
-	pxeAssetsPath := filepath.Join(directory, pxeAssetsPath)
+	pxeAssetsFullPath := filepath.Join(directory, pxeAssetsPath)
 
-	os.RemoveAll(pxeAssetsPath)
+	os.RemoveAll(pxeAssetsFullPath)
 
-	err := os.Mkdir(pxeAssetsPath, 0750)
+	err := os.Mkdir(pxeAssetsFullPath, 0750)
 	if err != nil {
 		return err
 	}
 
-	agentInitrdFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s.%s.img", initrdimg, a.cpuArch))
+	agentInitrdFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent-%s.%s.img", initrdimg, a.cpuArch))
 	output, err := os.Create(agentInitrdFile)
 	if err != nil {
 		return err
@@ -113,20 +113,20 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	}
 
 	srcfilename := fmt.Sprintf("images/pxeboot/%s.img", rootfsimg)
-	agentRootfsimgFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s.%s.img", rootfsimg, a.cpuArch))
+	agentRootfsimgFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent-%s.%s.img", rootfsimg, a.cpuArch))
 	err = a.extractPXEFileFromISO(a.isoPath, srcfilename, agentRootfsimgFile)
 	if err != nil {
 		return err
 	}
 
 	srcfilename = fmt.Sprintf("images/pxeboot/%s", vmlinuz)
-	agentVmlinuzFile := filepath.Join(pxeAssetsPath, fmt.Sprintf("agent-%s.%s", vmlinuz, a.cpuArch))
+	agentVmlinuzFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent-%s.%s", vmlinuz, a.cpuArch))
 	err = a.extractPXEFileFromISO(a.isoPath, srcfilename, agentVmlinuzFile)
 	if err != nil {
 		return err
 	}
 
-	logrus.Infof("Created PXE files in %s directory", pxeAssetsPath)
+	logrus.Infof("Created PXE files in %s directory", pxeAssetsFullPath)
 
 	return nil
 }
