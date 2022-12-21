@@ -8,11 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
-	"github.com/openshift/assisted-image-service/pkg/overlay"
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -71,8 +69,7 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 
 	ignitionContent := &isoeditor.IgnitionContent{Config: ignitionByte}
 
-	fname := filepath.Join(tmpdir, fmt.Sprintf("%s.img", initrdimg))
-	custom, err := isoeditor.NewInitRamFSStreamReader(fname, ignitionContent)
+	custom, err := isoeditor.NewInitRamFSStreamReader(dstfilename, ignitionContent)
 	if err != nil {
 		return err
 	}
@@ -102,7 +99,7 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	}
 
 	agentInitrdFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent-%s.%s.img", initrdimg, a.cpuArch))
-	err = a.copy(agentInitrdFile, a.imageReader, nil)
+	err = a.copy(agentInitrdFile, a.imageReader)
 	if err != nil {
 		return err
 	}
@@ -121,7 +118,7 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
-	logrus.Infof("Created PXE files in %s directory", pxeAssetsFullPath)
+	logrus.Infof("PXE-files created in: %s", pxeAssetsFullPath)
 
 	return nil
 }
@@ -151,34 +148,24 @@ func (a *AgentPXEFiles) extractPXEFileFromISO(isoPath string, srcfilename string
 	}
 	defer fileReader.Close()
 
-	err = a.copy(dstfilename, nil, fileReader)
+	err = a.copy(dstfilename, fileReader)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *AgentPXEFiles) copy(filepath string, imageReader overlay.OverlayReader, fileReader filesystem.File) error {
+func (a *AgentPXEFiles) copy(filepath string, src io.Reader) error {
 	output, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}
 	defer output.Close()
 
-	if imageReader != nil {
-		_, err = io.Copy(output, imageReader)
-		if err != nil {
-			return err
-		}
-
+	_, err = io.Copy(output, src)
+	if err != nil {
+		return err
 	}
 
-	if fileReader != nil {
-		_, err = io.Copy(output, fileReader)
-		if err != nil {
-			return err
-		}
-
-	}
 	return nil
 }

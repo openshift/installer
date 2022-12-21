@@ -56,7 +56,7 @@ var (
 	}
 
 	agentImageTarget = target{
-		name: "Image",
+		name: "Agent ISO Image",
 		command: &cobra.Command{
 			Use:   "image",
 			Short: "Generates a bootable image containing all the information needed to deploy a cluster",
@@ -70,7 +70,7 @@ var (
 	}
 
 	agentPXEFilesTarget = target{
-		name: "PXE-Files",
+		name: "Agent PXE Files",
 		command: &cobra.Command{
 			Use:   "pxe-files",
 			Short: "Generates PXE bootable image files containing all the information needed to deploy a cluster",

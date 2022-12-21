@@ -20,7 +20,7 @@ import (
 
 // BaseIso generates the base ISO file for the image
 type BaseIso struct {
-	File        *asset.File
+	File *asset.File
 }
 
 const (
