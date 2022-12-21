@@ -16,7 +16,6 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 	ctx := context.Background()
 	cluster, err := NewCluster(ctx, assetDir)
 	if err != nil {
-		logrus.Warn("unable to make cluster object to track installation")
 		return nil, err
 	}
 
