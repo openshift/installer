@@ -48,7 +48,7 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	baseImage := &BaseIso{}
 	dependencies.Get(baseImage)
 
-	a.isoPath = baseImage.baseISOPath
+	a.isoPath = baseImage.File.Filename
 
 	tmpdir, err := os.MkdirTemp("", pxeAssetsPath)
 	if err != nil {
