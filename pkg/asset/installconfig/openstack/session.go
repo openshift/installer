@@ -2,11 +2,11 @@
 package openstack
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/ghodss/yaml"
 	"github.com/gophercloud/utils/openstack/clientconfig"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
@@ -43,7 +43,7 @@ func (opts yamlLoadOpts) LoadCloudsYAML() (map[string]clientconfig.Cloud, error)
 	}
 	err = yaml.Unmarshal(content, &clouds)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal yaml")
+		return nil, fmt.Errorf("failed to unmarshal yaml: %w", err)
 	}
 
 	return clouds.Clouds, nil
@@ -60,7 +60,7 @@ func (opts yamlLoadOpts) LoadSecureCloudsYAML() (map[string]clientconfig.Cloud, 
 	}
 	err = yaml.Unmarshal(content, &clouds)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal yaml")
+		return nil, fmt.Errorf("failed to unmarshal yaml: %w", err)
 	}
 	return clouds.Clouds, err
 }
@@ -76,7 +76,7 @@ func (opts yamlLoadOpts) LoadPublicCloudsYAML() (map[string]clientconfig.Cloud, 
 	}
 	err = yaml.Unmarshal(content, &publicClouds)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal yaml")
+		return nil, fmt.Errorf("failed to unmarshal yaml: %w", err)
 	}
 	return publicClouds.Clouds, err
 }
