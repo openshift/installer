@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
+	"github.com/openshift/assisted-image-service/pkg/overlay"
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -101,13 +102,7 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	}
 
 	agentInitrdFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent-%s.%s.img", initrdimg, a.cpuArch))
-	output, err := os.Create(agentInitrdFile)
-	if err != nil {
-		return err
-	}
-	defer output.Close()
-
-	_, err = io.Copy(output, a.imageReader)
+	err = a.copy(agentInitrdFile, a.imageReader, nil)
 	if err != nil {
 		return err
 	}
@@ -156,23 +151,34 @@ func (a *AgentPXEFiles) extractPXEFileFromISO(isoPath string, srcfilename string
 	}
 	defer fileReader.Close()
 
-	err = a.copy(dstfilename, fileReader)
+	err = a.copy(dstfilename, nil, fileReader)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *AgentPXEFiles) copy(filepath string, fileReader filesystem.File) error {
+func (a *AgentPXEFiles) copy(filepath string, imageReader overlay.OverlayReader, fileReader filesystem.File) error {
 	output, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}
 	defer output.Close()
 
-	_, err = io.Copy(output, fileReader)
-	if err != nil {
-		return err
+	if imageReader != nil {
+		_, err = io.Copy(output, imageReader)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	if fileReader != nil {
+		_, err = io.Copy(output, fileReader)
+		if err != nil {
+			return err
+		}
+
 	}
 	return nil
 }
