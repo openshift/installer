@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -42,8 +44,14 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
 			}
-			cluster, err := agentpkg.WaitForBootstrapComplete(assetDir)
+
+			ctx := context.Background()
+			cluster, err := agentpkg.NewCluster(ctx, assetDir)
 			if err != nil {
+				logrus.Exit(exitCodeBootstrapFailed)
+			}
+
+			if err := agentpkg.WaitForBootstrapComplete(cluster); err != nil {
 				logrus.Debug("Printing the event list gathered from the Agent Rest API")
 				cluster.PrintInfraEnvRestAPIEventList()
 				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
@@ -70,8 +78,14 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
 			}
-			cluster, err := agentpkg.WaitForInstallComplete(assetDir)
+
+			ctx := context.Background()
+			cluster, err := agentpkg.NewCluster(ctx, assetDir)
 			if err != nil {
+				logrus.Exit(exitCodeBootstrapFailed)
+			}
+
+			if err = agentpkg.WaitForInstallComplete(cluster); err != nil {
 				logrus.Debug("Printing the event list gathered from the Agent Rest API")
 				cluster.PrintInfraEnvRestAPIEventList()
 				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
