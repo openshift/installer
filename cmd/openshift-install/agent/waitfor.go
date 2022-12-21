@@ -33,6 +33,19 @@ func NewWaitForCmd() *cobra.Command {
 	return cmd
 }
 
+func handleBootstrapError(cluster *agentpkg.Cluster, err error) {
+	logrus.Debug("Printing the event list gathered from the Agent Rest API")
+	cluster.PrintInfraEnvRestAPIEventList()
+	err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
+	if err2 != nil {
+		logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
+	}
+	logrus.Info("Use the following commands to gather logs from the cluster")
+	logrus.Info("openshift-install gather bootstrap --help")
+	logrus.Error(errors.Wrap(err, "Bootstrap failed to complete: "))
+	logrus.Exit(exitCodeBootstrapFailed)
+}
+
 func newWaitForBootstrapCompleteCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "bootstrap-complete",
@@ -52,16 +65,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			}
 
 			if err := agentpkg.WaitForBootstrapComplete(cluster); err != nil {
-				logrus.Debug("Printing the event list gathered from the Agent Rest API")
-				cluster.PrintInfraEnvRestAPIEventList()
-				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
-				if err2 != nil {
-					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
-				}
-				logrus.Info("Use the following commands to gather logs from the cluster")
-				logrus.Info("openshift-install gather bootstrap --help")
-				logrus.Error(errors.Wrap(err, "Bootstrap failed to complete: "))
-				logrus.Exit(exitCodeBootstrapFailed)
+				handleBootstrapError(cluster, err)
 			}
 		},
 	}
@@ -85,9 +89,11 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				logrus.Exit(exitCodeBootstrapFailed)
 			}
 
+			if err := agentpkg.WaitForBootstrapComplete(cluster); err != nil {
+				handleBootstrapError(cluster, err)
+			}
+
 			if err = agentpkg.WaitForInstallComplete(cluster); err != nil {
-				logrus.Debug("Printing the event list gathered from the Agent Rest API")
-				cluster.PrintInfraEnvRestAPIEventList()
 				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
 				if err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
