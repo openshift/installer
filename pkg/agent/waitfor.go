@@ -61,12 +61,6 @@ func WaitForBootstrapComplete(cluster *Cluster) error {
 // WaitForInstallComplete Waits for the cluster installation triggered by the
 // agent installer to be complete.
 func WaitForInstallComplete(cluster *Cluster) error {
-
-	err := WaitForBootstrapComplete(cluster)
-	if err != nil {
-		return cluster, errors.Wrap(err, "error occured during bootstrap process")
-	}
-
 	timeout := 90 * time.Minute
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
