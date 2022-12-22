@@ -90,9 +90,6 @@ func WaitForInstallComplete(assetDir string) (*Cluster, error) {
 
 	waitErr := waitContext.Err()
 	if waitErr != nil && waitErr != context.Canceled {
-		if err != nil {
-			return cluster, errors.Wrap(err, "Error occurred during installation")
-		}
 		return cluster, errors.Wrap(waitErr, "Cluster installation timed out")
 	}
 	return cluster, nil
