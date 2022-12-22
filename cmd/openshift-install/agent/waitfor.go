@@ -94,6 +94,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			}
 
 			if err = agentpkg.WaitForInstallComplete(cluster); err != nil {
+				logrus.Error(err)
 				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
 				if err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
