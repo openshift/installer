@@ -39,6 +39,7 @@ var (
 		"europe-west8":            "Milan, Italy",
 		"europe-west9":            "Paris, France",
 		"europe-southwest1":       "Madrid, Spain",
+		"me-west1":                "Tel Aviv, Israel",
 		"northamerica-northeast1": "Montréal, Québec, Canada",
 		"northamerica-northeast2": "Toronto, Ontario, Canada",
 		"southamerica-east1":      "São Paulo, Brazil",
