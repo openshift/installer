@@ -65,6 +65,7 @@ In addition, it covers the installation with the default CNI (OVNKubernetes), as
 - [Deploying OpenShift single root I/O virtualization (SRIOV) workers](deploy_sriov_workers.md)
 - [Deploying OpenShift with OVS-DPDK](ovs-dpdk.md)
 - [Provider Networks](provider_networks.md)
+- [Migrate the Image Registry from Cinder to Swift](image-registry-storage-swift.md)
 
 ## OpenStack Requirements
 
