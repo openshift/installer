@@ -42,3 +42,4 @@ fi
 mkdir -p /etc/motd.d/
 echo $rendezvousHostMessage > /etc/motd.d/60-rendezvous-host
 echo $rendezvousHostMessage > /etc/issue.d/60-rendezvous-host.issue
+agetty --reload
