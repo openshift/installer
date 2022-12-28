@@ -111,14 +111,25 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) (*machinev1alpha1.OpenstackProviderSpec, error) {
 	var controlPlaneNetwork machinev1alpha1.NetworkParam
 	additionalNetworks := make([]machinev1alpha1.NetworkParam, 0, len(mpool.AdditionalNetworkIDs))
-	primarySubnet := platform.MachinesSubnet
+	primarySubnet := ""
 
-	if platform.MachinesSubnet != "" {
-		controlPlaneNetwork = machinev1alpha1.NetworkParam{
-			Subnets: []machinev1alpha1.SubnetParam{{
-				UUID: platform.MachinesSubnet,
-			}},
+	if platform.ControlPlanePort != nil {
+		var subnets []machinev1alpha1.SubnetParam
+		controlPlanePort := platform.ControlPlanePort
+
+		for _, fixedIP := range controlPlanePort.FixedIPs {
+			subnets = append(subnets, machinev1alpha1.SubnetParam{
+				Filter: machinev1alpha1.SubnetFilter{ID: fixedIP.Subnet.ID, Name: fixedIP.Subnet.Name},
+			})
 		}
+		controlPlaneNetwork = machinev1alpha1.NetworkParam{
+			Subnets: subnets,
+			Filter: machinev1alpha1.Filter{
+				Name: controlPlanePort.Network.Name,
+				ID:   controlPlanePort.Network.ID,
+			},
+		}
+		primarySubnet = controlPlanePort.FixedIPs[0].Subnet.ID
 	} else {
 		controlPlaneNetwork = machinev1alpha1.NetworkParam{
 			Subnets: []machinev1alpha1.SubnetParam{

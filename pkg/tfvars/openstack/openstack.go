@@ -11,7 +11,6 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -178,23 +177,18 @@ func TFVars(
 		additionalNetworkIDs = mastermpool.AdditionalNetworkIDs
 	}
 
-	// defaultMachinesPort carries the machinesSubnet (and its resolved
-	// network) if provided.
+	// defaultMachinesPort carries the machine subnets and the network.
 	var defaultMachinesPort *terraformPort
-	if machinesSubnet := installConfig.Config.Platform.OpenStack.MachinesSubnet; machinesSubnet != "" {
-		networkID, err := getNetworkFromSubnet(networkClient, machinesSubnet)
+	if controlPlanePort := installConfig.Config.Platform.OpenStack.ControlPlanePort; controlPlanePort != nil {
+		port, err := portTargetToTerraformPort(networkClient, *controlPlanePort)
 		if err != nil {
-			return nil, fmt.Errorf("failed to resolve the given machineSubnet: %w", err)
+			return nil, fmt.Errorf("failed to resolve portTarget :%w", err)
 		}
-		defaultMachinesPort = &terraformPort{
-			NetworkID: networkID,
-			FixedIP:   []terraformFixedIP{{SubnetID: machinesSubnet}},
-		}
-
+		defaultMachinesPort = &port
 		// tagging the API port if pre-created by the user.
 		if apiVIPS := installConfig.Config.OpenStack.APIVIPs; len(apiVIPS) > 0 {
 			// Assuming the API VIPs addresses are on the same Port
-			err = tagVIPsPort(cloud, clusterID.InfraID, apiVIPS[0], networkID)
+			err = tagVIPsPort(cloud, clusterID.InfraID, apiVIPS[0], port.NetworkID)
 			if err != nil {
 				return nil, err
 			}
@@ -202,7 +196,7 @@ func TFVars(
 		// tagging the Ingress port if pre-created by the user.
 		if ingressVIPS := installConfig.Config.OpenStack.IngressVIPs; len(ingressVIPS) > 0 {
 			// Assuming the Ingress VIPs addresses are on the same Port
-			err = tagVIPsPort(cloud, clusterID.InfraID, ingressVIPS[0], networkID)
+			err = tagVIPsPort(cloud, clusterID.InfraID, ingressVIPS[0], port.NetworkID)
 			if err != nil {
 				return nil, err
 			}
@@ -345,16 +339,6 @@ func getServiceCatalog(cloud string) (*tokens.ServiceCatalog, error) {
 	}
 
 	return serviceCatalog, nil
-}
-
-// getNetworkFromSubnet looks up a subnet in openstack and returns the ID of the network it's a part of
-func getNetworkFromSubnet(networkClient *gophercloud.ServiceClient, subnetID string) (string, error) {
-	subnet, err := subnets.Get(networkClient, subnetID).Extract()
-	if err != nil {
-		return "", err
-	}
-
-	return subnet.NetworkID, nil
 }
 
 func isOctaviaSupported(serviceCatalog *tokens.ServiceCatalog) (bool, error) {

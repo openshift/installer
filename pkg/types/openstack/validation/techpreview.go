@@ -14,5 +14,9 @@ func FilledInTechPreviewFields(installConfig *types.InstallConfig) (fields []*fi
 		return nil
 	}
 
+	if installConfig.OpenStack.ControlPlanePort != nil && installConfig.OpenStack.DeprecatedMachinesSubnet == "" {
+		fields = append(fields, field.NewPath("platform", "openstack", "controlPlanePort"))
+	}
+
 	return fields
 }

@@ -106,7 +106,7 @@ func validateVolumeTypes(input string, available []string, fldPath *field.Path) 
 func validateUUIDV4s(input []string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for idx, uuid := range input {
-		if !validUUIDv4(uuid) {
+		if !ValidUUIDv4(uuid) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(idx), uuid, "valid UUID v4 must be specified"))
 		}
 	}
@@ -116,7 +116,7 @@ func validateUUIDV4s(input []string, fldPath *field.Path) field.ErrorList {
 
 // validUUIDv4 checks if string is in UUID v4 format
 // For more information: https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
-func validUUIDv4(s string) bool {
+func ValidUUIDv4(s string) bool {
 	uuid, err := guuid.Parse(s)
 	if err != nil {
 		return false
