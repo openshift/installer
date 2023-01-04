@@ -90,7 +90,7 @@ resource "ibm_pi_image" "boot_image" {
   pi_cloud_instance_id      = var.powervs_cloud_instance_id
   pi_image_bucket_name      = var.powervs_image_bucket_name
   pi_image_bucket_access    = "public"
-  pi_image_bucket_region    = var.powervs_vpc_region
+  pi_image_bucket_region    = var.powervs_cos_region
   pi_image_bucket_file_name = var.powervs_image_bucket_file_name
   pi_image_storage_type     = var.powervs_image_storage_type
 }

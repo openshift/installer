@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	"github.com/ghodss/yaml"
@@ -30,6 +33,7 @@ import (
 	aztypes "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
@@ -834,6 +838,46 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig)
 		}
 
+		client, err := powervsconfig.NewClient()
+		if err != nil {
+			return err
+		}
+		var (
+			vpcRegion, vpcZone string
+		)
+		vpcName := installConfig.Config.PowerVS.VPCName
+		if vpcName != "" {
+			var vpc *vpcv1.VPC
+			vpc, err = client.GetVPCByName(ctx, vpcName)
+			if err != nil {
+				return err
+			}
+			var crnElems = strings.SplitN(*vpc.CRN, ":", 8)
+			vpcRegion = crnElems[5]
+		} else {
+			specified := installConfig.Config.PowerVS.VPCRegion
+			if specified != "" {
+				if powervs.ValidateVPCRegion(specified) {
+					vpcRegion = specified
+				} else {
+					return errors.New("unknown VPC region")
+				}
+			} else if vpcRegion, err = powervs.VPCRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
+				return err
+			}
+		}
+		if vpcSubnet != "" {
+			var sn *vpcv1.Subnet
+			sn, err = client.GetSubnetByName(ctx, vpcSubnet, vpcRegion)
+			if err != nil {
+				return err
+			}
+			vpcZone = *sn.Zone.Name
+		} else {
+			rand.Seed(time.Now().UnixNano())
+			vpcZone = fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1) //nolint:gosec // we don't need a crypto secure number
+		}
+
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
@@ -846,7 +890,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ImageBucketName:      osImage[0],
 				ImageBucketFileName:  osImage[1],
 				NetworkName:          installConfig.Config.PowerVS.PVSNetworkName,
-				VPCName:              installConfig.Config.PowerVS.VPCName,
+				VPCRegion:            vpcRegion,
+				VPCZone:              vpcZone,
+				VPCName:              vpcName,
 				VPCSubnetName:        vpcSubnet,
 				VPCPermitted:         vpcPermitted,
 				VPCGatewayName:       vpcGatewayName,
