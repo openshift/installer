@@ -1007,3 +1007,4 @@ sigs.k8s.io/yaml
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 # golang.org/x/text => golang.org/x/text v0.3.7
 # github.com/hashicorp/vault => github.com/hashicorp/vault v1.9.10
+# github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1

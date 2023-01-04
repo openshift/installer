@@ -150,3 +150,6 @@ replace golang.org/x/text => golang.org/x/text v0.3.7
 
 // https://issues.redhat.com/browse/OCPBUGS-2498
 replace github.com/hashicorp/vault => github.com/hashicorp/vault v1.9.10
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2045880
+replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
