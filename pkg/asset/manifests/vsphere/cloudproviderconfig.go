@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-yaml/yaml"
+	yaml "gopkg.in/yaml.v2"
 	cloudconfig "k8s.io/cloud-provider-vsphere/pkg/common/config"
 
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
