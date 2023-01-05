@@ -125,7 +125,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 			return err
 		}
 	case typesopenstack.Name:
-		if err := openstack.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
+		if err := openstack.PreTerraform(); err != nil {
 			return err
 		}
 	}
