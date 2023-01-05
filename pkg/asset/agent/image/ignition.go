@@ -371,7 +371,7 @@ func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesC
 	// This is required for assisted-service to build the ICSP for openshift-install
 	if registriesConfig.File != nil {
 		registriesFile := ignition.FileFromBytes(registriesConfPath,
-			"root", 0600, registriesConfig.File.Data)
+			"root", 0644, registriesConfig.File.Data)
 		config.Storage.Files = append(config.Storage.Files, registriesFile)
 	}
 
