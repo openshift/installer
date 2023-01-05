@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -31,6 +33,19 @@ func NewWaitForCmd() *cobra.Command {
 	return cmd
 }
 
+func handleBootstrapError(cluster *agentpkg.Cluster, err error) {
+	logrus.Debug("Printing the event list gathered from the Agent Rest API")
+	cluster.PrintInfraEnvRestAPIEventList()
+	err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
+	if err2 != nil {
+		logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
+	}
+	logrus.Info("Use the following commands to gather logs from the cluster")
+	logrus.Info("openshift-install gather bootstrap --help")
+	logrus.Error(errors.Wrap(err, "Bootstrap failed to complete: "))
+	logrus.Exit(exitCodeBootstrapFailed)
+}
+
 func newWaitForBootstrapCompleteCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "bootstrap-complete",
@@ -42,18 +57,15 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
 			}
-			cluster, err := agentpkg.WaitForBootstrapComplete(assetDir)
+
+			ctx := context.Background()
+			cluster, err := agentpkg.NewCluster(ctx, assetDir)
 			if err != nil {
-				logrus.Debug("Printing the event list gathered from the Agent Rest API")
-				cluster.PrintInfraEnvRestAPIEventList()
-				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
-				if err2 != nil {
-					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
-				}
-				logrus.Info("Use the following commands to gather logs from the cluster")
-				logrus.Info("openshift-install gather bootstrap --help")
-				logrus.Error(errors.Wrap(err, "Bootstrap failed to complete: "))
 				logrus.Exit(exitCodeBootstrapFailed)
+			}
+
+			if err := agentpkg.WaitForBootstrapComplete(cluster); err != nil {
+				handleBootstrapError(cluster, err)
 			}
 		},
 	}
@@ -70,10 +82,19 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
 			}
-			cluster, err := agentpkg.WaitForInstallComplete(assetDir)
+
+			ctx := context.Background()
+			cluster, err := agentpkg.NewCluster(ctx, assetDir)
 			if err != nil {
-				logrus.Debug("Printing the event list gathered from the Agent Rest API")
-				cluster.PrintInfraEnvRestAPIEventList()
+				logrus.Exit(exitCodeBootstrapFailed)
+			}
+
+			if err := agentpkg.WaitForBootstrapComplete(cluster); err != nil {
+				handleBootstrapError(cluster, err)
+			}
+
+			if err = agentpkg.WaitForInstallComplete(cluster); err != nil {
+				logrus.Error(err)
 				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
 				if err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
