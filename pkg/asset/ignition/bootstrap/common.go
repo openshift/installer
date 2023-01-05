@@ -387,6 +387,10 @@ func AddStorageFiles(config *igntypes.Config, base string, uri string, templateD
 	} else if filename == "motd" || filename == "containers.conf" {
 		mode = 0644
 		appendToFile = true
+	} else if filename == "registries.conf" {
+		// Having the mode be private breaks rpm-ostree, xref
+		// https://github.com/openshift/installer/pull/6789
+		mode = 0644
 	} else {
 		mode = 0600
 	}
