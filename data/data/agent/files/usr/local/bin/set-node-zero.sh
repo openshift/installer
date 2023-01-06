@@ -19,7 +19,7 @@ done
 if [ "${IS_NODE_ZERO}" = "true" ]; then
     echo "Node 0 IP ${NODE_ZERO_IP} found on this host" 1>&2
 
-    NODE0_PATH=/etc/assisted-service/node0
+    NODE0_PATH=/etc/assisted/node0
     mkdir -p "$(dirname "${NODE0_PATH}")"
 
     NODE_ZERO_MAC=$(ip -j address | jq -r ".[] | select(.addr_info | map(select(.local == \"$NODE_ZERO_IP\")) | any).address")
@@ -31,6 +31,20 @@ if [ "${IS_NODE_ZERO}" = "true" ]; then
 # IP address matching NODE_ZERO_IP in /etc/assisted/agent-installer.env. 
 # The MAC address of the network interface matching NODE_ZERO_IP is noted below 
 # as BOOTSTRAP_HOST_MAC.
+#
+# BOOTSTRAP_HOST_MAC is read by assisted-service. The host with a MAC address
+# matching this value in assisted-service is designated to be the bootstrap during
+# cluster installation. In assisted-service.service, this file is included as a
+# --env-file in the ExecStart command.
+#
+# This file is also a ConditionPathExists in the following systemd service
+# definitions:
+# apply-host-config.service
+# assisted-service-pod.service
+# assisted-service.service
+# create-cluster-and-infraenv.service
+# install-status.service
+# start-cluster-installation.service
 BOOTSTRAP_HOST_MAC=${NODE_ZERO_MAC}
 EOF
 

@@ -4,7 +4,7 @@ Wants=network-online.target
 Requires=create-cluster-and-infraenv.service
 PartOf=assisted-service-pod.service
 After=network-online.target create-cluster-and-infraenv.service
-ConditionPathExists=/etc/assisted-service/node0
+ConditionPathExists=/etc/assisted/node0
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
