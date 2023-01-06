@@ -1,7 +1,3 @@
-variable "hostnames_ip_addresses" {
-  type = map(string)
-}
-
 variable "ignition" {
   type    = string
   sensitive = true
@@ -60,3 +56,10 @@ variable "dns_addresses" {
   type = list(string)
 }
 
+variable "vmname" {
+  type = string
+}
+
+variable "ipaddress" {
+  type = string
+}
