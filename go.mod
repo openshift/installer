@@ -42,8 +42,8 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
-	github.com/gophercloud/gophercloud v0.24.0
-	github.com/gophercloud/utils v0.0.0-20220307143606-8e7800759d16
+	github.com/gophercloud/gophercloud v1.1.1
+	github.com/gophercloud/utils v0.0.0-20221207145018-e8fba78967ca
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/terraform-exec v0.17.3
 	github.com/jongio/azidext/go/azidext v0.4.0
@@ -89,6 +89,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be
 	golang.org/x/oauth2 v0.0.0-20220622183110-fd043fe589d2
 	golang.org/x/sys v0.2.0
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	google.golang.org/api v0.91.0
 	google.golang.org/genproto v0.0.0-20220808131553-a91ffa7f803e
 	google.golang.org/grpc v1.48.0
@@ -113,8 +114,6 @@ require (
 	go.mongodb.org/mongo-driver v1.8.3 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/term v0.2.0
-	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
@@ -235,6 +234,7 @@ require (
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/net v0.0.0-20221004154528-8021a29435af // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.2.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect

@@ -160,6 +160,5 @@ Example to Remove/Revoke Access to a Volume Type
 	if err != nil {
 		panic(err)
 	}
-
 */
 package volumetypes
