@@ -2296,9 +2296,8 @@ spec:
                       should be created rather than provisioning a new one.
                     type: string
                   networkProjectID:
-                    description: NetworkProjectID is currently TechPreview. NetworkProjectID
-                      specifies which project the network and subnets exist in when
-                      they are not in the main ProjectID.
+                    description: NetworkProjectID specifies which project the network
+                      and subnets exist in when they are not in the main ProjectID.
                     type: string
                   privateDNSZone:
                     description: PrivateDNSZone Technology Preview. PrivateDNSZone
