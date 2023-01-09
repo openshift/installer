@@ -79,8 +79,10 @@ func TestIgnition_getTemplateData(t *testing.T) {
 		URL:              &isoURL,
 		Version:          &ver,
 	}
+	clusterName := "test-agent-cluster-install.test"
 
-	templateData := getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage)
+	templateData := getTemplateData(clusterName, pullSecret, nodeZeroIP, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage)
+	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, "http://"+nodeZeroIP+":8090/", templateData.ServiceBaseURL)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -389,6 +391,8 @@ metadata:
 				"/usr/local/bin/agent-gather",
 				"/usr/local/bin/extract-agent.sh",
 				"/usr/local/bin/get-container-images.sh",
+				"/usr/local/bin/install-status.sh",
+				"/usr/local/bin/issue_status.sh",
 				"/usr/local/bin/set-hostname.sh",
 				"/usr/local/bin/start-agent.sh",
 				"/usr/local/bin/start-cluster-installation.sh",

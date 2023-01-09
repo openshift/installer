@@ -1,9 +1,21 @@
 #!/bin/bash
+
+cat <<EOF >/etc/motd
+The primary service is agent.service. To watch its status, run:
+
+  journalctl -u agent.service
+
+To view the agent log, run:
+
+  journalctl TAG=agent
+EOF
+echo "Waiting for network to determine if this is the rendezvous host." > /etc/motd.d/60-rendezvous-host
+
 #
 # The hostnames defined in agent-config.yaml are written out
 # to files at /etc/assisted/hostnames/<MAC-address>.
-# 
-# If a host has multiple interfaces, the host's first network 
+#
+# If a host has multiple interfaces, the host's first network
 # interface's MAC address is used.
 #
 # This script compares the MAC addresses on the current host

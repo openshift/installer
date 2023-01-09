@@ -14,6 +14,7 @@ ExecStartPre=/usr/local/bin/extract-agent.sh
 ExecStart=/usr/local/bin/start-agent.sh
 
 [Unit]
+Description=Assisted Installer Agent
 Wants=network-online.target set-hostname.service
 After=network-online.target set-hostname.service
 
