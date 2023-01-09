@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck disable=SC1091
 source common.sh
 
 >&2 echo "Waiting for infra-env-id to be available"
@@ -19,4 +20,4 @@ IMAGE=$(image_for agent-installer-node-agent)
 echo "Using agent image: ${IMAGE} to start agent"
 
 # use infra-env-id to have agent register this host with assisted-service
-exec /usr/local/bin/agent --url ${SERVICE_BASE_URL} --infra-env-id ${INFRA_ENV_ID} --agent-version ${IMAGE} --insecure=true
+exec /usr/local/bin/agent --url "${SERVICE_BASE_URL}" --infra-env-id "${INFRA_ENV_ID}" --agent-version "${IMAGE}" --insecure=true

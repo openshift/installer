@@ -2,6 +2,7 @@
 
 set -e
 
+# shellcheck disable=SC1091
 source /etc/assisted/agent-installer.env
 echo "NODE_ZERO_IP: $NODE_ZERO_IP"
 
@@ -41,7 +42,6 @@ if [ "${IS_NODE_ZERO}" = "true" ]; then
 # definitions:
 # apply-host-config.service
 # assisted-service-pod.service
-# assisted-service.service
 # create-cluster-and-infraenv.service
 # install-status.service
 # start-cluster-installation.service
@@ -62,6 +62,6 @@ else
     rendezvousHostMessage="This host is not the rendezvous host. The rendezvous host is at ${NODE_ZERO_IP}."
 fi
 mkdir -p /etc/motd.d/
-echo $rendezvousHostMessage > /etc/motd.d/60-rendezvous-host
-echo $rendezvousHostMessage > /etc/issue.d/60-rendezvous-host.issue
+echo "$rendezvousHostMessage" > /etc/motd.d/60-rendezvous-host
+echo "$rendezvousHostMessage" > /etc/issue.d/60-rendezvous-host.issue
 agetty --reload
