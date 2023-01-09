@@ -275,7 +275,10 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		gcp.ConfigMasters(machines, clusterID.InfraID, ic.Publish)
+		err := gcp.ConfigMasters(machines, controlPlaneMachineSet, clusterID.InfraID, ic.Publish)
+		if err != nil {
+			return err
+		}
 	case ibmcloudtypes.Name:
 		subnets := map[string]string{}
 		if len(ic.Platform.IBMCloud.ControlPlaneSubnets) > 0 {
