@@ -503,7 +503,7 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			Ingress: platform.OpenStack.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, network, fldPath.Child(openstack.Name))...)
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, network, fldPath.Child(openstack.Name))...)
 	case platform.VSphere != nil:
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.APIVIPs, fldPath.Child(vsphere.Name, newVIPsFields.APIVIPs))...)
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.IngressVIPs, fldPath.Child(vsphere.Name, newVIPsFields.IngressVIPs))...)
