@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	// DefaultMachineCIDR default machine CIDR applied to MachineNetwork
+	// DefaultMachineCIDR default machine CIDR applied to MachineNetwork.
 	DefaultMachineCIDR    = ipnet.MustParseCIDR("10.0.0.0/16")
 	defaultServiceNetwork = ipnet.MustParseCIDR("172.30.0.0/16")
 	defaultClusterNetwork = ipnet.MustParseCIDR("10.128.0.0/14")
