@@ -84,7 +84,7 @@ func ValidateMultiZoneForProvisioning(ic *types.InstallConfig) error {
 	// This will allow the use of an external load balancer
 	// and RHCOS nodes to be on multiple L2 segments.
 	if len(ic.Platform.VSphere.APIVIPs) == 0 && len(ic.Platform.VSphere.IngressVIPs) == 0 {
-		allErrs = append(allErrs, ensureLoadBalancerDNS(ic, field.NewPath("platform"))...)
+		allErrs = append(allErrs, EnsureLoadBalancerDNS(ic, field.NewPath("platform"))...)
 	}
 
 	var clients = make(map[string]*validationContext, 0)
@@ -427,7 +427,7 @@ func validateVcenterPrivileges(validationCtx *validationContext, fldPath *field.
 	return field.ErrorList{}
 }
 
-func ensureLoadBalancerDNS(installConfig *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+func EnsureLoadBalancerDNS(installConfig *types.InstallConfig, fldPath *field.Path) field.ErrorList {
 	var lastErr error
 	var uris []string
 	dialTimeout := time.Second

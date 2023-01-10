@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
+	vspherevalidation "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
@@ -57,6 +58,20 @@ func Validate(ic *types.InstallConfig) error {
 		}
 		fldPath := field.NewPath("compute").Index(idx)
 		allErrs = append(allErrs, validation.ValidateMachinePool(&compute, ci, false, fldPath.Child("platform", "openstack"))...)
+	}
+
+	// If APIVIPs and IngressVIPs is equal to zero
+	// then don't validate the VIPs.
+	// Instead, ensure there is a configured
+	// DNS record for api and test if the load
+	// balancer is configured.
+	// The VIP parameters within the Infrastructure status object
+	// will be empty. This will cause MCO to not deploy
+	// the static pods: haproxy, keepalived and coredns.
+	// This will allow the use of an external load balancer
+	// and RHCOS nodes to be on multiple L2 segments.
+	if len(ic.Platform.OpenStack.APIVIPs) == 0 && len(ic.Platform.OpenStack.IngressVIPs) == 0 {
+		allErrs = append(allErrs, vspherevalidation.EnsureLoadBalancerDNS(ic, field.NewPath("platform"))...)
 	}
 
 	return allErrs.ToAggregate()
