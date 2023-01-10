@@ -35,7 +35,6 @@ type Platform struct {
 	// +optional
 	Network string `json:"network,omitempty"`
 
-	// NetworkProjectID is currently TechPreview.
 	// NetworkProjectID specifies which project the network and subnets exist in when
 	// they are not in the main ProjectID.
 	// +optional
