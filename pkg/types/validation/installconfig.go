@@ -657,7 +657,7 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired bo
 	return allErrs
 }
 
-// ValidateIPinMachineCIDR confirms if the specified VIP is in the
+// ValidateIPinMachineCIDR confirms if the specified VIP is in the machine CIDR.
 func ValidateIPinMachineCIDR(vip string, n *types.Networking) error {
 	var networks []string
 

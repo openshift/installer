@@ -9,15 +9,15 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/defaults"
-	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/vapi/rest"
 	"github.com/vmware/govmomi/vim25"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/defaults"
+	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/validate"
 )

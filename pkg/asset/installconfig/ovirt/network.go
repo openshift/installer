@@ -6,14 +6,14 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
-	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/defaults"
-	"github.com/openshift/installer/pkg/types/validation"
-	"github.com/openshift/installer/pkg/validate"
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
 
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/defaults"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/validation"
+	"github.com/openshift/installer/pkg/validate"
 )
 
 func askNetwork(c *ovirtsdk4.Connection, p *ovirt.Platform) error {

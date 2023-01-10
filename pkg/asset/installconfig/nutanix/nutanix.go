@@ -11,14 +11,14 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	nutanixclient "github.com/nutanix-cloud-native/prism-go-client"
 	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/v3"
-	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/defaults"
-	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/defaults"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
+	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/openshift/installer/pkg/validate"
 )
 
