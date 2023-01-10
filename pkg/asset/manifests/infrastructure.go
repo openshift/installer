@@ -197,11 +197,13 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Spec.PlatformSpec.Type = configv1.NonePlatformType
 	case openstack.Name:
 		config.Spec.PlatformSpec.Type = configv1.OpenStackPlatformType
-		config.Status.PlatformStatus.OpenStack = &configv1.OpenStackPlatformStatus{
-			APIServerInternalIP:  installConfig.Config.OpenStack.APIVIPs[0],
-			IngressIP:            installConfig.Config.OpenStack.IngressVIPs[0],
-			APIServerInternalIPs: installConfig.Config.OpenStack.APIVIPs,
-			IngressIPs:           installConfig.Config.OpenStack.IngressVIPs,
+		if len(installConfig.Config.OpenStack.APIVIPs) > 0 {
+			config.Status.PlatformStatus.OpenStack = &configv1.OpenStackPlatformStatus{
+				APIServerInternalIP:  installConfig.Config.OpenStack.APIVIPs[0],
+				IngressIP:            installConfig.Config.OpenStack.IngressVIPs[0],
+				APIServerInternalIPs: installConfig.Config.OpenStack.APIVIPs,
+				IngressIPs:           installConfig.Config.OpenStack.IngressVIPs,
+			}
 		}
 	case vsphere.Name:
 		config.Spec.PlatformSpec.Type = configv1.VSpherePlatformType
