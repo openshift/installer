@@ -240,3 +240,4 @@ google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/emptypb
 google.golang.org/protobuf/types/known/timestamppb
 # golang.org/x/text => golang.org/x/text v0.3.7
+# github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
