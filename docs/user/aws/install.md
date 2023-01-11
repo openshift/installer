@@ -11,6 +11,16 @@ To see a guided example of a UPI install, please see [Install: User-Provided Inf
 The steps for performing an IPI-based install are outlined [here][cloud-install]. Following this guide you may begin at
 Step 3: Download the Installer.
 
+## Fully air-gapped installation
+
+It is not possible to install Openshift on AWS in a fully air-gapped design because the installation process requires Internet access to use the route 53 API, as documented in the [AWS route 53 FAQ][aws-faq]:
+
+```
+Do I need connectivity to the outside Internet in order to use Private DNS?
+
+You can resolve internal DNS names from resources within your VPC that do not have Internet connectivity. However, to update the configuration for your Private DNS hosted zone, you need Internet connectivity to access the Route 53 API endpoint, which is outside of VPC.
+```
+
 ### Create Configuration
 
 ```console
@@ -71,3 +81,4 @@ The OpenShift console is available via the kubeadmin login provided by the insta
 
 [cloud-install]: https://console.redhat.com/openshift/create
 [encrypted-copy]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIEncryption.html#create-ami-encrypted-root-snapshot
+[aws-faq]: https://aws.amazon.com/route53/faqs/

@@ -28,6 +28,9 @@ type Route struct {
 
 	// Interface to which packets for this route will be sent
 	Interface string `json:"interface,omitempty"`
+
+	// Route priority metric
+	Metric int32 `json:"metric,omitempty"`
 }
 
 // Validate validates this route

@@ -2,14 +2,14 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
+	terminal "golang.org/x/term"
 	"k8s.io/klog"
 	klogv2 "k8s.io/klog/v2"
 )
@@ -28,12 +28,12 @@ func main() {
 	var fs flag.FlagSet
 	klog.InitFlags(&fs)
 	fs.Set("stderrthreshold", "4")
-	klog.SetOutput(ioutil.Discard)
+	klog.SetOutput(io.Discard)
 	// Handle k8s.io/klog/v2
 	var fsv2 flag.FlagSet
 	klogv2.InitFlags(&fsv2)
 	fsv2.Set("stderrthreshold", "4")
-	klogv2.SetOutput(ioutil.Discard)
+	klogv2.SetOutput(io.Discard)
 
 	installerMain()
 }
@@ -78,7 +78,7 @@ func newRootCmd() *cobra.Command {
 }
 
 func runRootCmd(cmd *cobra.Command, args []string) {
-	logrus.SetOutput(ioutil.Discard)
+	logrus.SetOutput(io.Discard)
 	logrus.SetLevel(logrus.TraceLevel)
 
 	level, err := logrus.ParseLevel(rootOpts.logLevel)
@@ -89,7 +89,7 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 	logrus.AddHook(newFileHookWithNewlineTruncate(os.Stderr, level, &logrus.TextFormatter{
 		// Setting ForceColors is necessary because logrus.TextFormatter determines
 		// whether or not to enable colors by looking at the output of the logger.
-		// In this case, the output is ioutil.Discard, which is not a terminal.
+		// In this case, the output is io.Discard, which is not a terminal.
 		// Overriding it here allows the same check to be done, but against the
 		// hook's output instead of the logger's output.
 		ForceColors:            terminal.IsTerminal(int(os.Stderr.Fd())),

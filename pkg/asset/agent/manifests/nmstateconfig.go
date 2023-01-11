@@ -9,18 +9,19 @@ import (
 	"os"
 	"path/filepath"
 
-	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
-	"github.com/openshift/assisted-service/models"
-	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/yaml"
-
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	k8syaml "sigs.k8s.io/yaml"
+
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	"github.com/openshift/assisted-service/models"
+	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 )
 
 var (
@@ -61,6 +62,7 @@ func (*NMStateConfig) Name() string {
 func (*NMStateConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agentconfig.AgentConfig{},
+		&agent.OptionalInstallConfig{},
 	}
 }
 
@@ -68,7 +70,8 @@ func (*NMStateConfig) Dependencies() []asset.Asset {
 func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 
 	agentConfig := &agentconfig.AgentConfig{}
-	dependencies.Get(agentConfig)
+	installConfig := &agent.OptionalInstallConfig{}
+	dependencies.Get(agentConfig, installConfig)
 
 	staticNetworkConfig := []*models.HostStaticNetworkConfig{}
 	nmStateConfigs := []*aiv1beta1.NMStateConfig{}
@@ -89,9 +92,9 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf(getNMStateConfigName(agentConfig)+"-%d", i),
-						Namespace: getNMStateConfigNamespace(agentConfig),
-						Labels:    getNMStateConfigLabelsFromAgentConfig(agentConfig),
+						Name:      fmt.Sprintf(getNMStateConfigName(installConfig)+"-%d", i),
+						Namespace: getObjectMetaNamespace(installConfig),
+						Labels:    getNMStateConfigLabels(installConfig),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						NetConfig: aiv1beta1.NetConfig{
@@ -160,8 +163,7 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	// Split up the file into multiple YAMLs if it contains NMStateConfig for more than one node
-	var decoder nmStateConfigYamlDecoder
-	yamlList, err := getMultipleYamls(file.Data, &decoder)
+	yamlList, err := GetMultipleYamls[aiv1beta1.NMStateConfig](file.Data)
 	if err != nil {
 		return false, errors.Wrapf(err, "could not decode YAML for %s", nmStateConfigFilename)
 	}
@@ -170,21 +172,12 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 	var nmStateConfigList []*aiv1beta1.NMStateConfig
 
 	for i := range yamlList {
-		nmStateConfig := yamlList[i].(*aiv1beta1.NMStateConfig)
+		nmStateConfig := yamlList[i]
 		staticNetworkConfig = append(staticNetworkConfig, &models.HostStaticNetworkConfig{
-			MacInterfaceMap: buildMacInterfaceMap(*nmStateConfig),
+			MacInterfaceMap: buildMacInterfaceMap(nmStateConfig),
 			NetworkYaml:     string(nmStateConfig.Spec.NetConfig.Raw),
 		})
-		nmStateConfigList = append(nmStateConfigList, nmStateConfig)
-	}
-
-	log := logrus.New()
-	log.Level = logrus.WarnLevel
-	staticNetworkConfigGenerator := staticnetworkconfig.New(log.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
-
-	// Validate the network config using nmstatectl
-	if err = staticNetworkConfigGenerator.ValidateStaticConfigParams(context.Background(), staticNetworkConfig); err != nil {
-		return false, errors.Wrapf(err, "staticNetwork configuration is not valid")
+		nmStateConfigList = append(nmStateConfigList, &nmStateConfig)
 	}
 
 	n.File, n.StaticNetworkConfig, n.Config = file, staticNetworkConfig, nmStateConfigList
@@ -196,8 +189,25 @@ func (n *NMStateConfig) Load(f asset.FileFetcher) (bool, error) {
 
 func (n *NMStateConfig) finish() error {
 
-	if err := n.validateNMStateConfig().ToAggregate(); err != nil {
-		return errors.Wrapf(err, "invalid NMStateConfig configuration")
+	if err := n.validateWithNMStateCtl(); err != nil {
+		return err
+	}
+
+	if errList := n.validateNMStateConfig().ToAggregate(); errList != nil {
+		return errors.Wrapf(errList, "invalid NMStateConfig configuration")
+	}
+	return nil
+}
+
+func (n *NMStateConfig) validateWithNMStateCtl() error {
+	level := logrus.GetLevel()
+	logrus.SetLevel(logrus.WarnLevel)
+	staticNetworkConfigGenerator := staticnetworkconfig.New(logrus.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
+	defer logrus.SetLevel(level)
+
+	// Validate the network config using nmstatectl
+	if err := staticNetworkConfigGenerator.ValidateStaticConfigParams(context.Background(), n.StaticNetworkConfig); err != nil {
+		return errors.Wrapf(err, "staticNetwork configuration is not valid")
 	}
 	return nil
 }
@@ -266,8 +276,11 @@ func GetNodeZeroIP(nmStateConfigs []*aiv1beta1.NMStateConfig) (string, error) {
 
 // GetNMIgnitionFiles returns the list of NetworkManager configuration files
 func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) ([]staticnetworkconfig.StaticNetworkConfigData, error) {
-	log := logrus.New()
-	staticNetworkConfigGenerator := staticnetworkconfig.New(log.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
+
+	level := logrus.GetLevel()
+	logrus.SetLevel(logrus.WarnLevel)
+	staticNetworkConfigGenerator := staticnetworkconfig.New(logrus.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
+	defer logrus.SetLevel(level)
 
 	networkConfigStr, err := staticNetworkConfigGenerator.FormatStaticNetworkConfigForDB(staticNetworkConfig)
 	if err != nil {
@@ -284,29 +297,17 @@ func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) (
 	return filesList, err
 }
 
-type nmStateConfigYamlDecoder int
-
-type decodeFormat interface {
-	NewDecodedYaml(decoder *yaml.YAMLToJSONDecoder) (interface{}, error)
-}
-
-func (d *nmStateConfigYamlDecoder) NewDecodedYaml(yamlDecoder *yaml.YAMLToJSONDecoder) (interface{}, error) {
-	decodedData := new(aiv1beta1.NMStateConfig)
-	err := yamlDecoder.Decode(&decodedData)
-
-	return decodedData, err
-}
-
-// Read a YAML file containing multiple YAML definitions of the same format
+// GetMultipleYamls reads a YAML file containing multiple YAML definitions of the same format
 // Each specific format must be of type DecodeFormat
-func getMultipleYamls(contents []byte, decoder decodeFormat) ([]interface{}, error) {
+func GetMultipleYamls[T any](contents []byte) ([]T, error) {
 
 	r := bytes.NewReader(contents)
 	dec := yaml.NewYAMLToJSONDecoder(r)
 
-	var outputList []interface{}
+	var outputList []T
 	for {
-		decodedData, err := decoder.NewDecodedYaml(dec)
+		decodedData := new(T)
+		err := dec.Decode(&decodedData)
 		if errors.Is(err, io.EOF) {
 			break
 		}
@@ -314,7 +315,9 @@ func getMultipleYamls(contents []byte, decoder decodeFormat) ([]interface{}, err
 			return nil, errors.Wrapf(err, "Error reading multiple YAMLs")
 		}
 
-		outputList = append(outputList, decodedData)
+		if decodedData != nil {
+			outputList = append(outputList, *decodedData)
+		}
 	}
 
 	return outputList, nil

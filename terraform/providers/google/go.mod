@@ -107,6 +107,7 @@ require (
 	github.com/julz/importas v0.0.0-20210419104244-841f0c0fe66d // indirect
 	github.com/kisielk/errcheck v1.6.0 // indirect
 	github.com/kisielk/gotool v1.0.0 // indirect
+	github.com/klauspost/compress v1.11.2 // indirect
 	github.com/kulti/thelper v0.4.0 // indirect
 	github.com/kunwardeep/paralleltest v1.0.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
@@ -182,10 +183,10 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/mod v0.5.0 // indirect
-	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420 // indirect
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881 // indirect
-	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/api v0.61.0 // indirect
@@ -202,3 +203,11 @@ require (
 	mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b // indirect
 	mvdan.cc/unparam v0.0.0-20210104141923-aac4ce9116a7 // indirect
 )
+
+replace github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2064702
+replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2100495
+replace golang.org/x/text => golang.org/x/text v0.3.7

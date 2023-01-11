@@ -30,6 +30,8 @@ func ResourceIBMCISRouting() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "CIS Intance CRN",
+				ValidateFunc: validate.InvokeValidator("ibm_cis_routing",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -52,7 +54,14 @@ func ResourceIBMCISRoutingValidator() *validate.ResourceValidator {
 
 	validateSchema := make([]validate.ValidateSchema, 0)
 	smartRoutingValues := "on, off"
-
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 cisRoutingSmartRouting,

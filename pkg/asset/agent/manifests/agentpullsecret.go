@@ -1,10 +1,12 @@
 package manifests
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -12,13 +14,15 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
-	"github.com/pkg/errors"
+	"github.com/openshift/installer/pkg/validate"
 )
 
-var (
-	agentPullSecretName     = "pull-secret"
-	agentPullSecretFilename = filepath.Join(clusterManifestDir, fmt.Sprintf("%s.yaml", agentPullSecretName))
+const (
+	pullSecretKey       = ".dockerconfigjson" //nolint:gosec // not a secret despite the word
+	agentPullSecretName = "pull-secret"
 )
+
+var agentPullSecretFilename = filepath.Join(clusterManifestDir, fmt.Sprintf("%s.yaml", agentPullSecretName))
 
 // AgentPullSecret generates the pull-secret file used by the agent installer.
 type AgentPullSecret struct {
@@ -43,7 +47,6 @@ func (*AgentPullSecret) Dependencies() []asset.Asset {
 
 // Generate generates the AgentPullSecret manifest.
 func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
-
 	installConfig := &agent.OptionalInstallConfig{}
 	dependencies.Get(installConfig)
 
@@ -58,20 +61,11 @@ func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
 				Namespace: getObjectMetaNamespace(installConfig),
 			},
 			StringData: map[string]string{
-				".dockerconfigjson": installConfig.Config.PullSecret,
+				pullSecretKey: installConfig.Config.PullSecret,
 			},
 		}
 		a.Config = secret
 
-		secretData, err := yaml.Marshal(secret)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal agent secret")
-		}
-
-		a.File = &asset.File{
-			Filename: agentPullSecretFilename,
-			Data:     secretData,
-		}
 	}
 
 	return a.finish()
@@ -100,7 +94,7 @@ func (a *AgentPullSecret) Load(f asset.FileFetcher) (bool, error) {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", agentPullSecretFilename)
 	}
 
-	a.File, a.Config = file, config
+	a.Config = config
 	if err = a.finish(); err != nil {
 		return false, err
 	}
@@ -109,7 +103,6 @@ func (a *AgentPullSecret) Load(f asset.FileFetcher) (bool, error) {
 }
 
 func (a *AgentPullSecret) finish() error {
-
 	if a.Config == nil {
 		return errors.New("missing configuration or manifest file")
 	}
@@ -118,21 +111,51 @@ func (a *AgentPullSecret) finish() error {
 		return errors.Wrapf(err, "invalid PullSecret configuration")
 	}
 
+	// Normalise the JSON formatting so that we can redact the file reliably
+	normal, err := normalizeDockerConfig(a.Config.StringData[pullSecretKey])
+	if err != nil {
+		return err
+	}
+	a.Config.StringData[pullSecretKey] = normal
+
+	secretData, err := yaml.Marshal(a.Config)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal agent secret")
+	}
+	a.File = &asset.File{
+		Filename: agentPullSecretFilename,
+		Data:     secretData,
+	}
 	return nil
 }
 
-func (a *AgentPullSecret) validatePullSecret() field.ErrorList {
-	allErrs := field.ErrorList{}
+func normalizeDockerConfig(stringData string) (string, error) {
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(stringData), &data); err != nil {
+		return stringData, err
+	}
+	normal, err := json.MarshalIndent(data, "", "  ")
+	if err == nil {
+		stringData = string(normal)
+	}
+	return stringData, err
+}
 
+func (a *AgentPullSecret) validatePullSecret() field.ErrorList {
 	if err := a.validateSecretIsNotEmpty(); err != nil {
-		allErrs = append(allErrs, err...)
+		return err
 	}
 
-	return allErrs
+	fieldPath := field.NewPath("StringData")
+	dockerConfig := a.Config.StringData[pullSecretKey]
+	if err := validate.ImagePullSecret(dockerConfig); err != nil {
+		return field.ErrorList{field.Invalid(fieldPath, dockerConfig, err.Error())}
+	}
+
+	return field.ErrorList{}
 }
 
 func (a *AgentPullSecret) validateSecretIsNotEmpty() field.ErrorList {
-
 	var allErrs field.ErrorList
 
 	fieldPath := field.NewPath("StringData")
@@ -142,7 +165,7 @@ func (a *AgentPullSecret) validateSecretIsNotEmpty() field.ErrorList {
 		return allErrs
 	}
 
-	pullSecret, ok := a.Config.StringData[".dockerconfigjson"]
+	pullSecret, ok := a.Config.StringData[pullSecretKey]
 	if !ok {
 		allErrs = append(allErrs, field.Required(fieldPath, "the pull secret key '.dockerconfigjson' is not defined"))
 		return allErrs

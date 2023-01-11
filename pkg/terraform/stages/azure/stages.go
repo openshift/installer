@@ -12,7 +12,7 @@ var PlatformStages = []terraform.Stage{
 	stages.NewStage(
 		typesazure.Name,
 		"vnet",
-		[]providers.Provider{providers.AzureRM, providers.Random},
+		[]providers.Provider{providers.AzureRM},
 	),
 	stages.NewStage(
 		typesazure.Name,
@@ -23,7 +23,7 @@ var PlatformStages = []terraform.Stage{
 	stages.NewStage(
 		typesazure.Name,
 		"cluster",
-		[]providers.Provider{providers.AzureRM},
+		[]providers.Provider{providers.AzureRM, providers.Time},
 	),
 }
 
@@ -32,7 +32,7 @@ var StackPlatformStages = []terraform.Stage{
 	stages.NewStage(
 		typesazure.StackTerraformName,
 		"vnet",
-		[]providers.Provider{providers.AzureStack, providers.Random},
+		[]providers.Provider{providers.AzureStack},
 	),
 	stages.NewStage(
 		typesazure.StackTerraformName,

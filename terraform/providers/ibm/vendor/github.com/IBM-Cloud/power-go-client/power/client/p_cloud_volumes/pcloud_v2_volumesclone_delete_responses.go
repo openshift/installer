@@ -41,6 +41,12 @@ func (o *PcloudV2VolumescloneDeleteReader) ReadResponse(response runtime.ClientR
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudV2VolumescloneDeleteForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudV2VolumescloneDeleteNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -141,6 +147,38 @@ func (o *PcloudV2VolumescloneDeleteUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudV2VolumescloneDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2VolumescloneDeleteForbidden creates a PcloudV2VolumescloneDeleteForbidden with default headers values
+func NewPcloudV2VolumescloneDeleteForbidden() *PcloudV2VolumescloneDeleteForbidden {
+	return &PcloudV2VolumescloneDeleteForbidden{}
+}
+
+/* PcloudV2VolumescloneDeleteForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudV2VolumescloneDeleteForbidden struct {
+	Payload *models.Error
+}
+
+func (o *PcloudV2VolumescloneDeleteForbidden) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteForbidden  %+v", 403, o.Payload)
+}
+func (o *PcloudV2VolumescloneDeleteForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV2VolumescloneDeleteForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

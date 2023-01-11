@@ -1,11 +1,11 @@
 package gcp
 
 import (
-	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/pkg/errors"
-
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
+
+	"github.com/openshift/installer/pkg/types/gcp"
 )
 
 func (o *ClusterUninstaller) listForwardingRules() ([]cloudResource, error) {

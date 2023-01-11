@@ -7,14 +7,22 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	googleoauth "golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/option"
 	"google.golang.org/api/serviceusage/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 //go:generate mockgen -source=./client.go -destination=./mock/gcpclient_generated.go -package=mock
+
+var (
+	// RequiredBasePermissions is the list of permissions required for an installation.
+	// A list of valid permissions can be found at https://cloud.google.com/iam/docs/understanding-roles.
+	RequiredBasePermissions = []string{}
+)
 
 // API represents the calls made to the API.
 type API interface {
@@ -22,12 +30,16 @@ type API interface {
 	GetMachineType(ctx context.Context, project, zone, machineType string) (*compute.MachineType, error)
 	GetPublicDomains(ctx context.Context, project string) ([]string, error)
 	GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error)
+	GetDNSZoneByName(ctx context.Context, project, zoneName string) (*dns.ManagedZone, error)
 	GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error)
 	GetProjects(ctx context.Context) (map[string]string, error)
 	GetRegions(ctx context.Context, project string) ([]string, error)
 	GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error)
 	GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error)
 	GetEnabledServices(ctx context.Context, project string) ([]string, error)
+	GetCredentials() *googleoauth.Credentials
+	GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.String, error)
+	ValidateServiceAccountHasPermissions(ctx context.Context, project string, permissions []string) (bool, error)
 }
 
 // Client makes calls to the GCP API.
@@ -107,6 +119,24 @@ func (c *Client) GetPublicDomains(ctx context.Context, project string) ([]string
 		return publicZones, err
 	}
 	return publicZones, nil
+}
+
+// GetDNSZoneByName returns a DNS zone matching the `zoneName` if the DNS zone exists
+// and can be seen (correct permissions for a private zone) in the project.
+func (c *Client) GetDNSZoneByName(ctx context.Context, project, zoneName string) (*dns.ManagedZone, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	defer cancel()
+
+	svc, err := c.getDNSService(ctx)
+	if err != nil {
+		return nil, err
+	}
+	returnedZone, err := svc.ManagedZones.Get(project, zoneName).Context(ctx).Do()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get DNS Zones")
+	}
+	return returnedZone, nil
+
 }
 
 // GetPublicDNSZone returns a public DNS zone for a basedomain.
@@ -316,4 +346,49 @@ func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.Serv
 		return nil, errors.Wrap(err, "failed to create service usage service")
 	}
 	return svc, nil
+}
+
+// GetCredentials returns the credentials used to authenticate the GCP session.
+func (c *Client) GetCredentials() *googleoauth.Credentials {
+	return c.ssn.Credentials
+}
+
+func (c *Client) getPermissions(ctx context.Context, project string, permissions []string) ([]string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	service, err := c.getCloudResourceService(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get cloud resource manager service")
+	}
+
+	projectsService := cloudresourcemanager.NewProjectsService(service)
+	rb := &cloudresourcemanager.TestIamPermissionsRequest{Permissions: permissions}
+	response, err := projectsService.TestIamPermissions(project, rb).Context(ctx).Do()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get Iam permissions")
+	}
+
+	return response.Permissions, nil
+}
+
+// GetProjectPermissions consumes a set of permissions and returns the set of found permissions for the service
+// account (in the provided project). A list of valid permissions can be found at
+// https://cloud.google.com/iam/docs/understanding-roles.
+func (c *Client) GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.String, error) {
+	validPermissions, err := c.getPermissions(ctx, project, permissions)
+	if err != nil {
+		return nil, err
+	}
+	return sets.NewString(validPermissions...), nil
+}
+
+// ValidateServiceAccountHasPermissions compares the permissions to the set returned from the GCP API. Returns true
+// if all permissions are available to the service account in the project.
+func (c *Client) ValidateServiceAccountHasPermissions(ctx context.Context, project string, permissions []string) (bool, error) {
+	validPermissions, err := c.GetProjectPermissions(ctx, project, permissions)
+	if err != nil {
+		return false, err
+	}
+	return validPermissions.Len() == len(permissions), nil
 }

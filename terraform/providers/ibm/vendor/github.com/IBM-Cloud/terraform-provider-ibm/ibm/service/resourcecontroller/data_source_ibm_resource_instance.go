@@ -13,6 +13,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
 func DataSourceIBMResourceInstance() *schema.Resource {
@@ -31,6 +32,8 @@ func DataSourceIBMResourceInstance() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "The id of the resource group in which the instance is present",
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_resource_instance",
+					"resource_group_id"),
 			},
 
 			"location": {
@@ -38,6 +41,8 @@ func DataSourceIBMResourceInstance() *schema.Resource {
 				Optional:    true,
 				Type:        schema.TypeString,
 				Computed:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_resource_instance",
+					"location"),
 			},
 
 			"service": {
@@ -113,6 +118,26 @@ func DataSourceIBMResourceInstance() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMResourceInstanceValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "resource_group_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceGroup",
+			Optional:                   true})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "location",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "Region",
+			Optional:                   true})
+
+	ibmIBMResourceInstanceValidator := validate.ResourceValidator{ResourceName: "ibm_resource_instance", Schema: validateSchema}
+	return &ibmIBMResourceInstanceValidator
 }
 
 func DataSourceIBMResourceInstanceRead(d *schema.ResourceData, meta interface{}) error {

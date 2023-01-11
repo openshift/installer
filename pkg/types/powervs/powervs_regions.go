@@ -51,7 +51,10 @@ var Regions = map[string]Region{
 	"syd": {
 		Description: "Sydney, Australia",
 		VPCRegion:   "au-syd",
-		Zones:       []string{"syd04"},
+		Zones: []string{
+			"syd04",
+			"syd05",
+		},
 	},
 	"sao": {
 		Description: "São Paulo, Brazil",
@@ -93,4 +96,16 @@ func RegionShortNames() []string {
 		i++
 	}
 	return keys
+}
+
+// ValidateVPCRegion validates that given VPC region is known/tested.
+func ValidateVPCRegion(region string) bool {
+	found := false
+	for r := range Regions {
+		if region == Regions[r].VPCRegion {
+			found = true
+			break
+		}
+	}
+	return found
 }

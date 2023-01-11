@@ -4,13 +4,13 @@ import (
 	"context"
 	"path/filepath"
 
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	configv1 "github.com/openshift/api/config/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
@@ -24,6 +24,7 @@ type ClusterOpenShiftAPIClient struct {
 	ctx          context.Context
 	config       *rest.Config
 	configPath   string
+	cvResVersion string
 }
 
 const (
@@ -85,7 +86,10 @@ func (ocp *ClusterOpenShiftAPIClient) AreClusterOperatorsInitialized() (bool, er
 	} else if cov1helpers.IsStatusConditionTrue(version.Status.Conditions, configv1.OperatorProgressing) {
 		lastError = cov1helpers.FindStatusCondition(version.Status.Conditions, configv1.OperatorProgressing).Message
 	}
-	logrus.Debugf("Still waiting for the cluster to initialize: %s", lastError)
+	if version.ResourceVersion != ocp.cvResVersion {
+		logrus.Debugf("Still waiting for the cluster to initialize: %s", lastError)
+		ocp.cvResVersion = version.ResourceVersion
+	}
 
 	return false, nil
 }

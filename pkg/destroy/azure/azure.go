@@ -9,13 +9,19 @@ import (
 	"time"
 
 	azurestackdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
-	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns"
 	"github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources"
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
+	azurekiota "github.com/microsoft/kiota-authentication-azure-go"
+	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
+	"github.com/microsoftgraph/msgraph-sdk-go/applications"
+	"github.com/microsoftgraph/msgraph-sdk-go/models"
+	"github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors"
+	"github.com/microsoftgraph/msgraph-sdk-go/serviceprincipals"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -30,12 +36,12 @@ import (
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
-	SubscriptionID  string
-	TenantID        string
-	GraphAuthorizer autorest.Authorizer
-	Authorizer      autorest.Authorizer
-	Environment     azureenv.Environment
-	CloudName       azure.CloudEnvironment
+	SubscriptionID string
+	TenantID       string
+	Authorizer     autorest.Authorizer
+	AuthProvider   *azurekiota.AzureIdentityAuthenticationProvider
+	Environment    azureenv.Environment
+	CloudName      azure.CloudEnvironment
 
 	InfraID                     string
 	ResourceGroupName           string
@@ -48,11 +54,10 @@ type ClusterUninstaller struct {
 	recordsClient           dns.RecordSetsClient
 	privateRecordSetsClient privatedns.RecordSetsClient
 	privateZonesClient      privatedns.PrivateZonesClient
-	serviceprincipalsClient graphrbac.ServicePrincipalsClient
-	applicationsClient      graphrbac.ApplicationsClient
+	msgraphClient           *msgraphsdk.GraphServiceClient
 }
 
-func (o *ClusterUninstaller) configureClients() {
+func (o *ClusterUninstaller) configureClients() error {
 	o.resourceGroupsClient = resources.NewGroupsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
 	o.resourceGroupsClient.Authorizer = o.Authorizer
 
@@ -68,11 +73,13 @@ func (o *ClusterUninstaller) configureClients() {
 	o.privateRecordSetsClient = privatedns.NewRecordSetsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
 	o.privateRecordSetsClient.Authorizer = o.Authorizer
 
-	o.serviceprincipalsClient = graphrbac.NewServicePrincipalsClientWithBaseURI(o.Environment.GraphEndpoint, o.TenantID)
-	o.serviceprincipalsClient.Authorizer = o.GraphAuthorizer
+	adapter, err := msgraphsdk.NewGraphRequestAdapter(o.AuthProvider)
+	if err != nil {
+		return err
+	}
+	o.msgraphClient = msgraphsdk.NewGraphServiceClient(adapter)
 
-	o.applicationsClient = graphrbac.NewApplicationsClientWithBaseURI(o.Environment.GraphEndpoint, o.TenantID)
-	o.applicationsClient.Authorizer = o.GraphAuthorizer
+	return nil
 }
 
 // New returns an Azure destroyer from ClusterMetadata.
@@ -94,9 +101,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	return &ClusterUninstaller{
 		SubscriptionID:              session.Credentials.SubscriptionID,
 		TenantID:                    session.Credentials.TenantID,
-		GraphAuthorizer:             session.GraphAuthorizer,
 		Authorizer:                  session.Authorizer,
 		Environment:                 session.Environment,
+		AuthProvider:                session.AuthProvider,
 		InfraID:                     metadata.InfraID,
 		ResourceGroupName:           group,
 		Logger:                      logger,
@@ -110,7 +117,10 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	var errs []error
 	var err error
 
-	o.configureClients()
+	err = o.configureClients()
+	if err != nil {
+		return nil, err
+	}
 
 	// 2 hours
 	timeout := 120 * time.Minute
@@ -186,12 +196,13 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		waitCtx,
 		func(ctx context.Context) {
 			o.Logger.Debugf("deleting application registrations")
-			err = deleteApplicationRegistrations(ctx, o.applicationsClient, o.serviceprincipalsClient, o.Logger, o.InfraID)
+			err = deleteApplicationRegistrations(ctx, o.msgraphClient, o.Logger, o.InfraID)
 			if err != nil {
-				o.Logger.Debug(err)
+				oDataErr := extractODataError(err)
+				o.Logger.Debug(oDataErr)
 				if isAuthError(err) {
 					cancel()
-					errs = append(errs, errors.Wrap(err, "unable to authenticate when deleting application registrations and their service principals"))
+					errs = append(errs, errors.Wrap(oDataErr, "unable to authenticate when deleting application registrations and their service principals"))
 				}
 				return
 			}
@@ -522,6 +533,15 @@ func isAuthError(err error) bool {
 		}
 	}
 
+	// https://github.com/Azure/azure-sdk-for-go/issues/16736
+	// https://github.com/Azure/azure-sdk-for-go/blob/sdk/azidentity/v1.1.0/sdk/azidentity/errors.go#L36
+	var authErr *azidentity.AuthenticationFailedError
+	if errors.As(err, &authErr) {
+		if authErr.RawResponse.StatusCode >= 400 && authErr.RawResponse.StatusCode <= 403 {
+			return true
+		}
+	}
+
 	return false
 }
 
@@ -543,70 +563,71 @@ func isResourceGroupBlockedError(err error) bool {
 	return false
 }
 
-func deleteApplicationRegistrations(ctx context.Context, appClient graphrbac.ApplicationsClient, spClient graphrbac.ServicePrincipalsClient, logger logrus.FieldLogger, infraID string) error {
-	errorList := []error{}
+// Errors returned by the new Azure SDK are not very helpful. They just say
+// "error status code received from the API". This function unwraps the
+// ODataErr, if possible, and returns a new error with a more friendly "code:
+// message" format.
+func extractODataError(err error) error {
+	var oDataErr *odataerrors.ODataError
+	if errors.As(err, &oDataErr) {
+		if typed := oDataErr.GetError(); typed != nil {
+			return fmt.Errorf("%s: %s", *typed.GetCode(), *typed.GetMessage())
+		}
+	}
+	return err
+}
+
+func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, logger logrus.FieldLogger, infraID string) error {
+	var errorList []error
 
 	tag := fmt.Sprintf("kubernetes.io_cluster.%s=owned", infraID)
-	servicePrincipals, err := getServicePrincipalsByTag(ctx, spClient, tag, infraID)
+	servicePrincipals, err := getServicePrincipalsByTag(ctx, graphClient, tag, infraID)
 	if err != nil {
-		if isAuthError(err) {
-			return err
-		}
 		return errors.Wrap(err, "failed to gather list of Service Principals by tag")
 	}
 
 	for _, sp := range servicePrincipals {
-		logger = logger.WithField("appID", *sp.AppID)
-		appFilter := fmt.Sprintf("appId eq '%s'", *sp.AppID)
-		appResults, err := appClient.List(ctx, appFilter)
+		appID := *sp.GetAppId()
+		logger := logger.WithField("appID", appID)
+
+		filter := fmt.Sprintf("appId eq '%s'", appID)
+		listQuery := applications.ApplicationsRequestBuilderGetRequestConfiguration{
+			QueryParameters: &applications.ApplicationsRequestBuilderGetQueryParameters{
+				Filter: &filter,
+			},
+		}
+
+		resp, err := graphClient.Applications().Get(ctx, &listQuery)
 		if err != nil {
-			if isAuthError(err) {
-				return err
-			}
 			errorList = append(errorList, err)
 			continue
 		}
-
-		apps := appResults.Values()
+		apps := resp.GetValue()
 		if len(apps) != 1 {
-			msg := fmt.Sprintf("should have recieved only a single result matching AppID, received %d instead", len(apps))
-			errorList = append(errorList, errors.New(msg))
-			continue
+			err = fmt.Errorf("should have received only a single matching AppID, received %d instead", len(apps))
+			errorList = append(errorList, err)
 		}
 
-		_, err = appClient.Delete(ctx, *apps[0].ObjectID)
+		err = graphClient.ApplicationsById(*apps[0].GetId()).Delete(ctx, nil)
 		if err != nil {
-			if isAuthError(err) {
-				return err
-			}
 			errorList = append(errorList, err)
-			continue
 		}
-		logger.Info("deleted")
+		logger.Info("Deleted")
 	}
 
 	return utilerrors.NewAggregate(errorList)
 }
 
-func getServicePrincipalsByTag(ctx context.Context, spClient graphrbac.ServicePrincipalsClient, matchTag, infraID string) ([]graphrbac.ServicePrincipal, error) {
-	matchedSPs := []graphrbac.ServicePrincipal{}
-
-	infraFilter := fmt.Sprintf("startswith(displayName,'%s')", infraID)
-
-	for spResults, err := spClient.List(ctx, infraFilter); spResults.NotDone(); err = spResults.NextWithContext(ctx) {
-		if err != nil {
-			return matchedSPs, err
-		}
-
-		for _, sp := range spResults.Values() {
-			for _, tag := range *sp.Tags {
-				if tag == matchTag {
-					matchedSPs = append(matchedSPs, sp)
-					break
-				}
-			}
-		}
+func getServicePrincipalsByTag(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, matchTag, infraID string) ([]models.ServicePrincipalable, error) {
+	filter := fmt.Sprintf("startswith(displayName, '%s') and tags/any(s:s eq '%s')", infraID, matchTag)
+	listQuery := serviceprincipals.ServicePrincipalsRequestBuilderGetRequestConfiguration{
+		QueryParameters: &serviceprincipals.ServicePrincipalsRequestBuilderGetQueryParameters{
+			Filter: &filter,
+		},
 	}
-
-	return matchedSPs, nil
+	resp, err := graphClient.ServicePrincipals().Get(ctx, &listQuery)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetValue(), nil
 }

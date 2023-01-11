@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	machineapi "github.com/openshift/api/machine/v1beta1"
-	"github.com/openshift/installer/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	machineapi "github.com/openshift/api/machine/v1beta1"
+	"github.com/openshift/installer/pkg/types"
 )
 
 func TestConfigMasters(t *testing.T) {

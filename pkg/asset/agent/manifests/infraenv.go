@@ -6,14 +6,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 )
 
 var (
@@ -38,6 +39,7 @@ func (*InfraEnv) Name() string {
 func (*InfraEnv) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
+		&agentconfig.AgentConfig{},
 	}
 }
 
@@ -45,7 +47,8 @@ func (*InfraEnv) Dependencies() []asset.Asset {
 func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(installConfig)
+	agentConfig := &agentconfig.AgentConfig{}
+	dependencies.Get(installConfig, agentConfig)
 
 	if installConfig.Config != nil {
 		infraEnv := &aiv1beta1.InfraEnv{
@@ -63,9 +66,16 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 					Name: getPullSecretName(installConfig),
 				},
 				NMStateConfigLabelSelector: metav1.LabelSelector{
-					MatchLabels: getNMStateConfigLabelsFromOptionalInstallConfig(installConfig),
+					MatchLabels: getNMStateConfigLabels(installConfig),
 				},
 			},
+		}
+		if installConfig.Config.Proxy != nil {
+			infraEnv.Spec.Proxy = getProxy(installConfig)
+		}
+
+		if agentConfig.Config != nil {
+			infraEnv.Spec.AdditionalNTPSources = agentConfig.Config.AdditionalNTPSources
 		}
 		i.Config = infraEnv
 

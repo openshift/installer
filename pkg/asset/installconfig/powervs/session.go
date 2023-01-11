@@ -4,15 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	gohttp "net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/openshift/installer/pkg/types/powervs"
-	"github.com/pkg/errors"
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/IBM-Cloud/bluemix-go"
@@ -25,8 +21,10 @@ import (
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/form3tech-oss/jwt-go"
-
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/openshift/installer/pkg/types/powervs"
 )
 
 var (
@@ -35,7 +33,7 @@ var (
 	defaultAuthFilePath               = filepath.Join(os.Getenv("HOME"), ".powervs", "config.json")
 )
 
-//BxClient is struct which provides bluemix session details
+// BxClient is struct which provides bluemix session details
 type BxClient struct {
 	*bxsession.Session
 	APIKey       string
@@ -44,7 +42,7 @@ type BxClient struct {
 	AccountAPIV2 accountv2.Accounts
 }
 
-//User is struct with user details
+// User is struct with user details
 type User struct {
 	ID      string
 	Email   string
@@ -100,7 +98,7 @@ func fetchUserDetails(sess *bxsession.Session) (*User, error) {
 	return &user, nil
 }
 
-//NewBxClient func returns bluemix client
+// NewBxClient func returns bluemix client
 func NewBxClient() (*BxClient, error) {
 	c := &BxClient{}
 
@@ -162,7 +160,7 @@ func NewBxClient() (*BxClient, error) {
 	return c, nil
 }
 
-//GetAccountType func return the type of account TRAIL/PAID
+// GetAccountType func return the type of account TRAIL/PAID
 func (c *BxClient) GetAccountType() (string, error) {
 	myAccount, err := c.AccountAPIV2.Get((*c.User).Account)
 	if err != nil {
@@ -172,7 +170,7 @@ func (c *BxClient) GetAccountType() (string, error) {
 	return myAccount.Type, nil
 }
 
-//ValidateAccountPermissions Checks permission for provisioning Power VS resources
+// ValidateAccountPermissions Checks permission for provisioning Power VS resources
 func (c *BxClient) ValidateAccountPermissions() error {
 	accType, err := c.GetAccountType()
 	if err != nil {
@@ -184,7 +182,7 @@ func (c *BxClient) ValidateAccountPermissions() error {
 	return nil
 }
 
-//ValidateDhcpService checks for existing Dhcp service for the provided PowerVS cloud instance
+// ValidateDhcpService checks for existing Dhcp service for the provided PowerVS cloud instance
 func (c *BxClient) ValidateDhcpService(ctx context.Context, svcInsID string) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
@@ -202,7 +200,7 @@ func (c *BxClient) ValidateDhcpService(ctx context.Context, svcInsID string) err
 	return nil
 }
 
-//ValidateCloudConnectionInPowerVSRegion counts cloud connection in PowerVS Region
+// ValidateCloudConnectionInPowerVSRegion counts cloud connection in PowerVS Region
 func (c *BxClient) ValidateCloudConnectionInPowerVSRegion(ctx context.Context, svcInsID string) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
@@ -291,7 +289,7 @@ func getPISessionVarsFromAuthFile(pisv *PISessionVars) error {
 		return nil
 	}
 
-	content, err := ioutil.ReadFile(authFilePath)
+	content, err := os.ReadFile(authFilePath)
 	if err != nil {
 		return err
 	}
@@ -404,7 +402,7 @@ func savePISessionVars(pisv *PISessionVars) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(authFilePath, jsonVars, 0600)
+	return os.WriteFile(authFilePath, jsonVars, 0o600)
 }
 
 func getEnv(envs []string) string {

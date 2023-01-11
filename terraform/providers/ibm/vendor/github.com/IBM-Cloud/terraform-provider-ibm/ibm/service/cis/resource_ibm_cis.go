@@ -4,6 +4,7 @@
 package cis
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/url"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -46,6 +48,12 @@ func ResourceIBMCISInstance() *schema.Resource {
 			Update: schema.DefaultTimeout(10 * time.Minute),
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.Sequence(
+			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+				return flex.ResourceTagsCustomizeDiff(diff)
+			},
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -97,8 +105,9 @@ func ResourceIBMCISInstance() *schema.Resource {
 			"tags": {
 				Type:     schema.TypeSet,
 				Optional: true,
+				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_cis", "tags")},
-				Set:      schema.HashString,
+				Set:      flex.ResourceIBMVPCHash,
 			},
 
 			"status": {

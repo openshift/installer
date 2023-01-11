@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -25,6 +26,9 @@ func DataSourceIBMCISLogPushJobs() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_logpush_jobs",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -78,6 +82,24 @@ func DataSourceIBMCISLogPushJobs() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMCISLogPushJobsValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISLogPushJobsValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_logpush_jobs",
+		Schema:       validateSchema}
+	return &iBMCISLogPushJobsValidator
 }
 func ResourceIBMCISLogpushJobsRead(d *schema.ResourceData, meta interface{}) error {
 	sess, err := meta.(conns.ClientSession).CisLogpushJobsSession()

@@ -11,14 +11,15 @@ import (
 	"strings"
 
 	dockerref "github.com/containers/image/docker/reference"
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	utilsnet "k8s.io/utils/net"
 
+	configv1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -47,7 +48,6 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 	vspherevalidation "github.com/openshift/installer/pkg/types/vsphere/validation"
 	"github.com/openshift/installer/pkg/validate"
-	utilsnet "k8s.io/utils/net"
 )
 
 // list of known plugins that require hostPrefix to be set
@@ -143,6 +143,8 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("publish"), c.Publish, fmt.Sprintf("Internal publish strategy is not supported on %q platform", platformName)))
 		}
 	}
+
+	allErrs = append(allErrs, validateFeatureSet(c)...)
 
 	return allErrs
 }
@@ -975,4 +977,59 @@ func validateAdditionalCABundlePolicy(c *types.InstallConfig) error {
 	default:
 		return fmt.Errorf("supported values \"Proxyonly\", \"Always\"")
 	}
+}
+
+// validateFeatureSet returns an error if a gated feature is used without opting into the feature set.
+func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if _, ok := configv1.FeatureSets[c.FeatureSet]; !ok {
+		sortedFeatureSets := func() []string {
+			v := []string{}
+			for n := range configv1.FeatureSets {
+				v = append(v, string(n))
+			}
+			sort.Strings(v)
+			return v
+		}()
+		allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), c.FeatureSet, sortedFeatureSets))
+	}
+
+	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
+		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
+
+		if c.GCP != nil {
+			if c.GCP.PrivateDNSZone != nil && len(c.GCP.PrivateDNSZone.ProjectID) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "privateDNSZone", "projectID"), errMsg))
+			}
+
+			if c.GCP.PublicDNSZone != nil && len(c.GCP.PublicDNSZone.ProjectID) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "publicDNSZone", "projectID"), errMsg))
+			}
+		}
+
+		if c.VSphere != nil {
+			if len(c.VSphere.FailureDomains) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "vsphere", "failureDomains"), errMsg))
+			}
+
+			if len(c.VSphere.VCenters) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "vsphere", "vcenters"), errMsg))
+			}
+
+			if c.VSphere.DefaultMachinePlatform != nil && len(c.VSphere.DefaultMachinePlatform.Zones) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "vsphere", "defaultMachinePlatform", "zones"), errMsg))
+			}
+
+			if c.ControlPlane != nil && c.ControlPlane.Platform.VSphere != nil && len(c.ControlPlane.Platform.VSphere.Zones) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("controlPlane", "platform", "vsphere", "zones"), errMsg))
+			}
+
+			if len(c.Compute) != 0 && c.Compute[0].Platform.VSphere != nil && len(c.Compute[0].Platform.VSphere.Zones) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("compute", "platform", "vsphere", "zones"), errMsg))
+			}
+		}
+	}
+
+	return allErrs
 }

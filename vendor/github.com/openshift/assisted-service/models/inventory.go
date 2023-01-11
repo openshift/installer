@@ -54,9 +54,6 @@ type Inventory struct {
 	// system vendor
 	SystemVendor *SystemVendor `json:"system_vendor,omitempty"`
 
-	// timestamp
-	Timestamp int64 `json:"timestamp,omitempty"`
-
 	// tpm version
 	// Enum: [none 1.2 2.0]
 	TpmVersion string `json:"tpm_version,omitempty"`

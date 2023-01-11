@@ -10,10 +10,6 @@ type DiskType string
 // +kubebuilder:validation:Enum=HostGroup;Datacenter;ComputeCluster
 type FailureDomainType string
 
-// DeploymentSuitable defines if a type of machine is suitable for a given DeploymentZone
-// +kubebuilder:validation:Enum=Allowed;NotAllowed
-type DeploymentSuitable string
-
 const (
 	// DiskTypeThin uses Thin disk provisioning type for vsphere in the cluster.
 	DiskTypeThin DiskType = "thin"
@@ -23,23 +19,6 @@ const (
 
 	// DiskTypeEagerZeroedThick uses EagerZeroedThick disk provisioning type for vsphere in the cluster.
 	DiskTypeEagerZeroedThick DiskType = "eagerZeroedThick"
-
-	// HostGroupFailureDomain as a type allows the use of a group of ESXi hosts
-	// to be represented as a failure domain zone. When using this
-	// case it is expected that region would be a cluster.
-	// HostGroups within vCenter must be preconfigured and
-	// assigned in the topology.
-	HostGroupFailureDomain FailureDomainType = "HostGroup"
-
-	// ComputeClusterFailureDomain failure domain can either be a zone or region.
-	// The vCenter cluster is required to preconfigured and
-	// assigned in the topology.
-	ComputeClusterFailureDomain FailureDomainType = "ComputeCluster"
-
-	// DatacenterFailureDomain failure domain can be only a region. The vcenter
-	// datacenter is required to be preconfigred and assigned
-	// in the topology. If used the zone would be of type ComputeCluster.
-	DatacenterFailureDomain FailureDomainType = "Datacenter"
 )
 
 // Platform stores any global configuration used for vsphere platforms
@@ -56,6 +35,8 @@ type Platform struct {
 	DefaultDatastore string `json:"defaultDatastore"`
 	// Folder is the absolute path of the folder that will be used and/or created for
 	// virtual machines. The absolute path is of the form /<datacenter>/vm/<folder>/<subfolder>.
+	// +kubebuilder:validation:Pattern=`^/.*?/vm/.*?`
+	// +optional
 	Folder string `json:"folder,omitempty"`
 	// Cluster is the name of the cluster virtual machines will be cloned into.
 	Cluster string `json:"cluster,omitempty"`
@@ -109,15 +90,17 @@ type Platform struct {
 	// specified, it will be set according to the default storage policy
 	// of vsphere.
 	DiskType DiskType `json:"diskType,omitempty"`
-	// vcenters holds the connection details for services to communicate with vCenter.
+	// VCenters holds the connection details for services to communicate with vCenter.
 	// Currently only a single vCenter is supported.
+	// VCenters is available in TechPreview.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:MaxItems=1
 	// +kubebuilder:validation:MinItems=1
 	VCenters []VCenter `json:"vcenters,omitempty"`
-	// failureDomains holds the VSpherePlatformFailureDomainSpec which contains
+	// FailureDomains holds the VSpherePlatformFailureDomainSpec which contains
 	// the definition of region, zone and the vCenter topology.
 	// If this is omitted failure domains (regions and zones) will not be used.
+	// FailureDomains is available in TechPreview.
 	// +kubebuilder:validation:Optional
 	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
 }
@@ -168,7 +151,6 @@ type Topology struct {
 	// +kubebuilder:validation:MaxLength=2048
 	ComputeCluster string `json:"computeCluster"`
 	// networks is the list of networks within this failure domain
-	// +kubebuilder:validation:Optional
 	Networks []string `json:"networks,omitempty"`
 	// datastore is the name or inventory path of the datastore in which the
 	// virtual machine is created/located.
@@ -183,10 +165,11 @@ type Topology struct {
 	// +kubebuilder:validation:Pattern=`^/.*?/host/.*?/Resources.*`
 	// +optional
 	ResourcePool string `json:"resourcePool,omitempty"`
-	// folder is the name or inventory path of the folder in which the
+	// folder is the inventory path of the folder in which the
 	// virtual machine is created/located.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=2048
+	// +kubebuilder:validation:Pattern=`^/.*?/vm/.*?`
 	// +optional
 	Folder string `json:"folder,omitempty"`
 }

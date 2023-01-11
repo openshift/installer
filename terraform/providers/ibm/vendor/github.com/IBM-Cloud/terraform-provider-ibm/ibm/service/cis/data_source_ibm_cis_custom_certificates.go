@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -22,8 +23,12 @@ func DataSourceIBMCISCustomCertificates() *schema.Resource {
 		Read: dataSourceIBMCISCustomCertificatesRead,
 		Schema: map[string]*schema.Schema{
 			cisID: {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Description: "CIS instance crn",
+				Required:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_cis_custom_certificates",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -96,6 +101,24 @@ func DataSourceIBMCISCustomCertificates() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMCISCustomCertificatesValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+
+	iBMCISCustomCertificatesValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_custom_certificates",
+		Schema:       validateSchema}
+	return &iBMCISCustomCertificatesValidator
 }
 
 func dataSourceIBMCISCustomCertificatesRead(d *schema.ResourceData, meta interface{}) error {

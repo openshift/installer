@@ -2,13 +2,15 @@ package aws
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	awss "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"strings"
+
+	"github.com/openshift/installer/pkg/types"
 )
 
 //go:generate mockgen -source=./route53.go -destination=mock/awsroute53_generated.go -package=mock

@@ -35,6 +35,8 @@ func ResourceIBMCISWAFPackage() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "CIS Intance CRN",
+				ValidateFunc: validate.InvokeValidator("ibm_cis_waf_package",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -88,6 +90,14 @@ func ResourceIBMCISWAFPackageValidator() *validate.ResourceValidator {
 	sesitivity := "high, medium, low, off"
 	actionMode := "simulate, block, challenge"
 
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 cisWAFPackageSensitivity,

@@ -12,19 +12,19 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPICloneVolumeClient ...
+// IBMPICloneVolumeClient
 type IBMPICloneVolumeClient struct {
 	IBMPIClient
 }
 
-// NewIBMPICloneVolumeClient ...
+// NewIBMPICloneVolumeClient
 func NewIBMPICloneVolumeClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPICloneVolumeClient {
 	return &IBMPICloneVolumeClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
 	}
 }
 
-//Create a clone volume using V2 of the API - This creates a clone
+// Create a Clone Volume (V2) - This creates a clone
 func (f *IBMPICloneVolumeClient) Create(body *models.VolumesCloneAsyncRequest) (*models.CloneTaskReference, error) {
 	params := p_cloud_volumes.NewPcloudV2VolumesClonePostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -39,7 +39,7 @@ func (f *IBMPICloneVolumeClient) Create(body *models.VolumesCloneAsyncRequest) (
 	return resp.Payload, nil
 }
 
-// Get status of a clone request
+// Get Status of a Clone Request
 func (f *IBMPICloneVolumeClient) Get(cloneTaskID string) (*models.CloneTaskStatus, error) {
 	params := p_cloud_volumes.NewPcloudV2VolumesClonetasksGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -54,7 +54,7 @@ func (f *IBMPICloneVolumeClient) Get(cloneTaskID string) (*models.CloneTaskStatu
 	return resp.Payload, nil
 }
 
-// Create a volume clone V2 Version = This is the prepare operation
+// Create a Clone Volume (V2) - This is the prepare operation
 func (f *IBMPICloneVolumeClient) CreateV2Clone(body *models.VolumesCloneCreate) (*models.VolumesClone, error) {
 	params := p_cloud_volumes.NewPcloudV2VolumesclonePostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -69,7 +69,7 @@ func (f *IBMPICloneVolumeClient) CreateV2Clone(body *models.VolumesCloneCreate) 
 	return resp.Payload, nil
 }
 
-// Get a list of volume-clones request for a cloud instance
+// Get a list of Volume Clones
 func (f *IBMPICloneVolumeClient) GetV2Clones(queryFilter string) (*models.VolumesClones, error) {
 	params := p_cloud_volumes.NewPcloudV2VolumescloneGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -84,7 +84,7 @@ func (f *IBMPICloneVolumeClient) GetV2Clones(queryFilter string) (*models.Volume
 	return resp.Payload, nil
 }
 
-// Delete a volume- clone request
+// Delete a Volume Clone
 func (f *IBMPICloneVolumeClient) DeleteClone(id string) error {
 	params := p_cloud_volumes.NewPcloudV2VolumescloneDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
@@ -96,7 +96,7 @@ func (f *IBMPICloneVolumeClient) DeleteClone(id string) error {
 	return nil
 }
 
-// Initiate the start clone request
+// Initiate a Start Clone Request
 func (f *IBMPICloneVolumeClient) StartClone(volumesCloneID string) (*models.VolumesClone, error) {
 	params := p_cloud_volumes.NewPcloudV2VolumescloneStartPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -111,7 +111,7 @@ func (f *IBMPICloneVolumeClient) StartClone(volumesCloneID string) (*models.Volu
 	return resp.Payload, nil
 }
 
-// Initiate the execute action for a clone
+// Initiate an Execute Action for a Clone
 func (f *IBMPICloneVolumeClient) PrepareClone(volumesCloneID string) (*models.VolumesClone, error) {
 	params := p_cloud_volumes.NewPcloudV2VolumescloneExecutePostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -126,7 +126,7 @@ func (f *IBMPICloneVolumeClient) PrepareClone(volumesCloneID string) (*models.Vo
 	return resp.Payload, nil
 }
 
-// Get V2Clone Task Status
+// Get a V2Clone Task Status
 func (f *IBMPICloneVolumeClient) GetV2CloneStatus(cloneName string) (*models.VolumesCloneDetail, error) {
 	params := p_cloud_volumes.NewPcloudV2VolumescloneGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).

@@ -33,9 +33,12 @@ require (
 	github.com/zclconf/go-cty v1.8.4 // indirect
 	golang.org/x/net v0.0.0-20210326060303-6b1517762897 // indirect
 	golang.org/x/sys v0.0.0-20210502180810-71e4cd670f79 // indirect
-	golang.org/x/text v0.3.5 // indirect
+	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/genproto v0.0.0-20200711021454-869866162049 // indirect
 	google.golang.org/grpc v1.32.0 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 )
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2100495
+replace golang.org/x/text => golang.org/x/text v0.3.7

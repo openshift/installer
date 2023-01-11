@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
@@ -38,7 +38,8 @@ func TestGenerateInfrastructe(t *testing.T) {
 			infraBuild.forPlatform(configv1.AWSPlatformType),
 			infraBuild.withServiceEndpoint("service", "https://endpoint"),
 		),
-	}}
+	},
+	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			parents := asset.Parents{}
@@ -118,6 +119,13 @@ func (b icBuildNamespace) withServiceEndpoint(name, url string) icOption {
 				URL:  url,
 			},
 		)
+	}
+}
+
+func (b icBuildNamespace) withLBType(lbType configv1.AWSLBType) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAWS()(ic)
+		ic.Platform.AWS.LBType = lbType
 	}
 }
 

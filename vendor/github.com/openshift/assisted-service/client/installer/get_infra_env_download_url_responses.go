@@ -92,19 +92,19 @@ func NewGetInfraEnvDownloadURLOK() *GetInfraEnvDownloadURLOK {
 Success.
 */
 type GetInfraEnvDownloadURLOK struct {
-	Payload *models.InfraEnvImageURL
+	Payload *models.PresignedURL
 }
 
 func (o *GetInfraEnvDownloadURLOK) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/image-url][%d] getInfraEnvDownloadUrlOK  %+v", 200, o.Payload)
 }
-func (o *GetInfraEnvDownloadURLOK) GetPayload() *models.InfraEnvImageURL {
+func (o *GetInfraEnvDownloadURLOK) GetPayload() *models.PresignedURL {
 	return o.Payload
 }
 
 func (o *GetInfraEnvDownloadURLOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.InfraEnvImageURL)
+	o.Payload = new(models.PresignedURL)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

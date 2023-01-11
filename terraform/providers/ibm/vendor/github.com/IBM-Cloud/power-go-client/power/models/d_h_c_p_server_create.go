@@ -28,6 +28,9 @@ type DHCPServerCreate struct {
 
 	// Optional name of DHCP Service (will be prefixed by DHCP identifier)
 	Name *string `json:"name,omitempty"`
+
+	// Indicates if SNAT will be enabled for DHCP service
+	SnatEnabled *bool `json:"snatEnabled,omitempty"`
 }
 
 // Validate validates this d h c p server create

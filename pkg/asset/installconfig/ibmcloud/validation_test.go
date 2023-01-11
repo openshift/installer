@@ -10,14 +10,14 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/stretchr/testify/assert"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type editFunctions []func(ic *types.InstallConfig)
@@ -39,14 +39,31 @@ var (
 		validPrivateSubnetUSSouth1ID,
 		validPrivateSubnetUSSouth2ID,
 	}
-	validSubnetName   = "valid-subnet"
+	validSubnet1Name  = "valid-subnet-1"
+	validSubnet2Name  = "valid-subnet-2"
+	validSubnet3Name  = "valid-subnet-3"
 	validVPCID        = "valid-id"
 	validVPC          = "valid-vpc"
 	validRG           = "valid-resource-group"
 	validZoneUSSouth1 = "us-south-1"
+	validZoneUSSouth2 = "us-south-2"
+	validZoneUSSouth3 = "us-south-3"
+	validZones        = []string{
+		validZoneUSSouth1,
+		validZoneUSSouth2,
+		validZoneUSSouth3,
+	}
+	validZoneSubnetNameMap = map[string]string{
+		validZoneUSSouth1: validSubnet1Name,
+		validZoneUSSouth2: validSubnet2Name,
+		validZoneUSSouth3: validSubnet3Name,
+	}
+
 	wrongRG           = "wrong-resource-group"
+	wrongSubnetName   = "wrong-subnet"
 	wrongVPCID        = "wrong-id"
 	wrongVPC          = "wrong-vpc"
+	wrongZone         = "wrong-zone"
 	anotherValidVPCID = "another-valid-id"
 	anotherValidVPC   = "another-valid-vpc"
 	anotherValidRG    = "another-valid-resource-group"
@@ -99,8 +116,8 @@ var (
 			},
 		},
 	}
-	validSubnet = &vpcv1.Subnet{
-		Name: &validRG,
+	validSubnet1 = &vpcv1.Subnet{
+		Name: &validSubnet1Name,
 		VPC: &vpcv1.VPCReference{
 			Name: &validVPC,
 			ID:   &validVPCID,
@@ -108,6 +125,51 @@ var (
 		ResourceGroup: &vpcv1.ResourceGroupReference{
 			Name: &validRG,
 			ID:   &validRG,
+		},
+		Zone: &vpcv1.ZoneReference{
+			Name: &validZoneUSSouth1,
+		},
+	}
+	validSubnet2 = &vpcv1.Subnet{
+		Name: &validSubnet2Name,
+		VPC: &vpcv1.VPCReference{
+			Name: &validVPC,
+			ID:   &validVPCID,
+		},
+		ResourceGroup: &vpcv1.ResourceGroupReference{
+			Name: &validRG,
+			ID:   &validRG,
+		},
+		Zone: &vpcv1.ZoneReference{
+			Name: &validZoneUSSouth2,
+		},
+	}
+	validSubnet3 = &vpcv1.Subnet{
+		Name: &validSubnet3Name,
+		VPC: &vpcv1.VPCReference{
+			Name: &validVPC,
+			ID:   &validVPCID,
+		},
+		ResourceGroup: &vpcv1.ResourceGroupReference{
+			Name: &validRG,
+			ID:   &validRG,
+		},
+		Zone: &vpcv1.ZoneReference{
+			Name: &validZoneUSSouth3,
+		},
+	}
+	wrongSubnet = &vpcv1.Subnet{
+		Name: &wrongSubnetName,
+		VPC: &vpcv1.VPCReference{
+			Name: &validVPC,
+			ID:   &validVPCID,
+		},
+		ResourceGroup: &vpcv1.ResourceGroupReference{
+			Name: &validRG,
+			ID:   &validRG,
+		},
+		Zone: &vpcv1.ZoneReference{
+			Name: &wrongZone,
 		},
 	}
 
@@ -176,6 +238,26 @@ func validVPCName(ic *types.InstallConfig) {
 	ic.Platform.IBMCloud.VPCName = "valid-vpc"
 }
 
+func validControlPlaneSubnetsForZones(ic *types.InstallConfig, zones []string) {
+	// If no zones are passed, we select all valid zones
+	if zones == nil || len(zones) == 0 {
+		zones = validZones
+	}
+	for _, zone := range zones {
+		ic.Platform.IBMCloud.ControlPlaneSubnets = append(ic.Platform.IBMCloud.ControlPlaneSubnets, validZoneSubnetNameMap[zone])
+	}
+}
+
+func validComputeSubnetsForZones(ic *types.InstallConfig, zones []string) {
+	// If no zones are passed, we select all valid zones
+	if zones == nil || len(zones) == 0 {
+		zones = validZones
+	}
+	for _, zone := range zones {
+		ic.Platform.IBMCloud.ComputeSubnets = append(ic.Platform.IBMCloud.ComputeSubnets, validZoneSubnetNameMap[zone])
+	}
+}
+
 func TestValidate(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -220,7 +302,7 @@ func TestValidate(t *testing.T) {
 				validResourceGroupName,
 				validVPCName,
 			},
-			errorMsg: `platform.ibmcloud.controlPlaneSubnets: Invalid value: \[\]string\(nil\): controlPlaneSubnets cannot be empty when providing a vpcName: valid-vpc`,
+			errorMsg: `\Qplatform.ibmcloud.controlPlaneSubnets: Invalid value: []string(nil): controlPlaneSubnets cannot be empty when providing a vpcName: valid-vpc\E`,
 		},
 		{
 			name: "control plane subnet not found",
@@ -271,12 +353,80 @@ func TestValidate(t *testing.T) {
 			errorMsg: `platform.ibmcloud.controlPlaneSubnets: Invalid value: "valid-subnet": controlPlaneSubnets contains subnet: valid-subnet, not found in expected resourceGroupName: wrong-resource-group`,
 		},
 		{
+			name: "control plane subnet no zones",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+				},
+			},
+		},
+		{
+			name: "control plane subnet no machinepoolplatform",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+				},
+				func(ic *types.InstallConfig) {
+					ic.ControlPlane.Platform.IBMCloud = nil
+				},
+			},
+		},
+		{
+			name: "control plane subnet invalid zones",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+				},
+				func(ic *types.InstallConfig) {
+					ic.ControlPlane.Platform.IBMCloud.Zones = validZones
+				},
+			},
+			errorMsg: `\Qplatform.ibmcloud.controlPlaneSubnets: Invalid value: []string{"valid-subnet-1"}: number of zones (1) covered by controlPlaneSubnets does not match number of provided or default zones (3) for control plane in us-south\E`,
+		},
+		{
+			name: "control plane subnet valid zones some",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+				},
+				func(ic *types.InstallConfig) {
+					ic.ControlPlane.Platform.IBMCloud.Zones = []string{"us-south-2", "us-south-3"}
+				},
+			},
+		},
+		{
+			name: "control plane subnet valid zones all",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+				},
+				func(ic *types.InstallConfig) {
+					ic.ControlPlane.Platform.IBMCloud.Zones = validZones
+				},
+			},
+		},
+		{
 			name: "VPC with no compute subnets",
 			edits: editFunctions{
 				validResourceGroupName,
 				validVPCName,
 			},
-			errorMsg: `platform.ibmcloud.computeSubnets: Invalid value: \[\]string\(nil\): computeSubnets cannot be empty when providing a vpcName: valid-vpc`,
+			errorMsg: `\Qplatform.ibmcloud.computeSubnets: Invalid value: []string(nil): computeSubnets cannot be empty when providing a vpcName: valid-vpc\E`,
 		},
 		{
 			name: "compute subnet not found",
@@ -326,6 +476,138 @@ func TestValidate(t *testing.T) {
 			},
 			errorMsg: `platform.ibmcloud.computeSubnets: Invalid value: "valid-subnet": computeSubnets contains subnet: valid-subnet, not found in expected resourceGroupName: wrong-resource-group`,
 		},
+		{
+			name: "compute subnet no zones",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+				},
+			},
+		},
+		{
+			name: "compute subnet no machinepoolplatform",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+				},
+				func(ic *types.InstallConfig) {
+					ic.Compute[0].Platform.IBMCloud = nil
+				},
+			},
+		},
+		{
+			name: "compute subnet invalid zones",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet1Name}
+				},
+				func(ic *types.InstallConfig) {
+					ic.Compute[0].Platform.IBMCloud.Zones = validZones
+				},
+			},
+			errorMsg: `\Qplatform.ibmcloud.computeSubnets: Invalid value: []string{"valid-subnet-1"}: number of zones (1) covered by computeSubnets does not match number of provided or default zones (3) for compute[0] in us-south\E`,
+		},
+		{
+			name: "single compute subnet valid zones some",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet2Name}
+				},
+				func(ic *types.InstallConfig) {
+					ic.Compute[0].Platform.IBMCloud.Zones = []string{validZoneUSSouth2}
+				},
+			},
+		},
+		{
+			name: "multiple compute subnet invalid zones some",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet2Name, validSubnet3Name}
+				},
+				func(ic *types.InstallConfig) {
+					secondCompute := types.MachinePool{
+						Platform: types.MachinePoolPlatform{
+							IBMCloud: validMachinePool(),
+						},
+					}
+					ic.Compute = append(ic.Compute, secondCompute)
+					ic.Compute[0].Platform.IBMCloud.Zones = []string{validZoneUSSouth2, validZoneUSSouth3}
+					ic.Compute[1].Platform.IBMCloud.Zones = []string{validZoneUSSouth3}
+				},
+			},
+			errorMsg: `\Qplatform.ibmcloud.computeSubnets: Invalid value: []string{"valid-subnet-2", "valid-subnet-3"}: number of zones (2) covered by computeSubnets does not match number of provided or default zones (1) for compute[1] in us-south\E`,
+		},
+		{
+			name: "multiple compute subnet valid zones some",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet2Name, validSubnet3Name}
+				},
+				func(ic *types.InstallConfig) {
+					secondCompute := types.MachinePool{
+						Platform: types.MachinePoolPlatform{
+							IBMCloud: validMachinePool(),
+						},
+					}
+					ic.Compute = append(ic.Compute, secondCompute)
+					ic.Compute[0].Platform.IBMCloud.Zones = []string{validZoneUSSouth2, validZoneUSSouth3}
+					ic.Compute[1].Platform.IBMCloud.Zones = []string{validZoneUSSouth2, validZoneUSSouth3}
+				},
+			},
+		},
+		{
+			name: "single compute subnet valid zones all",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+				},
+				func(ic *types.InstallConfig) {
+					ic.Compute[0].Platform.IBMCloud.Zones = validZones
+				},
+			},
+		},
+		{
+			name: "multiple compute subnet valid zones all",
+			edits: editFunctions{
+				validResourceGroupName,
+				validVPCName,
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+					ic.Platform.IBMCloud.ComputeSubnets = []string{validSubnet1Name, validSubnet2Name, validSubnet3Name}
+				},
+				func(ic *types.InstallConfig) {
+					secondCompute := types.MachinePool{
+						Platform: types.MachinePoolPlatform{
+							IBMCloud: validMachinePool(),
+						},
+					}
+					ic.Compute = append(ic.Compute, secondCompute)
+					ic.Compute[0].Platform.IBMCloud.Zones = validZones
+					ic.Compute[1].Platform.IBMCloud.Zones = validZones
+				},
+			},
+		},
 	}
 
 	mockCtrl := gomock.NewController(t)
@@ -370,12 +652,47 @@ func TestValidate(t *testing.T) {
 	// Mocks: control plane subnet invalid VPC
 	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
 	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(invalidVPC, nil)
-	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "valid-subnet", validRegion).Return(validSubnet, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "valid-subnet", validRegion).Return(validSubnet1, nil)
 
 	// Mocks: control plane subnet invalid ResourceGroup
 	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
 	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCInvalidRG, nil)
-	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "valid-subnet", validRegion).Return(validSubnet, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "valid-subnet", validRegion).Return(validSubnet1, nil)
+
+	// Mocks: control plane subnet no zones
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil).Times(2)
+
+	// Mocks: control plane subnet no machinepoolplatform
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil).Times(2)
+
+	// Mocks: control plane subnet invalid zones
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil)
+
+	// Mocks: control plane subnet valid zones some
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil).Times(2)
+
+	// Mocks: control plane subnet valid zones all
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil).Times(2)
 
 	// Mocks: VPC with no compute subnets
 	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
@@ -394,12 +711,68 @@ func TestValidate(t *testing.T) {
 	// Mocks: compute subnet invalid VPC
 	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
 	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(invalidVPC, nil)
-	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "valid-subnet", validRegion).Return(validSubnet, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "valid-subnet", validRegion).Return(validSubnet1, nil)
 
 	// Mocks: compute subnet invalid ResourceGroup
 	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
 	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCInvalidRG, nil)
-	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "valid-subnet", validRegion).Return(validSubnet, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), "valid-subnet", validRegion).Return(validSubnet1, nil)
+
+	// Mocks: compute subnet no zones
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil).Times(2)
+
+	// Mocks: compute subnet no machinepoolplatform
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil).Times(2)
+
+	// Mocks: compute subnet invalid zones
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil)
+
+	// Mocks: single compute subnet valid zones some
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil)
+
+	// Mocks: multiple compute subnet invalid zones some
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil).Times(2)
+
+	// Mocks: multiple compute subnet valid zones some
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil).Times(2)
+
+	// Mocks: single compute subnet valid zones all
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil).Times(2)
+
+	// Mocks: multiple compute subnet valid zones all
+	ibmcloudClient.EXPECT().GetResourceGroups(gomock.Any()).Return(validResourceGroups, nil)
+	ibmcloudClient.EXPECT().GetVPCs(gomock.Any(), validRegion).Return(validVPCs, nil)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
+	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil).Times(2)
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

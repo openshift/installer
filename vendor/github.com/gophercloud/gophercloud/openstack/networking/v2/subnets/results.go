@@ -83,6 +83,9 @@ type Subnet struct {
 	// DNS name servers used by hosts in this subnet.
 	DNSNameservers []string `json:"dns_nameservers"`
 
+	// Service types associated with the subnet.
+	ServiceTypes []string `json:"service_types"`
+
 	// Sub-ranges of CIDR available for dynamic allocation to ports.
 	// See AllocationPool.
 	AllocationPools []AllocationPool `json:"allocation_pools"`
@@ -112,6 +115,9 @@ type Subnet struct {
 
 	// Tags optionally set via extensions/attributestags
 	Tags []string `json:"tags"`
+
+	// RevisionNumber optionally set via extensions/standard-attr-revisions
+	RevisionNumber int `json:"revision_number"`
 }
 
 // SubnetPage is the page returned by a pager when traversing over a collection

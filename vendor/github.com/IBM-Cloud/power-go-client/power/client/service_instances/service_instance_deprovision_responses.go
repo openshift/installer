@@ -41,6 +41,12 @@ func (o *ServiceInstanceDeprovisionReader) ReadResponse(response runtime.ClientR
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewServiceInstanceDeprovisionUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 410:
 		result := NewServiceInstanceDeprovisionGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -141,6 +147,38 @@ func (o *ServiceInstanceDeprovisionBadRequest) GetPayload() *models.Error {
 }
 
 func (o *ServiceInstanceDeprovisionBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceDeprovisionUnauthorized creates a ServiceInstanceDeprovisionUnauthorized with default headers values
+func NewServiceInstanceDeprovisionUnauthorized() *ServiceInstanceDeprovisionUnauthorized {
+	return &ServiceInstanceDeprovisionUnauthorized{}
+}
+
+/* ServiceInstanceDeprovisionUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type ServiceInstanceDeprovisionUnauthorized struct {
+	Payload *models.Error
+}
+
+func (o *ServiceInstanceDeprovisionUnauthorized) Error() string {
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionUnauthorized  %+v", 401, o.Payload)
+}
+func (o *ServiceInstanceDeprovisionUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceDeprovisionUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

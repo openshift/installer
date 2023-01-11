@@ -3,13 +3,13 @@ package bootstrap
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset/cluster"
+	openstackasset "github.com/openshift/installer/pkg/asset/cluster/openstack"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
 	"github.com/openshift/installer/pkg/terraform"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
@@ -31,6 +31,10 @@ func Destroy(dir string) (err error) {
 	}
 
 	if platform == openstack.Name {
+		if err := openstackasset.PreTerraform(); err != nil {
+			return errors.Wrapf(err, "Failed to  initialize infrastructure")
+		}
+
 		imageName := metadata.InfraID + "-ignition"
 		if err := osp.DeleteGlanceImage(imageName, metadata.OpenStack.Cloud); err != nil {
 			return errors.Wrapf(err, "Failed to delete glance image %s", imageName)
@@ -74,7 +78,7 @@ func Destroy(dir string) (err error) {
 			continue
 		}
 
-		tempDir, err := ioutil.TempDir("", fmt.Sprintf("openshift-install-%s-", stage.Name()))
+		tempDir, err := os.MkdirTemp("", fmt.Sprintf("openshift-install-%s-", stage.Name()))
 		if err != nil {
 			return errors.Wrap(err, "failed to create temporary directory for Terraform execution")
 		}
@@ -115,10 +119,10 @@ func Destroy(dir string) (err error) {
 }
 
 func copy(from string, to string) error {
-	data, err := ioutil.ReadFile(from)
+	data, err := os.ReadFile(from)
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(to, data, 0666)
+	return os.WriteFile(to, data, 0o666) //nolint:gosec // state file doesn't need to be 0600
 }

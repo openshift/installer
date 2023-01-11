@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
+	"github.com/hashicorp/aws-sdk-go-base/v2/useragent"
 )
 
 func apnUserAgentMiddleware(apn APNInfo) middleware.BuildMiddleware {
@@ -33,5 +34,31 @@ func prependUserAgentHeader(request *smithyhttp.Request, value string) {
 		current = value
 	}
 	request.Header["User-Agent"] = append(request.Header["User-Agent"][:0], current)
+}
 
+func userAgentFromContextMiddleware() middleware.BuildMiddleware {
+	return middleware.BuildMiddlewareFunc("CtxUserAgent",
+		func(ctx context.Context, in middleware.BuildInput, next middleware.BuildHandler) (middleware.BuildOutput, middleware.Metadata, error) {
+			request, ok := in.Request.(*smithyhttp.Request)
+			if !ok {
+				return middleware.BuildOutput{}, middleware.Metadata{}, fmt.Errorf("unknown request type %T", in.Request)
+			}
+
+			if v := useragent.BuildFromContext(ctx); v != "" {
+				appendUserAgentHeader(request, v)
+			}
+
+			return next.HandleBuild(ctx, in)
+		},
+	)
+}
+
+func appendUserAgentHeader(request *smithyhttp.Request, value string) {
+	current := request.Header.Get("User-Agent")
+	if len(current) > 0 {
+		current = current + " " + value
+	} else {
+		current = value
+	}
+	request.Header["User-Agent"] = append(request.Header["User-Agent"][:0], current)
 }

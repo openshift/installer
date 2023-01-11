@@ -1,0 +1,10 @@
+{{if .IsOKD -}}
+kind: Secret
+apiVersion: v1
+metadata:
+  name: support
+  namespace: openshift-config
+stringData:
+  scaPullDisabled: "true"
+type: Opaque
+{{end -}}

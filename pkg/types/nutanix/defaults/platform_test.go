@@ -3,8 +3,9 @@ package defaults
 import (
 	"testing"
 
-	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/openshift/installer/pkg/types/nutanix"
 )
 
 const testClusterName = "test-cluster"

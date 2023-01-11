@@ -3,12 +3,11 @@ package validation
 import (
 	"fmt"
 
+	guuid "github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	guuid "github.com/google/uuid"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 

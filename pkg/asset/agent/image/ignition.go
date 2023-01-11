@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/url"
@@ -12,7 +13,9 @@ import (
 	"github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/api/v1beta1"
@@ -23,9 +26,11 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/agent"
-	"github.com/pkg/errors"
+	"github.com/openshift/installer/pkg/version"
 )
 
 const manifestPath = "/etc/assisted/manifests"
@@ -35,45 +40,31 @@ const extraManifestPath = "/etc/assisted/extra-manifests"
 
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
-	Config *igntypes.Config
+	Config       *igntypes.Config
+	CPUArch      string
+	RendezvousIP string
 }
 
 // agentTemplateData is the data used to replace values in agent template
 // files.
 type agentTemplateData struct {
-	ServiceProtocol string
-	ServiceBaseURL  string
-	PullSecret      string
-	// PullSecretToken is token to use for authentication when AUTH_TYPE=rhsso
-	// in assisted-service
-	PullSecretToken     string
-	NodeZeroIP          string
-	AssistedServiceHost string
-	APIVIP              string
-	ControlPlaneAgents  int
-	WorkerAgents        int
-	ReleaseImages       string
-	ReleaseImage        string
-	ReleaseImageMirror  string
-	HaveMirrorConfig    bool
-	InfraEnvID          string
+	ServiceProtocol           string
+	ServiceBaseURL            string
+	PullSecret                string
+	NodeZeroIP                string
+	AssistedServiceHost       string
+	APIVIP                    string
+	ControlPlaneAgents        int
+	WorkerAgents              int
+	ReleaseImages             string
+	ReleaseImage              string
+	ReleaseImageMirror        string
+	HaveMirrorConfig          bool
+	PublicContainerRegistries string
+	InfraEnvID                string
+	ClusterName               string
+	OSImage                   *models.OsImage
 }
-
-var (
-	agentEnabledServices = []string{
-		"agent.service",
-		"assisted-service-db.service",
-		"assisted-service-pod.service",
-		"assisted-service.service",
-		"create-cluster-and-infraenv.service",
-		"node-zero.service",
-		"multipathd.service",
-		"pre-network-manager-config.service",
-		"selinux.service",
-		"set-hostname.service",
-		"start-cluster-installation.service",
-	}
-)
 
 // Name returns the human-friendly name of the asset.
 func (a *Ignition) Name() string {
@@ -89,7 +80,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&tls.KubeAPIServerLocalhostSignerCertKey{},
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
-		&tls.AdminKubeConfigClientCertKey{},
+		&password.KubeadminPassword{},
 		&agentconfig.AgentConfig{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
@@ -102,6 +93,10 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	extraManifests := &manifests.ExtraManifests{}
 	dependencies.Get(agentManifests, agentConfigAsset, extraManifests)
+
+	pwd := &password.KubeadminPassword{}
+	dependencies.Get(pwd)
+	pwdHash := string(pwd.PasswordHash)
 
 	infraEnv := agentManifests.InfraEnv
 
@@ -116,6 +111,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 					SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{
 						igntypes.SSHAuthorizedKey(infraEnv.Spec.SSHAuthorizedKey),
 					},
+					PasswordHash: &pwdHash,
 				},
 			},
 		},
@@ -126,8 +122,12 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
+	logrus.Infof("The rendezvous host IP (node0 IP) is %s", nodeZeroIP)
+
+	a.RendezvousIP = nodeZeroIP
+
 	// TODO: don't hard-code target arch
-	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, "x86_64")
+	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, archName)
 	if err != nil {
 		return err
 	}
@@ -136,20 +136,35 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	registryCABundle := &mirror.CaBundle{}
 	dependencies.Get(registriesConfig, registryCABundle)
 
+	publicContainerRegistries := getPublicContainerRegistries(registriesConfig)
+
 	releaseImageMirror := getMirrorFromRelease(agentManifests.ClusterImageSet.Spec.ReleaseImage, registriesConfig)
 
 	infraEnvID := uuid.New().String()
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
+	osImage, err := getOSImagesInfo(archName)
+	if err != nil {
+		return err
+	}
+	a.CPUArch = *osImage.CPUArchitecture
+
+	clusterName := fmt.Sprintf("%s.%s",
+		agentManifests.ClusterDeployment.Spec.ClusterName,
+		agentManifests.ClusterDeployment.Spec.BaseDomain)
+
 	agentTemplateData := getTemplateData(
+		clusterName,
 		agentManifests.GetPullSecretData(),
 		nodeZeroIP,
 		releaseImageList,
 		agentManifests.ClusterImageSet.Spec.ReleaseImage,
 		releaseImageMirror,
 		len(registriesConfig.MirrorConfig) > 0,
+		publicContainerRegistries,
 		agentManifests.AgentClusterInstall,
-		infraEnvID)
+		infraEnvID,
+		osImage)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -198,6 +213,25 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
+	agentEnabledServices := []string{
+		"agent.service",
+		"assisted-service-db.service",
+		"assisted-service-pod.service",
+		"assisted-service.service",
+		"create-cluster-and-infraenv.service",
+		"node-zero.service",
+		"multipathd.service",
+		"selinux.service",
+		"set-hostname.service",
+		"start-cluster-installation.service",
+		"install-status.service",
+	}
+
+	// Enable pre-network-manager-config.service only when there are network configs defined
+	if len(agentManifests.StaticNetworkConfigs) != 0 {
+		agentEnabledServices = append(agentEnabledServices, "pre-network-manager-config.service")
+	}
+
 	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, agentEnabledServices)
 	if err != nil {
 		return err
@@ -209,16 +243,20 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	addHostConfig(&config, agentConfigAsset)
 
-	addExtraManifests(&config, extraManifests)
+	err = addExtraManifests(&config, extraManifests)
+	if err != nil {
+		return err
+	}
 
 	a.Config = &config
 	return nil
 }
 
-func getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage,
-	releaseImageMirror string, haveMirrorConfig bool,
+func getTemplateData(name, pullSecret, nodeZeroIP, releaseImageList, releaseImage,
+	releaseImageMirror string, haveMirrorConfig bool, publicContainerRegistries string,
 	agentClusterInstall *hiveext.AgentClusterInstall,
-	infraEnvID string) *agentTemplateData {
+	infraEnvID string,
+	osImage *models.OsImage) *agentTemplateData {
 	serviceBaseURL := url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -226,20 +264,22 @@ func getTemplateData(pullSecret, nodeZeroIP, releaseImageList, releaseImage,
 	}
 
 	return &agentTemplateData{
-		ServiceProtocol:     serviceBaseURL.Scheme,
-		ServiceBaseURL:      serviceBaseURL.String(),
-		PullSecret:          pullSecret,
-		PullSecretToken:     "",
-		NodeZeroIP:          serviceBaseURL.Hostname(),
-		AssistedServiceHost: serviceBaseURL.Host,
-		APIVIP:              agentClusterInstall.Spec.APIVIP,
-		ControlPlaneAgents:  agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
-		WorkerAgents:        agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
-		ReleaseImages:       releaseImageList,
-		ReleaseImage:        releaseImage,
-		ReleaseImageMirror:  releaseImageMirror,
-		HaveMirrorConfig:    haveMirrorConfig,
-		InfraEnvID:          infraEnvID,
+		ServiceProtocol:           serviceBaseURL.Scheme,
+		ServiceBaseURL:            serviceBaseURL.String(),
+		PullSecret:                pullSecret,
+		NodeZeroIP:                serviceBaseURL.Hostname(),
+		AssistedServiceHost:       serviceBaseURL.Host,
+		APIVIP:                    agentClusterInstall.Spec.APIVIP,
+		ControlPlaneAgents:        agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
+		WorkerAgents:              agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
+		ReleaseImages:             releaseImageList,
+		ReleaseImage:              releaseImage,
+		ReleaseImageMirror:        releaseImageMirror,
+		HaveMirrorConfig:          haveMirrorConfig,
+		PublicContainerRegistries: publicContainerRegistries,
+		InfraEnvID:                infraEnvID,
+		ClusterName:               name,
+		OSImage:                   osImage,
 	}
 }
 
@@ -274,7 +314,6 @@ func addTLSData(config *igntypes.Config, dependencies asset.Parents) {
 		&tls.KubeAPIServerLocalhostSignerCertKey{},
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
-		&tls.AdminKubeConfigClientCertKey{},
 	}
 	dependencies.Get(certKeys...)
 
@@ -284,6 +323,12 @@ func addTLSData(config *igntypes.Config, dependencies asset.Parents) {
 			config.Storage.Files = append(config.Storage.Files, f)
 		}
 	}
+
+	pwd := &password.KubeadminPassword{}
+	dependencies.Get(pwd)
+	config.Storage.Files = append(config.Storage.Files,
+		ignition.FileFromBytes("/opt/agent/tls/kubeadmin-password.hash", "root", 0600, pwd.PasswordHash))
+
 }
 
 func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesConf, registryCABundle *mirror.CaBundle) {
@@ -335,7 +380,7 @@ func addHostConfig(config *igntypes.Config, agentConfig *agentconfig.AgentConfig
 	return nil
 }
 
-func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraManifests) {
+func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraManifests) error {
 
 	user := "root"
 	mode := 0644
@@ -354,9 +399,68 @@ func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraM
 	})
 
 	for _, file := range extraManifests.FileList {
-		extraFile := ignition.FileFromBytes(filepath.Join(extraManifestPath, filepath.Base(file.Filename)), user, mode, file.Data)
-		config.Storage.Files = append(config.Storage.Files, extraFile)
+
+		type unstructured map[string]interface{}
+
+		yamlList, err := manifests.GetMultipleYamls[unstructured](file.Data)
+		if err != nil {
+			return errors.Wrapf(err, "could not decode YAML for %s", file.Filename)
+		}
+
+		for n, manifest := range yamlList {
+			m, err := yaml.Marshal(manifest)
+			if err != nil {
+				return err
+			}
+
+			base := filepath.Base(file.Filename)
+			ext := filepath.Ext(file.Filename)
+			baseWithoutExt := strings.TrimSuffix(base, ext)
+			baseFileName := filepath.Join(extraManifestPath, baseWithoutExt)
+			fileName := fmt.Sprintf("%s-%d%s", baseFileName, n, ext)
+
+			extraFile := ignition.FileFromBytes(fileName, user, mode, m)
+			config.Storage.Files = append(config.Storage.Files, extraFile)
+		}
 	}
+
+	return nil
+}
+
+func getOSImagesInfo(cpuArch string) (*models.OsImage, error) {
+	st, err := rhcos.FetchCoreOSBuild(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	osImage := &models.OsImage{
+		CPUArchitecture: &cpuArch,
+	}
+
+	openshiftVersion, err := version.Version()
+	if err != nil {
+		return nil, err
+	}
+	osImage.OpenshiftVersion = &openshiftVersion
+
+	streamArch, err := st.GetArchitecture(cpuArch)
+	if err != nil {
+		return nil, err
+	}
+
+	artifacts, ok := streamArch.Artifacts["metal"]
+	if !ok {
+		return nil, fmt.Errorf("failed to retrieve coreos metal info for architecture %s", cpuArch)
+	}
+	osImage.Version = &artifacts.Release
+
+	isoFormat, ok := artifacts.Formats["iso"]
+	if !ok {
+		return nil, fmt.Errorf("failed to retrieve coreos ISO info for architecture %s", cpuArch)
+	}
+	osImage.URL = &isoFormat.Disk.Location
+
+	return osImage, nil
 }
 
 // RetrieveRendezvousIP Returns the Rendezvous IP from either AgentConfig or NMStateConfig
@@ -378,20 +482,36 @@ func RetrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.N
 }
 
 func getMirrorFromRelease(releaseImage string, registriesConfig *mirror.RegistriesConf) string {
-
-	releaseImageMirror := ""
 	source := regexp.MustCompile(`^(.+?)(@sha256)?:(.+)`).FindStringSubmatch(releaseImage)
 	for _, config := range registriesConfig.MirrorConfig {
 		if config.Location == source[1] {
 			// include the tag with the build release image
 			if len(source) == 4 {
 				// Has Sha256
-				releaseImageMirror = fmt.Sprintf("%s%s:%s", config.Mirror, source[2], source[3])
+				return fmt.Sprintf("%s%s:%s", config.Mirror, source[2], source[3])
 			} else if len(source) == 3 {
-				releaseImageMirror = fmt.Sprintf("%s:%s", config.Mirror, source[2])
+				return fmt.Sprintf("%s:%s", config.Mirror, source[2])
 			}
 		}
 	}
 
-	return releaseImageMirror
+	return ""
+}
+
+func getPublicContainerRegistries(registriesConfig *mirror.RegistriesConf) string {
+
+	if len(registriesConfig.MirrorConfig) > 0 {
+		registries := []string{}
+		for _, config := range registriesConfig.MirrorConfig {
+			location := strings.SplitN(config.Location, "/", 2)[0]
+
+			allRegs := fmt.Sprint(registries)
+			if !strings.Contains(allRegs, location) {
+				registries = append(registries, location)
+			}
+		}
+		return strings.Join(registries, ",")
+	}
+
+	return "quay.io"
 }

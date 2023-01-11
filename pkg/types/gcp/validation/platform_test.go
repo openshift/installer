@@ -153,28 +153,17 @@ func TestValidatePlatform(t *testing.T) {
 			valid:           false,
 		},
 		{
-			name: "Valid CreateFirewallRules: Enabled",
+			name: "GCP invalid private dns zone",
 			platform: &gcp.Platform{
-				CreateFirewallRules: "Enabled",
-				Region:              "us-east1",
+				Region:             "us-east1",
+				NetworkProjectID:   "valid-network-project",
+				ProjectID:          "valid-project",
+				Network:            "valid-vpc",
+				ControlPlaneSubnet: "valid-cp-subnet",
+				PrivateDNSZone:     &gcp.DNSZone{ID: "bad-id", ProjectID: "valid-project"},
 			},
-			valid: true,
-		},
-		{
-			name: "Valid CreateFirewallRules: Disabled",
-			platform: &gcp.Platform{
-				CreateFirewallRules: "Disabled",
-				Region:              "us-east1",
-			},
-			valid: true,
-		},
-		{
-			name: "Invalid CreateFirewallRules",
-			platform: &gcp.Platform{
-				CreateFirewallRules: "invalid",
-				Region:              "us-east1",
-			},
-			valid: false,
+			credentialsMode: types.PassthroughCredentialsMode,
+			valid:           false,
 		},
 	}
 	for _, tc := range cases {

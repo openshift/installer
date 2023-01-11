@@ -36,7 +36,7 @@ resource "vsphere_virtual_machine" "vm_master" {
   num_cpus             = var.vsphere_control_planes[count.index].numCPUs
   num_cores_per_socket = var.vsphere_control_planes[count.index].numCoresPerSocket
   memory               = var.vsphere_control_planes[count.index].memoryMiB
-  folder               = var.vsphere_control_planes[count.index].workspace.folder
+  folder               = trimprefix(var.vsphere_control_planes[count.index].workspace.folder, "/${var.vsphere_control_planes[count.index].workspace.datacenter}/vm")
 
   guest_id = local.template_map[var.vsphere_control_planes[count.index].template].guest_id
 

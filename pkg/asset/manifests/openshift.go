@@ -3,7 +3,7 @@ package manifests
 import (
 	"context"
 	"encoding/base64"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -62,6 +62,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&installconfig.ClusterID{},
 		&password.KubeadminPassword{},
 		&openshiftinstall.Config{},
+		&FeatureGate{},
 
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
@@ -78,7 +79,8 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	kubeadminPassword := &password.KubeadminPassword{}
 	openshiftInstall := &openshiftinstall.Config{}
-	dependencies.Get(installConfig, kubeadminPassword, clusterID, openshiftInstall)
+	featureGate := &FeatureGate{}
+	dependencies.Get(installConfig, kubeadminPassword, clusterID, openshiftInstall, featureGate)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -210,7 +212,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		}
 
 		if len(conf.CABundle) == 0 && len(conf.CAFile) > 0 {
-			content, err := ioutil.ReadFile(conf.CAFile)
+			content, err := os.ReadFile(conf.CAFile)
 			if err != nil {
 				return errors.Wrapf(err, "failed to read the cert file: %s", conf.CAFile)
 			}
@@ -307,6 +309,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	}
 
 	o.FileList = append(o.FileList, openshiftInstall.Files()...)
+	o.FileList = append(o.FileList, featureGate.Files()...)
 
 	asset.SortFiles(o.FileList)
 

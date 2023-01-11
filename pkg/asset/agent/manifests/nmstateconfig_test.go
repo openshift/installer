@@ -18,24 +18,30 @@ import (
 )
 
 func TestNMStateConfig_Generate(t *testing.T) {
-
 	cases := []struct {
-		name           string
-		dependencies   []asset.Asset
-		expectedConfig []*aiv1beta1.NMStateConfig
+		name               string
+		dependencies       []asset.Asset
+		requiresNmstatectl bool
+		expectedConfig     []*aiv1beta1.NMStateConfig
+		expectedError      string
 	}{
 		{
-			name: "valid dhcp agent config no hosts",
+			name: "agent-config does not contain networkConfig",
 			dependencies: []asset.Asset{
 				getValidDHCPAgentConfigNoHosts(),
+				getValidOptionalInstallConfig(),
 			},
-			expectedConfig: []*aiv1beta1.NMStateConfig(nil),
+			requiresNmstatectl: false,
+			expectedConfig:     nil,
+			expectedError:      "",
 		},
 		{
 			name: "valid dhcp agent config with some hosts without networkconfig",
 			dependencies: []asset.Asset{
 				getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig(),
+				getValidOptionalInstallConfig(),
 			},
+			requiresNmstatectl: true,
 			expectedConfig: []*aiv1beta1.NMStateConfig{
 				{
 					TypeMeta: metav1.TypeMeta{
@@ -43,9 +49,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig()), "-0"),
-						Namespace: getNMStateConfigNamespace(getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig()),
-						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig()),
+						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
+						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -55,17 +61,20 @@ func TestNMStateConfig_Generate(t *testing.T) {
 							},
 						},
 						NetConfig: aiv1beta1.NetConfig{
-							Raw: unmarshalJSON([]byte("interfaces:")),
+							Raw: unmarshalJSON([]byte(rawNMStateConfigNoIP)),
 						},
 					},
 				},
 			},
+			expectedError: "",
 		},
 		{
 			name: "valid config",
 			dependencies: []asset.Asset{
 				getValidAgentConfig(),
+				getValidOptionalInstallConfig(),
 			},
+			requiresNmstatectl: true,
 			expectedConfig: []*aiv1beta1.NMStateConfig{
 				{
 					TypeMeta: metav1.TypeMeta{
@@ -73,9 +82,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidAgentConfig()), "-0"),
-						Namespace: getNMStateConfigNamespace(getValidAgentConfig()),
-						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidAgentConfig()),
+						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
+						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -89,7 +98,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 							},
 						},
 						NetConfig: aiv1beta1.NetConfig{
-							Raw: unmarshalJSON([]byte("interfaces:")),
+							Raw: unmarshalJSON([]byte(rawNMStateConfig)),
 						},
 					},
 				},
@@ -99,9 +108,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidAgentConfig()), "-1"),
-						Namespace: getNMStateConfigNamespace(getValidAgentConfig()),
-						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidAgentConfig()),
+						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-1"),
+						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -111,7 +120,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 							},
 						},
 						NetConfig: aiv1beta1.NetConfig{
-							Raw: unmarshalJSON([]byte("interfaces:")),
+							Raw: unmarshalJSON([]byte(rawNMStateConfig)),
 						},
 					},
 				},
@@ -121,9 +130,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidAgentConfig()), "-2"),
-						Namespace: getNMStateConfigNamespace(getValidAgentConfig()),
-						Labels:    getNMStateConfigLabelsFromAgentConfig(getValidAgentConfig()),
+						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-2"),
+						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -133,26 +142,48 @@ func TestNMStateConfig_Generate(t *testing.T) {
 							},
 						},
 						NetConfig: aiv1beta1.NetConfig{
-							Raw: unmarshalJSON([]byte("interfaces:")),
+							Raw: unmarshalJSON([]byte(rawNMStateConfig)),
 						},
 					},
 				},
 			},
+			expectedError: "",
+		},
+		{
+			name: "invalid networkConfig",
+			dependencies: []asset.Asset{
+				getInValidAgentConfig(),
+				getValidOptionalInstallConfig(),
+			},
+			requiresNmstatectl: true,
+			expectedConfig:     nil,
+			expectedError:      "failed to validate network yaml",
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-
 			parents := asset.Parents{}
 			parents.Add(tc.dependencies...)
 
 			asset := &NMStateConfig{}
 			err := asset.Generate(parents)
 
-			if len(tc.expectedConfig) == 0 {
+			// Check if the test failed because nmstatectl is not available in CI
+			if tc.requiresNmstatectl {
+				_, execErr := exec.LookPath("nmstatectl")
+				if execErr != nil {
+					assert.ErrorContains(t, err, "executable file not found")
+					t.Skip("No nmstatectl binary available")
+				}
+			}
+
+			switch {
+			case tc.expectedError != "":
+				assert.ErrorContains(t, err, tc.expectedError)
+			case len(tc.expectedConfig) == 0:
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedConfig, asset.Config)
-			} else {
+			default:
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedConfig, asset.Config)
 				assert.NotEmpty(t, asset.Files())
@@ -161,26 +192,21 @@ func TestNMStateConfig_Generate(t *testing.T) {
 				assert.Equal(t, "cluster-manifests/nmstateconfig.yaml", configFile.Filename)
 
 				// Split up the file into multiple YAMLs if it contains NMStateConfig for more than one node
-				var decoder nmStateConfigYamlDecoder
-				yamlList, err := getMultipleYamls(configFile.Data, &decoder)
+				yamlList, err := GetMultipleYamls[aiv1beta1.NMStateConfig](configFile.Data)
 
 				assert.NoError(t, err)
 				assert.Equal(t, len(tc.expectedConfig), len(yamlList))
 
 				for i := range tc.expectedConfig {
-					assert.Equal(t, tc.expectedConfig[i], yamlList[i])
-
+					assert.Equal(t, *tc.expectedConfig[i], yamlList[i])
 				}
 				assert.Equal(t, len(tc.expectedConfig), len(asset.StaticNetworkConfig))
 			}
-
 		})
 	}
-
 }
 
 func TestNMStateConfig_LoadedFromDisk(t *testing.T) {
-
 	cases := []struct {
 		name               string
 		data               string

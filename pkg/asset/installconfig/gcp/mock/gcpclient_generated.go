@@ -9,8 +9,10 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	google "golang.org/x/oauth2/google"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
+	sets "k8s.io/apimachinery/pkg/util/sets"
 )
 
 // MockAPI is a mock of API interface.
@@ -34,6 +36,35 @@ func NewMockAPI(ctrl *gomock.Controller) *MockAPI {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
+}
+
+// GetCredentials mocks base method.
+func (m *MockAPI) GetCredentials() *google.Credentials {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCredentials")
+	ret0, _ := ret[0].(*google.Credentials)
+	return ret0
+}
+
+// GetCredentials indicates an expected call of GetCredentials.
+func (mr *MockAPIMockRecorder) GetCredentials() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentials", reflect.TypeOf((*MockAPI)(nil).GetCredentials))
+}
+
+// GetDNSZoneByName mocks base method.
+func (m *MockAPI) GetDNSZoneByName(ctx context.Context, project, zoneName string) (*dns.ManagedZone, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDNSZoneByName", ctx, project, zoneName)
+	ret0, _ := ret[0].(*dns.ManagedZone)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDNSZoneByName indicates an expected call of GetDNSZoneByName.
+func (mr *MockAPIMockRecorder) GetDNSZoneByName(ctx, project, zoneName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZoneByName", reflect.TypeOf((*MockAPI)(nil).GetDNSZoneByName), ctx, project, zoneName)
 }
 
 // GetEnabledServices mocks base method.
@@ -79,6 +110,21 @@ func (m *MockAPI) GetNetwork(ctx context.Context, network, project string) (*com
 func (mr *MockAPIMockRecorder) GetNetwork(ctx, network, project interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetwork", reflect.TypeOf((*MockAPI)(nil).GetNetwork), ctx, network, project)
+}
+
+// GetProjectPermissions mocks base method.
+func (m *MockAPI) GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.String, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProjectPermissions", ctx, project, permissions)
+	ret0, _ := ret[0].(sets.String)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProjectPermissions indicates an expected call of GetProjectPermissions.
+func (mr *MockAPIMockRecorder) GetProjectPermissions(ctx, project, permissions interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectPermissions", reflect.TypeOf((*MockAPI)(nil).GetProjectPermissions), ctx, project, permissions)
 }
 
 // GetProjects mocks base method.
@@ -184,4 +230,19 @@ func (m *MockAPI) GetZones(ctx context.Context, project, filter string) ([]*comp
 func (mr *MockAPIMockRecorder) GetZones(ctx, project, filter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetZones", reflect.TypeOf((*MockAPI)(nil).GetZones), ctx, project, filter)
+}
+
+// ValidateServiceAccountHasPermissions mocks base method.
+func (m *MockAPI) ValidateServiceAccountHasPermissions(ctx context.Context, project string, permissions []string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateServiceAccountHasPermissions", ctx, project, permissions)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateServiceAccountHasPermissions indicates an expected call of ValidateServiceAccountHasPermissions.
+func (mr *MockAPIMockRecorder) ValidateServiceAccountHasPermissions(ctx, project, permissions interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateServiceAccountHasPermissions", reflect.TypeOf((*MockAPI)(nil).ValidateServiceAccountHasPermissions), ctx, project, permissions)
 }

@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/pkg/errors"
 )
 
 // Auth is the collection of credentials that will be used by terrform.

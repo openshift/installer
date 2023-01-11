@@ -2,7 +2,6 @@ package store
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -130,7 +129,7 @@ func (s *storeImpl) DestroyState() error {
 func (s *storeImpl) loadStateFile() error {
 	path := filepath.Join(s.directory, stateFileName)
 	assets := map[string]json.RawMessage{}
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -184,7 +183,7 @@ func (s *storeImpl) saveStateFile() error {
 	if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(path, data, 0640); err != nil {
+	if err := os.WriteFile(path, data, 0o640); err != nil { //nolint:gosec // no sensitive info
 		return err
 	}
 	return nil

@@ -73,6 +73,7 @@ spec:
                   - Console
                   - Insights
                   - Storage
+                  - CSISnapshot
                   type: string
                 type: array
               baselineCapabilitySet:
@@ -722,7 +723,8 @@ spec:
                               type: integer
                           type: object
                         zones:
-                          description: Zones defines available zones
+                          description: Zones defines available zones Zones is available
+                            in TechPreview.
                           items:
                             type: string
                           type: array
@@ -1365,7 +1367,8 @@ spec:
                             type: integer
                         type: object
                       zones:
-                        description: Zones defines available zones
+                        description: Zones defines available zones Zones is available
+                          in TechPreview.
                         items:
                           type: string
                         type: array
@@ -1401,6 +1404,10 @@ spec:
             - Mint
             - Passthrough
             - Manual
+            type: string
+          featureSet:
+            description: FeatureSet enables features that are not part of the default
+              feature set.
             type: string
           fips:
             default: false
@@ -1500,7 +1507,7 @@ spec:
                   This field replaces MachineCIDR, and if set MachineCIDR must be
                   empty or match the first entry in the list. Default is 10.0.0.0/16
                   for all platforms other than libvirt and Power VS. For libvirt,
-                  the default is 192.168.126.0/24. For Power VS, the default is 192.168.0.0/16.
+                  the default is 192.168.126.0/24. For Power VS, the default is 192.168.0.0/24.
                 items:
                   description: MachineNetworkEntry is a single IP address block for
                     node IP blocks.
@@ -1710,6 +1717,20 @@ spec:
                       subnets. The hosted zone must be associated with the VPC containing
                       the subnets. Leave the hosted zone unset to have the installer
                       create the hosted zone on your behalf.
+                    type: string
+                  lbType:
+                    description: "LBType is an optional field to specify a load balancer
+                      type. \n When this field is specified, the default ingresscontroller
+                      will be created using the specified load-balancer type. \n Following
+                      are the accepted values: \n * \"Classic\": A Classic Load Balancer
+                      that makes routing decisions at either the transport layer (TCP/SSL)
+                      or the application layer (HTTP/HTTPS). See the following for
+                      additional details: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#clb
+                      \n * \"NLB\": A Network Load Balancer that makes routing decisions
+                      at the transport layer (TCP/SSL). See the following for additional
+                      details: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb
+                      \n If this field is not set explicitly, it defaults to \"Classic\".
+                      \ This default is subject to change over time."
                     type: string
                   propagateUserTags:
                     description: PropagateUserTags is a flag that directs in-cluster
@@ -2187,13 +2208,6 @@ spec:
                       control plane will be deployed. The value should be the name
                       of the subnet.
                     type: string
-                  createFirewallRules:
-                    description: CreateFirewallRules specifies if the installer should
-                      create the cluster firewall rules in the gcp cloud network.
-                    enum:
-                    - Enabled
-                    - Disabled
-                    type: string
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on GCP for machine pools which do not define
@@ -2289,14 +2303,43 @@ spec:
                       should be created rather than provisioning a new one.
                     type: string
                   networkProjectID:
-                    description: NetworkProjectID is currently Technology Preview.
-                      NetworkProjectID specifies which project the network and subnets
-                      exist in when they are not in the main ProjectID.
+                    description: NetworkProjectID specifies which project the network
+                      and subnets exist in when they are not in the main ProjectID.
                     type: string
+                  privateDNSZone:
+                    description: PrivateDNSZone Technology Preview. PrivateDNSZone
+                      contains the zone ID and project where the Private DNS zone
+                      records will be created.
+                    properties:
+                      id:
+                        description: ID Technology Preview. ID or name of the zone.
+                        type: string
+                      project:
+                        description: ProjectID Technology Preview. When the ProjectID
+                          is provided, the zone will exist in this project. When the
+                          ProjectID is empty, the ProjectID defaults to the Service
+                          Project (GCP.ProjectID).
+                        type: string
+                    type: object
                   projectID:
                     description: ProjectID is the the project that will be used for
                       the cluster.
                     type: string
+                  publicDNSZone:
+                    description: PublicDNSZone Technology Preview. PublicDNSZone contains
+                      the zone ID and project where the Public DNS zone records will
+                      be created.
+                    properties:
+                      id:
+                        description: ID Technology Preview. ID or name of the zone.
+                        type: string
+                      project:
+                        description: ProjectID Technology Preview. When the ProjectID
+                          is provided, the zone will exist in this project. When the
+                          ProjectID is empty, the ProjectID defaults to the Service
+                          Project (GCP.ProjectID).
+                        type: string
+                    type: object
                   region:
                     description: Region specifies the GCP region where the cluster
                       will be created.
@@ -3118,7 +3161,8 @@ spec:
                             type: integer
                         type: object
                       zones:
-                        description: Zones defines available zones
+                        description: Zones defines available zones Zones is available
+                          in TechPreview.
                         items:
                           type: string
                         type: array
@@ -3135,10 +3179,10 @@ spec:
                     - eagerZeroedThick
                     type: string
                   failureDomains:
-                    description: failureDomains holds the VSpherePlatformFailureDomainSpec
+                    description: FailureDomains holds the VSpherePlatformFailureDomainSpec
                       which contains the definition of region, zone and the vCenter
                       topology. If this is omitted failure domains (regions and zones)
-                      will not be used.
+                      will not be used. FailureDomains is available in TechPreview.
                     items:
                       description: FailureDomain holds the region and zone failure
                         domain and the vCenter topology of that failure domain.
@@ -3185,10 +3229,11 @@ spec:
                               minLength: 1
                               type: string
                             folder:
-                              description: folder is the name or inventory path of
-                                the folder in which the virtual machine is created/located.
+                              description: folder is the inventory path of the folder
+                                in which the virtual machine is created/located.
                               maxLength: 2048
                               minLength: 1
+                              pattern: ^/.*?/vm/.*?
                               type: string
                             networks:
                               description: networks is the list of networks within
@@ -3226,6 +3271,7 @@ spec:
                     description: Folder is the absolute path of the folder that will
                       be used and/or created for virtual machines. The absolute path
                       is of the form /<datacenter>/vm/<folder>/<subfolder>.
+                    pattern: ^/.*?/vm/.*?
                     type: string
                   ingressVIP:
                     description: 'DeprecatedIngressVIP is the virtual IP address for
@@ -3262,9 +3308,9 @@ spec:
                     description: VCenter is the domain name or IP address of the vCenter.
                     type: string
                   vcenters:
-                    description: vcenters holds the connection details for services
+                    description: VCenters holds the connection details for services
                       to communicate with vCenter. Currently only a single vCenter
-                      is supported.
+                      is supported. VCenters is available in TechPreview.
                     items:
                       description: VCenter stores the vCenter connection fields https://github.com/kubernetes/cloud-provider-vsphere/blob/master/pkg/common/config/types_yaml.go
                       properties:

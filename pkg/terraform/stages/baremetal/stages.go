@@ -2,15 +2,14 @@ package baremetal
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
 
-	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -41,7 +40,7 @@ func extractOutputHostAddresses(s stages.SplitStage, directory string, config *t
 		return "", 0, nil, errors.Wrapf(err, "could not find outputs file %q", outputsFilePath)
 	}
 
-	outputsFile, err := ioutil.ReadFile(outputsFilePath)
+	outputsFile, err := os.ReadFile(outputsFilePath)
 	if err != nil {
 		return "", 0, nil, errors.Wrapf(err, "failed to read outputs file %q", outputsFilePath)
 	}

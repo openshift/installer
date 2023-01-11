@@ -30,6 +30,12 @@ func (o *V2DownloadInfraEnvFilesReader) ReadResponse(response runtime.ClientResp
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewV2DownloadInfraEnvFilesBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewV2DownloadInfraEnvFilesUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -107,6 +113,38 @@ func (o *V2DownloadInfraEnvFilesOK) GetPayload() io.Writer {
 }
 
 func (o *V2DownloadInfraEnvFilesOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewV2DownloadInfraEnvFilesBadRequest creates a V2DownloadInfraEnvFilesBadRequest with default headers values
+func NewV2DownloadInfraEnvFilesBadRequest() *V2DownloadInfraEnvFilesBadRequest {
+	return &V2DownloadInfraEnvFilesBadRequest{}
+}
+
+/* V2DownloadInfraEnvFilesBadRequest describes a response with status code 400, with default header values.
+
+Bad Request.
+*/
+type V2DownloadInfraEnvFilesBadRequest struct {
+	Payload *models.Error
+}
+
+func (o *V2DownloadInfraEnvFilesBadRequest) Error() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesBadRequest  %+v", 400, o.Payload)
+}
+func (o *V2DownloadInfraEnvFilesBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *V2DownloadInfraEnvFilesBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

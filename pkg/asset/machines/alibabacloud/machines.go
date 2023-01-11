@@ -4,15 +4,14 @@ package alibabacloud
 import (
 	"fmt"
 
-	machinev1 "github.com/openshift/api/machine/v1"
-	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
-
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	machinev1 "github.com/openshift/api/machine/v1"
+	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 )
@@ -147,6 +146,7 @@ func tagsFromResourceTags(clusterID string, resourceTags map[string]string) ([]m
 		{Key: fmt.Sprintf("kubernetes.io/cluster/%s", clusterID), Value: "owned"},
 		{Key: "GISV", Value: "ocp"},
 		{Key: "sigs.k8s.io/cloud-provider-alibaba/origin", Value: "ocp"},
+		{Key: "ack.aliyun.com", Value: clusterID},
 	}
 	forbiddenTags := sets.NewString()
 	for idx := range tags {

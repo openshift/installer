@@ -8,17 +8,17 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/platform-services-go-sdk/contextbasedrestrictionsv1"
 )
 
 func DataSourceIBMCbrZone() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: DataSourceIBMCbrZoneRead,
+		ReadContext: dataSourceIBMCbrZoneRead,
 
 		Schema: map[string]*schema.Schema{
 			"zone_id": &schema.Schema{
@@ -98,6 +98,11 @@ func DataSourceIBMCbrZone() *schema.Resource {
 										Computed:    true,
 										Description: "The service instance.",
 									},
+									"location": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The location.",
+									},
 								},
 							},
 						},
@@ -119,35 +124,6 @@ func DataSourceIBMCbrZone() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The IP address.",
-						},
-						"ref": &schema.Schema{
-							Type:        schema.TypeList,
-							Computed:    true,
-							Description: "A service reference value.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"account_id": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The id of the account owning the service.",
-									},
-									"service_type": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The service type.",
-									},
-									"service_name": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The service name.",
-									},
-									"service_instance": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The service instance.",
-									},
-								},
-							},
 						},
 					},
 				},
@@ -181,7 +157,7 @@ func DataSourceIBMCbrZone() *schema.Resource {
 	}
 }
 
-func DataSourceIBMCbrZoneRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceIBMCbrZoneRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
 		return diag.FromErr(err)
@@ -226,7 +202,7 @@ func DataSourceIBMCbrZoneRead(context context.Context, d *schema.ResourceData, m
 	addresses := []map[string]interface{}{}
 	if zone.Addresses != nil {
 		for _, modelItem := range zone.Addresses {
-			modelMap, err := DataSourceIBMCbrZoneAddressToMap(modelItem)
+			modelMap, err := dataSourceIBMCbrZoneAddressToMap(modelItem)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -240,7 +216,7 @@ func DataSourceIBMCbrZoneRead(context context.Context, d *schema.ResourceData, m
 	excluded := []map[string]interface{}{}
 	if zone.Excluded != nil {
 		for _, modelItem := range zone.Excluded {
-			modelMap, err := DataSourceIBMCbrZoneAddressToMap(modelItem)
+			modelMap, err := dataSourceIBMCbrZoneAddressToMap(modelItem)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -274,17 +250,17 @@ func DataSourceIBMCbrZoneRead(context context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func DataSourceIBMCbrZoneAddressToMap(model contextbasedrestrictionsv1.AddressIntf) (map[string]interface{}, error) {
+func dataSourceIBMCbrZoneAddressToMap(model contextbasedrestrictionsv1.AddressIntf) (map[string]interface{}, error) {
 	if _, ok := model.(*contextbasedrestrictionsv1.AddressIPAddress); ok {
-		return DataSourceIBMCbrZoneAddressIPAddressToMap(model.(*contextbasedrestrictionsv1.AddressIPAddress))
+		return dataSourceIBMCbrZoneAddressIPAddressToMap(model.(*contextbasedrestrictionsv1.AddressIPAddress))
 	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressIPAddressRange); ok {
-		return DataSourceIBMCbrZoneAddressIPAddressRangeToMap(model.(*contextbasedrestrictionsv1.AddressIPAddressRange))
+		return dataSourceIBMCbrZoneAddressIPAddressRangeToMap(model.(*contextbasedrestrictionsv1.AddressIPAddressRange))
 	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressSubnet); ok {
-		return DataSourceIBMCbrZoneAddressSubnetToMap(model.(*contextbasedrestrictionsv1.AddressSubnet))
+		return dataSourceIBMCbrZoneAddressSubnetToMap(model.(*contextbasedrestrictionsv1.AddressSubnet))
 	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressVPC); ok {
-		return DataSourceIBMCbrZoneAddressVPCToMap(model.(*contextbasedrestrictionsv1.AddressVPC))
+		return dataSourceIBMCbrZoneAddressVPCToMap(model.(*contextbasedrestrictionsv1.AddressVPC))
 	} else if _, ok := model.(*contextbasedrestrictionsv1.AddressServiceRef); ok {
-		return DataSourceIBMCbrZoneAddressServiceRefToMap(model.(*contextbasedrestrictionsv1.AddressServiceRef))
+		return dataSourceIBMCbrZoneAddressServiceRefToMap(model.(*contextbasedrestrictionsv1.AddressServiceRef))
 	} else if _, ok := model.(*contextbasedrestrictionsv1.Address); ok {
 		modelMap := make(map[string]interface{})
 		model := model.(*contextbasedrestrictionsv1.Address)
@@ -295,7 +271,7 @@ func DataSourceIBMCbrZoneAddressToMap(model contextbasedrestrictionsv1.AddressIn
 			modelMap["value"] = *model.Value
 		}
 		if model.Ref != nil {
-			refMap, err := DataSourceIBMCbrZoneServiceRefValueToMap(model.Ref)
+			refMap, err := dataSourceIBMCbrZoneServiceRefValueToMap(model.Ref)
 			if err != nil {
 				return modelMap, err
 			}
@@ -307,7 +283,7 @@ func DataSourceIBMCbrZoneAddressToMap(model contextbasedrestrictionsv1.AddressIn
 	}
 }
 
-func DataSourceIBMCbrZoneServiceRefValueToMap(model *contextbasedrestrictionsv1.ServiceRefValue) (map[string]interface{}, error) {
+func dataSourceIBMCbrZoneServiceRefValueToMap(model *contextbasedrestrictionsv1.ServiceRefValue) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AccountID != nil {
 		modelMap["account_id"] = *model.AccountID
@@ -321,10 +297,13 @@ func DataSourceIBMCbrZoneServiceRefValueToMap(model *contextbasedrestrictionsv1.
 	if model.ServiceInstance != nil {
 		modelMap["service_instance"] = *model.ServiceInstance
 	}
+	if model.Location != nil {
+		modelMap["location"] = *model.Location
+	}
 	return modelMap, nil
 }
 
-func DataSourceIBMCbrZoneAddressIPAddressToMap(model *contextbasedrestrictionsv1.AddressIPAddress) (map[string]interface{}, error) {
+func dataSourceIBMCbrZoneAddressIPAddressToMap(model *contextbasedrestrictionsv1.AddressIPAddress) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Type != nil {
 		modelMap["type"] = *model.Type
@@ -335,13 +314,13 @@ func DataSourceIBMCbrZoneAddressIPAddressToMap(model *contextbasedrestrictionsv1
 	return modelMap, nil
 }
 
-func DataSourceIBMCbrZoneAddressServiceRefToMap(model *contextbasedrestrictionsv1.AddressServiceRef) (map[string]interface{}, error) {
+func dataSourceIBMCbrZoneAddressServiceRefToMap(model *contextbasedrestrictionsv1.AddressServiceRef) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Type != nil {
 		modelMap["type"] = *model.Type
 	}
 	if model.Ref != nil {
-		refMap, err := DataSourceIBMCbrZoneServiceRefValueToMap(model.Ref)
+		refMap, err := dataSourceIBMCbrZoneServiceRefValueToMap(model.Ref)
 		if err != nil {
 			return modelMap, err
 		}
@@ -350,7 +329,7 @@ func DataSourceIBMCbrZoneAddressServiceRefToMap(model *contextbasedrestrictionsv
 	return modelMap, nil
 }
 
-func DataSourceIBMCbrZoneAddressSubnetToMap(model *contextbasedrestrictionsv1.AddressSubnet) (map[string]interface{}, error) {
+func dataSourceIBMCbrZoneAddressSubnetToMap(model *contextbasedrestrictionsv1.AddressSubnet) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Type != nil {
 		modelMap["type"] = *model.Type
@@ -361,7 +340,7 @@ func DataSourceIBMCbrZoneAddressSubnetToMap(model *contextbasedrestrictionsv1.Ad
 	return modelMap, nil
 }
 
-func DataSourceIBMCbrZoneAddressIPAddressRangeToMap(model *contextbasedrestrictionsv1.AddressIPAddressRange) (map[string]interface{}, error) {
+func dataSourceIBMCbrZoneAddressIPAddressRangeToMap(model *contextbasedrestrictionsv1.AddressIPAddressRange) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Type != nil {
 		modelMap["type"] = *model.Type
@@ -372,7 +351,7 @@ func DataSourceIBMCbrZoneAddressIPAddressRangeToMap(model *contextbasedrestricti
 	return modelMap, nil
 }
 
-func DataSourceIBMCbrZoneAddressVPCToMap(model *contextbasedrestrictionsv1.AddressVPC) (map[string]interface{}, error) {
+func dataSourceIBMCbrZoneAddressVPCToMap(model *contextbasedrestrictionsv1.AddressVPC) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Type != nil {
 		modelMap["type"] = *model.Type

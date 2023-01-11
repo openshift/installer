@@ -4,9 +4,6 @@ package aws
 import (
 	"fmt"
 
-	v1 "github.com/openshift/api/config/v1"
-	machinev1 "github.com/openshift/api/machine/v1"
-	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/pointer"
 
+	v1 "github.com/openshift/api/config/v1"
+	machinev1 "github.com/openshift/api/machine/v1"
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
@@ -119,6 +119,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 		},
 		Spec: machinev1.ControlPlaneMachineSetSpec{
 			Replicas: &replicas,
+			State:    machinev1.ControlPlaneMachineSetStateActive,
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"machine.openshift.io/cluster-api-machine-role": role,

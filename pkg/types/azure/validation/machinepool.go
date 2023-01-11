@@ -1,9 +1,10 @@
 package validation
 
 import (
-	"github.com/openshift/installer/pkg/types/azure"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.

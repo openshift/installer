@@ -3,9 +3,9 @@ package nutanix
 import (
 	"encoding/json"
 
-	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/pkg/errors"
 
+	machinev1 "github.com/openshift/api/machine/v1"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 )
 
@@ -38,7 +38,7 @@ type TFVarsSources struct {
 	ControlPlaneConfigs   []*machinev1.NutanixMachineProviderConfig
 }
 
-//TFVars generate Nutanix-specific Terraform variables
+// TFVars generate Nutanix-specific Terraform variables
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	bootstrapIgnitionImagePath, err := nutanixtypes.CreateBootstrapISO(sources.ClusterID, sources.BootstrapIgnitionData)
 	if err != nil {

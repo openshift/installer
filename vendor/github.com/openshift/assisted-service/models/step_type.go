@@ -41,14 +41,14 @@ const (
 	// StepTypeFreeNetworkAddresses captures enum value "free-network-addresses"
 	StepTypeFreeNetworkAddresses StepType = "free-network-addresses"
 
-	// StepTypeResetInstallation captures enum value "reset-installation"
-	StepTypeResetInstallation StepType = "reset-installation"
-
 	// StepTypeDhcpLeaseAllocate captures enum value "dhcp-lease-allocate"
 	StepTypeDhcpLeaseAllocate StepType = "dhcp-lease-allocate"
 
 	// StepTypeAPIVipConnectivityCheck captures enum value "api-vip-connectivity-check"
 	StepTypeAPIVipConnectivityCheck StepType = "api-vip-connectivity-check"
+
+	// StepTypeTangConnectivityCheck captures enum value "tang-connectivity-check"
+	StepTypeTangConnectivityCheck StepType = "tang-connectivity-check"
 
 	// StepTypeNtpSynchronizer captures enum value "ntp-synchronizer"
 	StepTypeNtpSynchronizer StepType = "ntp-synchronizer"
@@ -61,6 +61,24 @@ const (
 
 	// StepTypeDomainResolution captures enum value "domain-resolution"
 	StepTypeDomainResolution StepType = "domain-resolution"
+
+	// StepTypeStopInstallation captures enum value "stop-installation"
+	StepTypeStopInstallation StepType = "stop-installation"
+
+	// StepTypeLogsGather captures enum value "logs-gather"
+	StepTypeLogsGather StepType = "logs-gather"
+
+	// StepTypeNextStepRunner captures enum value "next-step-runner"
+	StepTypeNextStepRunner StepType = "next-step-runner"
+
+	// StepTypeUpgradeAgent captures enum value "upgrade-agent"
+	StepTypeUpgradeAgent StepType = "upgrade-agent"
+
+	// StepTypeDownloadBootArtifacts captures enum value "download-boot-artifacts"
+	StepTypeDownloadBootArtifacts StepType = "download-boot-artifacts"
+
+	// StepTypeRebootForReclaim captures enum value "reboot-for-reclaim"
+	StepTypeRebootForReclaim StepType = "reboot-for-reclaim"
 )
 
 // for schema
@@ -68,7 +86,7 @@ var stepTypeEnum []interface{}
 
 func init() {
 	var res []StepType
-	if err := json.Unmarshal([]byte(`["connectivity-check","execute","inventory","install","free-network-addresses","reset-installation","dhcp-lease-allocate","api-vip-connectivity-check","ntp-synchronizer","installation-disk-speed-check","container-image-availability","domain-resolution"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["connectivity-check","execute","inventory","install","free-network-addresses","dhcp-lease-allocate","api-vip-connectivity-check","tang-connectivity-check","ntp-synchronizer","installation-disk-speed-check","container-image-availability","domain-resolution","stop-installation","logs-gather","next-step-runner","upgrade-agent","download-boot-artifacts","reboot-for-reclaim"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

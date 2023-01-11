@@ -2,7 +2,6 @@ package alibabacloud
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,7 +44,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
-		name := fmt.Sprintf("%s-%s-%s", clusterID, pool.Name, strings.TrimPrefix(az, fmt.Sprintf("%s-", platform.Region)))
+		name := fmt.Sprintf("%s-%s-%s", clusterID, pool.Name, az)
 		mset := &machinev1beta1.MachineSet{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",

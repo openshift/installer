@@ -9,6 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/session"
 	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -231,14 +232,21 @@ func TestValidate(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	validPermissionsAuthManagerClient, err := buildAuthManagerClient(ctx, ctrl, finder, "test_username", nil)
+
+	sessionMgr := session.NewManager(client)
+	userSession, err := sessionMgr.UserSession(ctx)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	username := userSession.UserName
+	validPermissionsAuthManagerClient, err := buildAuthManagerClient(ctx, ctrl, finder, username, nil, nil, nil)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
 	validationCtx := &validationContext{
-		User:        "test_username",
 		AuthManager: validPermissionsAuthManagerClient,
 		Finder:      finder,
 		Client:      client,

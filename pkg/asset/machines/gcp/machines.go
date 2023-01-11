@@ -5,25 +5,28 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	machineapi "github.com/openshift/api/machine/v1beta1"
-	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	"sort"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	v1 "github.com/openshift/api/config/v1"
+	machinev1 "github.com/openshift/api/machine/v1"
+	machineapi "github.com/openshift/api/machine/v1beta1"
+	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != gcp.Name {
-		return nil, fmt.Errorf("non-GCP configuration: %q", configPlatform)
+		return nil, nil, fmt.Errorf("non-GCP configuration: %q", configPlatform)
 	}
 	if poolPlatform := pool.Platform.Name(); poolPlatform != gcp.Name {
-		return nil, fmt.Errorf("non-GCP machine-pool: %q", poolPlatform)
+		return nil, nil, fmt.Errorf("non-GCP machine-pool: %q", poolPlatform)
 	}
 	platform := config.Platform.GCP
 	mpool := pool.Platform.GCP
@@ -37,11 +40,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 
 	var machines []machineapi.Machine
+	machineSetProvider := &machineapi.GCPMachineProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
 		azIndex := int(idx) % len(azs)
 		provider, err := provider(clusterID, platform, mpool, osImage, azIndex, role, userDataSecret, credentialsMode)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create provider")
+			return nil, nil, errors.Wrap(err, "failed to create provider")
 		}
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
@@ -64,11 +68,65 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				// we don't need to set Versions, because we control those via operators.
 			},
 		}
-
+		*machineSetProvider = *provider
 		machines = append(machines, machine)
 	}
+	replicas := int32(total)
+	failureDomains := []machinev1.GCPFailureDomain{}
+	sort.Strings(mpool.Zones)
+	for _, zone := range mpool.Zones {
+		domain := machinev1.GCPFailureDomain{
+			Zone: zone,
+		}
+		failureDomains = append(failureDomains, domain)
+	}
+	machineSetProvider.Zone = ""
+	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "machine.openshift.io/v1",
+			Kind:       "ControlPlaneMachineSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "openshift-machine-api",
+			Name:      "cluster",
+			Labels: map[string]string{
+				"machine.openshift.io/cluster-api-cluster": clusterID,
+			},
+		},
+		Spec: machinev1.ControlPlaneMachineSetSpec{
+			Replicas: &replicas,
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"machine.openshift.io/cluster-api-machine-role": role,
+					"machine.openshift.io/cluster-api-machine-type": role,
+					"machine.openshift.io/cluster-api-cluster":      clusterID,
+				},
+			},
+			Template: machinev1.ControlPlaneMachineSetTemplate{
+				MachineType: machinev1.OpenShiftMachineV1Beta1MachineType,
+				OpenShiftMachineV1Beta1Machine: &machinev1.OpenShiftMachineV1Beta1MachineTemplate{
+					FailureDomains: machinev1.FailureDomains{
+						Platform: v1.GCPPlatformType,
+						GCP:      &failureDomains,
+					},
+					ObjectMeta: machinev1.ControlPlaneMachineSetTemplateObjectMeta{
+						Labels: map[string]string{
+							"machine.openshift.io/cluster-api-cluster":      clusterID,
+							"machine.openshift.io/cluster-api-machine-role": role,
+							"machine.openshift.io/cluster-api-machine-type": role,
+						},
+					},
+					Spec: machineapi.MachineSpec{
+						ProviderSpec: machineapi.ProviderSpec{
+							Value: &runtime.RawExtension{Object: machineSetProvider},
+						},
+					},
+				},
+			},
+		},
+	}
 
-	return machines, nil
+	return machines, controlPlaneMachineSet, nil
 }
 
 func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, role, userDataSecret string, credentialsMode types.CredentialsMode) (*machineapi.GCPMachineProviderSpec, error) {
@@ -96,7 +154,8 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 	}
 
 	instanceServiceAccount := fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID)
-	if credentialsMode == types.PassthroughCredentialsMode {
+	// Passthrough service accounts are only needed for GCP XPN.
+	if len(platform.NetworkProjectID) > 0 && credentialsMode == types.PassthroughCredentialsMode {
 		sess, err := gcpconfig.GetSession(context.TODO())
 		if err != nil {
 			return nil, err

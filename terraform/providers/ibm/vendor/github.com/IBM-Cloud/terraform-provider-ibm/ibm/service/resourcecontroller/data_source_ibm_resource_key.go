@@ -6,6 +6,7 @@ package resourcecontroller
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -33,6 +35,8 @@ func DataSourceIBMResourceKey() *schema.Resource {
 				Optional:      true,
 				Description:   "The id of the resource instance",
 				ConflictsWith: []string{"resource_alias_id"},
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_resource_key",
+					"resource_instance_id"),
 			},
 
 			"resource_alias_id": {
@@ -83,6 +87,20 @@ func DataSourceIBMResourceKey() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMResourceKeyValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "resource_instance_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:%s"},
+			Optional:                   true})
+
+	ibmDataSourceKeyResourceValidator := validate.ResourceValidator{ResourceName: "ibm_resource_key", Schema: validateSchema}
+	return &ibmDataSourceKeyResourceValidator
 }
 
 func dataSourceIBMResourceKeyRead(d *schema.ResourceData, meta interface{}) error {
@@ -135,6 +153,9 @@ func dataSourceIBMResourceKeyRead(d *schema.ResourceData, meta interface{}) erro
 
 	d.SetId(key.ID)
 
+	if redacted, ok := key.Credentials["redacted"].(string); ok {
+		log.Printf("Credentials are redacted with code: %s.The User doesn't have the correct access to view the credentials. Refer to the API documentation for additional details.", redacted)
+	}
 	if roleCrn, ok := key.Parameters["role_crn"].(string); ok {
 		d.Set("role", roleCrn[strings.LastIndex(roleCrn, ":")+1:])
 	} else if roleCrn, ok := key.Credentials["iam_role_crn"].(string); ok {

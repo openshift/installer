@@ -7,13 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/go-autorest/autorest/to"
-
-	"github.com/sirupsen/logrus"
-
 	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
 	azdns "github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns"
 	azprivatedns "github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns"
+	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/sirupsen/logrus"
+
 	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/types/azure"
 )
@@ -42,7 +41,7 @@ func newLegacyDNSClient(session *azconfig.Session, resourceGroup string) *legacy
 // Takes a subscription ID and parses the resource group out of it.
 // A subscription ID has the format "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/xxxx-xxxxx-rg/providers/...".
 // Splitting the string on '/' gives us the following slice:
-// parts[0] = ''
+// parts[0] = ”
 // parts[1] = 'subscriptions'
 // parts[2] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
 // parts[3] = 'resourceGroups'

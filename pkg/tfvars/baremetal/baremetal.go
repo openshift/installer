@@ -9,11 +9,12 @@ import (
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
 	"github.com/metal3-io/baremetal-operator/pkg/hardwareutils/bmc"
+	"github.com/pkg/errors"
+	"sigs.k8s.io/yaml"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types/baremetal"
-	"github.com/pkg/errors"
-	"sigs.k8s.io/yaml"
 )
 
 type config struct {

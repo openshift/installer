@@ -294,7 +294,7 @@ Resources:
               elb.register_targets(TargetGroupArn=event['ResourceProperties']['TargetArn'],Targets=[{'Id': event['ResourceProperties']['TargetIp']}])
             responseData = {}
             cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, event['ResourceProperties']['TargetArn']+event['ResourceProperties']['TargetIp'])
-      Runtime: "python3.7"
+      Runtime: "python3.8"
       Timeout: 120
 
   RegisterSubnetTagsLambdaIamRole:
@@ -354,7 +354,7 @@ Resources:
                 ec2_client.create_tags(Resources=[subnet_id], Tags=[{'Key': 'kubernetes.io/cluster/' + event['ResourceProperties']['InfrastructureName'], 'Value': 'shared'}]);
             responseData = {}
             cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, event['ResourceProperties']['InfrastructureName']+event['ResourceProperties']['Subnets'][0])
-      Runtime: "python3.7"
+      Runtime: "python3.8"
       Timeout: 120
 
   RegisterPublicSubnetTags:

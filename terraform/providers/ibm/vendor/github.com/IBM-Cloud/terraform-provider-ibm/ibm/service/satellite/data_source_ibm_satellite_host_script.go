@@ -35,6 +35,11 @@ func DataSourceIBMSatelliteAttachHostScript() *schema.Resource {
 				Computed:    true,
 				Description: "A unique name for the new Satellite location",
 			},
+			"coreos_host": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "If true, returns a CoreOS ignition file for the host. Otherwise, returns a RHEL attach script",
+			},
 			"labels": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -126,12 +131,29 @@ func dataSourceIBMSatelliteAttachHostScriptRead(d *schema.ResourceData, meta int
 		}
 	}
 	scriptDir, _ = filepath.Abs(scriptDir)
-	scriptPath := filepath.Join(scriptDir, "addHost.sh")
+	var scriptPath string
 
 	//Generate script
 	createRegOptions := &kubernetesserviceapiv1.AttachSatelliteHostOptions{}
 	createRegOptions.Controller = locData.ID
 	createRegOptions.Labels = labels
+
+	//check to see if host attach is CoreOS or RHEL
+	var host_os string
+	var coreos_enabled bool
+	if _, ok := d.GetOk("coreos_host"); ok {
+		coreos_enabled = d.Get("coreos_host").(bool)
+		if coreos_enabled {
+			host_os = "RHCOS"
+			createRegOptions.OperatingSystem = &host_os
+			scriptPath = filepath.Join(scriptDir, "addHost.ign")
+		}
+	} else {
+		coreos_enabled = false
+		host_os = "RHEL"
+		createRegOptions.OperatingSystem = &host_os
+		scriptPath = filepath.Join(scriptDir, "addHost.sh")
+	}
 
 	resp, err := satClient.AttachSatelliteHost(createRegOptions)
 	if err != nil {
@@ -139,38 +161,42 @@ func dataSourceIBMSatelliteAttachHostScriptRead(d *schema.ResourceData, meta int
 	}
 
 	lines := strings.Split(string(resp), "\n")
-	for i, line := range lines {
-		if strings.Contains(line, "API_URL=") {
-			i = i + 1
-			if script, ok := d.GetOk("custom_script"); ok {
-				lines[i] = script.(string)
-			} else {
-				if strings.ToLower(hostProvider) == "aws" {
-					lines[i] = "yum update -y\nyum-config-manager --enable '*'\nyum repolist all\nyum install container-selinux -y"
-				} else if strings.ToLower(hostProvider) == "ibm" {
-					lines[i] = `subscription-manager refresh
+
+	//if this is a RHEL host, continue with custom script
+	if !coreos_enabled {
+		for i, line := range lines {
+			if strings.Contains(line, "API_URL=") {
+				i = i + 1
+				if script, ok := d.GetOk("custom_script"); ok {
+					lines[i] = script.(string)
+				} else {
+					if strings.ToLower(hostProvider) == "aws" {
+						lines[i] = "yum update -y\nyum-config-manager --enable '*'\nyum repolist all\nyum install container-selinux -y"
+					} else if strings.ToLower(hostProvider) == "ibm" {
+						lines[i] = `subscription-manager refresh
 subscription-manager repos --enable rhel-server-rhscl-7-rpms
 subscription-manager repos --enable rhel-7-server-optional-rpms
 subscription-manager repos --enable rhel-7-server-rh-common-rpms
 subscription-manager repos --enable rhel-7-server-supplementary-rpms
 subscription-manager repos --enable rhel-7-server-extras-rpms`
-				} else if strings.ToLower(hostProvider) == "azure" {
-					lines[i] = fmt.Sprintf(`yum update --disablerepo=* --enablerepo="*microsoft*" -y
+					} else if strings.ToLower(hostProvider) == "azure" {
+						lines[i] = fmt.Sprintf(`yum update --disablerepo=* --enablerepo="*microsoft*" -y
 yum-config-manager --enable '*'
 yum repolist all
 yum install container-selinux -y
 					`)
-				} else if strings.ToLower(hostProvider) == "google" {
-					lines[i] = fmt.Sprintf(`yum update --disablerepo=* --enablerepo="*" -y
+					} else if strings.ToLower(hostProvider) == "google" {
+						lines[i] = fmt.Sprintf(`yum update --disablerepo=* --enablerepo="*" -y
 yum repolist all
 yum install container-selinux -y
 yum install subscription-manager -y
 	`)
-				} else {
-					lines[i] = "subscription-manager refresh\nyum update -y\n"
+					} else {
+						lines[i] = "subscription-manager refresh\nyum update -y\n"
+					}
 				}
-			}
 
+			}
 		}
 	}
 

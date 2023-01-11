@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/assisted-service/pkg/executer"
 	"github.com/openshift/installer/pkg/asset"
@@ -15,7 +16,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/rhcos"
-	"github.com/sirupsen/logrus"
 )
 
 // BaseIso generates the base ISO file for the image
@@ -106,7 +106,6 @@ func (i *BaseIso) Dependencies() []asset.Asset {
 // Generate the baseIso
 func (i *BaseIso) Generate(dependencies asset.Parents) error {
 
-	log := logrus.New()
 	// TODO - if image registry location is defined in InstallConfig,
 	// ic := &agent.OptionalInstallConfig{}
 	// p.Get(ic)
@@ -127,27 +126,27 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 		ocRelease := NewRelease(&executer.CommonExecuter{},
 			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay})
 
-		log.Info("Extracting base ISO from release payload")
-		baseIsoFileName, err = ocRelease.GetBaseIso(log, releaseImage, pullSecret, registriesConf.MirrorConfig, archName)
+		logrus.Info("Extracting base ISO from release payload")
+		baseIsoFileName, err = ocRelease.GetBaseIso(releaseImage, pullSecret, archName, registriesConf.MirrorConfig)
 		if err == nil {
-			log.Debugf("Extracted base ISO image %s from release payload", baseIsoFileName)
+			logrus.Debugf("Extracted base ISO image %s from release payload", baseIsoFileName)
 			i.File = &asset.File{Filename: baseIsoFileName}
 			return nil
 		}
 		if !errors.Is(err, &exec.Error{}) { // Already warned about missing oc binary
-			log.Warning("Failed to extract base ISO from release payload - check registry configuration")
+			logrus.Warning("Failed to extract base ISO from release payload - check registry configuration")
 		}
 	}
 
-	log.Info("Downloading base ISO")
+	logrus.Info("Downloading base ISO")
 	isoGetter := newGetIso(GetIsoPluggable)
 	baseIsoFileName, err2 := isoGetter.getter()
 	if err2 == nil {
-		log.Debugf("Using base ISO image %s", baseIsoFileName)
+		logrus.Debugf("Using base ISO image %s", baseIsoFileName)
 		i.File = &asset.File{Filename: baseIsoFileName}
 		return nil
 	}
-	log.Debugf("Failed to download base ISO: %s", err2)
+	logrus.Debugf("Failed to download base ISO: %s", err2)
 
 	return errors.Wrap(err, "failed to get base ISO image")
 }

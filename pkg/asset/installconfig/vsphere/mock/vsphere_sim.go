@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/pem"
 	"errors"
-	"io/ioutil"
 	"os"
 
 	"github.com/vmware/govmomi/find"
@@ -15,8 +14,9 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 )
 
-// StartSimulator starts an instance of the simulator which listens on 127.0.0.1. Call GetClient
-//                to retrieve a vim25.client which will connect to and trust this simulator
+// StartSimulator starts an instance of the simulator which listens on 127.0.0.1.
+// Call GetClient to retrieve a vim25.client which will connect to and trust this
+// simulator
 func StartSimulator() *simulator.Server {
 	model := simulator.VPX()
 	model.Folder = 1
@@ -38,7 +38,7 @@ func GetClient(server *simulator.Server) (*vim25.Client, *session.Manager, error
 		Headers: nil,
 		Bytes:   server.TLS.Certificates[0].Certificate[0],
 	}
-	tempFile, err := ioutil.TempFile(tmpCAdir, "*.pem")
+	tempFile, err := os.CreateTemp(tmpCAdir, "*.pem")
 	if err != nil {
 		return nil, nil, err
 	}

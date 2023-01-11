@@ -32,6 +32,12 @@ builds:
 archives:
 - format: zip
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+  files:
+    - LICENSE
+    - README.md
+    - CHANGELOG.md
+    - src: metadata/provider_metadata.json
+      strip_parent: true
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
   algorithm: sha256

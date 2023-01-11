@@ -18,12 +18,15 @@ module "vpc" {
   }
   source = "./vpc"
 
-  cluster_id      = var.cluster_id
-  resource_group  = var.powervs_resource_group
-  vpc_zone        = var.powervs_vpc_zone
-  vpc_subnet_name = var.powervs_vpc_subnet_name
-  vpc_name        = var.powervs_vpc_name
-  wait_for_vpc    = var.powervs_wait_for_vpc
+  cluster_id           = var.cluster_id
+  publish_strategy     = var.powervs_publish_strategy
+  resource_group       = var.powervs_resource_group
+  vpc_zone             = var.powervs_vpc_zone
+  vpc_subnet_name      = var.powervs_vpc_subnet_name
+  vpc_name             = var.powervs_vpc_name
+  vpc_gateway_name     = var.powervs_vpc_gateway_name
+  vpc_gateway_attached = var.powervs_vpc_gateway_attached
+  wait_for_vpc         = var.powervs_wait_for_vpc
 }
 
 module "pi_network" {
@@ -39,6 +42,8 @@ module "pi_network" {
   machine_cidr      = var.machine_v4_cidrs[0]
   cloud_conn_name   = var.powervs_ccon_name
   vpc_crn           = module.vpc.vpc_crn
+  dns_server        = module.dns.dns_server
+  enable_snat       = var.powervs_enable_snat
 }
 
 resource "ibm_pi_key" "cluster_key" {
@@ -62,7 +67,7 @@ module "master" {
   powervs_region      = var.powervs_region
   powervs_zone        = var.powervs_zone
   vpc_region          = var.powervs_vpc_region
-  vpc_zone            = var.powervs_vpc_zone
+  vpc_zone            = module.vpc.vpc_zone
   memory              = var.powervs_master_memory
   processors          = var.powervs_master_processors
   ignition            = var.ignition_master
@@ -85,7 +90,7 @@ resource "ibm_pi_image" "boot_image" {
   pi_cloud_instance_id      = var.powervs_cloud_instance_id
   pi_image_bucket_name      = var.powervs_image_bucket_name
   pi_image_bucket_access    = "public"
-  pi_image_bucket_region    = var.powervs_vpc_region
+  pi_image_bucket_region    = var.powervs_cos_region
   pi_image_bucket_file_name = var.powervs_image_bucket_file_name
   pi_image_storage_type     = var.powervs_image_storage_type
 }
@@ -110,22 +115,30 @@ module "loadbalancer" {
   vpc_subnet_id  = module.vpc.vpc_subnet_id
 }
 
+locals {
+  dns_service_id = var.powervs_publish_strategy == "Internal" ? var.powervs_dns_guid : var.powervs_cis_crn
+}
+
 module "dns" {
   providers = {
     ibm = ibm.vpc
   }
   source = "./dns"
 
-  cis_id                     = var.powervs_cis_crn
+  service_id                 = local.dns_service_id
   base_domain                = var.base_domain
   cluster_domain             = var.cluster_domain
   load_balancer_hostname     = module.loadbalancer.lb_hostname
   load_balancer_int_hostname = module.loadbalancer.lb_int_hostname
   cluster_id                 = var.cluster_id
+  vpc_crn                    = module.vpc.vpc_crn
   vpc_id                     = module.vpc.vpc_id
   vpc_subnet_id              = module.vpc.vpc_subnet_id
-  vpc_zone                   = var.powervs_vpc_zone
+  vpc_zone                   = module.vpc.vpc_zone
+  vpc_region                 = var.powervs_vpc_region
+  vpc_permitted              = var.powervs_vpc_permitted
   ssh_key                    = var.powervs_ssh_key
   publish_strategy           = var.powervs_publish_strategy
+  enable_snat                = var.powervs_enable_snat
   # dns_vm_image_name        = @FUTURE
 }

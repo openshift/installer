@@ -8,7 +8,6 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -251,7 +250,11 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
-		if vpcRegion, err = powervstypes.VPCRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
+		vpcRegion = installConfig.Config.PowerVS.VPCRegion
+		if vpcRegion == "" {
+			vpcRegion, err = powervstypes.VPCRegionForPowerVSRegion(installConfig.Config.PowerVS.Region)
+		}
+		if err != nil {
 			return err
 		}
 

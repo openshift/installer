@@ -1,3 +1,94 @@
+# 1.45.0 (Sep 05, 2022)
+Features
+* Support App Configuration
+    - **DataSources**
+        - ibm_app_config_segment
+        - ibm_app_config_segment
+    - **Resources**
+        - ibm_app_config_segment
+* Support IAM Access Group
+    - **Resources**
+        - ibm_iam_access_group_account_settings
+
+Enhancements
+* CIS CNAME Setup : Create Partial Zone ([3937](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3937))
+* deprecating Security Insights ([3755](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3755))
+* Add SNAP enabled bool for DHCP create function ([3932](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3932))
+* Support for EPIC offering Create flow ([3949](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3949))
+* Add minimum role notes ([3962](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3962))
+* enhancement(is_vpc): added support for identifier in vpc data source ([3959](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3959))
+* Atracker v2 metadata backup ([3887](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3887))
+* coreos host attach support ([3968](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3968))
+* add CBR rule API type support ([3971](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3971))
+* Mark key_protect_key_id as deprecate in database datasource ([3939](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3939))
+* doc changes for VPC Load Balancer ([3872](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3872))
+* Add source units required parameter ([3991](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3991))
+* Add default_network_acl computed attribute for VPC ([3997](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3997))
+
+
+BUG FIXES
+* added log entry for redacted credentials ([3942](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3942))
+* stack trace with ibm_pi_dhcps data resource ([3951](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3951)) 
+* Fix crash on schematics_action resource ([3969](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3969)) 
+* Fix duplicate VPC entries in cloud connection create
+operation ([3958](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3958)) 
+* fix: account_id issue when service id apikey is used ([3950](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3950))
+* Delete Over Count Bug Fix ([3946](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3946))
+* Fix the setting of monitoring if it fails with error during update ([3974](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3974))
+* CIS - Delete filter on deletion of Firewall Rules ([3963](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3963))
+* Fix VPN Server clientAuthentication ([3947](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3947))
+* fix(security_group): added wait logic to wait for target removal to avoid 409 ([3957](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3957))
+* The IBM database fails with Error: Unprocessable Entity ([3964](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3964))
+* Prevent runtime error on 0 member allocations ([3992](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3992))
+* key_protect_key_id doc typo fix for database ([3980](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3980))
+* Fix links in database docs ([3977](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3977))
+* fix(ibm_is_security_group_target): missing set statements in sg target resource ([4002](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/4002))
+* target_http_status_code correction for VPC LoadBalancer listener ([4005](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/4005))
+* fix the diff on cis tags if provisioned from Schematics ([4008](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/4008))
+* CIS Firewall Rules : added priority key ([3998](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3998))
+# 1.44.3 (Aug 29, 2022)
+BUG FIXES
+* The IBM database fails with Error: Unprocessable Entity ([3964](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3964))
+* Prevent runtime error on 0 member allocations ([3992](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3992))
+
+# 1.45.0-beta0 (Aug 18, 2022)
+Features
+* Support App Configuration
+    - **DataSources**
+        - ibm_app_config_segment
+        - ibm_app_config_segment
+    - **Resources**
+        - ibm_app_config_segment
+* Support IAM Access Group
+    - **Resources**
+        - ibm_iam_access_group_account_settings
+
+Enhancements
+* CIS CNAME Setup : Create Partial Zone ([3937](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3937))
+* deprecating Security Insights ([3755](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3755))
+* Add SNAP enabled bool for DHCP create function ([3932](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3932))
+* Support for EPIC offering Create flow ([3949](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3949))
+* Add minimum role notes ([3962](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3962))
+* enhancement(is_vpc): added support for identifier in vpc data source ([3959](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3959))
+* Atracker v2 metadata backup ([3887](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3887))
+* coreos host attach support ([3968](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3968))
+* add CBR rule API type support ([3971](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3971))
+* Mark key_protect_key_id as deprecate in database datasource ([3939](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3939))
+* doc changes for VPC Load Balancer ([3872](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3872))
+
+BUG FIXES
+* added log entry for redacted credentials ([3942](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3942))
+* stack trace with ibm_pi_dhcps data resource ([3951](https://github.com/IBM-Cloud/terraform-provider-ibm/issues/3951)) 
+* Fix crash on schematics_action resource ([3969](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3969)) 
+* Fix duplicate VPC entries in cloud connection create
+operation ([3958](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3958)) 
+* fix: account_id issue when service id apikey is used ([3950](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3950))
+* Delete Over Count Bug Fix ([3946](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3946))
+* Fix the setting of monitoring if it fails with error during update ([3974](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3974))
+* CIS - Delete filter on deletion of Firewall Rules ([3963](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3963))
+* Fix VPN Server clientAuthentication ([3947](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3947))
+* fix(security_group): added wait logic to wait for target removal to avoid 409 ([3957](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3957))
+
 # 1.44.2 (Aug 8, 2022)
 BUG FIXES
 * fix: schematics template metadata issue ([3953](https://github.com/IBM-Cloud/terraform-provider-ibm/pull/3953))

@@ -30,6 +30,19 @@ func TestConvertAgentConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "v1alpha1",
+			config: &agent.Config{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1alpha1",
+				},
+			},
+			expected: &agent.Config{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: agent.AgentConfigVersion,
+				},
+			},
+		},
+		{
 			name:          "no version",
 			config:        &agent.Config{},
 			expectedError: "no version was provided",

@@ -6,7 +6,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -22,7 +21,7 @@ var errHTTPNotFound = errors.New("http response 404")
 // readFile reads a file provided in the args and return
 // the content or in case of failure return an error
 func readFile(pathFile string) ([]byte, error) {
-	content, err := ioutil.ReadFile(pathFile)
+	content, err := os.ReadFile(pathFile)
 	if err != nil {
 		return content, errors.Wrapf(err, "failed to read file: %s", pathFile)
 	}
@@ -195,7 +194,7 @@ func askCredentials(c Config) (Config, error) {
 // showPEM will print information about PEM file provided in param or error
 // if a failure happens
 func showPEM(pemFilePath string) error {
-	certpem, err := ioutil.ReadFile(pemFilePath)
+	certpem, err := os.ReadFile(pemFilePath)
 	if err != nil {
 		return errors.Wrapf(err, "failed to read the cert: %s", pemFilePath)
 	}
@@ -291,7 +290,7 @@ func engineSetup() (Config, error) {
 	logrus.Debug("PEM URL: ", engineConfig.PemURL)
 
 	// Create tmpFile to store the Engine PEM file
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "engine-")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "engine-")
 	if err != nil {
 		return engineConfig, err
 	}

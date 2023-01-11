@@ -37,25 +37,12 @@ const (
 	// CertificateIdentifier doesn't refer to an existing certificate.
 	ErrCodeCertificateNotFoundFault = "CertificateNotFound"
 
-	// ErrCodeCustomAvailabilityZoneAlreadyExistsFault for service response error code
-	// "CustomAvailabilityZoneAlreadyExists".
-	//
-	// CustomAvailabilityZoneName is already used by an existing custom Availability
-	// Zone.
-	ErrCodeCustomAvailabilityZoneAlreadyExistsFault = "CustomAvailabilityZoneAlreadyExists"
-
 	// ErrCodeCustomAvailabilityZoneNotFoundFault for service response error code
 	// "CustomAvailabilityZoneNotFound".
 	//
 	// CustomAvailabilityZoneId doesn't refer to an existing custom Availability
 	// Zone identifier.
 	ErrCodeCustomAvailabilityZoneNotFoundFault = "CustomAvailabilityZoneNotFound"
-
-	// ErrCodeCustomAvailabilityZoneQuotaExceededFault for service response error code
-	// "CustomAvailabilityZoneQuotaExceeded".
-	//
-	// You have exceeded the maximum number of custom Availability Zones.
-	ErrCodeCustomAvailabilityZoneQuotaExceededFault = "CustomAvailabilityZoneQuotaExceeded"
 
 	// ErrCodeCustomDBEngineVersionAlreadyExistsFault for service response error code
 	// "CustomDBEngineVersionAlreadyExistsFault".
@@ -434,18 +421,6 @@ const (
 	// The IAM role is missing for exporting to an Amazon S3 bucket.
 	ErrCodeIamRoleNotFoundFault = "IamRoleNotFound"
 
-	// ErrCodeInstallationMediaAlreadyExistsFault for service response error code
-	// "InstallationMediaAlreadyExists".
-	//
-	// The specified installation medium has already been imported.
-	ErrCodeInstallationMediaAlreadyExistsFault = "InstallationMediaAlreadyExists"
-
-	// ErrCodeInstallationMediaNotFoundFault for service response error code
-	// "InstallationMediaNotFound".
-	//
-	// InstallationMediaID doesn't refer to an existing installation medium.
-	ErrCodeInstallationMediaNotFoundFault = "InstallationMediaNotFound"
-
 	// ErrCodeInstanceQuotaExceededFault for service response error code
 	// "InstanceQuotaExceeded".
 	//
@@ -650,6 +625,13 @@ const (
 	//
 	// An error occurred accessing an Amazon Web Services KMS key.
 	ErrCodeKMSKeyNotAccessibleFault = "KMSKeyNotAccessibleFault"
+
+	// ErrCodeNetworkTypeNotSupported for service response error code
+	// "NetworkTypeNotSupported".
+	//
+	// The network type is invalid for the DB instance. Valid nework type values
+	// are IPV4 and DUAL.
+	ErrCodeNetworkTypeNotSupported = "NetworkTypeNotSupported"
 
 	// ErrCodeOptionGroupAlreadyExistsFault for service response error code
 	// "OptionGroupAlreadyExistsFault".

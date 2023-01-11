@@ -3,12 +3,11 @@ package executer
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
 	"os"
 	"os/exec"
 )
 
-//go:generate mockgen -package executer -destination mock_executer.go . Executer
+//go:generate mockgen --build_flags=--mod=mod -package executer -destination mock_executer.go . Executer
 type Executer interface {
 	Execute(command string, args ...string) (stdout string, stderr string, exitCode int)
 	ExecuteWithContext(ctx context.Context, command string, args ...string) (stdout string, stderr string, exitCode int)
@@ -18,7 +17,7 @@ type Executer interface {
 type CommonExecuter struct{}
 
 func (e *CommonExecuter) TempFile(dir, pattern string) (f *os.File, err error) {
-	return ioutil.TempFile(dir, pattern)
+	return os.CreateTemp(dir, pattern)
 }
 
 func (e *CommonExecuter) Execute(command string, args ...string) (stdout string, stderr string, exitCode int) {

@@ -2,7 +2,6 @@ package ovirt
 
 import (
 	"crypto/x509"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -39,7 +38,7 @@ type clientHTTP struct {
 // 2  $defaultOvirtConfigPath
 // See #@Config for the expected format
 func LoadOvirtConfig() ([]byte, error) {
-	data, err := ioutil.ReadFile(discoverPath())
+	data, err := os.ReadFile(discoverPath())
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +84,7 @@ func (c *Config) Save() error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path, out, 0600)
+	return os.WriteFile(path, out, 0o600)
 }
 
 // getValidatedConnection will create a connection and validate it before returning.

@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	rg "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -22,6 +23,8 @@ func DataSourceIBMResourceGroup() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ExactlyOneOf: []string{"is_default", "name"},
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_resource_group",
+					"name"),
 			},
 			"is_default": {
 				Description:  "Default Resource group",
@@ -83,6 +86,19 @@ func DataSourceIBMResourceGroup() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMResourceGroupValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "name",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceGroup",
+			Optional:                   true})
+
+	ibmIBMResourceGroupValidator := validate.ResourceValidator{ResourceName: "ibm_resource_group", Schema: validateSchema}
+	return &ibmIBMResourceGroupValidator
 }
 
 func dataSourceIBMResourceGroupRead(d *schema.ResourceData, meta interface{}) error {

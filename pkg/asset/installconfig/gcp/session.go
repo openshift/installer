@@ -3,7 +3,6 @@ package gcp
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -83,7 +82,7 @@ func getCredentials(ctx context.Context) (*googleoauth.Credentials, error) {
 	if err := os.MkdirAll(filepath.Dir(filePath), 0700); err != nil {
 		return nil, err
 	}
-	if err := ioutil.WriteFile(filePath, creds.JSON, 0600); err != nil {
+	if err := os.WriteFile(filePath, creds.JSON, 0o600); err != nil {
 		return nil, err
 	}
 	return creds, nil
@@ -144,7 +143,7 @@ type fileLoader struct {
 }
 
 func (f *fileLoader) Load(ctx context.Context) (*googleoauth.Credentials, error) {
-	content, err := ioutil.ReadFile(f.path)
+	content, err := os.ReadFile(f.path)
 	if err != nil {
 		return nil, err
 	}

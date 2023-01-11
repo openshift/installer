@@ -1,6 +1,8 @@
 package subnets
 
 import (
+	"fmt"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/pagination"
 )
@@ -120,6 +122,9 @@ type CreateOpts struct {
 	// DNSNameservers are the nameservers to be set via DHCP.
 	DNSNameservers []string `json:"dns_nameservers,omitempty"`
 
+	// ServiceTypes are the service types associated with the subnet.
+	ServiceTypes []string `json:"service_types,omitempty"`
+
 	// HostRoutes are any static host routes to be set via DHCP.
 	HostRoutes []HostRoute `json:"host_routes,omitempty"`
 
@@ -192,11 +197,19 @@ type UpdateOpts struct {
 	// DNSNameservers are the nameservers to be set via DHCP.
 	DNSNameservers *[]string `json:"dns_nameservers,omitempty"`
 
+	// ServiceTypes are the service types associated with the subnet.
+	ServiceTypes *[]string `json:"service_types,omitempty"`
+
 	// HostRoutes are any static host routes to be set via DHCP.
 	HostRoutes *[]HostRoute `json:"host_routes,omitempty"`
 
 	// EnableDHCP will either enable to disable the DHCP service.
 	EnableDHCP *bool `json:"enable_dhcp,omitempty"`
+
+	// RevisionNumber implements extension:standard-attr-revisions. If != "" it
+	// will set revision_number=%s. If the revision number does not match, the
+	// update will fail.
+	RevisionNumber *int `json:"-" h:"If-Match"`
 }
 
 // ToSubnetUpdateMap builds a request body from UpdateOpts.
@@ -221,8 +234,20 @@ func Update(c *gophercloud.ServiceClient, id string, opts UpdateOptsBuilder) (r 
 		r.Err = err
 		return
 	}
+	h, err := gophercloud.BuildHeaders(opts)
+	if err != nil {
+		r.Err = err
+		return
+	}
+	for k := range h {
+		if k == "If-Match" {
+			h[k] = fmt.Sprintf("revision_number=%s", h[k])
+		}
+	}
+
 	resp, err := c.Put(updateURL(c, id), b, &r.Body, &gophercloud.RequestOpts{
-		OkCodes: []int{200, 201},
+		MoreHeaders: h,
+		OkCodes:     []int{200, 201},
 	})
 	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return

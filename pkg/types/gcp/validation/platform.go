@@ -2,10 +2,8 @@ package validation
 
 import (
 	"os"
-
 	"sort"
 
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -40,6 +38,7 @@ var (
 		"europe-west8":            "Milan, Italy",
 		"europe-west9":            "Paris, France",
 		"europe-southwest1":       "Madrid, Spain",
+		"me-west1":                "Tel Aviv, Israel",
 		"northamerica-northeast1": "Montréal, Québec, Canada",
 		"northamerica-northeast2": "Toronto, Ontario, Canada",
 		"southamerica-east1":      "São Paulo, Brazil",
@@ -94,10 +93,9 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		}
 	}
 
-	if p.CreateFirewallRules != "" {
-		validCreateFirewallRules := sets.NewString(string(gcp.CreateFirewallRulesEnabled), string(gcp.CreateFirewallRulesDisabled))
-		if !validCreateFirewallRules.Has(string(p.CreateFirewallRules)) {
-			allErrs = append(allErrs, field.NotSupported(fldPath.Child("createFirewallRules"), p.CreateFirewallRules, validCreateFirewallRules.List()))
+	if p.PrivateDNSZone != nil {
+		if p.PrivateDNSZone.ID != "" {
+			allErrs = append(allErrs, field.Forbidden(fldPath.Child("privateDNSZone").Child("id"), "do not provide an ID for the private DNS zone."))
 		}
 	}
 

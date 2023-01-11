@@ -1,11 +1,15 @@
 package powervs
 
 import (
+	"math"
+	gohttp "net/http"
+	"strings"
+	"time"
+
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
-	gohttp "net/http"
-	"strings"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const subnetTypeName = "subnet"
@@ -14,9 +18,12 @@ const subnetTypeName = "subnet"
 func (o *ClusterUninstaller) listSubnets() (cloudResources, error) {
 	o.Logger.Debugf("Listing Subnets")
 
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
 	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("listSubnets: case <-o.Context.Done()")
+	case <-ctx.Done():
+		o.Logger.Debugf("listSubnets: case <-ctx.Done()")
 		return nil, o.Context.Err() // we're cancelled, abort
 	default:
 	}
@@ -59,13 +66,23 @@ func (o *ClusterUninstaller) deleteSubnet(item cloudResource) error {
 	var response *core.DetailedResponse
 	var err error
 
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("deleteSubnet: case <-ctx.Done()")
+		return o.Context.Err() // we're cancelled, abort
+	default:
+	}
+
 	getOptions = o.vpcSvc.NewGetSubnetOptions(item.id)
 	_, response, err = o.vpcSvc.GetSubnet(getOptions)
 
 	if err != nil && response != nil && response.StatusCode == gohttp.StatusNotFound {
 		// The resource is gone
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted subnet %q", item.name)
+		o.Logger.Infof("Deleted Subnet %q", item.name)
 		return nil
 	}
 	if err != nil && response != nil && response.StatusCode == gohttp.StatusInternalServerError {
@@ -73,23 +90,14 @@ func (o *ClusterUninstaller) deleteSubnet(item cloudResource) error {
 		return nil
 	}
 
-	o.Logger.Debugf("Deleting subnet %q", item.name)
-
-	ctx, _ := o.contextWithTimeout()
-
-	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("deleteSubnet: case <-o.Context.Done()")
-		return o.Context.Err() // we're cancelled, abort
-	default:
-	}
-
 	deleteOptions := o.vpcSvc.NewDeleteSubnetOptions(item.id)
 	_, err = o.vpcSvc.DeleteSubnetWithContext(ctx, deleteOptions)
-
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete subnet %s", item.name)
 	}
+
+	o.Logger.Infof("Deleted Subnet %q", item.name)
+	o.deletePendingItems(item.typeName, []cloudResource{item})
 
 	return nil
 }
@@ -97,44 +105,75 @@ func (o *ClusterUninstaller) deleteSubnet(item cloudResource) error {
 // destroySubnets removes all subnet resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroySubnets() error {
-	found, err := o.listSubnets()
+	firstPassList, err := o.listSubnets()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(subnetTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
 
-	ctx, _ := o.contextWithTimeout()
+	items := o.insertPendingItems(subnetTypeName, firstPassList.list())
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroySubnets: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted subnet %q", item.name)
-				continue
-			}
-			err = o.deleteSubnet(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroySubnets: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(subnetTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.deleteSubnet(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroySubnets: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(subnetTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroySubnets: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroySubnets: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listSubnets()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroySubnets: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroySubnets: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }

@@ -8,7 +8,14 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	machinev1 "github.com/openshift/api/machine/v1"
+	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	baremetalapi "github.com/openshift/cluster-api-provider-baremetal/pkg/apis"
 	baremetalprovider "github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
@@ -18,15 +25,6 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
-	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -62,6 +60,7 @@ import (
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 )
 
 const (
@@ -215,6 +214,7 @@ func (w *Worker) Dependencies() []asset.Asset {
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
+		new(rhcos.Release),
 		&machine.Worker{},
 	}
 }
@@ -225,8 +225,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
+	rhcosRelease := new(rhcos.Release)
 	wign := &machine.Worker{}
-	dependencies.Get(clusterID, installConfig, rhcosImage, wign)
+	dependencies.Get(clusterID, installConfig, rhcosImage, rhcosRelease, wign)
 
 	workerUserDataSecretName := "worker-user-data"
 
@@ -235,6 +236,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	var err error
 	ic := installConfig.Config
 	for _, pool := range ic.Compute {
+		pool := pool // this makes golint happy... G601: Implicit memory aliasing in for loop. (gosec)
 		if pool.Hyperthreading == types.HyperthreadingDisabled {
 			ignHT, err := machineconfig.ForHyperthreadingDisabled("worker")
 			if err != nil {
@@ -410,7 +412,8 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				return err
 			}
 
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName, capabilities)
+			useImageGallery := ic.Platform.Azure.CloudName != azuretypes.StackCloud
+			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName, capabilities, useImageGallery)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -512,6 +515,14 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool := defaultVSphereMachinePoolPlatform()
 			mpool.Set(ic.Platform.VSphere.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.VSphere)
+			// The machinepool has no zones defined, there are FailureDomains
+			// This is a vSphere zonal installation. Generate machinepool zone
+			// list.
+			if len(mpool.Zones) == 0 && len(ic.VSphere.FailureDomains) != 0 {
+				for _, fd := range ic.VSphere.FailureDomains {
+					mpool.Zones = append(mpool.Zones, fd.Name)
+				}
+			}
 			pool.Platform.VSphere = &mpool
 			templateName := clusterID.InfraID + "-rhcos"
 
@@ -642,8 +653,10 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	baremetalapi.AddToScheme(scheme)
 	ibmcloudapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
-	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
+	scheme.AddKnownTypes(machinev1alpha1.GroupVersion,
+		&machinev1alpha1.OpenstackProviderSpec{},
+	)
 	scheme.AddKnownTypes(machinev1beta1.SchemeGroupVersion,
 		&machinev1beta1.AWSMachineProviderConfig{},
 		&machinev1beta1.VSphereMachineProviderSpec{},
@@ -662,7 +675,7 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 		ibmcloudprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
 		machinev1.GroupVersion,
-		openstackprovider.SchemeGroupVersion,
+		machinev1alpha1.GroupVersion,
 		ovirtprovider.SchemeGroupVersion,
 		machinev1beta1.SchemeGroupVersion,
 	)

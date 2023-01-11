@@ -3,11 +3,15 @@ package vsphere
 import (
 	"context"
 
-	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/vim25"
+	"github.com/vmware/govmomi/vim25/mo"
 	vim25types "github.com/vmware/govmomi/vim25/types"
+	"k8s.io/apimachinery/pkg/util/sets"
+
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 //go:generate mockgen -source=./permissions.go -destination=./mock/authmanager_generated.go -package=mock
@@ -15,6 +19,13 @@ import (
 // AuthManager defines an interface to an implementation of the AuthorizationManager to facilitate mocking
 type AuthManager interface {
 	FetchUserPrivilegeOnEntities(ctx context.Context, entities []vim25types.ManagedObjectReference, userName string) ([]vim25types.UserPrivilegeResult, error)
+	Properties(ctx context.Context, r vim25types.ManagedObjectReference, ps []string, dst interface{}) error
+	Reference() vim25types.ManagedObjectReference
+}
+
+// SessionManager defines an interface to an implementation of the SessionManager to facilitate mocking.
+type SessionManager interface {
+	UserSession(ctx context.Context) (*vim25types.UserSession, error)
 }
 
 // permissionGroup is the group of permissions needed by cluster creation, operation, or teardown.
@@ -104,6 +115,7 @@ var permissions = map[permissionGroup]PermissionGroupDefinition{
 			"VirtualMachine.Provisioning.Clone",
 			"VirtualMachine.Provisioning.MarkAsTemplate",
 			"VirtualMachine.Provisioning.DeployTemplate",
+			"InventoryService.Tagging.ObjectAttachable",
 		},
 		Description: "Pre-existing Virtual Machine Folder",
 	},
@@ -139,6 +151,7 @@ var permissions = map[permissionGroup]PermissionGroupDefinition{
 			"VirtualMachine.Provisioning.MarkAsTemplate",
 			"Folder.Create",
 			"Folder.Delete",
+			"InventoryService.Tagging.ObjectAttachable",
 		},
 		Description: "vSphere vCenter Datacenter",
 	},
@@ -162,15 +175,44 @@ var permissions = map[permissionGroup]PermissionGroupDefinition{
 	},
 }
 
+// pruneToAvailablePermissions different versions of vCenter support different privileges.  the intent of this method
+// is to prune privileges from the check that don't exist.
+func pruneToAvailablePermissions(ctx context.Context, manager AuthManager) error {
+	var authManagerMo mo.AuthorizationManager
+	err := manager.Properties(ctx, manager.Reference(), []string{"privilegeList"}, &authManagerMo)
+	if err != nil {
+		return err
+	}
+
+	availablePermissions := sets.NewString()
+	for _, availablePermission := range authManagerMo.PrivilegeList {
+		availablePermissions.Insert(availablePermission.PrivId)
+	}
+	for permissionGroupKey, permissionGroup := range permissions {
+		prunedPermissions := sets.NewString(permissionGroup.Permissions...)
+
+		prunedPermissions = prunedPermissions.Intersection(availablePermissions)
+		permissions[permissionGroupKey] = PermissionGroupDefinition{
+			Permissions: prunedPermissions.List(),
+			Description: permissionGroup.Description,
+		}
+	}
+	return nil
+}
+
 func newAuthManager(client *vim25.Client) AuthManager {
 	authManager := object.NewAuthorizationManager(client)
 	return authManager
 }
 
-func comparePrivileges(ctx context.Context, validationCtx *validationContext, mo vim25types.ManagedObjectReference, permissionGroup PermissionGroupDefinition) error {
+func comparePrivileges(ctx context.Context, validationCtx *validationContext, moRef vim25types.ManagedObjectReference, permissionGroup PermissionGroupDefinition) error {
 	authManager := validationCtx.AuthManager
-	derived, err := authManager.FetchUserPrivilegeOnEntities(ctx, []vim25types.ManagedObjectReference{mo}, validationCtx.User)
-
+	sessionMgr := session.NewManager(validationCtx.Client)
+	user, err := sessionMgr.UserSession(ctx)
+	if err != nil {
+		return errors.Wrap(err, "unable to get user session")
+	}
+	derived, err := authManager.FetchUserPrivilegeOnEntities(ctx, []vim25types.ManagedObjectReference{moRef}, user.UserName)
 	if err != nil {
 		return errors.Wrap(err, "unable to retrieve privileges")
 	}

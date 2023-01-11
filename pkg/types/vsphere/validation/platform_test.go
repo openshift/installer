@@ -55,7 +55,7 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 					Datastore:      "test-datastore",
 					Networks:       []string{"test-portgroup"},
 					ResourcePool:   "test-resourcepool",
-					Folder:         "test-folder",
+					Folder:         "/test-datacenter/vm/test-folder",
 				},
 			},
 			{
@@ -69,7 +69,7 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 					Datastore:      "test-datastore",
 					Networks:       []string{"test-portgroup"},
 					ResourcePool:   "test-resourcepool",
-					Folder:         "test-folder",
+					Folder:         "/test-datacenter/vm/test-folder",
 				},
 			},
 		},
@@ -162,6 +162,15 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expectedError: `^test-path\.defaultDatastore: Required value: must specify the default datastore$`,
+		},
+		{
+			name: "Invalid folder path",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Folder = "test-folder"
+				return p
+			}(),
+			expectedError: `^test-path\.folder: Invalid value: "test-folder": folder must be absolute path: expected prefix /test-datacenter/vm/`,
 		},
 		{
 			name: "Capital letters in vCenter",
@@ -358,6 +367,15 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expectedError: `^test-path\.failureDomains\.topology\.datacenter: Required value: must specify a datacenter`,
+		},
+		{
+			name: "Multi-zone platform failureDomain topology empty networks",
+			platform: func() *vsphere.Platform {
+				p := validMultiVCenterPlatform()
+				p.FailureDomains[0].Topology.Networks = []string{}
+				return p
+			}(),
+			expectedError: `^test-path\.failureDomains\.topology\.networks: Required value: must specify a network`,
 		},
 		{
 			name: "Multi-zone platform failureDomain defaults applied",

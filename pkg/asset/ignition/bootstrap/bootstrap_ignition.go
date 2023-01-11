@@ -8,9 +8,10 @@ import (
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	"github.com/vincent-petithory/dataurl"
+
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/vincent-petithory/dataurl"
 )
 
 // parseCertificateBundle loads each certificate in the bundle to the Ingition

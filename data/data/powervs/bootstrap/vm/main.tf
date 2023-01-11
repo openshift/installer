@@ -50,7 +50,8 @@ resource "ibm_pi_instance" "bootstrap" {
     network_id = var.dhcp_network_id
   }
   pi_user_data = base64encode(templatefile("${path.module}/templates/bootstrap.ign", {
-    HOSTNAME    = ibm_cos_bucket.ignition.s3_endpoint_public
+    PROTOCOL    = var.enable_snat ? "https" : "http"
+    HOSTNAME    = var.enable_snat ? ibm_cos_bucket.ignition.s3_endpoint_public : var.proxy_server_ip
     BUCKET_NAME = ibm_cos_bucket.ignition.bucket_name
     OBJECT_NAME = ibm_cos_bucket_object.ignition.key
     IAM_TOKEN   = data.ibm_iam_auth_token.iam_token.iam_access_token
@@ -60,7 +61,7 @@ resource "ibm_pi_instance" "bootstrap" {
 }
 
 resource "time_sleep" "wait_for_bootstrap_macs" {
-  create_duration = "45s"
+  create_duration = "3m"
 
   depends_on = [ibm_pi_instance.bootstrap]
 }

@@ -1,13 +1,14 @@
 package explain
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
-	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"github.com/openshift/installer/data"
 )
 
 // NewCmd returns a subcommand for explain
@@ -46,7 +47,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 	defer file.Close()
 
-	raw, err := ioutil.ReadAll(file)
+	raw, err := io.ReadAll(file)
 	if err != nil {
 		return errors.Wrap(err, "failed to read InstallConfig CRD")
 	}

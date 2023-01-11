@@ -1,7 +1,7 @@
 package openstack
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/external"
@@ -78,7 +78,7 @@ func getFlavorNames(cloud string) ([]string, error) {
 	}
 
 	if len(allFlavors) == 0 {
-		return nil, errors.New("no OpenStack flavors were found")
+		return nil, fmt.Errorf("no OpenStack flavors were found")
 	}
 
 	flavorNames := make([]string, len(allFlavors))
@@ -149,7 +149,7 @@ func getFloatingIPs(cloud string, floatingNetworkName string) (sortableFloatingI
 	}
 
 	if len(allFloatingIPs) == 0 {
-		return nil, errors.New("there are no unassigned floating IP addresses available")
+		return nil, fmt.Errorf("there are no unassigned floating IP addresses available")
 	}
 
 	return allFloatingIPs, nil

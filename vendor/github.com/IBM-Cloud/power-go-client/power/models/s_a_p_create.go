@@ -20,6 +20,9 @@ import (
 // swagger:model SAPCreate
 type SAPCreate struct {
 
+	// Custom SAP Deployment Type Information (For Internal Use Only)
+	DeploymentType string `json:"deploymentType,omitempty"`
+
 	// Image ID of the sap image to use for the server
 	// Required: true
 	ImageID *string `json:"imageID"`
@@ -44,6 +47,9 @@ type SAPCreate struct {
 	// SAP Profile ID for the amount of cores and memory
 	// Required: true
 	ProfileID *string `json:"profileID"`
+
+	// The shared processor pool for server deployment
+	SharedProcessorPool string `json:"sharedProcessorPool,omitempty"`
 
 	// The name of the SSH Key to provide to the server for authenticating
 	SSHKeyName string `json:"sshKeyName,omitempty"`

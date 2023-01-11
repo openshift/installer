@@ -1,21 +1,21 @@
 package powervs
 
 import (
-	"github.com/IBM-Cloud/power-go-client/power/models"
-	"github.com/pkg/errors"
+	"math"
 	"strings"
+	"time"
+
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
 	powerInstanceTypeName = "powerInstance"
 )
 
-// listPowerInstances lists instances in the Power server.
+// listPowerInstances lists instances in the power server.
 func (o *ClusterUninstaller) listPowerInstances() (cloudResources, error) {
-	// https://github.com/IBM-Cloud/power-go-client/blob/v1.0.88/power/models/p_vm_instance_network.go#L16-L44
-	var network *models.PVMInstanceNetwork
-
-	o.Logger.Debugf("Listing virtual Power service instances")
+	o.Logger.Debugf("Listing virtual Power service instances (%s)", o.InfraID)
 
 	instances, err := o.instanceClient.GetAll()
 	if err != nil {
@@ -38,18 +38,12 @@ func (o *ClusterUninstaller) listPowerInstances() (cloudResources, error) {
 				typeName: powerInstanceTypeName,
 				id:       *instance.PvmInstanceID,
 			})
-
-			for _, network = range instance.Networks {
-				if strings.HasPrefix(network.NetworkName, "DHCPSERVER") {
-					o.DHCPNetworks[network.NetworkName] = struct{}{}
-				}
-			}
 		}
 	}
 	if !foundOne {
 		o.Logger.Debugf("listPowerInstances: NO matching virtual instance against: %s", o.InfraID)
 		for _, instance := range instances.PvmInstances {
-			o.Logger.Debugf("listInstances: only found virtual instance: %s", *instance.ServerName)
+			o.Logger.Debugf("listPowerInstances: only found virtual instance: %s", *instance.ServerName)
 		}
 	}
 
@@ -63,7 +57,7 @@ func (o *ClusterUninstaller) destroyPowerInstance(item cloudResource) error {
 	_, err = o.instanceClient.Get(item.id)
 	if err != nil {
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted Power instance %q", item.name)
+		o.Logger.Infof("Deleted Power Instance %q (%q)", item.name, item.status)
 		return nil
 	}
 
@@ -76,7 +70,7 @@ func (o *ClusterUninstaller) destroyPowerInstance(item cloudResource) error {
 	}
 
 	o.deletePendingItems(item.typeName, []cloudResource{item})
-	o.Logger.Infof("Deleted Power instance %q", item.name)
+	o.Logger.Infof("Deleted Power Instance %q (%q)", item.name, item.status)
 
 	return nil
 }
@@ -84,44 +78,75 @@ func (o *ClusterUninstaller) destroyPowerInstance(item cloudResource) error {
 // destroyPowerInstances searches for Power instances that have a name that starts with
 // the cluster's infra ID.
 func (o *ClusterUninstaller) destroyPowerInstances() error {
-	found, err := o.listPowerInstances()
+	firstPassList, err := o.listPowerInstances()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(powerInstanceTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
 
-	ctx, _ := o.contextWithTimeout()
+	items := o.insertPendingItems(powerInstanceTypeName, firstPassList.list())
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyPowerInstances: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted Power instance %q", item.name)
-				continue
-			}
-			err := o.destroyPowerInstance(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyPowerInstances: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(powerInstanceTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.destroyPowerInstance(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyPowerInstances: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(powerInstanceTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyPowerInstances: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroyPowerInstances: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listPowerInstances()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyPowerInstances: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyPowerInstances: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }

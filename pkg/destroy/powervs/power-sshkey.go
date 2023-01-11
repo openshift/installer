@@ -1,10 +1,13 @@
 package powervs
 
 import (
+	"math"
 	"strings"
+	"time"
 
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const powerSSHKeyTypeName = "powerSshKey"
@@ -13,9 +16,12 @@ const powerSSHKeyTypeName = "powerSshKey"
 func (o *ClusterUninstaller) listPowerSSHKeys() (cloudResources, error) {
 	o.Logger.Debugf("Listing Power SSHKeys")
 
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
 	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("listPowerSSHKeys: case <-o.Context.Done()")
+	case <-ctx.Done():
+		o.Logger.Debugf("listPowerSSHKeys: case <-ctx.Done()")
 		return nil, o.Context.Err() // we're cancelled, abort
 	default:
 	}
@@ -55,24 +61,24 @@ func (o *ClusterUninstaller) listPowerSSHKeys() (cloudResources, error) {
 	return cloudResources{}.insert(result...), nil
 }
 
-// deletePowerSSHKey deleted a given ssh key.
 func (o *ClusterUninstaller) deletePowerSSHKey(item cloudResource) error {
 	var err error
+
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("deletePowerSSHKey: case <-ctx.Done()")
+		return o.Context.Err() // we're cancelled, abort
+	default:
+	}
 
 	_, err = o.keyClient.Get(item.id)
 	if err != nil {
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted Power sshKey %q", item.name)
+		o.Logger.Infof("Deleted Power SSHKey %q", item.name)
 		return nil
-	}
-
-	o.Logger.Debugf("Deleting Power sshKey %q", item.name)
-
-	select {
-	case <-o.Context.Done():
-		o.Logger.Debugf("deletePowerSSHKey: case <-o.Context.Done()")
-		return o.Context.Err() // we're cancelled, abort
-	default:
 	}
 
 	err = o.keyClient.Delete(item.id)
@@ -80,50 +86,84 @@ func (o *ClusterUninstaller) deletePowerSSHKey(item cloudResource) error {
 		return errors.Wrapf(err, "failed to delete Power sshKey %s", item.name)
 	}
 
+	o.Logger.Infof("Deleted Power SSHKey %q", item.name)
+	o.deletePendingItems(item.typeName, []cloudResource{item})
+
 	return nil
 }
 
 // destroyPowerSSHKeys removes all ssh keys that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyPowerSSHKeys() error {
-	found, err := o.listPowerSSHKeys()
+	firstPassList, err := o.listPowerSSHKeys()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(powerSSHKeyTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
 
-	ctx, _ := o.contextWithTimeout()
+	items := o.insertPendingItems(powerSSHKeyTypeName, firstPassList.list())
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyPowerSSHKeys: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted sshKey %q", item.name)
-				continue
-			}
-			err := o.deletePowerSSHKey(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyPowerSSHKeys: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(powerSSHKeyTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.deletePowerSSHKey(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyPowerSSHKeys: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(powerSSHKeyTypeName); len(items) > 0 {
-		return errors.Errorf("destroyPower1SSHKeys: %d undeleted items pending", len(items))
+		for _, item := range items {
+			o.Logger.Debugf("destroyPowerSSHKeys: found %s in pending items", item.name)
+		}
+		return errors.Errorf("destroyPowerSSHKeys: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listPowerSSHKeys()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyPowerSSHKeys: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyPowerSSHKeys: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }

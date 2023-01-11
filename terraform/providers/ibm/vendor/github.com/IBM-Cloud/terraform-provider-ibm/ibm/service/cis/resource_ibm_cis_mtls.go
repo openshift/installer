@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -33,6 +34,8 @@ func ResourceIBMCISMtls() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeValidator("ibm_cis_mtls",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -84,6 +87,21 @@ func ResourceIBMCISMtls() *schema.Resource {
 			},
 		},
 	}
+}
+func ResourceIBMCISMtlsValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+	ibmCISMtlsValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_mtls",
+		Schema:       validateSchema}
+	return &ibmCISMtlsValidator
 }
 func resourceIBMCISMtlsCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	sess, err := meta.(conns.ClientSession).CisMtlsSession()

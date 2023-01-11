@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/openshift/installer/pkg/types/azure"
 	"k8s.io/apimachinery/pkg/util/sets"
+
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 // GetHyperVGenerationVersion returns a HyperVGeneration version compatible with that of the image's. If imageHyperVGen is empty, it returns the highest supported version.

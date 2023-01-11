@@ -29,14 +29,13 @@ const opActivateType = "ActivateType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ActivateTypeRequest method.
+//	req, resp := client.ActivateTypeRequest(params)
 //
-//    // Example sending a request using the ActivateTypeRequest method.
-//    req, resp := client.ActivateTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ActivateType
 func (c *CloudFormation) ActivateTypeRequest(input *ActivateTypeInput) (req *request.Request, output *ActivateTypeOutput) {
@@ -75,11 +74,12 @@ func (c *CloudFormation) ActivateTypeRequest(input *ActivateTypeInput) (req *req
 // API operation ActivateType for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
 //
-//   * ErrCodeTypeNotFoundException "TypeNotFoundException"
-//   The specified extension doesn't exist in the CloudFormation registry.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
+//
+//   - ErrCodeTypeNotFoundException "TypeNotFoundException"
+//     The specified extension doesn't exist in the CloudFormation registry.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ActivateType
 func (c *CloudFormation) ActivateType(input *ActivateTypeInput) (*ActivateTypeOutput, error) {
@@ -119,14 +119,13 @@ const opBatchDescribeTypeConfigurations = "BatchDescribeTypeConfigurations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchDescribeTypeConfigurationsRequest method.
+//	req, resp := client.BatchDescribeTypeConfigurationsRequest(params)
 //
-//    // Example sending a request using the BatchDescribeTypeConfigurationsRequest method.
-//    req, resp := client.BatchDescribeTypeConfigurationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/BatchDescribeTypeConfigurations
 func (c *CloudFormation) BatchDescribeTypeConfigurationsRequest(input *BatchDescribeTypeConfigurationsInput) (req *request.Request, output *BatchDescribeTypeConfigurationsOutput) {
@@ -161,11 +160,12 @@ func (c *CloudFormation) BatchDescribeTypeConfigurationsRequest(input *BatchDesc
 // API operation BatchDescribeTypeConfigurations for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeTypeConfigurationNotFoundException "TypeConfigurationNotFoundException"
-//   The specified extension configuration can't be found.
 //
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
+//   - ErrCodeTypeConfigurationNotFoundException "TypeConfigurationNotFoundException"
+//     The specified extension configuration can't be found.
+//
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/BatchDescribeTypeConfigurations
 func (c *CloudFormation) BatchDescribeTypeConfigurations(input *BatchDescribeTypeConfigurationsInput) (*BatchDescribeTypeConfigurationsOutput, error) {
@@ -205,14 +205,13 @@ const opCancelUpdateStack = "CancelUpdateStack"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CancelUpdateStackRequest method.
+//	req, resp := client.CancelUpdateStackRequest(params)
 //
-//    // Example sending a request using the CancelUpdateStackRequest method.
-//    req, resp := client.CancelUpdateStackRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/CancelUpdateStack
 func (c *CloudFormation) CancelUpdateStackRequest(input *CancelUpdateStackInput) (req *request.Request, output *CancelUpdateStackOutput) {
@@ -247,8 +246,8 @@ func (c *CloudFormation) CancelUpdateStackRequest(input *CancelUpdateStackInput)
 // API operation CancelUpdateStack for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
-//   A client request token already exists.
+//   - ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
+//     A client request token already exists.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/CancelUpdateStack
 func (c *CloudFormation) CancelUpdateStack(input *CancelUpdateStackInput) (*CancelUpdateStackOutput, error) {
@@ -288,14 +287,13 @@ const opContinueUpdateRollback = "ContinueUpdateRollback"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ContinueUpdateRollbackRequest method.
+//	req, resp := client.ContinueUpdateRollbackRequest(params)
 //
-//    // Example sending a request using the ContinueUpdateRollbackRequest method.
-//    req, resp := client.ContinueUpdateRollbackRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ContinueUpdateRollback
 func (c *CloudFormation) ContinueUpdateRollbackRequest(input *ContinueUpdateRollbackInput) (req *request.Request, output *ContinueUpdateRollbackOutput) {
@@ -339,8 +337,8 @@ func (c *CloudFormation) ContinueUpdateRollbackRequest(input *ContinueUpdateRoll
 // API operation ContinueUpdateRollback for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
-//   A client request token already exists.
+//   - ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
+//     A client request token already exists.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ContinueUpdateRollback
 func (c *CloudFormation) ContinueUpdateRollback(input *ContinueUpdateRollbackInput) (*ContinueUpdateRollbackOutput, error) {
@@ -380,14 +378,13 @@ const opCreateChangeSet = "CreateChangeSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateChangeSetRequest method.
+//	req, resp := client.CreateChangeSetRequest(params)
 //
-//    // Example sending a request using the CreateChangeSetRequest method.
-//    req, resp := client.CreateChangeSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/CreateChangeSet
 func (c *CloudFormation) CreateChangeSetRequest(input *CreateChangeSetInput) (req *request.Request, output *CreateChangeSetOutput) {
@@ -442,19 +439,20 @@ func (c *CloudFormation) CreateChangeSetRequest(input *CreateChangeSetInput) (re
 // API operation CreateChangeSet for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeAlreadyExistsException "AlreadyExistsException"
-//   The resource with the name requested already exists.
 //
-//   * ErrCodeInsufficientCapabilitiesException "InsufficientCapabilitiesException"
-//   The template contains resources with capabilities that weren't specified
-//   in the Capabilities parameter.
+//   - ErrCodeAlreadyExistsException "AlreadyExistsException"
+//     The resource with the name requested already exists.
 //
-//   * ErrCodeLimitExceededException "LimitExceededException"
-//   The quota for the resource has already been reached.
+//   - ErrCodeInsufficientCapabilitiesException "InsufficientCapabilitiesException"
+//     The template contains resources with capabilities that weren't specified
+//     in the Capabilities parameter.
 //
-//   For information on resource and stack limitations, see CloudFormation quotas
-//   (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html)
-//   in the CloudFormation User Guide.
+//   - ErrCodeLimitExceededException "LimitExceededException"
+//     The quota for the resource has already been reached.
+//
+//     For information about resource and stack limitations, see CloudFormation
+//     quotas (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html)
+//     in the CloudFormation User Guide.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/CreateChangeSet
 func (c *CloudFormation) CreateChangeSet(input *CreateChangeSetInput) (*CreateChangeSetOutput, error) {
@@ -494,14 +492,13 @@ const opCreateStack = "CreateStack"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateStackRequest method.
+//	req, resp := client.CreateStackRequest(params)
 //
-//    // Example sending a request using the CreateStackRequest method.
-//    req, resp := client.CreateStackRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/CreateStack
 func (c *CloudFormation) CreateStackRequest(input *CreateStackInput) (req *request.Request, output *CreateStackOutput) {
@@ -534,22 +531,23 @@ func (c *CloudFormation) CreateStackRequest(input *CreateStackInput) (req *reque
 // API operation CreateStack for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceededException"
-//   The quota for the resource has already been reached.
 //
-//   For information on resource and stack limitations, see CloudFormation quotas
-//   (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html)
-//   in the CloudFormation User Guide.
+//   - ErrCodeLimitExceededException "LimitExceededException"
+//     The quota for the resource has already been reached.
 //
-//   * ErrCodeAlreadyExistsException "AlreadyExistsException"
-//   The resource with the name requested already exists.
+//     For information about resource and stack limitations, see CloudFormation
+//     quotas (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html)
+//     in the CloudFormation User Guide.
 //
-//   * ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
-//   A client request token already exists.
+//   - ErrCodeAlreadyExistsException "AlreadyExistsException"
+//     The resource with the name requested already exists.
 //
-//   * ErrCodeInsufficientCapabilitiesException "InsufficientCapabilitiesException"
-//   The template contains resources with capabilities that weren't specified
-//   in the Capabilities parameter.
+//   - ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
+//     A client request token already exists.
+//
+//   - ErrCodeInsufficientCapabilitiesException "InsufficientCapabilitiesException"
+//     The template contains resources with capabilities that weren't specified
+//     in the Capabilities parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/CreateStack
 func (c *CloudFormation) CreateStack(input *CreateStackInput) (*CreateStackOutput, error) {
@@ -589,14 +587,13 @@ const opCreateStackInstances = "CreateStackInstances"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateStackInstancesRequest method.
+//	req, resp := client.CreateStackInstancesRequest(params)
 //
-//    // Example sending a request using the CreateStackInstancesRequest method.
-//    req, resp := client.CreateStackInstancesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/CreateStackInstances
 func (c *CloudFormation) CreateStackInstancesRequest(input *CreateStackInstancesInput) (req *request.Request, output *CreateStackInstancesOutput) {
@@ -630,29 +627,30 @@ func (c *CloudFormation) CreateStackInstancesRequest(input *CreateStackInstances
 // API operation CreateStackInstances for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
 //
-//   * ErrCodeOperationInProgressException "OperationInProgressException"
-//   Another operation is currently in progress for this stack set. Only one operation
-//   can be performed for a stack set at a given time.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
 //
-//   * ErrCodeOperationIdAlreadyExistsException "OperationIdAlreadyExistsException"
-//   The specified operation ID already exists.
+//   - ErrCodeOperationInProgressException "OperationInProgressException"
+//     Another operation is currently in progress for this stack set. Only one operation
+//     can be performed for a stack set at a given time.
 //
-//   * ErrCodeStaleRequestException "StaleRequestException"
-//   Another operation has been performed on this stack set since the specified
-//   operation was performed.
+//   - ErrCodeOperationIdAlreadyExistsException "OperationIdAlreadyExistsException"
+//     The specified operation ID already exists.
 //
-//   * ErrCodeInvalidOperationException "InvalidOperationException"
-//   The specified operation isn't valid.
+//   - ErrCodeStaleRequestException "StaleRequestException"
+//     Another operation has been performed on this stack set since the specified
+//     operation was performed.
 //
-//   * ErrCodeLimitExceededException "LimitExceededException"
-//   The quota for the resource has already been reached.
+//   - ErrCodeInvalidOperationException "InvalidOperationException"
+//     The specified operation isn't valid.
 //
-//   For information on resource and stack limitations, see CloudFormation quotas
-//   (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html)
-//   in the CloudFormation User Guide.
+//   - ErrCodeLimitExceededException "LimitExceededException"
+//     The quota for the resource has already been reached.
+//
+//     For information about resource and stack limitations, see CloudFormation
+//     quotas (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html)
+//     in the CloudFormation User Guide.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/CreateStackInstances
 func (c *CloudFormation) CreateStackInstances(input *CreateStackInstancesInput) (*CreateStackInstancesOutput, error) {
@@ -692,14 +690,13 @@ const opCreateStackSet = "CreateStackSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateStackSetRequest method.
+//	req, resp := client.CreateStackSetRequest(params)
 //
-//    // Example sending a request using the CreateStackSetRequest method.
-//    req, resp := client.CreateStackSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/CreateStackSet
 func (c *CloudFormation) CreateStackSetRequest(input *CreateStackSetInput) (req *request.Request, output *CreateStackSetOutput) {
@@ -730,18 +727,19 @@ func (c *CloudFormation) CreateStackSetRequest(input *CreateStackSetInput) (req 
 // API operation CreateStackSet for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNameAlreadyExistsException "NameAlreadyExistsException"
-//   The specified name is already in use.
 //
-//   * ErrCodeCreatedButModifiedException "CreatedButModifiedException"
-//   The specified resource exists, but has been changed.
+//   - ErrCodeNameAlreadyExistsException "NameAlreadyExistsException"
+//     The specified name is already in use.
 //
-//   * ErrCodeLimitExceededException "LimitExceededException"
-//   The quota for the resource has already been reached.
+//   - ErrCodeCreatedButModifiedException "CreatedButModifiedException"
+//     The specified resource exists, but has been changed.
 //
-//   For information on resource and stack limitations, see CloudFormation quotas
-//   (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html)
-//   in the CloudFormation User Guide.
+//   - ErrCodeLimitExceededException "LimitExceededException"
+//     The quota for the resource has already been reached.
+//
+//     For information about resource and stack limitations, see CloudFormation
+//     quotas (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html)
+//     in the CloudFormation User Guide.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/CreateStackSet
 func (c *CloudFormation) CreateStackSet(input *CreateStackSetInput) (*CreateStackSetOutput, error) {
@@ -781,14 +779,13 @@ const opDeactivateType = "DeactivateType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeactivateTypeRequest method.
+//	req, resp := client.DeactivateTypeRequest(params)
 //
-//    // Example sending a request using the DeactivateTypeRequest method.
-//    req, resp := client.DeactivateTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeactivateType
 func (c *CloudFormation) DeactivateTypeRequest(input *DeactivateTypeInput) (req *request.Request, output *DeactivateTypeOutput) {
@@ -827,11 +824,12 @@ func (c *CloudFormation) DeactivateTypeRequest(input *DeactivateTypeInput) (req 
 // API operation DeactivateType for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
 //
-//   * ErrCodeTypeNotFoundException "TypeNotFoundException"
-//   The specified extension doesn't exist in the CloudFormation registry.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
+//
+//   - ErrCodeTypeNotFoundException "TypeNotFoundException"
+//     The specified extension doesn't exist in the CloudFormation registry.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeactivateType
 func (c *CloudFormation) DeactivateType(input *DeactivateTypeInput) (*DeactivateTypeOutput, error) {
@@ -871,14 +869,13 @@ const opDeleteChangeSet = "DeleteChangeSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteChangeSetRequest method.
+//	req, resp := client.DeleteChangeSetRequest(params)
 //
-//    // Example sending a request using the DeleteChangeSetRequest method.
-//    req, resp := client.DeleteChangeSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeleteChangeSet
 func (c *CloudFormation) DeleteChangeSetRequest(input *DeleteChangeSetInput) (req *request.Request, output *DeleteChangeSetOutput) {
@@ -919,10 +916,10 @@ func (c *CloudFormation) DeleteChangeSetRequest(input *DeleteChangeSetInput) (re
 // API operation DeleteChangeSet for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidChangeSetStatusException "InvalidChangeSetStatus"
-//   The specified change set can't be used to update the stack. For example,
-//   the change set status might be CREATE_IN_PROGRESS, or the stack status might
-//   be UPDATE_IN_PROGRESS.
+//   - ErrCodeInvalidChangeSetStatusException "InvalidChangeSetStatus"
+//     The specified change set can't be used to update the stack. For example,
+//     the change set status might be CREATE_IN_PROGRESS, or the stack status might
+//     be UPDATE_IN_PROGRESS.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeleteChangeSet
 func (c *CloudFormation) DeleteChangeSet(input *DeleteChangeSetInput) (*DeleteChangeSetOutput, error) {
@@ -962,14 +959,13 @@ const opDeleteStack = "DeleteStack"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteStackRequest method.
+//	req, resp := client.DeleteStackRequest(params)
 //
-//    // Example sending a request using the DeleteStackRequest method.
-//    req, resp := client.DeleteStackRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeleteStack
 func (c *CloudFormation) DeleteStackRequest(input *DeleteStackInput) (req *request.Request, output *DeleteStackOutput) {
@@ -1003,8 +999,8 @@ func (c *CloudFormation) DeleteStackRequest(input *DeleteStackInput) (req *reque
 // API operation DeleteStack for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
-//   A client request token already exists.
+//   - ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
+//     A client request token already exists.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeleteStack
 func (c *CloudFormation) DeleteStack(input *DeleteStackInput) (*DeleteStackOutput, error) {
@@ -1044,14 +1040,13 @@ const opDeleteStackInstances = "DeleteStackInstances"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteStackInstancesRequest method.
+//	req, resp := client.DeleteStackInstancesRequest(params)
 //
-//    // Example sending a request using the DeleteStackInstancesRequest method.
-//    req, resp := client.DeleteStackInstancesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeleteStackInstances
 func (c *CloudFormation) DeleteStackInstancesRequest(input *DeleteStackInstancesInput) (req *request.Request, output *DeleteStackInstancesOutput) {
@@ -1083,22 +1078,23 @@ func (c *CloudFormation) DeleteStackInstancesRequest(input *DeleteStackInstances
 // API operation DeleteStackInstances for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
 //
-//   * ErrCodeOperationInProgressException "OperationInProgressException"
-//   Another operation is currently in progress for this stack set. Only one operation
-//   can be performed for a stack set at a given time.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
 //
-//   * ErrCodeOperationIdAlreadyExistsException "OperationIdAlreadyExistsException"
-//   The specified operation ID already exists.
+//   - ErrCodeOperationInProgressException "OperationInProgressException"
+//     Another operation is currently in progress for this stack set. Only one operation
+//     can be performed for a stack set at a given time.
 //
-//   * ErrCodeStaleRequestException "StaleRequestException"
-//   Another operation has been performed on this stack set since the specified
-//   operation was performed.
+//   - ErrCodeOperationIdAlreadyExistsException "OperationIdAlreadyExistsException"
+//     The specified operation ID already exists.
 //
-//   * ErrCodeInvalidOperationException "InvalidOperationException"
-//   The specified operation isn't valid.
+//   - ErrCodeStaleRequestException "StaleRequestException"
+//     Another operation has been performed on this stack set since the specified
+//     operation was performed.
+//
+//   - ErrCodeInvalidOperationException "InvalidOperationException"
+//     The specified operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeleteStackInstances
 func (c *CloudFormation) DeleteStackInstances(input *DeleteStackInstancesInput) (*DeleteStackInstancesOutput, error) {
@@ -1138,14 +1134,13 @@ const opDeleteStackSet = "DeleteStackSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteStackSetRequest method.
+//	req, resp := client.DeleteStackSetRequest(params)
 //
-//    // Example sending a request using the DeleteStackSetRequest method.
-//    req, resp := client.DeleteStackSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeleteStackSet
 func (c *CloudFormation) DeleteStackSetRequest(input *DeleteStackSetInput) (req *request.Request, output *DeleteStackSetOutput) {
@@ -1167,8 +1162,8 @@ func (c *CloudFormation) DeleteStackSetRequest(input *DeleteStackSetInput) (req 
 
 // DeleteStackSet API operation for AWS CloudFormation.
 //
-// Deletes a stack set. Before you can delete a stack set, all of its member
-// stack instances must be deleted. For more information about how to do this,
+// Deletes a stack set. Before you can delete a stack set, all its member stack
+// instances must be deleted. For more information about how to complete this,
 // see DeleteStackInstances.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -1179,14 +1174,15 @@ func (c *CloudFormation) DeleteStackSetRequest(input *DeleteStackSetInput) (req 
 // API operation DeleteStackSet for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotEmptyException "StackSetNotEmptyException"
-//   You can't yet delete this stack set, because it still contains one or more
-//   stack instances. Delete all stack instances from the stack set before deleting
-//   the stack set.
 //
-//   * ErrCodeOperationInProgressException "OperationInProgressException"
-//   Another operation is currently in progress for this stack set. Only one operation
-//   can be performed for a stack set at a given time.
+//   - ErrCodeStackSetNotEmptyException "StackSetNotEmptyException"
+//     You can't yet delete this stack set, because it still contains one or more
+//     stack instances. Delete all stack instances from the stack set before deleting
+//     the stack set.
+//
+//   - ErrCodeOperationInProgressException "OperationInProgressException"
+//     Another operation is currently in progress for this stack set. Only one operation
+//     can be performed for a stack set at a given time.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeleteStackSet
 func (c *CloudFormation) DeleteStackSet(input *DeleteStackSetInput) (*DeleteStackSetOutput, error) {
@@ -1226,14 +1222,13 @@ const opDeregisterType = "DeregisterType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeregisterTypeRequest method.
+//	req, resp := client.DeregisterTypeRequest(params)
 //
-//    // Example sending a request using the DeregisterTypeRequest method.
-//    req, resp := client.DeregisterTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeregisterType
 func (c *CloudFormation) DeregisterTypeRequest(input *DeregisterTypeInput) (req *request.Request, output *DeregisterTypeOutput) {
@@ -1280,11 +1275,12 @@ func (c *CloudFormation) DeregisterTypeRequest(input *DeregisterTypeInput) (req 
 // API operation DeregisterType for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
 //
-//   * ErrCodeTypeNotFoundException "TypeNotFoundException"
-//   The specified extension doesn't exist in the CloudFormation registry.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
+//
+//   - ErrCodeTypeNotFoundException "TypeNotFoundException"
+//     The specified extension doesn't exist in the CloudFormation registry.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DeregisterType
 func (c *CloudFormation) DeregisterType(input *DeregisterTypeInput) (*DeregisterTypeOutput, error) {
@@ -1324,14 +1320,13 @@ const opDescribeAccountLimits = "DescribeAccountLimits"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAccountLimitsRequest method.
+//	req, resp := client.DescribeAccountLimitsRequest(params)
 //
-//    // Example sending a request using the DescribeAccountLimitsRequest method.
-//    req, resp := client.DescribeAccountLimitsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeAccountLimits
 func (c *CloudFormation) DescribeAccountLimitsRequest(input *DescribeAccountLimitsInput) (req *request.Request, output *DescribeAccountLimitsOutput) {
@@ -1399,15 +1394,14 @@ func (c *CloudFormation) DescribeAccountLimitsWithContext(ctx aws.Context, input
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeAccountLimits operation.
-//    pageNum := 0
-//    err := client.DescribeAccountLimitsPages(params,
-//        func(page *cloudformation.DescribeAccountLimitsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeAccountLimits operation.
+//	pageNum := 0
+//	err := client.DescribeAccountLimitsPages(params,
+//	    func(page *cloudformation.DescribeAccountLimitsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) DescribeAccountLimitsPages(input *DescribeAccountLimitsInput, fn func(*DescribeAccountLimitsOutput, bool) bool) error {
 	return c.DescribeAccountLimitsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1459,14 +1453,13 @@ const opDescribeChangeSet = "DescribeChangeSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeChangeSetRequest method.
+//	req, resp := client.DescribeChangeSetRequest(params)
 //
-//    // Example sending a request using the DescribeChangeSetRequest method.
-//    req, resp := client.DescribeChangeSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeChangeSet
 func (c *CloudFormation) DescribeChangeSetRequest(input *DescribeChangeSetInput) (req *request.Request, output *DescribeChangeSetOutput) {
@@ -1500,9 +1493,9 @@ func (c *CloudFormation) DescribeChangeSetRequest(input *DescribeChangeSetInput)
 // API operation DescribeChangeSet for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeChangeSetNotFoundException "ChangeSetNotFound"
-//   The specified change set name or ID doesn't exit. To view valid change sets
-//   for a stack, use the ListChangeSets operation.
+//   - ErrCodeChangeSetNotFoundException "ChangeSetNotFound"
+//     The specified change set name or ID doesn't exit. To view valid change sets
+//     for a stack, use the ListChangeSets operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeChangeSet
 func (c *CloudFormation) DescribeChangeSet(input *DescribeChangeSetInput) (*DescribeChangeSetOutput, error) {
@@ -1542,14 +1535,13 @@ const opDescribeChangeSetHooks = "DescribeChangeSetHooks"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeChangeSetHooksRequest method.
+//	req, resp := client.DescribeChangeSetHooksRequest(params)
 //
-//    // Example sending a request using the DescribeChangeSetHooksRequest method.
-//    req, resp := client.DescribeChangeSetHooksRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeChangeSetHooks
 func (c *CloudFormation) DescribeChangeSetHooksRequest(input *DescribeChangeSetHooksInput) (req *request.Request, output *DescribeChangeSetHooksOutput) {
@@ -1581,9 +1573,9 @@ func (c *CloudFormation) DescribeChangeSetHooksRequest(input *DescribeChangeSetH
 // API operation DescribeChangeSetHooks for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeChangeSetNotFoundException "ChangeSetNotFound"
-//   The specified change set name or ID doesn't exit. To view valid change sets
-//   for a stack, use the ListChangeSets operation.
+//   - ErrCodeChangeSetNotFoundException "ChangeSetNotFound"
+//     The specified change set name or ID doesn't exit. To view valid change sets
+//     for a stack, use the ListChangeSets operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeChangeSetHooks
 func (c *CloudFormation) DescribeChangeSetHooks(input *DescribeChangeSetHooksInput) (*DescribeChangeSetHooksOutput, error) {
@@ -1623,14 +1615,13 @@ const opDescribePublisher = "DescribePublisher"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribePublisherRequest method.
+//	req, resp := client.DescribePublisherRequest(params)
 //
-//    // Example sending a request using the DescribePublisherRequest method.
-//    req, resp := client.DescribePublisherRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribePublisher
 func (c *CloudFormation) DescribePublisherRequest(input *DescribePublisherInput) (req *request.Request, output *DescribePublisherOutput) {
@@ -1657,12 +1648,12 @@ func (c *CloudFormation) DescribePublisherRequest(input *DescribePublisherInput)
 // publisher, DescribePublisher returns information about your own publisher
 // account.
 //
-// For more information on registering as a publisher, see:
+// For more information about registering as a publisher, see:
 //
-//    * RegisterPublisher (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_RegisterPublisher.html)
+//   - RegisterPublisher (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_RegisterPublisher.html)
 //
-//    * Publishing extensions to make them available for public use (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/publish-extension.html)
-//    in the CloudFormation CLI User Guide
+//   - Publishing extensions to make them available for public use (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/publish-extension.html)
+//     in the CloudFormation CLI User Guide
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1672,8 +1663,8 @@ func (c *CloudFormation) DescribePublisherRequest(input *DescribePublisherInput)
 // API operation DescribePublisher for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribePublisher
 func (c *CloudFormation) DescribePublisher(input *DescribePublisherInput) (*DescribePublisherOutput, error) {
@@ -1713,14 +1704,13 @@ const opDescribeStackDriftDetectionStatus = "DescribeStackDriftDetectionStatus"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStackDriftDetectionStatusRequest method.
+//	req, resp := client.DescribeStackDriftDetectionStatusRequest(params)
 //
-//    // Example sending a request using the DescribeStackDriftDetectionStatusRequest method.
-//    req, resp := client.DescribeStackDriftDetectionStatusRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStackDriftDetectionStatus
 func (c *CloudFormation) DescribeStackDriftDetectionStatusRequest(input *DescribeStackDriftDetectionStatusInput) (req *request.Request, output *DescribeStackDriftDetectionStatusOutput) {
@@ -1746,7 +1736,7 @@ func (c *CloudFormation) DescribeStackDriftDetectionStatusRequest(input *Describ
 // or has drifted, from it's expected configuration, as defined in the stack
 // template and any values specified as template parameters. A stack is considered
 // to have drifted if one or more of its resources have drifted. For more information
-// on stack and resource drift, see Detecting Unregulated Configuration Changes
+// about stack and resource drift, see Detecting Unregulated Configuration Changes
 // to Stacks and Resources (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift.html).
 //
 // Use DetectStackDrift to initiate a stack drift detection operation. DetectStackDrift
@@ -1799,14 +1789,13 @@ const opDescribeStackEvents = "DescribeStackEvents"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStackEventsRequest method.
+//	req, resp := client.DescribeStackEventsRequest(params)
 //
-//    // Example sending a request using the DescribeStackEventsRequest method.
-//    req, resp := client.DescribeStackEventsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStackEvents
 func (c *CloudFormation) DescribeStackEventsRequest(input *DescribeStackEventsInput) (req *request.Request, output *DescribeStackEventsOutput) {
@@ -1876,15 +1865,14 @@ func (c *CloudFormation) DescribeStackEventsWithContext(ctx aws.Context, input *
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeStackEvents operation.
-//    pageNum := 0
-//    err := client.DescribeStackEventsPages(params,
-//        func(page *cloudformation.DescribeStackEventsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeStackEvents operation.
+//	pageNum := 0
+//	err := client.DescribeStackEventsPages(params,
+//	    func(page *cloudformation.DescribeStackEventsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) DescribeStackEventsPages(input *DescribeStackEventsInput, fn func(*DescribeStackEventsOutput, bool) bool) error {
 	return c.DescribeStackEventsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1936,14 +1924,13 @@ const opDescribeStackInstance = "DescribeStackInstance"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStackInstanceRequest method.
+//	req, resp := client.DescribeStackInstanceRequest(params)
 //
-//    // Example sending a request using the DescribeStackInstanceRequest method.
-//    req, resp := client.DescribeStackInstanceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStackInstance
 func (c *CloudFormation) DescribeStackInstanceRequest(input *DescribeStackInstanceInput) (req *request.Request, output *DescribeStackInstanceOutput) {
@@ -1978,11 +1965,12 @@ func (c *CloudFormation) DescribeStackInstanceRequest(input *DescribeStackInstan
 // API operation DescribeStackInstance for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
 //
-//   * ErrCodeStackInstanceNotFoundException "StackInstanceNotFoundException"
-//   The specified stack instance doesn't exist.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
+//
+//   - ErrCodeStackInstanceNotFoundException "StackInstanceNotFoundException"
+//     The specified stack instance doesn't exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStackInstance
 func (c *CloudFormation) DescribeStackInstance(input *DescribeStackInstanceInput) (*DescribeStackInstanceOutput, error) {
@@ -2022,14 +2010,13 @@ const opDescribeStackResource = "DescribeStackResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStackResourceRequest method.
+//	req, resp := client.DescribeStackResourceRequest(params)
 //
-//    // Example sending a request using the DescribeStackResourceRequest method.
-//    req, resp := client.DescribeStackResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStackResource
 func (c *CloudFormation) DescribeStackResourceRequest(input *DescribeStackResourceInput) (req *request.Request, output *DescribeStackResourceOutput) {
@@ -2099,14 +2086,13 @@ const opDescribeStackResourceDrifts = "DescribeStackResourceDrifts"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStackResourceDriftsRequest method.
+//	req, resp := client.DescribeStackResourceDriftsRequest(params)
 //
-//    // Example sending a request using the DescribeStackResourceDriftsRequest method.
-//    req, resp := client.DescribeStackResourceDriftsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStackResourceDrifts
 func (c *CloudFormation) DescribeStackResourceDriftsRequest(input *DescribeStackResourceDriftsInput) (req *request.Request, output *DescribeStackResourceDriftsOutput) {
@@ -2182,15 +2168,14 @@ func (c *CloudFormation) DescribeStackResourceDriftsWithContext(ctx aws.Context,
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeStackResourceDrifts operation.
-//    pageNum := 0
-//    err := client.DescribeStackResourceDriftsPages(params,
-//        func(page *cloudformation.DescribeStackResourceDriftsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeStackResourceDrifts operation.
+//	pageNum := 0
+//	err := client.DescribeStackResourceDriftsPages(params,
+//	    func(page *cloudformation.DescribeStackResourceDriftsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) DescribeStackResourceDriftsPages(input *DescribeStackResourceDriftsInput, fn func(*DescribeStackResourceDriftsOutput, bool) bool) error {
 	return c.DescribeStackResourceDriftsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2242,14 +2227,13 @@ const opDescribeStackResources = "DescribeStackResources"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStackResourcesRequest method.
+//	req, resp := client.DescribeStackResourcesRequest(params)
 //
-//    // Example sending a request using the DescribeStackResourcesRequest method.
-//    req, resp := client.DescribeStackResourcesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStackResources
 func (c *CloudFormation) DescribeStackResourcesRequest(input *DescribeStackResourcesInput) (req *request.Request, output *DescribeStackResourcesOutput) {
@@ -2333,14 +2317,13 @@ const opDescribeStackSet = "DescribeStackSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStackSetRequest method.
+//	req, resp := client.DescribeStackSetRequest(params)
 //
-//    // Example sending a request using the DescribeStackSetRequest method.
-//    req, resp := client.DescribeStackSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStackSet
 func (c *CloudFormation) DescribeStackSetRequest(input *DescribeStackSetInput) (req *request.Request, output *DescribeStackSetOutput) {
@@ -2371,8 +2354,8 @@ func (c *CloudFormation) DescribeStackSetRequest(input *DescribeStackSetInput) (
 // API operation DescribeStackSet for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStackSet
 func (c *CloudFormation) DescribeStackSet(input *DescribeStackSetInput) (*DescribeStackSetOutput, error) {
@@ -2412,14 +2395,13 @@ const opDescribeStackSetOperation = "DescribeStackSetOperation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStackSetOperationRequest method.
+//	req, resp := client.DescribeStackSetOperationRequest(params)
 //
-//    // Example sending a request using the DescribeStackSetOperationRequest method.
-//    req, resp := client.DescribeStackSetOperationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStackSetOperation
 func (c *CloudFormation) DescribeStackSetOperationRequest(input *DescribeStackSetOperationInput) (req *request.Request, output *DescribeStackSetOperationOutput) {
@@ -2450,11 +2432,12 @@ func (c *CloudFormation) DescribeStackSetOperationRequest(input *DescribeStackSe
 // API operation DescribeStackSetOperation for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
 //
-//   * ErrCodeOperationNotFoundException "OperationNotFoundException"
-//   The specified ID refers to an operation that doesn't exist.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
+//
+//   - ErrCodeOperationNotFoundException "OperationNotFoundException"
+//     The specified ID refers to an operation that doesn't exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStackSetOperation
 func (c *CloudFormation) DescribeStackSetOperation(input *DescribeStackSetOperationInput) (*DescribeStackSetOperationOutput, error) {
@@ -2494,14 +2477,13 @@ const opDescribeStacks = "DescribeStacks"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStacksRequest method.
+//	req, resp := client.DescribeStacksRequest(params)
 //
-//    // Example sending a request using the DescribeStacksRequest method.
-//    req, resp := client.DescribeStacksRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeStacks
 func (c *CloudFormation) DescribeStacksRequest(input *DescribeStacksInput) (req *request.Request, output *DescribeStacksOutput) {
@@ -2569,15 +2551,14 @@ func (c *CloudFormation) DescribeStacksWithContext(ctx aws.Context, input *Descr
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeStacks operation.
-//    pageNum := 0
-//    err := client.DescribeStacksPages(params,
-//        func(page *cloudformation.DescribeStacksOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeStacks operation.
+//	pageNum := 0
+//	err := client.DescribeStacksPages(params,
+//	    func(page *cloudformation.DescribeStacksOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) DescribeStacksPages(input *DescribeStacksInput, fn func(*DescribeStacksOutput, bool) bool) error {
 	return c.DescribeStacksPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2629,14 +2610,13 @@ const opDescribeType = "DescribeType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTypeRequest method.
+//	req, resp := client.DescribeTypeRequest(params)
 //
-//    // Example sending a request using the DescribeTypeRequest method.
-//    req, resp := client.DescribeTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeType
 func (c *CloudFormation) DescribeTypeRequest(input *DescribeTypeInput) (req *request.Request, output *DescribeTypeOutput) {
@@ -2671,11 +2651,12 @@ func (c *CloudFormation) DescribeTypeRequest(input *DescribeTypeInput) (req *req
 // API operation DescribeType for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
 //
-//   * ErrCodeTypeNotFoundException "TypeNotFoundException"
-//   The specified extension doesn't exist in the CloudFormation registry.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
+//
+//   - ErrCodeTypeNotFoundException "TypeNotFoundException"
+//     The specified extension doesn't exist in the CloudFormation registry.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeType
 func (c *CloudFormation) DescribeType(input *DescribeTypeInput) (*DescribeTypeOutput, error) {
@@ -2715,14 +2696,13 @@ const opDescribeTypeRegistration = "DescribeTypeRegistration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTypeRegistrationRequest method.
+//	req, resp := client.DescribeTypeRegistrationRequest(params)
 //
-//    // Example sending a request using the DescribeTypeRegistrationRequest method.
-//    req, resp := client.DescribeTypeRegistrationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeTypeRegistration
 func (c *CloudFormation) DescribeTypeRegistrationRequest(input *DescribeTypeRegistrationInput) (req *request.Request, output *DescribeTypeRegistrationOutput) {
@@ -2761,8 +2741,8 @@ func (c *CloudFormation) DescribeTypeRegistrationRequest(input *DescribeTypeRegi
 // API operation DescribeTypeRegistration for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DescribeTypeRegistration
 func (c *CloudFormation) DescribeTypeRegistration(input *DescribeTypeRegistrationInput) (*DescribeTypeRegistrationOutput, error) {
@@ -2802,14 +2782,13 @@ const opDetectStackDrift = "DetectStackDrift"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DetectStackDriftRequest method.
+//	req, resp := client.DetectStackDriftRequest(params)
 //
-//    // Example sending a request using the DetectStackDriftRequest method.
-//    req, resp := client.DetectStackDriftRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DetectStackDrift
 func (c *CloudFormation) DetectStackDriftRequest(input *DetectStackDriftInput) (req *request.Request, output *DetectStackDriftOutput) {
@@ -2900,14 +2879,13 @@ const opDetectStackResourceDrift = "DetectStackResourceDrift"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DetectStackResourceDriftRequest method.
+//	req, resp := client.DetectStackResourceDriftRequest(params)
 //
-//    // Example sending a request using the DetectStackResourceDriftRequest method.
-//    req, resp := client.DetectStackResourceDriftRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DetectStackResourceDrift
 func (c *CloudFormation) DetectStackResourceDriftRequest(input *DetectStackResourceDriftInput) (req *request.Request, output *DetectStackResourceDriftOutput) {
@@ -2988,14 +2966,13 @@ const opDetectStackSetDrift = "DetectStackSetDrift"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DetectStackSetDriftRequest method.
+//	req, resp := client.DetectStackSetDriftRequest(params)
 //
-//    // Example sending a request using the DetectStackSetDriftRequest method.
-//    req, resp := client.DetectStackSetDriftRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DetectStackSetDrift
 func (c *CloudFormation) DetectStackSetDriftRequest(input *DetectStackSetDriftInput) (req *request.Request, output *DetectStackSetDriftOutput) {
@@ -3030,19 +3007,19 @@ func (c *CloudFormation) DetectStackSetDriftRequest(input *DetectStackSetDriftIn
 // Once the operation has completed, use the following actions to return drift
 // information:
 //
-//    * Use DescribeStackSet to return detailed information about the stack
-//    set, including detailed information about the last completed drift operation
-//    performed on the stack set. (Information about drift operations that are
-//    in progress isn't included.)
+//   - Use DescribeStackSet to return detailed information about the stack
+//     set, including detailed information about the last completed drift operation
+//     performed on the stack set. (Information about drift operations that are
+//     in progress isn't included.)
 //
-//    * Use ListStackInstances to return a list of stack instances belonging
-//    to the stack set, including the drift status and last drift time checked
-//    of each instance.
+//   - Use ListStackInstances to return a list of stack instances belonging
+//     to the stack set, including the drift status and last drift time checked
+//     of each instance.
 //
-//    * Use DescribeStackInstance to return detailed information about a specific
-//    stack instance, including its drift status and last drift time checked.
+//   - Use DescribeStackInstance to return detailed information about a specific
+//     stack instance, including its drift status and last drift time checked.
 //
-// For more information on performing a drift detection operation on a stack
+// For more information about performing a drift detection operation on a stack
 // set, see Detecting unmanaged changes in stack sets (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-drift.html).
 //
 // You can only run a single drift detection operation on a given stack set
@@ -3058,15 +3035,16 @@ func (c *CloudFormation) DetectStackSetDriftRequest(input *DetectStackSetDriftIn
 // API operation DetectStackSetDrift for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidOperationException "InvalidOperationException"
-//   The specified operation isn't valid.
 //
-//   * ErrCodeOperationInProgressException "OperationInProgressException"
-//   Another operation is currently in progress for this stack set. Only one operation
-//   can be performed for a stack set at a given time.
+//   - ErrCodeInvalidOperationException "InvalidOperationException"
+//     The specified operation isn't valid.
 //
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
+//   - ErrCodeOperationInProgressException "OperationInProgressException"
+//     Another operation is currently in progress for this stack set. Only one operation
+//     can be performed for a stack set at a given time.
+//
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/DetectStackSetDrift
 func (c *CloudFormation) DetectStackSetDrift(input *DetectStackSetDriftInput) (*DetectStackSetDriftOutput, error) {
@@ -3106,14 +3084,13 @@ const opEstimateTemplateCost = "EstimateTemplateCost"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the EstimateTemplateCostRequest method.
+//	req, resp := client.EstimateTemplateCostRequest(params)
 //
-//    // Example sending a request using the EstimateTemplateCostRequest method.
-//    req, resp := client.EstimateTemplateCostRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/EstimateTemplateCost
 func (c *CloudFormation) EstimateTemplateCostRequest(input *EstimateTemplateCostInput) (req *request.Request, output *EstimateTemplateCostOutput) {
@@ -3182,14 +3159,13 @@ const opExecuteChangeSet = "ExecuteChangeSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ExecuteChangeSetRequest method.
+//	req, resp := client.ExecuteChangeSetRequest(params)
 //
-//    // Example sending a request using the ExecuteChangeSetRequest method.
-//    req, resp := client.ExecuteChangeSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ExecuteChangeSet
 func (c *CloudFormation) ExecuteChangeSetRequest(input *ExecuteChangeSetInput) (req *request.Request, output *ExecuteChangeSetOutput) {
@@ -3234,21 +3210,22 @@ func (c *CloudFormation) ExecuteChangeSetRequest(input *ExecuteChangeSetInput) (
 // API operation ExecuteChangeSet for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidChangeSetStatusException "InvalidChangeSetStatus"
-//   The specified change set can't be used to update the stack. For example,
-//   the change set status might be CREATE_IN_PROGRESS, or the stack status might
-//   be UPDATE_IN_PROGRESS.
 //
-//   * ErrCodeChangeSetNotFoundException "ChangeSetNotFound"
-//   The specified change set name or ID doesn't exit. To view valid change sets
-//   for a stack, use the ListChangeSets operation.
+//   - ErrCodeInvalidChangeSetStatusException "InvalidChangeSetStatus"
+//     The specified change set can't be used to update the stack. For example,
+//     the change set status might be CREATE_IN_PROGRESS, or the stack status might
+//     be UPDATE_IN_PROGRESS.
 //
-//   * ErrCodeInsufficientCapabilitiesException "InsufficientCapabilitiesException"
-//   The template contains resources with capabilities that weren't specified
-//   in the Capabilities parameter.
+//   - ErrCodeChangeSetNotFoundException "ChangeSetNotFound"
+//     The specified change set name or ID doesn't exit. To view valid change sets
+//     for a stack, use the ListChangeSets operation.
 //
-//   * ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
-//   A client request token already exists.
+//   - ErrCodeInsufficientCapabilitiesException "InsufficientCapabilitiesException"
+//     The template contains resources with capabilities that weren't specified
+//     in the Capabilities parameter.
+//
+//   - ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
+//     A client request token already exists.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ExecuteChangeSet
 func (c *CloudFormation) ExecuteChangeSet(input *ExecuteChangeSetInput) (*ExecuteChangeSetOutput, error) {
@@ -3288,14 +3265,13 @@ const opGetStackPolicy = "GetStackPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetStackPolicyRequest method.
+//	req, resp := client.GetStackPolicyRequest(params)
 //
-//    // Example sending a request using the GetStackPolicyRequest method.
-//    req, resp := client.GetStackPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/GetStackPolicy
 func (c *CloudFormation) GetStackPolicyRequest(input *GetStackPolicyInput) (req *request.Request, output *GetStackPolicyOutput) {
@@ -3363,14 +3339,13 @@ const opGetTemplate = "GetTemplate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetTemplateRequest method.
+//	req, resp := client.GetTemplateRequest(params)
 //
-//    // Example sending a request using the GetTemplateRequest method.
-//    req, resp := client.GetTemplateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/GetTemplate
 func (c *CloudFormation) GetTemplateRequest(input *GetTemplateInput) (req *request.Request, output *GetTemplateOutput) {
@@ -3407,9 +3382,9 @@ func (c *CloudFormation) GetTemplateRequest(input *GetTemplateInput) (req *reque
 // API operation GetTemplate for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeChangeSetNotFoundException "ChangeSetNotFound"
-//   The specified change set name or ID doesn't exit. To view valid change sets
-//   for a stack, use the ListChangeSets operation.
+//   - ErrCodeChangeSetNotFoundException "ChangeSetNotFound"
+//     The specified change set name or ID doesn't exit. To view valid change sets
+//     for a stack, use the ListChangeSets operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/GetTemplate
 func (c *CloudFormation) GetTemplate(input *GetTemplateInput) (*GetTemplateOutput, error) {
@@ -3449,14 +3424,13 @@ const opGetTemplateSummary = "GetTemplateSummary"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetTemplateSummaryRequest method.
+//	req, resp := client.GetTemplateSummaryRequest(params)
 //
-//    // Example sending a request using the GetTemplateSummaryRequest method.
-//    req, resp := client.GetTemplateSummaryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/GetTemplateSummary
 func (c *CloudFormation) GetTemplateSummaryRequest(input *GetTemplateSummaryInput) (req *request.Request, output *GetTemplateSummaryOutput) {
@@ -3498,8 +3472,8 @@ func (c *CloudFormation) GetTemplateSummaryRequest(input *GetTemplateSummaryInpu
 // API operation GetTemplateSummary for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/GetTemplateSummary
 func (c *CloudFormation) GetTemplateSummary(input *GetTemplateSummaryInput) (*GetTemplateSummaryOutput, error) {
@@ -3539,14 +3513,13 @@ const opImportStacksToStackSet = "ImportStacksToStackSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ImportStacksToStackSetRequest method.
+//	req, resp := client.ImportStacksToStackSetRequest(params)
 //
-//    // Example sending a request using the ImportStacksToStackSetRequest method.
-//    req, resp := client.ImportStacksToStackSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ImportStacksToStackSet
 func (c *CloudFormation) ImportStacksToStackSetRequest(input *ImportStacksToStackSetInput) (req *request.Request, output *ImportStacksToStackSetOutput) {
@@ -3582,33 +3555,34 @@ func (c *CloudFormation) ImportStacksToStackSetRequest(input *ImportStacksToStac
 // API operation ImportStacksToStackSet for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceededException"
-//   The quota for the resource has already been reached.
 //
-//   For information on resource and stack limitations, see CloudFormation quotas
-//   (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html)
-//   in the CloudFormation User Guide.
+//   - ErrCodeLimitExceededException "LimitExceededException"
+//     The quota for the resource has already been reached.
 //
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
+//     For information about resource and stack limitations, see CloudFormation
+//     quotas (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html)
+//     in the CloudFormation User Guide.
 //
-//   * ErrCodeInvalidOperationException "InvalidOperationException"
-//   The specified operation isn't valid.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
 //
-//   * ErrCodeOperationInProgressException "OperationInProgressException"
-//   Another operation is currently in progress for this stack set. Only one operation
-//   can be performed for a stack set at a given time.
+//   - ErrCodeInvalidOperationException "InvalidOperationException"
+//     The specified operation isn't valid.
 //
-//   * ErrCodeOperationIdAlreadyExistsException "OperationIdAlreadyExistsException"
-//   The specified operation ID already exists.
+//   - ErrCodeOperationInProgressException "OperationInProgressException"
+//     Another operation is currently in progress for this stack set. Only one operation
+//     can be performed for a stack set at a given time.
 //
-//   * ErrCodeStackNotFoundException "StackNotFoundException"
-//   The specified stack ARN doesn't exist or stack doesn't exist corresponding
-//   to the ARN in input.
+//   - ErrCodeOperationIdAlreadyExistsException "OperationIdAlreadyExistsException"
+//     The specified operation ID already exists.
 //
-//   * ErrCodeStaleRequestException "StaleRequestException"
-//   Another operation has been performed on this stack set since the specified
-//   operation was performed.
+//   - ErrCodeStackNotFoundException "StackNotFoundException"
+//     The specified stack ARN doesn't exist or stack doesn't exist corresponding
+//     to the ARN in input.
+//
+//   - ErrCodeStaleRequestException "StaleRequestException"
+//     Another operation has been performed on this stack set since the specified
+//     operation was performed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ImportStacksToStackSet
 func (c *CloudFormation) ImportStacksToStackSet(input *ImportStacksToStackSetInput) (*ImportStacksToStackSetOutput, error) {
@@ -3648,14 +3622,13 @@ const opListChangeSets = "ListChangeSets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListChangeSetsRequest method.
+//	req, resp := client.ListChangeSetsRequest(params)
 //
-//    // Example sending a request using the ListChangeSetsRequest method.
-//    req, resp := client.ListChangeSetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListChangeSets
 func (c *CloudFormation) ListChangeSetsRequest(input *ListChangeSetsInput) (req *request.Request, output *ListChangeSetsOutput) {
@@ -3722,15 +3695,14 @@ func (c *CloudFormation) ListChangeSetsWithContext(ctx aws.Context, input *ListC
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListChangeSets operation.
-//    pageNum := 0
-//    err := client.ListChangeSetsPages(params,
-//        func(page *cloudformation.ListChangeSetsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListChangeSets operation.
+//	pageNum := 0
+//	err := client.ListChangeSetsPages(params,
+//	    func(page *cloudformation.ListChangeSetsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListChangeSetsPages(input *ListChangeSetsInput, fn func(*ListChangeSetsOutput, bool) bool) error {
 	return c.ListChangeSetsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3782,14 +3754,13 @@ const opListExports = "ListExports"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListExportsRequest method.
+//	req, resp := client.ListExportsRequest(params)
 //
-//    // Example sending a request using the ListExportsRequest method.
-//    req, resp := client.ListExportsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListExports
 func (c *CloudFormation) ListExportsRequest(input *ListExportsInput) (req *request.Request, output *ListExportsOutput) {
@@ -3859,15 +3830,14 @@ func (c *CloudFormation) ListExportsWithContext(ctx aws.Context, input *ListExpo
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListExports operation.
-//    pageNum := 0
-//    err := client.ListExportsPages(params,
-//        func(page *cloudformation.ListExportsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListExports operation.
+//	pageNum := 0
+//	err := client.ListExportsPages(params,
+//	    func(page *cloudformation.ListExportsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListExportsPages(input *ListExportsInput, fn func(*ListExportsOutput, bool) bool) error {
 	return c.ListExportsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -3919,14 +3889,13 @@ const opListImports = "ListImports"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListImportsRequest method.
+//	req, resp := client.ListImportsRequest(params)
 //
-//    // Example sending a request using the ListImportsRequest method.
-//    req, resp := client.ListImportsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListImports
 func (c *CloudFormation) ListImportsRequest(input *ListImportsInput) (req *request.Request, output *ListImportsOutput) {
@@ -3997,15 +3966,14 @@ func (c *CloudFormation) ListImportsWithContext(ctx aws.Context, input *ListImpo
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListImports operation.
-//    pageNum := 0
-//    err := client.ListImportsPages(params,
-//        func(page *cloudformation.ListImportsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListImports operation.
+//	pageNum := 0
+//	err := client.ListImportsPages(params,
+//	    func(page *cloudformation.ListImportsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListImportsPages(input *ListImportsInput, fn func(*ListImportsOutput, bool) bool) error {
 	return c.ListImportsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4057,14 +4025,13 @@ const opListStackInstances = "ListStackInstances"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListStackInstancesRequest method.
+//	req, resp := client.ListStackInstancesRequest(params)
 //
-//    // Example sending a request using the ListStackInstancesRequest method.
-//    req, resp := client.ListStackInstancesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListStackInstances
 func (c *CloudFormation) ListStackInstancesRequest(input *ListStackInstancesInput) (req *request.Request, output *ListStackInstancesOutput) {
@@ -4104,8 +4071,8 @@ func (c *CloudFormation) ListStackInstancesRequest(input *ListStackInstancesInpu
 // API operation ListStackInstances for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListStackInstances
 func (c *CloudFormation) ListStackInstances(input *ListStackInstancesInput) (*ListStackInstancesOutput, error) {
@@ -4137,15 +4104,14 @@ func (c *CloudFormation) ListStackInstancesWithContext(ctx aws.Context, input *L
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListStackInstances operation.
-//    pageNum := 0
-//    err := client.ListStackInstancesPages(params,
-//        func(page *cloudformation.ListStackInstancesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListStackInstances operation.
+//	pageNum := 0
+//	err := client.ListStackInstancesPages(params,
+//	    func(page *cloudformation.ListStackInstancesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListStackInstancesPages(input *ListStackInstancesInput, fn func(*ListStackInstancesOutput, bool) bool) error {
 	return c.ListStackInstancesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4197,14 +4163,13 @@ const opListStackResources = "ListStackResources"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListStackResourcesRequest method.
+//	req, resp := client.ListStackResourcesRequest(params)
 //
-//    // Example sending a request using the ListStackResourcesRequest method.
-//    req, resp := client.ListStackResourcesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListStackResources
 func (c *CloudFormation) ListStackResourcesRequest(input *ListStackResourcesInput) (req *request.Request, output *ListStackResourcesOutput) {
@@ -4272,15 +4237,14 @@ func (c *CloudFormation) ListStackResourcesWithContext(ctx aws.Context, input *L
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListStackResources operation.
-//    pageNum := 0
-//    err := client.ListStackResourcesPages(params,
-//        func(page *cloudformation.ListStackResourcesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListStackResources operation.
+//	pageNum := 0
+//	err := client.ListStackResourcesPages(params,
+//	    func(page *cloudformation.ListStackResourcesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListStackResourcesPages(input *ListStackResourcesInput, fn func(*ListStackResourcesOutput, bool) bool) error {
 	return c.ListStackResourcesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4332,14 +4296,13 @@ const opListStackSetOperationResults = "ListStackSetOperationResults"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListStackSetOperationResultsRequest method.
+//	req, resp := client.ListStackSetOperationResultsRequest(params)
 //
-//    // Example sending a request using the ListStackSetOperationResultsRequest method.
-//    req, resp := client.ListStackSetOperationResultsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListStackSetOperationResults
 func (c *CloudFormation) ListStackSetOperationResultsRequest(input *ListStackSetOperationResultsInput) (req *request.Request, output *ListStackSetOperationResultsOutput) {
@@ -4376,11 +4339,12 @@ func (c *CloudFormation) ListStackSetOperationResultsRequest(input *ListStackSet
 // API operation ListStackSetOperationResults for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
 //
-//   * ErrCodeOperationNotFoundException "OperationNotFoundException"
-//   The specified ID refers to an operation that doesn't exist.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
+//
+//   - ErrCodeOperationNotFoundException "OperationNotFoundException"
+//     The specified ID refers to an operation that doesn't exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListStackSetOperationResults
 func (c *CloudFormation) ListStackSetOperationResults(input *ListStackSetOperationResultsInput) (*ListStackSetOperationResultsOutput, error) {
@@ -4412,15 +4376,14 @@ func (c *CloudFormation) ListStackSetOperationResultsWithContext(ctx aws.Context
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListStackSetOperationResults operation.
-//    pageNum := 0
-//    err := client.ListStackSetOperationResultsPages(params,
-//        func(page *cloudformation.ListStackSetOperationResultsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListStackSetOperationResults operation.
+//	pageNum := 0
+//	err := client.ListStackSetOperationResultsPages(params,
+//	    func(page *cloudformation.ListStackSetOperationResultsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListStackSetOperationResultsPages(input *ListStackSetOperationResultsInput, fn func(*ListStackSetOperationResultsOutput, bool) bool) error {
 	return c.ListStackSetOperationResultsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4472,14 +4435,13 @@ const opListStackSetOperations = "ListStackSetOperations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListStackSetOperationsRequest method.
+//	req, resp := client.ListStackSetOperationsRequest(params)
 //
-//    // Example sending a request using the ListStackSetOperationsRequest method.
-//    req, resp := client.ListStackSetOperationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListStackSetOperations
 func (c *CloudFormation) ListStackSetOperationsRequest(input *ListStackSetOperationsInput) (req *request.Request, output *ListStackSetOperationsOutput) {
@@ -4516,8 +4478,8 @@ func (c *CloudFormation) ListStackSetOperationsRequest(input *ListStackSetOperat
 // API operation ListStackSetOperations for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListStackSetOperations
 func (c *CloudFormation) ListStackSetOperations(input *ListStackSetOperationsInput) (*ListStackSetOperationsOutput, error) {
@@ -4549,15 +4511,14 @@ func (c *CloudFormation) ListStackSetOperationsWithContext(ctx aws.Context, inpu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListStackSetOperations operation.
-//    pageNum := 0
-//    err := client.ListStackSetOperationsPages(params,
-//        func(page *cloudformation.ListStackSetOperationsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListStackSetOperations operation.
+//	pageNum := 0
+//	err := client.ListStackSetOperationsPages(params,
+//	    func(page *cloudformation.ListStackSetOperationsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListStackSetOperationsPages(input *ListStackSetOperationsInput, fn func(*ListStackSetOperationsOutput, bool) bool) error {
 	return c.ListStackSetOperationsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4609,14 +4570,13 @@ const opListStackSets = "ListStackSets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListStackSetsRequest method.
+//	req, resp := client.ListStackSetsRequest(params)
 //
-//    // Example sending a request using the ListStackSetsRequest method.
-//    req, resp := client.ListStackSetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListStackSets
 func (c *CloudFormation) ListStackSetsRequest(input *ListStackSetsInput) (req *request.Request, output *ListStackSetsOutput) {
@@ -4646,17 +4606,17 @@ func (c *CloudFormation) ListStackSetsRequest(input *ListStackSetsInput) (req *r
 // Returns summary information about stack sets that are associated with the
 // user.
 //
-//    * [Self-managed permissions] If you set the CallAs parameter to SELF while
-//    signed in to your Amazon Web Services account, ListStackSets returns all
-//    self-managed stack sets in your Amazon Web Services account.
+//   - [Self-managed permissions] If you set the CallAs parameter to SELF while
+//     signed in to your Amazon Web Services account, ListStackSets returns all
+//     self-managed stack sets in your Amazon Web Services account.
 //
-//    * [Service-managed permissions] If you set the CallAs parameter to SELF
-//    while signed in to the organization's management account, ListStackSets
-//    returns all stack sets in the management account.
+//   - [Service-managed permissions] If you set the CallAs parameter to SELF
+//     while signed in to the organization's management account, ListStackSets
+//     returns all stack sets in the management account.
 //
-//    * [Service-managed permissions] If you set the CallAs parameter to DELEGATED_ADMIN
-//    while signed in to your member account, ListStackSets returns all stack
-//    sets with service-managed permissions in the management account.
+//   - [Service-managed permissions] If you set the CallAs parameter to DELEGATED_ADMIN
+//     while signed in to your member account, ListStackSets returns all stack
+//     sets with service-managed permissions in the management account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4694,15 +4654,14 @@ func (c *CloudFormation) ListStackSetsWithContext(ctx aws.Context, input *ListSt
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListStackSets operation.
-//    pageNum := 0
-//    err := client.ListStackSetsPages(params,
-//        func(page *cloudformation.ListStackSetsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListStackSets operation.
+//	pageNum := 0
+//	err := client.ListStackSetsPages(params,
+//	    func(page *cloudformation.ListStackSetsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListStackSetsPages(input *ListStackSetsInput, fn func(*ListStackSetsOutput, bool) bool) error {
 	return c.ListStackSetsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4754,14 +4713,13 @@ const opListStacks = "ListStacks"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListStacksRequest method.
+//	req, resp := client.ListStacksRequest(params)
 //
-//    // Example sending a request using the ListStacksRequest method.
-//    req, resp := client.ListStacksRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListStacks
 func (c *CloudFormation) ListStacksRequest(input *ListStacksInput) (req *request.Request, output *ListStacksOutput) {
@@ -4830,15 +4788,14 @@ func (c *CloudFormation) ListStacksWithContext(ctx aws.Context, input *ListStack
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListStacks operation.
-//    pageNum := 0
-//    err := client.ListStacksPages(params,
-//        func(page *cloudformation.ListStacksOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListStacks operation.
+//	pageNum := 0
+//	err := client.ListStacksPages(params,
+//	    func(page *cloudformation.ListStacksOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListStacksPages(input *ListStacksInput, fn func(*ListStacksOutput, bool) bool) error {
 	return c.ListStacksPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -4890,14 +4847,13 @@ const opListTypeRegistrations = "ListTypeRegistrations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTypeRegistrationsRequest method.
+//	req, resp := client.ListTypeRegistrationsRequest(params)
 //
-//    // Example sending a request using the ListTypeRegistrationsRequest method.
-//    req, resp := client.ListTypeRegistrationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListTypeRegistrations
 func (c *CloudFormation) ListTypeRegistrationsRequest(input *ListTypeRegistrationsInput) (req *request.Request, output *ListTypeRegistrationsOutput) {
@@ -4934,8 +4890,8 @@ func (c *CloudFormation) ListTypeRegistrationsRequest(input *ListTypeRegistratio
 // API operation ListTypeRegistrations for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListTypeRegistrations
 func (c *CloudFormation) ListTypeRegistrations(input *ListTypeRegistrationsInput) (*ListTypeRegistrationsOutput, error) {
@@ -4967,15 +4923,14 @@ func (c *CloudFormation) ListTypeRegistrationsWithContext(ctx aws.Context, input
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTypeRegistrations operation.
-//    pageNum := 0
-//    err := client.ListTypeRegistrationsPages(params,
-//        func(page *cloudformation.ListTypeRegistrationsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTypeRegistrations operation.
+//	pageNum := 0
+//	err := client.ListTypeRegistrationsPages(params,
+//	    func(page *cloudformation.ListTypeRegistrationsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListTypeRegistrationsPages(input *ListTypeRegistrationsInput, fn func(*ListTypeRegistrationsOutput, bool) bool) error {
 	return c.ListTypeRegistrationsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5027,14 +4982,13 @@ const opListTypeVersions = "ListTypeVersions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTypeVersionsRequest method.
+//	req, resp := client.ListTypeVersionsRequest(params)
 //
-//    // Example sending a request using the ListTypeVersionsRequest method.
-//    req, resp := client.ListTypeVersionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListTypeVersions
 func (c *CloudFormation) ListTypeVersionsRequest(input *ListTypeVersionsInput) (req *request.Request, output *ListTypeVersionsOutput) {
@@ -5071,8 +5025,8 @@ func (c *CloudFormation) ListTypeVersionsRequest(input *ListTypeVersionsInput) (
 // API operation ListTypeVersions for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListTypeVersions
 func (c *CloudFormation) ListTypeVersions(input *ListTypeVersionsInput) (*ListTypeVersionsOutput, error) {
@@ -5104,15 +5058,14 @@ func (c *CloudFormation) ListTypeVersionsWithContext(ctx aws.Context, input *Lis
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTypeVersions operation.
-//    pageNum := 0
-//    err := client.ListTypeVersionsPages(params,
-//        func(page *cloudformation.ListTypeVersionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTypeVersions operation.
+//	pageNum := 0
+//	err := client.ListTypeVersionsPages(params,
+//	    func(page *cloudformation.ListTypeVersionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListTypeVersionsPages(input *ListTypeVersionsInput, fn func(*ListTypeVersionsOutput, bool) bool) error {
 	return c.ListTypeVersionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5164,14 +5117,13 @@ const opListTypes = "ListTypes"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTypesRequest method.
+//	req, resp := client.ListTypesRequest(params)
 //
-//    // Example sending a request using the ListTypesRequest method.
-//    req, resp := client.ListTypesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListTypes
 func (c *CloudFormation) ListTypesRequest(input *ListTypesInput) (req *request.Request, output *ListTypesOutput) {
@@ -5209,8 +5161,8 @@ func (c *CloudFormation) ListTypesRequest(input *ListTypesInput) (req *request.R
 // API operation ListTypes for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ListTypes
 func (c *CloudFormation) ListTypes(input *ListTypesInput) (*ListTypesOutput, error) {
@@ -5242,15 +5194,14 @@ func (c *CloudFormation) ListTypesWithContext(ctx aws.Context, input *ListTypesI
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTypes operation.
-//    pageNum := 0
-//    err := client.ListTypesPages(params,
-//        func(page *cloudformation.ListTypesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTypes operation.
+//	pageNum := 0
+//	err := client.ListTypesPages(params,
+//	    func(page *cloudformation.ListTypesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *CloudFormation) ListTypesPages(input *ListTypesInput, fn func(*ListTypesOutput, bool) bool) error {
 	return c.ListTypesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5302,14 +5253,13 @@ const opPublishType = "PublishType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PublishTypeRequest method.
+//	req, resp := client.PublishTypeRequest(params)
 //
-//    // Example sending a request using the PublishTypeRequest method.
-//    req, resp := client.PublishTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/PublishType
 func (c *CloudFormation) PublishTypeRequest(input *PublishTypeInput) (req *request.Request, output *PublishTypeOutput) {
@@ -5332,7 +5282,7 @@ func (c *CloudFormation) PublishTypeRequest(input *PublishTypeInput) (req *reque
 //
 // Publishes the specified extension to the CloudFormation registry as a public
 // extension in this region. Public extensions are available for use by all
-// CloudFormation users. For more information on publishing extensions, see
+// CloudFormation users. For more information about publishing extensions, see
 // Publishing extensions to make them available for public use (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/publish-extension.html)
 // in the CloudFormation CLI User Guide.
 //
@@ -5347,11 +5297,12 @@ func (c *CloudFormation) PublishTypeRequest(input *PublishTypeInput) (req *reque
 // API operation PublishType for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
 //
-//   * ErrCodeTypeNotFoundException "TypeNotFoundException"
-//   The specified extension doesn't exist in the CloudFormation registry.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
+//
+//   - ErrCodeTypeNotFoundException "TypeNotFoundException"
+//     The specified extension doesn't exist in the CloudFormation registry.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/PublishType
 func (c *CloudFormation) PublishType(input *PublishTypeInput) (*PublishTypeOutput, error) {
@@ -5391,14 +5342,13 @@ const opRecordHandlerProgress = "RecordHandlerProgress"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RecordHandlerProgressRequest method.
+//	req, resp := client.RecordHandlerProgressRequest(params)
 //
-//    // Example sending a request using the RecordHandlerProgressRequest method.
-//    req, resp := client.RecordHandlerProgressRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/RecordHandlerProgress
 func (c *CloudFormation) RecordHandlerProgressRequest(input *RecordHandlerProgressInput) (req *request.Request, output *RecordHandlerProgressOutput) {
@@ -5433,13 +5383,14 @@ func (c *CloudFormation) RecordHandlerProgressRequest(input *RecordHandlerProgre
 // API operation RecordHandlerProgress for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidStateTransitionException "InvalidStateTransition"
-//   Error reserved for use by the CloudFormation CLI (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/what-is-cloudformation-cli.html).
-//   CloudFormation doesn't return this error to users.
 //
-//   * ErrCodeOperationStatusCheckFailedException "ConditionalCheckFailed"
-//   Error reserved for use by the CloudFormation CLI (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/what-is-cloudformation-cli.html).
-//   CloudFormation doesn't return this error to users.
+//   - ErrCodeInvalidStateTransitionException "InvalidStateTransition"
+//     Error reserved for use by the CloudFormation CLI (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/what-is-cloudformation-cli.html).
+//     CloudFormation doesn't return this error to users.
+//
+//   - ErrCodeOperationStatusCheckFailedException "ConditionalCheckFailed"
+//     Error reserved for use by the CloudFormation CLI (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/what-is-cloudformation-cli.html).
+//     CloudFormation doesn't return this error to users.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/RecordHandlerProgress
 func (c *CloudFormation) RecordHandlerProgress(input *RecordHandlerProgressInput) (*RecordHandlerProgressOutput, error) {
@@ -5479,14 +5430,13 @@ const opRegisterPublisher = "RegisterPublisher"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RegisterPublisherRequest method.
+//	req, resp := client.RegisterPublisherRequest(params)
 //
-//    // Example sending a request using the RegisterPublisherRequest method.
-//    req, resp := client.RegisterPublisherRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/RegisterPublisher
 func (c *CloudFormation) RegisterPublisherRequest(input *RegisterPublisherInput) (req *request.Request, output *RegisterPublisherOutput) {
@@ -5511,8 +5461,9 @@ func (c *CloudFormation) RegisterPublisherRequest(input *RegisterPublisherInput)
 // registry. Public extensions are available for use by all CloudFormation users.
 // This publisher ID applies to your account in all Amazon Web Services Regions.
 //
-// For information on requirements for registering as a public extension publisher,
-// see Registering your account to publish CloudFormation extensions (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/publish-extension.html#publish-extension-prereqs)
+// For information about requirements for registering as a public extension
+// publisher, see Registering your account to publish CloudFormation extensions
+// (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/publish-extension.html#publish-extension-prereqs)
 // in the CloudFormation CLI User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -5523,8 +5474,8 @@ func (c *CloudFormation) RegisterPublisherRequest(input *RegisterPublisherInput)
 // API operation RegisterPublisher for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/RegisterPublisher
 func (c *CloudFormation) RegisterPublisher(input *RegisterPublisherInput) (*RegisterPublisherOutput, error) {
@@ -5564,14 +5515,13 @@ const opRegisterType = "RegisterType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RegisterTypeRequest method.
+//	req, resp := client.RegisterTypeRequest(params)
 //
-//    // Example sending a request using the RegisterTypeRequest method.
-//    req, resp := client.RegisterTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/RegisterType
 func (c *CloudFormation) RegisterTypeRequest(input *RegisterTypeInput) (req *request.Request, output *RegisterTypeOutput) {
@@ -5596,13 +5546,13 @@ func (c *CloudFormation) RegisterTypeRequest(input *RegisterTypeInput) (req *req
 // makes it available for use in CloudFormation templates in your Amazon Web
 // Services account, and includes:
 //
-//    * Validating the extension schema.
+//   - Validating the extension schema.
 //
-//    * Determining which handlers, if any, have been specified for the extension.
+//   - Determining which handlers, if any, have been specified for the extension.
 //
-//    * Making the extension available for use in your account.
+//   - Making the extension available for use in your account.
 //
-// For more information on how to develop extensions and ready them for registration,
+// For more information about how to develop extensions and ready them for registration,
 // see Creating Resource Providers (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-types.html)
 // in the CloudFormation CLI User Guide.
 //
@@ -5628,8 +5578,8 @@ func (c *CloudFormation) RegisterTypeRequest(input *RegisterTypeInput) (req *req
 // API operation RegisterType for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/RegisterType
 func (c *CloudFormation) RegisterType(input *RegisterTypeInput) (*RegisterTypeOutput, error) {
@@ -5669,14 +5619,13 @@ const opRollbackStack = "RollbackStack"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RollbackStackRequest method.
+//	req, resp := client.RollbackStackRequest(params)
 //
-//    // Example sending a request using the RollbackStackRequest method.
-//    req, resp := client.RollbackStackRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/RollbackStack
 func (c *CloudFormation) RollbackStackRequest(input *RollbackStackInput) (req *request.Request, output *RollbackStackOutput) {
@@ -5708,15 +5657,15 @@ func (c *CloudFormation) RollbackStackRequest(input *RollbackStackInput) (req *r
 // state. A last known stable state includes any status in a *_COMPLETE. This
 // includes the following stack statuses.
 //
-//    * CREATE_COMPLETE
+//   - CREATE_COMPLETE
 //
-//    * UPDATE_COMPLETE
+//   - UPDATE_COMPLETE
 //
-//    * UPDATE_ROLLBACK_COMPLETE
+//   - UPDATE_ROLLBACK_COMPLETE
 //
-//    * IMPORT_COMPLETE
+//   - IMPORT_COMPLETE
 //
-//    * IMPORT_ROLLBACK_COMPLETE
+//   - IMPORT_ROLLBACK_COMPLETE
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5726,8 +5675,8 @@ func (c *CloudFormation) RollbackStackRequest(input *RollbackStackInput) (req *r
 // API operation RollbackStack for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
-//   A client request token already exists.
+//   - ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
+//     A client request token already exists.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/RollbackStack
 func (c *CloudFormation) RollbackStack(input *RollbackStackInput) (*RollbackStackOutput, error) {
@@ -5767,14 +5716,13 @@ const opSetStackPolicy = "SetStackPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetStackPolicyRequest method.
+//	req, resp := client.SetStackPolicyRequest(params)
 //
-//    // Example sending a request using the SetStackPolicyRequest method.
-//    req, resp := client.SetStackPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/SetStackPolicy
 func (c *CloudFormation) SetStackPolicyRequest(input *SetStackPolicyInput) (req *request.Request, output *SetStackPolicyOutput) {
@@ -5842,14 +5790,13 @@ const opSetTypeConfiguration = "SetTypeConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetTypeConfigurationRequest method.
+//	req, resp := client.SetTypeConfigurationRequest(params)
 //
-//    // Example sending a request using the SetTypeConfigurationRequest method.
-//    req, resp := client.SetTypeConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/SetTypeConfiguration
 func (c *CloudFormation) SetTypeConfigurationRequest(input *SetTypeConfigurationInput) (req *request.Request, output *SetTypeConfigurationOutput) {
@@ -5891,11 +5838,12 @@ func (c *CloudFormation) SetTypeConfigurationRequest(input *SetTypeConfiguration
 // API operation SetTypeConfiguration for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
 //
-//   * ErrCodeTypeNotFoundException "TypeNotFoundException"
-//   The specified extension doesn't exist in the CloudFormation registry.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
+//
+//   - ErrCodeTypeNotFoundException "TypeNotFoundException"
+//     The specified extension doesn't exist in the CloudFormation registry.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/SetTypeConfiguration
 func (c *CloudFormation) SetTypeConfiguration(input *SetTypeConfigurationInput) (*SetTypeConfigurationOutput, error) {
@@ -5935,14 +5883,13 @@ const opSetTypeDefaultVersion = "SetTypeDefaultVersion"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetTypeDefaultVersionRequest method.
+//	req, resp := client.SetTypeDefaultVersionRequest(params)
 //
-//    // Example sending a request using the SetTypeDefaultVersionRequest method.
-//    req, resp := client.SetTypeDefaultVersionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/SetTypeDefaultVersion
 func (c *CloudFormation) SetTypeDefaultVersionRequest(input *SetTypeDefaultVersionInput) (req *request.Request, output *SetTypeDefaultVersionOutput) {
@@ -5975,11 +5922,12 @@ func (c *CloudFormation) SetTypeDefaultVersionRequest(input *SetTypeDefaultVersi
 // API operation SetTypeDefaultVersion for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
 //
-//   * ErrCodeTypeNotFoundException "TypeNotFoundException"
-//   The specified extension doesn't exist in the CloudFormation registry.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
+//
+//   - ErrCodeTypeNotFoundException "TypeNotFoundException"
+//     The specified extension doesn't exist in the CloudFormation registry.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/SetTypeDefaultVersion
 func (c *CloudFormation) SetTypeDefaultVersion(input *SetTypeDefaultVersionInput) (*SetTypeDefaultVersionOutput, error) {
@@ -6019,14 +5967,13 @@ const opSignalResource = "SignalResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SignalResourceRequest method.
+//	req, resp := client.SignalResourceRequest(params)
 //
-//    // Example sending a request using the SignalResourceRequest method.
-//    req, resp := client.SignalResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/SignalResource
 func (c *CloudFormation) SignalResourceRequest(input *SignalResourceInput) (req *request.Request, output *SignalResourceOutput) {
@@ -6099,14 +6046,13 @@ const opStopStackSetOperation = "StopStackSetOperation"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StopStackSetOperationRequest method.
+//	req, resp := client.StopStackSetOperationRequest(params)
 //
-//    // Example sending a request using the StopStackSetOperationRequest method.
-//    req, resp := client.StopStackSetOperationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/StopStackSetOperation
 func (c *CloudFormation) StopStackSetOperationRequest(input *StopStackSetOperationInput) (req *request.Request, output *StopStackSetOperationOutput) {
@@ -6140,14 +6086,15 @@ func (c *CloudFormation) StopStackSetOperationRequest(input *StopStackSetOperati
 // API operation StopStackSetOperation for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
 //
-//   * ErrCodeOperationNotFoundException "OperationNotFoundException"
-//   The specified ID refers to an operation that doesn't exist.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
 //
-//   * ErrCodeInvalidOperationException "InvalidOperationException"
-//   The specified operation isn't valid.
+//   - ErrCodeOperationNotFoundException "OperationNotFoundException"
+//     The specified ID refers to an operation that doesn't exist.
+//
+//   - ErrCodeInvalidOperationException "InvalidOperationException"
+//     The specified operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/StopStackSetOperation
 func (c *CloudFormation) StopStackSetOperation(input *StopStackSetOperationInput) (*StopStackSetOperationOutput, error) {
@@ -6187,14 +6134,13 @@ const opTestType = "TestType"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TestTypeRequest method.
+//	req, resp := client.TestTypeRequest(params)
 //
-//    // Example sending a request using the TestTypeRequest method.
-//    req, resp := client.TestTypeRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/TestType
 func (c *CloudFormation) TestTypeRequest(input *TestTypeInput) (req *request.Request, output *TestTypeOutput) {
@@ -6218,11 +6164,11 @@ func (c *CloudFormation) TestTypeRequest(input *TestTypeInput) (req *request.Req
 // Tests a registered extension to make sure it meets all necessary requirements
 // for being published in the CloudFormation registry.
 //
-//    * For resource types, this includes passing all contracts tests defined
-//    for the type.
+//   - For resource types, this includes passing all contracts tests defined
+//     for the type.
 //
-//    * For modules, this includes determining if the module's model meets all
-//    necessary requirements.
+//   - For modules, this includes determining if the module's model meets all
+//     necessary requirements.
 //
 // For more information, see Testing your public extension prior to publishing
 // (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/publish-extension.html#publish-extension-testing)
@@ -6251,11 +6197,12 @@ func (c *CloudFormation) TestTypeRequest(input *TestTypeInput) (req *request.Req
 // API operation TestType for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCFNRegistryException "CFNRegistryException"
-//   An error occurred during a CloudFormation registry operation.
 //
-//   * ErrCodeTypeNotFoundException "TypeNotFoundException"
-//   The specified extension doesn't exist in the CloudFormation registry.
+//   - ErrCodeCFNRegistryException "CFNRegistryException"
+//     An error occurred during a CloudFormation registry operation.
+//
+//   - ErrCodeTypeNotFoundException "TypeNotFoundException"
+//     The specified extension doesn't exist in the CloudFormation registry.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/TestType
 func (c *CloudFormation) TestType(input *TestTypeInput) (*TestTypeOutput, error) {
@@ -6295,14 +6242,13 @@ const opUpdateStack = "UpdateStack"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateStackRequest method.
+//	req, resp := client.UpdateStackRequest(params)
 //
-//    // Example sending a request using the UpdateStackRequest method.
-//    req, resp := client.UpdateStackRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/UpdateStack
 func (c *CloudFormation) UpdateStackRequest(input *UpdateStackInput) (req *request.Request, output *UpdateStackOutput) {
@@ -6341,12 +6287,13 @@ func (c *CloudFormation) UpdateStackRequest(input *UpdateStackInput) (req *reque
 // API operation UpdateStack for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInsufficientCapabilitiesException "InsufficientCapabilitiesException"
-//   The template contains resources with capabilities that weren't specified
-//   in the Capabilities parameter.
 //
-//   * ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
-//   A client request token already exists.
+//   - ErrCodeInsufficientCapabilitiesException "InsufficientCapabilitiesException"
+//     The template contains resources with capabilities that weren't specified
+//     in the Capabilities parameter.
+//
+//   - ErrCodeTokenAlreadyExistsException "TokenAlreadyExistsException"
+//     A client request token already exists.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/UpdateStack
 func (c *CloudFormation) UpdateStack(input *UpdateStackInput) (*UpdateStackOutput, error) {
@@ -6386,14 +6333,13 @@ const opUpdateStackInstances = "UpdateStackInstances"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateStackInstancesRequest method.
+//	req, resp := client.UpdateStackInstancesRequest(params)
 //
-//    // Example sending a request using the UpdateStackInstancesRequest method.
-//    req, resp := client.UpdateStackInstancesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/UpdateStackInstances
 func (c *CloudFormation) UpdateStackInstancesRequest(input *UpdateStackInstancesInput) (req *request.Request, output *UpdateStackInstancesOutput) {
@@ -6442,25 +6388,26 @@ func (c *CloudFormation) UpdateStackInstancesRequest(input *UpdateStackInstances
 // API operation UpdateStackInstances for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
 //
-//   * ErrCodeStackInstanceNotFoundException "StackInstanceNotFoundException"
-//   The specified stack instance doesn't exist.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
 //
-//   * ErrCodeOperationInProgressException "OperationInProgressException"
-//   Another operation is currently in progress for this stack set. Only one operation
-//   can be performed for a stack set at a given time.
+//   - ErrCodeStackInstanceNotFoundException "StackInstanceNotFoundException"
+//     The specified stack instance doesn't exist.
 //
-//   * ErrCodeOperationIdAlreadyExistsException "OperationIdAlreadyExistsException"
-//   The specified operation ID already exists.
+//   - ErrCodeOperationInProgressException "OperationInProgressException"
+//     Another operation is currently in progress for this stack set. Only one operation
+//     can be performed for a stack set at a given time.
 //
-//   * ErrCodeStaleRequestException "StaleRequestException"
-//   Another operation has been performed on this stack set since the specified
-//   operation was performed.
+//   - ErrCodeOperationIdAlreadyExistsException "OperationIdAlreadyExistsException"
+//     The specified operation ID already exists.
 //
-//   * ErrCodeInvalidOperationException "InvalidOperationException"
-//   The specified operation isn't valid.
+//   - ErrCodeStaleRequestException "StaleRequestException"
+//     Another operation has been performed on this stack set since the specified
+//     operation was performed.
+//
+//   - ErrCodeInvalidOperationException "InvalidOperationException"
+//     The specified operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/UpdateStackInstances
 func (c *CloudFormation) UpdateStackInstances(input *UpdateStackInstancesInput) (*UpdateStackInstancesOutput, error) {
@@ -6500,14 +6447,13 @@ const opUpdateStackSet = "UpdateStackSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateStackSetRequest method.
+//	req, resp := client.UpdateStackSetRequest(params)
 //
-//    // Example sending a request using the UpdateStackSetRequest method.
-//    req, resp := client.UpdateStackSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/UpdateStackSet
 func (c *CloudFormation) UpdateStackSetRequest(input *UpdateStackSetInput) (req *request.Request, output *UpdateStackSetOutput) {
@@ -6544,25 +6490,26 @@ func (c *CloudFormation) UpdateStackSetRequest(input *UpdateStackSetInput) (req 
 // API operation UpdateStackSet for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeStackSetNotFoundException "StackSetNotFoundException"
-//   The specified stack set doesn't exist.
 //
-//   * ErrCodeOperationInProgressException "OperationInProgressException"
-//   Another operation is currently in progress for this stack set. Only one operation
-//   can be performed for a stack set at a given time.
+//   - ErrCodeStackSetNotFoundException "StackSetNotFoundException"
+//     The specified stack set doesn't exist.
 //
-//   * ErrCodeOperationIdAlreadyExistsException "OperationIdAlreadyExistsException"
-//   The specified operation ID already exists.
+//   - ErrCodeOperationInProgressException "OperationInProgressException"
+//     Another operation is currently in progress for this stack set. Only one operation
+//     can be performed for a stack set at a given time.
 //
-//   * ErrCodeStaleRequestException "StaleRequestException"
-//   Another operation has been performed on this stack set since the specified
-//   operation was performed.
+//   - ErrCodeOperationIdAlreadyExistsException "OperationIdAlreadyExistsException"
+//     The specified operation ID already exists.
 //
-//   * ErrCodeInvalidOperationException "InvalidOperationException"
-//   The specified operation isn't valid.
+//   - ErrCodeStaleRequestException "StaleRequestException"
+//     Another operation has been performed on this stack set since the specified
+//     operation was performed.
 //
-//   * ErrCodeStackInstanceNotFoundException "StackInstanceNotFoundException"
-//   The specified stack instance doesn't exist.
+//   - ErrCodeInvalidOperationException "InvalidOperationException"
+//     The specified operation isn't valid.
+//
+//   - ErrCodeStackInstanceNotFoundException "StackInstanceNotFoundException"
+//     The specified stack instance doesn't exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/UpdateStackSet
 func (c *CloudFormation) UpdateStackSet(input *UpdateStackSetInput) (*UpdateStackSetOutput, error) {
@@ -6602,14 +6549,13 @@ const opUpdateTerminationProtection = "UpdateTerminationProtection"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateTerminationProtectionRequest method.
+//	req, resp := client.UpdateTerminationProtectionRequest(params)
 //
-//    // Example sending a request using the UpdateTerminationProtectionRequest method.
-//    req, resp := client.UpdateTerminationProtectionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/UpdateTerminationProtection
 func (c *CloudFormation) UpdateTerminationProtectionRequest(input *UpdateTerminationProtectionInput) (req *request.Request, output *UpdateTerminationProtectionOutput) {
@@ -6684,14 +6630,13 @@ const opValidateTemplate = "ValidateTemplate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ValidateTemplateRequest method.
+//	req, resp := client.ValidateTemplateRequest(params)
 //
-//    // Example sending a request using the ValidateTemplateRequest method.
-//    req, resp := client.ValidateTemplateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/ValidateTemplate
 func (c *CloudFormation) ValidateTemplateRequest(input *ValidateTemplateInput) (req *request.Request, output *ValidateTemplateOutput) {
@@ -6823,11 +6768,11 @@ func (s *AccountGateResult) SetStatusReason(v string) *AccountGateResult {
 //
 // CloudFormation has the following limits per account:
 //
-//    * Number of concurrent resources
+//   - Number of concurrent resources
 //
-//    * Number of stacks
+//   - Number of stacks
 //
-//    * Number of stack outputs
+//   - Number of stack outputs
 //
 // For more information about these account limits, and other CloudFormation
 // limits, see CloudFormation quotas (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html)
@@ -6897,7 +6842,7 @@ type ActivateTypeInput struct {
 	// You can specify MajorVersion or VersionBump, but not both.
 	MajorVersion *int64 `min:"1" type:"long"`
 
-	// The Amazon Resource Number (ARN) of the public extension.
+	// The Amazon Resource Name (ARN) of the public extension.
 	//
 	// Conditional: You must specify PublicTypeArn, or TypeName, Type, and PublisherId.
 	PublicTypeArn *string `type:"string"`
@@ -7050,7 +6995,7 @@ func (s *ActivateTypeInput) SetVersionBump(v string) *ActivateTypeInput {
 type ActivateTypeOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Resource Number (ARN) of the activated extension, in this account
+	// The Amazon Resource Name (ARN) of the activated extension, in this account
 	// and region.
 	Arn *string `type:"string"`
 }
@@ -7929,7 +7874,7 @@ type CreateChangeSetInput struct {
 	//    IAM resources, you can specify either capability. If you have IAM resources
 	//    with custom names, you must specify CAPABILITY_NAMED_IAM. If you don't
 	//    specify either of these capabilities, CloudFormation returns an InsufficientCapabilities
-	//    error. If your stack template contains these resources, we recommend that
+	//    error. If your stack template contains these resources, we suggest that
 	//    you review all permissions associated with them and edit their permissions
 	//    if necessary. AWS::IAM::AccessKey (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-iam-accesskey.html)
 	//    AWS::IAM::Group (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-iam-group.html)
@@ -7956,10 +7901,10 @@ type CreateChangeSetInput struct {
 	//    sets has no effect. If you want to create a stack from a stack template
 	//    that contains macros and nested stacks, you must create or update the
 	//    stack directly from the template using the CreateStack or UpdateStack
-	//    action, and specifying this capability. For more information on macros,
+	//    action, and specifying this capability. For more information about macros,
 	//    see Using CloudFormation macros to perform custom processing on templates
 	//    (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-macros.html).
-	Capabilities []*string `type:"list"`
+	Capabilities []*string `type:"list" enum:"Capability"`
 
 	// The name of the change set. The name must be unique among all change sets
 	// that are associated with the specified stack.
@@ -8343,7 +8288,7 @@ type CreateStackInput struct {
 	//    Be aware that the Lambda function owner can update the function operation
 	//    without CloudFormation being notified. For more information, see Using
 	//    CloudFormation macros to perform custom processing on templates (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-macros.html).
-	Capabilities []*string `type:"list"`
+	Capabilities []*string `type:"list" enum:"Capability"`
 
 	// A unique identifier for this CreateStack request. Specify this token if you
 	// plan to retry requests so that CloudFormation knows that you're not attempting
@@ -8899,7 +8844,7 @@ func (s *CreateStackOutput) SetStackId(v string) *CreateStackOutput {
 type CreateStackSetInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Resource Number (ARN) of the IAM role to use to create this stack
+	// The Amazon Resource Name (ARN) of the IAM role to use to create this stack
 	// set.
 	//
 	// Specify an IAM role only if you are using customized administrator roles
@@ -8972,7 +8917,7 @@ type CreateStackSetInput struct {
 	//    transforms, which are macros hosted by CloudFormation.) Even if you specify
 	//    this capability for a stack set with service-managed permissions, if you
 	//    reference a macro in your template the stack set operation will fail.
-	Capabilities []*string `type:"list"`
+	Capabilities []*string `type:"list" enum:"Capability"`
 
 	// A unique identifier for this CreateStackSet request. Specify this token if
 	// you plan to retry requests so that CloudFormation knows that you're not attempting
@@ -9014,7 +8959,7 @@ type CreateStackSetInput struct {
 	PermissionModel *string `type:"string" enum:"PermissionModels"`
 
 	// The stack ID you are importing into a new stack set. Specify the Amazon Resource
-	// Number (ARN) of the stack.
+	// Name (ARN) of the stack.
 	StackId *string `type:"string"`
 
 	// The name to associate with the stack set. The name must be unique in the
@@ -9840,6 +9785,27 @@ func (s DeleteStackSetOutput) GoString() string {
 type DeploymentTargets struct {
 	_ struct{} `type:"structure"`
 
+	// Limit deployment targets to individual accounts or include additional accounts
+	// with provided OUs.
+	//
+	// The following is a list of possible values for the AccountFilterType operation.
+	//
+	//    * INTERSECTION: StackSets deploys to the accounts specified in Accounts
+	//    parameter.
+	//
+	//    * DIFFERENCE: StackSets excludes the accounts specified in Accounts parameter.
+	//    This enables user to avoid certain accounts within an OU such as suspended
+	//    accounts.
+	//
+	//    * UNION: (default value) StackSets includes additional accounts deployment
+	//    targets. This is the default value if AccountFilterType is not provided.
+	//    This enables user to update an entire OU and individual accounts from
+	//    a different OU in one request, which used to be two separate requests.
+	//
+	//    * NONE: Deploys to all the accounts in specified organizational units
+	//    (OU).
+	AccountFilterType *string `type:"string" enum:"AccountFilterType"`
+
 	// The names of one or more Amazon Web Services accounts for which you want
 	// to deploy stack set updates.
 	Accounts []*string `type:"list"`
@@ -9881,6 +9847,12 @@ func (s *DeploymentTargets) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAccountFilterType sets the AccountFilterType field's value.
+func (s *DeploymentTargets) SetAccountFilterType(v string) *DeploymentTargets {
+	s.AccountFilterType = &v
+	return s
 }
 
 // SetAccounts sets the Accounts field's value.
@@ -10346,7 +10318,7 @@ type DescribeChangeSetOutput struct {
 
 	// If you execute the change set, the list of capabilities that were explicitly
 	// acknowledged when the change set was created.
-	Capabilities []*string `type:"list"`
+	Capabilities []*string `type:"list" enum:"Capability"`
 
 	// The Amazon Resource Name (ARN) of the change set.
 	ChangeSetId *string `min:"1" type:"string"`
@@ -11100,7 +11072,7 @@ type DescribeStackResourceDriftsInput struct {
 	//    configuration.
 	//
 	//    * NOT_CHECKED: CloudFormation doesn't currently return this value.
-	StackResourceDriftStatusFilters []*string `min:"1" type:"list"`
+	StackResourceDriftStatusFilters []*string `min:"1" type:"list" enum:"StackResourceDriftStatus"`
 }
 
 // String returns the string representation.
@@ -11173,8 +11145,8 @@ func (s *DescribeStackResourceDriftsInput) SetStackResourceDriftStatusFilters(v 
 type DescribeStackResourceDriftsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// If the request doesn't return all of the remaining results, NextToken is
-	// set to a token. To retrieve the next set of results, call DescribeStackResourceDrifts
+	// If the request doesn't return all the remaining results, NextToken is set
+	// to a token. To retrieve the next set of results, call DescribeStackResourceDrifts
 	// again and assign that token to the request object's NextToken parameter.
 	// If the request returns all results, NextToken is set to null.
 	NextToken *string `min:"1" type:"string"`
@@ -11764,7 +11736,7 @@ type DescribeTypeInput struct {
 
 	// The publisher ID of the extension publisher.
 	//
-	// Extensions provided by Amazon are not assigned a publisher ID.
+	// Extensions provided by Amazon Web Services are not assigned a publisher ID.
 	PublisherId *string `min:"1" type:"string"`
 
 	// The kind of extension.
@@ -11889,9 +11861,9 @@ type DescribeTypeOutput struct {
 	// when the extension version isn't specified.
 	//
 	// This applies only to private extensions you have registered in your account.
-	// For public extensions, both those provided by Amazon and published by third
-	// parties, CloudFormation returns null. For more information, see RegisterType
-	// (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_RegisterType.html).
+	// For public extensions, both those provided by Amazon Web Services and published
+	// by third parties, CloudFormation returns null. For more information, see
+	// RegisterType (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_RegisterType.html).
 	//
 	// To set the default version of an extension, use SetTypeDefaultVersion .
 	DefaultVersionId *string `min:"1" type:"string"`
@@ -11927,7 +11899,7 @@ type DescribeTypeOutput struct {
 	// credentials.
 	ExecutionRoleArn *string `min:"1" type:"string"`
 
-	// Whether or not the extension is activated in the account and region.
+	// Whether the extension is activated in the account and region.
 	//
 	// This only applies to public third-party extensions. For all other extensions,
 	// CloudFormation returns null.
@@ -11936,8 +11908,8 @@ type DescribeTypeOutput struct {
 	// Whether the specified extension version is set as the default version.
 	//
 	// This applies only to private extensions you have registered in your account,
-	// and extensions published by Amazon. For public third-party extensions, whether
-	// or not they are activated in your account, CloudFormation returns null.
+	// and extensions published by Amazon Web Services. For public third-party extensions,
+	// whether they are activated in your account, CloudFormation returns null.
 	IsDefaultVersion *bool `type:"boolean"`
 
 	// When the specified extension version was registered. This applies only to:
@@ -11957,8 +11929,9 @@ type DescribeTypeOutput struct {
 
 	// Contains logging configuration information for private extensions. This applies
 	// only to private extensions you have registered in your account. For public
-	// extensions, both those provided by Amazon and published by third parties,
-	// CloudFormation returns null. For more information, see RegisterType (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_RegisterType.html).
+	// extensions, both those provided by Amazon Web Services and published by third
+	// parties, CloudFormation returns null. For more information, see RegisterType
+	// (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_RegisterType.html).
 	LoggingConfig *LoggingConfig `type:"structure"`
 
 	// For public extensions that have been activated for this account and region,
@@ -12012,7 +11985,8 @@ type DescribeTypeOutput struct {
 
 	// The schema that defines the extension.
 	//
-	// For more information on extension schemas, see Resource Provider Schema (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-schema.html)
+	// For more information about extension schemas, see Resource Provider Schema
+	// (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-schema.html)
 	// in the CloudFormation CLI User Guide.
 	Schema *string `min:"1" type:"string"`
 
@@ -12037,8 +12011,8 @@ type DescribeTypeOutput struct {
 	// extension test status of a specific extension version, you must specify VersionId.
 	//
 	// This applies only to registered private extension versions. CloudFormation
-	// doesn't return this information for public extensions, whether or not they
-	// are activated in your account.
+	// doesn't return this information for public extensions, whether they are activated
+	// in your account.
 	//
 	//    * PASSED: The extension has passed all its contract tests. An extension
 	//    must have a test status of PASSED before it can be published. For more
@@ -12057,8 +12031,8 @@ type DescribeTypeOutput struct {
 	// a specific extension version, you must specify VersionId.
 	//
 	// This applies only to registered private extension versions. CloudFormation
-	// doesn't return this information for public extensions, whether or not they
-	// are activated in your account.
+	// doesn't return this information for public extensions, whether they are activated
+	// in your account.
 	TypeTestsStatusDescription *string `min:"1" type:"string"`
 
 	// The scope at which the extension is visible and usable in CloudFormation
@@ -12071,7 +12045,7 @@ type DescribeTypeOutput struct {
 	//    as PRIVATE.
 	//
 	//    * PUBLIC: The extension is publicly visible and usable within any Amazon
-	//    account.
+	//    Web Services account.
 	Visibility *string `type:"string" enum:"Visibility"`
 }
 
@@ -12593,7 +12567,7 @@ type DetectStackSetDriftInput struct {
 	// The user-specified preferences for how CloudFormation performs a stack set
 	// operation.
 	//
-	// For more information on maximum concurrent accounts and failure tolerance,
+	// For more information about maximum concurrent accounts and failure tolerance,
 	// see Stack set operation options (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-concepts.html#stackset-ops-options).
 	OperationPreferences *StackSetOperationPreferences `type:"structure"`
 
@@ -13147,7 +13121,7 @@ type GetTemplateOutput struct {
 	// and Processed templates are always available. For change sets, the Original
 	// template is always available. After CloudFormation finishes creating the
 	// change set, the Processed template becomes available.
-	StagesAvailable []*string `type:"list"`
+	StagesAvailable []*string `type:"list" enum:"TemplateStage"`
 
 	// Structure containing the template body. (For more information, go to Template
 	// Anatomy (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html)
@@ -13322,7 +13296,7 @@ type GetTemplateSummaryOutput struct {
 	//
 	// For more information, see Acknowledging IAM Resources in CloudFormation Templates
 	// (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities).
-	Capabilities []*string `type:"list"`
+	Capabilities []*string `type:"list" enum:"Capability"`
 
 	// The list of resources that generated the values in the Capabilities response
 	// element.
@@ -13445,7 +13419,7 @@ type ImportStacksToStackSetInput struct {
 	// The user-specified preferences for how CloudFormation performs a stack set
 	// operation.
 	//
-	// For more information on maximum concurrent accounts and failure tolerance,
+	// For more information about maximum concurrent accounts and failure tolerance,
 	// see Stack set operation options (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-concepts.html#stackset-ops-options).
 	OperationPreferences *StackSetOperationPreferences `type:"structure"`
 
@@ -13908,7 +13882,7 @@ type ListStackInstancesInput struct {
 	// set of results.
 	MaxResults *int64 `min:"1" type:"integer"`
 
-	// If the previous request didn't return all of the remaining results, the response's
+	// If the previous request didn't return all the remaining results, the response's
 	// NextToken parameter value is set to a token. To retrieve the next set of
 	// results, call ListStackInstances again and assign that token to the request
 	// object's NextToken parameter. If there are no remaining results, the previous
@@ -14197,7 +14171,7 @@ type ListStackSetOperationResultsInput struct {
 	// set of results.
 	MaxResults *int64 `min:"1" type:"integer"`
 
-	// If the previous request didn't return all of the remaining results, the response
+	// If the previous request didn't return all the remaining results, the response
 	// object's NextToken parameter value is set to a token. To retrieve the next
 	// set of results, call ListStackSetOperationResults again and assign that token
 	// to the request object's NextToken parameter. If there are no remaining results,
@@ -14626,7 +14600,7 @@ type ListStacksInput struct {
 	// Stack status to use as a filter. Specify one or more stack status codes to
 	// list only stacks with the specified status codes. For a complete list of
 	// stack status codes, see the StackStatus parameter of the Stack data type.
-	StackStatusFilter []*string `type:"list"`
+	StackStatusFilter []*string `type:"list" enum:"StackStatus"`
 }
 
 // String returns the string representation.
@@ -14828,10 +14802,10 @@ func (s *ListTypeRegistrationsInput) SetTypeName(v string) *ListTypeRegistration
 type ListTypeRegistrationsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// If the request doesn't return all of the remaining results, NextToken is
-	// set to a token. To retrieve the next set of results, call this action again
-	// and assign that token to the request object's NextToken parameter. If the
-	// request returns all results, NextToken is set to null.
+	// If the request doesn't return all the remaining results, NextToken is set
+	// to a token. To retrieve the next set of results, call this action again and
+	// assign that token to the request object's NextToken parameter. If the request
+	// returns all results, NextToken is set to null.
 	NextToken *string `min:"1" type:"string"`
 
 	// A list of extension registration tokens.
@@ -15076,7 +15050,7 @@ type ListTypesInput struct {
 	// set of results.
 	MaxResults *int64 `min:"1" type:"integer"`
 
-	// If the previous paginated request didn't return all of the remaining results,
+	// If the previous paginated request didn't return all the remaining results,
 	// the response object's NextToken parameter value is set to a token. To retrieve
 	// the next set of results, call this action again and assign that token to
 	// the request object's NextToken parameter. If there are no remaining results,
@@ -15116,8 +15090,8 @@ type ListTypesInput struct {
 	//    account and region.
 	//
 	//    * PUBLIC: Extensions that are publicly visible and available to be activated
-	//    within any Amazon account. This includes extensions from Amazon, as well
-	//    as third-party publishers.
+	//    within any Amazon Web Services account. This includes extensions from
+	//    Amazon Web Services, in addition to third-party publishers.
 	//
 	// The default is PRIVATE.
 	Visibility *string `type:"string" enum:"Visibility"`
@@ -15364,8 +15338,8 @@ func (s *ManagedExecution) SetActive(v bool) *ManagedExecution {
 // Contains information about the module from which the resource was created,
 // if the resource was created from a module included in the stack template.
 //
-// For more information on modules, see Using modules to encapsulate and reuse
-// resource configurations (AWSCloudFormation/latest/UserGuide/modules.html)
+// For more information about modules, see Using modules to encapsulate and
+// reuse resource configurations (AWSCloudFormation/latest/UserGuide/modules.html)
 // in the CloudFormation User Guide.
 type ModuleInfo struct {
 	_ struct{} `type:"structure"`
@@ -15793,7 +15767,7 @@ func (s *PropertyDifference) SetPropertyPath(v string) *PropertyDifference {
 type PublishTypeInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Resource Number (ARN) of the extension.
+	// The Amazon Resource Name (ARN) of the extension.
 	//
 	// Conditional: You must specify Arn, or TypeName and Type.
 	Arn *string `type:"string"`
@@ -15886,7 +15860,7 @@ func (s *PublishTypeInput) SetTypeName(v string) *PublishTypeInput {
 type PublishTypeOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Resource Number (ARN) assigned to the public extension upon publication.
+	// The Amazon Resource Name (ARN) assigned to the public extension upon publication.
 	PublicTypeArn *string `type:"string"`
 }
 
@@ -16158,7 +16132,7 @@ type RegisterTypeInput struct {
 	//
 	// For CloudFormation to assume the specified execution role, the role must
 	// contain a trust relationship with the CloudFormation service principle (resources.cloudformation.amazonaws.com).
-	// For more information on adding trust relationships, see Modifying a role
+	// For more information about adding trust relationships, see Modifying a role
 	// trust policy (IAM/latest/UserGuide/roles-managingrole-editing-console.html#roles-managingrole_edit-trust-policy)
 	// in the Identity and Access Management User Guide.
 	//
@@ -16177,7 +16151,7 @@ type RegisterTypeInput struct {
 	// A URL to the S3 bucket containing the extension project package that contains
 	// the necessary files for the extension you want to register.
 	//
-	// For information on generating a schema handler package for the extension
+	// For information about generating a schema handler package for the extension
 	// you want to register, see submit (https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-cli-submit.html)
 	// in the CloudFormation CLI User Guide.
 	//
@@ -16195,11 +16169,13 @@ type RegisterTypeInput struct {
 
 	// The name of the extension being registered.
 	//
-	// We recommend that extension names adhere to the following patterns:
+	// We suggest that extension names adhere to the following patterns:
 	//
 	//    * For resource types, company_or_organization::service::type.
 	//
 	//    * For modules, company_or_organization::service::type::MODULE.
+	//
+	//    * For hooks, MyCompany::Testing::MyTestHook.
 	//
 	// The following organization namespaces are reserved and can't be used in your
 	// extension names:
@@ -16463,7 +16439,7 @@ type ResourceChange struct {
 	// For the Modify action, indicates which resource attribute is triggering this
 	// update, such as a change in the resource attribute's Metadata, Properties,
 	// or Tags.
-	Scope []*string `type:"list"`
+	Scope []*string `type:"list" enum:"ResourceAttribute"`
 }
 
 // String returns the string representation.
@@ -17598,7 +17574,7 @@ type Stack struct {
 	_ struct{} `type:"structure"`
 
 	// The capabilities allowed in the stack.
-	Capabilities []*string `type:"list"`
+	Capabilities []*string `type:"list" enum:"Capability"`
 
 	// The unique ID of the change set.
 	ChangeSetId *string `min:"1" type:"string"`
@@ -17621,16 +17597,16 @@ type Stack struct {
 	//    * false: enable rollback.
 	DisableRollback *bool `type:"boolean"`
 
-	// Information on whether a stack's actual configuration differs, or has drifted,
-	// from it's expected configuration, as defined in the stack template and any
-	// values specified as template parameters. For more information, see Detecting
-	// Unregulated Configuration Changes to Stacks and Resources (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift.html).
+	// Information about whether a stack's actual configuration differs, or has
+	// drifted, from it's expected configuration, as defined in the stack template
+	// and any values specified as template parameters. For more information, see
+	// Detecting Unregulated Configuration Changes to Stacks and Resources (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift.html).
 	DriftInformation *StackDriftInformation `type:"structure"`
 
 	// Whether termination protection is enabled for the stack.
 	//
 	// For nested stacks (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html),
-	// termination protection is set on the root stack and cannot be changed directly
+	// termination protection is set on the root stack and can't be changed directly
 	// on the nested stack. For more information, see Protecting a Stack From Being
 	// Deleted (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-protect-stacks.html)
 	// in the CloudFormation User Guide.
@@ -19113,8 +19089,8 @@ type StackResourceDriftInformationSummary struct {
 	//    Resources that Support Drift Detection (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift-resource-list.html).
 	//    If you performed an ContinueUpdateRollback operation on a stack, any resources
 	//    included in ResourcesToSkip will also have a status of NOT_CHECKED. For
-	//    more information on skipping resources during rollback operations, see
-	//    Continue Rolling Back an Update (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-continueupdaterollback.html)
+	//    more information about skipping resources during rollback operations,
+	//    see Continue Rolling Back an Update (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-continueupdaterollback.html)
 	//    in the CloudFormation User Guide.
 	//
 	//    * IN_SYNC: The resource's actual configuration matches its expected configuration.
@@ -19271,8 +19247,8 @@ func (s *StackResourceSummary) SetResourceType(v string) *StackResourceSummary {
 type StackSet struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Resource Number (ARN) of the IAM role used to create or update
-	// the stack set.
+	// The Amazon Resource Name (ARN) of the IAM role used to create or update the
+	// stack set.
 	//
 	// Use customized administrator roles to control which users or groups can manage
 	// specific stack sets within the same administrator account. For more information,
@@ -19290,7 +19266,7 @@ type StackSet struct {
 	// account—for example, by creating new Identity and Access Management (IAM)
 	// users. For more information, see Acknowledging IAM Resources in CloudFormation
 	// Templates. (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities)
-	Capabilities []*string `type:"list"`
+	Capabilities []*string `type:"list" enum:"Capability"`
 
 	// A description of the stack set that you specify when the stack set is created
 	// or updated.
@@ -19324,7 +19300,7 @@ type StackSet struct {
 	//    more information, see Grant Service-Managed Stack Set Permissions (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-prereqs-service-managed.html).
 	PermissionModel *string `type:"string" enum:"PermissionModels"`
 
-	// The Amazon Resource Number (ARN) of the stack set.
+	// The Amazon Resource Name (ARN) of the stack set.
 	StackSetARN *string `type:"string"`
 
 	// Detailed information about the drift status of the stack set.
@@ -19623,7 +19599,7 @@ type StackSetOperation struct {
 	// itself, in addition to all associated stack set instances.
 	Action *string `type:"string" enum:"StackSetOperationAction"`
 
-	// The Amazon Resource Number (ARN) of the IAM role used to perform this stack
+	// The Amazon Resource Name (ARN) of the IAM role used to perform this stack
 	// set operation.
 	//
 	// Use customized administrator roles to control which users or groups can manage
@@ -19704,6 +19680,9 @@ type StackSetOperation struct {
 	//    * SUCCEEDED: The operation completed creating or updating all the specified
 	//    stacks without exceeding the failure tolerance for the operation.
 	Status *string `type:"string" enum:"StackSetOperationStatus"`
+
+	// The status of the operation in details.
+	StatusReason *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -19796,10 +19775,16 @@ func (s *StackSetOperation) SetStatus(v string) *StackSetOperation {
 	return s
 }
 
+// SetStatusReason sets the StatusReason field's value.
+func (s *StackSetOperation) SetStatusReason(v string) *StackSetOperation {
+	s.StatusReason = &v
+	return s
+}
+
 // The user-specified preferences for how CloudFormation performs a stack set
 // operation.
 //
-// For more information on maximum concurrent accounts and failure tolerance,
+// For more information about maximum concurrent accounts and failure tolerance,
 // see Stack set operation options (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-concepts.html#stackset-ops-options).
 type StackSetOperationPreferences struct {
 	_ struct{} `type:"structure"`
@@ -20087,6 +20072,9 @@ type StackSetOperationSummary struct {
 	//    * SUCCEEDED: The operation completed creating or updating all the specified
 	//    stacks without exceeding the failure tolerance for the operation.
 	Status *string `type:"string" enum:"StackSetOperationStatus"`
+
+	// The status of the operation in details.
+	StatusReason *string `type:"string"`
 }
 
 // String returns the string representation.
@@ -20134,6 +20122,12 @@ func (s *StackSetOperationSummary) SetOperationId(v string) *StackSetOperationSu
 // SetStatus sets the Status field's value.
 func (s *StackSetOperationSummary) SetStatus(v string) *StackSetOperationSummary {
 	s.Status = &v
+	return s
+}
+
+// SetStatusReason sets the StatusReason field's value.
+func (s *StackSetOperationSummary) SetStatusReason(v string) *StackSetOperationSummary {
+	s.StatusReason = &v
 	return s
 }
 
@@ -20283,7 +20277,7 @@ type StackSummary struct {
 	// The time the stack was deleted.
 	DeletionTime *time.Time `type:"timestamp"`
 
-	// Summarizes information on whether a stack's actual configuration differs,
+	// Summarizes information about whether a stack's actual configuration differs,
 	// or has drifted, from it's expected configuration, as defined in the stack
 	// template and any values specified as template parameters. For more information,
 	// see Detecting Unregulated Configuration Changes to Stacks and Resources (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift.html).
@@ -20817,8 +20811,7 @@ type TypeConfigurationDetails struct {
 	// returns {}.
 	Configuration *string `min:"1" type:"string"`
 
-	// Whether or not this configuration data is the default configuration for the
-	// extension.
+	// Whether this configuration data is the default configuration for the extension.
 	IsDefaultConfiguration *bool `type:"boolean"`
 
 	// When the configuration data was last updated for this extension.
@@ -21091,7 +21084,7 @@ type TypeSummary struct {
 	// The description of the extension.
 	Description *string `min:"1" type:"string"`
 
-	// Whether or not the extension is activated for this account and region.
+	// Whether the extension is activated for this account and region.
 	//
 	// This applies only to third-party public extensions. Extensions published
 	// by Amazon are activated by default.
@@ -21392,7 +21385,7 @@ type UpdateStackInput struct {
 	//    IAM resources, you can specify either capability. If you have IAM resources
 	//    with custom names, you must specify CAPABILITY_NAMED_IAM. If you don't
 	//    specify either of these capabilities, CloudFormation returns an InsufficientCapabilities
-	//    error. If your stack template contains these resources, we recommend that
+	//    error. If your stack template contains these resources, we suggest that
 	//    you review all permissions associated with them and edit their permissions
 	//    if necessary. AWS::IAM::AccessKey (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-iam-accesskey.html)
 	//    AWS::IAM::Group (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-iam-group.html)
@@ -21423,7 +21416,7 @@ type UpdateStackInput struct {
 	//    Be aware that the Lambda function owner can update the function operation
 	//    without CloudFormation being notified. For more information, see Using
 	//    CloudFormation Macros to Perform Custom Processing on Templates (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-macros.html).
-	Capabilities []*string `type:"list"`
+	Capabilities []*string `type:"list" enum:"Capability"`
 
 	// A unique identifier for this UpdateStack request. Specify this token if you
 	// plan to retry requests so that CloudFormation knows that you're not attempting
@@ -21503,7 +21496,7 @@ type UpdateStackInput struct {
 	// parameter, but not both.
 	//
 	// If you want to update protected resources, specify a temporary overriding
-	// stack policy during this update. If you do not specify a stack policy, the
+	// stack policy during this update. If you don't specify a stack policy, the
 	// current policy that is associated with the stack will be used.
 	StackPolicyDuringUpdateBody *string `min:"1" type:"string"`
 
@@ -21513,7 +21506,7 @@ type UpdateStackInput struct {
 	// or the StackPolicyDuringUpdateURL parameter, but not both.
 	//
 	// If you want to update protected resources, specify a temporary overriding
-	// stack policy during this update. If you do not specify a stack policy, the
+	// stack policy during this update. If you don't specify a stack policy, the
 	// current policy that is associated with the stack will be used.
 	StackPolicyDuringUpdateURL *string `min:"1" type:"string"`
 
@@ -22009,7 +22002,7 @@ type UpdateStackSetInput struct {
 	// other stack instances with their existing stack instance status.
 	Accounts []*string `type:"list"`
 
-	// The Amazon Resource Number (ARN) of the IAM role to use to update this stack
+	// The Amazon Resource Name (ARN) of the IAM role to use to update this stack
 	// set.
 	//
 	// Specify an IAM role only if you are using customized administrator roles
@@ -22083,7 +22076,7 @@ type UpdateStackSetInput struct {
 	//    transforms, which are macros hosted by CloudFormation.) Even if you specify
 	//    this capability for a stack set with service-managed permissions, if you
 	//    reference a macro in your template the stack set operation will fail.
-	Capabilities []*string `type:"list"`
+	Capabilities []*string `type:"list" enum:"Capability"`
 
 	// [Service-managed permissions] The Organizations accounts in which to update
 	// associated stack instances.
@@ -22620,7 +22613,7 @@ type ValidateTemplateOutput struct {
 	//
 	// For more information, see Acknowledging IAM Resources in CloudFormation Templates
 	// (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities).
-	Capabilities []*string `type:"list"`
+	Capabilities []*string `type:"list" enum:"Capability"`
 
 	// The list of resources that generated the values in the Capabilities response
 	// element.
@@ -22682,6 +22675,30 @@ func (s *ValidateTemplateOutput) SetDescription(v string) *ValidateTemplateOutpu
 func (s *ValidateTemplateOutput) SetParameters(v []*TemplateParameter) *ValidateTemplateOutput {
 	s.Parameters = v
 	return s
+}
+
+const (
+	// AccountFilterTypeNone is a AccountFilterType enum value
+	AccountFilterTypeNone = "NONE"
+
+	// AccountFilterTypeIntersection is a AccountFilterType enum value
+	AccountFilterTypeIntersection = "INTERSECTION"
+
+	// AccountFilterTypeDifference is a AccountFilterType enum value
+	AccountFilterTypeDifference = "DIFFERENCE"
+
+	// AccountFilterTypeUnion is a AccountFilterType enum value
+	AccountFilterTypeUnion = "UNION"
+)
+
+// AccountFilterType_Values returns all elements of the AccountFilterType enum
+func AccountFilterType_Values() []string {
+	return []string{
+		AccountFilterTypeNone,
+		AccountFilterTypeIntersection,
+		AccountFilterTypeDifference,
+		AccountFilterTypeUnion,
+	}
 }
 
 const (

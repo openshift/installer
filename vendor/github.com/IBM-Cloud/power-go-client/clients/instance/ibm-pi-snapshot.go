@@ -11,19 +11,19 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-// IBMPISnapshotClient ...
+// IBMPISnapshotClient
 type IBMPISnapshotClient struct {
 	IBMPIClient
 }
 
-// NewIBMPISnapshotClient ...
+// NewIBMPISnapshotClient
 func NewIBMPISnapshotClient(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string) *IBMPISnapshotClient {
 	return &IBMPISnapshotClient{
 		*NewIBMPIClient(ctx, sess, cloudInstanceID),
 	}
 }
 
-//Get information about a single snapshot only
+// Get a Snapshot
 func (f *IBMPISnapshotClient) Get(id string) (*models.Snapshot, error) {
 	params := p_cloud_snapshots.NewPcloudCloudinstancesSnapshotsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -38,7 +38,7 @@ func (f *IBMPISnapshotClient) Get(id string) (*models.Snapshot, error) {
 	return resp.Payload, nil
 }
 
-// Delete ...
+// Delete a Snapshot
 func (f *IBMPISnapshotClient) Delete(id string) error {
 	params := p_cloud_snapshots.NewPcloudCloudinstancesSnapshotsDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
@@ -50,7 +50,7 @@ func (f *IBMPISnapshotClient) Delete(id string) error {
 	return nil
 }
 
-// Update ...
+// Update a Snapshot
 func (f *IBMPISnapshotClient) Update(id string, body *models.SnapshotUpdate) (models.Object, error) {
 	params := p_cloud_snapshots.NewPcloudCloudinstancesSnapshotsPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
@@ -66,7 +66,7 @@ func (f *IBMPISnapshotClient) Update(id string, body *models.SnapshotUpdate) (mo
 	return resp.Payload, nil
 }
 
-// GetAll snapshots
+// Get All Snapshots
 func (f *IBMPISnapshotClient) GetAll() (*models.Snapshots, error) {
 	params := p_cloud_snapshots.NewPcloudCloudinstancesSnapshotsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).

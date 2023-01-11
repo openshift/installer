@@ -28,14 +28,13 @@ const opBatchExecuteStatement = "BatchExecuteStatement"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the BatchExecuteStatementRequest method.
+//	req, resp := client.BatchExecuteStatementRequest(params)
 //
-//    // Example sending a request using the BatchExecuteStatementRequest method.
-//    req, resp := client.BatchExecuteStatementRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/BatchExecuteStatement
 func (c *RedshiftDataAPIService) BatchExecuteStatementRequest(input *BatchExecuteStatementInput) (req *request.Request, output *BatchExecuteStatementOutput) {
@@ -60,16 +59,18 @@ func (c *RedshiftDataAPIService) BatchExecuteStatementRequest(input *BatchExecut
 // (DML) or data definition language (DDL). Depending on the authorization method,
 // use one of the following combinations of request parameters:
 //
-//    * Secrets Manager - when connecting to a cluster, specify the Amazon Resource
-//    Name (ARN) of the secret, the database name, and the cluster identifier
-//    that matches the cluster in the secret. When connecting to a serverless
-//    endpoint, specify the Amazon Resource Name (ARN) of the secret and the
-//    database name.
+//   - Secrets Manager - when connecting to a cluster, specify the Amazon Resource
+//     Name (ARN) of the secret, the database name, and the cluster identifier
+//     that matches the cluster in the secret. When connecting to a serverless
+//     workgroup, specify the Amazon Resource Name (ARN) of the secret and the
+//     database name.
 //
-//    * Temporary credentials - when connecting to a cluster, specify the cluster
-//    identifier, the database name, and the database user name. Also, permission
-//    to call the redshift:GetClusterCredentials operation is required. When
-//    connecting to a serverless endpoint, specify the database name.
+//   - Temporary credentials - when connecting to a cluster, specify the cluster
+//     identifier, the database name, and the database user name. Also, permission
+//     to call the redshift:GetClusterCredentials operation is required. When
+//     connecting to a serverless workgroup, specify the workgroup name and database
+//     name. Also, permission to call the redshift-serverless:GetCredentials
+//     operation is required.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -79,14 +80,15 @@ func (c *RedshiftDataAPIService) BatchExecuteStatementRequest(input *BatchExecut
 // API operation BatchExecuteStatement for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * ActiveStatementsExceededException
-//   The number of active statements exceeds the limit.
+//   - ValidationException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * BatchExecuteStatementException
-//   An SQL statement encountered an environmental error while running.
+//   - ActiveStatementsExceededException
+//     The number of active statements exceeds the limit.
+//
+//   - BatchExecuteStatementException
+//     An SQL statement encountered an environmental error while running.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/BatchExecuteStatement
 func (c *RedshiftDataAPIService) BatchExecuteStatement(input *BatchExecuteStatementInput) (*BatchExecuteStatementOutput, error) {
@@ -126,14 +128,13 @@ const opCancelStatement = "CancelStatement"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CancelStatementRequest method.
+//	req, resp := client.CancelStatementRequest(params)
 //
-//    // Example sending a request using the CancelStatementRequest method.
-//    req, resp := client.CancelStatementRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/CancelStatement
 func (c *RedshiftDataAPIService) CancelStatementRequest(input *CancelStatementInput) (req *request.Request, output *CancelStatementOutput) {
@@ -164,17 +165,18 @@ func (c *RedshiftDataAPIService) CancelStatementRequest(input *CancelStatementIn
 // API operation CancelStatement for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * ResourceNotFoundException
-//   The Amazon Redshift Data API operation failed due to a missing resource.
+//   - ValidationException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * InternalServerException
-//   The Amazon Redshift Data API operation failed due to invalid input.
+//   - ResourceNotFoundException
+//     The Amazon Redshift Data API operation failed due to a missing resource.
 //
-//   * DatabaseConnectionException
-//   Connection to a database failed.
+//   - InternalServerException
+//     The Amazon Redshift Data API operation failed due to invalid input.
+//
+//   - DatabaseConnectionException
+//     Connection to a database failed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/CancelStatement
 func (c *RedshiftDataAPIService) CancelStatement(input *CancelStatementInput) (*CancelStatementOutput, error) {
@@ -214,14 +216,13 @@ const opDescribeStatement = "DescribeStatement"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeStatementRequest method.
+//	req, resp := client.DescribeStatementRequest(params)
 //
-//    // Example sending a request using the DescribeStatementRequest method.
-//    req, resp := client.DescribeStatementRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/DescribeStatement
 func (c *RedshiftDataAPIService) DescribeStatementRequest(input *DescribeStatementInput) (req *request.Request, output *DescribeStatementOutput) {
@@ -255,14 +256,15 @@ func (c *RedshiftDataAPIService) DescribeStatementRequest(input *DescribeStateme
 // API operation DescribeStatement for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * ResourceNotFoundException
-//   The Amazon Redshift Data API operation failed due to a missing resource.
+//   - ValidationException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * InternalServerException
-//   The Amazon Redshift Data API operation failed due to invalid input.
+//   - ResourceNotFoundException
+//     The Amazon Redshift Data API operation failed due to a missing resource.
+//
+//   - InternalServerException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/DescribeStatement
 func (c *RedshiftDataAPIService) DescribeStatement(input *DescribeStatementInput) (*DescribeStatementOutput, error) {
@@ -302,14 +304,13 @@ const opDescribeTable = "DescribeTable"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTableRequest method.
+//	req, resp := client.DescribeTableRequest(params)
 //
-//    // Example sending a request using the DescribeTableRequest method.
-//    req, resp := client.DescribeTableRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/DescribeTable
 func (c *RedshiftDataAPIService) DescribeTableRequest(input *DescribeTableInput) (req *request.Request, output *DescribeTableOutput) {
@@ -341,16 +342,18 @@ func (c *RedshiftDataAPIService) DescribeTableRequest(input *DescribeTableInput)
 // the column list. Depending on the authorization method, use one of the following
 // combinations of request parameters:
 //
-//    * Secrets Manager - when connecting to a cluster, specify the Amazon Resource
-//    Name (ARN) of the secret, the database name, and the cluster identifier
-//    that matches the cluster in the secret. When connecting to a serverless
-//    endpoint, specify the Amazon Resource Name (ARN) of the secret and the
-//    database name.
+//   - Secrets Manager - when connecting to a cluster, specify the Amazon Resource
+//     Name (ARN) of the secret, the database name, and the cluster identifier
+//     that matches the cluster in the secret. When connecting to a serverless
+//     workgroup, specify the Amazon Resource Name (ARN) of the secret and the
+//     database name.
 //
-//    * Temporary credentials - when connecting to a cluster, specify the cluster
-//    identifier, the database name, and the database user name. Also, permission
-//    to call the redshift:GetClusterCredentials operation is required. When
-//    connecting to a serverless endpoint, specify the database name.
+//   - Temporary credentials - when connecting to a cluster, specify the cluster
+//     identifier, the database name, and the database user name. Also, permission
+//     to call the redshift:GetClusterCredentials operation is required. When
+//     connecting to a serverless workgroup, specify the workgroup name and database
+//     name. Also, permission to call the redshift-serverless:GetCredentials
+//     operation is required.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -360,14 +363,15 @@ func (c *RedshiftDataAPIService) DescribeTableRequest(input *DescribeTableInput)
 // API operation DescribeTable for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * InternalServerException
-//   The Amazon Redshift Data API operation failed due to invalid input.
+//   - ValidationException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * DatabaseConnectionException
-//   Connection to a database failed.
+//   - InternalServerException
+//     The Amazon Redshift Data API operation failed due to invalid input.
+//
+//   - DatabaseConnectionException
+//     Connection to a database failed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/DescribeTable
 func (c *RedshiftDataAPIService) DescribeTable(input *DescribeTableInput) (*DescribeTableOutput, error) {
@@ -399,15 +403,14 @@ func (c *RedshiftDataAPIService) DescribeTableWithContext(ctx aws.Context, input
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeTable operation.
-//    pageNum := 0
-//    err := client.DescribeTablePages(params,
-//        func(page *redshiftdataapiservice.DescribeTableOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeTable operation.
+//	pageNum := 0
+//	err := client.DescribeTablePages(params,
+//	    func(page *redshiftdataapiservice.DescribeTableOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *RedshiftDataAPIService) DescribeTablePages(input *DescribeTableInput, fn func(*DescribeTableOutput, bool) bool) error {
 	return c.DescribeTablePagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -459,14 +462,13 @@ const opExecuteStatement = "ExecuteStatement"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ExecuteStatementRequest method.
+//	req, resp := client.ExecuteStatementRequest(params)
 //
-//    // Example sending a request using the ExecuteStatementRequest method.
-//    req, resp := client.ExecuteStatementRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/ExecuteStatement
 func (c *RedshiftDataAPIService) ExecuteStatementRequest(input *ExecuteStatementInput) (req *request.Request, output *ExecuteStatementOutput) {
@@ -492,16 +494,18 @@ func (c *RedshiftDataAPIService) ExecuteStatementRequest(input *ExecuteStatement
 // Depending on the authorization method, use one of the following combinations
 // of request parameters:
 //
-//    * Secrets Manager - when connecting to a cluster, specify the Amazon Resource
-//    Name (ARN) of the secret, the database name, and the cluster identifier
-//    that matches the cluster in the secret. When connecting to a serverless
-//    endpoint, specify the Amazon Resource Name (ARN) of the secret and the
-//    database name.
+//   - Secrets Manager - when connecting to a cluster, specify the Amazon Resource
+//     Name (ARN) of the secret, the database name, and the cluster identifier
+//     that matches the cluster in the secret. When connecting to a serverless
+//     workgroup, specify the Amazon Resource Name (ARN) of the secret and the
+//     database name.
 //
-//    * Temporary credentials - when connecting to a cluster, specify the cluster
-//    identifier, the database name, and the database user name. Also, permission
-//    to call the redshift:GetClusterCredentials operation is required. When
-//    connecting to a serverless endpoint, specify the database name.
+//   - Temporary credentials - when connecting to a cluster, specify the cluster
+//     identifier, the database name, and the database user name. Also, permission
+//     to call the redshift:GetClusterCredentials operation is required. When
+//     connecting to a serverless workgroup, specify the workgroup name and database
+//     name. Also, permission to call the redshift-serverless:GetCredentials
+//     operation is required.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -511,14 +515,15 @@ func (c *RedshiftDataAPIService) ExecuteStatementRequest(input *ExecuteStatement
 // API operation ExecuteStatement for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * ExecuteStatementException
-//   The SQL statement encountered an environmental error while running.
+//   - ValidationException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * ActiveStatementsExceededException
-//   The number of active statements exceeds the limit.
+//   - ExecuteStatementException
+//     The SQL statement encountered an environmental error while running.
+//
+//   - ActiveStatementsExceededException
+//     The number of active statements exceeds the limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/ExecuteStatement
 func (c *RedshiftDataAPIService) ExecuteStatement(input *ExecuteStatementInput) (*ExecuteStatementOutput, error) {
@@ -558,14 +563,13 @@ const opGetStatementResult = "GetStatementResult"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetStatementResultRequest method.
+//	req, resp := client.GetStatementResultRequest(params)
 //
-//    // Example sending a request using the GetStatementResultRequest method.
-//    req, resp := client.GetStatementResultRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/GetStatementResult
 func (c *RedshiftDataAPIService) GetStatementResultRequest(input *GetStatementResultInput) (req *request.Request, output *GetStatementResultOutput) {
@@ -603,14 +607,15 @@ func (c *RedshiftDataAPIService) GetStatementResultRequest(input *GetStatementRe
 // API operation GetStatementResult for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * ResourceNotFoundException
-//   The Amazon Redshift Data API operation failed due to a missing resource.
+//   - ValidationException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * InternalServerException
-//   The Amazon Redshift Data API operation failed due to invalid input.
+//   - ResourceNotFoundException
+//     The Amazon Redshift Data API operation failed due to a missing resource.
+//
+//   - InternalServerException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/GetStatementResult
 func (c *RedshiftDataAPIService) GetStatementResult(input *GetStatementResultInput) (*GetStatementResultOutput, error) {
@@ -642,15 +647,14 @@ func (c *RedshiftDataAPIService) GetStatementResultWithContext(ctx aws.Context, 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a GetStatementResult operation.
-//    pageNum := 0
-//    err := client.GetStatementResultPages(params,
-//        func(page *redshiftdataapiservice.GetStatementResultOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a GetStatementResult operation.
+//	pageNum := 0
+//	err := client.GetStatementResultPages(params,
+//	    func(page *redshiftdataapiservice.GetStatementResultOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *RedshiftDataAPIService) GetStatementResultPages(input *GetStatementResultInput, fn func(*GetStatementResultOutput, bool) bool) error {
 	return c.GetStatementResultPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -702,14 +706,13 @@ const opListDatabases = "ListDatabases"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListDatabasesRequest method.
+//	req, resp := client.ListDatabasesRequest(params)
 //
-//    // Example sending a request using the ListDatabasesRequest method.
-//    req, resp := client.ListDatabasesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/ListDatabases
 func (c *RedshiftDataAPIService) ListDatabasesRequest(input *ListDatabasesInput) (req *request.Request, output *ListDatabasesOutput) {
@@ -740,16 +743,18 @@ func (c *RedshiftDataAPIService) ListDatabasesRequest(input *ListDatabasesInput)
 // database list. Depending on the authorization method, use one of the following
 // combinations of request parameters:
 //
-//    * Secrets Manager - when connecting to a cluster, specify the Amazon Resource
-//    Name (ARN) of the secret, the database name, and the cluster identifier
-//    that matches the cluster in the secret. When connecting to a serverless
-//    endpoint, specify the Amazon Resource Name (ARN) of the secret and the
-//    database name.
+//   - Secrets Manager - when connecting to a cluster, specify the Amazon Resource
+//     Name (ARN) of the secret, the database name, and the cluster identifier
+//     that matches the cluster in the secret. When connecting to a serverless
+//     workgroup, specify the Amazon Resource Name (ARN) of the secret and the
+//     database name.
 //
-//    * Temporary credentials - when connecting to a cluster, specify the cluster
-//    identifier, the database name, and the database user name. Also, permission
-//    to call the redshift:GetClusterCredentials operation is required. When
-//    connecting to a serverless endpoint, specify the database name.
+//   - Temporary credentials - when connecting to a cluster, specify the cluster
+//     identifier, the database name, and the database user name. Also, permission
+//     to call the redshift:GetClusterCredentials operation is required. When
+//     connecting to a serverless workgroup, specify the workgroup name and database
+//     name. Also, permission to call the redshift-serverless:GetCredentials
+//     operation is required.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -759,14 +764,15 @@ func (c *RedshiftDataAPIService) ListDatabasesRequest(input *ListDatabasesInput)
 // API operation ListDatabases for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * InternalServerException
-//   The Amazon Redshift Data API operation failed due to invalid input.
+//   - ValidationException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * DatabaseConnectionException
-//   Connection to a database failed.
+//   - InternalServerException
+//     The Amazon Redshift Data API operation failed due to invalid input.
+//
+//   - DatabaseConnectionException
+//     Connection to a database failed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/ListDatabases
 func (c *RedshiftDataAPIService) ListDatabases(input *ListDatabasesInput) (*ListDatabasesOutput, error) {
@@ -798,15 +804,14 @@ func (c *RedshiftDataAPIService) ListDatabasesWithContext(ctx aws.Context, input
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListDatabases operation.
-//    pageNum := 0
-//    err := client.ListDatabasesPages(params,
-//        func(page *redshiftdataapiservice.ListDatabasesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListDatabases operation.
+//	pageNum := 0
+//	err := client.ListDatabasesPages(params,
+//	    func(page *redshiftdataapiservice.ListDatabasesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *RedshiftDataAPIService) ListDatabasesPages(input *ListDatabasesInput, fn func(*ListDatabasesOutput, bool) bool) error {
 	return c.ListDatabasesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -858,14 +863,13 @@ const opListSchemas = "ListSchemas"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListSchemasRequest method.
+//	req, resp := client.ListSchemasRequest(params)
 //
-//    // Example sending a request using the ListSchemasRequest method.
-//    req, resp := client.ListSchemasRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/ListSchemas
 func (c *RedshiftDataAPIService) ListSchemasRequest(input *ListSchemasInput) (req *request.Request, output *ListSchemasOutput) {
@@ -896,16 +900,18 @@ func (c *RedshiftDataAPIService) ListSchemasRequest(input *ListSchemasInput) (re
 // schema list. Depending on the authorization method, use one of the following
 // combinations of request parameters:
 //
-//    * Secrets Manager - when connecting to a cluster, specify the Amazon Resource
-//    Name (ARN) of the secret, the database name, and the cluster identifier
-//    that matches the cluster in the secret. When connecting to a serverless
-//    endpoint, specify the Amazon Resource Name (ARN) of the secret and the
-//    database name.
+//   - Secrets Manager - when connecting to a cluster, specify the Amazon Resource
+//     Name (ARN) of the secret, the database name, and the cluster identifier
+//     that matches the cluster in the secret. When connecting to a serverless
+//     workgroup, specify the Amazon Resource Name (ARN) of the secret and the
+//     database name.
 //
-//    * Temporary credentials - when connecting to a cluster, specify the cluster
-//    identifier, the database name, and the database user name. Also, permission
-//    to call the redshift:GetClusterCredentials operation is required. When
-//    connecting to a serverless endpoint, specify the database name.
+//   - Temporary credentials - when connecting to a cluster, specify the cluster
+//     identifier, the database name, and the database user name. Also, permission
+//     to call the redshift:GetClusterCredentials operation is required. When
+//     connecting to a serverless workgroup, specify the workgroup name and database
+//     name. Also, permission to call the redshift-serverless:GetCredentials
+//     operation is required.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -915,14 +921,15 @@ func (c *RedshiftDataAPIService) ListSchemasRequest(input *ListSchemasInput) (re
 // API operation ListSchemas for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * InternalServerException
-//   The Amazon Redshift Data API operation failed due to invalid input.
+//   - ValidationException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * DatabaseConnectionException
-//   Connection to a database failed.
+//   - InternalServerException
+//     The Amazon Redshift Data API operation failed due to invalid input.
+//
+//   - DatabaseConnectionException
+//     Connection to a database failed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/ListSchemas
 func (c *RedshiftDataAPIService) ListSchemas(input *ListSchemasInput) (*ListSchemasOutput, error) {
@@ -954,15 +961,14 @@ func (c *RedshiftDataAPIService) ListSchemasWithContext(ctx aws.Context, input *
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListSchemas operation.
-//    pageNum := 0
-//    err := client.ListSchemasPages(params,
-//        func(page *redshiftdataapiservice.ListSchemasOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListSchemas operation.
+//	pageNum := 0
+//	err := client.ListSchemasPages(params,
+//	    func(page *redshiftdataapiservice.ListSchemasOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *RedshiftDataAPIService) ListSchemasPages(input *ListSchemasInput, fn func(*ListSchemasOutput, bool) bool) error {
 	return c.ListSchemasPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1014,14 +1020,13 @@ const opListStatements = "ListStatements"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListStatementsRequest method.
+//	req, resp := client.ListStatementsRequest(params)
 //
-//    // Example sending a request using the ListStatementsRequest method.
-//    req, resp := client.ListStatementsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/ListStatements
 func (c *RedshiftDataAPIService) ListStatementsRequest(input *ListStatementsInput) (req *request.Request, output *ListStatementsOutput) {
@@ -1059,11 +1064,12 @@ func (c *RedshiftDataAPIService) ListStatementsRequest(input *ListStatementsInpu
 // API operation ListStatements for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * InternalServerException
-//   The Amazon Redshift Data API operation failed due to invalid input.
+//   - ValidationException
+//     The Amazon Redshift Data API operation failed due to invalid input.
+//
+//   - InternalServerException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/ListStatements
 func (c *RedshiftDataAPIService) ListStatements(input *ListStatementsInput) (*ListStatementsOutput, error) {
@@ -1095,15 +1101,14 @@ func (c *RedshiftDataAPIService) ListStatementsWithContext(ctx aws.Context, inpu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListStatements operation.
-//    pageNum := 0
-//    err := client.ListStatementsPages(params,
-//        func(page *redshiftdataapiservice.ListStatementsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListStatements operation.
+//	pageNum := 0
+//	err := client.ListStatementsPages(params,
+//	    func(page *redshiftdataapiservice.ListStatementsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *RedshiftDataAPIService) ListStatementsPages(input *ListStatementsInput, fn func(*ListStatementsOutput, bool) bool) error {
 	return c.ListStatementsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1155,14 +1160,13 @@ const opListTables = "ListTables"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTablesRequest method.
+//	req, resp := client.ListTablesRequest(params)
 //
-//    // Example sending a request using the ListTablesRequest method.
-//    req, resp := client.ListTablesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/ListTables
 func (c *RedshiftDataAPIService) ListTablesRequest(input *ListTablesInput) (req *request.Request, output *ListTablesOutput) {
@@ -1194,16 +1198,18 @@ func (c *RedshiftDataAPIService) ListTablesRequest(input *ListTablesInput) (req 
 // to page through the table list. Depending on the authorization method, use
 // one of the following combinations of request parameters:
 //
-//    * Secrets Manager - when connecting to a cluster, specify the Amazon Resource
-//    Name (ARN) of the secret, the database name, and the cluster identifier
-//    that matches the cluster in the secret. When connecting to a serverless
-//    endpoint, specify the Amazon Resource Name (ARN) of the secret and the
-//    database name.
+//   - Secrets Manager - when connecting to a cluster, specify the Amazon Resource
+//     Name (ARN) of the secret, the database name, and the cluster identifier
+//     that matches the cluster in the secret. When connecting to a serverless
+//     workgroup, specify the Amazon Resource Name (ARN) of the secret and the
+//     database name.
 //
-//    * Temporary credentials - when connecting to a cluster, specify the cluster
-//    identifier, the database name, and the database user name. Also, permission
-//    to call the redshift:GetClusterCredentials operation is required. When
-//    connecting to a serverless endpoint, specify the database name.
+//   - Temporary credentials - when connecting to a cluster, specify the cluster
+//     identifier, the database name, and the database user name. Also, permission
+//     to call the redshift:GetClusterCredentials operation is required. When
+//     connecting to a serverless workgroup, specify the workgroup name and database
+//     name. Also, permission to call the redshift-serverless:GetCredentials
+//     operation is required.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1213,14 +1219,15 @@ func (c *RedshiftDataAPIService) ListTablesRequest(input *ListTablesInput) (req 
 // API operation ListTables for usage and error information.
 //
 // Returned Error Types:
-//   * ValidationException
-//   The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * InternalServerException
-//   The Amazon Redshift Data API operation failed due to invalid input.
+//   - ValidationException
+//     The Amazon Redshift Data API operation failed due to invalid input.
 //
-//   * DatabaseConnectionException
-//   Connection to a database failed.
+//   - InternalServerException
+//     The Amazon Redshift Data API operation failed due to invalid input.
+//
+//   - DatabaseConnectionException
+//     Connection to a database failed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/redshift-data-2019-12-20/ListTables
 func (c *RedshiftDataAPIService) ListTables(input *ListTablesInput) (*ListTablesOutput, error) {
@@ -1252,15 +1259,14 @@ func (c *RedshiftDataAPIService) ListTablesWithContext(ctx aws.Context, input *L
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTables operation.
-//    pageNum := 0
-//    err := client.ListTablesPages(params,
-//        func(page *redshiftdataapiservice.ListTablesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTables operation.
+//	pageNum := 0
+//	err := client.ListTablesPages(params,
+//	    func(page *redshiftdataapiservice.ListTablesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *RedshiftDataAPIService) ListTablesPages(input *ListTablesInput, fn func(*ListTablesOutput, bool) bool) error {
 	return c.ListTablesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1462,6 +1468,11 @@ type BatchExecuteStatementInput struct {
 	// A value that indicates whether to send an event to the Amazon EventBridge
 	// event bus after the SQL statements run.
 	WithEvent *bool `type:"boolean"`
+
+	// The serverless workgroup name. This parameter is required when connecting
+	// to a serverless workgroup and authenticating using either Secrets Manager
+	// or temporary credentials.
+	WorkgroupName *string `min:"3" type:"string"`
 }
 
 // String returns the string representation.
@@ -1493,6 +1504,9 @@ func (s *BatchExecuteStatementInput) Validate() error {
 	}
 	if s.Sqls != nil && len(s.Sqls) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Sqls", 1))
+	}
+	if s.WorkgroupName != nil && len(*s.WorkgroupName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("WorkgroupName", 3))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -1543,11 +1557,17 @@ func (s *BatchExecuteStatementInput) SetWithEvent(v bool) *BatchExecuteStatement
 	return s
 }
 
+// SetWorkgroupName sets the WorkgroupName field's value.
+func (s *BatchExecuteStatementInput) SetWorkgroupName(v string) *BatchExecuteStatementInput {
+	s.WorkgroupName = &v
+	return s
+}
+
 type BatchExecuteStatementOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The cluster identifier. This parameter is not returned when connecting to
-	// a serverless endpoint.
+	// The cluster identifier. This element is not returned when connecting to a
+	// serverless workgroup.
 	ClusterIdentifier *string `type:"string"`
 
 	// The date and time (UTC) the statement was created.
@@ -1566,6 +1586,10 @@ type BatchExecuteStatementOutput struct {
 
 	// The name or ARN of the secret that enables access to the database.
 	SecretArn *string `type:"string"`
+
+	// The serverless workgroup name. This element is not returned when connecting
+	// to a provisioned cluster.
+	WorkgroupName *string `min:"3" type:"string"`
 }
 
 // String returns the string representation.
@@ -1619,6 +1643,12 @@ func (s *BatchExecuteStatementOutput) SetId(v string) *BatchExecuteStatementOutp
 // SetSecretArn sets the SecretArn field's value.
 func (s *BatchExecuteStatementOutput) SetSecretArn(v string) *BatchExecuteStatementOutput {
 	s.SecretArn = &v
+	return s
+}
+
+// SetWorkgroupName sets the WorkgroupName field's value.
+func (s *BatchExecuteStatementOutput) SetWorkgroupName(v string) *BatchExecuteStatementOutput {
+	s.WorkgroupName = &v
 	return s
 }
 
@@ -2040,6 +2070,9 @@ type DescribeStatementOutput struct {
 	// The date and time (UTC) that the metadata for the SQL statement was last
 	// updated. An example is the time the status last changed.
 	UpdatedAt *time.Time `type:"timestamp"`
+
+	// The serverless workgroup name.
+	WorkgroupName *string `min:"3" type:"string"`
 }
 
 // String returns the string representation.
@@ -2168,6 +2201,12 @@ func (s *DescribeStatementOutput) SetUpdatedAt(v time.Time) *DescribeStatementOu
 	return s
 }
 
+// SetWorkgroupName sets the WorkgroupName field's value.
+func (s *DescribeStatementOutput) SetWorkgroupName(v string) *DescribeStatementOutput {
+	s.WorkgroupName = &v
+	return s
+}
+
 type DescribeTableInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2214,6 +2253,11 @@ type DescribeTableInput struct {
 	// schemas are returned. If no table and no schema is specified, then all tables
 	// for all schemas in the database are returned
 	Table *string `type:"string"`
+
+	// The serverless workgroup name. This parameter is required when connecting
+	// to a serverless workgroup and authenticating using either Secrets Manager
+	// or temporary credentials.
+	WorkgroupName *string `min:"3" type:"string"`
 }
 
 // String returns the string representation.
@@ -2239,6 +2283,9 @@ func (s *DescribeTableInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "DescribeTableInput"}
 	if s.Database == nil {
 		invalidParams.Add(request.NewErrParamRequired("Database"))
+	}
+	if s.WorkgroupName != nil && len(*s.WorkgroupName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("WorkgroupName", 3))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -2298,6 +2345,12 @@ func (s *DescribeTableInput) SetSecretArn(v string) *DescribeTableInput {
 // SetTable sets the Table field's value.
 func (s *DescribeTableInput) SetTable(v string) *DescribeTableInput {
 	s.Table = &v
+	return s
+}
+
+// SetWorkgroupName sets the WorkgroupName field's value.
+func (s *DescribeTableInput) SetWorkgroupName(v string) *DescribeTableInput {
+	s.WorkgroupName = &v
 	return s
 }
 
@@ -2460,6 +2513,11 @@ type ExecuteStatementInput struct {
 	// A value that indicates whether to send an event to the Amazon EventBridge
 	// event bus after the SQL statement runs.
 	WithEvent *bool `type:"boolean"`
+
+	// The serverless workgroup name. This parameter is required when connecting
+	// to a serverless workgroup and authenticating using either Secrets Manager
+	// or temporary credentials.
+	WorkgroupName *string `min:"3" type:"string"`
 }
 
 // String returns the string representation.
@@ -2491,6 +2549,9 @@ func (s *ExecuteStatementInput) Validate() error {
 	}
 	if s.Sql == nil {
 		invalidParams.Add(request.NewErrParamRequired("Sql"))
+	}
+	if s.WorkgroupName != nil && len(*s.WorkgroupName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("WorkgroupName", 3))
 	}
 	if s.Parameters != nil {
 		for i, v := range s.Parameters {
@@ -2557,11 +2618,17 @@ func (s *ExecuteStatementInput) SetWithEvent(v bool) *ExecuteStatementInput {
 	return s
 }
 
+// SetWorkgroupName sets the WorkgroupName field's value.
+func (s *ExecuteStatementInput) SetWorkgroupName(v string) *ExecuteStatementInput {
+	s.WorkgroupName = &v
+	return s
+}
+
 type ExecuteStatementOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The cluster identifier. This parameter is not returned when connecting to
-	// a serverless endpoint.
+	// The cluster identifier. This element is not returned when connecting to a
+	// serverless workgroup.
 	ClusterIdentifier *string `type:"string"`
 
 	// The date and time (UTC) the statement was created.
@@ -2580,6 +2647,10 @@ type ExecuteStatementOutput struct {
 
 	// The name or ARN of the secret that enables access to the database.
 	SecretArn *string `type:"string"`
+
+	// The serverless workgroup name. This element is not returned when connecting
+	// to a provisioned cluster.
+	WorkgroupName *string `min:"3" type:"string"`
 }
 
 // String returns the string representation.
@@ -2633,6 +2704,12 @@ func (s *ExecuteStatementOutput) SetId(v string) *ExecuteStatementOutput {
 // SetSecretArn sets the SecretArn field's value.
 func (s *ExecuteStatementOutput) SetSecretArn(v string) *ExecuteStatementOutput {
 	s.SecretArn = &v
+	return s
+}
+
+// SetWorkgroupName sets the WorkgroupName field's value.
+func (s *ExecuteStatementOutput) SetWorkgroupName(v string) *ExecuteStatementOutput {
+	s.WorkgroupName = &v
 	return s
 }
 
@@ -2941,6 +3018,11 @@ type ListDatabasesInput struct {
 	// The name or ARN of the secret that enables access to the database. This parameter
 	// is required when authenticating using Secrets Manager.
 	SecretArn *string `type:"string"`
+
+	// The serverless workgroup name. This parameter is required when connecting
+	// to a serverless workgroup and authenticating using either Secrets Manager
+	// or temporary credentials.
+	WorkgroupName *string `min:"3" type:"string"`
 }
 
 // String returns the string representation.
@@ -2966,6 +3048,9 @@ func (s *ListDatabasesInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ListDatabasesInput"}
 	if s.Database == nil {
 		invalidParams.Add(request.NewErrParamRequired("Database"))
+	}
+	if s.WorkgroupName != nil && len(*s.WorkgroupName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("WorkgroupName", 3))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -3007,6 +3092,12 @@ func (s *ListDatabasesInput) SetNextToken(v string) *ListDatabasesInput {
 // SetSecretArn sets the SecretArn field's value.
 func (s *ListDatabasesInput) SetSecretArn(v string) *ListDatabasesInput {
 	s.SecretArn = &v
+	return s
+}
+
+// SetWorkgroupName sets the WorkgroupName field's value.
+func (s *ListDatabasesInput) SetWorkgroupName(v string) *ListDatabasesInput {
+	s.WorkgroupName = &v
 	return s
 }
 
@@ -3096,6 +3187,11 @@ type ListSchemasInput struct {
 	// The name or ARN of the secret that enables access to the database. This parameter
 	// is required when authenticating using Secrets Manager.
 	SecretArn *string `type:"string"`
+
+	// The serverless workgroup name. This parameter is required when connecting
+	// to a serverless workgroup and authenticating using either Secrets Manager
+	// or temporary credentials.
+	WorkgroupName *string `min:"3" type:"string"`
 }
 
 // String returns the string representation.
@@ -3121,6 +3217,9 @@ func (s *ListSchemasInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ListSchemasInput"}
 	if s.Database == nil {
 		invalidParams.Add(request.NewErrParamRequired("Database"))
+	}
+	if s.WorkgroupName != nil && len(*s.WorkgroupName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("WorkgroupName", 3))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -3174,6 +3273,12 @@ func (s *ListSchemasInput) SetSchemaPattern(v string) *ListSchemasInput {
 // SetSecretArn sets the SecretArn field's value.
 func (s *ListSchemasInput) SetSecretArn(v string) *ListSchemasInput {
 	s.SecretArn = &v
+	return s
+}
+
+// SetWorkgroupName sets the WorkgroupName field's value.
+func (s *ListSchemasInput) SetWorkgroupName(v string) *ListSchemasInput {
+	s.WorkgroupName = &v
 	return s
 }
 
@@ -3416,6 +3521,11 @@ type ListTablesInput struct {
 	// neither SchemaPattern or TablePattern are specified, then all tables are
 	// returned.
 	TablePattern *string `type:"string"`
+
+	// The serverless workgroup name. This parameter is required when connecting
+	// to a serverless workgroup and authenticating using either Secrets Manager
+	// or temporary credentials.
+	WorkgroupName *string `min:"3" type:"string"`
 }
 
 // String returns the string representation.
@@ -3441,6 +3551,9 @@ func (s *ListTablesInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ListTablesInput"}
 	if s.Database == nil {
 		invalidParams.Add(request.NewErrParamRequired("Database"))
+	}
+	if s.WorkgroupName != nil && len(*s.WorkgroupName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("WorkgroupName", 3))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -3500,6 +3613,12 @@ func (s *ListTablesInput) SetSecretArn(v string) *ListTablesInput {
 // SetTablePattern sets the TablePattern field's value.
 func (s *ListTablesInput) SetTablePattern(v string) *ListTablesInput {
 	s.TablePattern = &v
+	return s
+}
+
+// SetWorkgroupName sets the WorkgroupName field's value.
+func (s *ListTablesInput) SetWorkgroupName(v string) *ListTablesInput {
+	s.WorkgroupName = &v
 	return s
 }
 

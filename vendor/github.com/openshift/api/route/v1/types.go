@@ -228,8 +228,7 @@ type RouteIngressCondition struct {
 // generate host names and routing table entries when a routing shard is
 // allocated for a specific route.
 // Caveat: This is WIP and will likely undergo modifications when sharding
-//
-//	support is added.
+// support is added.
 type RouterShard struct {
 	// shardName uniquely identifies a router shard in the "set" of
 	// routers used for routing traffic to the services.

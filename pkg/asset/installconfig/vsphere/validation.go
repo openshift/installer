@@ -3,16 +3,18 @@ package vsphere
 import (
 	"context"
 	"fmt"
+	"net"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25"
 	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -20,7 +22,6 @@ import (
 )
 
 type validationContext struct {
-	User        string
 	AuthManager AuthManager
 	Finder      Finder
 	Client      *vim25.Client
@@ -49,7 +50,6 @@ func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConf
 			}
 
 			validationCtx := validationContext{
-				User:        vcenter.Username,
 				AuthManager: newAuthManager(vim25Client),
 				Finder:      find.NewFinder(vim25Client),
 				Client:      vim25Client,
@@ -66,6 +66,27 @@ func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConf
 // infrastructure for vSphere clusters.
 func ValidateMultiZoneForProvisioning(ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
+
+	err := ValidateForProvisioning(ic)
+	if err != nil {
+		return err
+	}
+
+	// If APIVIPs and IngressVIPs is equal to zero
+	// then don't validate the VIPs.
+	// Instead, ensure there is a configured
+	// DNS record for api and test if the load
+	// balancer is configured.
+
+	// The VIP parameters within the Infrastructure status object
+	// will be empty. This will cause MCO to not deploy
+	// the static pods: haproxy, keepalived and coredns.
+	// This will allow the use of an external load balancer
+	// and RHCOS nodes to be on multiple L2 segments.
+	if len(ic.Platform.VSphere.APIVIPs) == 0 && len(ic.Platform.VSphere.IngressVIPs) == 0 {
+		allErrs = append(allErrs, ensureLoadBalancerDNS(ic, field.NewPath("platform"))...)
+	}
+
 	var clients = make(map[string]*validationContext, 0)
 	for _, failureDomain := range ic.VSphere.FailureDomains {
 		if _, exists := clients[failureDomain.Server]; !exists {
@@ -85,9 +106,13 @@ func ValidateMultiZoneForProvisioning(ic *types.InstallConfig) error {
 
 func validateMultiZoneProvisioning(validationCtx *validationContext, failureDomain *vsphere.FailureDomain) field.ErrorList {
 	allErrs := field.ErrorList{}
+	checkDatacenterPrivileges := true
+	checkComputeClusterPrivileges := true
+
 	resourcePool := fmt.Sprintf("%s/Resources", failureDomain.Topology.ComputeCluster)
 	if len(failureDomain.Topology.ResourcePool) != 0 {
 		resourcePool = failureDomain.Topology.ResourcePool
+		checkComputeClusterPrivileges = false
 	}
 
 	vsphereField := field.NewPath("platform").Child("vsphere")
@@ -97,6 +122,7 @@ func validateMultiZoneProvisioning(validationCtx *validationContext, failureDoma
 
 	if len(failureDomain.Topology.Folder) > 0 {
 		allErrs = append(allErrs, folderExists(validationCtx, failureDomain.Topology.Folder, topologyField.Child("folder"))...)
+		checkDatacenterPrivileges = false
 	}
 
 	computeCluster := failureDomain.Topology.ComputeCluster
@@ -110,11 +136,11 @@ func validateMultiZoneProvisioning(validationCtx *validationContext, failureDoma
 	if len(errs) > 0 {
 		return append(allErrs, errs...)
 	}
-	errs = computeClusterExists(validationCtx, computeCluster, topologyField.Child("computeCluster"))
+	errs = computeClusterExists(validationCtx, computeCluster, topologyField.Child("computeCluster"), checkComputeClusterPrivileges)
 	if len(errs) > 0 {
 		return append(allErrs, errs...)
 	}
-	errs = datacenterExists(validationCtx, failureDomain.Topology.Datacenter, topologyField.Child("datacenter"))
+	errs = datacenterExists(validationCtx, failureDomain.Topology.Datacenter, topologyField.Child("datacenter"), checkDatacenterPrivileges)
 	if len(errs) > 0 {
 		return append(allErrs, errs...)
 	}
@@ -151,10 +177,16 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 
 	finder := NewFinder(vim25Client)
 	validationCtx := &validationContext{
-		User:        ic.VSphere.Username,
-		AuthManager: object.NewAuthorizationManager(vim25Client),
+		AuthManager: newAuthManager(vim25Client),
 		Finder:      finder,
 		Client:      vim25Client,
+	}
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
+	err = pruneToAvailablePermissions(ctx, validationCtx.AuthManager)
+	if err != nil {
+		return errors.New(field.InternalError(field.NewPath("platform", "vsphere"), errors.Wrapf(err, "unable to determine available vCenter privileges.")).Error())
 	}
 
 	return validateProvisioning(validationCtx, ic)
@@ -164,6 +196,8 @@ func validateProvisioning(validationCtx *validationContext, ic *types.InstallCon
 	allErrs := field.ErrorList{}
 	platform := ic.Platform.VSphere
 	vsphereField := field.NewPath("platform").Child("vsphere")
+	checkDatacenterPrivileges := ic.VSphere.Folder == ""
+	checkComputeClusterPrivileges := ic.VSphere.ResourcePool == ""
 	allErrs = append(allErrs, validation.ValidateForProvisioning(platform, vsphereField)...)
 	allErrs = append(allErrs, validateVcenterPrivileges(validationCtx, vsphereField.Child("vcenter"))...)
 	allErrs = append(allErrs, folderExists(validationCtx, ic.VSphere.Folder, vsphereField.Child("folder"))...)
@@ -171,7 +205,7 @@ func validateProvisioning(validationCtx *validationContext, ic *types.InstallCon
 
 	// if the datacenter or cluster fail to be found or is missing privileges, this will cascade through the balance
 	// of checks.  exit if they fail to limit multiple errors from being thrown.
-	errs := datacenterExists(validationCtx, platform.Datacenter, vsphereField.Child("datacenter"))
+	errs := datacenterExists(validationCtx, platform.Datacenter, vsphereField.Child("datacenter"), checkDatacenterPrivileges)
 	if len(errs) > 0 {
 		allErrs = append(allErrs, errs...)
 		return allErrs.ToAggregate()
@@ -185,7 +219,7 @@ func validateProvisioning(validationCtx *validationContext, ic *types.InstallCon
 	if len(clusterPathParts) < 3 {
 		computeCluster = fmt.Sprintf("/%s/host/%s", platform.Datacenter, computeCluster)
 	}
-	errs = computeClusterExists(validationCtx, computeCluster, vsphereField.Child("cluster"))
+	errs = computeClusterExists(validationCtx, computeCluster, vsphereField.Child("cluster"), checkComputeClusterPrivileges)
 	if len(errs) > 0 {
 		allErrs = append(allErrs, errs...)
 		return allErrs.ToAggregate()
@@ -262,7 +296,7 @@ func validateNetwork(validationCtx *validationContext, datacenterName string, cl
 }
 
 // resourcePoolExists returns an error if a resourcePool is specified in the vSphere platform but a resourcePool with that name is not found in the datacenter.
-func computeClusterExists(validationCtx *validationContext, computeCluster string, fldPath *field.Path) field.ErrorList {
+func computeClusterExists(validationCtx *validationContext, computeCluster string, fldPath *field.Path, checkPrivileges bool) field.ErrorList {
 	if computeCluster == "" {
 		return field.ErrorList{field.Required(fldPath, "must specify the cluster")}
 	}
@@ -274,11 +308,14 @@ func computeClusterExists(validationCtx *validationContext, computeCluster strin
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, computeCluster, err.Error())}
 	}
-	permissionGroup := permissions[permissionCluster]
-	err = comparePrivileges(ctx, validationCtx, computeClusterMo.Reference(), permissionGroup)
 
-	if err != nil {
-		return field.ErrorList{field.InternalError(fldPath, err)}
+	if checkPrivileges {
+		permissionGroup := permissions[permissionCluster]
+		err = comparePrivileges(ctx, validationCtx, computeClusterMo.Reference(), permissionGroup)
+
+		if err != nil {
+			return field.ErrorList{field.InternalError(fldPath, err)}
+		}
 	}
 
 	return field.ErrorList{}
@@ -305,12 +342,13 @@ func resourcePoolExists(validationCtx *validationContext, resourcePool string, f
 	if err != nil {
 		return field.ErrorList{field.InternalError(fldPath, err)}
 	}
+
 	return field.ErrorList{}
 }
 
 // datacenterExists returns an error if a datacenter is specified in the vSphere platform but a datacenter with that
 // name is not found in the datacenter or the user does not hold adequate privileges for the datacenter.
-func datacenterExists(validationCtx *validationContext, datacenterName string, fldPath *field.Path) field.ErrorList {
+func datacenterExists(validationCtx *validationContext, datacenterName string, fldPath *field.Path, checkPrivileges bool) field.ErrorList {
 	finder := validationCtx.Finder
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
@@ -320,10 +358,12 @@ func datacenterExists(validationCtx *validationContext, datacenterName string, f
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, datacenterName, err.Error())}
 	}
-	permissionGroup := permissions[permissionDatacenter]
-	err = comparePrivileges(ctx, validationCtx, dataCenter.Reference(), permissionGroup)
-	if err != nil {
-		return field.ErrorList{field.InternalError(fldPath, err)}
+	if checkPrivileges {
+		permissionGroup := permissions[permissionDatacenter]
+		err = comparePrivileges(ctx, validationCtx, dataCenter.Reference(), permissionGroup)
+		if err != nil {
+			return field.ErrorList{field.InternalError(fldPath, err)}
+		}
 	}
 	return field.ErrorList{}
 }
@@ -385,4 +425,60 @@ func validateVcenterPrivileges(validationCtx *validationContext, fldPath *field.
 		return field.ErrorList{field.InternalError(fldPath, err)}
 	}
 	return field.ErrorList{}
+}
+
+func ensureLoadBalancerDNS(installConfig *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	var lastErr error
+	var uris []string
+	dialTimeout := time.Second
+	tcpTimeout := time.Second * 10
+	errorCount := 0
+	errList := field.ErrorList{}
+	tcpContext, cancel := context.WithTimeout(context.TODO(), tcpTimeout)
+	defer cancel()
+
+	uris = append(uris, fmt.Sprintf("api.%s", installConfig.ClusterDomain()))
+	uris = append(uris, fmt.Sprintf("api-int.%s", installConfig.ClusterDomain()))
+
+	apiURIPort := fmt.Sprintf("%s:%s", uris[0], "6443")
+
+	// DNS lookup uri
+	for _, u := range uris {
+		logrus.Debugf("Performing DNS Lookup: %s", u)
+		_, err := net.LookupHost(u)
+		// Append error if DNS entry does not exist
+		if err != nil {
+			errList = append(errList, field.Invalid(fldPath, u, err.Error()))
+		}
+	}
+
+	// If the load balancer is configured properly even
+	// without members we should be available to make
+	// a connection to port 6443. Check for 10 seconds
+	// emit debug message every 2 failures. If unavailable
+	// after timeout emit warning only.
+	wait.Until(func() {
+		conn, err := net.DialTimeout("tcp", apiURIPort, dialTimeout)
+		if err == nil {
+			conn.Close()
+			cancel()
+		} else {
+			lastErr = err
+			if errorCount == 2 {
+				logrus.Debug("Still waiting for load balancer...")
+				errorCount = 0
+			} else {
+				errorCount++
+			}
+		}
+	}, 2*time.Second, tcpContext.Done())
+
+	err := tcpContext.Err()
+	if err != nil && !errors.Is(err, context.Canceled) {
+		if lastErr != nil {
+			logrus.Warnf("Installation may fail, load balancer not available: %v", lastErr)
+		}
+	}
+
+	return errList
 }

@@ -4,22 +4,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	"github.com/ghodss/yaml"
-	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
-	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
-	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
+	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
+	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
+	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -30,6 +33,7 @@ import (
 	aztypes "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
@@ -66,6 +70,10 @@ import (
 )
 
 const (
+	// GCPFirewallPermission is the role/permission to create or skip the creation of
+	// firewall rules for GCP during an xpn installation.
+	GCPFirewallPermission = "compute.firewalls.create"
+
 	// TfVarsFileName is the filename for Terraform variables.
 	TfVarsFileName = "terraform.tfvars.json"
 
@@ -97,6 +105,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
+		new(rhcos.Release),
 		new(rhcos.BootstrapImage),
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
@@ -119,9 +128,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	workersAsset := &machines.Worker{}
 	manifestsAsset := &manifests.Manifests{}
 	rhcosImage := new(rhcos.Image)
+	rhcosRelease := new(rhcos.Release)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
 	ironicCreds := &baremetalbootstrap.IronicCreds{}
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosBootstrapImage, ironicCreds)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosRelease, rhcosBootstrapImage, ironicCreds)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -359,12 +369,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				MasterConfigs:                   masterConfigs,
 				WorkerConfigs:                   workerConfigs,
 				ImageURL:                        string(*rhcosImage),
+				ImageRelease:                    rhcosRelease.GetAzureReleaseVersion(),
 				PreexistingNetwork:              preexistingnetwork,
 				Publish:                         installConfig.Config.Publish,
 				OutboundType:                    installConfig.Config.Azure.OutboundType,
 				BootstrapIgnStub:                bootstrapIgnStub,
 				BootstrapIgnitionURLPlaceholder: bootstrapIgnURLPlaceholder,
 				HyperVGeneration:                hyperVGeneration,
+				VMArchitecture:                  installConfig.Config.ControlPlane.Architecture,
 			},
 		)
 		if err != nil {
@@ -375,14 +387,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case gcp.Name:
-		var publicZoneName string
 		sess, err := gcpconfig.GetSession(ctx)
 		if err != nil {
 			return err
 		}
 
 		instanceServiceAccount := ""
-		if installConfig.Config.CredentialsMode == types.PassthroughCredentialsMode {
+
+		// Passthrough service accounts are only needed for GCP XPN.
+		ic := installConfig.Config
+		if len(ic.GCP.NetworkProjectID) > 0 && ic.CredentialsMode == types.PassthroughCredentialsMode {
 			var found bool
 			serviceAccount := make(map[string]interface{})
 			err := json.Unmarshal([]byte(sess.Credentials.JSON), &serviceAccount)
@@ -401,6 +415,22 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			ServiceAccount:   string(sess.Credentials.JSON),
 		}
 
+		// In the case of a shared vpn, the firewall rules should only be created if the user has permissions to do so
+		createFirewallRules := true
+		if installConfig.Config.GCP.NetworkProjectID != "" {
+			client, err := gcpconfig.NewClient(context.Background())
+			if err != nil {
+				return err
+			}
+			permissions, err := client.GetProjectPermissions(context.Background(), installConfig.Config.GCP.NetworkProjectID, []string{
+				GCPFirewallPermission,
+			})
+			if err != nil {
+				return err
+			}
+			createFirewallRules = permissions.Has(GCPFirewallPermission)
+		}
+
 		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
@@ -417,18 +447,34 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec)
 		}
-		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-			publicZone, err := gcpconfig.GetPublicZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
+		preexistingnetwork := installConfig.Config.GCP.Network != ""
+
+		// Setup defaults for public dns zone
+		createPublicZoneRecords := true
+		publicZoneName := ""
+		publicZoneProject := installConfig.Config.GCP.ProjectID
+		if installConfig.Config.GCP.PublicDNSZone != nil && installConfig.Config.GCP.PublicDNSZone.ProjectID != "" {
+			publicZoneProject = installConfig.Config.GCP.PublicDNSZone.ProjectID
+		}
+
+		switch {
+		case installConfig.Config.Publish != types.ExternalPublishingStrategy:
+			// Do not create public records when not publishing externally.
+			createPublicZoneRecords = false
+		case installConfig.Config.GCP.PublicDNSZone != nil && installConfig.Config.GCP.PublicDNSZone.ID != "":
+			publicZoneName = installConfig.Config.GCP.PublicDNSZone.ID
+		default:
+			// Search the project for a dns zone with the specified base domain.
+			publicZone, err := gcpconfig.GetPublicZone(ctx, publicZoneProject, installConfig.Config.BaseDomain)
 			if err != nil {
 				return errors.Wrapf(err, "failed to get GCP public zone")
 			}
 			publicZoneName = publicZone.Name
 		}
-		preexistingnetwork := installConfig.Config.GCP.Network != ""
 
-		createFirewallRules := true
-		if installConfig.Config.GCP.CreateFirewallRules == gcp.CreateFirewallRulesDisabled {
-			createFirewallRules = false
+		privateZoneProject := ""
+		if installConfig.Config.GCP.PrivateDNSZone != nil && installConfig.Config.GCP.PrivateDNSZone.ProjectID != "" {
+			privateZoneProject = installConfig.Config.GCP.PrivateDNSZone.ProjectID
 		}
 
 		archName := coreosarch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
@@ -451,16 +497,19 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		imageURL := fmt.Sprintf("https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz", img.Name)
 		data, err := gcptfvars.TFVars(
 			gcptfvars.TFVarsSources{
-				Auth:                   auth,
-				MasterConfigs:          masterConfigs,
-				WorkerConfigs:          workerConfigs,
-				CreateFirewallRules:    createFirewallRules,
-				ImageURI:               imageURL,
-				ImageLicenses:          installConfig.Config.GCP.Licenses,
-				InstanceServiceAccount: instanceServiceAccount,
-				PublicZoneName:         publicZoneName,
-				PublishStrategy:        installConfig.Config.Publish,
-				PreexistingNetwork:     preexistingnetwork,
+				Auth:                    auth,
+				MasterConfigs:           masterConfigs,
+				WorkerConfigs:           workerConfigs,
+				CreateFirewallRules:     createFirewallRules,
+				CreatePublicZoneRecords: createPublicZoneRecords,
+				ImageURI:                imageURL,
+				ImageLicenses:           installConfig.Config.GCP.Licenses,
+				InstanceServiceAccount:  instanceServiceAccount,
+				PreexistingNetwork:      preexistingnetwork,
+				PrivateZoneProject:      privateZoneProject,
+				PublicZoneName:          publicZoneName,
+				PublicZoneProject:       publicZoneProject,
+				PublishStrategy:         installConfig.Config.Publish,
 			},
 		)
 		if err != nil {
@@ -748,10 +797,40 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 
-		// Get CISInstanceCRN from InstallConfig metadata
-		crn, err := installConfig.PowerVS.CISInstanceCRN(ctx)
-		if err != nil {
-			return err
+		var (
+			cisCRN, dnsCRN, vpcGatewayName, vpcSubnet string
+			vpcPermitted, vpcGatewayAttached          bool
+		)
+		if len(installConfig.Config.PowerVS.VPCSubnets) > 0 {
+			vpcSubnet = installConfig.Config.PowerVS.VPCSubnets[0]
+		}
+		switch installConfig.Config.Publish {
+		case types.InternalPublishingStrategy:
+			// Get DNSInstanceCRN from InstallConfig metadata
+			dnsCRN, err = installConfig.PowerVS.DNSInstanceCRN(ctx)
+			if err != nil {
+				return err
+			}
+
+			// If the VPC already exists and the cluster is Private, check if the VPC is already a Permitted Network on DNS Instance
+			if installConfig.Config.PowerVS.VPCName != "" {
+				vpcPermitted, err = installConfig.PowerVS.IsVPCPermittedNetwork(ctx, installConfig.Config.Platform.PowerVS.VPCName, installConfig.Config.BaseDomain)
+				if err != nil {
+					return err
+				}
+				vpcGatewayName, vpcGatewayAttached, err = installConfig.PowerVS.GetExistingVPCGateway(ctx, installConfig.Config.Platform.PowerVS.VPCName, vpcSubnet)
+				if err != nil {
+					return err
+				}
+			}
+		case types.ExternalPublishingStrategy:
+			// Get CISInstanceCRN from InstallConfig metadata
+			cisCRN, err = installConfig.PowerVS.CISInstanceCRN(ctx)
+			if err != nil {
+				return err
+			}
+		default:
+			return errors.New("unknown publishing strategy")
 		}
 
 		masterConfigs := make([]*machinev1.PowerVSMachineProviderConfig, len(masters))
@@ -759,9 +838,44 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig)
 		}
 
-		var vpcSubnet string
-		if len(installConfig.Config.PowerVS.VPCSubnets) > 0 {
-			vpcSubnet = installConfig.Config.PowerVS.VPCSubnets[0]
+		client, err := powervsconfig.NewClient()
+		if err != nil {
+			return err
+		}
+		var (
+			vpcRegion, vpcZone string
+		)
+		vpcName := installConfig.Config.PowerVS.VPCName
+		if vpcName != "" {
+			var vpc *vpcv1.VPC
+			vpc, err = client.GetVPCByName(ctx, vpcName)
+			if err != nil {
+				return err
+			}
+			var crnElems = strings.SplitN(*vpc.CRN, ":", 8)
+			vpcRegion = crnElems[5]
+		} else {
+			specified := installConfig.Config.PowerVS.VPCRegion
+			if specified != "" {
+				if powervs.ValidateVPCRegion(specified) {
+					vpcRegion = specified
+				} else {
+					return errors.New("unknown VPC region")
+				}
+			} else if vpcRegion, err = powervs.VPCRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
+				return err
+			}
+		}
+		if vpcSubnet != "" {
+			var sn *vpcv1.Subnet
+			sn, err = client.GetSubnetByName(ctx, vpcSubnet, vpcRegion)
+			if err != nil {
+				return err
+			}
+			vpcZone = *sn.Zone.Name
+		} else {
+			rand.Seed(time.Now().UnixNano())
+			vpcZone = fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1) //nolint:gosec // we don't need a crypto secure number
 		}
 
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
@@ -776,11 +890,18 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ImageBucketName:      osImage[0],
 				ImageBucketFileName:  osImage[1],
 				NetworkName:          installConfig.Config.PowerVS.PVSNetworkName,
-				VPCName:              installConfig.Config.PowerVS.VPCName,
+				VPCRegion:            vpcRegion,
+				VPCZone:              vpcZone,
+				VPCName:              vpcName,
 				VPCSubnetName:        vpcSubnet,
+				VPCPermitted:         vpcPermitted,
+				VPCGatewayName:       vpcGatewayName,
+				VPCGatewayAttached:   vpcGatewayAttached,
 				CloudConnectionName:  installConfig.Config.PowerVS.CloudConnectionName,
-				CISInstanceCRN:       crn,
+				CISInstanceCRN:       cisCRN,
+				DNSInstanceCRN:       dnsCRN,
 				PublishStrategy:      installConfig.Config.Publish,
+				EnableSNAT:           len(installConfig.Config.ImageContentSources) == 0,
 			},
 		)
 		if err != nil {

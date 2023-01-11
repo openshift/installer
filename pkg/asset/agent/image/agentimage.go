@@ -3,6 +3,7 @@ package image
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,14 +13,14 @@ import (
 )
 
 const (
-	// TODO: Make this relative to the directory passed as --dir rather than
-	// the current working directory
-	agentISOFilename = "agent.iso"
+	agentISOFilename = "agent.%s.iso"
 )
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
 type AgentImage struct {
-	imageReader isoeditor.ImageReader
+	imageReader  isoeditor.ImageReader
+	cpuArch      string
+	rendezvousIP string
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -52,17 +53,22 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	}
 
 	a.imageReader = custom
+	a.cpuArch = ignition.CPUArch
+	a.rendezvousIP = ignition.RendezvousIP
+
 	return nil
 }
 
 // PersistToFile writes the iso image in the assets folder
 func (a *AgentImage) PersistToFile(directory string) error {
+	// If the imageReader is not set then it means that either one of the AgentImage
+	// dependencies or the asset itself failed for some reason
 	if a.imageReader == nil {
-		return errors.New("image reader not available")
+		return errors.New("cannot generate ISO image due to configuration errors")
 	}
 
 	defer a.imageReader.Close()
-	agentIsoFile := filepath.Join(directory, agentISOFilename)
+	agentIsoFile := filepath.Join(directory, fmt.Sprintf(agentISOFilename, a.cpuArch))
 
 	// Remove symlink if it exists
 	os.Remove(agentIsoFile)
@@ -74,7 +80,16 @@ func (a *AgentImage) PersistToFile(directory string) error {
 	defer output.Close()
 
 	_, err = io.Copy(output, a.imageReader)
-	return err
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filepath.Join(directory, "rendezvousIP"), []byte(a.rendezvousIP), 0o644) //nolint:gosec // no sensitive info
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Name returns the human-friendly name of the asset.

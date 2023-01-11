@@ -7,7 +7,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"path"
@@ -19,12 +18,12 @@ import (
 	"github.com/containers/image/pkg/sysregistriesv2"
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
 	utilsnet "k8s.io/utils/net"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -78,8 +77,14 @@ type bootstrapTemplateData struct {
 	PlatformData          platformTemplateData
 	BootstrapInPlace      *types.BootstrapInPlace
 	UseIPv6ForNodeIP      bool
+	UseDualForNodeIP      bool
+	IsFCOS                bool
+	IsSCOS                bool
 	IsOKD                 bool
 	BootstrapNodeIP       string
+	APIServerURL          string
+	APIIntServerURL       string
+	FeatureSet            configv1.FeatureSet
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -99,6 +104,7 @@ type Common struct {
 func (a *Common) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&baremetal.IronicCreds{},
+		&CVOIgnore{},
 		&installconfig.InstallConfig{},
 		&kubeconfig.AdminInternalClient{},
 		&kubeconfig.Kubelet{},
@@ -275,6 +281,15 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	platformFirstAPIVIP := firstAPIVIP(&installConfig.Config.Platform)
 	APIIntVIPonIPv6 := utilsnet.IsIPv6String(platformFirstAPIVIP)
 
+	networkStack := 0
+	for _, snet := range installConfig.Config.ServiceNetwork {
+		if snet.IP.To4() != nil {
+			networkStack |= 1
+		} else {
+			networkStack |= 2
+		}
+	}
+
 	// Set cluster profile
 	clusterProfile := ""
 	if cp := os.Getenv("OPENSHIFT_INSTALL_EXPERIMENTAL_CLUSTER_PROFILE"); cp != "" {
@@ -285,6 +300,9 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	if bootstrapInPlace {
 		bootstrapInPlaceConfig = installConfig.Config.BootstrapInPlace
 	}
+
+	apiURL := fmt.Sprintf("api.%s", installConfig.Config.ClusterDomain())
+	apiIntURL := fmt.Sprintf("api-int.%s", installConfig.Config.ClusterDomain())
 	return &bootstrapTemplateData{
 		AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
 		FIPS:                  installConfig.Config.FIPS,
@@ -299,8 +317,14 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		ClusterProfile:        clusterProfile,
 		BootstrapInPlace:      bootstrapInPlaceConfig,
 		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
+		UseDualForNodeIP:      networkStack == 3,
+		IsFCOS:                installConfig.Config.IsFCOS(),
+		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
 		BootstrapNodeIP:       bootstrapNodeIP,
+		APIServerURL:          apiURL,
+		APIIntServerURL:       apiIntURL,
+		FeatureSet:            installConfig.Config.FeatureSet,
 	}
 }
 
@@ -473,7 +497,7 @@ func AddSystemdUnits(config *igntypes.Config, uri string, templateData interface
 // '.template', strip that extension from the name and render the
 // template.
 func readFile(name string, reader io.Reader, templateData interface{}) (finalName string, data []byte, err error) {
-	data, err = ioutil.ReadAll(reader)
+	data, err = io.ReadAll(reader)
 	if err != nil {
 		return name, []byte{}, err
 	}
@@ -502,6 +526,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 		&machines.Worker{},
 		&mcign.MasterIgnitionCustomizations{},
 		&mcign.WorkerIgnitionCustomizations{},
+		&CVOIgnore{}, // this must come after manifests.Manifests so that it replaces cvo-overrides.yaml
 	} {
 		dependencies.Get(asset)
 

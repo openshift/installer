@@ -12,6 +12,7 @@ variable "gcp_network_project_id" {
 variable "gcp_service_account" {
   type        = string
   description = "The service account for authenticating with GCP APIs."
+  default     = ""
 }
 
 variable "gcp_region" {
@@ -84,7 +85,7 @@ variable "gcp_master_root_volume_size" {
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
-variable "gcp_public_dns_zone_name" {
+variable "gcp_public_zone_name" {
   type = string
   default = null
   description = "The name of the public DNS zone to use for this cluster"
@@ -143,4 +144,22 @@ variable "gcp_create_firewall_rules" {
   type = bool
   default = true
   description = "Create the cluster's network firewall rules."
+}
+
+variable "gcp_create_public_zone_records" {
+  type = bool
+  default = true
+  description = "Create records for the public managed zone."
+}
+
+variable "gcp_public_zone_project" {
+  type = string
+  default = ""
+  description = "Project where the public managed zone will exist."
+}
+
+variable "gcp_private_zone_project" {
+  type = string
+  default = ""
+  description = "Project where the private managed zone will exist."
 }

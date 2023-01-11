@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2021.
+ * (C) Copyright IBM Corp. 2022.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.32.0-4c6a3129-20210514-210323
+ * IBM OpenAPI SDK Code Generator Version: 3.54.0-af6d2126-20220803-151219
  */
 
 // Package firewallrulesv1 : Operations and models for the FirewallRulesV1 service
@@ -35,7 +35,7 @@ import (
 
 // FirewallRulesV1 : Firewall rules
 //
-// Version: 1.0.1
+// API Version: 1.0.1
 type FirewallRulesV1 struct {
 	Service *core.BaseService
 }
@@ -177,7 +177,7 @@ func (firewallRules *FirewallRulesV1) ListAllFirewallRulesWithContext(ctx contex
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *listAllFirewallRulesOptions.Crn,
+		"crn":             *listAllFirewallRulesOptions.Crn,
 		"zone_identifier": *listAllFirewallRulesOptions.ZoneIdentifier,
 	}
 
@@ -241,7 +241,7 @@ func (firewallRules *FirewallRulesV1) CreateFirewallRulesWithContext(ctx context
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *createFirewallRulesOptions.Crn,
+		"crn":             *createFirewallRulesOptions.Crn,
 		"zone_identifier": *createFirewallRulesOptions.ZoneIdentifier,
 	}
 
@@ -267,8 +267,8 @@ func (firewallRules *FirewallRulesV1) CreateFirewallRulesWithContext(ctx context
 		builder.AddHeader("X-Auth-User-Token", fmt.Sprint(*createFirewallRulesOptions.XAuthUserToken))
 	}
 
-	if createFirewallRulesOptions.FirewallRuleInputWithFilterID != nil {
-		_, err = builder.SetBodyContentJSON(createFirewallRulesOptions.FirewallRuleInputWithFilterID)
+	if createFirewallRulesOptions.FirewallRuleInput != nil {
+		_, err = builder.SetBodyContentJSON(createFirewallRulesOptions.FirewallRuleInput)
 		if err != nil {
 			return
 		}
@@ -313,7 +313,7 @@ func (firewallRules *FirewallRulesV1) UpdateFirewllRulesWithContext(ctx context.
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *updateFirewllRulesOptions.Crn,
+		"crn":             *updateFirewllRulesOptions.Crn,
 		"zone_identifier": *updateFirewllRulesOptions.ZoneIdentifier,
 	}
 
@@ -385,7 +385,7 @@ func (firewallRules *FirewallRulesV1) DeleteFirewallRulesWithContext(ctx context
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *deleteFirewallRulesOptions.Crn,
+		"crn":             *deleteFirewallRulesOptions.Crn,
 		"zone_identifier": *deleteFirewallRulesOptions.ZoneIdentifier,
 	}
 
@@ -451,8 +451,8 @@ func (firewallRules *FirewallRulesV1) DeleteFirewallRuleWithContext(ctx context.
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *deleteFirewallRuleOptions.Crn,
-		"zone_identifier": *deleteFirewallRuleOptions.ZoneIdentifier,
+		"crn":                      *deleteFirewallRuleOptions.Crn,
+		"zone_identifier":          *deleteFirewallRuleOptions.ZoneIdentifier,
 		"firewall_rule_identifier": *deleteFirewallRuleOptions.FirewallRuleIdentifier,
 	}
 
@@ -516,8 +516,8 @@ func (firewallRules *FirewallRulesV1) GetFirewallRuleWithContext(ctx context.Con
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *getFirewallRuleOptions.Crn,
-		"zone_identifier": *getFirewallRuleOptions.ZoneIdentifier,
+		"crn":                      *getFirewallRuleOptions.Crn,
+		"zone_identifier":          *getFirewallRuleOptions.ZoneIdentifier,
 		"firewall_rule_identifier": *getFirewallRuleOptions.FirewallRuleIdentifier,
 	}
 
@@ -581,8 +581,8 @@ func (firewallRules *FirewallRulesV1) UpdateFirewallRuleWithContext(ctx context.
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *updateFirewallRuleOptions.Crn,
-		"zone_identifier": *updateFirewallRuleOptions.ZoneIdentifier,
+		"crn":                      *updateFirewallRuleOptions.Crn,
+		"zone_identifier":          *updateFirewallRuleOptions.ZoneIdentifier,
 		"firewall_rule_identifier": *updateFirewallRuleOptions.FirewallRuleIdentifier,
 	}
 
@@ -614,6 +614,9 @@ func (firewallRules *FirewallRulesV1) UpdateFirewallRuleWithContext(ctx context.
 	}
 	if updateFirewallRuleOptions.Paused != nil {
 		body["paused"] = updateFirewallRuleOptions.Paused
+	}
+	if updateFirewallRuleOptions.Priority != nil {
+		body["priority"] = updateFirewallRuleOptions.Priority
 	}
 	if updateFirewallRuleOptions.Description != nil {
 		body["description"] = updateFirewallRuleOptions.Description
@@ -650,16 +653,16 @@ func (firewallRules *FirewallRulesV1) UpdateFirewallRuleWithContext(ctx context.
 // CreateFirewallRulesOptions : The CreateFirewallRules options.
 type CreateFirewallRulesOptions struct {
 	// IBM Cloud user IAM token.
-	XAuthUserToken *string `validate:"required"`
+	XAuthUserToken *string `json:"X-Auth-User-Token" validate:"required"`
 
 	// Full url-encoded cloud resource name (CRN) of resource instance.
-	Crn *string `validate:"required,ne="`
+	Crn *string `json:"crn" validate:"required,ne="`
 
 	// Zone identifier of the zone for which firewall rules are created.
-	ZoneIdentifier *string `validate:"required,ne="`
+	ZoneIdentifier *string `json:"zone_identifier" validate:"required,ne="`
 
 	// Json objects which are used to create firewall rules.
-	FirewallRuleInputWithFilterID []FirewallRuleInputWithFilterID
+	FirewallRuleInput []FirewallRuleInput `json:"firewall_rule_input,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -669,33 +672,33 @@ type CreateFirewallRulesOptions struct {
 func (*FirewallRulesV1) NewCreateFirewallRulesOptions(xAuthUserToken string, crn string, zoneIdentifier string) *CreateFirewallRulesOptions {
 	return &CreateFirewallRulesOptions{
 		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
+		Crn:            core.StringPtr(crn),
 		ZoneIdentifier: core.StringPtr(zoneIdentifier),
 	}
 }
 
 // SetXAuthUserToken : Allow user to set XAuthUserToken
-func (options *CreateFirewallRulesOptions) SetXAuthUserToken(xAuthUserToken string) *CreateFirewallRulesOptions {
-	options.XAuthUserToken = core.StringPtr(xAuthUserToken)
-	return options
+func (_options *CreateFirewallRulesOptions) SetXAuthUserToken(xAuthUserToken string) *CreateFirewallRulesOptions {
+	_options.XAuthUserToken = core.StringPtr(xAuthUserToken)
+	return _options
 }
 
 // SetCrn : Allow user to set Crn
-func (options *CreateFirewallRulesOptions) SetCrn(crn string) *CreateFirewallRulesOptions {
-	options.Crn = core.StringPtr(crn)
-	return options
+func (_options *CreateFirewallRulesOptions) SetCrn(crn string) *CreateFirewallRulesOptions {
+	_options.Crn = core.StringPtr(crn)
+	return _options
 }
 
 // SetZoneIdentifier : Allow user to set ZoneIdentifier
-func (options *CreateFirewallRulesOptions) SetZoneIdentifier(zoneIdentifier string) *CreateFirewallRulesOptions {
-	options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
-	return options
+func (_options *CreateFirewallRulesOptions) SetZoneIdentifier(zoneIdentifier string) *CreateFirewallRulesOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
 }
 
-// SetFirewallRuleInputWithFilterID : Allow user to set FirewallRuleInputWithFilterID
-func (options *CreateFirewallRulesOptions) SetFirewallRuleInputWithFilterID(firewallRuleInputWithFilterID []FirewallRuleInputWithFilterID) *CreateFirewallRulesOptions {
-	options.FirewallRuleInputWithFilterID = firewallRuleInputWithFilterID
-	return options
+// SetFirewallRuleInput : Allow user to set FirewallRuleInput
+func (_options *CreateFirewallRulesOptions) SetFirewallRuleInput(firewallRuleInput []FirewallRuleInput) *CreateFirewallRulesOptions {
+	_options.FirewallRuleInput = firewallRuleInput
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -707,16 +710,16 @@ func (options *CreateFirewallRulesOptions) SetHeaders(param map[string]string) *
 // DeleteFirewallRuleOptions : The DeleteFirewallRule options.
 type DeleteFirewallRuleOptions struct {
 	// IBM Cloud user IAM token.
-	XAuthUserToken *string `validate:"required"`
+	XAuthUserToken *string `json:"X-Auth-User-Token" validate:"required"`
 
 	// Full crn of the service instance.
-	Crn *string `validate:"required,ne="`
+	Crn *string `json:"crn" validate:"required,ne="`
 
 	// Identifier of zone whose firewall rule is to be deleted.
-	ZoneIdentifier *string `validate:"required,ne="`
+	ZoneIdentifier *string `json:"zone_identifier" validate:"required,ne="`
 
 	// Identifier of the firewall rule to be deleted.
-	FirewallRuleIdentifier *string `validate:"required,ne="`
+	FirewallRuleIdentifier *string `json:"firewall_rule_identifier" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -725,35 +728,35 @@ type DeleteFirewallRuleOptions struct {
 // NewDeleteFirewallRuleOptions : Instantiate DeleteFirewallRuleOptions
 func (*FirewallRulesV1) NewDeleteFirewallRuleOptions(xAuthUserToken string, crn string, zoneIdentifier string, firewallRuleIdentifier string) *DeleteFirewallRuleOptions {
 	return &DeleteFirewallRuleOptions{
-		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
-		ZoneIdentifier: core.StringPtr(zoneIdentifier),
+		XAuthUserToken:         core.StringPtr(xAuthUserToken),
+		Crn:                    core.StringPtr(crn),
+		ZoneIdentifier:         core.StringPtr(zoneIdentifier),
 		FirewallRuleIdentifier: core.StringPtr(firewallRuleIdentifier),
 	}
 }
 
 // SetXAuthUserToken : Allow user to set XAuthUserToken
-func (options *DeleteFirewallRuleOptions) SetXAuthUserToken(xAuthUserToken string) *DeleteFirewallRuleOptions {
-	options.XAuthUserToken = core.StringPtr(xAuthUserToken)
-	return options
+func (_options *DeleteFirewallRuleOptions) SetXAuthUserToken(xAuthUserToken string) *DeleteFirewallRuleOptions {
+	_options.XAuthUserToken = core.StringPtr(xAuthUserToken)
+	return _options
 }
 
 // SetCrn : Allow user to set Crn
-func (options *DeleteFirewallRuleOptions) SetCrn(crn string) *DeleteFirewallRuleOptions {
-	options.Crn = core.StringPtr(crn)
-	return options
+func (_options *DeleteFirewallRuleOptions) SetCrn(crn string) *DeleteFirewallRuleOptions {
+	_options.Crn = core.StringPtr(crn)
+	return _options
 }
 
 // SetZoneIdentifier : Allow user to set ZoneIdentifier
-func (options *DeleteFirewallRuleOptions) SetZoneIdentifier(zoneIdentifier string) *DeleteFirewallRuleOptions {
-	options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
-	return options
+func (_options *DeleteFirewallRuleOptions) SetZoneIdentifier(zoneIdentifier string) *DeleteFirewallRuleOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
 }
 
 // SetFirewallRuleIdentifier : Allow user to set FirewallRuleIdentifier
-func (options *DeleteFirewallRuleOptions) SetFirewallRuleIdentifier(firewallRuleIdentifier string) *DeleteFirewallRuleOptions {
-	options.FirewallRuleIdentifier = core.StringPtr(firewallRuleIdentifier)
-	return options
+func (_options *DeleteFirewallRuleOptions) SetFirewallRuleIdentifier(firewallRuleIdentifier string) *DeleteFirewallRuleOptions {
+	_options.FirewallRuleIdentifier = core.StringPtr(firewallRuleIdentifier)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -782,16 +785,16 @@ func UnmarshalDeleteFirewallRuleRespResult(m map[string]json.RawMessage, result 
 // DeleteFirewallRulesOptions : The DeleteFirewallRules options.
 type DeleteFirewallRulesOptions struct {
 	// IBM Cloud user IAM token.
-	XAuthUserToken *string `validate:"required"`
+	XAuthUserToken *string `json:"X-Auth-User-Token" validate:"required"`
 
 	// Full crn of the service instance.
-	Crn *string `validate:"required,ne="`
+	Crn *string `json:"crn" validate:"required,ne="`
 
 	// Identifier of zone whose firewall rules are to be deleted.
-	ZoneIdentifier *string `validate:"required,ne="`
+	ZoneIdentifier *string `json:"zone_identifier" validate:"required,ne="`
 
 	// ids of firewall rules which will be deleted.
-	ID *string `validate:"required"`
+	ID *string `json:"id" validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -801,34 +804,34 @@ type DeleteFirewallRulesOptions struct {
 func (*FirewallRulesV1) NewDeleteFirewallRulesOptions(xAuthUserToken string, crn string, zoneIdentifier string, id string) *DeleteFirewallRulesOptions {
 	return &DeleteFirewallRulesOptions{
 		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
+		Crn:            core.StringPtr(crn),
 		ZoneIdentifier: core.StringPtr(zoneIdentifier),
-		ID: core.StringPtr(id),
+		ID:             core.StringPtr(id),
 	}
 }
 
 // SetXAuthUserToken : Allow user to set XAuthUserToken
-func (options *DeleteFirewallRulesOptions) SetXAuthUserToken(xAuthUserToken string) *DeleteFirewallRulesOptions {
-	options.XAuthUserToken = core.StringPtr(xAuthUserToken)
-	return options
+func (_options *DeleteFirewallRulesOptions) SetXAuthUserToken(xAuthUserToken string) *DeleteFirewallRulesOptions {
+	_options.XAuthUserToken = core.StringPtr(xAuthUserToken)
+	return _options
 }
 
 // SetCrn : Allow user to set Crn
-func (options *DeleteFirewallRulesOptions) SetCrn(crn string) *DeleteFirewallRulesOptions {
-	options.Crn = core.StringPtr(crn)
-	return options
+func (_options *DeleteFirewallRulesOptions) SetCrn(crn string) *DeleteFirewallRulesOptions {
+	_options.Crn = core.StringPtr(crn)
+	return _options
 }
 
 // SetZoneIdentifier : Allow user to set ZoneIdentifier
-func (options *DeleteFirewallRulesOptions) SetZoneIdentifier(zoneIdentifier string) *DeleteFirewallRulesOptions {
-	options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
-	return options
+func (_options *DeleteFirewallRulesOptions) SetZoneIdentifier(zoneIdentifier string) *DeleteFirewallRulesOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteFirewallRulesOptions) SetID(id string) *DeleteFirewallRulesOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteFirewallRulesOptions) SetID(id string) *DeleteFirewallRulesOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -854,25 +857,48 @@ func UnmarshalDeleteFirewallRulesRespResultItem(m map[string]json.RawMessage, re
 	return
 }
 
-// FirewallRuleInputWithFilterIdFilter : An existing filter.
-type FirewallRuleInputWithFilterIdFilter struct {
+// FirewallRuleInputFilter : FirewallRuleInputFilter struct
+// Models which "extend" this model:
+// - FirewallRuleInputFilterID
+// - FirewallRuleInputFilterExpression
+type FirewallRuleInputFilter struct {
 	// Identifier of the filter.
-	ID *string `json:"id" validate:"required"`
+	ID *string `json:"id,omitempty"`
+
+	// A filter expression.
+	Expression *string `json:"expression,omitempty"`
+
+	// Indicates if the filter is active.
+	Paused *bool `json:"paused,omitempty"`
+
+	// An informative summary of the filter.
+	Description *string `json:"description,omitempty"`
 }
 
-// NewFirewallRuleInputWithFilterIdFilter : Instantiate FirewallRuleInputWithFilterIdFilter (Generic Model Constructor)
-func (*FirewallRulesV1) NewFirewallRuleInputWithFilterIdFilter(id string) (model *FirewallRuleInputWithFilterIdFilter, err error) {
-	model = &FirewallRuleInputWithFilterIdFilter{
-		ID: core.StringPtr(id),
-	}
-	err = core.ValidateStruct(model, "required parameters")
-	return
+func (*FirewallRuleInputFilter) isaFirewallRuleInputFilter() bool {
+	return true
 }
 
-// UnmarshalFirewallRuleInputWithFilterIdFilter unmarshals an instance of FirewallRuleInputWithFilterIdFilter from the specified map of raw messages.
-func UnmarshalFirewallRuleInputWithFilterIdFilter(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(FirewallRuleInputWithFilterIdFilter)
+type FirewallRuleInputFilterIntf interface {
+	isaFirewallRuleInputFilter() bool
+}
+
+// UnmarshalFirewallRuleInputFilter unmarshals an instance of FirewallRuleInputFilter from the specified map of raw messages.
+func UnmarshalFirewallRuleInputFilter(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(FirewallRuleInputFilter)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "expression", &obj.Expression)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "paused", &obj.Paused)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
 		return
 	}
@@ -925,11 +951,11 @@ type FirewallRuleUpdateInputFilter struct {
 }
 
 // NewFirewallRuleUpdateInputFilter : Instantiate FirewallRuleUpdateInputFilter (Generic Model Constructor)
-func (*FirewallRulesV1) NewFirewallRuleUpdateInputFilter(id string) (model *FirewallRuleUpdateInputFilter, err error) {
-	model = &FirewallRuleUpdateInputFilter{
+func (*FirewallRulesV1) NewFirewallRuleUpdateInputFilter(id string) (_model *FirewallRuleUpdateInputFilter, err error) {
+	_model = &FirewallRuleUpdateInputFilter{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -955,6 +981,9 @@ type FirewallRulesUpdateInputItem struct {
 	// Indicates if the firewall rule is active.
 	Paused *bool `json:"paused,omitempty"`
 
+	// The priority of the rule.
+	Priority *int64 `json:"priority,omitempty"`
+
 	// To briefly describe the firewall rule, omitted from object if empty.
 	Description *string `json:"description,omitempty"`
 
@@ -965,20 +994,20 @@ type FirewallRulesUpdateInputItem struct {
 // Constants associated with the FirewallRulesUpdateInputItem.Action property.
 // The firewall action to perform, "log" action is only available for enterprise plan instances.
 const (
-	FirewallRulesUpdateInputItem_Action_Allow = "allow"
-	FirewallRulesUpdateInputItem_Action_Block = "block"
-	FirewallRulesUpdateInputItem_Action_Challenge = "challenge"
+	FirewallRulesUpdateInputItem_Action_Allow       = "allow"
+	FirewallRulesUpdateInputItem_Action_Block       = "block"
+	FirewallRulesUpdateInputItem_Action_Challenge   = "challenge"
 	FirewallRulesUpdateInputItem_Action_JsChallenge = "js_challenge"
-	FirewallRulesUpdateInputItem_Action_Log = "log"
+	FirewallRulesUpdateInputItem_Action_Log         = "log"
 )
 
 // NewFirewallRulesUpdateInputItem : Instantiate FirewallRulesUpdateInputItem (Generic Model Constructor)
-func (*FirewallRulesV1) NewFirewallRulesUpdateInputItem(id string, action string) (model *FirewallRulesUpdateInputItem, err error) {
-	model = &FirewallRulesUpdateInputItem{
-		ID: core.StringPtr(id),
+func (*FirewallRulesV1) NewFirewallRulesUpdateInputItem(id string, action string) (_model *FirewallRulesUpdateInputItem, err error) {
+	_model = &FirewallRulesUpdateInputItem{
+		ID:     core.StringPtr(id),
 		Action: core.StringPtr(action),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -994,6 +1023,10 @@ func UnmarshalFirewallRulesUpdateInputItem(m map[string]json.RawMessage, result 
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "paused", &obj.Paused)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "priority", &obj.Priority)
 	if err != nil {
 		return
 	}
@@ -1016,11 +1049,11 @@ type FirewallRulesUpdateInputItemFilter struct {
 }
 
 // NewFirewallRulesUpdateInputItemFilter : Instantiate FirewallRulesUpdateInputItemFilter (Generic Model Constructor)
-func (*FirewallRulesV1) NewFirewallRulesUpdateInputItemFilter(id string) (model *FirewallRulesUpdateInputItemFilter, err error) {
-	model = &FirewallRulesUpdateInputItemFilter{
+func (*FirewallRulesV1) NewFirewallRulesUpdateInputItemFilter(id string) (_model *FirewallRulesUpdateInputItemFilter, err error) {
+	_model = &FirewallRulesUpdateInputItemFilter{
 		ID: core.StringPtr(id),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -1038,16 +1071,16 @@ func UnmarshalFirewallRulesUpdateInputItemFilter(m map[string]json.RawMessage, r
 // GetFirewallRuleOptions : The GetFirewallRule options.
 type GetFirewallRuleOptions struct {
 	// IBM Cloud user IAM token.
-	XAuthUserToken *string `validate:"required"`
+	XAuthUserToken *string `json:"X-Auth-User-Token" validate:"required"`
 
 	// Full crn of the service instance.
-	Crn *string `validate:"required,ne="`
+	Crn *string `json:"crn" validate:"required,ne="`
 
 	// Zone identifier (zone id).
-	ZoneIdentifier *string `validate:"required,ne="`
+	ZoneIdentifier *string `json:"zone_identifier" validate:"required,ne="`
 
 	// Identifier of firewall rule for the given zone.
-	FirewallRuleIdentifier *string `validate:"required,ne="`
+	FirewallRuleIdentifier *string `json:"firewall_rule_identifier" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1056,35 +1089,35 @@ type GetFirewallRuleOptions struct {
 // NewGetFirewallRuleOptions : Instantiate GetFirewallRuleOptions
 func (*FirewallRulesV1) NewGetFirewallRuleOptions(xAuthUserToken string, crn string, zoneIdentifier string, firewallRuleIdentifier string) *GetFirewallRuleOptions {
 	return &GetFirewallRuleOptions{
-		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
-		ZoneIdentifier: core.StringPtr(zoneIdentifier),
+		XAuthUserToken:         core.StringPtr(xAuthUserToken),
+		Crn:                    core.StringPtr(crn),
+		ZoneIdentifier:         core.StringPtr(zoneIdentifier),
 		FirewallRuleIdentifier: core.StringPtr(firewallRuleIdentifier),
 	}
 }
 
 // SetXAuthUserToken : Allow user to set XAuthUserToken
-func (options *GetFirewallRuleOptions) SetXAuthUserToken(xAuthUserToken string) *GetFirewallRuleOptions {
-	options.XAuthUserToken = core.StringPtr(xAuthUserToken)
-	return options
+func (_options *GetFirewallRuleOptions) SetXAuthUserToken(xAuthUserToken string) *GetFirewallRuleOptions {
+	_options.XAuthUserToken = core.StringPtr(xAuthUserToken)
+	return _options
 }
 
 // SetCrn : Allow user to set Crn
-func (options *GetFirewallRuleOptions) SetCrn(crn string) *GetFirewallRuleOptions {
-	options.Crn = core.StringPtr(crn)
-	return options
+func (_options *GetFirewallRuleOptions) SetCrn(crn string) *GetFirewallRuleOptions {
+	_options.Crn = core.StringPtr(crn)
+	return _options
 }
 
 // SetZoneIdentifier : Allow user to set ZoneIdentifier
-func (options *GetFirewallRuleOptions) SetZoneIdentifier(zoneIdentifier string) *GetFirewallRuleOptions {
-	options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
-	return options
+func (_options *GetFirewallRuleOptions) SetZoneIdentifier(zoneIdentifier string) *GetFirewallRuleOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
 }
 
 // SetFirewallRuleIdentifier : Allow user to set FirewallRuleIdentifier
-func (options *GetFirewallRuleOptions) SetFirewallRuleIdentifier(firewallRuleIdentifier string) *GetFirewallRuleOptions {
-	options.FirewallRuleIdentifier = core.StringPtr(firewallRuleIdentifier)
-	return options
+func (_options *GetFirewallRuleOptions) SetFirewallRuleIdentifier(firewallRuleIdentifier string) *GetFirewallRuleOptions {
+	_options.FirewallRuleIdentifier = core.StringPtr(firewallRuleIdentifier)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1096,13 +1129,13 @@ func (options *GetFirewallRuleOptions) SetHeaders(param map[string]string) *GetF
 // ListAllFirewallRulesOptions : The ListAllFirewallRules options.
 type ListAllFirewallRulesOptions struct {
 	// IBM Cloud user IAM token.
-	XAuthUserToken *string `validate:"required"`
+	XAuthUserToken *string `json:"X-Auth-User-Token" validate:"required"`
 
 	// Full url-encoded cloud resource name (CRN) of resource instance.
-	Crn *string `validate:"required,ne="`
+	Crn *string `json:"crn" validate:"required,ne="`
 
 	// Zone identifier of the zone for which firewall rules are listed.
-	ZoneIdentifier *string `validate:"required,ne="`
+	ZoneIdentifier *string `json:"zone_identifier" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1112,27 +1145,27 @@ type ListAllFirewallRulesOptions struct {
 func (*FirewallRulesV1) NewListAllFirewallRulesOptions(xAuthUserToken string, crn string, zoneIdentifier string) *ListAllFirewallRulesOptions {
 	return &ListAllFirewallRulesOptions{
 		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
+		Crn:            core.StringPtr(crn),
 		ZoneIdentifier: core.StringPtr(zoneIdentifier),
 	}
 }
 
 // SetXAuthUserToken : Allow user to set XAuthUserToken
-func (options *ListAllFirewallRulesOptions) SetXAuthUserToken(xAuthUserToken string) *ListAllFirewallRulesOptions {
-	options.XAuthUserToken = core.StringPtr(xAuthUserToken)
-	return options
+func (_options *ListAllFirewallRulesOptions) SetXAuthUserToken(xAuthUserToken string) *ListAllFirewallRulesOptions {
+	_options.XAuthUserToken = core.StringPtr(xAuthUserToken)
+	return _options
 }
 
 // SetCrn : Allow user to set Crn
-func (options *ListAllFirewallRulesOptions) SetCrn(crn string) *ListAllFirewallRulesOptions {
-	options.Crn = core.StringPtr(crn)
-	return options
+func (_options *ListAllFirewallRulesOptions) SetCrn(crn string) *ListAllFirewallRulesOptions {
+	_options.Crn = core.StringPtr(crn)
+	return _options
 }
 
 // SetZoneIdentifier : Allow user to set ZoneIdentifier
-func (options *ListAllFirewallRulesOptions) SetZoneIdentifier(zoneIdentifier string) *ListAllFirewallRulesOptions {
-	options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
-	return options
+func (_options *ListAllFirewallRulesOptions) SetZoneIdentifier(zoneIdentifier string) *ListAllFirewallRulesOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1182,28 +1215,31 @@ func UnmarshalListFirewallRulesRespResultInfo(m map[string]json.RawMessage, resu
 // UpdateFirewallRuleOptions : The UpdateFirewallRule options.
 type UpdateFirewallRuleOptions struct {
 	// IBM Cloud user IAM token.
-	XAuthUserToken *string `validate:"required"`
+	XAuthUserToken *string `json:"X-Auth-User-Token" validate:"required"`
 
 	// Full crn of the service instance.
-	Crn *string `validate:"required,ne="`
+	Crn *string `json:"crn" validate:"required,ne="`
 
 	// Zone identifier (zone id).
-	ZoneIdentifier *string `validate:"required,ne="`
+	ZoneIdentifier *string `json:"zone_identifier" validate:"required,ne="`
 
 	// Identifier of firewall rule.
-	FirewallRuleIdentifier *string `validate:"required,ne="`
+	FirewallRuleIdentifier *string `json:"firewall_rule_identifier" validate:"required,ne="`
 
 	// The firewall action to perform, "log" action is only available for enterprise plan instances.
-	Action *string
+	Action *string `json:"action,omitempty"`
 
 	// Indicates if the firewall rule is active.
-	Paused *bool
+	Paused *bool `json:"paused,omitempty"`
+
+	// The priority of the rule.
+	Priority *int64 `json:"priority,omitempty"`
 
 	// To briefly describe the firewall rule, omitted from object if empty.
-	Description *string
+	Description *string `json:"description,omitempty"`
 
 	// An existing filter.
-	Filter *FirewallRuleUpdateInputFilter
+	Filter *FirewallRuleUpdateInputFilter `json:"filter,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1212,69 +1248,75 @@ type UpdateFirewallRuleOptions struct {
 // Constants associated with the UpdateFirewallRuleOptions.Action property.
 // The firewall action to perform, "log" action is only available for enterprise plan instances.
 const (
-	UpdateFirewallRuleOptions_Action_Allow = "allow"
-	UpdateFirewallRuleOptions_Action_Block = "block"
-	UpdateFirewallRuleOptions_Action_Challenge = "challenge"
+	UpdateFirewallRuleOptions_Action_Allow       = "allow"
+	UpdateFirewallRuleOptions_Action_Block       = "block"
+	UpdateFirewallRuleOptions_Action_Challenge   = "challenge"
 	UpdateFirewallRuleOptions_Action_JsChallenge = "js_challenge"
-	UpdateFirewallRuleOptions_Action_Log = "log"
+	UpdateFirewallRuleOptions_Action_Log         = "log"
 )
 
 // NewUpdateFirewallRuleOptions : Instantiate UpdateFirewallRuleOptions
 func (*FirewallRulesV1) NewUpdateFirewallRuleOptions(xAuthUserToken string, crn string, zoneIdentifier string, firewallRuleIdentifier string) *UpdateFirewallRuleOptions {
 	return &UpdateFirewallRuleOptions{
-		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
-		ZoneIdentifier: core.StringPtr(zoneIdentifier),
+		XAuthUserToken:         core.StringPtr(xAuthUserToken),
+		Crn:                    core.StringPtr(crn),
+		ZoneIdentifier:         core.StringPtr(zoneIdentifier),
 		FirewallRuleIdentifier: core.StringPtr(firewallRuleIdentifier),
 	}
 }
 
 // SetXAuthUserToken : Allow user to set XAuthUserToken
-func (options *UpdateFirewallRuleOptions) SetXAuthUserToken(xAuthUserToken string) *UpdateFirewallRuleOptions {
-	options.XAuthUserToken = core.StringPtr(xAuthUserToken)
-	return options
+func (_options *UpdateFirewallRuleOptions) SetXAuthUserToken(xAuthUserToken string) *UpdateFirewallRuleOptions {
+	_options.XAuthUserToken = core.StringPtr(xAuthUserToken)
+	return _options
 }
 
 // SetCrn : Allow user to set Crn
-func (options *UpdateFirewallRuleOptions) SetCrn(crn string) *UpdateFirewallRuleOptions {
-	options.Crn = core.StringPtr(crn)
-	return options
+func (_options *UpdateFirewallRuleOptions) SetCrn(crn string) *UpdateFirewallRuleOptions {
+	_options.Crn = core.StringPtr(crn)
+	return _options
 }
 
 // SetZoneIdentifier : Allow user to set ZoneIdentifier
-func (options *UpdateFirewallRuleOptions) SetZoneIdentifier(zoneIdentifier string) *UpdateFirewallRuleOptions {
-	options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
-	return options
+func (_options *UpdateFirewallRuleOptions) SetZoneIdentifier(zoneIdentifier string) *UpdateFirewallRuleOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
 }
 
 // SetFirewallRuleIdentifier : Allow user to set FirewallRuleIdentifier
-func (options *UpdateFirewallRuleOptions) SetFirewallRuleIdentifier(firewallRuleIdentifier string) *UpdateFirewallRuleOptions {
-	options.FirewallRuleIdentifier = core.StringPtr(firewallRuleIdentifier)
-	return options
+func (_options *UpdateFirewallRuleOptions) SetFirewallRuleIdentifier(firewallRuleIdentifier string) *UpdateFirewallRuleOptions {
+	_options.FirewallRuleIdentifier = core.StringPtr(firewallRuleIdentifier)
+	return _options
 }
 
 // SetAction : Allow user to set Action
-func (options *UpdateFirewallRuleOptions) SetAction(action string) *UpdateFirewallRuleOptions {
-	options.Action = core.StringPtr(action)
-	return options
+func (_options *UpdateFirewallRuleOptions) SetAction(action string) *UpdateFirewallRuleOptions {
+	_options.Action = core.StringPtr(action)
+	return _options
 }
 
 // SetPaused : Allow user to set Paused
-func (options *UpdateFirewallRuleOptions) SetPaused(paused bool) *UpdateFirewallRuleOptions {
-	options.Paused = core.BoolPtr(paused)
-	return options
+func (_options *UpdateFirewallRuleOptions) SetPaused(paused bool) *UpdateFirewallRuleOptions {
+	_options.Paused = core.BoolPtr(paused)
+	return _options
+}
+
+// SetPriority : Allow user to set Priority
+func (_options *UpdateFirewallRuleOptions) SetPriority(priority int64) *UpdateFirewallRuleOptions {
+	_options.Priority = core.Int64Ptr(priority)
+	return _options
 }
 
 // SetDescription : Allow user to set Description
-func (options *UpdateFirewallRuleOptions) SetDescription(description string) *UpdateFirewallRuleOptions {
-	options.Description = core.StringPtr(description)
-	return options
+func (_options *UpdateFirewallRuleOptions) SetDescription(description string) *UpdateFirewallRuleOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
 }
 
 // SetFilter : Allow user to set Filter
-func (options *UpdateFirewallRuleOptions) SetFilter(filter *FirewallRuleUpdateInputFilter) *UpdateFirewallRuleOptions {
-	options.Filter = filter
-	return options
+func (_options *UpdateFirewallRuleOptions) SetFilter(filter *FirewallRuleUpdateInputFilter) *UpdateFirewallRuleOptions {
+	_options.Filter = filter
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1286,15 +1328,15 @@ func (options *UpdateFirewallRuleOptions) SetHeaders(param map[string]string) *U
 // UpdateFirewllRulesOptions : The UpdateFirewllRules options.
 type UpdateFirewllRulesOptions struct {
 	// IBM Cloud user IAM token.
-	XAuthUserToken *string `validate:"required"`
+	XAuthUserToken *string `json:"X-Auth-User-Token" validate:"required"`
 
 	// Full crn of the service instance.
-	Crn *string `validate:"required,ne="`
+	Crn *string `json:"crn" validate:"required,ne="`
 
 	// Zone identifier (zone id).
-	ZoneIdentifier *string `validate:"required,ne="`
+	ZoneIdentifier *string `json:"zone_identifier" validate:"required,ne="`
 
-	FirewallRulesUpdateInputItem []FirewallRulesUpdateInputItem
+	FirewallRulesUpdateInputItem []FirewallRulesUpdateInputItem `json:"FirewallRulesUpdateInputItem,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1304,33 +1346,33 @@ type UpdateFirewllRulesOptions struct {
 func (*FirewallRulesV1) NewUpdateFirewllRulesOptions(xAuthUserToken string, crn string, zoneIdentifier string) *UpdateFirewllRulesOptions {
 	return &UpdateFirewllRulesOptions{
 		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
+		Crn:            core.StringPtr(crn),
 		ZoneIdentifier: core.StringPtr(zoneIdentifier),
 	}
 }
 
 // SetXAuthUserToken : Allow user to set XAuthUserToken
-func (options *UpdateFirewllRulesOptions) SetXAuthUserToken(xAuthUserToken string) *UpdateFirewllRulesOptions {
-	options.XAuthUserToken = core.StringPtr(xAuthUserToken)
-	return options
+func (_options *UpdateFirewllRulesOptions) SetXAuthUserToken(xAuthUserToken string) *UpdateFirewllRulesOptions {
+	_options.XAuthUserToken = core.StringPtr(xAuthUserToken)
+	return _options
 }
 
 // SetCrn : Allow user to set Crn
-func (options *UpdateFirewllRulesOptions) SetCrn(crn string) *UpdateFirewllRulesOptions {
-	options.Crn = core.StringPtr(crn)
-	return options
+func (_options *UpdateFirewllRulesOptions) SetCrn(crn string) *UpdateFirewllRulesOptions {
+	_options.Crn = core.StringPtr(crn)
+	return _options
 }
 
 // SetZoneIdentifier : Allow user to set ZoneIdentifier
-func (options *UpdateFirewllRulesOptions) SetZoneIdentifier(zoneIdentifier string) *UpdateFirewllRulesOptions {
-	options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
-	return options
+func (_options *UpdateFirewllRulesOptions) SetZoneIdentifier(zoneIdentifier string) *UpdateFirewllRulesOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
 }
 
 // SetFirewallRulesUpdateInputItem : Allow user to set FirewallRulesUpdateInputItem
-func (options *UpdateFirewllRulesOptions) SetFirewallRulesUpdateInputItem(firewallRulesUpdateInputItem []FirewallRulesUpdateInputItem) *UpdateFirewllRulesOptions {
-	options.FirewallRulesUpdateInputItem = firewallRulesUpdateInputItem
-	return options
+func (_options *UpdateFirewllRulesOptions) SetFirewallRulesUpdateInputItem(firewallRulesUpdateInputItem []FirewallRulesUpdateInputItem) *UpdateFirewllRulesOptions {
+	_options.FirewallRulesUpdateInputItem = firewallRulesUpdateInputItem
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1415,42 +1457,47 @@ func UnmarshalDeleteFirewallRulesResp(m map[string]json.RawMessage, result inter
 	return
 }
 
-// FirewallRuleInputWithFilterID : Json objects which are used to create firewall rule.
-type FirewallRuleInputWithFilterID struct {
-	// An existing filter.
-	Filter *FirewallRuleInputWithFilterIdFilter `json:"filter" validate:"required"`
+// FirewallRuleInput : Json objects which are used to create firewall rule.
+type FirewallRuleInput struct {
+	Filter FirewallRuleInputFilterIntf `json:"filter" validate:"required"`
 
 	// The firewall action to perform, "log" action is only available for enterprise plan instances.
 	Action *string `json:"action" validate:"required"`
 
-	// To briefly describe the firewall rule, omitted from object if empty.
+	// An informative summary of the firewall rule.
 	Description *string `json:"description,omitempty"`
+
+	// Indicates if the firewall rule is active.
+	Paused *bool `json:"paused,omitempty"`
+
+	// The priority of the rule.
+	Priority *int64 `json:"priority,omitempty"`
 }
 
-// Constants associated with the FirewallRuleInputWithFilterID.Action property.
+// Constants associated with the FirewallRuleInput.Action property.
 // The firewall action to perform, "log" action is only available for enterprise plan instances.
 const (
-	FirewallRuleInputWithFilterID_Action_Allow = "allow"
-	FirewallRuleInputWithFilterID_Action_Block = "block"
-	FirewallRuleInputWithFilterID_Action_Challenge = "challenge"
-	FirewallRuleInputWithFilterID_Action_JsChallenge = "js_challenge"
-	FirewallRuleInputWithFilterID_Action_Log = "log"
+	FirewallRuleInput_Action_Allow       = "allow"
+	FirewallRuleInput_Action_Block       = "block"
+	FirewallRuleInput_Action_Challenge   = "challenge"
+	FirewallRuleInput_Action_JsChallenge = "js_challenge"
+	FirewallRuleInput_Action_Log         = "log"
 )
 
-// NewFirewallRuleInputWithFilterID : Instantiate FirewallRuleInputWithFilterID (Generic Model Constructor)
-func (*FirewallRulesV1) NewFirewallRuleInputWithFilterID(filter *FirewallRuleInputWithFilterIdFilter, action string) (model *FirewallRuleInputWithFilterID, err error) {
-	model = &FirewallRuleInputWithFilterID{
+// NewFirewallRuleInput : Instantiate FirewallRuleInput (Generic Model Constructor)
+func (*FirewallRulesV1) NewFirewallRuleInput(filter FirewallRuleInputFilterIntf, action string) (_model *FirewallRuleInput, err error) {
+	_model = &FirewallRuleInput{
 		Filter: filter,
 		Action: core.StringPtr(action),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
-// UnmarshalFirewallRuleInputWithFilterID unmarshals an instance of FirewallRuleInputWithFilterID from the specified map of raw messages.
-func UnmarshalFirewallRuleInputWithFilterID(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(FirewallRuleInputWithFilterID)
-	err = core.UnmarshalModel(m, "filter", &obj.Filter, UnmarshalFirewallRuleInputWithFilterIdFilter)
+// UnmarshalFirewallRuleInput unmarshals an instance of FirewallRuleInput from the specified map of raw messages.
+func UnmarshalFirewallRuleInput(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(FirewallRuleInput)
+	err = core.UnmarshalModel(m, "filter", &obj.Filter, UnmarshalFirewallRuleInputFilter)
 	if err != nil {
 		return
 	}
@@ -1459,6 +1506,14 @@ func UnmarshalFirewallRuleInputWithFilterID(m map[string]json.RawMessage, result
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "paused", &obj.Paused)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "priority", &obj.Priority)
 	if err != nil {
 		return
 	}
@@ -1493,11 +1548,11 @@ type FirewallRuleObject struct {
 // Constants associated with the FirewallRuleObject.Action property.
 // The firewall action to perform, "log" action is only available for enterprise plan instances.
 const (
-	FirewallRuleObject_Action_Allow = "allow"
-	FirewallRuleObject_Action_Block = "block"
-	FirewallRuleObject_Action_Challenge = "challenge"
+	FirewallRuleObject_Action_Allow       = "allow"
+	FirewallRuleObject_Action_Block       = "block"
+	FirewallRuleObject_Action_Challenge   = "challenge"
 	FirewallRuleObject_Action_JsChallenge = "js_challenge"
-	FirewallRuleObject_Action_Log = "log"
+	FirewallRuleObject_Action_Log         = "log"
 )
 
 // UnmarshalFirewallRuleObject unmarshals an instance of FirewallRuleObject from the specified map of raw messages.
@@ -1648,6 +1703,82 @@ func UnmarshalListFirewallRulesResp(m map[string]json.RawMessage, result interfa
 		return
 	}
 	err = core.UnmarshalModel(m, "result_info", &obj.ResultInfo, UnmarshalListFirewallRulesRespResultInfo)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// FirewallRuleInputFilterExpression : Json objects which are used to create firewall rule.
+// This model "extends" FirewallRuleInputFilter
+type FirewallRuleInputFilterExpression struct {
+	// A filter expression.
+	Expression *string `json:"expression" validate:"required"`
+
+	// Indicates if the filter is active.
+	Paused *bool `json:"paused,omitempty"`
+
+	// An informative summary of the filter.
+	Description *string `json:"description,omitempty"`
+}
+
+// NewFirewallRuleInputFilterExpression : Instantiate FirewallRuleInputFilterExpression (Generic Model Constructor)
+func (*FirewallRulesV1) NewFirewallRuleInputFilterExpression(expression string) (_model *FirewallRuleInputFilterExpression, err error) {
+	_model = &FirewallRuleInputFilterExpression{
+		Expression: core.StringPtr(expression),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*FirewallRuleInputFilterExpression) isaFirewallRuleInputFilter() bool {
+	return true
+}
+
+// UnmarshalFirewallRuleInputFilterExpression unmarshals an instance of FirewallRuleInputFilterExpression from the specified map of raw messages.
+func UnmarshalFirewallRuleInputFilterExpression(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(FirewallRuleInputFilterExpression)
+	err = core.UnmarshalPrimitive(m, "expression", &obj.Expression)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "paused", &obj.Paused)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// FirewallRuleInputFilterID : An existing filter.
+// This model "extends" FirewallRuleInputFilter
+type FirewallRuleInputFilterID struct {
+	// Identifier of the filter.
+	ID *string `json:"id" validate:"required"`
+}
+
+// NewFirewallRuleInputFilterID : Instantiate FirewallRuleInputFilterID (Generic Model Constructor)
+func (*FirewallRulesV1) NewFirewallRuleInputFilterID(id string) (_model *FirewallRuleInputFilterID, err error) {
+	_model = &FirewallRuleInputFilterID{
+		ID: core.StringPtr(id),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*FirewallRuleInputFilterID) isaFirewallRuleInputFilter() bool {
+	return true
+}
+
+// UnmarshalFirewallRuleInputFilterID unmarshals an instance of FirewallRuleInputFilterID from the specified map of raw messages.
+func UnmarshalFirewallRuleInputFilterID(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(FirewallRuleInputFilterID)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		return
 	}

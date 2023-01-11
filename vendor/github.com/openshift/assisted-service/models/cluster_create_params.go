@@ -24,6 +24,10 @@ type ClusterCreateParams struct {
 	// A comma-separated list of NTP sources (name or IP) going to be added to all the hosts.
 	AdditionalNtpSource *string `json:"additional_ntp_source,omitempty"`
 
+	// The virtual IP used to reach the OpenShift cluster's API.
+	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))?$
+	APIVip string `json:"api_vip,omitempty"`
+
 	// Base domain of the cluster. All DNS records must be sub-domains of this base and include the cluster name.
 	BaseDNSDomain string `json:"base_dns_domain,omitempty"`
 
@@ -118,6 +122,9 @@ type ClusterCreateParams struct {
 	// SSH public key for debugging OpenShift nodes.
 	SSHPublicKey string `json:"ssh_public_key,omitempty"`
 
+	// A comma-separated list of tags that are associated to the cluster.
+	Tags *string `json:"tags,omitempty"`
+
 	// Indicate if the networking is managed by the user.
 	UserManagedNetworking *bool `json:"user_managed_networking,omitempty"`
 
@@ -128,6 +135,10 @@ type ClusterCreateParams struct {
 // Validate validates this cluster create params
 func (m *ClusterCreateParams) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateAPIVip(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateClusterNetworkCidr(formats); err != nil {
 		res = append(res, err)
@@ -200,6 +211,18 @@ func (m *ClusterCreateParams) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *ClusterCreateParams) validateAPIVip(formats strfmt.Registry) error {
+	if swag.IsZero(m.APIVip) { // not required
+		return nil
+	}
+
+	if err := validate.Pattern("api_vip", "body", m.APIVip, `^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))?$`); err != nil {
+		return err
+	}
+
 	return nil
 }
 

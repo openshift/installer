@@ -39,8 +39,6 @@ var (
 	OpenStack = provider("openstack")
 	// OVirt is the provider for creating resources in oVirt.
 	OVirt = provider("ovirt")
-	// Random is the provider for generating randomness.
-	Random = provider("random")
 	// Time is the provider for adding create and sleep requirements for resources.
 	Time = provider("time")
 	// VSphere is the provider for creating resource in vSphere.

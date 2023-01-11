@@ -1,0 +1,132 @@
+#!/bin/bash
+
+function redact_pull_secret_sed() {
+	# Produce a sed script to redact any of the pull secrets we know about.
+	# The journal export format is binary, so the redacted output must be
+	# the same length as the input.
+	jq -r '.auths[].auth' </root/.docker/config.json | sed -f <(cat <<EOF
+h
+s/.*/s#\0#/
+x
+s/././g
+s/^.\{10\}/<redacted>/
+s/.*/\0#g/
+x
+G
+s/\n//
+EOF
+)
+}
+
+function gather_journal() {
+	( >&2 echo -n "Gathering node journal" )
+	journalctl -o export | sed -f <(redact_pull_secret_sed) >"${ARTIFACTS_DIR}/journal.export"
+	( >&2 echo " Done")
+}
+
+function gather_agent_data() {
+	( >&2 echo -n "Gathering agent installation data" )
+	mkdir -p "${ARTIFACTS_DIR}/etc"
+	cp -a /etc/assisted{,-service} "${ARTIFACTS_DIR}/etc/"
+	# Redact pull secrets
+	for manifest in "${ARTIFACTS_DIR}"/etc/assisted/manifests/*; do
+		sed -i -e '/"auth":/ s/: *"[A-Za-z0-9+/]*=*"/: "<redacted>"/g' "${manifest}"
+	done
+	( >&2 echo -n ".")
+	mkdir "${ARTIFACTS_DIR}/etc/containers"
+	cp -a /etc/containers/registries.conf "${ARTIFACTS_DIR}/etc/containers/"
+	( >&2 echo -n ".")
+	mkdir -p "${ARTIFACTS_DIR}/usr/local/share/"
+	cp -a /usr/local/share/assisted-service "${ARTIFACTS_DIR}/usr/local/share/"
+
+	if [[ $(podman info -f json | jq 'if any(.registries[]; type=="array") then false else any(.registries[].Mirrors[]; has("Location")) end') == "true" ]]; then
+		mkdir -p "${ARTIFACTS_DIR}/etc/pki/ca-trust/extracted/"
+		cp -a /etc/pki/ca-trust/extracted/pem "${ARTIFACTS_DIR}/etc/pki/ca-trust/extracted/"
+	fi
+	( >&2 echo " Done")
+}
+
+function gather_config_status() {
+	( >&2 echo -n "Gathering configuration status" )
+	mkdir -p "${ARTIFACTS_DIR}/var/run"
+        if [ -d /var/run/agent-installer ]; then
+            cp -a /var/run/agent-installer "${ARTIFACTS_DIR}/var/run/"
+        fi
+	( >&2 echo " Done")
+}
+
+function gather_network_data() {
+	( >&2 echo -n "Gathering network data" )
+	ip -d -j -p addr show > "${ARTIFACTS_DIR}/ipaddr"
+	( >&2 echo -n ".")
+        ip -d -j -p link show > "${ARTIFACTS_DIR}/iplink"
+	( >&2 echo -n ".")
+        ip -d -j -p route show > "${ARTIFACTS_DIR}/iproute"
+	( >&2 echo -n ".")
+	cp /etc/resolv.conf "${ARTIFACTS_DIR}/resolv.conf"
+	( >&2 echo " Done")
+}
+
+function gather_storage_data() {
+	( >&2 echo  -n "Gathering storage data" )
+	mkdir -p "${ARTIFACTS_DIR}/etc"
+	cp /etc/mtab "${ARTIFACTS_DIR}/etc/mtab"
+	( >&2 echo -n ".")
+	lsblk > "${ARTIFACTS_DIR}/lsblk"
+	( >&2 echo " Done")
+}
+
+function Help()
+{
+	echo "Gathers the necessary data for troubleshooting OpenShift's agent based installation"
+	echo
+	echo "Syntax: agent-gather [-h|-v]"
+	echo "options:"
+        echo "-h	Print this help"
+        echo "-O	Output the compressed content to stdout"
+	echo "-v	Set verbose mode"
+	echo
+}
+
+while getopts ":hvO" option; do
+	case $option in
+		h)
+			Help
+			exit;;
+		v)
+			set -xv;;
+		O)
+			STDOUT=1;;
+		\?)
+			echo "Error: Invalid option"
+			Help
+			exit;;
+	esac
+done
+
+if [[ "$UID" != "0" ]]; then
+	( >&2 echo "This command must be run with super user privileges. Doing that now")
+	exec sudo "$0" "$@"
+fi
+
+ARTIFACTS_DIR="$(mktemp -d)/agent-gather"
+mkdir -p "$ARTIFACTS_DIR"
+gather_journal
+gather_agent_data
+gather_config_status
+gather_network_data
+gather_storage_data
+
+# Set permissions so regular users can delete the extracted content
+find "$ARTIFACTS_DIR" -type d -exec chmod a+rwx "{}" \;
+find "$ARTIFACTS_DIR" -type f -exec chmod a+rw "{}" \;
+
+OUTPUT_FILE="./agent-gather-$(date +%Y%m%d-%H%M%S%Z).tar.xz"
+( >&2 echo "Compressing gathered data to $OUTPUT_FILE" )
+
+if [[ "$STDOUT" == "1" ]]; then
+    tar -cJO --directory "$(dirname "$ARTIFACTS_DIR")" agent-gather
+else
+    tar -cJvf "$OUTPUT_FILE" --directory "$(dirname "$ARTIFACTS_DIR")" agent-gather
+    ( >&2 echo "Wrote gathered data to \"$OUTPUT_FILE\"" )
+fi

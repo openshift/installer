@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	machineapi "github.com/openshift/api/machine/v1beta1"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
-	"github.com/pkg/errors"
 )
 
 // MachineSets returns a list of machinesets for a machinepool.

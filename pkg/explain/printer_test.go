@@ -52,6 +52,9 @@ func Test_PrintFields(t *testing.T) {
  There are three possible values for this field, but the valid values are dependent upon the platform being used. "Mint": create new credentials with a subset of the overall permissions for each CredentialsRequest "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest "Manual": CredentialsRequests must be handled manually by the user 
  For each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set. AWS: "Mint", "Passthrough", "Manual" Azure: "Passthrough", "Manual" AzureStack: "Manual" GCP: "Mint", "Passthrough", "Manual" IBMCloud: "Manual" AlibabaCloud: "Manual" PowerVS: "Manual" Nutanix: "Manual"
 
+    featureSet <string>
+      FeatureSet enables features that are not part of the default feature set.
+
     fips <boolean>
       Default: false
       FIPS configures https://www.nist.gov/itl/fips-general-information
@@ -143,6 +146,14 @@ func Test_PrintFields(t *testing.T) {
 
     hostedZone <string>
       HostedZone is the ID of an existing hosted zone into which to add DNS records for the cluster's internal API. An existing hosted zone can only be used when also using existing subnets. The hosted zone must be associated with the VPC containing the subnets. Leave the hosted zone unset to have the installer create the hosted zone on your behalf.
+
+    lbType <string>
+      LBType is an optional field to specify a load balancer type. 
+ When this field is specified, the default ingresscontroller will be created using the specified load-balancer type. 
+ Following are the accepted values: 
+ * "Classic": A Classic Load Balancer that makes routing decisions at either the transport layer (TCP/SSL) or the application layer (HTTP/HTTPS). See the following for additional details: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#clb 
+ * "NLB": A Network Load Balancer that makes routing decisions at the transport layer (TCP/SSL). See the following for additional details: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb 
+ If this field is not set explicitly, it defaults to "Classic".  This default is subject to change over time.
 
     propagateUserTags <boolean>
       PropagateUserTags is a flag that directs in-cluster operators to include the specified user tags in the tags of the AWS resources that the operators create.

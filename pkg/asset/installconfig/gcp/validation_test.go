@@ -1,15 +1,21 @@
 package gcp
 
 import (
+	"context"
 	"fmt"
 	"net"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	googleoauth "golang.org/x/oauth2/google"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
+	"google.golang.org/api/googleapi"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -30,6 +36,19 @@ var (
 	validCPSubnet      = "valid-controlplane-subnet"
 	validCIDR          = "10.0.0.0/16"
 	validClusterName   = "valid-cluster"
+	validPrivateZone   = "valid-short-private-zone"
+	validPublicZone    = "valid-short-public-zone"
+	invalidPublicZone  = "invalid-short-public-zone"
+	validBaseDomain    = "example.installer.domain."
+
+	validPrivateDNSZone = dns.ManagedZone{
+		Name:    validPrivateZone,
+		DnsName: fmt.Sprintf("%s.%s", validClusterName, strings.TrimSuffix(validBaseDomain, ".")),
+	}
+	validPublicDNSZone = dns.ManagedZone{
+		Name:    validPublicZone,
+		DnsName: validBaseDomain,
+	}
 
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
@@ -69,6 +88,15 @@ var (
 	removeVPC                = func(ic *types.InstallConfig) { ic.GCP.Network = "" }
 	removeSubnets            = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet, ic.GCP.ControlPlaneSubnet = "", "" }
 	invalidClusterName       = func(ic *types.InstallConfig) { ic.ObjectMeta.Name = "testgoogletest" }
+	validManagedZone         = func(ic *types.InstallConfig) {
+		ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID = validPublicZone, validProjectName
+	}
+	invalidManagedZone = func(ic *types.InstallConfig) {
+		ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID = invalidPublicZone, validProjectName
+	}
+	invalidZoneProject = func(ic *types.InstallConfig) {
+		ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID = validPublicZone, invalidProjectName
+	}
 
 	machineTypeAPIResult = map[string]*compute.MachineType{
 		"n1-standard-1": {GuestCpus: 1, MemoryMb: 3840},
@@ -90,6 +118,7 @@ var (
 
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
+		BaseDomain: validBaseDomain,
 		ObjectMeta: metav1.ObjectMeta{
 			Name: validClusterName,
 		},
@@ -106,6 +135,13 @@ func validInstallConfig() *types.InstallConfig {
 				Network:                validNetworkName,
 				ComputeSubnet:          validComputeSubnet,
 				ControlPlaneSubnet:     validCPSubnet,
+				PublicDNSZone: &gcp.DNSZone{
+					ID:        validPublicZone,
+					ProjectID: validProjectName,
+				},
+				PrivateDNSZone: &gcp.DNSZone{
+					ProjectID: validProjectName,
+				},
 			},
 		},
 		ControlPlane: &types.MachinePool{
@@ -254,6 +290,24 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: "platform.gcp.region: Invalid value: \"us-east4\": invalid region",
 		},
+		{
+			name:          "Managed zone validated",
+			edits:         editFunctions{validManagedZone},
+			expectedError: false,
+		},
+		{
+			name:          "Valid project & invalid zone",
+			edits:         editFunctions{invalidManagedZone},
+			expectedError: true,
+			// slips through the switch for GCP error types and into the base domain errors
+			expectedErrMsg: fmt.Sprintf("baseDomain: Internal error: no matching DNS Zone found"),
+		},
+		{
+			name:           "Valid zone & invalid project",
+			edits:          editFunctions{invalidZoneProject},
+			expectedError:  true,
+			expectedErrMsg: fmt.Sprintf("platform.gcp.PublicDNSZone.ProjectID: Invalid value: \"%s\": invalid public zone project", invalidProjectName),
+		},
 	}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -292,6 +346,14 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), gomock.Any(), gomock.Not(validProjectName), gomock.Any()).Return([]*compute.Subnetwork{}, nil).AnyTimes()
 	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Not(validRegion)).Return([]*compute.Subnetwork{}, nil).AnyTimes()
 
+	// Return fake credentials when asked
+	gcpClient.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: []byte("fake creds")}).AnyTimes()
+
+	// Expected results for the managed zone tests
+	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), validPublicZone).Return(&validPublicDNSZone, nil).AnyTimes()
+	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), validPrivateZone).Return(&validPrivateDNSZone, nil).AnyTimes()
+	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), invalidPublicZone).Return(nil, fmt.Errorf("no matching DNS Zone found")).AnyTimes()
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			editedInstallConfig := validInstallConfig()
@@ -309,7 +371,7 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	}
 }
 
-func TestValidatePreExitingPublicDNS(t *testing.T) {
+func TestValidatePreExistingPublicDNS(t *testing.T) {
 	cases := []struct {
 		name    string
 		records []*dns.ResourceRecordSet
@@ -339,7 +401,7 @@ func TestValidatePreExitingPublicDNS(t *testing.T) {
 			gcpClient.EXPECT().GetPublicDNSZone(gomock.Any(), "project-id", "base-domain").Return(&dns.ManagedZone{Name: "zone-name"}, nil).AnyTimes()
 			gcpClient.EXPECT().GetRecordSets(gomock.Any(), gomock.Eq("project-id"), gomock.Eq("zone-name")).Return(test.records, nil).AnyTimes()
 
-			err := ValidatePreExitingPublicDNS(gcpClient, &types.InstallConfig{
+			err := ValidatePreExistingPublicDNS(gcpClient, &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster-name"},
 				BaseDomain: "base-domain",
 				Platform:   types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
@@ -361,21 +423,26 @@ func TestGCPEnabledServicesList(t *testing.T) {
 	}{{
 		name:     "No services present",
 		services: nil,
-		err: "following required services are not enabled in this project storage-component.googleapis.com," +
-			" servicemanagement.googleapis.com, storage-api.googleapis.com, compute.googleapis.com," +
-			" cloudapis.googleapis.com, dns.googleapis.com, iam.googleapis.com, iamcredentials.googleapis.com," +
-			" serviceusage.googleapis.com, cloudresourcemanager.googleapis.com",
+		err:      "unable to fetch enabled services for project. Make sure 'serviceusage.googleapis.com' is enabled",
+	}, {
+		name:     "Service Usage missing",
+		services: []string{"compute.googleapis.com"},
+		err:      "unable to fetch enabled services for project. Make sure 'serviceusage.googleapis.com' is enabled",
 	}, {
 		name: "All pre-existing",
-		services: []string{"compute.googleapis.com",
+		services: []string{
+			"compute.googleapis.com",
 			"cloudresourcemanager.googleapis.com", "dns.googleapis.com",
 			"iam.googleapis.com", "iamcredentials.googleapis.com", "serviceusage.googleapis.com",
-			"deploymentmanager.googleapis.com"},
+			"deploymentmanager.googleapis.com",
+		},
 	}, {
 		name:     "Some services present",
-		services: []string{"compute.googleapis.com"},
-		err:      "enable all services before creating the cluster",
+		services: []string{"compute.googleapis.com", "serviceusage.googleapis.com"},
+		err:      "the following required services are not enabled in this project: cloudresourcemanager.googleapis.com,dns.googleapis.com,iam.googleapis.com,iamcredentials.googleapis.com",
 	}}
+
+	errForbidden := &googleapi.Error{Code: http.StatusForbidden}
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -383,12 +450,78 @@ func TestGCPEnabledServicesList(t *testing.T) {
 			defer mockCtrl.Finish()
 			gcpClient := mock.NewMockAPI(mockCtrl)
 
-			gcpClient.EXPECT().GetEnabledServices(gomock.Any(), gomock.Any()).Return(test.services, nil).AnyTimes()
-			err := ValidateEnabledServices(nil, gcpClient, "")
+			if !sets.NewString(test.services...).Has("serviceusage.googleapis.com") {
+				gcpClient.EXPECT().GetEnabledServices(gomock.Any(), gomock.Any()).Return(nil, errForbidden).AnyTimes()
+			} else {
+				gcpClient.EXPECT().GetEnabledServices(gomock.Any(), gomock.Any()).Return(test.services, nil).AnyTimes()
+			}
+			err := ValidateEnabledServices(context.TODO(), gcpClient, "")
 			if test.err == "" {
 				assert.NoError(t, err)
 			} else {
-				assert.Error(t, err)
+				assert.Regexp(t, test.err, err)
+			}
+		})
+	}
+}
+
+func TestValidateCredentialMode(t *testing.T) {
+	cases := []struct {
+		name       string
+		creds      types.CredentialsMode
+		emptyCreds bool
+		err        string
+	}{{
+		name:       "missing json with manual creds",
+		creds:      types.ManualCredentialsMode,
+		emptyCreds: true,
+	}, {
+		name:       "missing json without manual creds",
+		creds:      types.PassthroughCredentialsMode,
+		emptyCreds: true,
+		err:        "credentialsMode: Forbidden: environmental authentication is only supported with Manual credentials mode",
+	}, {
+		name:       "supplied json with manual creds",
+		creds:      types.ManualCredentialsMode,
+		emptyCreds: false,
+	}, {
+		name:       "supplied json without manual creds",
+		creds:      types.PassthroughCredentialsMode,
+		emptyCreds: false,
+	}}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	// Client where the creds are empty
+	gcpClientEmptyCreds := mock.NewMockAPI(mockCtrl)
+	gcpClientEmptyCreds.EXPECT().GetCredentials().Return(&googleoauth.Credentials{}).AnyTimes()
+
+	// Client that contains creds
+	gcpClientWithCreds := mock.NewMockAPI(mockCtrl)
+	gcpClientWithCreds.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: []byte("fake creds")}).AnyTimes()
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+
+			ic := types.InstallConfig{
+				ObjectMeta:      metav1.ObjectMeta{Name: "cluster-name"},
+				BaseDomain:      "base-domain",
+				Platform:        types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+				CredentialsMode: test.creds,
+			}
+
+			var err error
+			if test.emptyCreds {
+				err = ValidateCredentialMode(gcpClientEmptyCreds, &ic)
+			} else {
+				err = ValidateCredentialMode(gcpClientWithCreds, &ic)
+			}
+
+			if test.err == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, test.err, err)
 			}
 		})
 	}

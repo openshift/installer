@@ -189,3 +189,19 @@ variable "azure_control_plane_vm_networking_type" {
   type        = bool
   description = "Whether to enable accelerated networking on control plane nodes."
 }
+
+variable "random_storage_account_suffix" {
+  type        = string
+  description = "A random string generated to add a suffix to the storage account and blob"
+}
+
+variable "azure_vm_architecture" {
+  type        = string
+  description = "Architecture of the VMs - used when creating images in the image gallery"
+}
+
+variable "azure_image_release" {
+  type        = string
+  description = "RHCOS release image version - used when creating the image definition in the gallery"
+}
+

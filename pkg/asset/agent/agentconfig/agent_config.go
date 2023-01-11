@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/agent/conversion"
+	"github.com/openshift/installer/pkg/validate"
 )
 
 var (
@@ -64,8 +65,8 @@ hosts:
   # For more information about rootDeviceHints:
   # https://docs.openshift.com/container-platform/4.10/installing/installing_bare_metal_ipi/ipi-install-installation-workflow.html#root-device-hints_ipi-install-installation-workflow
   rootDeviceHints:
- deviceName: /dev/sda
- interfaces are used to identify the host to apply this configuration to
+    deviceName: /dev/sda
+  # interfaces are used to identify the host to apply this configuration to
   interfaces:
     - macAddress: 00:00:00:00:00:00
       name: host-network-interface-name
@@ -150,80 +151,151 @@ func (a *AgentConfig) finish() error {
 }
 
 func (a *AgentConfig) validateAgent() field.ErrorList {
-	allErrs := field.ErrorList{}
+	var allErrs field.ErrorList
 
-	if err := a.validateNodesHaveAtLeastOneMacAddressDefined(); err != nil {
+	if err := a.validateRendezvousIP(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
-	if err := a.validateRootDeviceHints(); err != nil {
+	if err := a.validateHosts(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
-	if err := a.validateRoles(); err != nil {
+	if err := a.validateAdditionalNTPSources(field.NewPath("AdditionalNTPSources"), a.Config.AdditionalNTPSources); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	if err := a.validateRendevousIPNotWorker(a.Config.RendezvousIP, a.Config.Hosts); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
 	return allErrs
 }
 
-func (a *AgentConfig) validateNodesHaveAtLeastOneMacAddressDefined() field.ErrorList {
+func (a *AgentConfig) validateRendezvousIP() field.ErrorList {
 	var allErrs field.ErrorList
 
-	if len(a.Config.Hosts) == 0 {
-		return allErrs
+	rendezvousIPPath := field.NewPath("rendezvousIP")
+
+	//empty rendezvous ip is fine
+	if a.Config.RendezvousIP == "" {
+		return nil
 	}
 
-	rootPath := field.NewPath("Hosts")
+	if err := validate.IP(a.Config.RendezvousIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(rendezvousIPPath, a.Config.RendezvousIP, err.Error()))
+	}
 
-	for i := range a.Config.Hosts {
-		node := a.Config.Hosts[i]
-		interfacePath := rootPath.Index(i).Child("Interfaces")
-		if len(node.Interfaces) == 0 {
-			allErrs = append(allErrs, field.Required(interfacePath, "at least one interface must be defined for each node"))
+	return allErrs
+}
+
+func (a *AgentConfig) validateHosts() field.ErrorList {
+	var allErrs field.ErrorList
+
+	macs := make(map[string]bool)
+	for i, host := range a.Config.Hosts {
+
+		hostPath := field.NewPath("Hosts").Index(i)
+
+		if err := a.validateHostInterfaces(hostPath, host, macs); err != nil {
+			allErrs = append(allErrs, err...)
 		}
 
-		for j := range node.Interfaces {
-			if node.Interfaces[j].MacAddress == "" {
-				macAddressPath := interfacePath.Index(j).Child("macAddress")
-				allErrs = append(allErrs, field.Required(macAddressPath, "each interface must have a MAC address defined"))
+		if err := a.validateHostRootDeviceHints(hostPath, host); err != nil {
+			allErrs = append(allErrs, err...)
+		}
+
+		if err := a.validateRoles(hostPath, host); err != nil {
+			allErrs = append(allErrs, err...)
+		}
+	}
+
+	return allErrs
+}
+
+func (a *AgentConfig) validateHostInterfaces(hostPath *field.Path, host agent.Host, macs map[string]bool) field.ErrorList {
+	var allErrs field.ErrorList
+
+	interfacePath := hostPath.Child("Interfaces")
+	if len(host.Interfaces) == 0 {
+		allErrs = append(allErrs, field.Required(interfacePath, "at least one interface must be defined for each node"))
+	}
+
+	for j := range host.Interfaces {
+		mac := host.Interfaces[j].MacAddress
+		macAddressPath := interfacePath.Index(j).Child("macAddress")
+
+		if mac == "" {
+			allErrs = append(allErrs, field.Required(macAddressPath, "each interface must have a MAC address defined"))
+			continue
+		}
+
+		if err := validate.MAC(mac); err != nil {
+			allErrs = append(allErrs, field.Invalid(macAddressPath, mac, err.Error()))
+		}
+
+		if _, ok := macs[mac]; ok {
+			allErrs = append(allErrs, field.Invalid(macAddressPath, mac, "duplicate MAC address found"))
+		}
+		macs[mac] = true
+	}
+
+	return allErrs
+}
+
+func (a *AgentConfig) validateHostRootDeviceHints(hostPath *field.Path, host agent.Host) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if host.RootDeviceHints.WWNWithExtension != "" {
+		allErrs = append(allErrs, field.Forbidden(
+			hostPath.Child("RootDeviceHints", "WWNWithExtension"), "WWN extensions are not supported in root device hints"))
+	}
+
+	if host.RootDeviceHints.WWNVendorExtension != "" {
+		allErrs = append(allErrs, field.Forbidden(hostPath.Child("RootDeviceHints", "WWNVendorExtension"), "WWN vendor extensions are not supported in root device hints"))
+	}
+
+	return allErrs
+}
+
+func (a *AgentConfig) validateRoles(hostPath *field.Path, host agent.Host) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if len(host.Role) > 0 && host.Role != "master" && host.Role != "worker" {
+		allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), "host role has incorrect value. Role must either be 'master' or 'worker'"))
+	}
+
+	return allErrs
+}
+
+func (a *AgentConfig) validateAdditionalNTPSources(additionalNTPSourcesPath *field.Path, sources []string) field.ErrorList {
+	var allErrs field.ErrorList
+
+	for i, source := range sources {
+		domainNameErr := validate.DomainName(source, true)
+		if domainNameErr != nil {
+			ipErr := validate.IP(source)
+			if ipErr != nil {
+				allErrs = append(allErrs, field.Invalid(additionalNTPSourcesPath.Index(i), source, "NTP source is not a valid domain name nor a valid IP"))
 			}
 		}
 	}
-	return allErrs
-}
-
-func (a *AgentConfig) validateRootDeviceHints() field.ErrorList {
-	var allErrs field.ErrorList
-	rootPath := field.NewPath("Hosts")
-
-	for i, host := range a.Config.Hosts {
-		hostPath := rootPath.Index(i)
-		if host.RootDeviceHints.WWNWithExtension != "" {
-			allErrs = append(allErrs, field.Forbidden(
-				hostPath.Child("RootDeviceHints", "WWNWithExtension"),
-				"WWN extensions are not supported in root device hints"))
-		}
-		if host.RootDeviceHints.WWNVendorExtension != "" {
-			allErrs = append(allErrs, field.Forbidden(
-				hostPath.Child("RootDeviceHints", "WWNVendorExtension"),
-				"WWN vendor extensions are not supported in root device hints"))
-		}
-	}
 
 	return allErrs
 }
 
-func (a *AgentConfig) validateRoles() field.ErrorList {
+func (a *AgentConfig) validateRendevousIPNotWorker(rendezvousIP string, hosts []agent.Host) field.ErrorList {
 	var allErrs field.ErrorList
-	rootPath := field.NewPath("Hosts")
 
-	for i, host := range a.Config.Hosts {
-		hostPath := rootPath.Index(i)
-		if len(host.Role) > 0 && host.Role != "master" && host.Role != "worker" {
-			allErrs = append(allErrs, field.Forbidden(
-				hostPath.Child("Host"),
-				"host role has incorrect value. Role must either be 'master' or 'worker'"))
+	if rendezvousIP != "" {
+		for i, host := range hosts {
+			hostPath := field.NewPath("Hosts").Index(i)
+			if strings.Contains(string(host.NetworkConfig.Raw), rendezvousIP) && host.Role != "master" {
+				if len(host.Role) > 0 {
+					errMsg := "Host " + host.Hostname + " is not of role 'master' and has the rendevousIP assigned to it. The rendevousIP must be assigned to a host of role 'master'"
+					allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), errMsg))
+				}
+			}
 		}
 	}
 

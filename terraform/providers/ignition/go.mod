@@ -27,7 +27,7 @@ require (
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-getter v1.4.2-0.20200106182914-9813cbd4eb02 // indirect
 	github.com/hashicorp/go-hclog v0.13.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
@@ -42,6 +42,7 @@ require (
 	github.com/jmespath/go-jmespath v0.3.0 // indirect
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/kisielk/errcheck v1.2.0 // indirect
+	github.com/klauspost/compress v1.11.2 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mitchellh/cli v1.1.1 // indirect
@@ -57,7 +58,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/posener/complete v1.2.3 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
-	github.com/ulikunitz/xz v0.5.7 // indirect
+	github.com/ulikunitz/xz v0.5.8 // indirect
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/zclconf/go-cty v1.4.0 // indirect
@@ -66,10 +67,10 @@ require (
 	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79 // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/mod v0.2.0 // indirect
-	golang.org/x/net v0.0.0-20200506145744-7e3656a0809f // indirect
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
-	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6 // indirect
-	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.0.0-20200509030707-2212a7e161a5 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	google.golang.org/api v0.23.0 // indirect
@@ -79,3 +80,11 @@ require (
 	google.golang.org/protobuf v1.22.0 // indirect
 	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 )
+
+replace github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2064702
+replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2100495
+replace golang.org/x/text => golang.org/x/text v0.3.7

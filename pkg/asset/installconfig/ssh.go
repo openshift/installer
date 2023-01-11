@@ -2,7 +2,6 @@ package installconfig
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -31,7 +30,7 @@ func (a *sshPublicKey) Dependencies() []asset.Asset {
 }
 
 func readSSHKey(path string) (string, error) {
-	keyAsBytes, err := ioutil.ReadFile(path)
+	keyAsBytes, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

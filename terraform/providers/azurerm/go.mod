@@ -79,3 +79,9 @@ require (
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2064702
+replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2100495
+replace golang.org/x/text => golang.org/x/text v0.3.7

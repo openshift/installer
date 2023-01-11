@@ -5,6 +5,7 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 
 . /usr/local/bin/release-image.sh
 . /usr/local/bin/bootstrap-cluster-gather.sh
+. /usr/local/bin/bootstrap-verify-api-server-urls.sh
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
@@ -140,10 +141,13 @@ then
 
 	rm --recursive --force config-bootstrap
 
-	ADDITIONAL_FLAGS=""
+	ADDITIONAL_FLAGS=()
 	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
-		ADDITIONAL_FLAGS="--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml"
+		ADDITIONAL_FLAGS+=("--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml")
 	fi
+	{{- if .FeatureSet }}
+	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
+	{{- end}}
 
 	bootkube_podman_run \
 		--name config-render \
@@ -155,7 +159,7 @@ then
 		--config-output-file=/assets/config-bootstrap/config \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/config-bootstrap \
-		${ADDITIONAL_FLAGS}
+		"${ADDITIONAL_FLAGS[@]}"
 
 	cp config-bootstrap/manifests/* manifests/
 
@@ -169,6 +173,11 @@ then
 	echo "Rendering Kubernetes API server core manifests..."
 
 	rm --recursive --force kube-apiserver-bootstrap
+
+  ADDITIONAL_FLAGS=()
+	{{- if .FeatureSet }}
+	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
+	{{- end}}
 
 	bootkube_podman_run  \
 		--name kube-apiserver-render \
@@ -184,7 +193,8 @@ then
 		--config-output-file=/assets/kube-apiserver-bootstrap/config \
 		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml \
 		--cluster-auth-file=/assets/manifests/cluster-authentication-02-config.yaml \
-		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml
+		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+		"${ADDITIONAL_FLAGS[@]}"
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -201,6 +211,11 @@ then
 
 	rm --recursive --force kube-controller-manager-bootstrap
 
+  ADDITIONAL_FLAGS=()
+	{{- if .FeatureSet }}
+	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
+	{{- end}}
+
 	bootkube_podman_run \
 		--name kube-controller-render \
 		--volume "$PWD:/assets:z" \
@@ -212,7 +227,8 @@ then
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
 		--cpc-config-output-file=/assets/kube-controller-manager-bootstrap/cpc-config \
-		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml
+		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml \
+    "${ADDITIONAL_FLAGS[@]}"
 
 	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
 	cp kube-controller-manager-bootstrap/cpc-config /etc/kubernetes/bootstrap-configs/cluster-policy-controller-config.yaml
@@ -354,6 +370,19 @@ then
 
 	touch mco-bootstrap.done
     record_service_stage_success
+fi
+
+# Check if the API and API_INT Server URLs can be resolved and reached.
+echo "Check if API and API-Int URLs are resolvable during bootstrap"
+API_SERVER_URL="{{.APIServerURL}}"
+API_INT_SERVER_URL="{{.APIIntServerURL}}" 
+
+if [[ ! -z "${API_SERVER_URL}" ]] ; then
+    check_url "API_URL" "${API_SERVER_URL}"
+fi
+
+if [[ ! -z "${API_INT_SERVER_URL}" ]] ; then
+    check_url "API_INT_URL" "${API_INT_SERVER_URL}"
 fi
 
 if [ ! -f cco-bootstrap.done ]

@@ -29,6 +29,18 @@ func (o *V2ListSupportedOpenshiftVersionsReader) ReadResponse(response runtime.C
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewV2ListSupportedOpenshiftVersionsBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 500:
+		result := NewV2ListSupportedOpenshiftVersionsInternalServerError()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 503:
 		result := NewV2ListSupportedOpenshiftVersionsServiceUnavailable()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -64,6 +76,70 @@ func (o *V2ListSupportedOpenshiftVersionsOK) readResponse(response runtime.Clien
 
 	// response payload
 	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewV2ListSupportedOpenshiftVersionsBadRequest creates a V2ListSupportedOpenshiftVersionsBadRequest with default headers values
+func NewV2ListSupportedOpenshiftVersionsBadRequest() *V2ListSupportedOpenshiftVersionsBadRequest {
+	return &V2ListSupportedOpenshiftVersionsBadRequest{}
+}
+
+/* V2ListSupportedOpenshiftVersionsBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type V2ListSupportedOpenshiftVersionsBadRequest struct {
+	Payload *models.Error
+}
+
+func (o *V2ListSupportedOpenshiftVersionsBadRequest) Error() string {
+	return fmt.Sprintf("[GET /v2/openshift-versions][%d] v2ListSupportedOpenshiftVersionsBadRequest  %+v", 400, o.Payload)
+}
+func (o *V2ListSupportedOpenshiftVersionsBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *V2ListSupportedOpenshiftVersionsBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewV2ListSupportedOpenshiftVersionsInternalServerError creates a V2ListSupportedOpenshiftVersionsInternalServerError with default headers values
+func NewV2ListSupportedOpenshiftVersionsInternalServerError() *V2ListSupportedOpenshiftVersionsInternalServerError {
+	return &V2ListSupportedOpenshiftVersionsInternalServerError{}
+}
+
+/* V2ListSupportedOpenshiftVersionsInternalServerError describes a response with status code 500, with default header values.
+
+Error.
+*/
+type V2ListSupportedOpenshiftVersionsInternalServerError struct {
+	Payload *models.Error
+}
+
+func (o *V2ListSupportedOpenshiftVersionsInternalServerError) Error() string {
+	return fmt.Sprintf("[GET /v2/openshift-versions][%d] v2ListSupportedOpenshiftVersionsInternalServerError  %+v", 500, o.Payload)
+}
+func (o *V2ListSupportedOpenshiftVersionsInternalServerError) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *V2ListSupportedOpenshiftVersionsInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
 

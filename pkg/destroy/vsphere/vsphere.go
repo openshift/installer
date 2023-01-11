@@ -143,10 +143,18 @@ func (o *ClusterUninstaller) deleteFolder() error {
 	}
 
 	// If there are no children in the folder, go ahead and remove it
-	if len(folderMoList[0].ChildEntity) == 0 {
-		folderLogger := o.Logger.WithField("Folder", folderMoList[0].Name)
 
-		folder := object.NewFolder(o.Client, folderMoList[0].Reference())
+	for _, f := range folderMoList {
+		folderLogger := o.Logger.WithField("Folder", f.Name)
+		if numChildren := len(f.ChildEntity); numChildren > 0 {
+			entities := make([]string, 0, numChildren)
+			for _, child := range f.ChildEntity {
+				entities = append(entities, fmt.Sprintf("%s:%s", child.Type, child.Value))
+			}
+			folderLogger.Errorf("Folder should be empty but contains %d objects: %s. The installer will retry removing \"virtualmachine\" objects, but any other type will need to be removed manually before the deprovision can proceed", numChildren, strings.Join(entities, ", "))
+			return errors.Errorf("Expected Folder %s to be empty", f.Name)
+		}
+		folder := object.NewFolder(o.Client, f.Reference())
 		task, err := folder.Destroy(ctx)
 		if err == nil {
 			err = task.Wait(ctx)
@@ -156,8 +164,6 @@ func (o *ClusterUninstaller) deleteFolder() error {
 			return err
 		}
 		folderLogger.Info("Destroyed")
-	} else {
-		return errors.Errorf("Expected Folder %s to be empty", folderMoList[0].Name)
 	}
 
 	return nil

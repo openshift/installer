@@ -6,14 +6,14 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	configv1 "github.com/openshift/api/config/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
 )
 
 var (
@@ -114,6 +114,22 @@ func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, 
 		Status: configv1.IngressStatus{
 			DefaultPlacement: defaultPlacement,
 		},
+	}
+
+	switch config.Platform.Name() {
+	case aws.Name:
+		lbType := configv1.Classic
+		if config.AWS.LBType == configv1.NLB {
+			lbType = configv1.NLB
+		}
+		obj.Spec.LoadBalancer = configv1.LoadBalancer{
+			Platform: configv1.IngressPlatformSpec{
+				AWS: &configv1.AWSIngressSpec{
+					Type: lbType,
+				},
+				Type: configv1.AWSPlatformType,
+			},
+		}
 	}
 	return yaml.Marshal(obj)
 }

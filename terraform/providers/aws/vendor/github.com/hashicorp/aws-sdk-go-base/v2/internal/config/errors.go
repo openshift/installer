@@ -34,6 +34,36 @@ func (c *Config) NewCannotAssumeRoleError(err error) CannotAssumeRoleError {
 	return CannotAssumeRoleError{Config: c, Err: err}
 }
 
+// CannotAssumeRoleWithWebIdentityError occurs when AssumeRoleWithWebIdentity cannot complete.
+type CannotAssumeRoleWithWebIdentityError struct {
+	Config *Config
+	Err    error
+}
+
+func (e CannotAssumeRoleWithWebIdentityError) Error() string {
+	if e.Config == nil || e.Config.AssumeRoleWithWebIdentity == nil {
+		return fmt.Sprintf("cannot assume role with web identity: %s", e.Err)
+	}
+
+	return fmt.Sprintf(`IAM Role (%s) cannot be assumed with web identity token.
+
+There are a number of possible causes of this - the most common are:
+  * The web identity token used in order to assume the role is invalid
+  * The web identity token does not have appropriate permission to assume the role
+  * The role ARN is not valid
+
+Error: %s
+`, e.Config.AssumeRoleWithWebIdentity.RoleARN, e.Err)
+}
+
+func (e CannotAssumeRoleWithWebIdentityError) Unwrap() error {
+	return e.Err
+}
+
+func (c *Config) NewCannotAssumeRoleWithWebIdentityError(err error) CannotAssumeRoleWithWebIdentityError {
+	return CannotAssumeRoleWithWebIdentityError{Config: c, Err: err}
+}
+
 // NoValidCredentialSourcesError occurs when all credential lookup methods have been exhausted without results.
 type NoValidCredentialSourcesError struct {
 	Config *Config

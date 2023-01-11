@@ -3,7 +3,7 @@ package tfvars
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -28,7 +28,7 @@ type config struct {
 
 // TFVars generates terraform.tfvar JSON for launching the cluster.
 func TFVars(clusterID string, clusterDomain string, baseDomain string, machineV4CIDRs []string, machineV6CIDRs []string, useIPv4, useIPv6 bool, bootstrapIgn string, masterIgn string, masterCount int, mastersSchedulable bool) ([]byte, error) {
-	f, err := ioutil.TempFile("", "openshift-install-bootstrap-*.ign")
+	f, err := os.CreateTemp("", "openshift-install-bootstrap-*.ign")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create tmp file for bootstrap ignition")
 	}

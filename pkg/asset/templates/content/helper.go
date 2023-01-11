@@ -1,7 +1,7 @@
 package content
 
 import (
-	"io/ioutil"
+	"io"
 	"path"
 
 	"github.com/openshift/installer/data"
@@ -32,5 +32,5 @@ func getFileContents(uri string) ([]byte, error) {
 	}
 	defer file.Close()
 
-	return ioutil.ReadAll(file)
+	return io.ReadAll(file)
 }

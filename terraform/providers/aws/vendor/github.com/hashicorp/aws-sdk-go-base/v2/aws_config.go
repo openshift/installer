@@ -7,7 +7,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/smithy-go/middleware"
+	"github.com/hashicorp/aws-sdk-go-base/v2/internal/awsconfig"
 	"github.com/hashicorp/aws-sdk-go-base/v2/internal/constants"
 	"github.com/hashicorp/aws-sdk-go-base/v2/internal/endpoints"
 )
@@ -42,20 +42,6 @@ func GetAwsConfig(ctx context.Context, c *Config) (aws.Config, error) {
 	creds, _ := credentialsProvider.Retrieve(ctx)
 	log.Printf("[INFO] Retrieved credentials from %q", creds.Source)
 
-	var retryer aws.Retryer
-	retryer = retry.NewStandard()
-	if maxAttempts := os.Getenv("AWS_MAX_ATTEMPTS"); maxAttempts != "" {
-		if i, err := strconv.Atoi(maxAttempts); err == nil {
-			retryer = retry.AddWithMaxAttempts(retryer, i)
-		}
-	}
-	if c.MaxRetries != 0 {
-		retryer = retry.AddWithMaxAttempts(retryer, c.MaxRetries)
-	}
-	retryer = &networkErrorShortcutter{
-		Retryer: retryer,
-	}
-
 	loadOptions, err := commonLoadOptions(c)
 	if err != nil {
 		return aws.Config{}, err
@@ -63,9 +49,6 @@ func GetAwsConfig(ctx context.Context, c *Config) (aws.Config, error) {
 	loadOptions = append(
 		loadOptions,
 		config.WithCredentialsProvider(credentialsProvider),
-		config.WithRetryer(func() aws.Retryer {
-			return retryer
-		}),
 	)
 	if initialSource == ec2rolecreds.ProviderName {
 		loadOptions = append(
@@ -78,6 +61,8 @@ func GetAwsConfig(ctx context.Context, c *Config) (aws.Config, error) {
 		return awsConfig, fmt.Errorf("loading configuration: %w", err)
 	}
 
+	resolveRetryer(ctx, &awsConfig)
+
 	if !c.SkipCredsValidation {
 		if _, _, err := getAccountIDAndPartitionFromSTSGetCallerIdentity(ctx, stsClient(awsConfig, c)); err != nil {
 			return awsConfig, fmt.Errorf("error validating provider credentials: %w", err)
@@ -87,9 +72,28 @@ func GetAwsConfig(ctx context.Context, c *Config) (aws.Config, error) {
 	return awsConfig, nil
 }
 
+// Adapted from the per-service-client `resolveRetryer()` functions in the AWS SDK for Go v2
+// e.g. https://github.com/aws/aws-sdk-go-v2/blob/main/service/accessanalyzer/api_client.go
+// Currently only supports "standard" retry mode
+func resolveRetryer(ctx context.Context, awsConfig *aws.Config) {
+	var standardOptions []func(*retry.StandardOptions)
+
+	if v, found, _ := awsconfig.GetRetryMaxAttempts(ctx, awsConfig.ConfigSources); found && v != 0 {
+		standardOptions = append(standardOptions, func(so *retry.StandardOptions) {
+			so.MaxAttempts = v
+		})
+	}
+
+	awsConfig.Retryer = func() aws.Retryer {
+		return &networkErrorShortcutter{
+			RetryerV2: retry.NewStandard(standardOptions...),
+		}
+	}
+}
+
 // networkErrorShortcutter is used to enable networking error shortcutting
 type networkErrorShortcutter struct {
-	aws.Retryer
+	aws.RetryerV2
 }
 
 // We're misusing RetryDelay here, since this is the only function that takes the attempt count
@@ -108,7 +112,7 @@ func (r *networkErrorShortcutter) RetryDelay(attempt int, err error) (time.Durat
 		}
 	}
 
-	return r.Retryer.RetryDelay(attempt, err)
+	return r.RetryerV2.RetryDelay(attempt, err)
 }
 
 func GetAwsAccountIDAndPartition(ctx context.Context, awsConfig aws.Config, c *Config) (string, string, error) {
@@ -164,6 +168,10 @@ func commonLoadOptions(c *Config) ([]func(*config.LoadOptions) error, error) {
 		apiOptions = append(apiOptions, awsmiddleware.AddUserAgentKey(c.UserAgent.BuildUserAgentString()))
 	}
 
+	apiOptions = append(apiOptions, func(stack *middleware.Stack) error {
+		return stack.Build.Add(userAgentFromContextMiddleware(), middleware.After)
+	})
+
 	if v := os.Getenv(constants.AppendUserAgentEnvVar); v != "" {
 		log.Printf("[DEBUG] Using additional User-Agent Info: %s", v)
 		apiOptions = append(apiOptions, awsmiddleware.AddUserAgentKey(v))
@@ -173,8 +181,22 @@ func commonLoadOptions(c *Config) ([]func(*config.LoadOptions) error, error) {
 		config.WithRegion(c.Region),
 		config.WithHTTPClient(httpClient),
 		config.WithAPIOptions(apiOptions),
-		config.WithClientLogMode(aws.LogRequestWithBody | aws.LogResponseWithBody | aws.LogRetries),
-		config.WithLogger(debugLogger{}),
+		config.WithEC2IMDSClientEnableState(c.EC2MetadataServiceEnableState),
+	}
+
+	if c.MaxRetries != 0 {
+		loadOptions = append(
+			loadOptions,
+			config.WithRetryMaxAttempts(c.MaxRetries),
+		)
+	}
+
+	if !c.SuppressDebugLog {
+		loadOptions = append(
+			loadOptions,
+			config.WithClientLogMode(aws.LogRequestWithBody|aws.LogResponseWithBody|aws.LogRetries),
+			config.WithLogger(debugLogger{}),
+		)
 	}
 
 	sharedCredentialsFiles, err := c.ResolveSharedCredentialsFiles()
@@ -226,12 +248,10 @@ func commonLoadOptions(c *Config) ([]func(*config.LoadOptions) error, error) {
 		)
 	}
 
-	if c.SkipEC2MetadataApiCheck {
-		loadOptions = append(loadOptions,
-			config.WithEC2IMDSClientEnableState(imds.ClientDisabled),
-		)
-
-		// This should not be needed, but https://github.com/aws/aws-sdk-go-v2/issues/1398
+	// This should not be needed, but https://github.com/aws/aws-sdk-go-v2/issues/1398
+	if c.EC2MetadataServiceEnableState == imds.ClientEnabled {
+		os.Setenv("AWS_EC2_METADATA_DISABLED", "false")
+	} else if c.EC2MetadataServiceEnableState == imds.ClientDisabled {
 		os.Setenv("AWS_EC2_METADATA_DISABLED", "true")
 	}
 

@@ -13,6 +13,8 @@ type APNInfo = config.APNInfo
 
 type AssumeRole = config.AssumeRole
 
+type AssumeRoleWithWebIdentity = config.AssumeRoleWithWebIdentity
+
 type UserAgentProducts = config.UserAgentProducts
 
 type UserAgentProduct = config.UserAgentProduct

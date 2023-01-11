@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/x509"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -300,7 +299,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 			logrus.Fatal(err)
 		}
 		switch cmd.Name() {
-		case "cluster", "image":
+		case "cluster", "image", "pxe-files":
 		default:
 			logrus.Infof(logging.LogCreatedFiles(cmd.Name(), rootOpts.dir, targets))
 		}
@@ -603,7 +602,7 @@ func logComplete(directory, consoleURL string) error {
 	}
 	kubeconfig := filepath.Join(absDir, "auth", "kubeconfig")
 	pwFile := filepath.Join(absDir, "auth", "kubeadmin-password")
-	pw, err := ioutil.ReadFile(pwFile)
+	pw, err := os.ReadFile(pwFile)
 	if err != nil {
 		return err
 	}
@@ -621,12 +620,12 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 		return err
 	}
 
+	if err := addRouterCAToClusterCA(ctx, config, rootOpts.dir); err != nil {
+		return err
+	}
+
 	consoleURL, err := getConsole(ctx, config)
-	if err == nil {
-		if err = addRouterCAToClusterCA(ctx, config, rootOpts.dir); err != nil {
-			return err
-		}
-	} else {
+	if err != nil {
 		logrus.Warnf("Cluster does not have a console available: %v", err)
 	}
 

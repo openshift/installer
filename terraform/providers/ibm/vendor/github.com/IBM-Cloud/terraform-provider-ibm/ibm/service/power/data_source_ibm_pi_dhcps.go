@@ -97,11 +97,14 @@ func dataSourceIBMPIDhcpServersRead(ctx context.Context, d *schema.ResourceData,
 	servers := make([]map[string]interface{}, 0, len(dhcpServers))
 	for _, dhcpServer := range dhcpServers {
 		server := map[string]interface{}{
-			Attr_DhcpID:                *dhcpServer.ID,
-			Attr_DhcpNetworkDeprecated: *dhcpServer.Network.ID,
-			Attr_DhcpNetworkID:         *dhcpServer.Network.ID,
-			Attr_DhcpNetworkName:       *dhcpServer.Network.Name,
-			Attr_DhcpStatus:            *dhcpServer.Status,
+			Attr_DhcpID:     *dhcpServer.ID,
+			Attr_DhcpStatus: *dhcpServer.Status,
+		}
+		if dhcpServer.Network != nil {
+			dhcpNetwork := dhcpServer.Network
+			server[Attr_DhcpNetworkDeprecated] = *dhcpNetwork.ID
+			server[Attr_DhcpNetworkID] = *dhcpNetwork.ID
+			server[Attr_DhcpNetworkName] = *dhcpNetwork.Name
 		}
 		servers = append(servers, server)
 	}

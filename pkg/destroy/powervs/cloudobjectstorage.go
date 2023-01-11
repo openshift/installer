@@ -2,15 +2,22 @@ package powervs
 
 import (
 	"fmt"
+	"math"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	// https://github.com/IBM/platform-services-go-sdk/blob/v0.18.16/resourcecontrollerv2/resource_controller_v2.go
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const cosTypeName = "cos instance"
+
+// $ ibmcloud catalog service cloud-object-storage --output json | jq -r '.[].id'
+// dff97f5c-bc5e-4455-b470-411c3edbe49c.
 const cosResourceID = "dff97f5c-bc5e-4455-b470-411c3edbe49c"
 
 // listCOSInstances lists COS service instances.
@@ -18,7 +25,8 @@ const cosResourceID = "dff97f5c-bc5e-4455-b470-411c3edbe49c"
 func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 	o.Logger.Debugf("Listing COS instances")
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	options := o.controllerSvc.NewListResourceInstancesOptions()
 	options.SetResourceID(cosResourceID)
@@ -35,8 +43,11 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 	for _, instance := range resources.Resources {
 		// Match the COS instances created by both the installer and the
 		// cluster-image-registry-operator.
-		if fmt.Sprintf("%s-cos", o.InfraID) == *instance.Name ||
-			fmt.Sprintf("%s-image-registry", o.InfraID) == *instance.Name {
+		if strings.Contains(*instance.Name, o.InfraID) {
+			if !(strings.HasSuffix(*instance.Name, "-cos") ||
+				strings.HasSuffix(*instance.Name, "-image-registry")) {
+				continue
+			}
 			foundOne = true
 			o.Logger.Debugf("listCOSInstances: FOUND %s %s", *instance.Name, *instance.GUID)
 			result = append(result, cloudResource{
@@ -69,7 +80,8 @@ func (o *ClusterUninstaller) findReclaimedCOSInstance(item cloudResource) (*reso
 
 	getReclamationOptions = o.controllerSvc.NewListReclamationsOptions()
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	reclamations, response, err = o.controllerSvc.ListReclamationsWithContext(ctx, getReclamationOptions)
 	if err != nil {
@@ -102,7 +114,7 @@ func (o *ClusterUninstaller) destroyCOSInstance(item cloudResource) error {
 	if cosInstance != nil {
 		// The resource is gone
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted COS instance %q", item.name)
+		o.Logger.Infof("Deleted COS Instance %q", item.name)
 		return nil
 	}
 
@@ -112,22 +124,21 @@ func (o *ClusterUninstaller) destroyCOSInstance(item cloudResource) error {
 
 	getOptions = o.controllerSvc.NewGetResourceInstanceOptions(item.id)
 
-	ctx, _ := o.contextWithTimeout()
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
 	_, response, err = o.controllerSvc.GetResourceInstanceWithContext(ctx, getOptions)
 
 	if err != nil && response != nil && response.StatusCode == http.StatusNotFound {
 		// The resource is gone
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted COS instance %q", item.name)
+		o.Logger.Infof("Deleted COS Instance %q", item.name)
 		return nil
 	}
 	if err != nil && response != nil && response.StatusCode == http.StatusInternalServerError {
 		o.Logger.Infof("destroyCOSInstance: internal server error")
 		return nil
 	}
-
-	o.Logger.Debugf("Deleting COS instance %q", item.name)
 
 	options := o.controllerSvc.NewDeleteResourceInstanceOptions(item.id)
 	options.SetRecursive(true)
@@ -152,51 +163,85 @@ func (o *ClusterUninstaller) destroyCOSInstance(item cloudResource) error {
 		}
 	}
 
+	o.Logger.Infof("Deleted COS Instance %q", item.name)
+	o.deletePendingItems(item.typeName, []cloudResource{item})
+
 	return nil
 }
 
 // destroyCOSInstances removes the COS service instance resources that have a
 // name prefixed with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyCOSInstances() error {
-	found, err := o.listCOSInstances()
+	firstPassList, err := o.listCOSInstances()
 	if err != nil {
 		return err
 	}
 
-	items := o.insertPendingItems(cosTypeName, found.list())
+	if len(firstPassList.list()) == 0 {
+		return nil
+	}
 
-	ctx, _ := o.contextWithTimeout()
+	items := o.insertPendingItems(cosTypeName, firstPassList.list())
 
-	for !o.timeout(ctx) {
-		for _, item := range items {
-			select {
-			case <-o.Context.Done():
-				o.Logger.Debugf("destroyCOSInstances: case <-o.Context.Done()")
-				return o.Context.Err() // we're cancelled, abort
-			default:
-			}
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
 
-			if _, ok := found[item.key]; !ok {
-				// This item has finished deletion.
-				o.deletePendingItems(item.typeName, []cloudResource{item})
-				o.Logger.Infof("Deleted COS instance %q", item.name)
-				continue
-			}
-			err = o.destroyCOSInstance(item)
-			if err != nil {
-				o.errorTracker.suppressWarning(item.key, err, o.Logger)
-			}
+	for _, item := range items {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyCOSInstances: case <-ctx.Done()")
+			return o.Context.Err() // we're cancelled, abort
+		default:
 		}
 
-		items = o.getPendingItems(cosTypeName)
-		if len(items) == 0 {
-			break
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+			err2 := o.destroyCOSInstance(item)
+			if err2 == nil {
+				return true, err2
+			}
+			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
+			return false, err2
+		})
+		if err != nil {
+			o.Logger.Fatal("destroyCOSInstances: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
 	if items = o.getPendingItems(cosTypeName); len(items) > 0 {
+		for _, item := range items {
+			o.Logger.Debugf("destroyCOSInstances: found %s in pending items", item.name)
+		}
 		return errors.Errorf("destroyCOSInstances: %d undeleted items pending", len(items))
 	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		secondPassList, err2 := o.listCOSInstances()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyCOSInstances: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyCOSInstances: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }
 

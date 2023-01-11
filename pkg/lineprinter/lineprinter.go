@@ -10,8 +10,8 @@ import (
 // Print is a type that can hold fmt.Print and other implementations
 // which match that signature.  For example, you can use:
 //
-//   trimmer := &lineprinter.Trimmer{WrappedPrint: logrus.StandardLogger().Debug}
-//   linePrinter := &linePrinter{Print: trimmer.Print}
+//	trimmer := &lineprinter.Trimmer{WrappedPrint: logrus.StandardLogger().Debug}
+//	linePrinter := &linePrinter{Print: trimmer.Print}
 //
 // to connect the line printer to logrus at the debug level.
 type Print func(args ...interface{})
@@ -24,12 +24,12 @@ type Print func(args ...interface{})
 // One use-case is connecting a subprocess's standard streams to a
 // logger:
 //
-//   linePrinter := &linePrinter{
-//     Print: &Trimmer{WrappedPrint: logrus.StandardLogger().Debug}.Print,
-//   }
-//   defer linePrinter.Close()
-//   cmd := exec.Command(...)
-//   cmd.Stdout = linePrinter
+//	linePrinter := &linePrinter{
+//	  Print: &Trimmer{WrappedPrint: logrus.StandardLogger().Debug}.Print,
+//	}
+//	defer linePrinter.Close()
+//	cmd := exec.Command(...)
+//	cmd.Stdout = linePrinter
 //
 // LinePrinter buffers the subcommand's byte stream and splits it into
 // lines for the logger.  Sometimes we might have a partial line

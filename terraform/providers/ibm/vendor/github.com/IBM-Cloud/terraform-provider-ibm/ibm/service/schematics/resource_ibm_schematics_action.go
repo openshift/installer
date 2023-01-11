@@ -1114,7 +1114,7 @@ func resourceIBMSchematicsActionMapToExternalSource(externalSourceMap map[string
 		externalSourceGit := resourceIBMSchematicsActionMapToExternalSourceGit(externalSourceMap["git"].([]interface{})[0].(map[string]interface{}))
 		externalSource.Git = &externalSourceGit
 	}
-	if externalSourceMap["catalog"] != nil {
+	if externalSourceMap["catalog"] != nil && len(externalSourceMap["catalog"].([]interface{})) > 0 {
 		externalSourceCatalog := resourceIBMSchematicsActionMapToExternalSourceCatalog(externalSourceMap["catalog"].([]interface{})[0].(map[string]interface{}))
 		externalSource.Catalog = &externalSourceCatalog
 	}

@@ -3,10 +3,12 @@ package password
 import (
 	"crypto/rand"
 	"math/big"
+	"os"
 	"path/filepath"
 
-	"github.com/openshift/installer/pkg/asset"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/openshift/installer/pkg/asset"
 )
 
 var (
@@ -99,7 +101,22 @@ func (a *KubeadminPassword) Files() []*asset.File {
 	return []*asset.File{}
 }
 
-// Load returns false as the password file is read-only.
+// Load loads a predefined hash only, if one is supplied
 func (a *KubeadminPassword) Load(f asset.FileFetcher) (found bool, err error) {
-	return false, nil
+	hashFilePath := filepath.Join("tls", "kubeadmin-password.hash")
+	hashFile, err := f.FetchByName(hashFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	a.PasswordHash = hashFile.Data
+	// Assisted-service expects to always see a password file, so generate an
+	// empty one
+	a.File = &asset.File{
+		Filename: kubeadminPasswordPath,
+	}
+	return true, nil
 }

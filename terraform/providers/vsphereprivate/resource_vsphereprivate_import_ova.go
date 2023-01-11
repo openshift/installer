@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/find"
+	"github.com/vmware/govmomi/govc/importx"
 	"github.com/vmware/govmomi/nfc"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/ovf"
@@ -20,8 +23,6 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
-
-	"github.com/vmware/govmomi/govc/importx"
 )
 
 const (
@@ -123,6 +124,7 @@ type importOvaParams struct {
 
 func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool, datastore, network, folder string) (*importOvaParams, error) {
 	var ccrMo mo.ClusterComputeResource
+	var folderPath string
 
 	ctx, cancel := context.WithTimeout(context.TODO(), defaultAPITimeout)
 	defer cancel()
@@ -137,15 +139,28 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 	}
 	importOvaParams.Datacenter = dcObj
 
+	// First check if the folder contains the datacenter
+	// If so check the regex
+	if strings.Contains(folder, datacenter) {
+		folderPathRegexp := regexp.MustCompile("^\\/(.*?)\\/vm\\/(.*?)$")
+		folderPathParts := folderPathRegexp.FindStringSubmatch(folder)
+
+		if folderPathParts != nil {
+			folderPath = folder
+		} else {
+			return nil, errors.Errorf("folder path is incorrect, please provide a full path.")
+		}
+
+	} else {
+		folderPath = fmt.Sprintf("/%s/vm/%s", datacenter, folder)
+	}
+
 	// Create an absolute path to the folder in case the provided folder is nested.
-	folderPath := fmt.Sprintf("/%s/vm/%s", datacenter, folder)
 	folderObj, err := finder.Folder(ctx, folderPath)
 	if err != nil {
 		return nil, err
 	}
 	importOvaParams.Folder = folderObj
-
-	clusterPath := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
 
 	// Find the resource pool object by using its path provided by install-config,
 	// or generated in pkg/asset/machines/vsphere/machines.go
@@ -155,8 +170,15 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 	}
 	importOvaParams.ResourcePool = resourcePoolObj
 
-	// Find the cluster object by the datacenter and cluster name to
-	// generate the path e.g. /datacenter/host/cluster
+	clusterPathRegexp := regexp.MustCompile("^\\/(.*?)\\/host\\/(.*?)$")
+	clusterPathParts := clusterPathRegexp.FindStringSubmatch(cluster)
+
+	clusterPath := cluster
+	if clusterPathParts == nil {
+		// Find the cluster object by the datacenter and cluster name to
+		// generate the path e.g. /datacenter/host/cluster
+		clusterPath = fmt.Sprintf("/%s/host/%s", datacenter, cluster)
+	}
 	clusterComputeResource, err := finder.ClusterComputeResource(ctx, clusterPath)
 	if err != nil {
 		return nil, err

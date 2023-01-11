@@ -27,14 +27,13 @@ const opAnalyzeDocument = "AnalyzeDocument"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AnalyzeDocumentRequest method.
+//	req, resp := client.AnalyzeDocumentRequest(params)
 //
-//    // Example sending a request using the AnalyzeDocumentRequest method.
-//    req, resp := client.AnalyzeDocumentRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/AnalyzeDocument
 func (c *Textract) AnalyzeDocumentRequest(input *AnalyzeDocumentInput) (req *request.Request, output *AnalyzeDocumentOutput) {
@@ -59,19 +58,23 @@ func (c *Textract) AnalyzeDocumentRequest(input *AnalyzeDocumentInput) (req *req
 //
 // The types of information returned are as follows:
 //
-//    * Form data (key-value pairs). The related information is returned in
-//    two Block objects, each of type KEY_VALUE_SET: a KEY Block object and
-//    a VALUE Block object. For example, Name: Ana Silva Carolina contains a
-//    key and value. Name: is the key. Ana Silva Carolina is the value.
+//   - Form data (key-value pairs). The related information is returned in
+//     two Block objects, each of type KEY_VALUE_SET: a KEY Block object and
+//     a VALUE Block object. For example, Name: Ana Silva Carolina contains a
+//     key and value. Name: is the key. Ana Silva Carolina is the value.
 //
-//    * Table and table cell data. A TABLE Block object contains information
-//    about a detected table. A CELL Block object is returned for each cell
-//    in a table.
+//   - Table and table cell data. A TABLE Block object contains information
+//     about a detected table. A CELL Block object is returned for each cell
+//     in a table.
 //
-//    * Lines and words of text. A LINE Block object contains one or more WORD
-//    Block objects. All lines and words that are detected in the document are
-//    returned (including text that doesn't have a relationship with the value
-//    of FeatureTypes).
+//   - Lines and words of text. A LINE Block object contains one or more WORD
+//     Block objects. All lines and words that are detected in the document are
+//     returned (including text that doesn't have a relationship with the value
+//     of FeatureTypes).
+//
+//   - Queries.A QUERIES_RESULT Block object contains the answer to the query,
+//     the alias associated and an ID that connect it to the query asked. This
+//     Block also contains a location and attached confidence score.
 //
 // Selection elements such as check boxes and option buttons (radio buttons)
 // can be detected in form data and in tables. A SELECTION_ELEMENT Block object
@@ -95,49 +98,49 @@ func (c *Textract) AnalyzeDocumentRequest(input *AnalyzeDocumentInput) (req *req
 // API operation AnalyzeDocument for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   An input parameter violated a constraint. For example, in synchronous operations,
-//   an InvalidParameterException exception occurs when neither of the S3Object
-//   or Bytes values are supplied in the Document request parameter. Validate
-//   your parameter before calling the API operation again.
 //
-//   * InvalidS3ObjectException
-//   Amazon Textract is unable to access the S3 object that's specified in the
-//   request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
-//   For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//   - InvalidParameterException
+//     An input parameter violated a constraint. For example, in synchronous operations,
+//     an InvalidParameterException exception occurs when neither of the S3Object
+//     or Bytes values are supplied in the Document request parameter. Validate
+//     your parameter before calling the API operation again.
 //
-//   * UnsupportedDocumentException
-//   The format of the input document isn't supported. Documents for synchronous
-//   operations can be in PNG or JPEG format only. Documents for asynchronous
-//   operations can be in PDF format.
+//   - InvalidS3ObjectException
+//     Amazon Textract is unable to access the S3 object that's specified in the
+//     request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
+//     For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
 //
-//   * DocumentTooLargeException
-//   The document can't be processed because it's too large. The maximum document
-//   size for synchronous operations 10 MB. The maximum document size for asynchronous
-//   operations is 500 MB for PDF files.
+//   - UnsupportedDocumentException
+//     The format of the input document isn't supported. Documents for operations
+//     can be in PNG, JPEG, PDF, or TIFF format.
 //
-//   * BadDocumentException
-//   Amazon Textract isn't able to read the document. For more information on
-//   the document limits in Amazon Textract, see limits.
+//   - DocumentTooLargeException
+//     The document can't be processed because it's too large. The maximum document
+//     size for synchronous operations 10 MB. The maximum document size for asynchronous
+//     operations is 500 MB for PDF files.
 //
-//   * AccessDeniedException
-//   You aren't authorized to perform the action. Use the Amazon Resource Name
-//   (ARN) of an authorized user or IAM role to perform the operation.
+//   - BadDocumentException
+//     Amazon Textract isn't able to read the document. For more information on
+//     the document limits in Amazon Textract, see limits.
 //
-//   * ProvisionedThroughputExceededException
-//   The number of requests exceeded your throughput limit. If you want to increase
-//   this limit, contact Amazon Textract.
+//   - AccessDeniedException
+//     You aren't authorized to perform the action. Use the Amazon Resource Name
+//     (ARN) of an authorized user or IAM role to perform the operation.
 //
-//   * InternalServerError
-//   Amazon Textract experienced a service issue. Try your call again.
+//   - ProvisionedThroughputExceededException
+//     The number of requests exceeded your throughput limit. If you want to increase
+//     this limit, contact Amazon Textract.
 //
-//   * ThrottlingException
-//   Amazon Textract is temporarily unable to process the request. Try your call
-//   again.
+//   - InternalServerError
+//     Amazon Textract experienced a service issue. Try your call again.
 //
-//   * HumanLoopQuotaExceededException
-//   Indicates you have exceeded the maximum number of active human in the loop
-//   workflows available
+//   - ThrottlingException
+//     Amazon Textract is temporarily unable to process the request. Try your call
+//     again.
+//
+//   - HumanLoopQuotaExceededException
+//     Indicates you have exceeded the maximum number of active human in the loop
+//     workflows available
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/AnalyzeDocument
 func (c *Textract) AnalyzeDocument(input *AnalyzeDocumentInput) (*AnalyzeDocumentOutput, error) {
@@ -177,14 +180,13 @@ const opAnalyzeExpense = "AnalyzeExpense"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AnalyzeExpenseRequest method.
+//	req, resp := client.AnalyzeExpenseRequest(params)
 //
-//    // Example sending a request using the AnalyzeExpenseRequest method.
-//    req, resp := client.AnalyzeExpenseRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/AnalyzeExpense
 func (c *Textract) AnalyzeExpenseRequest(input *AnalyzeExpenseInput) (req *request.Request, output *AnalyzeExpenseOutput) {
@@ -210,12 +212,12 @@ func (c *Textract) AnalyzeExpenseRequest(input *AnalyzeExpenseInput) (req *reque
 //
 // Information is returned as ExpenseDocuments and seperated as follows.
 //
-//    * LineItemGroups- A data set containing LineItems which store information
-//    about the lines of text, such as an item purchased and its price on a
-//    receipt.
+//   - LineItemGroups- A data set containing LineItems which store information
+//     about the lines of text, such as an item purchased and its price on a
+//     receipt.
 //
-//    * SummaryFields- Contains all other information a receipt, such as header
-//    information or the vendors name.
+//   - SummaryFields- Contains all other information a receipt, such as header
+//     information or the vendors name.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -225,45 +227,45 @@ func (c *Textract) AnalyzeExpenseRequest(input *AnalyzeExpenseInput) (req *reque
 // API operation AnalyzeExpense for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   An input parameter violated a constraint. For example, in synchronous operations,
-//   an InvalidParameterException exception occurs when neither of the S3Object
-//   or Bytes values are supplied in the Document request parameter. Validate
-//   your parameter before calling the API operation again.
 //
-//   * InvalidS3ObjectException
-//   Amazon Textract is unable to access the S3 object that's specified in the
-//   request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
-//   For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//   - InvalidParameterException
+//     An input parameter violated a constraint. For example, in synchronous operations,
+//     an InvalidParameterException exception occurs when neither of the S3Object
+//     or Bytes values are supplied in the Document request parameter. Validate
+//     your parameter before calling the API operation again.
 //
-//   * UnsupportedDocumentException
-//   The format of the input document isn't supported. Documents for synchronous
-//   operations can be in PNG or JPEG format only. Documents for asynchronous
-//   operations can be in PDF format.
+//   - InvalidS3ObjectException
+//     Amazon Textract is unable to access the S3 object that's specified in the
+//     request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
+//     For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
 //
-//   * DocumentTooLargeException
-//   The document can't be processed because it's too large. The maximum document
-//   size for synchronous operations 10 MB. The maximum document size for asynchronous
-//   operations is 500 MB for PDF files.
+//   - UnsupportedDocumentException
+//     The format of the input document isn't supported. Documents for operations
+//     can be in PNG, JPEG, PDF, or TIFF format.
 //
-//   * BadDocumentException
-//   Amazon Textract isn't able to read the document. For more information on
-//   the document limits in Amazon Textract, see limits.
+//   - DocumentTooLargeException
+//     The document can't be processed because it's too large. The maximum document
+//     size for synchronous operations 10 MB. The maximum document size for asynchronous
+//     operations is 500 MB for PDF files.
 //
-//   * AccessDeniedException
-//   You aren't authorized to perform the action. Use the Amazon Resource Name
-//   (ARN) of an authorized user or IAM role to perform the operation.
+//   - BadDocumentException
+//     Amazon Textract isn't able to read the document. For more information on
+//     the document limits in Amazon Textract, see limits.
 //
-//   * ProvisionedThroughputExceededException
-//   The number of requests exceeded your throughput limit. If you want to increase
-//   this limit, contact Amazon Textract.
+//   - AccessDeniedException
+//     You aren't authorized to perform the action. Use the Amazon Resource Name
+//     (ARN) of an authorized user or IAM role to perform the operation.
 //
-//   * InternalServerError
-//   Amazon Textract experienced a service issue. Try your call again.
+//   - ProvisionedThroughputExceededException
+//     The number of requests exceeded your throughput limit. If you want to increase
+//     this limit, contact Amazon Textract.
 //
-//   * ThrottlingException
-//   Amazon Textract is temporarily unable to process the request. Try your call
-//   again.
+//   - InternalServerError
+//     Amazon Textract experienced a service issue. Try your call again.
+//
+//   - ThrottlingException
+//     Amazon Textract is temporarily unable to process the request. Try your call
+//     again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/AnalyzeExpense
 func (c *Textract) AnalyzeExpense(input *AnalyzeExpenseInput) (*AnalyzeExpenseOutput, error) {
@@ -303,14 +305,13 @@ const opAnalyzeID = "AnalyzeID"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AnalyzeIDRequest method.
+//	req, resp := client.AnalyzeIDRequest(params)
 //
-//    // Example sending a request using the AnalyzeIDRequest method.
-//    req, resp := client.AnalyzeIDRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/AnalyzeID
 func (c *Textract) AnalyzeIDRequest(input *AnalyzeIDInput) (req *request.Request, output *AnalyzeIDOutput) {
@@ -333,7 +334,8 @@ func (c *Textract) AnalyzeIDRequest(input *AnalyzeIDInput) (req *request.Request
 //
 // Analyzes identity documents for relevant information. This information is
 // extracted and returned as IdentityDocumentFields, which records both the
-// normalized field and value of the extracted text.
+// normalized field and value of the extracted text.Unlike other Amazon Textract
+// operations, AnalyzeID doesn't return any Geometry data.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -343,45 +345,45 @@ func (c *Textract) AnalyzeIDRequest(input *AnalyzeIDInput) (req *request.Request
 // API operation AnalyzeID for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   An input parameter violated a constraint. For example, in synchronous operations,
-//   an InvalidParameterException exception occurs when neither of the S3Object
-//   or Bytes values are supplied in the Document request parameter. Validate
-//   your parameter before calling the API operation again.
 //
-//   * InvalidS3ObjectException
-//   Amazon Textract is unable to access the S3 object that's specified in the
-//   request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
-//   For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//   - InvalidParameterException
+//     An input parameter violated a constraint. For example, in synchronous operations,
+//     an InvalidParameterException exception occurs when neither of the S3Object
+//     or Bytes values are supplied in the Document request parameter. Validate
+//     your parameter before calling the API operation again.
 //
-//   * UnsupportedDocumentException
-//   The format of the input document isn't supported. Documents for synchronous
-//   operations can be in PNG or JPEG format only. Documents for asynchronous
-//   operations can be in PDF format.
+//   - InvalidS3ObjectException
+//     Amazon Textract is unable to access the S3 object that's specified in the
+//     request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
+//     For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
 //
-//   * DocumentTooLargeException
-//   The document can't be processed because it's too large. The maximum document
-//   size for synchronous operations 10 MB. The maximum document size for asynchronous
-//   operations is 500 MB for PDF files.
+//   - UnsupportedDocumentException
+//     The format of the input document isn't supported. Documents for operations
+//     can be in PNG, JPEG, PDF, or TIFF format.
 //
-//   * BadDocumentException
-//   Amazon Textract isn't able to read the document. For more information on
-//   the document limits in Amazon Textract, see limits.
+//   - DocumentTooLargeException
+//     The document can't be processed because it's too large. The maximum document
+//     size for synchronous operations 10 MB. The maximum document size for asynchronous
+//     operations is 500 MB for PDF files.
 //
-//   * AccessDeniedException
-//   You aren't authorized to perform the action. Use the Amazon Resource Name
-//   (ARN) of an authorized user or IAM role to perform the operation.
+//   - BadDocumentException
+//     Amazon Textract isn't able to read the document. For more information on
+//     the document limits in Amazon Textract, see limits.
 //
-//   * ProvisionedThroughputExceededException
-//   The number of requests exceeded your throughput limit. If you want to increase
-//   this limit, contact Amazon Textract.
+//   - AccessDeniedException
+//     You aren't authorized to perform the action. Use the Amazon Resource Name
+//     (ARN) of an authorized user or IAM role to perform the operation.
 //
-//   * InternalServerError
-//   Amazon Textract experienced a service issue. Try your call again.
+//   - ProvisionedThroughputExceededException
+//     The number of requests exceeded your throughput limit. If you want to increase
+//     this limit, contact Amazon Textract.
 //
-//   * ThrottlingException
-//   Amazon Textract is temporarily unable to process the request. Try your call
-//   again.
+//   - InternalServerError
+//     Amazon Textract experienced a service issue. Try your call again.
+//
+//   - ThrottlingException
+//     Amazon Textract is temporarily unable to process the request. Try your call
+//     again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/AnalyzeID
 func (c *Textract) AnalyzeID(input *AnalyzeIDInput) (*AnalyzeIDOutput, error) {
@@ -421,14 +423,13 @@ const opDetectDocumentText = "DetectDocumentText"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DetectDocumentTextRequest method.
+//	req, resp := client.DetectDocumentTextRequest(params)
 //
-//    // Example sending a request using the DetectDocumentTextRequest method.
-//    req, resp := client.DetectDocumentTextRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/DetectDocumentText
 func (c *Textract) DetectDocumentTextRequest(input *DetectDocumentTextInput) (req *request.Request, output *DetectDocumentTextOutput) {
@@ -451,8 +452,8 @@ func (c *Textract) DetectDocumentTextRequest(input *DetectDocumentTextInput) (re
 //
 // Detects text in the input document. Amazon Textract can detect lines of text
 // and the words that make up a line of text. The input document must be an
-// image in JPEG or PNG format. DetectDocumentText returns the detected text
-// in an array of Block objects.
+// image in JPEG, PNG, PDF, or TIFF format. DetectDocumentText returns the detected
+// text in an array of Block objects.
 //
 // Each document page has as an associated Block of type PAGE. Each PAGE Block
 // object is the parent of LINE Block objects that represent the lines of detected
@@ -472,45 +473,45 @@ func (c *Textract) DetectDocumentTextRequest(input *DetectDocumentTextInput) (re
 // API operation DetectDocumentText for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   An input parameter violated a constraint. For example, in synchronous operations,
-//   an InvalidParameterException exception occurs when neither of the S3Object
-//   or Bytes values are supplied in the Document request parameter. Validate
-//   your parameter before calling the API operation again.
 //
-//   * InvalidS3ObjectException
-//   Amazon Textract is unable to access the S3 object that's specified in the
-//   request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
-//   For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//   - InvalidParameterException
+//     An input parameter violated a constraint. For example, in synchronous operations,
+//     an InvalidParameterException exception occurs when neither of the S3Object
+//     or Bytes values are supplied in the Document request parameter. Validate
+//     your parameter before calling the API operation again.
 //
-//   * UnsupportedDocumentException
-//   The format of the input document isn't supported. Documents for synchronous
-//   operations can be in PNG or JPEG format only. Documents for asynchronous
-//   operations can be in PDF format.
+//   - InvalidS3ObjectException
+//     Amazon Textract is unable to access the S3 object that's specified in the
+//     request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
+//     For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
 //
-//   * DocumentTooLargeException
-//   The document can't be processed because it's too large. The maximum document
-//   size for synchronous operations 10 MB. The maximum document size for asynchronous
-//   operations is 500 MB for PDF files.
+//   - UnsupportedDocumentException
+//     The format of the input document isn't supported. Documents for operations
+//     can be in PNG, JPEG, PDF, or TIFF format.
 //
-//   * BadDocumentException
-//   Amazon Textract isn't able to read the document. For more information on
-//   the document limits in Amazon Textract, see limits.
+//   - DocumentTooLargeException
+//     The document can't be processed because it's too large. The maximum document
+//     size for synchronous operations 10 MB. The maximum document size for asynchronous
+//     operations is 500 MB for PDF files.
 //
-//   * AccessDeniedException
-//   You aren't authorized to perform the action. Use the Amazon Resource Name
-//   (ARN) of an authorized user or IAM role to perform the operation.
+//   - BadDocumentException
+//     Amazon Textract isn't able to read the document. For more information on
+//     the document limits in Amazon Textract, see limits.
 //
-//   * ProvisionedThroughputExceededException
-//   The number of requests exceeded your throughput limit. If you want to increase
-//   this limit, contact Amazon Textract.
+//   - AccessDeniedException
+//     You aren't authorized to perform the action. Use the Amazon Resource Name
+//     (ARN) of an authorized user or IAM role to perform the operation.
 //
-//   * InternalServerError
-//   Amazon Textract experienced a service issue. Try your call again.
+//   - ProvisionedThroughputExceededException
+//     The number of requests exceeded your throughput limit. If you want to increase
+//     this limit, contact Amazon Textract.
 //
-//   * ThrottlingException
-//   Amazon Textract is temporarily unable to process the request. Try your call
-//   again.
+//   - InternalServerError
+//     Amazon Textract experienced a service issue. Try your call again.
+//
+//   - ThrottlingException
+//     Amazon Textract is temporarily unable to process the request. Try your call
+//     again.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/DetectDocumentText
 func (c *Textract) DetectDocumentText(input *DetectDocumentTextInput) (*DetectDocumentTextOutput, error) {
@@ -550,14 +551,13 @@ const opGetDocumentAnalysis = "GetDocumentAnalysis"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDocumentAnalysisRequest method.
+//	req, resp := client.GetDocumentAnalysisRequest(params)
 //
-//    // Example sending a request using the GetDocumentAnalysisRequest method.
-//    req, resp := client.GetDocumentAnalysisRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/GetDocumentAnalysis
 func (c *Textract) GetDocumentAnalysisRequest(input *GetDocumentAnalysisInput) (req *request.Request, output *GetDocumentAnalysisOutput) {
@@ -593,19 +593,23 @@ func (c *Textract) GetDocumentAnalysisRequest(input *GetDocumentAnalysisInput) (
 // GetDocumentAnalysis returns an array of Block objects. The following types
 // of information are returned:
 //
-//    * Form data (key-value pairs). The related information is returned in
-//    two Block objects, each of type KEY_VALUE_SET: a KEY Block object and
-//    a VALUE Block object. For example, Name: Ana Silva Carolina contains a
-//    key and value. Name: is the key. Ana Silva Carolina is the value.
+//   - Form data (key-value pairs). The related information is returned in
+//     two Block objects, each of type KEY_VALUE_SET: a KEY Block object and
+//     a VALUE Block object. For example, Name: Ana Silva Carolina contains a
+//     key and value. Name: is the key. Ana Silva Carolina is the value.
 //
-//    * Table and table cell data. A TABLE Block object contains information
-//    about a detected table. A CELL Block object is returned for each cell
-//    in a table.
+//   - Table and table cell data. A TABLE Block object contains information
+//     about a detected table. A CELL Block object is returned for each cell
+//     in a table.
 //
-//    * Lines and words of text. A LINE Block object contains one or more WORD
-//    Block objects. All lines and words that are detected in the document are
-//    returned (including text that doesn't have a relationship with the value
-//    of the StartDocumentAnalysis FeatureTypes input parameter).
+//   - Lines and words of text. A LINE Block object contains one or more WORD
+//     Block objects. All lines and words that are detected in the document are
+//     returned (including text that doesn't have a relationship with the value
+//     of the StartDocumentAnalysis FeatureTypes input parameter).
+//
+//   - Queries. A QUERIES_RESULT Block object contains the answer to the query,
+//     the alias associated and an ID that connect it to the query asked. This
+//     Block also contains a location and attached confidence score
 //
 // Selection elements such as check boxes and option buttons (radio buttons)
 // can be detected in form data and in tables. A SELECTION_ELEMENT Block object
@@ -628,38 +632,39 @@ func (c *Textract) GetDocumentAnalysisRequest(input *GetDocumentAnalysisInput) (
 // API operation GetDocumentAnalysis for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   An input parameter violated a constraint. For example, in synchronous operations,
-//   an InvalidParameterException exception occurs when neither of the S3Object
-//   or Bytes values are supplied in the Document request parameter. Validate
-//   your parameter before calling the API operation again.
 //
-//   * AccessDeniedException
-//   You aren't authorized to perform the action. Use the Amazon Resource Name
-//   (ARN) of an authorized user or IAM role to perform the operation.
+//   - InvalidParameterException
+//     An input parameter violated a constraint. For example, in synchronous operations,
+//     an InvalidParameterException exception occurs when neither of the S3Object
+//     or Bytes values are supplied in the Document request parameter. Validate
+//     your parameter before calling the API operation again.
 //
-//   * ProvisionedThroughputExceededException
-//   The number of requests exceeded your throughput limit. If you want to increase
-//   this limit, contact Amazon Textract.
+//   - AccessDeniedException
+//     You aren't authorized to perform the action. Use the Amazon Resource Name
+//     (ARN) of an authorized user or IAM role to perform the operation.
 //
-//   * InvalidJobIdException
-//   An invalid job identifier was passed to GetDocumentAnalysis or to GetDocumentAnalysis.
+//   - ProvisionedThroughputExceededException
+//     The number of requests exceeded your throughput limit. If you want to increase
+//     this limit, contact Amazon Textract.
 //
-//   * InternalServerError
-//   Amazon Textract experienced a service issue. Try your call again.
+//   - InvalidJobIdException
+//     An invalid job identifier was passed to GetDocumentAnalysis or to GetDocumentAnalysis.
 //
-//   * ThrottlingException
-//   Amazon Textract is temporarily unable to process the request. Try your call
-//   again.
+//   - InternalServerError
+//     Amazon Textract experienced a service issue. Try your call again.
 //
-//   * InvalidS3ObjectException
-//   Amazon Textract is unable to access the S3 object that's specified in the
-//   request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
-//   For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//   - ThrottlingException
+//     Amazon Textract is temporarily unable to process the request. Try your call
+//     again.
 //
-//   * InvalidKMSKeyException
-//   Indicates you do not have decrypt permissions with the KMS key entered, or
-//   the KMS key was entered incorrectly.
+//   - InvalidS3ObjectException
+//     Amazon Textract is unable to access the S3 object that's specified in the
+//     request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
+//     For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//
+//   - InvalidKMSKeyException
+//     Indicates you do not have decrypt permissions with the KMS key entered, or
+//     the KMS key was entered incorrectly.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/GetDocumentAnalysis
 func (c *Textract) GetDocumentAnalysis(input *GetDocumentAnalysisInput) (*GetDocumentAnalysisOutput, error) {
@@ -699,14 +704,13 @@ const opGetDocumentTextDetection = "GetDocumentTextDetection"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDocumentTextDetectionRequest method.
+//	req, resp := client.GetDocumentTextDetectionRequest(params)
 //
-//    // Example sending a request using the GetDocumentTextDetectionRequest method.
-//    req, resp := client.GetDocumentTextDetectionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/GetDocumentTextDetection
 func (c *Textract) GetDocumentTextDetectionRequest(input *GetDocumentTextDetectionInput) (req *request.Request, output *GetDocumentTextDetectionOutput) {
@@ -764,38 +768,39 @@ func (c *Textract) GetDocumentTextDetectionRequest(input *GetDocumentTextDetecti
 // API operation GetDocumentTextDetection for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   An input parameter violated a constraint. For example, in synchronous operations,
-//   an InvalidParameterException exception occurs when neither of the S3Object
-//   or Bytes values are supplied in the Document request parameter. Validate
-//   your parameter before calling the API operation again.
 //
-//   * AccessDeniedException
-//   You aren't authorized to perform the action. Use the Amazon Resource Name
-//   (ARN) of an authorized user or IAM role to perform the operation.
+//   - InvalidParameterException
+//     An input parameter violated a constraint. For example, in synchronous operations,
+//     an InvalidParameterException exception occurs when neither of the S3Object
+//     or Bytes values are supplied in the Document request parameter. Validate
+//     your parameter before calling the API operation again.
 //
-//   * ProvisionedThroughputExceededException
-//   The number of requests exceeded your throughput limit. If you want to increase
-//   this limit, contact Amazon Textract.
+//   - AccessDeniedException
+//     You aren't authorized to perform the action. Use the Amazon Resource Name
+//     (ARN) of an authorized user or IAM role to perform the operation.
 //
-//   * InvalidJobIdException
-//   An invalid job identifier was passed to GetDocumentAnalysis or to GetDocumentAnalysis.
+//   - ProvisionedThroughputExceededException
+//     The number of requests exceeded your throughput limit. If you want to increase
+//     this limit, contact Amazon Textract.
 //
-//   * InternalServerError
-//   Amazon Textract experienced a service issue. Try your call again.
+//   - InvalidJobIdException
+//     An invalid job identifier was passed to GetDocumentAnalysis or to GetDocumentAnalysis.
 //
-//   * ThrottlingException
-//   Amazon Textract is temporarily unable to process the request. Try your call
-//   again.
+//   - InternalServerError
+//     Amazon Textract experienced a service issue. Try your call again.
 //
-//   * InvalidS3ObjectException
-//   Amazon Textract is unable to access the S3 object that's specified in the
-//   request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
-//   For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//   - ThrottlingException
+//     Amazon Textract is temporarily unable to process the request. Try your call
+//     again.
 //
-//   * InvalidKMSKeyException
-//   Indicates you do not have decrypt permissions with the KMS key entered, or
-//   the KMS key was entered incorrectly.
+//   - InvalidS3ObjectException
+//     Amazon Textract is unable to access the S3 object that's specified in the
+//     request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
+//     For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//
+//   - InvalidKMSKeyException
+//     Indicates you do not have decrypt permissions with the KMS key entered, or
+//     the KMS key was entered incorrectly.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/GetDocumentTextDetection
 func (c *Textract) GetDocumentTextDetection(input *GetDocumentTextDetectionInput) (*GetDocumentTextDetectionOutput, error) {
@@ -835,14 +840,13 @@ const opGetExpenseAnalysis = "GetExpenseAnalysis"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetExpenseAnalysisRequest method.
+//	req, resp := client.GetExpenseAnalysisRequest(params)
 //
-//    // Example sending a request using the GetExpenseAnalysisRequest method.
-//    req, resp := client.GetExpenseAnalysisRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/GetExpenseAnalysis
 func (c *Textract) GetExpenseAnalysisRequest(input *GetExpenseAnalysisInput) (req *request.Request, output *GetExpenseAnalysisOutput) {
@@ -893,38 +897,39 @@ func (c *Textract) GetExpenseAnalysisRequest(input *GetExpenseAnalysisInput) (re
 // API operation GetExpenseAnalysis for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   An input parameter violated a constraint. For example, in synchronous operations,
-//   an InvalidParameterException exception occurs when neither of the S3Object
-//   or Bytes values are supplied in the Document request parameter. Validate
-//   your parameter before calling the API operation again.
 //
-//   * AccessDeniedException
-//   You aren't authorized to perform the action. Use the Amazon Resource Name
-//   (ARN) of an authorized user or IAM role to perform the operation.
+//   - InvalidParameterException
+//     An input parameter violated a constraint. For example, in synchronous operations,
+//     an InvalidParameterException exception occurs when neither of the S3Object
+//     or Bytes values are supplied in the Document request parameter. Validate
+//     your parameter before calling the API operation again.
 //
-//   * ProvisionedThroughputExceededException
-//   The number of requests exceeded your throughput limit. If you want to increase
-//   this limit, contact Amazon Textract.
+//   - AccessDeniedException
+//     You aren't authorized to perform the action. Use the Amazon Resource Name
+//     (ARN) of an authorized user or IAM role to perform the operation.
 //
-//   * InvalidJobIdException
-//   An invalid job identifier was passed to GetDocumentAnalysis or to GetDocumentAnalysis.
+//   - ProvisionedThroughputExceededException
+//     The number of requests exceeded your throughput limit. If you want to increase
+//     this limit, contact Amazon Textract.
 //
-//   * InternalServerError
-//   Amazon Textract experienced a service issue. Try your call again.
+//   - InvalidJobIdException
+//     An invalid job identifier was passed to GetDocumentAnalysis or to GetDocumentAnalysis.
 //
-//   * ThrottlingException
-//   Amazon Textract is temporarily unable to process the request. Try your call
-//   again.
+//   - InternalServerError
+//     Amazon Textract experienced a service issue. Try your call again.
 //
-//   * InvalidS3ObjectException
-//   Amazon Textract is unable to access the S3 object that's specified in the
-//   request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
-//   For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//   - ThrottlingException
+//     Amazon Textract is temporarily unable to process the request. Try your call
+//     again.
 //
-//   * InvalidKMSKeyException
-//   Indicates you do not have decrypt permissions with the KMS key entered, or
-//   the KMS key was entered incorrectly.
+//   - InvalidS3ObjectException
+//     Amazon Textract is unable to access the S3 object that's specified in the
+//     request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
+//     For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//
+//   - InvalidKMSKeyException
+//     Indicates you do not have decrypt permissions with the KMS key entered, or
+//     the KMS key was entered incorrectly.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/GetExpenseAnalysis
 func (c *Textract) GetExpenseAnalysis(input *GetExpenseAnalysisInput) (*GetExpenseAnalysisOutput, error) {
@@ -964,14 +969,13 @@ const opStartDocumentAnalysis = "StartDocumentAnalysis"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartDocumentAnalysisRequest method.
+//	req, resp := client.StartDocumentAnalysisRequest(params)
 //
-//    // Example sending a request using the StartDocumentAnalysisRequest method.
-//    req, resp := client.StartDocumentAnalysisRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/StartDocumentAnalysis
 func (c *Textract) StartDocumentAnalysisRequest(input *StartDocumentAnalysisInput) (req *request.Request, output *StartDocumentAnalysisOutput) {
@@ -1017,61 +1021,61 @@ func (c *Textract) StartDocumentAnalysisRequest(input *StartDocumentAnalysisInpu
 // API operation StartDocumentAnalysis for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   An input parameter violated a constraint. For example, in synchronous operations,
-//   an InvalidParameterException exception occurs when neither of the S3Object
-//   or Bytes values are supplied in the Document request parameter. Validate
-//   your parameter before calling the API operation again.
 //
-//   * InvalidS3ObjectException
-//   Amazon Textract is unable to access the S3 object that's specified in the
-//   request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
-//   For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//   - InvalidParameterException
+//     An input parameter violated a constraint. For example, in synchronous operations,
+//     an InvalidParameterException exception occurs when neither of the S3Object
+//     or Bytes values are supplied in the Document request parameter. Validate
+//     your parameter before calling the API operation again.
 //
-//   * InvalidKMSKeyException
-//   Indicates you do not have decrypt permissions with the KMS key entered, or
-//   the KMS key was entered incorrectly.
+//   - InvalidS3ObjectException
+//     Amazon Textract is unable to access the S3 object that's specified in the
+//     request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
+//     For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
 //
-//   * UnsupportedDocumentException
-//   The format of the input document isn't supported. Documents for synchronous
-//   operations can be in PNG or JPEG format only. Documents for asynchronous
-//   operations can be in PDF format.
+//   - InvalidKMSKeyException
+//     Indicates you do not have decrypt permissions with the KMS key entered, or
+//     the KMS key was entered incorrectly.
 //
-//   * DocumentTooLargeException
-//   The document can't be processed because it's too large. The maximum document
-//   size for synchronous operations 10 MB. The maximum document size for asynchronous
-//   operations is 500 MB for PDF files.
+//   - UnsupportedDocumentException
+//     The format of the input document isn't supported. Documents for operations
+//     can be in PNG, JPEG, PDF, or TIFF format.
 //
-//   * BadDocumentException
-//   Amazon Textract isn't able to read the document. For more information on
-//   the document limits in Amazon Textract, see limits.
+//   - DocumentTooLargeException
+//     The document can't be processed because it's too large. The maximum document
+//     size for synchronous operations 10 MB. The maximum document size for asynchronous
+//     operations is 500 MB for PDF files.
 //
-//   * AccessDeniedException
-//   You aren't authorized to perform the action. Use the Amazon Resource Name
-//   (ARN) of an authorized user or IAM role to perform the operation.
+//   - BadDocumentException
+//     Amazon Textract isn't able to read the document. For more information on
+//     the document limits in Amazon Textract, see limits.
 //
-//   * ProvisionedThroughputExceededException
-//   The number of requests exceeded your throughput limit. If you want to increase
-//   this limit, contact Amazon Textract.
+//   - AccessDeniedException
+//     You aren't authorized to perform the action. Use the Amazon Resource Name
+//     (ARN) of an authorized user or IAM role to perform the operation.
 //
-//   * InternalServerError
-//   Amazon Textract experienced a service issue. Try your call again.
+//   - ProvisionedThroughputExceededException
+//     The number of requests exceeded your throughput limit. If you want to increase
+//     this limit, contact Amazon Textract.
 //
-//   * IdempotentParameterMismatchException
-//   A ClientRequestToken input parameter was reused with an operation, but at
-//   least one of the other input parameters is different from the previous call
-//   to the operation.
+//   - InternalServerError
+//     Amazon Textract experienced a service issue. Try your call again.
 //
-//   * ThrottlingException
-//   Amazon Textract is temporarily unable to process the request. Try your call
-//   again.
+//   - IdempotentParameterMismatchException
+//     A ClientRequestToken input parameter was reused with an operation, but at
+//     least one of the other input parameters is different from the previous call
+//     to the operation.
 //
-//   * LimitExceededException
-//   An Amazon Textract service limit was exceeded. For example, if you start
-//   too many asynchronous jobs concurrently, calls to start operations (StartDocumentTextDetection,
-//   for example) raise a LimitExceededException exception (HTTP status code:
-//   400) until the number of concurrently running jobs is below the Amazon Textract
-//   service limit.
+//   - ThrottlingException
+//     Amazon Textract is temporarily unable to process the request. Try your call
+//     again.
+//
+//   - LimitExceededException
+//     An Amazon Textract service limit was exceeded. For example, if you start
+//     too many asynchronous jobs concurrently, calls to start operations (StartDocumentTextDetection,
+//     for example) raise a LimitExceededException exception (HTTP status code:
+//     400) until the number of concurrently running jobs is below the Amazon Textract
+//     service limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/StartDocumentAnalysis
 func (c *Textract) StartDocumentAnalysis(input *StartDocumentAnalysisInput) (*StartDocumentAnalysisOutput, error) {
@@ -1111,14 +1115,13 @@ const opStartDocumentTextDetection = "StartDocumentTextDetection"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartDocumentTextDetectionRequest method.
+//	req, resp := client.StartDocumentTextDetectionRequest(params)
 //
-//    // Example sending a request using the StartDocumentTextDetectionRequest method.
-//    req, resp := client.StartDocumentTextDetectionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/StartDocumentTextDetection
 func (c *Textract) StartDocumentTextDetectionRequest(input *StartDocumentTextDetectionInput) (req *request.Request, output *StartDocumentTextDetectionOutput) {
@@ -1164,61 +1167,61 @@ func (c *Textract) StartDocumentTextDetectionRequest(input *StartDocumentTextDet
 // API operation StartDocumentTextDetection for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   An input parameter violated a constraint. For example, in synchronous operations,
-//   an InvalidParameterException exception occurs when neither of the S3Object
-//   or Bytes values are supplied in the Document request parameter. Validate
-//   your parameter before calling the API operation again.
 //
-//   * InvalidS3ObjectException
-//   Amazon Textract is unable to access the S3 object that's specified in the
-//   request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
-//   For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//   - InvalidParameterException
+//     An input parameter violated a constraint. For example, in synchronous operations,
+//     an InvalidParameterException exception occurs when neither of the S3Object
+//     or Bytes values are supplied in the Document request parameter. Validate
+//     your parameter before calling the API operation again.
 //
-//   * InvalidKMSKeyException
-//   Indicates you do not have decrypt permissions with the KMS key entered, or
-//   the KMS key was entered incorrectly.
+//   - InvalidS3ObjectException
+//     Amazon Textract is unable to access the S3 object that's specified in the
+//     request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
+//     For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
 //
-//   * UnsupportedDocumentException
-//   The format of the input document isn't supported. Documents for synchronous
-//   operations can be in PNG or JPEG format only. Documents for asynchronous
-//   operations can be in PDF format.
+//   - InvalidKMSKeyException
+//     Indicates you do not have decrypt permissions with the KMS key entered, or
+//     the KMS key was entered incorrectly.
 //
-//   * DocumentTooLargeException
-//   The document can't be processed because it's too large. The maximum document
-//   size for synchronous operations 10 MB. The maximum document size for asynchronous
-//   operations is 500 MB for PDF files.
+//   - UnsupportedDocumentException
+//     The format of the input document isn't supported. Documents for operations
+//     can be in PNG, JPEG, PDF, or TIFF format.
 //
-//   * BadDocumentException
-//   Amazon Textract isn't able to read the document. For more information on
-//   the document limits in Amazon Textract, see limits.
+//   - DocumentTooLargeException
+//     The document can't be processed because it's too large. The maximum document
+//     size for synchronous operations 10 MB. The maximum document size for asynchronous
+//     operations is 500 MB for PDF files.
 //
-//   * AccessDeniedException
-//   You aren't authorized to perform the action. Use the Amazon Resource Name
-//   (ARN) of an authorized user or IAM role to perform the operation.
+//   - BadDocumentException
+//     Amazon Textract isn't able to read the document. For more information on
+//     the document limits in Amazon Textract, see limits.
 //
-//   * ProvisionedThroughputExceededException
-//   The number of requests exceeded your throughput limit. If you want to increase
-//   this limit, contact Amazon Textract.
+//   - AccessDeniedException
+//     You aren't authorized to perform the action. Use the Amazon Resource Name
+//     (ARN) of an authorized user or IAM role to perform the operation.
 //
-//   * InternalServerError
-//   Amazon Textract experienced a service issue. Try your call again.
+//   - ProvisionedThroughputExceededException
+//     The number of requests exceeded your throughput limit. If you want to increase
+//     this limit, contact Amazon Textract.
 //
-//   * IdempotentParameterMismatchException
-//   A ClientRequestToken input parameter was reused with an operation, but at
-//   least one of the other input parameters is different from the previous call
-//   to the operation.
+//   - InternalServerError
+//     Amazon Textract experienced a service issue. Try your call again.
 //
-//   * ThrottlingException
-//   Amazon Textract is temporarily unable to process the request. Try your call
-//   again.
+//   - IdempotentParameterMismatchException
+//     A ClientRequestToken input parameter was reused with an operation, but at
+//     least one of the other input parameters is different from the previous call
+//     to the operation.
 //
-//   * LimitExceededException
-//   An Amazon Textract service limit was exceeded. For example, if you start
-//   too many asynchronous jobs concurrently, calls to start operations (StartDocumentTextDetection,
-//   for example) raise a LimitExceededException exception (HTTP status code:
-//   400) until the number of concurrently running jobs is below the Amazon Textract
-//   service limit.
+//   - ThrottlingException
+//     Amazon Textract is temporarily unable to process the request. Try your call
+//     again.
+//
+//   - LimitExceededException
+//     An Amazon Textract service limit was exceeded. For example, if you start
+//     too many asynchronous jobs concurrently, calls to start operations (StartDocumentTextDetection,
+//     for example) raise a LimitExceededException exception (HTTP status code:
+//     400) until the number of concurrently running jobs is below the Amazon Textract
+//     service limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/StartDocumentTextDetection
 func (c *Textract) StartDocumentTextDetection(input *StartDocumentTextDetectionInput) (*StartDocumentTextDetectionOutput, error) {
@@ -1258,14 +1261,13 @@ const opStartExpenseAnalysis = "StartExpenseAnalysis"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the StartExpenseAnalysisRequest method.
+//	req, resp := client.StartExpenseAnalysisRequest(params)
 //
-//    // Example sending a request using the StartExpenseAnalysisRequest method.
-//    req, resp := client.StartExpenseAnalysisRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/StartExpenseAnalysis
 func (c *Textract) StartExpenseAnalysisRequest(input *StartExpenseAnalysisInput) (req *request.Request, output *StartExpenseAnalysisOutput) {
@@ -1313,61 +1315,61 @@ func (c *Textract) StartExpenseAnalysisRequest(input *StartExpenseAnalysisInput)
 // API operation StartExpenseAnalysis for usage and error information.
 //
 // Returned Error Types:
-//   * InvalidParameterException
-//   An input parameter violated a constraint. For example, in synchronous operations,
-//   an InvalidParameterException exception occurs when neither of the S3Object
-//   or Bytes values are supplied in the Document request parameter. Validate
-//   your parameter before calling the API operation again.
 //
-//   * InvalidS3ObjectException
-//   Amazon Textract is unable to access the S3 object that's specified in the
-//   request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
-//   For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
+//   - InvalidParameterException
+//     An input parameter violated a constraint. For example, in synchronous operations,
+//     an InvalidParameterException exception occurs when neither of the S3Object
+//     or Bytes values are supplied in the Document request parameter. Validate
+//     your parameter before calling the API operation again.
 //
-//   * InvalidKMSKeyException
-//   Indicates you do not have decrypt permissions with the KMS key entered, or
-//   the KMS key was entered incorrectly.
+//   - InvalidS3ObjectException
+//     Amazon Textract is unable to access the S3 object that's specified in the
+//     request. for more information, Configure Access to Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)
+//     For troubleshooting information, see Troubleshooting Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/troubleshooting.html)
 //
-//   * UnsupportedDocumentException
-//   The format of the input document isn't supported. Documents for synchronous
-//   operations can be in PNG or JPEG format only. Documents for asynchronous
-//   operations can be in PDF format.
+//   - InvalidKMSKeyException
+//     Indicates you do not have decrypt permissions with the KMS key entered, or
+//     the KMS key was entered incorrectly.
 //
-//   * DocumentTooLargeException
-//   The document can't be processed because it's too large. The maximum document
-//   size for synchronous operations 10 MB. The maximum document size for asynchronous
-//   operations is 500 MB for PDF files.
+//   - UnsupportedDocumentException
+//     The format of the input document isn't supported. Documents for operations
+//     can be in PNG, JPEG, PDF, or TIFF format.
 //
-//   * BadDocumentException
-//   Amazon Textract isn't able to read the document. For more information on
-//   the document limits in Amazon Textract, see limits.
+//   - DocumentTooLargeException
+//     The document can't be processed because it's too large. The maximum document
+//     size for synchronous operations 10 MB. The maximum document size for asynchronous
+//     operations is 500 MB for PDF files.
 //
-//   * AccessDeniedException
-//   You aren't authorized to perform the action. Use the Amazon Resource Name
-//   (ARN) of an authorized user or IAM role to perform the operation.
+//   - BadDocumentException
+//     Amazon Textract isn't able to read the document. For more information on
+//     the document limits in Amazon Textract, see limits.
 //
-//   * ProvisionedThroughputExceededException
-//   The number of requests exceeded your throughput limit. If you want to increase
-//   this limit, contact Amazon Textract.
+//   - AccessDeniedException
+//     You aren't authorized to perform the action. Use the Amazon Resource Name
+//     (ARN) of an authorized user or IAM role to perform the operation.
 //
-//   * InternalServerError
-//   Amazon Textract experienced a service issue. Try your call again.
+//   - ProvisionedThroughputExceededException
+//     The number of requests exceeded your throughput limit. If you want to increase
+//     this limit, contact Amazon Textract.
 //
-//   * IdempotentParameterMismatchException
-//   A ClientRequestToken input parameter was reused with an operation, but at
-//   least one of the other input parameters is different from the previous call
-//   to the operation.
+//   - InternalServerError
+//     Amazon Textract experienced a service issue. Try your call again.
 //
-//   * ThrottlingException
-//   Amazon Textract is temporarily unable to process the request. Try your call
-//   again.
+//   - IdempotentParameterMismatchException
+//     A ClientRequestToken input parameter was reused with an operation, but at
+//     least one of the other input parameters is different from the previous call
+//     to the operation.
 //
-//   * LimitExceededException
-//   An Amazon Textract service limit was exceeded. For example, if you start
-//   too many asynchronous jobs concurrently, calls to start operations (StartDocumentTextDetection,
-//   for example) raise a LimitExceededException exception (HTTP status code:
-//   400) until the number of concurrently running jobs is below the Amazon Textract
-//   service limit.
+//   - ThrottlingException
+//     Amazon Textract is temporarily unable to process the request. Try your call
+//     again.
+//
+//   - LimitExceededException
+//     An Amazon Textract service limit was exceeded. For example, if you start
+//     too many asynchronous jobs concurrently, calls to start operations (StartDocumentTextDetection,
+//     for example) raise a LimitExceededException exception (HTTP status code:
+//     400) until the number of concurrently running jobs is below the Amazon Textract
+//     service limit.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/textract-2018-06-27/StartExpenseAnalysis
 func (c *Textract) StartExpenseAnalysis(input *StartExpenseAnalysisInput) (*StartExpenseAnalysisOutput, error) {
@@ -1461,7 +1463,7 @@ type AnalyzeDocumentInput struct {
 
 	// The input document as base64-encoded bytes or an Amazon S3 object. If you
 	// use the AWS CLI to call Amazon Textract operations, you can't pass image
-	// bytes. The document must be an image in JPEG or PNG format.
+	// bytes. The document must be an image in JPEG, PNG, PDF, or TIFF format.
 	//
 	// If you're using an AWS SDK to call Amazon Textract, you might not need to
 	// base64-encode image bytes that are passed using the Bytes field.
@@ -1477,10 +1479,13 @@ type AnalyzeDocumentInput struct {
 	// of FeatureTypes).
 	//
 	// FeatureTypes is a required field
-	FeatureTypes []*string `type:"list" required:"true"`
+	FeatureTypes []*string `type:"list" required:"true" enum:"FeatureType"`
 
 	// Sets the configuration for the human in the loop workflow for analyzing documents.
 	HumanLoopConfig *HumanLoopConfig `type:"structure"`
+
+	// Contains Queries and the alias for those Queries, as determined by the input.
+	QueriesConfig *QueriesConfig `type:"structure"`
 }
 
 // String returns the string representation.
@@ -1520,6 +1525,11 @@ func (s *AnalyzeDocumentInput) Validate() error {
 			invalidParams.AddNested("HumanLoopConfig", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.QueriesConfig != nil {
+		if err := s.QueriesConfig.Validate(); err != nil {
+			invalidParams.AddNested("QueriesConfig", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -1542,6 +1552,12 @@ func (s *AnalyzeDocumentInput) SetFeatureTypes(v []*string) *AnalyzeDocumentInpu
 // SetHumanLoopConfig sets the HumanLoopConfig field's value.
 func (s *AnalyzeDocumentInput) SetHumanLoopConfig(v *HumanLoopConfig) *AnalyzeDocumentInput {
 	s.HumanLoopConfig = v
+	return s
+}
+
+// SetQueriesConfig sets the QueriesConfig field's value.
+func (s *AnalyzeDocumentInput) SetQueriesConfig(v *QueriesConfig) *AnalyzeDocumentInput {
+	s.QueriesConfig = v
 	return s
 }
 
@@ -1996,6 +2012,13 @@ type Block struct {
 	//    * SELECTION_ELEMENT - A selection element such as an option button (radio
 	//    button) or a check box that's detected on a document page. Use the value
 	//    of SelectionStatus to determine the status of the selection element.
+	//
+	//    * QUERY - A question asked during the call of AnalyzeDocument. Contains
+	//    an alias and an ID that attachs it to its answer.
+	//
+	//    * QUERY_RESULT - A response to a question asked during the call of analyze
+	//    document. Comes with an alias and ID for ease of locating in a response.
+	//    Also contains location and confidence score.
 	BlockType *string `type:"string" enum:"BlockType"`
 
 	// The column in which a table cell appears. The first column position is 1.
@@ -2018,7 +2041,7 @@ type Block struct {
 	//    * VALUE - The field text.
 	//
 	// EntityTypes isn't returned by DetectDocumentText and GetDocumentTextDetection.
-	EntityTypes []*string `type:"list"`
+	EntityTypes []*string `type:"list" enum:"EntityType"`
 
 	// The location of the recognized text on the image. It includes an axis-aligned,
 	// coarse bounding box that surrounds the text, and a finer-grain polygon for
@@ -2036,6 +2059,10 @@ type Block struct {
 	// value of Page is always 1. Synchronous operations don't return Page because
 	// every input document is considered to be a single-page document.
 	Page *int64 `type:"integer"`
+
+	// Each query contains the question you want to ask in the Text and the alias
+	// you want to associate.
+	Query *Query `type:"structure"`
 
 	// A list of child blocks of the current block. For example, a LINE object has
 	// child blocks for each WORD block that's part of the line of text. There aren't
@@ -2131,6 +2158,12 @@ func (s *Block) SetId(v string) *Block {
 // SetPage sets the Page field's value.
 func (s *Block) SetPage(v int64) *Block {
 	s.Page = &v
+	return s
+}
+
+// SetQuery sets the Query field's value.
+func (s *Block) SetQuery(v *Query) *Block {
+	s.Query = v
 	return s
 }
 
@@ -3475,7 +3508,7 @@ type HumanLoopDataAttributes struct {
 
 	// Sets whether the input image is free of personally identifiable information
 	// or adult content.
-	ContentClassifiers []*string `type:"list"`
+	ContentClassifiers []*string `type:"list" enum:"ContentClassifier"`
 }
 
 // String returns the string representation.
@@ -4504,6 +4537,154 @@ func (s *ProvisionedThroughputExceededException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+type QueriesConfig struct {
+	_ struct{} `type:"structure"`
+
+	// Queries is a required field
+	Queries []*Query `min:"1" type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueriesConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s QueriesConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *QueriesConfig) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "QueriesConfig"}
+	if s.Queries == nil {
+		invalidParams.Add(request.NewErrParamRequired("Queries"))
+	}
+	if s.Queries != nil && len(s.Queries) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Queries", 1))
+	}
+	if s.Queries != nil {
+		for i, v := range s.Queries {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Queries", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetQueries sets the Queries field's value.
+func (s *QueriesConfig) SetQueries(v []*Query) *QueriesConfig {
+	s.Queries = v
+	return s
+}
+
+// Each query contains the question you want to ask in the Text and the alias
+// you want to associate.
+type Query struct {
+	_ struct{} `type:"structure"`
+
+	// Alias attached to the query, for ease of location.
+	Alias *string `min:"1" type:"string"`
+
+	// List of pages associated with the query. The following is a list of rules
+	// for using this parameter.
+	//
+	//    * If a page is not specified, it is set to ["1"] by default.
+	//
+	//    * The following characters are allowed in the parameter's string: 0 1
+	//    2 3 4 5 6 7 8 9 - *. No whitespace is allowed.
+	//
+	//    * When using * to indicate all pages, it must be the only element in the
+	//    string.
+	//
+	//    * You can use page intervals, such as [“1-3”, “1-1”, “4-*”].
+	//    Where * indicates last page of document.
+	//
+	//    * Specified pages must be greater than 0 and less than or equal to the
+	//    number of pages in the document.
+	Pages []*string `min:"1" type:"list"`
+
+	// Question that Amazon Textract will apply to the document. An example would
+	// be "What is the customer's SSN?"
+	//
+	// Text is a required field
+	Text *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Query) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Query) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Query) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Query"}
+	if s.Alias != nil && len(*s.Alias) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Alias", 1))
+	}
+	if s.Pages != nil && len(s.Pages) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Pages", 1))
+	}
+	if s.Text == nil {
+		invalidParams.Add(request.NewErrParamRequired("Text"))
+	}
+	if s.Text != nil && len(*s.Text) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Text", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAlias sets the Alias field's value.
+func (s *Query) SetAlias(v string) *Query {
+	s.Alias = &v
+	return s
+}
+
+// SetPages sets the Pages field's value.
+func (s *Query) SetPages(v []*string) *Query {
+	s.Pages = v
+	return s
+}
+
+// SetText sets the Text field's value.
+func (s *Query) SetText(v string) *Query {
+	s.Text = &v
+	return s
+}
+
 // Information about how blocks are related to each other. A Block object contains
 // 0 or more Relation objects in a list, Relationships. For more information,
 // see Block.
@@ -4657,7 +4838,7 @@ type StartDocumentAnalysisInput struct {
 	// of FeatureTypes).
 	//
 	// FeatureTypes is a required field
-	FeatureTypes []*string `type:"list" required:"true"`
+	FeatureTypes []*string `type:"list" required:"true" enum:"FeatureType"`
 
 	// An identifier that you specify that's included in the completion notification
 	// published to the Amazon SNS topic. For example, you can use JobTag to identify
@@ -4680,6 +4861,8 @@ type StartDocumentAnalysisInput struct {
 	// Textract will save the results internally to be accessed by the GetDocumentAnalysis
 	// operation.
 	OutputConfig *OutputConfig `type:"structure"`
+
+	QueriesConfig *QueriesConfig `type:"structure"`
 }
 
 // String returns the string representation.
@@ -4733,6 +4916,11 @@ func (s *StartDocumentAnalysisInput) Validate() error {
 			invalidParams.AddNested("OutputConfig", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.QueriesConfig != nil {
+		if err := s.QueriesConfig.Validate(); err != nil {
+			invalidParams.AddNested("QueriesConfig", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4779,6 +4967,12 @@ func (s *StartDocumentAnalysisInput) SetNotificationChannel(v *NotificationChann
 // SetOutputConfig sets the OutputConfig field's value.
 func (s *StartDocumentAnalysisInput) SetOutputConfig(v *OutputConfig) *StartDocumentAnalysisInput {
 	s.OutputConfig = v
+	return s
+}
+
+// SetQueriesConfig sets the QueriesConfig field's value.
+func (s *StartDocumentAnalysisInput) SetQueriesConfig(v *QueriesConfig) *StartDocumentAnalysisInput {
+	s.QueriesConfig = v
 	return s
 }
 
@@ -5203,9 +5397,8 @@ func (s *ThrottlingException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// The format of the input document isn't supported. Documents for synchronous
-// operations can be in PNG or JPEG format only. Documents for asynchronous
-// operations can be in PDF format.
+// The format of the input document isn't supported. Documents for operations
+// can be in PNG, JPEG, PDF, or TIFF format.
 type UnsupportedDocumentException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -5338,6 +5531,12 @@ const (
 
 	// BlockTypeTitle is a BlockType enum value
 	BlockTypeTitle = "TITLE"
+
+	// BlockTypeQuery is a BlockType enum value
+	BlockTypeQuery = "QUERY"
+
+	// BlockTypeQueryResult is a BlockType enum value
+	BlockTypeQueryResult = "QUERY_RESULT"
 )
 
 // BlockType_Values returns all elements of the BlockType enum
@@ -5352,6 +5551,8 @@ func BlockType_Values() []string {
 		BlockTypeSelectionElement,
 		BlockTypeMergedCell,
 		BlockTypeTitle,
+		BlockTypeQuery,
+		BlockTypeQueryResult,
 	}
 }
 
@@ -5397,6 +5598,9 @@ const (
 
 	// FeatureTypeForms is a FeatureType enum value
 	FeatureTypeForms = "FORMS"
+
+	// FeatureTypeQueries is a FeatureType enum value
+	FeatureTypeQueries = "QUERIES"
 )
 
 // FeatureType_Values returns all elements of the FeatureType enum
@@ -5404,6 +5608,7 @@ func FeatureType_Values() []string {
 	return []string{
 		FeatureTypeTables,
 		FeatureTypeForms,
+		FeatureTypeQueries,
 	}
 }
 
@@ -5446,6 +5651,9 @@ const (
 
 	// RelationshipTypeTitle is a RelationshipType enum value
 	RelationshipTypeTitle = "TITLE"
+
+	// RelationshipTypeAnswer is a RelationshipType enum value
+	RelationshipTypeAnswer = "ANSWER"
 )
 
 // RelationshipType_Values returns all elements of the RelationshipType enum
@@ -5456,6 +5664,7 @@ func RelationshipType_Values() []string {
 		RelationshipTypeComplexFeatures,
 		RelationshipTypeMergedCell,
 		RelationshipTypeTitle,
+		RelationshipTypeAnswer,
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/globalloadbalancerpoolsv0"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -43,6 +44,8 @@ func ResourceIBMCISPool() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeValidator("ibm_cis_origin_pool",
+					"cis_id"),
 			},
 			cisGLBPoolID: {
 				Type:     schema.TypeString,
@@ -155,6 +158,21 @@ func ResourceIBMCISPool() *schema.Resource {
 		Exists:   resourceCISPoolExists,
 		Importer: &schema.ResourceImporter{},
 	}
+}
+func ResourceIBMCISPoolValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+	ibmCISPoolValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_origin_pool",
+		Schema:       validateSchema}
+	return &ibmCISPoolValidator
 }
 
 func resourceCISPoolCreate(d *schema.ResourceData, meta interface{}) error {

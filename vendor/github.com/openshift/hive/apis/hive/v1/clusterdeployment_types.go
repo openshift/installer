@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/hive/apis/hive/v1/azure"
 	"github.com/openshift/hive/apis/hive/v1/baremetal"
 	"github.com/openshift/hive/apis/hive/v1/gcp"
+	"github.com/openshift/hive/apis/hive/v1/ibmcloud"
 	"github.com/openshift/hive/apis/hive/v1/openstack"
 	"github.com/openshift/hive/apis/hive/v1/ovirt"
 	"github.com/openshift/hive/apis/hive/v1/vsphere"
@@ -46,24 +47,57 @@ const (
 	// target specific regions of the cluster-platform.
 	HiveClusterRegionLabel = "hive.openshift.io/cluster-region"
 
-	// FinalizerMachineManagementTargetNamespace is used on ClusterDeployments to
-	// ensure we clean up the machine management target namespace before cleaning up the API object.
-	FinalizerMachineManagementTargetNamespace string = "hive.openshift.io/machine-management-targetnamespace"
+	// FinalizerArgoCDCluster is used on ClusterDeployments to ensure we clean up the ArgoCD cluster
+	// secret before cleaning up the API object.
+	FinalizerArgoCDCluster = "hive.openshift.io/argocd-cluster"
 )
 
 // ClusterPowerState is used to indicate whether a cluster is running or in a
 // hibernating state.
-// +kubebuilder:validation:Enum="";Running;Hibernating
 type ClusterPowerState string
 
 const (
-	// RunningClusterPowerState is the default state of a cluster after it has
+	// ClusterPowerStateRunning is the default state of a cluster after it has
 	// been installed. All of its machines should be running.
-	RunningClusterPowerState ClusterPowerState = "Running"
+	ClusterPowerStateRunning ClusterPowerState = "Running"
 
-	// HibernatingClusterPowerState is used to stop the machines belonging to a cluster
-	// and move it to a hibernating state.
-	HibernatingClusterPowerState ClusterPowerState = "Hibernating"
+	// ClusterPowerStateHibernating indicates the machines belonging to a cluster
+	// are stopped.
+	ClusterPowerStateHibernating ClusterPowerState = "Hibernating"
+
+	// ClusterPowerStateSyncSetsNotApplied indicates SyncSets have not yet been applied
+	// for the cluster based on ClusterSync.Status.FirstSucessTime
+	ClusterPowerStateSyncSetsNotApplied ClusterPowerState = "SyncSetsNotApplied"
+
+	// ClusterPowerStateStartingMachines is used to reflect attempt to list and start cloud VMs
+	ClusterPowerStateStartingMachines ClusterPowerState = "StartingMachines"
+
+	// ClusterPowerStateFailedToStartMachines
+	ClusterPowerStateFailedToStartMachines ClusterPowerState = "FailedToStartMachines"
+
+	// ClusterPowerStateStopping indicates the cluster is transitioning
+	// from a Running state to a Hibernating state.
+	ClusterPowerStateStopping ClusterPowerState = "Stopping"
+
+	// ClusterPowerStateFailedToStop is used when there was an error stopping machines
+	// to enter hibernation
+	ClusterPowerStateFailedToStop ClusterPowerState = "FailedToStop"
+
+	// ClusterPowerStateWaitingForMachinesToStop is used when waiting for cloud VMs to stop
+	ClusterPowerStateWaitingForMachinesToStop ClusterPowerState = "WaitingForMachinesToStop"
+
+	// ClusterPowerStateWaitingForMachines is used when waiting for cloud VMs to start.
+	ClusterPowerStateWaitingForMachines ClusterPowerState = "WaitingForMachines"
+
+	// ClusterPowerStateWaitingForNodes is used when waiting for nodes to become Ready.
+	ClusterPowerStateWaitingForNodes ClusterPowerState = "WaitingForNodes"
+
+	// ClusterPowerStatePausingForClusterOperatorsToSettle is used when pausing to let ClusterOperators start and post new status before we check it.
+	ClusterPowerStatePausingForClusterOperatorsToSettle ClusterPowerState = "PausingForClusterOperatorsToSettle"
+
+	// ClusterPowerStateWaitingForClusterOperators is used when waiting for ClusterOperators to
+	// get to a good state. (Available=True, Processing=False, Degraded=False)
+	ClusterPowerStateWaitingForClusterOperators ClusterPowerState = "WaitingForClusterOperators"
 )
 
 // ClusterDeploymentSpec defines the desired state of ClusterDeployment
@@ -88,7 +122,9 @@ type ClusterDeploymentSpec struct {
 	// +optional
 	PullSecretRef *corev1.LocalObjectReference `json:"pullSecretRef,omitempty"`
 
-	// PreserveOnDelete allows the user to disconnect a cluster from Hive without deprovisioning it
+	// PreserveOnDelete allows the user to disconnect a cluster from Hive without deprovisioning it. This can also be
+	// used to abandon ongoing cluster deprovision.
+	// +optional
 	PreserveOnDelete bool `json:"preserveOnDelete,omitempty"`
 
 	// ControlPlaneConfig contains additional configuration for the target cluster's control plane
@@ -132,23 +168,26 @@ type ClusterDeploymentSpec struct {
 
 	// PowerState indicates whether a cluster should be running or hibernating. When omitted,
 	// PowerState defaults to the Running state.
+	// +kubebuilder:validation:Enum="";Running;Hibernating
 	// +optional
 	PowerState ClusterPowerState `json:"powerState,omitempty"`
 
 	// HibernateAfter will transition a cluster to hibernating power state after it has been running for the
 	// given duration. The time that a cluster has been running is the time since the cluster was installed or the
 	// time since the cluster last came out of hibernation.
+	// This is a Duration value; see https://pkg.go.dev/time#ParseDuration for accepted formats.
+	// Note: due to discrepancies in validation vs parsing, we use a Pattern instead of `Format=duration`. See
+	// https://bugzilla.redhat.com/show_bug.cgi?id=2050332
+	// https://github.com/kubernetes/apimachinery/issues/131
+	// https://github.com/kubernetes/apiextensions-apiserver/issues/56
 	// +optional
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
 	HibernateAfter *metav1.Duration `json:"hibernateAfter,omitempty"`
 
 	// InstallAttemptsLimit is the maximum number of times Hive will attempt to install the cluster.
 	// +optional
 	InstallAttemptsLimit *int32 `json:"installAttemptsLimit,omitempty"`
-
-	// MachineManagement contains machine management settings including the strategy that will be used when
-	// provisioning worker machines.
-	// +optional
-	MachineManagement *MachineManagement `json:"machineManagement,omitempty"`
 
 	// BoundServiceAccountSignkingKeySecretRef refers to a Secret that contains a
 	// 'bound-service-account-signing-key.key' data key pointing to the private
@@ -169,25 +208,6 @@ type ClusterInstallLocalReference struct {
 	Name string `json:"name"`
 }
 
-// MachineManagement contains settings used for machine management.
-type MachineManagement struct {
-	// Central contains settings for central machine management. If set Central indicates that central machine
-	// management will be used as opposed to management on the spoke cluster.
-	// +optional
-	Central *CentralMachineManagement `json:"central,omitempty"`
-
-	// TargetNamespace is the namespace in which we will create worker machineset resources. Resources
-	// required to create machines will be copied to the TargetNamespace.
-	// TargetNamespace is created for you and cannot be set during creation. TargetNamespace is also
-	// immutable once set.
-	// +optional
-	TargetNamespace string `json:"targetNamespace,omitempty"`
-}
-
-// CentralMachineManagement contains settings used for central machine managemnt.
-type CentralMachineManagement struct {
-}
-
 // Provisioning contains settings used only for initial cluster provisioning.
 type Provisioning struct {
 	// InstallConfigSecretRef is the reference to a secret that contains an openshift-install
@@ -200,6 +220,11 @@ type Provisioning struct {
 	// ReleaseImage is the image containing metadata for all components that run in the cluster, and
 	// is the primary and best way to specify what specific version of OpenShift you wish to install.
 	ReleaseImage string `json:"releaseImage,omitempty"`
+
+	// InstallerImageOverride allows specifying a URI for the installer image, normally gleaned from
+	// the metadata within the ReleaseImage.
+	// +optional
+	InstallerImageOverride string `json:"installerImageOverride,omitempty"`
 
 	// ImageSetRef is a reference to a ClusterImageSet. If a value is specified for ReleaseImage,
 	// that will take precedence over the one from the ClusterImageSet.
@@ -243,6 +268,9 @@ type ClusterPoolReference struct {
 	// ClaimName is the name of the ClusterClaim that claimed the cluster from the pool.
 	// +optional
 	ClaimName string `json:"claimName,omitempty"`
+	// ClaimedTimestamp is the time this cluster was assigned to a ClusterClaim. This is only used for
+	// ClusterDeployments belonging to ClusterPools.
+	ClaimedTimestamp *metav1.Time `json:"claimedTimestamp,omitempty"`
 }
 
 // ClusterMetadata contains metadata information about the installed cluster.
@@ -258,7 +286,8 @@ type ClusterMetadata struct {
 	AdminKubeconfigSecretRef corev1.LocalObjectReference `json:"adminKubeconfigSecretRef"`
 
 	// AdminPasswordSecretRef references the secret containing the admin username/password which can be used to login to this cluster.
-	AdminPasswordSecretRef corev1.LocalObjectReference `json:"adminPasswordSecretRef"`
+	// +optional
+	AdminPasswordSecretRef *corev1.LocalObjectReference `json:"adminPasswordSecretRef,omitempty"`
 }
 
 // ClusterDeploymentStatus defines the observed state of ClusterDeployment
@@ -303,6 +332,10 @@ type ClusterDeploymentStatus struct {
 	// InstalledTimestamp is the time we first detected that the cluster has been successfully installed.
 	InstalledTimestamp *metav1.Time `json:"installedTimestamp,omitempty"`
 
+	// PowerState indicates the powerstate of cluster
+	// +optional
+	PowerState ClusterPowerState `json:"powerState,omitempty"`
+
 	// ProvisionRef is a reference to the last ClusterProvision created for the deployment
 	// +optional
 	ProvisionRef *corev1.LocalObjectReference `json:"provisionRef,omitempty"`
@@ -336,12 +369,7 @@ type ClusterDeploymentCondition struct {
 // ClusterDeploymentConditionType is a valid value for ClusterDeploymentCondition.Type
 type ClusterDeploymentConditionType string
 
-// WARNING: All ClusterDeploymentConditionTypes should be added to the AllClusterDeploymentConditions slice below.
 const (
-	// ClusterImageSetNotFoundCondition is set when the ClusterImageSet referenced by the
-	// ClusterDeployment is not found.
-	ClusterImageSetNotFoundCondition ClusterDeploymentConditionType = "ClusterImageSetNotFound"
-
 	// InstallerImageResolutionFailedCondition is a condition that indicates whether the job
 	// to determine the installer image based on a release image was successful.
 	InstallerImageResolutionFailedCondition ClusterDeploymentConditionType = "InstallerImageResolutionFailed"
@@ -383,14 +411,28 @@ const (
 	// transitioning to/from a hibernating state or is in a hibernating state.
 	ClusterHibernatingCondition ClusterDeploymentConditionType = "Hibernating"
 
+	// ClusterReadyCondition works in conjunction with ClusterHibernatingCondition and gives more information
+	// pertaining to the transition status of the cluster and whether it is running and ready
+	ClusterReadyCondition ClusterDeploymentConditionType = "Ready"
+
 	// InstallLaunchErrorCondition is set when a cluster provision fails to launch an install pod
 	InstallLaunchErrorCondition ClusterDeploymentConditionType = "InstallLaunchError"
 
 	// DeprovisionLaunchErrorCondition is set when a cluster deprovision fails to launch.
 	DeprovisionLaunchErrorCondition ClusterDeploymentConditionType = "DeprovisionLaunchError"
 
-	// ProvisionStoppedCondition is set when cluster provisioning is stopped
+	// ProvisionStoppedCondition is set when cluster provisioning is stopped.
+	// This indicates that at least one provision attempt was made, but there will be no further
+	// retries (without InstallAttemptsLimit changes or other hive configuration stopping further retries).
 	ProvisionStoppedCondition ClusterDeploymentConditionType = "ProvisionStopped"
+
+	// Provisioned is True when a cluster is installed; False while it is provisioning or deprovisioning.
+	// The Reason indicates where it is in that lifecycle.
+	ProvisionedCondition ClusterDeploymentConditionType = "Provisioned"
+
+	// RequirementsMetCondition is set True when all pre-provision requirements have been met,
+	// and the controllers can begin the cluster install.
+	RequirementsMetCondition ClusterDeploymentConditionType = "RequirementsMet"
 
 	// AuthenticationFailureCondition is true when platform credentials cannot be used because of authentication failure
 	AuthenticationFailureClusterDeploymentCondition ClusterDeploymentConditionType = "AuthenticationFailure"
@@ -410,53 +452,84 @@ const (
 	ClusterInstallRequirementsMetClusterDeploymentCondition ClusterDeploymentConditionType = "ClusterInstallRequirementsMet"
 )
 
-// AllClusterDeploymentConditions is a slice containing all condition types. This can be used for dealing with
-// cluster deployment conditions dynamically.
-var AllClusterDeploymentConditions = []ClusterDeploymentConditionType{
-	ClusterImageSetNotFoundCondition,
-	InstallerImageResolutionFailedCondition,
-	ControlPlaneCertificateNotFoundCondition,
-	IngressCertificateNotFoundCondition,
-	UnreachableCondition,
+// PositivePolarityClusterDeploymentConditions is a slice containing all condition types with positive polarity
+// For controllers that handle these conditions, the desired state is True
+// All cluster deployment condition types that are not in this slice are assumed to have negative polarity
+var PositivePolarityClusterDeploymentConditions = []ClusterDeploymentConditionType{
 	ActiveAPIURLOverrideCondition,
-	DNSNotReadyCondition,
-	ProvisionFailedCondition,
-	SyncSetFailedCondition,
-	RelocationFailedCondition,
 	ClusterHibernatingCondition,
-	InstallLaunchErrorCondition,
+	ClusterReadyCondition,
 	AWSPrivateLinkReadyClusterDeploymentCondition,
-	AWSPrivateLinkFailedClusterDeploymentCondition,
+	ClusterInstallCompletedClusterDeploymentCondition,
+	ClusterInstallRequirementsMetClusterDeploymentCondition,
+	RequirementsMetCondition,
+	ProvisionedCondition,
 }
 
-// Cluster hibernating reasons
+// Cluster hibernating and ready reasons
 const (
-	// ResumingHibernationReason is used as the reason when the cluster is transitioning
-	// from a Hibernating state to a Running state.
-	ResumingHibernationReason = "Resuming"
-	// RunningHibernationReason is used as the reason when the cluster is running and
-	// the Hibernating condition is false.
-	RunningHibernationReason = "Running"
-	// StoppingHibernationReason is used as the reason when the cluster is transitioning
+	// HibernatingReasonResumingOrRunning is used as the reason for the Hibernating condition when the cluster
+	// is resuming or running. Precise details are available in the Ready condition.
+	HibernatingReasonResumingOrRunning = "ResumingOrRunning"
+	// HibernatingReasonStopping is used as the reason when the cluster is transitioning
 	// from a Running state to a Hibernating state.
-	StoppingHibernationReason = "Stopping"
-	// HibernatingHibernationReason is used as the reason when the cluster is in a
+	HibernatingReasonStopping = string(ClusterPowerStateStopping)
+	// HibernatingReasonWaitingForMachinesToStop is used on the Hibernating condition when waiting for cloud VMs to stop
+	HibernatingReasonWaitingForMachinesToStop = string(ClusterPowerStateWaitingForMachinesToStop)
+	// HibernatingReasonHibernating is used as the reason when the cluster is in a
 	// Hibernating state.
-	HibernatingHibernationReason = "Hibernating"
-	// UnsupportedHibernationReason is used as the reason when the cluster spec
+	HibernatingReasonHibernating = string(ClusterPowerStateHibernating)
+	// HibernatingReasonUnsupported is used as the reason when the cluster spec
 	// specifies that the cluster be moved to a Hibernating state, but either the cluster
 	// version is not compatible with hibernation (< 4.4.8) or the cloud provider of
 	// the cluster is not supported.
-	UnsupportedHibernationReason = "Unsupported"
-	// FailedToStopHibernationReason is used when there was an error stopping machines
+	HibernatingReasonUnsupported = "Unsupported"
+	// HibernatingReasonFailedToStop is used when there was an error stopping machines
 	// to enter hibernation
-	FailedToStopHibernationReason = "FailedToStop"
-	// FailedToStartHibernationReason is used when there was an error starting machines
-	// to leave hibernation
-	FailedToStartHibernationReason = "FailedToStart"
-	// SyncSetsNotAppliedReason is used as the reason when SyncSets have not yet been applied
+	HibernatingReasonFailedToStop = string(ClusterPowerStateFailedToStop)
+	// HibernatingReasonSyncSetsNotApplied is used as the reason when SyncSets have not yet been applied
 	// for the cluster based on ClusterSync.Status.FirstSucessTime
-	SyncSetsNotAppliedReason = "SyncSetsNotApplied"
+	HibernatingReasonSyncSetsNotApplied = string(ClusterPowerStateSyncSetsNotApplied)
+	// HibernatingReasonSyncSetsApplied means SyncSets have been successfully applied at some point.
+	// (It does not necessarily mean they are currently copacetic -- check ClusterSync status
+	// for that.)
+	HibernatingReasonSyncSetsApplied = "SyncSetsApplied"
+
+	// ReadyReasonStoppingOrHibernating is used as the reason for the Ready condition when the cluster
+	// is stopping or hibernating. Precise details are available in the Hibernating condition.
+	ReadyReasonStoppingOrHibernating = "StoppingOrHibernating"
+	// ReadyReasonStartingMachines is used to reflect attempt to list and start cloud VMs
+	ReadyReasonStartingMachines = string(ClusterPowerStateStartingMachines)
+	// ReadyReasonFailedToStartMachines is used when there was an error starting machines
+	// to leave hibernation
+	ReadyReasonFailedToStartMachines = string(ClusterPowerStateFailedToStartMachines)
+	// ReadyReasonWaitingForMachines is used on the Ready condition when waiting for cloud VMs to start.
+	ReadyReasonWaitingForMachines = string(ClusterPowerStateWaitingForMachines)
+	// ReadyReasonWaitingForNodes is used on the Ready condition when waiting for nodes to become Ready.
+	ReadyReasonWaitingForNodes = string(ClusterPowerStateWaitingForNodes)
+	// ReadyReasonPausingForClusterOperatorsToSettle is used on the Ready condition when pausing to let ClusterOperators start and post new status before we check it.
+	ReadyReasonPausingForClusterOperatorsToSettle = string(ClusterPowerStatePausingForClusterOperatorsToSettle)
+	// ReadyReasonWaitingForClusterOperators is used on the Ready condition when waiting for ClusterOperators to
+	// get to a good state. (Available=True, Processing=False, Degraded=False)
+	ReadyReasonWaitingForClusterOperators = string(ClusterPowerStateWaitingForClusterOperators)
+	// ReadyReasonRunning is used on the Ready condition as the reason when the cluster is running and ready
+	ReadyReasonRunning = string(ClusterPowerStateRunning)
+)
+
+// Provisioned status condition reasons
+const (
+	// ProvisionedReasonProvisioning is set while the cluster is still provisioning.
+	ProvisionedReasonProvisioning = "Provisioning"
+	// ProvisionedReasonProvisionStopped means cluster provisioning is stopped. The ProvisionStopped condition may contain more detail.
+	ProvisionedReasonProvisionStopped = "ProvisionStopped"
+	// ProvisionedReasonProvisioned is set when the provision is successful.
+	ProvisionedReasonProvisioned = "Provisioned"
+	// ProvisionedReasonDeprovisioning is set when we start to deprovision the cluster.
+	ProvisionedReasonDeprovisioning = "Deprovisioning"
+	// ProvisionedReasonDeprovisionFailed means the deprovision failed terminally.
+	ProvisionedReasonDeprovisionFailed = "DeprovisionFailed"
+	// ProvisionedReasonDeprovisioned is set when the cluster has been successfully deprovisioned
+	ProvisionedReasonDeprovisioned = "Deprovisioned"
 )
 
 // InitializedConditionReason is used when a condition is initialized for the first time, and the status of the
@@ -469,13 +542,13 @@ const InitializedConditionReason = "Initialized"
 // ClusterDeployment is the Schema for the clusterdeployments API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="InfraID",type="string",JSONPath=".spec.clusterMetadata.infraID"
 // +kubebuilder:printcolumn:name="Platform",type="string",JSONPath=".metadata.labels.hive\\.openshift\\.io/cluster-platform"
 // +kubebuilder:printcolumn:name="Region",type="string",JSONPath=".metadata.labels.hive\\.openshift\\.io/cluster-region"
-// +kubebuilder:printcolumn:name="ClusterType",type="string",JSONPath=".metadata.labels.hive\\.openshift\\.io/cluster-type"
-// +kubebuilder:printcolumn:name="Installed",type="boolean",JSONPath=".spec.installed"
-// +kubebuilder:printcolumn:name="InfraID",type="string",JSONPath=".spec.clusterMetadata.infraID"
 // +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".metadata.labels.hive\\.openshift\\.io/version-major-minor-patch"
-// +kubebuilder:printcolumn:name="PowerState",type="string",JSONPath=".status.conditions[?(@.type=='Hibernating')].reason"
+// +kubebuilder:printcolumn:name="ClusterType",type="string",JSONPath=".metadata.labels.hive\\.openshift\\.io/cluster-type"
+// +kubebuilder:printcolumn:name="ProvisionStatus",type="string",JSONPath=".status.conditions[?(@.type=='Provisioned')].reason"
+// +kubebuilder:printcolumn:name="PowerState",type="string",JSONPath=".status.powerState"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:path=clusterdeployments,shortName=cd,scope=Namespaced
 type ClusterDeployment struct {
@@ -524,6 +597,9 @@ type Platform struct {
 	// AgentBareMetal is the configuration used when performing an Assisted Agent based installation
 	// to bare metal.
 	AgentBareMetal *agent.BareMetalPlatform `json:"agentBareMetal,omitempty"`
+
+	// IBMCloud is the configuration used when installing on IBM Cloud
+	IBMCloud *ibmcloud.Platform `json:"ibmcloud,omitempty"`
 }
 
 // PlatformStatus contains the observed state for the specific platform upon which to

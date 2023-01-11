@@ -29,14 +29,13 @@ const opAssociateWebACL = "AssociateWebACL"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AssociateWebACLRequest method.
+//	req, resp := client.AssociateWebACLRequest(params)
 //
-//    // Example sending a request using the AssociateWebACLRequest method.
-//    req, resp := client.AssociateWebACLRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/AssociateWebACL
 func (c *WAFV2) AssociateWebACLRequest(input *AssociateWebACLInput) (req *request.Request, output *AssociateWebACLOutput) {
@@ -60,12 +59,26 @@ func (c *WAFV2) AssociateWebACLRequest(input *AssociateWebACLInput) (req *reques
 //
 // Associates a web ACL with a regional application resource, to protect the
 // resource. A regional application can be an Application Load Balancer (ALB),
-// an Amazon API Gateway REST API, or an AppSync GraphQL API.
+// an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon Cognito
+// user pool.
 //
 // For Amazon CloudFront, don't use this call. Instead, use your CloudFront
 // distribution configuration. To associate a web ACL, in the CloudFront call
 // UpdateDistribution, set the web ACL ID to the Amazon Resource Name (ARN)
 // of the web ACL. For information, see UpdateDistribution (https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_UpdateDistribution.html).
+//
+// When you make changes to web ACLs or web ACL components, like rules and rule
+// groups, WAF propagates the changes everywhere that the web ACL and its components
+// are stored and used. Your changes are applied within seconds, but there might
+// be a brief period of inconsistency when the changes have arrived in some
+// places and not in others. So, for example, if you change a rule action setting,
+// the action might be the old action in one area and the new action in another
+// area. Or if you add an IP address to an IP set used in a blocking rule, the
+// new address might briefly be blocked in one area while still allowed in another.
+// This temporary inconsistency can occur when you first associate a web ACL
+// with an Amazon Web Services resource and when you change a web ACL that is
+// already associated with a resource. Generally, any inconsistencies of this
+// type last only a few seconds.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -75,33 +88,41 @@ func (c *WAFV2) AssociateWebACLRequest(input *AssociateWebACLInput) (req *reques
 // API operation AssociateWebACL for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFUnavailableEntityException
-//   WAF couldn’t retrieve the resource that you requested. Retry your request.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFUnavailableEntityException
+//     WAF couldn’t retrieve a resource that you specified for this operation.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate. Verify the resources that you
+//     are specifying in your request parameters and then retry the operation.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/AssociateWebACL
 func (c *WAFV2) AssociateWebACL(input *AssociateWebACLInput) (*AssociateWebACLOutput, error) {
@@ -141,14 +162,13 @@ const opCheckCapacity = "CheckCapacity"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CheckCapacityRequest method.
+//	req, resp := client.CheckCapacityRequest(params)
 //
-//    // Example sending a request using the CheckCapacityRequest method.
-//    req, resp := client.CheckCapacityRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/CheckCapacity
 func (c *WAFV2) CheckCapacityRequest(input *CheckCapacityInput) (req *request.Request, output *CheckCapacityOutput) {
@@ -189,49 +209,60 @@ func (c *WAFV2) CheckCapacityRequest(input *CheckCapacityInput) (req *request.Re
 // API operation CheckCapacity for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFLimitsExceededException
-//   WAF couldn’t perform the operation because you exceeded your resource limit.
-//   For example, the maximum number of WebACL objects that you can create for
-//   an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
-//   in the WAF Developer Guide.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFInvalidResourceException
-//   WAF couldn’t perform the operation because the resource that you requested
-//   isn’t valid. Check the resource, and try again.
+//   - WAFLimitsExceededException
+//     WAF couldn’t perform the operation because you exceeded your resource limit.
+//     For example, the maximum number of WebACL objects that you can create for
+//     an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//     in the WAF Developer Guide.
 //
-//   * WAFUnavailableEntityException
-//   WAF couldn’t retrieve the resource that you requested. Retry your request.
+//   - WAFInvalidResourceException
+//     WAF couldn’t perform the operation because the resource that you requested
+//     isn’t valid. Check the resource, and try again.
 //
-//   * WAFSubscriptionNotFoundException
-//   You tried to use a managed rule group that's available by subscription, but
-//   you aren't subscribed to it yet.
+//   - WAFUnavailableEntityException
+//     WAF couldn’t retrieve a resource that you specified for this operation.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate. Verify the resources that you
+//     are specifying in your request parameters and then retry the operation.
 //
-//   * WAFExpiredManagedRuleGroupVersionException
-//   The operation failed because the specified version for the managed rule group
-//   has expired. You can retrieve the available versions for the managed rule
-//   group by calling ListAvailableManagedRuleGroupVersions.
+//   - WAFSubscriptionNotFoundException
+//     You tried to use a managed rule group that's available by subscription, but
+//     you aren't subscribed to it yet.
+//
+//   - WAFExpiredManagedRuleGroupVersionException
+//     The operation failed because the specified version for the managed rule group
+//     has expired. You can retrieve the available versions for the managed rule
+//     group by calling ListAvailableManagedRuleGroupVersions.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/CheckCapacity
 func (c *WAFV2) CheckCapacity(input *CheckCapacityInput) (*CheckCapacityOutput, error) {
@@ -271,14 +302,13 @@ const opCreateIPSet = "CreateIPSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateIPSetRequest method.
+//	req, resp := client.CreateIPSetRequest(params)
 //
-//    // Example sending a request using the CreateIPSetRequest method.
-//    req, resp := client.CreateIPSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/CreateIPSet
 func (c *WAFV2) CreateIPSetRequest(input *CreateIPSetInput) (req *request.Request, output *CreateIPSetOutput) {
@@ -312,49 +342,50 @@ func (c *WAFV2) CreateIPSetRequest(input *CreateIPSetInput) (req *request.Reques
 // API operation CreateIPSet for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFDuplicateItemException
-//   WAF couldn’t perform the operation because the resource that you tried
-//   to save is a duplicate of an existing one.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFDuplicateItemException
+//     WAF couldn’t perform the operation because the resource that you tried
+//     to save is a duplicate of an existing one.
 //
-//   * WAFLimitsExceededException
-//   WAF couldn’t perform the operation because you exceeded your resource limit.
-//   For example, the maximum number of WebACL objects that you can create for
-//   an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
-//   in the WAF Developer Guide.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFTagOperationException
-//   An error occurred during the tagging operation. Retry your request.
+//   - WAFLimitsExceededException
+//     WAF couldn’t perform the operation because you exceeded your resource limit.
+//     For example, the maximum number of WebACL objects that you can create for
+//     an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//     in the WAF Developer Guide.
 //
-//   * WAFTagOperationInternalErrorException
-//   WAF couldn’t perform your tagging operation because of an internal error.
-//   Retry your request.
+//   - WAFTagOperationException
+//     An error occurred during the tagging operation. Retry your request.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFTagOperationInternalErrorException
+//     WAF couldn’t perform your tagging operation because of an internal error.
+//     Retry your request.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/CreateIPSet
 func (c *WAFV2) CreateIPSet(input *CreateIPSetInput) (*CreateIPSetOutput, error) {
@@ -394,14 +425,13 @@ const opCreateRegexPatternSet = "CreateRegexPatternSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateRegexPatternSetRequest method.
+//	req, resp := client.CreateRegexPatternSetRequest(params)
 //
-//    // Example sending a request using the CreateRegexPatternSetRequest method.
-//    req, resp := client.CreateRegexPatternSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/CreateRegexPatternSet
 func (c *WAFV2) CreateRegexPatternSetRequest(input *CreateRegexPatternSetInput) (req *request.Request, output *CreateRegexPatternSetOutput) {
@@ -433,49 +463,50 @@ func (c *WAFV2) CreateRegexPatternSetRequest(input *CreateRegexPatternSetInput) 
 // API operation CreateRegexPatternSet for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFDuplicateItemException
-//   WAF couldn’t perform the operation because the resource that you tried
-//   to save is a duplicate of an existing one.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFDuplicateItemException
+//     WAF couldn’t perform the operation because the resource that you tried
+//     to save is a duplicate of an existing one.
 //
-//   * WAFLimitsExceededException
-//   WAF couldn’t perform the operation because you exceeded your resource limit.
-//   For example, the maximum number of WebACL objects that you can create for
-//   an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
-//   in the WAF Developer Guide.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFTagOperationException
-//   An error occurred during the tagging operation. Retry your request.
+//   - WAFLimitsExceededException
+//     WAF couldn’t perform the operation because you exceeded your resource limit.
+//     For example, the maximum number of WebACL objects that you can create for
+//     an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//     in the WAF Developer Guide.
 //
-//   * WAFTagOperationInternalErrorException
-//   WAF couldn’t perform your tagging operation because of an internal error.
-//   Retry your request.
+//   - WAFTagOperationException
+//     An error occurred during the tagging operation. Retry your request.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFTagOperationInternalErrorException
+//     WAF couldn’t perform your tagging operation because of an internal error.
+//     Retry your request.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/CreateRegexPatternSet
 func (c *WAFV2) CreateRegexPatternSet(input *CreateRegexPatternSetInput) (*CreateRegexPatternSetOutput, error) {
@@ -515,14 +546,13 @@ const opCreateRuleGroup = "CreateRuleGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateRuleGroupRequest method.
+//	req, resp := client.CreateRuleGroupRequest(params)
 //
-//    // Example sending a request using the CreateRuleGroupRequest method.
-//    req, resp := client.CreateRuleGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/CreateRuleGroup
 func (c *WAFV2) CreateRuleGroupRequest(input *CreateRuleGroupInput) (req *request.Request, output *CreateRuleGroupOutput) {
@@ -559,59 +589,67 @@ func (c *WAFV2) CreateRuleGroupRequest(input *CreateRuleGroupInput) (req *reques
 // API operation CreateRuleGroup for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFDuplicateItemException
-//   WAF couldn’t perform the operation because the resource that you tried
-//   to save is a duplicate of an existing one.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFDuplicateItemException
+//     WAF couldn’t perform the operation because the resource that you tried
+//     to save is a duplicate of an existing one.
 //
-//   * WAFLimitsExceededException
-//   WAF couldn’t perform the operation because you exceeded your resource limit.
-//   For example, the maximum number of WebACL objects that you can create for
-//   an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
-//   in the WAF Developer Guide.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFUnavailableEntityException
-//   WAF couldn’t retrieve the resource that you requested. Retry your request.
+//   - WAFLimitsExceededException
+//     WAF couldn’t perform the operation because you exceeded your resource limit.
+//     For example, the maximum number of WebACL objects that you can create for
+//     an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//     in the WAF Developer Guide.
 //
-//   * WAFTagOperationException
-//   An error occurred during the tagging operation. Retry your request.
+//   - WAFUnavailableEntityException
+//     WAF couldn’t retrieve a resource that you specified for this operation.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate. Verify the resources that you
+//     are specifying in your request parameters and then retry the operation.
 //
-//   * WAFTagOperationInternalErrorException
-//   WAF couldn’t perform your tagging operation because of an internal error.
-//   Retry your request.
+//   - WAFTagOperationException
+//     An error occurred during the tagging operation. Retry your request.
 //
-//   * WAFSubscriptionNotFoundException
-//   You tried to use a managed rule group that's available by subscription, but
-//   you aren't subscribed to it yet.
+//   - WAFTagOperationInternalErrorException
+//     WAF couldn’t perform your tagging operation because of an internal error.
+//     Retry your request.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - WAFSubscriptionNotFoundException
+//     You tried to use a managed rule group that's available by subscription, but
+//     you aren't subscribed to it yet.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/CreateRuleGroup
 func (c *WAFV2) CreateRuleGroup(input *CreateRuleGroupInput) (*CreateRuleGroupOutput, error) {
@@ -651,14 +689,13 @@ const opCreateWebACL = "CreateWebACL"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateWebACLRequest method.
+//	req, resp := client.CreateWebACLRequest(params)
 //
-//    // Example sending a request using the CreateWebACLRequest method.
-//    req, resp := client.CreateWebACLRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/CreateWebACL
 func (c *WAFV2) CreateWebACLRequest(input *CreateWebACLInput) (req *request.Request, output *CreateWebACLOutput) {
@@ -689,7 +726,7 @@ func (c *WAFV2) CreateWebACLRequest(input *CreateWebACLInput) (req *request.Requ
 // RuleGroup, and managed rule group. You can associate a web ACL with one or
 // more Amazon Web Services resources to protect. The resources can be an Amazon
 // CloudFront distribution, an Amazon API Gateway REST API, an Application Load
-// Balancer, or an AppSync GraphQL API.
+// Balancer, an AppSync GraphQL API, or an Amazon Cognito user pool.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -699,63 +736,85 @@ func (c *WAFV2) CreateWebACLRequest(input *CreateWebACLInput) (req *request.Requ
 // API operation CreateWebACL for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFDuplicateItemException
-//   WAF couldn’t perform the operation because the resource that you tried
-//   to save is a duplicate of an existing one.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFDuplicateItemException
+//     WAF couldn’t perform the operation because the resource that you tried
+//     to save is a duplicate of an existing one.
 //
-//   * WAFLimitsExceededException
-//   WAF couldn’t perform the operation because you exceeded your resource limit.
-//   For example, the maximum number of WebACL objects that you can create for
-//   an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
-//   in the WAF Developer Guide.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFInvalidResourceException
-//   WAF couldn’t perform the operation because the resource that you requested
-//   isn’t valid. Check the resource, and try again.
+//   - WAFLimitsExceededException
+//     WAF couldn’t perform the operation because you exceeded your resource limit.
+//     For example, the maximum number of WebACL objects that you can create for
+//     an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//     in the WAF Developer Guide.
 //
-//   * WAFUnavailableEntityException
-//   WAF couldn’t retrieve the resource that you requested. Retry your request.
+//   - WAFInvalidResourceException
+//     WAF couldn’t perform the operation because the resource that you requested
+//     isn’t valid. Check the resource, and try again.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - WAFUnavailableEntityException
+//     WAF couldn’t retrieve a resource that you specified for this operation.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate. Verify the resources that you
+//     are specifying in your request parameters and then retry the operation.
 //
-//   * WAFTagOperationException
-//   An error occurred during the tagging operation. Retry your request.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFTagOperationInternalErrorException
-//   WAF couldn’t perform your tagging operation because of an internal error.
-//   Retry your request.
+//   - WAFTagOperationException
+//     An error occurred during the tagging operation. Retry your request.
 //
-//   * WAFSubscriptionNotFoundException
-//   You tried to use a managed rule group that's available by subscription, but
-//   you aren't subscribed to it yet.
+//   - WAFTagOperationInternalErrorException
+//     WAF couldn’t perform your tagging operation because of an internal error.
+//     Retry your request.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFSubscriptionNotFoundException
+//     You tried to use a managed rule group that's available by subscription, but
+//     you aren't subscribed to it yet.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
+//
+//   - WAFConfigurationWarningException
+//     The operation failed because you are inspecting the web request body, headers,
+//     or cookies without specifying how to handle oversize components. Rules that
+//     inspect the body must either provide an OversizeHandling configuration or
+//     they must be preceded by a SizeConstraintStatement that blocks the body content
+//     from being too large. Rules that inspect the headers or cookies must provide
+//     an OversizeHandling configuration.
+//
+//     Provide the handling configuration and retry your operation.
+//
+//     Alternately, you can suppress this warning by adding the following tag to
+//     the resource that you provide to this operation: Tag (key:WAF:OversizeFieldsHandlingConstraintOptOut,
+//     value:true).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/CreateWebACL
 func (c *WAFV2) CreateWebACL(input *CreateWebACLInput) (*CreateWebACLOutput, error) {
@@ -795,14 +854,13 @@ const opDeleteFirewallManagerRuleGroups = "DeleteFirewallManagerRuleGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteFirewallManagerRuleGroupsRequest method.
+//	req, resp := client.DeleteFirewallManagerRuleGroupsRequest(params)
 //
-//    // Example sending a request using the DeleteFirewallManagerRuleGroupsRequest method.
-//    req, resp := client.DeleteFirewallManagerRuleGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteFirewallManagerRuleGroups
 func (c *WAFV2) DeleteFirewallManagerRuleGroupsRequest(input *DeleteFirewallManagerRuleGroupsInput) (req *request.Request, output *DeleteFirewallManagerRuleGroupsOutput) {
@@ -837,35 +895,39 @@ func (c *WAFV2) DeleteFirewallManagerRuleGroupsRequest(input *DeleteFirewallMana
 // API operation DeleteFirewallManagerRuleGroups for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteFirewallManagerRuleGroups
 func (c *WAFV2) DeleteFirewallManagerRuleGroups(input *DeleteFirewallManagerRuleGroupsInput) (*DeleteFirewallManagerRuleGroupsOutput, error) {
@@ -905,14 +967,13 @@ const opDeleteIPSet = "DeleteIPSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteIPSetRequest method.
+//	req, resp := client.DeleteIPSetRequest(params)
 //
-//    // Example sending a request using the DeleteIPSetRequest method.
-//    req, resp := client.DeleteIPSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteIPSet
 func (c *WAFV2) DeleteIPSetRequest(input *DeleteIPSetInput) (req *request.Request, output *DeleteIPSetOutput) {
@@ -944,46 +1005,50 @@ func (c *WAFV2) DeleteIPSetRequest(input *DeleteIPSetInput) (req *request.Reques
 // API operation DeleteIPSet for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFAssociatedItemException
-//   WAF couldn’t perform the operation because your resource is being used
-//   by another resource or it’s associated with another resource.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFTagOperationException
-//   An error occurred during the tagging operation. Retry your request.
+//   - WAFAssociatedItemException
+//     WAF couldn’t perform the operation because your resource is being used
+//     by another resource or it’s associated with another resource.
 //
-//   * WAFTagOperationInternalErrorException
-//   WAF couldn’t perform your tagging operation because of an internal error.
-//   Retry your request.
+//   - WAFTagOperationException
+//     An error occurred during the tagging operation. Retry your request.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFTagOperationInternalErrorException
+//     WAF couldn’t perform your tagging operation because of an internal error.
+//     Retry your request.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteIPSet
 func (c *WAFV2) DeleteIPSet(input *DeleteIPSetInput) (*DeleteIPSetOutput, error) {
@@ -1023,14 +1088,13 @@ const opDeleteLoggingConfiguration = "DeleteLoggingConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteLoggingConfigurationRequest method.
+//	req, resp := client.DeleteLoggingConfigurationRequest(params)
 //
-//    // Example sending a request using the DeleteLoggingConfigurationRequest method.
-//    req, resp := client.DeleteLoggingConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteLoggingConfiguration
 func (c *WAFV2) DeleteLoggingConfigurationRequest(input *DeleteLoggingConfigurationInput) (req *request.Request, output *DeleteLoggingConfigurationOutput) {
@@ -1062,35 +1126,39 @@ func (c *WAFV2) DeleteLoggingConfigurationRequest(input *DeleteLoggingConfigurat
 // API operation DeleteLoggingConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteLoggingConfiguration
 func (c *WAFV2) DeleteLoggingConfiguration(input *DeleteLoggingConfigurationInput) (*DeleteLoggingConfigurationOutput, error) {
@@ -1130,14 +1198,13 @@ const opDeletePermissionPolicy = "DeletePermissionPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeletePermissionPolicyRequest method.
+//	req, resp := client.DeletePermissionPolicyRequest(params)
 //
-//    // Example sending a request using the DeletePermissionPolicyRequest method.
-//    req, resp := client.DeletePermissionPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeletePermissionPolicy
 func (c *WAFV2) DeletePermissionPolicyRequest(input *DeletePermissionPolicyInput) (req *request.Request, output *DeletePermissionPolicyOutput) {
@@ -1171,27 +1238,31 @@ func (c *WAFV2) DeletePermissionPolicyRequest(input *DeletePermissionPolicyInput
 // API operation DeletePermissionPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
 //
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
+//
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeletePermissionPolicy
 func (c *WAFV2) DeletePermissionPolicy(input *DeletePermissionPolicyInput) (*DeletePermissionPolicyOutput, error) {
@@ -1231,14 +1302,13 @@ const opDeleteRegexPatternSet = "DeleteRegexPatternSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteRegexPatternSetRequest method.
+//	req, resp := client.DeleteRegexPatternSetRequest(params)
 //
-//    // Example sending a request using the DeleteRegexPatternSetRequest method.
-//    req, resp := client.DeleteRegexPatternSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteRegexPatternSet
 func (c *WAFV2) DeleteRegexPatternSetRequest(input *DeleteRegexPatternSetInput) (req *request.Request, output *DeleteRegexPatternSetOutput) {
@@ -1270,46 +1340,50 @@ func (c *WAFV2) DeleteRegexPatternSetRequest(input *DeleteRegexPatternSetInput) 
 // API operation DeleteRegexPatternSet for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFAssociatedItemException
-//   WAF couldn’t perform the operation because your resource is being used
-//   by another resource or it’s associated with another resource.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFTagOperationException
-//   An error occurred during the tagging operation. Retry your request.
+//   - WAFAssociatedItemException
+//     WAF couldn’t perform the operation because your resource is being used
+//     by another resource or it’s associated with another resource.
 //
-//   * WAFTagOperationInternalErrorException
-//   WAF couldn’t perform your tagging operation because of an internal error.
-//   Retry your request.
+//   - WAFTagOperationException
+//     An error occurred during the tagging operation. Retry your request.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFTagOperationInternalErrorException
+//     WAF couldn’t perform your tagging operation because of an internal error.
+//     Retry your request.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteRegexPatternSet
 func (c *WAFV2) DeleteRegexPatternSet(input *DeleteRegexPatternSetInput) (*DeleteRegexPatternSetOutput, error) {
@@ -1349,14 +1423,13 @@ const opDeleteRuleGroup = "DeleteRuleGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteRuleGroupRequest method.
+//	req, resp := client.DeleteRuleGroupRequest(params)
 //
-//    // Example sending a request using the DeleteRuleGroupRequest method.
-//    req, resp := client.DeleteRuleGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteRuleGroup
 func (c *WAFV2) DeleteRuleGroupRequest(input *DeleteRuleGroupInput) (req *request.Request, output *DeleteRuleGroupOutput) {
@@ -1388,46 +1461,50 @@ func (c *WAFV2) DeleteRuleGroupRequest(input *DeleteRuleGroupInput) (req *reques
 // API operation DeleteRuleGroup for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFAssociatedItemException
-//   WAF couldn’t perform the operation because your resource is being used
-//   by another resource or it’s associated with another resource.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFTagOperationException
-//   An error occurred during the tagging operation. Retry your request.
+//   - WAFAssociatedItemException
+//     WAF couldn’t perform the operation because your resource is being used
+//     by another resource or it’s associated with another resource.
 //
-//   * WAFTagOperationInternalErrorException
-//   WAF couldn’t perform your tagging operation because of an internal error.
-//   Retry your request.
+//   - WAFTagOperationException
+//     An error occurred during the tagging operation. Retry your request.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFTagOperationInternalErrorException
+//     WAF couldn’t perform your tagging operation because of an internal error.
+//     Retry your request.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteRuleGroup
 func (c *WAFV2) DeleteRuleGroup(input *DeleteRuleGroupInput) (*DeleteRuleGroupOutput, error) {
@@ -1467,14 +1544,13 @@ const opDeleteWebACL = "DeleteWebACL"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteWebACLRequest method.
+//	req, resp := client.DeleteWebACLRequest(params)
 //
-//    // Example sending a request using the DeleteWebACLRequest method.
-//    req, resp := client.DeleteWebACLRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteWebACL
 func (c *WAFV2) DeleteWebACLRequest(input *DeleteWebACLInput) (req *request.Request, output *DeleteWebACLOutput) {
@@ -1501,6 +1577,18 @@ func (c *WAFV2) DeleteWebACLRequest(input *DeleteWebACLInput) (req *request.Requ
 // You can only use this if ManagedByFirewallManager is false in the specified
 // WebACL.
 //
+// Before deleting any web ACL, first disassociate it from all resources.
+//
+//   - To retrieve a list of the resources that are associated with a web ACL,
+//     use the following calls: For regional resources, call ListResourcesForWebACL.
+//     For Amazon CloudFront distributions, use the CloudFront call ListDistributionsByWebACLId.
+//     For information, see ListDistributionsByWebACLId (https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_ListDistributionsByWebACLId.html).
+//
+//   - To disassociate a resource from a web ACL, use the following calls:
+//     For regional resources, call DisassociateWebACL. For Amazon CloudFront
+//     distributions, provide an empty web ACL ID in the CloudFront call UpdateDistribution.
+//     For information, see UpdateDistribution (https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_UpdateDistribution.html).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1509,46 +1597,50 @@ func (c *WAFV2) DeleteWebACLRequest(input *DeleteWebACLInput) (req *request.Requ
 // API operation DeleteWebACL for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFAssociatedItemException
-//   WAF couldn’t perform the operation because your resource is being used
-//   by another resource or it’s associated with another resource.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFTagOperationException
-//   An error occurred during the tagging operation. Retry your request.
+//   - WAFAssociatedItemException
+//     WAF couldn’t perform the operation because your resource is being used
+//     by another resource or it’s associated with another resource.
 //
-//   * WAFTagOperationInternalErrorException
-//   WAF couldn’t perform your tagging operation because of an internal error.
-//   Retry your request.
+//   - WAFTagOperationException
+//     An error occurred during the tagging operation. Retry your request.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFTagOperationInternalErrorException
+//     WAF couldn’t perform your tagging operation because of an internal error.
+//     Retry your request.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DeleteWebACL
 func (c *WAFV2) DeleteWebACL(input *DeleteWebACLInput) (*DeleteWebACLOutput, error) {
@@ -1588,14 +1680,13 @@ const opDescribeManagedRuleGroup = "DescribeManagedRuleGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeManagedRuleGroupRequest method.
+//	req, resp := client.DescribeManagedRuleGroupRequest(params)
 //
-//    // Example sending a request using the DescribeManagedRuleGroupRequest method.
-//    req, resp := client.DescribeManagedRuleGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DescribeManagedRuleGroup
 func (c *WAFV2) DescribeManagedRuleGroupRequest(input *DescribeManagedRuleGroupInput) (req *request.Request, output *DescribeManagedRuleGroupOutput) {
@@ -1627,39 +1718,43 @@ func (c *WAFV2) DescribeManagedRuleGroupRequest(input *DescribeManagedRuleGroupI
 // API operation DescribeManagedRuleGroup for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidResourceException
-//   WAF couldn’t perform the operation because the resource that you requested
-//   isn’t valid. Check the resource, and try again.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - WAFInvalidResourceException
+//     WAF couldn’t perform the operation because the resource that you requested
+//     isn’t valid. Check the resource, and try again.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFExpiredManagedRuleGroupVersionException
-//   The operation failed because the specified version for the managed rule group
-//   has expired. You can retrieve the available versions for the managed rule
-//   group by calling ListAvailableManagedRuleGroupVersions.
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
+//
+//   - WAFExpiredManagedRuleGroupVersionException
+//     The operation failed because the specified version for the managed rule group
+//     has expired. You can retrieve the available versions for the managed rule
+//     group by calling ListAvailableManagedRuleGroupVersions.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DescribeManagedRuleGroup
 func (c *WAFV2) DescribeManagedRuleGroup(input *DescribeManagedRuleGroupInput) (*DescribeManagedRuleGroupOutput, error) {
@@ -1699,14 +1794,13 @@ const opDisassociateWebACL = "DisassociateWebACL"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DisassociateWebACLRequest method.
+//	req, resp := client.DisassociateWebACLRequest(params)
 //
-//    // Example sending a request using the DisassociateWebACLRequest method.
-//    req, resp := client.DisassociateWebACLRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DisassociateWebACL
 func (c *WAFV2) DisassociateWebACLRequest(input *DisassociateWebACLInput) (req *request.Request, output *DisassociateWebACLOutput) {
@@ -1728,9 +1822,10 @@ func (c *WAFV2) DisassociateWebACLRequest(input *DisassociateWebACLInput) (req *
 
 // DisassociateWebACL API operation for AWS WAFV2.
 //
-// Disassociates a web ACL from a regional application resource. A regional
-// application can be an Application Load Balancer (ALB), an Amazon API Gateway
-// REST API, or an AppSync GraphQL API.
+// Disassociates the specified regional application resource from any existing
+// web ACL association. A resource can have at most one web ACL association.
+// A regional application can be an Application Load Balancer (ALB), an Amazon
+// API Gateway REST API, an AppSync GraphQL API, or an Amazon Cognito user pool.
 //
 // For Amazon CloudFront, don't use this call. Instead, use your CloudFront
 // distribution configuration. To disassociate a web ACL, provide an empty web
@@ -1745,30 +1840,34 @@ func (c *WAFV2) DisassociateWebACLRequest(input *DisassociateWebACLInput) (req *
 // API operation DisassociateWebACL for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/DisassociateWebACL
 func (c *WAFV2) DisassociateWebACL(input *DisassociateWebACLInput) (*DisassociateWebACLOutput, error) {
@@ -1808,14 +1907,13 @@ const opGenerateMobileSdkReleaseUrl = "GenerateMobileSdkReleaseUrl"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GenerateMobileSdkReleaseUrlRequest method.
+//	req, resp := client.GenerateMobileSdkReleaseUrlRequest(params)
 //
-//    // Example sending a request using the GenerateMobileSdkReleaseUrlRequest method.
-//    req, resp := client.GenerateMobileSdkReleaseUrlRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GenerateMobileSdkReleaseUrl
 func (c *WAFV2) GenerateMobileSdkReleaseUrlRequest(input *GenerateMobileSdkReleaseUrlInput) (req *request.Request, output *GenerateMobileSdkReleaseUrlOutput) {
@@ -1853,30 +1951,34 @@ func (c *WAFV2) GenerateMobileSdkReleaseUrlRequest(input *GenerateMobileSdkRelea
 // API operation GenerateMobileSdkReleaseUrl for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GenerateMobileSdkReleaseUrl
 func (c *WAFV2) GenerateMobileSdkReleaseUrl(input *GenerateMobileSdkReleaseUrlInput) (*GenerateMobileSdkReleaseUrlOutput, error) {
@@ -1916,14 +2018,13 @@ const opGetIPSet = "GetIPSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetIPSetRequest method.
+//	req, resp := client.GetIPSetRequest(params)
 //
-//    // Example sending a request using the GetIPSetRequest method.
-//    req, resp := client.GetIPSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetIPSet
 func (c *WAFV2) GetIPSetRequest(input *GetIPSetInput) (req *request.Request, output *GetIPSetOutput) {
@@ -1954,30 +2055,34 @@ func (c *WAFV2) GetIPSetRequest(input *GetIPSetInput) (req *request.Request, out
 // API operation GetIPSet for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetIPSet
 func (c *WAFV2) GetIPSet(input *GetIPSetInput) (*GetIPSetOutput, error) {
@@ -2017,14 +2122,13 @@ const opGetLoggingConfiguration = "GetLoggingConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetLoggingConfigurationRequest method.
+//	req, resp := client.GetLoggingConfigurationRequest(params)
 //
-//    // Example sending a request using the GetLoggingConfigurationRequest method.
-//    req, resp := client.GetLoggingConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetLoggingConfiguration
 func (c *WAFV2) GetLoggingConfigurationRequest(input *GetLoggingConfigurationInput) (req *request.Request, output *GetLoggingConfigurationOutput) {
@@ -2055,30 +2159,34 @@ func (c *WAFV2) GetLoggingConfigurationRequest(input *GetLoggingConfigurationInp
 // API operation GetLoggingConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetLoggingConfiguration
 func (c *WAFV2) GetLoggingConfiguration(input *GetLoggingConfigurationInput) (*GetLoggingConfigurationOutput, error) {
@@ -2118,14 +2226,13 @@ const opGetManagedRuleSet = "GetManagedRuleSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetManagedRuleSetRequest method.
+//	req, resp := client.GetManagedRuleSetRequest(params)
 //
-//    // Example sending a request using the GetManagedRuleSetRequest method.
-//    req, resp := client.GetManagedRuleSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetManagedRuleSet
 func (c *WAFV2) GetManagedRuleSetRequest(input *GetManagedRuleSetInput) (req *request.Request, output *GetManagedRuleSetOutput) {
@@ -2164,30 +2271,34 @@ func (c *WAFV2) GetManagedRuleSetRequest(input *GetManagedRuleSetInput) (req *re
 // API operation GetManagedRuleSet for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetManagedRuleSet
 func (c *WAFV2) GetManagedRuleSet(input *GetManagedRuleSetInput) (*GetManagedRuleSetOutput, error) {
@@ -2227,14 +2338,13 @@ const opGetMobileSdkRelease = "GetMobileSdkRelease"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetMobileSdkReleaseRequest method.
+//	req, resp := client.GetMobileSdkReleaseRequest(params)
 //
-//    // Example sending a request using the GetMobileSdkReleaseRequest method.
-//    req, resp := client.GetMobileSdkReleaseRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetMobileSdkRelease
 func (c *WAFV2) GetMobileSdkReleaseRequest(input *GetMobileSdkReleaseInput) (req *request.Request, output *GetMobileSdkReleaseOutput) {
@@ -2272,30 +2382,34 @@ func (c *WAFV2) GetMobileSdkReleaseRequest(input *GetMobileSdkReleaseInput) (req
 // API operation GetMobileSdkRelease for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetMobileSdkRelease
 func (c *WAFV2) GetMobileSdkRelease(input *GetMobileSdkReleaseInput) (*GetMobileSdkReleaseOutput, error) {
@@ -2335,14 +2449,13 @@ const opGetPermissionPolicy = "GetPermissionPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetPermissionPolicyRequest method.
+//	req, resp := client.GetPermissionPolicyRequest(params)
 //
-//    // Example sending a request using the GetPermissionPolicyRequest method.
-//    req, resp := client.GetPermissionPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetPermissionPolicy
 func (c *WAFV2) GetPermissionPolicyRequest(input *GetPermissionPolicyInput) (req *request.Request, output *GetPermissionPolicyOutput) {
@@ -2375,27 +2488,31 @@ func (c *WAFV2) GetPermissionPolicyRequest(input *GetPermissionPolicyInput) (req
 // API operation GetPermissionPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
 //
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
+//
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetPermissionPolicy
 func (c *WAFV2) GetPermissionPolicy(input *GetPermissionPolicyInput) (*GetPermissionPolicyOutput, error) {
@@ -2435,14 +2552,13 @@ const opGetRateBasedStatementManagedKeys = "GetRateBasedStatementManagedKeys"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetRateBasedStatementManagedKeysRequest method.
+//	req, resp := client.GetRateBasedStatementManagedKeysRequest(params)
 //
-//    // Example sending a request using the GetRateBasedStatementManagedKeysRequest method.
-//    req, resp := client.GetRateBasedStatementManagedKeysRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetRateBasedStatementManagedKeys
 func (c *WAFV2) GetRateBasedStatementManagedKeysRequest(input *GetRateBasedStatementManagedKeysInput) (req *request.Request, output *GetRateBasedStatementManagedKeysOutput) {
@@ -2488,30 +2604,34 @@ func (c *WAFV2) GetRateBasedStatementManagedKeysRequest(input *GetRateBasedState
 // API operation GetRateBasedStatementManagedKeys for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetRateBasedStatementManagedKeys
 func (c *WAFV2) GetRateBasedStatementManagedKeys(input *GetRateBasedStatementManagedKeysInput) (*GetRateBasedStatementManagedKeysOutput, error) {
@@ -2551,14 +2671,13 @@ const opGetRegexPatternSet = "GetRegexPatternSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetRegexPatternSetRequest method.
+//	req, resp := client.GetRegexPatternSetRequest(params)
 //
-//    // Example sending a request using the GetRegexPatternSetRequest method.
-//    req, resp := client.GetRegexPatternSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetRegexPatternSet
 func (c *WAFV2) GetRegexPatternSetRequest(input *GetRegexPatternSetInput) (req *request.Request, output *GetRegexPatternSetOutput) {
@@ -2589,30 +2708,34 @@ func (c *WAFV2) GetRegexPatternSetRequest(input *GetRegexPatternSetInput) (req *
 // API operation GetRegexPatternSet for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetRegexPatternSet
 func (c *WAFV2) GetRegexPatternSet(input *GetRegexPatternSetInput) (*GetRegexPatternSetOutput, error) {
@@ -2652,14 +2775,13 @@ const opGetRuleGroup = "GetRuleGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetRuleGroupRequest method.
+//	req, resp := client.GetRuleGroupRequest(params)
 //
-//    // Example sending a request using the GetRuleGroupRequest method.
-//    req, resp := client.GetRuleGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetRuleGroup
 func (c *WAFV2) GetRuleGroupRequest(input *GetRuleGroupInput) (req *request.Request, output *GetRuleGroupOutput) {
@@ -2690,30 +2812,34 @@ func (c *WAFV2) GetRuleGroupRequest(input *GetRuleGroupInput) (req *request.Requ
 // API operation GetRuleGroup for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetRuleGroup
 func (c *WAFV2) GetRuleGroup(input *GetRuleGroupInput) (*GetRuleGroupOutput, error) {
@@ -2753,14 +2879,13 @@ const opGetSampledRequests = "GetSampledRequests"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetSampledRequestsRequest method.
+//	req, resp := client.GetSampledRequestsRequest(params)
 //
-//    // Example sending a request using the GetSampledRequestsRequest method.
-//    req, resp := client.GetSampledRequestsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetSampledRequests
 func (c *WAFV2) GetSampledRequestsRequest(input *GetSampledRequestsInput) (req *request.Request, output *GetSampledRequestsOutput) {
@@ -2801,27 +2926,31 @@ func (c *WAFV2) GetSampledRequestsRequest(input *GetSampledRequestsInput) (req *
 // API operation GetSampledRequests for usage and error information.
 //
 // Returned Error Types:
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
 //
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
+//
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetSampledRequests
 func (c *WAFV2) GetSampledRequests(input *GetSampledRequestsInput) (*GetSampledRequestsOutput, error) {
@@ -2861,14 +2990,13 @@ const opGetWebACL = "GetWebACL"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetWebACLRequest method.
+//	req, resp := client.GetWebACLRequest(params)
 //
-//    // Example sending a request using the GetWebACLRequest method.
-//    req, resp := client.GetWebACLRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetWebACL
 func (c *WAFV2) GetWebACLRequest(input *GetWebACLInput) (req *request.Request, output *GetWebACLOutput) {
@@ -2899,30 +3027,34 @@ func (c *WAFV2) GetWebACLRequest(input *GetWebACLInput) (req *request.Request, o
 // API operation GetWebACL for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetWebACL
 func (c *WAFV2) GetWebACL(input *GetWebACLInput) (*GetWebACLOutput, error) {
@@ -2962,14 +3094,13 @@ const opGetWebACLForResource = "GetWebACLForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetWebACLForResourceRequest method.
+//	req, resp := client.GetWebACLForResourceRequest(params)
 //
-//    // Example sending a request using the GetWebACLForResourceRequest method.
-//    req, resp := client.GetWebACLForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetWebACLForResource
 func (c *WAFV2) GetWebACLForResourceRequest(input *GetWebACLForResourceInput) (req *request.Request, output *GetWebACLForResourceOutput) {
@@ -3000,33 +3131,41 @@ func (c *WAFV2) GetWebACLForResourceRequest(input *GetWebACLForResourceInput) (r
 // API operation GetWebACLForResource for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFUnavailableEntityException
-//   WAF couldn’t retrieve the resource that you requested. Retry your request.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFUnavailableEntityException
+//     WAF couldn’t retrieve a resource that you specified for this operation.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate. Verify the resources that you
+//     are specifying in your request parameters and then retry the operation.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/GetWebACLForResource
 func (c *WAFV2) GetWebACLForResource(input *GetWebACLForResourceInput) (*GetWebACLForResourceOutput, error) {
@@ -3066,14 +3205,13 @@ const opListAvailableManagedRuleGroupVersions = "ListAvailableManagedRuleGroupVe
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAvailableManagedRuleGroupVersionsRequest method.
+//	req, resp := client.ListAvailableManagedRuleGroupVersionsRequest(params)
 //
-//    // Example sending a request using the ListAvailableManagedRuleGroupVersionsRequest method.
-//    req, resp := client.ListAvailableManagedRuleGroupVersionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListAvailableManagedRuleGroupVersions
 func (c *WAFV2) ListAvailableManagedRuleGroupVersionsRequest(input *ListAvailableManagedRuleGroupVersionsInput) (req *request.Request, output *ListAvailableManagedRuleGroupVersionsOutput) {
@@ -3104,27 +3242,34 @@ func (c *WAFV2) ListAvailableManagedRuleGroupVersionsRequest(input *ListAvailabl
 // API operation ListAvailableManagedRuleGroupVersions for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListAvailableManagedRuleGroupVersions
 func (c *WAFV2) ListAvailableManagedRuleGroupVersions(input *ListAvailableManagedRuleGroupVersionsInput) (*ListAvailableManagedRuleGroupVersionsOutput, error) {
@@ -3164,14 +3309,13 @@ const opListAvailableManagedRuleGroups = "ListAvailableManagedRuleGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAvailableManagedRuleGroupsRequest method.
+//	req, resp := client.ListAvailableManagedRuleGroupsRequest(params)
 //
-//    // Example sending a request using the ListAvailableManagedRuleGroupsRequest method.
-//    req, resp := client.ListAvailableManagedRuleGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListAvailableManagedRuleGroups
 func (c *WAFV2) ListAvailableManagedRuleGroupsRequest(input *ListAvailableManagedRuleGroupsInput) (req *request.Request, output *ListAvailableManagedRuleGroupsOutput) {
@@ -3205,27 +3349,28 @@ func (c *WAFV2) ListAvailableManagedRuleGroupsRequest(input *ListAvailableManage
 // API operation ListAvailableManagedRuleGroups for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListAvailableManagedRuleGroups
 func (c *WAFV2) ListAvailableManagedRuleGroups(input *ListAvailableManagedRuleGroupsInput) (*ListAvailableManagedRuleGroupsOutput, error) {
@@ -3265,14 +3410,13 @@ const opListIPSets = "ListIPSets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListIPSetsRequest method.
+//	req, resp := client.ListIPSetsRequest(params)
 //
-//    // Example sending a request using the ListIPSetsRequest method.
-//    req, resp := client.ListIPSetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListIPSets
 func (c *WAFV2) ListIPSetsRequest(input *ListIPSetsInput) (req *request.Request, output *ListIPSetsOutput) {
@@ -3303,27 +3447,28 @@ func (c *WAFV2) ListIPSetsRequest(input *ListIPSetsInput) (req *request.Request,
 // API operation ListIPSets for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListIPSets
 func (c *WAFV2) ListIPSets(input *ListIPSetsInput) (*ListIPSetsOutput, error) {
@@ -3363,14 +3508,13 @@ const opListLoggingConfigurations = "ListLoggingConfigurations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListLoggingConfigurationsRequest method.
+//	req, resp := client.ListLoggingConfigurationsRequest(params)
 //
-//    // Example sending a request using the ListLoggingConfigurationsRequest method.
-//    req, resp := client.ListLoggingConfigurationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListLoggingConfigurations
 func (c *WAFV2) ListLoggingConfigurationsRequest(input *ListLoggingConfigurationsInput) (req *request.Request, output *ListLoggingConfigurationsOutput) {
@@ -3401,27 +3545,28 @@ func (c *WAFV2) ListLoggingConfigurationsRequest(input *ListLoggingConfiguration
 // API operation ListLoggingConfigurations for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListLoggingConfigurations
 func (c *WAFV2) ListLoggingConfigurations(input *ListLoggingConfigurationsInput) (*ListLoggingConfigurationsOutput, error) {
@@ -3461,14 +3606,13 @@ const opListManagedRuleSets = "ListManagedRuleSets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListManagedRuleSetsRequest method.
+//	req, resp := client.ListManagedRuleSetsRequest(params)
 //
-//    // Example sending a request using the ListManagedRuleSetsRequest method.
-//    req, resp := client.ListManagedRuleSetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListManagedRuleSets
 func (c *WAFV2) ListManagedRuleSetsRequest(input *ListManagedRuleSetsInput) (req *request.Request, output *ListManagedRuleSetsOutput) {
@@ -3507,27 +3651,28 @@ func (c *WAFV2) ListManagedRuleSetsRequest(input *ListManagedRuleSetsInput) (req
 // API operation ListManagedRuleSets for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListManagedRuleSets
 func (c *WAFV2) ListManagedRuleSets(input *ListManagedRuleSetsInput) (*ListManagedRuleSetsOutput, error) {
@@ -3567,14 +3712,13 @@ const opListMobileSdkReleases = "ListMobileSdkReleases"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListMobileSdkReleasesRequest method.
+//	req, resp := client.ListMobileSdkReleasesRequest(params)
 //
-//    // Example sending a request using the ListMobileSdkReleasesRequest method.
-//    req, resp := client.ListMobileSdkReleasesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListMobileSdkReleases
 func (c *WAFV2) ListMobileSdkReleasesRequest(input *ListMobileSdkReleasesInput) (req *request.Request, output *ListMobileSdkReleasesOutput) {
@@ -3612,27 +3756,28 @@ func (c *WAFV2) ListMobileSdkReleasesRequest(input *ListMobileSdkReleasesInput) 
 // API operation ListMobileSdkReleases for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListMobileSdkReleases
 func (c *WAFV2) ListMobileSdkReleases(input *ListMobileSdkReleasesInput) (*ListMobileSdkReleasesOutput, error) {
@@ -3672,14 +3817,13 @@ const opListRegexPatternSets = "ListRegexPatternSets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListRegexPatternSetsRequest method.
+//	req, resp := client.ListRegexPatternSetsRequest(params)
 //
-//    // Example sending a request using the ListRegexPatternSetsRequest method.
-//    req, resp := client.ListRegexPatternSetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListRegexPatternSets
 func (c *WAFV2) ListRegexPatternSetsRequest(input *ListRegexPatternSetsInput) (req *request.Request, output *ListRegexPatternSetsOutput) {
@@ -3711,27 +3855,28 @@ func (c *WAFV2) ListRegexPatternSetsRequest(input *ListRegexPatternSetsInput) (r
 // API operation ListRegexPatternSets for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListRegexPatternSets
 func (c *WAFV2) ListRegexPatternSets(input *ListRegexPatternSetsInput) (*ListRegexPatternSetsOutput, error) {
@@ -3771,14 +3916,13 @@ const opListResourcesForWebACL = "ListResourcesForWebACL"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListResourcesForWebACLRequest method.
+//	req, resp := client.ListResourcesForWebACLRequest(params)
 //
-//    // Example sending a request using the ListResourcesForWebACLRequest method.
-//    req, resp := client.ListResourcesForWebACLRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListResourcesForWebACL
 func (c *WAFV2) ListResourcesForWebACLRequest(input *ListResourcesForWebACLInput) (req *request.Request, output *ListResourcesForWebACLOutput) {
@@ -3811,30 +3955,34 @@ func (c *WAFV2) ListResourcesForWebACLRequest(input *ListResourcesForWebACLInput
 // API operation ListResourcesForWebACL for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListResourcesForWebACL
 func (c *WAFV2) ListResourcesForWebACL(input *ListResourcesForWebACLInput) (*ListResourcesForWebACLOutput, error) {
@@ -3874,14 +4022,13 @@ const opListRuleGroups = "ListRuleGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListRuleGroupsRequest method.
+//	req, resp := client.ListRuleGroupsRequest(params)
 //
-//    // Example sending a request using the ListRuleGroupsRequest method.
-//    req, resp := client.ListRuleGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListRuleGroups
 func (c *WAFV2) ListRuleGroupsRequest(input *ListRuleGroupsInput) (req *request.Request, output *ListRuleGroupsOutput) {
@@ -3913,27 +4060,28 @@ func (c *WAFV2) ListRuleGroupsRequest(input *ListRuleGroupsInput) (req *request.
 // API operation ListRuleGroups for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListRuleGroups
 func (c *WAFV2) ListRuleGroups(input *ListRuleGroupsInput) (*ListRuleGroupsOutput, error) {
@@ -3973,14 +4121,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListTagsForResource
 func (c *WAFV2) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -4019,37 +4166,41 @@ func (c *WAFV2) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFTagOperationException
-//   An error occurred during the tagging operation. Retry your request.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFTagOperationInternalErrorException
-//   WAF couldn’t perform your tagging operation because of an internal error.
-//   Retry your request.
+//   - WAFTagOperationException
+//     An error occurred during the tagging operation. Retry your request.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFTagOperationInternalErrorException
+//     WAF couldn’t perform your tagging operation because of an internal error.
+//     Retry your request.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListTagsForResource
 func (c *WAFV2) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -4089,14 +4240,13 @@ const opListWebACLs = "ListWebACLs"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListWebACLsRequest method.
+//	req, resp := client.ListWebACLsRequest(params)
 //
-//    // Example sending a request using the ListWebACLsRequest method.
-//    req, resp := client.ListWebACLsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListWebACLs
 func (c *WAFV2) ListWebACLsRequest(input *ListWebACLsInput) (req *request.Request, output *ListWebACLsOutput) {
@@ -4127,27 +4277,28 @@ func (c *WAFV2) ListWebACLsRequest(input *ListWebACLsInput) (req *request.Reques
 // API operation ListWebACLs for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/ListWebACLs
 func (c *WAFV2) ListWebACLs(input *ListWebACLsInput) (*ListWebACLsOutput, error) {
@@ -4187,14 +4338,13 @@ const opPutLoggingConfiguration = "PutLoggingConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutLoggingConfigurationRequest method.
+//	req, resp := client.PutLoggingConfigurationRequest(params)
 //
-//    // Example sending a request using the PutLoggingConfigurationRequest method.
-//    req, resp := client.PutLoggingConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/PutLoggingConfiguration
 func (c *WAFV2) PutLoggingConfigurationRequest(input *PutLoggingConfigurationInput) (req *request.Request, output *PutLoggingConfigurationOutput) {
@@ -4258,57 +4408,61 @@ func (c *WAFV2) PutLoggingConfigurationRequest(input *PutLoggingConfigurationInp
 // API operation PutLoggingConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFServiceLinkedRoleErrorException
-//   WAF is not able to access the service linked role. This can be caused by
-//   a previous PutLoggingConfiguration request, which can lock the service linked
-//   role for about 20 seconds. Please try your request again. The service linked
-//   role can also be locked by a previous DeleteServiceLinkedRole request, which
-//   can lock the role for 15 minutes or more. If you recently made a call to
-//   DeleteServiceLinkedRole, wait at least 15 minutes and try the request again.
-//   If you receive this same exception again, you will have to wait additional
-//   time until the role is unlocked.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFServiceLinkedRoleErrorException
+//     WAF is not able to access the service linked role. This can be caused by
+//     a previous PutLoggingConfiguration request, which can lock the service linked
+//     role for about 20 seconds. Please try your request again. The service linked
+//     role can also be locked by a previous DeleteServiceLinkedRole request, which
+//     can lock the role for 15 minutes or more. If you recently made a call to
+//     DeleteServiceLinkedRole, wait at least 15 minutes and try the request again.
+//     If you receive this same exception again, you will have to wait additional
+//     time until the role is unlocked.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFLimitsExceededException
-//   WAF couldn’t perform the operation because you exceeded your resource limit.
-//   For example, the maximum number of WebACL objects that you can create for
-//   an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
-//   in the WAF Developer Guide.
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
-//   * WAFLogDestinationPermissionIssueException
-//   The operation failed because you don't have the permissions that your logging
-//   configuration requires. For information, see Logging web ACL traffic information
-//   (https://docs.aws.amazon.com/waf/latest/developerguide/logging.html) in the
-//   WAF Developer Guide.
+//   - WAFLimitsExceededException
+//     WAF couldn’t perform the operation because you exceeded your resource limit.
+//     For example, the maximum number of WebACL objects that you can create for
+//     an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//     in the WAF Developer Guide.
+//
+//   - WAFLogDestinationPermissionIssueException
+//     The operation failed because you don't have the permissions that your logging
+//     configuration requires. For information, see Logging web ACL traffic information
+//     (https://docs.aws.amazon.com/waf/latest/developerguide/logging.html) in the
+//     WAF Developer Guide.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/PutLoggingConfiguration
 func (c *WAFV2) PutLoggingConfiguration(input *PutLoggingConfigurationInput) (*PutLoggingConfigurationOutput, error) {
@@ -4348,14 +4502,13 @@ const opPutManagedRuleSetVersions = "PutManagedRuleSetVersions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutManagedRuleSetVersionsRequest method.
+//	req, resp := client.PutManagedRuleSetVersionsRequest(params)
 //
-//    // Example sending a request using the PutManagedRuleSetVersionsRequest method.
-//    req, resp := client.PutManagedRuleSetVersionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/PutManagedRuleSetVersions
 func (c *WAFV2) PutManagedRuleSetVersionsRequest(input *PutManagedRuleSetVersionsInput) (req *request.Request, output *PutManagedRuleSetVersionsOutput) {
@@ -4404,35 +4557,39 @@ func (c *WAFV2) PutManagedRuleSetVersionsRequest(input *PutManagedRuleSetVersion
 // API operation PutManagedRuleSetVersions for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/PutManagedRuleSetVersions
 func (c *WAFV2) PutManagedRuleSetVersions(input *PutManagedRuleSetVersionsInput) (*PutManagedRuleSetVersionsOutput, error) {
@@ -4472,14 +4629,13 @@ const opPutPermissionPolicy = "PutPermissionPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutPermissionPolicyRequest method.
+//	req, resp := client.PutPermissionPolicyRequest(params)
 //
-//    // Example sending a request using the PutPermissionPolicyRequest method.
-//    req, resp := client.PutPermissionPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/PutPermissionPolicy
 func (c *WAFV2) PutPermissionPolicyRequest(input *PutPermissionPolicyInput) (req *request.Request, output *PutPermissionPolicyOutput) {
@@ -4508,12 +4664,12 @@ func (c *WAFV2) PutPermissionPolicyRequest(input *PutPermissionPolicyInput) (req
 //
 // This action is subject to the following restrictions:
 //
-//    * You can attach only one policy with each PutPermissionPolicy request.
+//   - You can attach only one policy with each PutPermissionPolicy request.
 //
-//    * The ARN in the request must be a valid WAF RuleGroup ARN and the rule
-//    group must exist in the same Region.
+//   - The ARN in the request must be a valid WAF RuleGroup ARN and the rule
+//     group must exist in the same Region.
 //
-//    * The user making the request must be the owner of the rule group.
+//   - The user making the request must be the owner of the rule group.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4523,46 +4679,51 @@ func (c *WAFV2) PutPermissionPolicyRequest(input *PutPermissionPolicyInput) (req
 // API operation PutPermissionPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
 //
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFInvalidPermissionPolicyException
-//   The operation failed because the specified policy isn't in the proper format.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   The policy specifications must conform to the following:
+//   - WAFInvalidPermissionPolicyException
+//     The operation failed because the specified policy isn't in the proper format.
 //
-//      * The policy must be composed using IAM Policy version 2012-10-17 or version
-//      2015-01-01.
+//     The policy specifications must conform to the following:
 //
-//      * The policy must include specifications for Effect, Action, and Principal.
+//   - The policy must be composed using IAM Policy version 2012-10-17 or version
+//     2015-01-01.
 //
-//      * Effect must specify Allow.
+//   - The policy must include specifications for Effect, Action, and Principal.
 //
-//      * Action must specify wafv2:CreateWebACL, wafv2:UpdateWebACL, and wafv2:PutFirewallManagerRuleGroups.
-//      WAF rejects any extra actions or wildcard actions in the policy.
+//   - Effect must specify Allow.
 //
-//      * The policy must not include a Resource parameter.
+//   - Action must specify wafv2:CreateWebACL, wafv2:UpdateWebACL, and wafv2:PutFirewallManagerRuleGroups
+//     and may optionally specify wafv2:GetRuleGroup. WAF rejects any extra actions
+//     or wildcard actions in the policy.
 //
-//   For more information, see IAM Policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
+//   - The policy must not include a Resource parameter.
+//
+//     For more information, see IAM Policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/PutPermissionPolicy
 func (c *WAFV2) PutPermissionPolicy(input *PutPermissionPolicyInput) (*PutPermissionPolicyOutput, error) {
@@ -4602,14 +4763,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/TagResource
 func (c *WAFV2) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -4649,43 +4809,47 @@ func (c *WAFV2) TagResourceRequest(input *TagResourceInput) (req *request.Reques
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFLimitsExceededException
-//   WAF couldn’t perform the operation because you exceeded your resource limit.
-//   For example, the maximum number of WebACL objects that you can create for
-//   an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
-//   in the WAF Developer Guide.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - WAFLimitsExceededException
+//     WAF couldn’t perform the operation because you exceeded your resource limit.
+//     For example, the maximum number of WebACL objects that you can create for
+//     an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//     in the WAF Developer Guide.
 //
-//   * WAFTagOperationException
-//   An error occurred during the tagging operation. Retry your request.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFTagOperationInternalErrorException
-//   WAF couldn’t perform your tagging operation because of an internal error.
-//   Retry your request.
+//   - WAFTagOperationException
+//     An error occurred during the tagging operation. Retry your request.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFTagOperationInternalErrorException
+//     WAF couldn’t perform your tagging operation because of an internal error.
+//     Retry your request.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/TagResource
 func (c *WAFV2) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -4725,14 +4889,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UntagResource
 func (c *WAFV2) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -4768,37 +4931,41 @@ func (c *WAFV2) UntagResourceRequest(input *UntagResourceInput) (req *request.Re
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFTagOperationException
-//   An error occurred during the tagging operation. Retry your request.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFTagOperationInternalErrorException
-//   WAF couldn’t perform your tagging operation because of an internal error.
-//   Retry your request.
+//   - WAFTagOperationException
+//     An error occurred during the tagging operation. Retry your request.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFTagOperationInternalErrorException
+//     WAF couldn’t perform your tagging operation because of an internal error.
+//     Retry your request.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UntagResource
 func (c *WAFV2) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -4838,14 +5005,13 @@ const opUpdateIPSet = "UpdateIPSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateIPSetRequest method.
+//	req, resp := client.UpdateIPSetRequest(params)
 //
-//    // Example sending a request using the UpdateIPSetRequest method.
-//    req, resp := client.UpdateIPSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UpdateIPSet
 func (c *WAFV2) UpdateIPSetRequest(input *UpdateIPSetInput) (req *request.Request, output *UpdateIPSetOutput) {
@@ -4873,6 +5039,19 @@ func (c *WAFV2) UpdateIPSetRequest(input *UpdateIPSetInput) (req *request.Reques
 // the IP set, retrieve it by calling GetIPSet, update the settings as needed,
 // and then provide the complete IP set specification to this call.
 //
+// When you make changes to web ACLs or web ACL components, like rules and rule
+// groups, WAF propagates the changes everywhere that the web ACL and its components
+// are stored and used. Your changes are applied within seconds, but there might
+// be a brief period of inconsistency when the changes have arrived in some
+// places and not in others. So, for example, if you change a rule action setting,
+// the action might be the old action in one area and the new action in another
+// area. Or if you add an IP address to an IP set used in a blocking rule, the
+// new address might briefly be blocked in one area while still allowed in another.
+// This temporary inconsistency can occur when you first associate a web ACL
+// with an Amazon Web Services resource and when you change a web ACL that is
+// already associated with a resource. Generally, any inconsistencies of this
+// type last only a few seconds.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -4881,45 +5060,49 @@ func (c *WAFV2) UpdateIPSetRequest(input *UpdateIPSetInput) (req *request.Reques
 // API operation UpdateIPSet for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFDuplicateItemException
-//   WAF couldn’t perform the operation because the resource that you tried
-//   to save is a duplicate of an existing one.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFDuplicateItemException
+//     WAF couldn’t perform the operation because the resource that you tried
+//     to save is a duplicate of an existing one.
 //
-//   * WAFLimitsExceededException
-//   WAF couldn’t perform the operation because you exceeded your resource limit.
-//   For example, the maximum number of WebACL objects that you can create for
-//   an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
-//   in the WAF Developer Guide.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFLimitsExceededException
+//     WAF couldn’t perform the operation because you exceeded your resource limit.
+//     For example, the maximum number of WebACL objects that you can create for
+//     an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//     in the WAF Developer Guide.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UpdateIPSet
 func (c *WAFV2) UpdateIPSet(input *UpdateIPSetInput) (*UpdateIPSetOutput, error) {
@@ -4959,14 +5142,13 @@ const opUpdateManagedRuleSetVersionExpiryDate = "UpdateManagedRuleSetVersionExpi
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateManagedRuleSetVersionExpiryDateRequest method.
+//	req, resp := client.UpdateManagedRuleSetVersionExpiryDateRequest(params)
 //
-//    // Example sending a request using the UpdateManagedRuleSetVersionExpiryDateRequest method.
-//    req, resp := client.UpdateManagedRuleSetVersionExpiryDateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UpdateManagedRuleSetVersionExpiryDate
 func (c *WAFV2) UpdateManagedRuleSetVersionExpiryDateRequest(input *UpdateManagedRuleSetVersionExpiryDateInput) (req *request.Request, output *UpdateManagedRuleSetVersionExpiryDateOutput) {
@@ -4989,7 +5171,7 @@ func (c *WAFV2) UpdateManagedRuleSetVersionExpiryDateRequest(input *UpdateManage
 //
 // Updates the expiration information for your managed rule set. Use this to
 // initiate the expiration of a managed rule group version. After you initiate
-// expiration for a version, WAF excludes it from the reponse to ListAvailableManagedRuleGroupVersions
+// expiration for a version, WAF excludes it from the response to ListAvailableManagedRuleGroupVersions
 // for the managed rule group.
 //
 // This is intended for use only by vendors of managed rule sets. Vendors are
@@ -5008,35 +5190,39 @@ func (c *WAFV2) UpdateManagedRuleSetVersionExpiryDateRequest(input *UpdateManage
 // API operation UpdateManagedRuleSetVersionExpiryDate for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UpdateManagedRuleSetVersionExpiryDate
 func (c *WAFV2) UpdateManagedRuleSetVersionExpiryDate(input *UpdateManagedRuleSetVersionExpiryDateInput) (*UpdateManagedRuleSetVersionExpiryDateOutput, error) {
@@ -5076,14 +5262,13 @@ const opUpdateRegexPatternSet = "UpdateRegexPatternSet"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateRegexPatternSetRequest method.
+//	req, resp := client.UpdateRegexPatternSetRequest(params)
 //
-//    // Example sending a request using the UpdateRegexPatternSetRequest method.
-//    req, resp := client.UpdateRegexPatternSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UpdateRegexPatternSet
 func (c *WAFV2) UpdateRegexPatternSetRequest(input *UpdateRegexPatternSetInput) (req *request.Request, output *UpdateRegexPatternSetOutput) {
@@ -5112,6 +5297,19 @@ func (c *WAFV2) UpdateRegexPatternSetRequest(input *UpdateRegexPatternSetInput) 
 // update the settings as needed, and then provide the complete regex pattern
 // set specification to this call.
 //
+// When you make changes to web ACLs or web ACL components, like rules and rule
+// groups, WAF propagates the changes everywhere that the web ACL and its components
+// are stored and used. Your changes are applied within seconds, but there might
+// be a brief period of inconsistency when the changes have arrived in some
+// places and not in others. So, for example, if you change a rule action setting,
+// the action might be the old action in one area and the new action in another
+// area. Or if you add an IP address to an IP set used in a blocking rule, the
+// new address might briefly be blocked in one area while still allowed in another.
+// This temporary inconsistency can occur when you first associate a web ACL
+// with an Amazon Web Services resource and when you change a web ACL that is
+// already associated with a resource. Generally, any inconsistencies of this
+// type last only a few seconds.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -5120,45 +5318,49 @@ func (c *WAFV2) UpdateRegexPatternSetRequest(input *UpdateRegexPatternSetInput) 
 // API operation UpdateRegexPatternSet for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFDuplicateItemException
-//   WAF couldn’t perform the operation because the resource that you tried
-//   to save is a duplicate of an existing one.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFDuplicateItemException
+//     WAF couldn’t perform the operation because the resource that you tried
+//     to save is a duplicate of an existing one.
 //
-//   * WAFLimitsExceededException
-//   WAF couldn’t perform the operation because you exceeded your resource limit.
-//   For example, the maximum number of WebACL objects that you can create for
-//   an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
-//   in the WAF Developer Guide.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFLimitsExceededException
+//     WAF couldn’t perform the operation because you exceeded your resource limit.
+//     For example, the maximum number of WebACL objects that you can create for
+//     an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//     in the WAF Developer Guide.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UpdateRegexPatternSet
 func (c *WAFV2) UpdateRegexPatternSet(input *UpdateRegexPatternSetInput) (*UpdateRegexPatternSetOutput, error) {
@@ -5198,14 +5400,13 @@ const opUpdateRuleGroup = "UpdateRuleGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateRuleGroupRequest method.
+//	req, resp := client.UpdateRuleGroupRequest(params)
 //
-//    // Example sending a request using the UpdateRuleGroupRequest method.
-//    req, resp := client.UpdateRuleGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UpdateRuleGroup
 func (c *WAFV2) UpdateRuleGroupRequest(input *UpdateRuleGroupInput) (req *request.Request, output *UpdateRuleGroupOutput) {
@@ -5234,6 +5435,19 @@ func (c *WAFV2) UpdateRuleGroupRequest(input *UpdateRuleGroupInput) (req *reques
 // as needed, and then provide the complete rule group specification to this
 // call.
 //
+// When you make changes to web ACLs or web ACL components, like rules and rule
+// groups, WAF propagates the changes everywhere that the web ACL and its components
+// are stored and used. Your changes are applied within seconds, but there might
+// be a brief period of inconsistency when the changes have arrived in some
+// places and not in others. So, for example, if you change a rule action setting,
+// the action might be the old action in one area and the new action in another
+// area. Or if you add an IP address to an IP set used in a blocking rule, the
+// new address might briefly be blocked in one area while still allowed in another.
+// This temporary inconsistency can occur when you first associate a web ACL
+// with an Amazon Web Services resource and when you change a web ACL that is
+// already associated with a resource. Generally, any inconsistencies of this
+// type last only a few seconds.
+//
 // A rule group defines a collection of rules to inspect and control web requests
 // that you can use in a WebACL. When you create a rule group, you define an
 // immutable capacity limit. If you update a rule group, you must stay within
@@ -5248,52 +5462,74 @@ func (c *WAFV2) UpdateRuleGroupRequest(input *UpdateRuleGroupInput) (req *reques
 // API operation UpdateRuleGroup for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFDuplicateItemException
-//   WAF couldn’t perform the operation because the resource that you tried
-//   to save is a duplicate of an existing one.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFDuplicateItemException
+//     WAF couldn’t perform the operation because the resource that you tried
+//     to save is a duplicate of an existing one.
 //
-//   * WAFLimitsExceededException
-//   WAF couldn’t perform the operation because you exceeded your resource limit.
-//   For example, the maximum number of WebACL objects that you can create for
-//   an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
-//   in the WAF Developer Guide.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFUnavailableEntityException
-//   WAF couldn’t retrieve the resource that you requested. Retry your request.
+//   - WAFLimitsExceededException
+//     WAF couldn’t perform the operation because you exceeded your resource limit.
+//     For example, the maximum number of WebACL objects that you can create for
+//     an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//     in the WAF Developer Guide.
 //
-//   * WAFSubscriptionNotFoundException
-//   You tried to use a managed rule group that's available by subscription, but
-//   you aren't subscribed to it yet.
+//   - WAFUnavailableEntityException
+//     WAF couldn’t retrieve a resource that you specified for this operation.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate. Verify the resources that you
+//     are specifying in your request parameters and then retry the operation.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFSubscriptionNotFoundException
+//     You tried to use a managed rule group that's available by subscription, but
+//     you aren't subscribed to it yet.
+//
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
+//
+//   - WAFConfigurationWarningException
+//     The operation failed because you are inspecting the web request body, headers,
+//     or cookies without specifying how to handle oversize components. Rules that
+//     inspect the body must either provide an OversizeHandling configuration or
+//     they must be preceded by a SizeConstraintStatement that blocks the body content
+//     from being too large. Rules that inspect the headers or cookies must provide
+//     an OversizeHandling configuration.
+//
+//     Provide the handling configuration and retry your operation.
+//
+//     Alternately, you can suppress this warning by adding the following tag to
+//     the resource that you provide to this operation: Tag (key:WAF:OversizeFieldsHandlingConstraintOptOut,
+//     value:true).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UpdateRuleGroup
 func (c *WAFV2) UpdateRuleGroup(input *UpdateRuleGroupInput) (*UpdateRuleGroupOutput, error) {
@@ -5333,14 +5569,13 @@ const opUpdateWebACL = "UpdateWebACL"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateWebACLRequest method.
+//	req, resp := client.UpdateWebACLRequest(params)
 //
-//    // Example sending a request using the UpdateWebACLRequest method.
-//    req, resp := client.UpdateWebACLRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UpdateWebACL
 func (c *WAFV2) UpdateWebACLRequest(input *UpdateWebACLInput) (req *request.Request, output *UpdateWebACLOutput) {
@@ -5361,7 +5596,21 @@ func (c *WAFV2) UpdateWebACLRequest(input *UpdateWebACLInput) (req *request.Requ
 
 // UpdateWebACL API operation for AWS WAFV2.
 //
-// Updates the specified WebACL.
+// Updates the specified WebACL. While updating a web ACL, WAF provides continuous
+// coverage to the resources that you have associated with the web ACL.
+//
+// When you make changes to web ACLs or web ACL components, like rules and rule
+// groups, WAF propagates the changes everywhere that the web ACL and its components
+// are stored and used. Your changes are applied within seconds, but there might
+// be a brief period of inconsistency when the changes have arrived in some
+// places and not in others. So, for example, if you change a rule action setting,
+// the action might be the old action in one area and the new action in another
+// area. Or if you add an IP address to an IP set used in a blocking rule, the
+// new address might briefly be blocked in one area while still allowed in another.
+// This temporary inconsistency can occur when you first associate a web ACL
+// with an Amazon Web Services resource and when you change a web ACL that is
+// already associated with a resource. Generally, any inconsistencies of this
+// type last only a few seconds.
 //
 // This operation completely replaces the mutable specifications that you already
 // have for the web ACL with the ones that you provide to this call. To modify
@@ -5376,7 +5625,7 @@ func (c *WAFV2) UpdateWebACLRequest(input *UpdateWebACLInput) (req *request.Requ
 // RuleGroup, and managed rule group. You can associate a web ACL with one or
 // more Amazon Web Services resources to protect. The resources can be an Amazon
 // CloudFront distribution, an Amazon API Gateway REST API, an Application Load
-// Balancer, or an AppSync GraphQL API.
+// Balancer, an AppSync GraphQL API, or an Amazon Cognito user pool.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5386,61 +5635,83 @@ func (c *WAFV2) UpdateWebACLRequest(input *UpdateWebACLInput) (req *request.Requ
 // API operation UpdateWebACL for usage and error information.
 //
 // Returned Error Types:
-//   * WAFInternalErrorException
-//   Your request is valid, but WAF couldn’t perform the operation because of
-//   a system problem. Retry your request.
 //
-//   * WAFInvalidParameterException
-//   The operation failed because WAF didn't recognize a parameter in the request.
-//   For example:
+//   - WAFInternalErrorException
+//     Your request is valid, but WAF couldn’t perform the operation because of
+//     a system problem. Retry your request.
 //
-//      * You specified a parameter name or value that isn't valid.
+//   - WAFInvalidParameterException
+//     The operation failed because WAF didn't recognize a parameter in the request.
+//     For example:
 //
-//      * Your nested statement isn't valid. You might have tried to nest a statement
-//      that can’t be nested.
+//   - You specified a parameter name or value that isn't valid.
 //
-//      * You tried to update a WebACL with a DefaultAction that isn't among the
-//      types available at DefaultAction.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//      * Your request references an ARN that is malformed, or corresponds to
-//      a resource with which a web ACL can't be associated.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//   * WAFNonexistentItemException
-//   WAF couldn’t perform the operation because your resource doesn’t exist.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 //
-//   * WAFDuplicateItemException
-//   WAF couldn’t perform the operation because the resource that you tried
-//   to save is a duplicate of an existing one.
+//   - WAFNonexistentItemException
+//     WAF couldn’t perform the operation because your resource doesn't exist.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate.
 //
-//   * WAFOptimisticLockException
-//   WAF couldn’t save your changes because you tried to update or delete a
-//   resource that has changed since you last retrieved it. Get the resource again,
-//   make any changes you need to make to the new copy, and retry your operation.
+//   - WAFDuplicateItemException
+//     WAF couldn’t perform the operation because the resource that you tried
+//     to save is a duplicate of an existing one.
 //
-//   * WAFLimitsExceededException
-//   WAF couldn’t perform the operation because you exceeded your resource limit.
-//   For example, the maximum number of WebACL objects that you can create for
-//   an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
-//   in the WAF Developer Guide.
+//   - WAFOptimisticLockException
+//     WAF couldn’t save your changes because you tried to update or delete a
+//     resource that has changed since you last retrieved it. Get the resource again,
+//     make any changes you need to make to the new copy, and retry your operation.
 //
-//   * WAFInvalidResourceException
-//   WAF couldn’t perform the operation because the resource that you requested
-//   isn’t valid. Check the resource, and try again.
+//   - WAFLimitsExceededException
+//     WAF couldn’t perform the operation because you exceeded your resource limit.
+//     For example, the maximum number of WebACL objects that you can create for
+//     an Amazon Web Services account. For more information, see WAF quotas (https://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//     in the WAF Developer Guide.
 //
-//   * WAFUnavailableEntityException
-//   WAF couldn’t retrieve the resource that you requested. Retry your request.
+//   - WAFInvalidResourceException
+//     WAF couldn’t perform the operation because the resource that you requested
+//     isn’t valid. Check the resource, and try again.
 //
-//   * WAFSubscriptionNotFoundException
-//   You tried to use a managed rule group that's available by subscription, but
-//   you aren't subscribed to it yet.
+//   - WAFUnavailableEntityException
+//     WAF couldn’t retrieve a resource that you specified for this operation.
+//     If you've just created a resource that you're using in this operation, you
+//     might just need to wait a few minutes. It can take from a few seconds to
+//     a number of minutes for changes to propagate. Verify the resources that you
+//     are specifying in your request parameters and then retry the operation.
 //
-//   * WAFInvalidOperationException
-//   The operation isn't valid.
+//   - WAFSubscriptionNotFoundException
+//     You tried to use a managed rule group that's available by subscription, but
+//     you aren't subscribed to it yet.
 //
-//   * WAFExpiredManagedRuleGroupVersionException
-//   The operation failed because the specified version for the managed rule group
-//   has expired. You can retrieve the available versions for the managed rule
-//   group by calling ListAvailableManagedRuleGroupVersions.
+//   - WAFInvalidOperationException
+//     The operation isn't valid.
+//
+//   - WAFExpiredManagedRuleGroupVersionException
+//     The operation failed because the specified version for the managed rule group
+//     has expired. You can retrieve the available versions for the managed rule
+//     group by calling ListAvailableManagedRuleGroupVersions.
+//
+//   - WAFConfigurationWarningException
+//     The operation failed because you are inspecting the web request body, headers,
+//     or cookies without specifying how to handle oversize components. Rules that
+//     inspect the body must either provide an OversizeHandling configuration or
+//     they must be preceded by a SizeConstraintStatement that blocks the body content
+//     from being too large. Rules that inspect the headers or cookies must provide
+//     an OversizeHandling configuration.
+//
+//     Provide the handling configuration and retry your operation.
+//
+//     Alternately, you can suppress this warning by adding the following tag to
+//     the resource that you provide to this operation: Tag (key:WAF:OversizeFieldsHandlingConstraintOptOut,
+//     value:true).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/wafv2-2019-07-29/UpdateWebACL
 func (c *WAFV2) UpdateWebACL(input *UpdateWebACLInput) (*UpdateWebACLOutput, error) {
@@ -5512,11 +5783,10 @@ func (s *ActionCondition) SetAction(v string) *ActionCondition {
 }
 
 // Inspect all of the elements that WAF has parsed and extracted from the web
-// request JSON body that are within the JsonBody MatchScope. This is used with
-// the FieldToMatch option JsonBody.
+// request component that you've identified in your FieldToMatch specifications.
 //
-// This is used only to indicate the web request component for WAF to inspect,
-// in the FieldToMatch specification.
+// This is used only in the FieldToMatch specification for some web request
+// component types.
 //
 // JSON specification: "All": {}
 type All struct {
@@ -5541,10 +5811,10 @@ func (s All) GoString() string {
 	return s.String()
 }
 
-// All query arguments of a web request.
+// Inspect all query arguments of the web request.
 //
-// This is used only to indicate the web request component for WAF to inspect,
-// in the FieldToMatch specification.
+// This is used only in the FieldToMatch specification for some web request
+// component types.
 //
 // JSON specification: "AllQueryArguments": {}
 type AllQueryArguments struct {
@@ -5687,6 +5957,8 @@ type AssociateWebACLInput struct {
 	//
 	//    * For an AppSync GraphQL API: arn:aws:appsync:region:account-id:apis/GraphQLApiId
 	//
+	//    * For an Amazon Cognito user pool: arn:aws:cognito-idp:region:account-id:userpool/user-pool-id
+	//
 	// ResourceArn is a required field
 	ResourceArn *string `min:"20" type:"string" required:"true"`
 
@@ -5826,14 +6098,35 @@ func (s *BlockAction) SetCustomResponse(v *CustomResponse) *BlockAction {
 	return s
 }
 
-// The body of a web request. This immediately follows the request headers.
+// Inspect the body of the web request. The body immediately follows the request
+// headers.
 //
-// This is used only to indicate the web request component for WAF to inspect,
-// in the FieldToMatch specification.
-//
-// JSON specification: "Body": {}
+// This is used to indicate the web request component to inspect, in the FieldToMatch
+// specification.
 type Body struct {
 	_ struct{} `type:"structure"`
+
+	// What WAF should do if the body is larger than WAF can inspect. WAF does not
+	// support inspecting the entire contents of the body of a web request when
+	// the body exceeds 8 KB (8192 bytes). Only the first 8 KB of the request body
+	// are forwarded to WAF by the underlying host service.
+	//
+	// The options for oversize handling are the following:
+	//
+	//    * CONTINUE - Inspect the body normally, according to the rule inspection
+	//    criteria.
+	//
+	//    * MATCH - Treat the web request as matching the rule statement. WAF applies
+	//    the rule action to the request.
+	//
+	//    * NO_MATCH - Treat the web request as not matching the rule statement.
+	//
+	// You can combine the MATCH or NO_MATCH settings for oversize handling with
+	// your rule and web ACL action settings, so that you block any request whose
+	// body is over 8 KB.
+	//
+	// Default: CONTINUE
+	OversizeHandling *string `type:"string" enum:"OversizeHandling"`
 }
 
 // String returns the string representation.
@@ -5854,22 +6147,27 @@ func (s Body) GoString() string {
 	return s.String()
 }
 
+// SetOversizeHandling sets the OversizeHandling field's value.
+func (s *Body) SetOversizeHandling(v string) *Body {
+	s.OversizeHandling = &v
+	return s
+}
+
 // A rule statement that defines a string match search for WAF to apply to web
 // requests. The byte match statement provides the bytes to search for, the
 // location in requests that you want WAF to search, and other settings. The
 // bytes to search for are typically a string that corresponds with ASCII characters.
-// In the WAF console and the developer guide, this is refered to as a string
-// match statement.
+// In the WAF console and the developer guide, this is called a string match
+// statement.
 type ByteMatchStatement struct {
 	_ struct{} `type:"structure"`
 
-	// The part of a web request that you want WAF to inspect. For more information,
-	// see FieldToMatch.
+	// The part of the web request that you want WAF to inspect.
 	//
 	// FieldToMatch is a required field
 	FieldToMatch *FieldToMatch `type:"structure" required:"true"`
 
-	// The area within the portion of a web request that you want WAF to search
+	// The area within the portion of the web request that you want WAF to search
 	// for SearchString. Valid values include the following:
 	//
 	// CONTAINS
@@ -6038,16 +6336,16 @@ func (s *ByteMatchStatement) SetTextTransformations(v []*TextTransformation) *By
 
 // Specifies that WAF should run a CAPTCHA check against the request:
 //
-//    * If the request includes a valid, unexpired CAPTCHA token, WAF allows
-//    the web request inspection to proceed to the next rule, similar to a CountAction.
+//   - If the request includes a valid, unexpired CAPTCHA token, WAF allows
+//     the web request inspection to proceed to the next rule, similar to a CountAction.
 //
-//    * If the request doesn't include a valid, unexpired CAPTCHA token, WAF
-//    discontinues the web ACL evaluation of the request and blocks it from
-//    going to its intended destination. WAF generates a response that it sends
-//    back to the client, which includes the following: The header x-amzn-waf-action
-//    with a value of captcha. The HTTP status code 405 Method Not Allowed.
-//    If the request contains an Accept header with a value of text/html, the
-//    response includes a CAPTCHA challenge.
+//   - If the request doesn't include a valid, unexpired CAPTCHA token, WAF
+//     discontinues the web ACL evaluation of the request and blocks it from
+//     going to its intended destination. WAF generates a response that it sends
+//     back to the client, which includes the following: The header x-amzn-waf-action
+//     with a value of captcha. The HTTP status code 405 Method Not Allowed.
+//     If the request contains an Accept header with a value of text/html, the
+//     response includes a CAPTCHA challenge.
 //
 // You can configure the expiration time in the CaptchaConfig ImmunityTimeProperty
 // setting at the rule and web ACL level. The rule setting overrides the web
@@ -6055,9 +6353,6 @@ func (s *ByteMatchStatement) SetTextTransformations(v []*TextTransformation) *By
 //
 // This action option is available for rules. It isn't available for web ACL
 // default actions.
-//
-// This is used in the context of other settings, for example to specify values
-// for RuleAction and web ACL DefaultAction.
 type CaptchaAction struct {
 	_ struct{} `type:"structure"`
 
@@ -6219,7 +6514,8 @@ type CheckCapacityInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -6324,10 +6620,14 @@ func (s *CheckCapacityOutput) SetCapacity(v int64) *CheckCapacityOutput {
 type Condition struct {
 	_ struct{} `type:"structure"`
 
-	// A single action condition.
+	// A single action condition. This is the action setting that a log record must
+	// contain in order to meet the condition.
 	ActionCondition *ActionCondition `type:"structure"`
 
-	// A single label name condition.
+	// A single label name condition. This is the fully qualified label name that
+	// a log record must contain in order to meet the condition. Fully qualified
+	// labels have a prefix, optional namespaces, and label name. The prefix identifies
+	// the rule group or web ACL context of the rule that added the label.
 	LabelNameCondition *LabelNameCondition `type:"structure"`
 }
 
@@ -6378,6 +6678,187 @@ func (s *Condition) SetActionCondition(v *ActionCondition) *Condition {
 // SetLabelNameCondition sets the LabelNameCondition field's value.
 func (s *Condition) SetLabelNameCondition(v *LabelNameCondition) *Condition {
 	s.LabelNameCondition = v
+	return s
+}
+
+// The filter to use to identify the subset of cookies to inspect in a web request.
+//
+// You must specify exactly one setting: either All, IncludedCookies, or ExcludedCookies.
+//
+// Example JSON: "MatchPattern": { "IncludedCookies": {"KeyToInclude1", "KeyToInclude2",
+// "KeyToInclude3"} }
+type CookieMatchPattern struct {
+	_ struct{} `type:"structure"`
+
+	// Inspect all cookies.
+	All *All `type:"structure"`
+
+	// Inspect only the cookies whose keys don't match any of the strings specified
+	// here.
+	ExcludedCookies []*string `min:"1" type:"list"`
+
+	// Inspect only the cookies that have a key that matches one of the strings
+	// specified here.
+	IncludedCookies []*string `min:"1" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CookieMatchPattern) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CookieMatchPattern) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CookieMatchPattern) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CookieMatchPattern"}
+	if s.ExcludedCookies != nil && len(s.ExcludedCookies) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ExcludedCookies", 1))
+	}
+	if s.IncludedCookies != nil && len(s.IncludedCookies) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IncludedCookies", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAll sets the All field's value.
+func (s *CookieMatchPattern) SetAll(v *All) *CookieMatchPattern {
+	s.All = v
+	return s
+}
+
+// SetExcludedCookies sets the ExcludedCookies field's value.
+func (s *CookieMatchPattern) SetExcludedCookies(v []*string) *CookieMatchPattern {
+	s.ExcludedCookies = v
+	return s
+}
+
+// SetIncludedCookies sets the IncludedCookies field's value.
+func (s *CookieMatchPattern) SetIncludedCookies(v []*string) *CookieMatchPattern {
+	s.IncludedCookies = v
+	return s
+}
+
+// Inspect the cookies in the web request. You can specify the parts of the
+// cookies to inspect and you can narrow the set of cookies to inspect by including
+// or excluding specific keys.
+//
+// This is used to indicate the web request component to inspect, in the FieldToMatch
+// specification.
+//
+// Example JSON: "Cookies": { "MatchPattern": { "All": {} }, "MatchScope": "KEY",
+// "OversizeHandling": "MATCH" }
+type Cookies struct {
+	_ struct{} `type:"structure"`
+
+	// The filter to use to identify the subset of cookies to inspect in a web request.
+	//
+	// You must specify exactly one setting: either All, IncludedCookies, or ExcludedCookies.
+	//
+	// Example JSON: "MatchPattern": { "IncludedCookies": {"KeyToInclude1", "KeyToInclude2",
+	// "KeyToInclude3"} }
+	//
+	// MatchPattern is a required field
+	MatchPattern *CookieMatchPattern `type:"structure" required:"true"`
+
+	// The parts of the cookies to inspect with the rule inspection criteria. If
+	// you specify All, WAF inspects both keys and values.
+	//
+	// MatchScope is a required field
+	MatchScope *string `type:"string" required:"true" enum:"MapMatchScope"`
+
+	// What WAF should do if the cookies of the request are larger than WAF can
+	// inspect. WAF does not support inspecting the entire contents of request cookies
+	// when they exceed 8 KB (8192 bytes) or 200 total cookies. The underlying host
+	// service forwards a maximum of 200 cookies and at most 8 KB of cookie contents
+	// to WAF.
+	//
+	// The options for oversize handling are the following:
+	//
+	//    * CONTINUE - Inspect the cookies normally, according to the rule inspection
+	//    criteria.
+	//
+	//    * MATCH - Treat the web request as matching the rule statement. WAF applies
+	//    the rule action to the request.
+	//
+	//    * NO_MATCH - Treat the web request as not matching the rule statement.
+	//
+	// OversizeHandling is a required field
+	OversizeHandling *string `type:"string" required:"true" enum:"OversizeHandling"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Cookies) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Cookies) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Cookies) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Cookies"}
+	if s.MatchPattern == nil {
+		invalidParams.Add(request.NewErrParamRequired("MatchPattern"))
+	}
+	if s.MatchScope == nil {
+		invalidParams.Add(request.NewErrParamRequired("MatchScope"))
+	}
+	if s.OversizeHandling == nil {
+		invalidParams.Add(request.NewErrParamRequired("OversizeHandling"))
+	}
+	if s.MatchPattern != nil {
+		if err := s.MatchPattern.Validate(); err != nil {
+			invalidParams.AddNested("MatchPattern", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMatchPattern sets the MatchPattern field's value.
+func (s *Cookies) SetMatchPattern(v *CookieMatchPattern) *Cookies {
+	s.MatchPattern = v
+	return s
+}
+
+// SetMatchScope sets the MatchScope field's value.
+func (s *Cookies) SetMatchScope(v string) *Cookies {
+	s.MatchScope = &v
+	return s
+}
+
+// SetOversizeHandling sets the OversizeHandling field's value.
+func (s *Cookies) SetOversizeHandling(v string) *Cookies {
+	s.OversizeHandling = &v
 	return s
 }
 
@@ -6440,8 +6921,9 @@ type CreateIPSetInput struct {
 	_ struct{} `type:"structure"`
 
 	// Contains an array of strings that specifies zero or more IP addresses or
-	// blocks of IP addresses in Classless Inter-Domain Routing (CIDR) notation.
-	// WAF supports all IPv4 and IPv6 CIDR ranges except for /0.
+	// blocks of IP addresses. All addresses must be specified using Classless Inter-Domain
+	// Routing (CIDR) notation. WAF supports all IPv4 and IPv6 CIDR ranges except
+	// for /0.
 	//
 	// Example address strings:
 	//
@@ -6491,7 +6973,8 @@ type CreateIPSetInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -6655,7 +7138,8 @@ type CreateRegexPatternSetInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -6854,7 +7338,8 @@ type CreateRuleGroupInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -7092,7 +7577,8 @@ type CreateWebACLInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -7460,7 +7946,7 @@ type CustomResponse struct {
 
 	// The HTTP status code to return to the client.
 	//
-	// For a list of status codes that you can use in your custom reqponses, see
+	// For a list of status codes that you can use in your custom responses, see
 	// Supported status codes for custom response (https://docs.aws.amazon.com/waf/latest/developerguide/customizing-the-response-status-codes.html)
 	// in the WAF Developer Guide (https://docs.aws.amazon.com/waf/latest/developerguide/waf-chapter.html).
 	//
@@ -7617,7 +8103,7 @@ func (s *CustomResponseBody) SetContentType(v string) *CustomResponseBody {
 
 // In a WebACL, this is the action that you want WAF to perform when a web request
 // doesn't match any of the rules in the WebACL. The default action must be
-// a terminating action, so you can't use count.
+// a terminating action.
 type DefaultAction struct {
 	_ struct{} `type:"structure"`
 
@@ -7818,7 +8304,8 @@ type DeleteIPSetInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -8101,7 +8588,8 @@ type DeleteRegexPatternSetInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -8240,7 +8728,8 @@ type DeleteRuleGroupInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -8379,7 +8868,8 @@ type DeleteWebACLInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -8499,7 +8989,8 @@ type DescribeManagedRuleGroupInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -8715,6 +9206,8 @@ type DisassociateWebACLInput struct {
 	//
 	//    * For an AppSync GraphQL API: arn:aws:appsync:region:account-id:apis/GraphQLApiId
 	//
+	//    * For an Amazon Cognito user pool: arn:aws:cognito-idp:region:account-id:userpool/user-pool-id
+	//
 	// ResourceArn is a required field
 	ResourceArn *string `min:"20" type:"string" required:"true"`
 }
@@ -8834,14 +9327,14 @@ func (s *ExcludedRule) SetName(v string) *ExcludedRule {
 	return s
 }
 
-// The part of a web request that you want WAF to inspect. Include the single
+// The part of the web request that you want WAF to inspect. Include the single
 // FieldToMatch type that you want to inspect, with additional specifications
 // as needed, according to the type. You specify a single request component
 // in FieldToMatch for each rule statement that requires it. To inspect more
-// than one component of a web request, create a separate rule statement for
+// than one component of the web request, create a separate rule statement for
 // each component.
 //
-// JSON specification for a QueryString field to match:
+// Example JSON for a QueryString field to match:
 //
 // "FieldToMatch": { "QueryString": {} }
 //
@@ -8859,29 +9352,41 @@ type FieldToMatch struct {
 	// data that you want to send to your web server as the HTTP request body, such
 	// as data from a form.
 	//
-	// Note that only the first 8 KB (8192 bytes) of the request body are forwarded
-	// to WAF for inspection by the underlying host service. If you don't need to
-	// inspect more than 8 KB, you can guarantee that you don't allow additional
-	// bytes in by combining a statement that inspects the body of the web request,
-	// such as ByteMatchStatement or RegexPatternSetReferenceStatement, with a SizeConstraintStatement
-	// that enforces an 8 KB size limit on the body of the request. WAF doesn't
-	// support inspecting the entire contents of web requests whose bodies exceed
-	// the 8 KB limit.
+	// Only the first 8 KB (8192 bytes) of the request body are forwarded to WAF
+	// for inspection by the underlying host service. For information about how
+	// to handle oversized request bodies, see the Body object configuration.
 	Body *Body `type:"structure"`
+
+	// Inspect the request cookies. You must configure scope and pattern matching
+	// filters in the Cookies object, to define the set of cookies and the parts
+	// of the cookies that WAF inspects.
+	//
+	// Only the first 8 KB (8192 bytes) of a request's cookies and only the first
+	// 200 cookies are forwarded to WAF for inspection by the underlying host service.
+	// You must configure how to handle any oversize cookie content in the Cookies
+	// object. WAF applies the pattern matching filters to the cookies that it receives
+	// from the underlying host service.
+	Cookies *Cookies `type:"structure"`
+
+	// Inspect the request headers. You must configure scope and pattern matching
+	// filters in the Headers object, to define the set of headers to and the parts
+	// of the headers that WAF inspects.
+	//
+	// Only the first 8 KB (8192 bytes) of a request's headers and only the first
+	// 200 headers are forwarded to WAF for inspection by the underlying host service.
+	// You must configure how to handle any oversize header content in the Headers
+	// object. WAF applies the pattern matching filters to the headers that it receives
+	// from the underlying host service.
+	Headers *Headers `type:"structure"`
 
 	// Inspect the request body as JSON. The request body immediately follows the
 	// request headers. This is the part of a request that contains any additional
 	// data that you want to send to your web server as the HTTP request body, such
 	// as data from a form.
 	//
-	// Note that only the first 8 KB (8192 bytes) of the request body are forwarded
-	// to WAF for inspection by the underlying host service. If you don't need to
-	// inspect more than 8 KB, you can guarantee that you don't allow additional
-	// bytes in by combining a statement that inspects the body of the web request,
-	// such as ByteMatchStatement or RegexPatternSetReferenceStatement, with a SizeConstraintStatement
-	// that enforces an 8 KB size limit on the body of the request. WAF doesn't
-	// support inspecting the entire contents of web requests whose bodies exceed
-	// the 8 KB limit.
+	// Only the first 8 KB (8192 bytes) of the request body are forwarded to WAF
+	// for inspection by the underlying host service. For information about how
+	// to handle oversized request bodies, see the JsonBody object configuration.
 	JsonBody *JsonBody `type:"structure"`
 
 	// Inspect the HTTP method. The method indicates the type of operation that
@@ -8896,19 +9401,19 @@ type FieldToMatch struct {
 	// User-Agent or Referer. This setting isn't case sensitive.
 	//
 	// Example JSON: "SingleHeader": { "Name": "haystack" }
+	//
+	// Alternately, you can filter and inspect all headers with the Headers FieldToMatch
+	// setting.
 	SingleHeader *SingleHeader `type:"structure"`
 
 	// Inspect a single query argument. Provide the name of the query argument to
 	// inspect, such as UserName or SalesRegion. The name can be up to 30 characters
 	// long and isn't case sensitive.
 	//
-	// This is used only to indicate the web request component for WAF to inspect,
-	// in the FieldToMatch specification.
-	//
 	// Example JSON: "SingleQueryArgument": { "Name": "myArgument" }
 	SingleQueryArgument *SingleQueryArgument `type:"structure"`
 
-	// Inspect the request URI path. This is the part of a web request that identifies
+	// Inspect the request URI path. This is the part of the web request that identifies
 	// a resource, for example, /images/daily-ad.jpg.
 	UriPath *UriPath `type:"structure"`
 }
@@ -8934,6 +9439,16 @@ func (s FieldToMatch) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *FieldToMatch) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "FieldToMatch"}
+	if s.Cookies != nil {
+		if err := s.Cookies.Validate(); err != nil {
+			invalidParams.AddNested("Cookies", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Headers != nil {
+		if err := s.Headers.Validate(); err != nil {
+			invalidParams.AddNested("Headers", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.JsonBody != nil {
 		if err := s.JsonBody.Validate(); err != nil {
 			invalidParams.AddNested("JsonBody", err.(request.ErrInvalidParams))
@@ -8965,6 +9480,18 @@ func (s *FieldToMatch) SetAllQueryArguments(v *AllQueryArguments) *FieldToMatch 
 // SetBody sets the Body field's value.
 func (s *FieldToMatch) SetBody(v *Body) *FieldToMatch {
 	s.Body = v
+	return s
+}
+
+// SetCookies sets the Cookies field's value.
+func (s *FieldToMatch) SetCookies(v *Cookies) *FieldToMatch {
+	s.Cookies = v
+	return s
+}
+
+// SetHeaders sets the Headers field's value.
+func (s *FieldToMatch) SetHeaders(v *Headers) *FieldToMatch {
+	s.Headers = v
 	return s
 }
 
@@ -9199,6 +9726,11 @@ type FirewallManagerStatement struct {
 	// You cannot nest a ManagedRuleGroupStatement, for example for use inside a
 	// NotStatement or OrStatement. It can only be referenced as a top-level statement
 	// within a rule.
+	//
+	// You are charged additional fees when you use the WAF Bot Control managed
+	// rule group AWSManagedRulesBotControlRuleSet or the WAF Fraud Control account
+	// takeover prevention (ATP) managed rule group AWSManagedRulesATPRuleSet. For
+	// more information, see WAF Pricing (http://aws.amazon.com/waf/pricing/).
 	ManagedRuleGroupStatement *ManagedRuleGroupStatement `type:"structure"`
 
 	// A rule statement used to run the rules that are defined in a RuleGroup. To
@@ -9431,7 +9963,7 @@ type GeoMatchStatement struct {
 
 	// An array of two-character country codes, for example, [ "US", "CN" ], from
 	// the alpha-2 country ISO codes of the ISO 3166 international standard.
-	CountryCodes []*string `min:"1" type:"list"`
+	CountryCodes []*string `min:"1" type:"list" enum:"CountryCode"`
 
 	// The configuration for inspecting IP addresses in an HTTP header that you
 	// specify, instead of using the IP address that's reported by the web request
@@ -9508,7 +10040,8 @@ type GetIPSetInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -9737,7 +10270,8 @@ type GetManagedRuleSetInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -10050,7 +10584,8 @@ type GetRateBasedStatementManagedKeysInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -10215,7 +10750,8 @@ type GetRegexPatternSetInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -10357,7 +10893,8 @@ type GetRuleGroupInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -10500,7 +11037,8 @@ type GetSampledRequestsInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -10677,7 +11215,18 @@ func (s *GetSampledRequestsOutput) SetTimeWindow(v *TimeWindow) *GetSampledReque
 type GetWebACLForResourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN (Amazon Resource Name) of the resource.
+	// The Amazon Resource Name (ARN) of the resource whose web ACL you want to
+	// retrieve.
+	//
+	// The ARN must be in one of the following formats:
+	//
+	//    * For an Application Load Balancer: arn:aws:elasticloadbalancing:region:account-id:loadbalancer/app/load-balancer-name/load-balancer-id
+	//
+	//    * For an Amazon API Gateway REST API: arn:aws:apigateway:region::/restapis/api-id/stages/stage-name
+	//
+	//    * For an AppSync GraphQL API: arn:aws:appsync:region:account-id:apis/GraphQLApiId
+	//
+	//    * For an Amazon Cognito user pool: arn:aws:cognito-idp:region:account-id:userpool/user-pool-id
 	//
 	// ResourceArn is a required field
 	ResourceArn *string `min:"20" type:"string" required:"true"`
@@ -10773,7 +11322,8 @@ type GetWebACLInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -11045,6 +11595,190 @@ func (s *HTTPRequest) SetURI(v string) *HTTPRequest {
 	return s
 }
 
+// The filter to use to identify the subset of headers to inspect in a web request.
+//
+// You must specify exactly one setting: either All, IncludedHeaders, or ExcludedHeaders.
+//
+// Example JSON: "MatchPattern": { "ExcludedHeaders": {"KeyToExclude1", "KeyToExclude2"}
+// }
+type HeaderMatchPattern struct {
+	_ struct{} `type:"structure"`
+
+	// Inspect all headers.
+	All *All `type:"structure"`
+
+	// Inspect only the headers whose keys don't match any of the strings specified
+	// here.
+	ExcludedHeaders []*string `min:"1" type:"list"`
+
+	// Inspect only the headers that have a key that matches one of the strings
+	// specified here.
+	IncludedHeaders []*string `min:"1" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HeaderMatchPattern) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HeaderMatchPattern) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HeaderMatchPattern) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "HeaderMatchPattern"}
+	if s.ExcludedHeaders != nil && len(s.ExcludedHeaders) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ExcludedHeaders", 1))
+	}
+	if s.IncludedHeaders != nil && len(s.IncludedHeaders) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IncludedHeaders", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAll sets the All field's value.
+func (s *HeaderMatchPattern) SetAll(v *All) *HeaderMatchPattern {
+	s.All = v
+	return s
+}
+
+// SetExcludedHeaders sets the ExcludedHeaders field's value.
+func (s *HeaderMatchPattern) SetExcludedHeaders(v []*string) *HeaderMatchPattern {
+	s.ExcludedHeaders = v
+	return s
+}
+
+// SetIncludedHeaders sets the IncludedHeaders field's value.
+func (s *HeaderMatchPattern) SetIncludedHeaders(v []*string) *HeaderMatchPattern {
+	s.IncludedHeaders = v
+	return s
+}
+
+// Inspect all headers in the web request. You can specify the parts of the
+// headers to inspect and you can narrow the set of headers to inspect by including
+// or excluding specific keys.
+//
+// This is used to indicate the web request component to inspect, in the FieldToMatch
+// specification.
+//
+// If you want to inspect just the value of a single header, use the SingleHeader
+// FieldToMatch setting instead.
+//
+// Example JSON: "Headers": { "MatchPattern": { "All": {} }, "MatchScope": "KEY",
+// "OversizeHandling": "MATCH" }
+type Headers struct {
+	_ struct{} `type:"structure"`
+
+	// The filter to use to identify the subset of headers to inspect in a web request.
+	//
+	// You must specify exactly one setting: either All, IncludedHeaders, or ExcludedHeaders.
+	//
+	// Example JSON: "MatchPattern": { "ExcludedHeaders": {"KeyToExclude1", "KeyToExclude2"}
+	// }
+	//
+	// MatchPattern is a required field
+	MatchPattern *HeaderMatchPattern `type:"structure" required:"true"`
+
+	// The parts of the headers to match with the rule inspection criteria. If you
+	// specify All, WAF inspects both keys and values.
+	//
+	// MatchScope is a required field
+	MatchScope *string `type:"string" required:"true" enum:"MapMatchScope"`
+
+	// What WAF should do if the headers of the request are larger than WAF can
+	// inspect. WAF does not support inspecting the entire contents of request headers
+	// when they exceed 8 KB (8192 bytes) or 200 total headers. The underlying host
+	// service forwards a maximum of 200 headers and at most 8 KB of header contents
+	// to WAF.
+	//
+	// The options for oversize handling are the following:
+	//
+	//    * CONTINUE - Inspect the headers normally, according to the rule inspection
+	//    criteria.
+	//
+	//    * MATCH - Treat the web request as matching the rule statement. WAF applies
+	//    the rule action to the request.
+	//
+	//    * NO_MATCH - Treat the web request as not matching the rule statement.
+	//
+	// OversizeHandling is a required field
+	OversizeHandling *string `type:"string" required:"true" enum:"OversizeHandling"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Headers) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Headers) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Headers) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Headers"}
+	if s.MatchPattern == nil {
+		invalidParams.Add(request.NewErrParamRequired("MatchPattern"))
+	}
+	if s.MatchScope == nil {
+		invalidParams.Add(request.NewErrParamRequired("MatchScope"))
+	}
+	if s.OversizeHandling == nil {
+		invalidParams.Add(request.NewErrParamRequired("OversizeHandling"))
+	}
+	if s.MatchPattern != nil {
+		if err := s.MatchPattern.Validate(); err != nil {
+			invalidParams.AddNested("MatchPattern", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMatchPattern sets the MatchPattern field's value.
+func (s *Headers) SetMatchPattern(v *HeaderMatchPattern) *Headers {
+	s.MatchPattern = v
+	return s
+}
+
+// SetMatchScope sets the MatchScope field's value.
+func (s *Headers) SetMatchScope(v string) *Headers {
+	s.MatchScope = &v
+	return s
+}
+
+// SetOversizeHandling sets the OversizeHandling field's value.
+func (s *Headers) SetOversizeHandling(v string) *Headers {
+	s.OversizeHandling = &v
+	return s
+}
+
 // Contains zero or more IP addresses or blocks of IP addresses specified in
 // Classless Inter-Domain Routing (CIDR) notation. WAF supports all IPv4 and
 // IPv6 CIDR ranges except for /0. For information about CIDR notation, see
@@ -11061,8 +11795,9 @@ type IPSet struct {
 	ARN *string `min:"20" type:"string" required:"true"`
 
 	// Contains an array of strings that specifies zero or more IP addresses or
-	// blocks of IP addresses in Classless Inter-Domain Routing (CIDR) notation.
-	// WAF supports all IPv4 and IPv6 CIDR ranges except for /0.
+	// blocks of IP addresses. All addresses must be specified using Classless Inter-Domain
+	// Routing (CIDR) notation. WAF supports all IPv4 and IPv6 CIDR ranges except
+	// for /0.
 	//
 	// Example address strings:
 	//
@@ -11498,8 +12233,11 @@ func (s *ImmunityTimeProperty) SetImmunityTime(v int64) *ImmunityTimeProperty {
 	return s
 }
 
-// The body of a web request, inspected as JSON. The body immediately follows
-// the request headers. This is used in the FieldToMatch specification.
+// Inspect the body of the web request as JSON. The body immediately follows
+// the request headers.
+//
+// This is used to indicate the web request component to inspect, in the FieldToMatch
+// specification.
 //
 // Use the specifications in this object to indicate which parts of the JSON
 // body to inspect using the rule's inspection criteria. WAF inspects only the
@@ -11549,6 +12287,28 @@ type JsonBody struct {
 	//
 	// MatchScope is a required field
 	MatchScope *string `type:"string" required:"true" enum:"JsonMatchScope"`
+
+	// What WAF should do if the body is larger than WAF can inspect. WAF does not
+	// support inspecting the entire contents of the body of a web request when
+	// the body exceeds 8 KB (8192 bytes). Only the first 8 KB of the request body
+	// are forwarded to WAF by the underlying host service.
+	//
+	// The options for oversize handling are the following:
+	//
+	//    * CONTINUE - Inspect the body normally, according to the rule inspection
+	//    criteria.
+	//
+	//    * MATCH - Treat the web request as matching the rule statement. WAF applies
+	//    the rule action to the request.
+	//
+	//    * NO_MATCH - Treat the web request as not matching the rule statement.
+	//
+	// You can combine the MATCH or NO_MATCH settings for oversize handling with
+	// your rule and web ACL action settings, so that you block any request whose
+	// body is over 8 KB.
+	//
+	// Default: CONTINUE
+	OversizeHandling *string `type:"string" enum:"OversizeHandling"`
 }
 
 // String returns the string representation.
@@ -11605,6 +12365,12 @@ func (s *JsonBody) SetMatchPattern(v *JsonMatchPattern) *JsonBody {
 // SetMatchScope sets the MatchScope field's value.
 func (s *JsonBody) SetMatchScope(v string) *JsonBody {
 	s.MatchScope = &v
+	return s
+}
+
+// SetOversizeHandling sets the OversizeHandling field's value.
+func (s *JsonBody) SetOversizeHandling(v string) *JsonBody {
+	s.OversizeHandling = &v
 	return s
 }
 
@@ -11871,12 +12637,12 @@ func (s *LabelNameCondition) SetLabelName(v string) *LabelNameCondition {
 // List of labels used by one or more of the rules of a RuleGroup. This summary
 // object is used for the following rule group lists:
 //
-//    * AvailableLabels - Labels that rules add to matching requests. These
-//    labels are defined in the RuleLabels for a Rule.
+//   - AvailableLabels - Labels that rules add to matching requests. These
+//     labels are defined in the RuleLabels for a Rule.
 //
-//    * ConsumedLabels - Labels that rules match against. These labels are defined
-//    in a LabelMatchStatement specification, in the Statement definition of
-//    a rule.
+//   - ConsumedLabels - Labels that rules match against. These labels are defined
+//     in a LabelMatchStatement specification, in the Statement definition of
+//     a rule.
 type LabelSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -11930,7 +12696,8 @@ type ListAvailableManagedRuleGroupVersionsInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -12032,6 +12799,9 @@ func (s *ListAvailableManagedRuleGroupVersionsInput) SetVendorName(v string) *Li
 type ListAvailableManagedRuleGroupVersionsOutput struct {
 	_ struct{} `type:"structure"`
 
+	// The name of the version that's currently set as the default.
+	CurrentDefaultVersion *string `min:"1" type:"string"`
+
 	// When you request a list of objects with a Limit setting, if the number of
 	// objects that are still available for retrieval exceeds the limit, WAF returns
 	// a NextMarker value in the response. To retrieve the next batch of objects,
@@ -12059,6 +12829,12 @@ func (s ListAvailableManagedRuleGroupVersionsOutput) String() string {
 // value will be replaced with "sensitive".
 func (s ListAvailableManagedRuleGroupVersionsOutput) GoString() string {
 	return s.String()
+}
+
+// SetCurrentDefaultVersion sets the CurrentDefaultVersion field's value.
+func (s *ListAvailableManagedRuleGroupVersionsOutput) SetCurrentDefaultVersion(v string) *ListAvailableManagedRuleGroupVersionsOutput {
+	s.CurrentDefaultVersion = &v
+	return s
 }
 
 // SetNextMarker sets the NextMarker field's value.
@@ -12089,7 +12865,8 @@ type ListAvailableManagedRuleGroupsInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -12216,7 +12993,8 @@ type ListIPSetsInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -12345,7 +13123,8 @@ type ListLoggingConfigurationsInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -12472,7 +13251,8 @@ type ListManagedRuleSetsInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -12718,7 +13498,8 @@ type ListRegexPatternSetsInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -12834,7 +13615,11 @@ type ListResourcesForWebACLInput struct {
 
 	// Used for web ACLs that are scoped for regional applications. A regional application
 	// can be an Application Load Balancer (ALB), an Amazon API Gateway REST API,
-	// or an AppSync GraphQL API.
+	// an AppSync GraphQL API, or an Amazon Cognito user pool.
+	//
+	// If you don't provide a resource type, the call uses the resource type APPLICATION_LOAD_BALANCER.
+	//
+	// Default: APPLICATION_LOAD_BALANCER
 	ResourceType *string `type:"string" enum:"ResourceType"`
 
 	// The Amazon Resource Name (ARN) of the web ACL.
@@ -12936,7 +13721,8 @@ type ListRuleGroupsInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -13184,7 +13970,8 @@ type ListWebACLsInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -13530,6 +14317,14 @@ func (s *LoggingFilter) SetFilters(v []*Filter) *LoggingFilter {
 //
 // Use this for the account takeover prevention managed rule group AWSManagedRulesATPRuleSet,
 // to provide information about the sign-in page of your application.
+//
+// You can provide multiple individual ManagedRuleGroupConfig objects for any
+// rule group configuration, for example UsernameField and PasswordField. The
+// configuration that you provide depends on the needs of the managed rule group.
+// For the ATP managed rule group, you provide the following individual configuration
+// objects: LoginPath, PasswordField, PayloadType and UsernameField.
+//
+// For example specifications, see the examples section of CreateWebACL.
 type ManagedRuleGroupConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -13619,6 +14414,11 @@ func (s *ManagedRuleGroupConfig) SetUsernameField(v *UsernameField) *ManagedRule
 // You cannot nest a ManagedRuleGroupStatement, for example for use inside a
 // NotStatement or OrStatement. It can only be referenced as a top-level statement
 // within a rule.
+//
+// You are charged additional fees when you use the WAF Bot Control managed
+// rule group AWSManagedRulesBotControlRuleSet or the WAF Fraud Control account
+// takeover prevention (ATP) managed rule group AWSManagedRulesATPRuleSet. For
+// more information, see WAF Pricing (http://aws.amazon.com/waf/pricing/).
 type ManagedRuleGroupStatement struct {
 	_ struct{} `type:"structure"`
 
@@ -13633,6 +14433,12 @@ type ManagedRuleGroupStatement struct {
 	//
 	// Use this for the account takeover prevention managed rule group AWSManagedRulesATPRuleSet,
 	// to provide information about the sign-in page of your application.
+	//
+	// You can provide multiple individual ManagedRuleGroupConfig objects for any
+	// rule group configuration, for example UsernameField and PasswordField. The
+	// configuration that you provide depends on the needs of the managed rule group.
+	// For the ATP managed rule group, you provide the following individual configuration
+	// objects: LoginPath, PasswordField, PayloadType and UsernameField.
 	ManagedRuleGroupConfigs []*ManagedRuleGroupConfig `min:"1" type:"list"`
 
 	// The name of the managed rule group. You use this, along with the vendor name,
@@ -13788,6 +14594,10 @@ type ManagedRuleGroupSummary struct {
 	// The name of the managed rule group vendor. You use this, along with the rule
 	// group name, to identify the rule group.
 	VendorName *string `min:"1" type:"string"`
+
+	// Indicates whether the managed rule group is versioned. If it is, you can
+	// retrieve the versions list by calling ListAvailableManagedRuleGroupVersions.
+	VersioningSupported *bool `type:"boolean"`
 }
 
 // String returns the string representation.
@@ -13823,6 +14633,12 @@ func (s *ManagedRuleGroupSummary) SetName(v string) *ManagedRuleGroupSummary {
 // SetVendorName sets the VendorName field's value.
 func (s *ManagedRuleGroupSummary) SetVendorName(v string) *ManagedRuleGroupSummary {
 	s.VendorName = &v
+	return s
+}
+
+// SetVersioningSupported sets the VersioningSupported field's value.
+func (s *ManagedRuleGroupSummary) SetVersioningSupported(v bool) *ManagedRuleGroupSummary {
+	s.VersioningSupported = &v
 	return s
 }
 
@@ -14198,11 +15014,11 @@ func (s *ManagedRuleSetVersion) SetPublishTimestamp(v time.Time) *ManagedRuleSet
 	return s
 }
 
-// The HTTP method of a web request. The method indicates the type of operation
-// that the request is asking the origin to perform.
+// Inspect the HTTP method of the web request. The method indicates the type
+// of operation that the request is asking the origin to perform.
 //
-// This is used only to indicate the web request component for WAF to inspect,
-// in the FieldToMatch specification.
+// This is used only in the FieldToMatch specification for some web request
+// component types.
 //
 // JSON specification: "Method": {}
 type Method struct {
@@ -14732,7 +15548,8 @@ type PutManagedRuleSetVersionsInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -14900,8 +15717,9 @@ type PutPermissionPolicyInput struct {
 	//
 	//    * Effect must specify Allow.
 	//
-	//    * Action must specify wafv2:CreateWebACL, wafv2:UpdateWebACL, and wafv2:PutFirewallManagerRuleGroups.
-	//    WAF rejects any extra actions or wildcard actions in the policy.
+	//    * Action must specify wafv2:CreateWebACL, wafv2:UpdateWebACL, and wafv2:PutFirewallManagerRuleGroups
+	//    and may optionally specify wafv2:GetRuleGroup. WAF rejects any extra actions
+	//    or wildcard actions in the policy.
 	//
 	//    * The policy must not include a Resource parameter.
 	//
@@ -14991,11 +15809,11 @@ func (s PutPermissionPolicyOutput) GoString() string {
 	return s.String()
 }
 
-// The query string of a web request. This is the part of a URL that appears
-// after a ? character, if any.
+// Inspect the query string of the web request. This is the part of a URL that
+// appears after a ? character, if any.
 //
-// This is used only to indicate the web request component for WAF to inspect,
-// in the FieldToMatch specification.
+// This is used only in the FieldToMatch specification for some web request
+// component types.
 //
 // JSON specification: "QueryString": {}
 type QueryString struct {
@@ -15043,16 +15861,17 @@ func (s QueryString) GoString() string {
 // seen from an attacker, you might create a rate-based rule with a nested AND
 // rule statement that contains the following nested statements:
 //
-//    * An IP match statement with an IP set that specified the address 192.0.2.44.
+//   - An IP match statement with an IP set that specified the address 192.0.2.44.
 //
-//    * A string match statement that searches in the User-Agent header for
-//    the string BadBot.
+//   - A string match statement that searches in the User-Agent header for
+//     the string BadBot.
 //
 // In this rate-based rule, you also define a rate limit. For this example,
-// the rate limit is 1,000. Requests that meet both of the conditions in the
+// the rate limit is 1,000. Requests that meet the criteria of both of the nested
 // statements are counted. If the count exceeds 1,000 requests per five minutes,
-// the rule action triggers. Requests that do not meet both conditions are not
-// counted towards the rate limit and are not affected by this rule.
+// the rule action triggers. Requests that do not meet the criteria of both
+// of the nested statements are not counted towards the rate limit and are not
+// affected by this rule.
 //
 // You cannot nest a RateBasedStatement inside another statement, for example
 // inside a NotStatement or OrStatement. You can define a RateBasedStatement
@@ -15261,8 +16080,7 @@ func (s *Regex) SetRegexString(v string) *Regex {
 type RegexMatchStatement struct {
 	_ struct{} `type:"structure"`
 
-	// The part of a web request that you want WAF to inspect. For more information,
-	// see FieldToMatch.
+	// The part of the web request that you want WAF to inspect.
 	//
 	// FieldToMatch is a required field
 	FieldToMatch *FieldToMatch `type:"structure" required:"true"`
@@ -15450,8 +16268,7 @@ type RegexPatternSetReferenceStatement struct {
 	// ARN is a required field
 	ARN *string `min:"20" type:"string" required:"true"`
 
-	// The part of a web request that you want WAF to inspect. For more information,
-	// see FieldToMatch.
+	// The part of the web request that you want WAF to inspect.
 	//
 	// FieldToMatch is a required field
 	FieldToMatch *FieldToMatch `type:"structure" required:"true"`
@@ -15893,7 +16710,8 @@ type RuleAction struct {
 	// Instructs WAF to run a CAPTCHA check against the web request.
 	Captcha *CaptchaAction `type:"structure"`
 
-	// Instructs WAF to count the web request and allow it.
+	// Instructs WAF to count the web request and then continue evaluating the request
+	// using the remaining rules in the web ACL.
 	Count *CountAction `type:"structure"`
 }
 
@@ -16477,11 +17295,13 @@ func (s *SampledHTTPRequest) SetWeight(v int64) *SampledHTTPRequest {
 	return s
 }
 
-// One of the headers in a web request, identified by name, for example, User-Agent
-// or Referer. This setting isn't case sensitive.
+// Inspect one of the headers in the web request, identified by name, for example,
+// User-Agent or Referer. The name isn't case sensitive.
 //
-// This is used only to indicate the web request component for WAF to inspect,
-// in the FieldToMatch specification.
+// You can filter and inspect all headers with the FieldToMatch setting Headers.
+//
+// This is used to indicate the web request component to inspect, in the FieldToMatch
+// specification.
 //
 // Example JSON: "SingleHeader": { "Name": "haystack" }
 type SingleHeader struct {
@@ -16533,8 +17353,11 @@ func (s *SingleHeader) SetName(v string) *SingleHeader {
 	return s
 }
 
-// One query argument in a web request, identified by name, for example UserName
-// or SalesRegion. The name can be up to 30 characters long and isn't case sensitive.
+// Inspect one query argument in the web request, identified by name, for example
+// UserName or SalesRegion. The name isn't case sensitive.
+//
+// This is used to indicate the web request component to inspect, in the FieldToMatch
+// specification.
 //
 // Example JSON: "SingleQueryArgument": { "Name": "myArgument" }
 type SingleQueryArgument struct {
@@ -16593,8 +17416,8 @@ func (s *SingleQueryArgument) SetName(v string) *SingleQueryArgument {
 //
 // If you configure WAF to inspect the request body, WAF inspects only the first
 // 8192 bytes (8 KB). If the request body for your web requests never exceeds
-// 8192 bytes, you can create a size constraint condition and block requests
-// that have a request body greater than 8192 bytes.
+// 8192 bytes, you could use a size constraint statement to block requests that
+// have a request body greater than 8192 bytes.
 //
 // If you choose URI for the value of Part of the request to filter on, the
 // slash (/) in the URI counts as one character. For example, the URI /logo.jpg
@@ -16607,8 +17430,7 @@ type SizeConstraintStatement struct {
 	// ComparisonOperator is a required field
 	ComparisonOperator *string `type:"string" required:"true" enum:"ComparisonOperator"`
 
-	// The part of a web request that you want WAF to inspect. For more information,
-	// see FieldToMatch.
+	// The part of the web request that you want WAF to inspect.
 	//
 	// FieldToMatch is a required field
 	FieldToMatch *FieldToMatch `type:"structure" required:"true"`
@@ -16710,21 +17532,30 @@ func (s *SizeConstraintStatement) SetTextTransformations(v []*TextTransformation
 	return s
 }
 
-// Attackers sometimes insert malicious SQL code into web requests in an effort
-// to extract data from your database. To allow or block web requests that appear
-// to contain malicious SQL code, create one or more SQL injection match conditions.
-// An SQL injection match condition identifies the part of web requests, such
-// as the URI or the query string, that you want WAF to inspect. Later in the
-// process, when you create a web ACL, you specify whether to allow or block
-// requests that appear to contain malicious SQL code.
+// A rule statement that inspects for malicious SQL code. Attackers insert malicious
+// SQL code into web requests to do things like modify your database or extract
+// data from it.
 type SqliMatchStatement struct {
 	_ struct{} `type:"structure"`
 
-	// The part of a web request that you want WAF to inspect. For more information,
-	// see FieldToMatch.
+	// The part of the web request that you want WAF to inspect.
 	//
 	// FieldToMatch is a required field
 	FieldToMatch *FieldToMatch `type:"structure" required:"true"`
+
+	// The sensitivity that you want WAF to use to inspect for SQL injection attacks.
+	//
+	// HIGH detects more attacks, but might generate more false positives, especially
+	// if your web requests frequently contain unusual strings. For information
+	// about identifying and mitigating false positives, see Testing and tuning
+	// (https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-testing.html)
+	// in the WAF Developer Guide.
+	//
+	// LOW is generally a better choice for resources that already have other protections
+	// against SQL injection attacks or that have a low tolerance for false positives.
+	//
+	// Default: LOW
+	SensitivityLevel *string `type:"string" enum:"SensitivityLevel"`
 
 	// Text transformations eliminate some of the unusual formatting that attackers
 	// use in web requests in an effort to bypass detection. If you specify one
@@ -16794,6 +17625,12 @@ func (s *SqliMatchStatement) SetFieldToMatch(v *FieldToMatch) *SqliMatchStatemen
 	return s
 }
 
+// SetSensitivityLevel sets the SensitivityLevel field's value.
+func (s *SqliMatchStatement) SetSensitivityLevel(v string) *SqliMatchStatement {
+	s.SensitivityLevel = &v
+	return s
+}
+
 // SetTextTransformations sets the TextTransformations field's value.
 func (s *SqliMatchStatement) SetTextTransformations(v []*TextTransformation) *SqliMatchStatement {
 	s.TextTransformations = v
@@ -16802,6 +17639,8 @@ func (s *SqliMatchStatement) SetTextTransformations(v []*TextTransformation) *Sq
 
 // The processing guidance for a Rule, used by WAF to determine whether a web
 // request matches the rule.
+//
+// For example specifications, see the examples section of CreateWebACL.
 type Statement struct {
 	_ struct{} `type:"structure"`
 
@@ -16813,8 +17652,8 @@ type Statement struct {
 	// requests. The byte match statement provides the bytes to search for, the
 	// location in requests that you want WAF to search, and other settings. The
 	// bytes to search for are typically a string that corresponds with ASCII characters.
-	// In the WAF console and the developer guide, this is refered to as a string
-	// match statement.
+	// In the WAF console and the developer guide, this is called a string match
+	// statement.
 	ByteMatchStatement *ByteMatchStatement `type:"structure"`
 
 	// A rule statement used to identify web requests based on country of origin.
@@ -16851,6 +17690,11 @@ type Statement struct {
 	// You cannot nest a ManagedRuleGroupStatement, for example for use inside a
 	// NotStatement or OrStatement. It can only be referenced as a top-level statement
 	// within a rule.
+	//
+	// You are charged additional fees when you use the WAF Bot Control managed
+	// rule group AWSManagedRulesBotControlRuleSet or the WAF Fraud Control account
+	// takeover prevention (ATP) managed rule group AWSManagedRulesATPRuleSet. For
+	// more information, see WAF Pricing (http://aws.amazon.com/waf/pricing/).
 	ManagedRuleGroupStatement *ManagedRuleGroupStatement `type:"structure"`
 
 	// A logical rule statement used to negate the results of another rule statement.
@@ -16890,10 +17734,11 @@ type Statement struct {
 	//    the string BadBot.
 	//
 	// In this rate-based rule, you also define a rate limit. For this example,
-	// the rate limit is 1,000. Requests that meet both of the conditions in the
+	// the rate limit is 1,000. Requests that meet the criteria of both of the nested
 	// statements are counted. If the count exceeds 1,000 requests per five minutes,
-	// the rule action triggers. Requests that do not meet both conditions are not
-	// counted towards the rate limit and are not affected by this rule.
+	// the rule action triggers. Requests that do not meet the criteria of both
+	// of the nested statements are not counted towards the rate limit and are not
+	// affected by this rule.
 	//
 	// You cannot nest a RateBasedStatement inside another statement, for example
 	// inside a NotStatement or OrStatement. You can define a RateBasedStatement
@@ -16933,30 +17778,22 @@ type Statement struct {
 	//
 	// If you configure WAF to inspect the request body, WAF inspects only the first
 	// 8192 bytes (8 KB). If the request body for your web requests never exceeds
-	// 8192 bytes, you can create a size constraint condition and block requests
-	// that have a request body greater than 8192 bytes.
+	// 8192 bytes, you could use a size constraint statement to block requests that
+	// have a request body greater than 8192 bytes.
 	//
 	// If you choose URI for the value of Part of the request to filter on, the
 	// slash (/) in the URI counts as one character. For example, the URI /logo.jpg
 	// is nine characters long.
 	SizeConstraintStatement *SizeConstraintStatement `type:"structure"`
 
-	// Attackers sometimes insert malicious SQL code into web requests in an effort
-	// to extract data from your database. To allow or block web requests that appear
-	// to contain malicious SQL code, create one or more SQL injection match conditions.
-	// An SQL injection match condition identifies the part of web requests, such
-	// as the URI or the query string, that you want WAF to inspect. Later in the
-	// process, when you create a web ACL, you specify whether to allow or block
-	// requests that appear to contain malicious SQL code.
+	// A rule statement that inspects for malicious SQL code. Attackers insert malicious
+	// SQL code into web requests to do things like modify your database or extract
+	// data from it.
 	SqliMatchStatement *SqliMatchStatement `type:"structure"`
 
-	// A rule statement that defines a cross-site scripting (XSS) match search for
-	// WAF to apply to web requests. XSS attacks are those where the attacker uses
-	// vulnerabilities in a benign website as a vehicle to inject malicious client-site
-	// scripts into other legitimate web browsers. The XSS match statement provides
-	// the location in requests that you want WAF to search and text transformations
-	// to use on the search area before WAF searches for character sequences that
-	// are likely to be malicious strings.
+	// A rule statement that inspects for cross-site scripting (XSS) attacks. In
+	// XSS attacks, the attacker uses vulnerabilities in a benign website as a vehicle
+	// to inject malicious client-site scripts into other legitimate web browsers.
 	XssMatchStatement *XssMatchStatement `type:"structure"`
 }
 
@@ -17729,8 +18566,9 @@ type UpdateIPSetInput struct {
 	_ struct{} `type:"structure"`
 
 	// Contains an array of strings that specifies zero or more IP addresses or
-	// blocks of IP addresses in Classless Inter-Domain Routing (CIDR) notation.
-	// WAF supports all IPv4 and IPv6 CIDR ranges except for /0.
+	// blocks of IP addresses. All addresses must be specified using Classless Inter-Domain
+	// Routing (CIDR) notation. WAF supports all IPv4 and IPv6 CIDR ranges except
+	// for /0.
 	//
 	// Example address strings:
 	//
@@ -17793,7 +18631,8 @@ type UpdateIPSetInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -17970,7 +18809,8 @@ type UpdateManagedRuleSetVersionExpiryDateInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -18177,7 +19017,8 @@ type UpdateRegexPatternSetInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -18377,7 +19218,8 @@ type UpdateRuleGroupInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -18622,7 +19464,8 @@ type UpdateWebACLInput struct {
 
 	// Specifies whether this is for an Amazon CloudFront distribution or for a
 	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, or an AppSync GraphQL API.
+	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, or an Amazon
+	// Cognito user pool.
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -18829,11 +19672,11 @@ func (s *UpdateWebACLOutput) SetNextLockToken(v string) *UpdateWebACLOutput {
 	return s
 }
 
-// The path component of the URI of a web request. This is the part of a web
-// request that identifies a resource. For example, /images/daily-ad.jpg.
+// Inspect the path component of the URI of the web request. This is the part
+// of the web request that identifies a resource. For example, /images/daily-ad.jpg.
 //
-// This is used only to indicate the web request component for WAF to inspect,
-// in the FieldToMatch specification.
+// This is used only in the FieldToMatch specification for some web request
+// component types.
 //
 // JSON specification: "UriPath": {}
 type UriPath struct {
@@ -18989,7 +19832,7 @@ type VisibilityConfig struct {
 	// A name of the Amazon CloudWatch metric. The name can contain only the characters:
 	// A-Z, a-z, 0-9, - (hyphen), and _ (underscore). The name can be from one to
 	// 128 characters long. It can't contain whitespace or metric names reserved
-	// for WAF, for example "All" and "Default_Action."
+	// for WAF, for example All and Default_Action.
 	//
 	// MetricName is a required field
 	MetricName *string `min:"1" type:"string" required:"true"`
@@ -19121,6 +19964,81 @@ func (s *WAFAssociatedItemException) StatusCode() int {
 
 // RequestID returns the service's response RequestID for request.
 func (s *WAFAssociatedItemException) RequestID() string {
+	return s.RespMetadata.RequestID
+}
+
+// The operation failed because you are inspecting the web request body, headers,
+// or cookies without specifying how to handle oversize components. Rules that
+// inspect the body must either provide an OversizeHandling configuration or
+// they must be preceded by a SizeConstraintStatement that blocks the body content
+// from being too large. Rules that inspect the headers or cookies must provide
+// an OversizeHandling configuration.
+//
+// Provide the handling configuration and retry your operation.
+//
+// Alternately, you can suppress this warning by adding the following tag to
+// the resource that you provide to this operation: Tag (key:WAF:OversizeFieldsHandlingConstraintOptOut,
+// value:true).
+type WAFConfigurationWarningException struct {
+	_            struct{}                  `type:"structure"`
+	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
+
+	Message_ *string `locationName:"Message" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s WAFConfigurationWarningException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s WAFConfigurationWarningException) GoString() string {
+	return s.String()
+}
+
+func newErrorWAFConfigurationWarningException(v protocol.ResponseMetadata) error {
+	return &WAFConfigurationWarningException{
+		RespMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s *WAFConfigurationWarningException) Code() string {
+	return "WAFConfigurationWarningException"
+}
+
+// Message returns the exception's message.
+func (s *WAFConfigurationWarningException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s *WAFConfigurationWarningException) OrigErr() error {
+	return nil
+}
+
+func (s *WAFConfigurationWarningException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s *WAFConfigurationWarningException) StatusCode() int {
+	return s.RespMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s *WAFConfigurationWarningException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
@@ -19387,16 +20305,16 @@ func (s *WAFInvalidOperationException) RequestID() string {
 // The operation failed because WAF didn't recognize a parameter in the request.
 // For example:
 //
-//    * You specified a parameter name or value that isn't valid.
+//   - You specified a parameter name or value that isn't valid.
 //
-//    * Your nested statement isn't valid. You might have tried to nest a statement
-//    that can’t be nested.
+//   - Your nested statement isn't valid. You might have tried to nest a statement
+//     that can’t be nested.
 //
-//    * You tried to update a WebACL with a DefaultAction that isn't among the
-//    types available at DefaultAction.
+//   - You tried to update a WebACL with a DefaultAction that isn't among the
+//     types available at DefaultAction.
 //
-//    * Your request references an ARN that is malformed, or corresponds to
-//    a resource with which a web ACL can't be associated.
+//   - Your request references an ARN that is malformed, or corresponds to
+//     a resource with which a web ACL can't be associated.
 type WAFInvalidParameterException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -19473,17 +20391,18 @@ func (s *WAFInvalidParameterException) RequestID() string {
 //
 // The policy specifications must conform to the following:
 //
-//    * The policy must be composed using IAM Policy version 2012-10-17 or version
-//    2015-01-01.
+//   - The policy must be composed using IAM Policy version 2012-10-17 or version
+//     2015-01-01.
 //
-//    * The policy must include specifications for Effect, Action, and Principal.
+//   - The policy must include specifications for Effect, Action, and Principal.
 //
-//    * Effect must specify Allow.
+//   - Effect must specify Allow.
 //
-//    * Action must specify wafv2:CreateWebACL, wafv2:UpdateWebACL, and wafv2:PutFirewallManagerRuleGroups.
-//    WAF rejects any extra actions or wildcard actions in the policy.
+//   - Action must specify wafv2:CreateWebACL, wafv2:UpdateWebACL, and wafv2:PutFirewallManagerRuleGroups
+//     and may optionally specify wafv2:GetRuleGroup. WAF rejects any extra actions
+//     or wildcard actions in the policy.
 //
-//    * The policy must not include a Resource parameter.
+//   - The policy must not include a Resource parameter.
 //
 // For more information, see IAM Policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
 type WAFInvalidPermissionPolicyException struct {
@@ -19748,7 +20667,10 @@ func (s *WAFLogDestinationPermissionIssueException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// WAF couldn’t perform the operation because your resource doesn’t exist.
+// WAF couldn’t perform the operation because your resource doesn't exist.
+// If you've just created a resource that you're using in this operation, you
+// might just need to wait a few minutes. It can take from a few seconds to
+// a number of minutes for changes to propagate.
 type WAFNonexistentItemException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -20143,7 +21065,11 @@ func (s *WAFTagOperationInternalErrorException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// WAF couldn’t retrieve the resource that you requested. Retry your request.
+// WAF couldn’t retrieve a resource that you specified for this operation.
+// If you've just created a resource that you're using in this operation, you
+// might just need to wait a few minutes. It can take from a few seconds to
+// a number of minutes for changes to propagate. Verify the resources that you
+// are specifying in your request parameters and then retry the operation.
 type WAFUnavailableEntityException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -20215,7 +21141,7 @@ func (s *WAFUnavailableEntityException) RequestID() string {
 // RuleGroup, and managed rule group. You can associate a web ACL with one or
 // more Amazon Web Services resources to protect. The resources can be an Amazon
 // CloudFront distribution, an Amazon API Gateway REST API, an Application Load
-// Balancer, or an AppSync GraphQL API.
+// Balancer, an AppSync GraphQL API, or an Amazon Cognito user pool.
 type WebACL struct {
 	_ struct{} `type:"structure"`
 
@@ -20510,18 +21436,13 @@ func (s *WebACLSummary) SetName(v string) *WebACLSummary {
 	return s
 }
 
-// A rule statement that defines a cross-site scripting (XSS) match search for
-// WAF to apply to web requests. XSS attacks are those where the attacker uses
-// vulnerabilities in a benign website as a vehicle to inject malicious client-site
-// scripts into other legitimate web browsers. The XSS match statement provides
-// the location in requests that you want WAF to search and text transformations
-// to use on the search area before WAF searches for character sequences that
-// are likely to be malicious strings.
+// A rule statement that inspects for cross-site scripting (XSS) attacks. In
+// XSS attacks, the attacker uses vulnerabilities in a benign website as a vehicle
+// to inject malicious client-site scripts into other legitimate web browsers.
 type XssMatchStatement struct {
 	_ struct{} `type:"structure"`
 
-	// The part of a web request that you want WAF to inspect. For more information,
-	// see FieldToMatch.
+	// The part of the web request that you want WAF to inspect.
 	//
 	// FieldToMatch is a required field
 	FieldToMatch *FieldToMatch `type:"structure" required:"true"`
@@ -21427,6 +22348,9 @@ const (
 
 	// CountryCodeZw is a CountryCode enum value
 	CountryCodeZw = "ZW"
+
+	// CountryCodeXk is a CountryCode enum value
+	CountryCodeXk = "XK"
 )
 
 // CountryCode_Values returns all elements of the CountryCode enum
@@ -21681,6 +22605,7 @@ func CountryCode_Values() []string {
 		CountryCodeYe,
 		CountryCodeZm,
 		CountryCodeZw,
+		CountryCodeXk,
 	}
 }
 
@@ -21817,6 +22742,46 @@ func LabelMatchScope_Values() []string {
 	return []string{
 		LabelMatchScopeLabel,
 		LabelMatchScopeNamespace,
+	}
+}
+
+const (
+	// MapMatchScopeAll is a MapMatchScope enum value
+	MapMatchScopeAll = "ALL"
+
+	// MapMatchScopeKey is a MapMatchScope enum value
+	MapMatchScopeKey = "KEY"
+
+	// MapMatchScopeValue is a MapMatchScope enum value
+	MapMatchScopeValue = "VALUE"
+)
+
+// MapMatchScope_Values returns all elements of the MapMatchScope enum
+func MapMatchScope_Values() []string {
+	return []string{
+		MapMatchScopeAll,
+		MapMatchScopeKey,
+		MapMatchScopeValue,
+	}
+}
+
+const (
+	// OversizeHandlingContinue is a OversizeHandling enum value
+	OversizeHandlingContinue = "CONTINUE"
+
+	// OversizeHandlingMatch is a OversizeHandling enum value
+	OversizeHandlingMatch = "MATCH"
+
+	// OversizeHandlingNoMatch is a OversizeHandling enum value
+	OversizeHandlingNoMatch = "NO_MATCH"
+)
+
+// OversizeHandling_Values returns all elements of the OversizeHandling enum
+func OversizeHandling_Values() []string {
+	return []string{
+		OversizeHandlingContinue,
+		OversizeHandlingMatch,
+		OversizeHandlingNoMatch,
 	}
 }
 
@@ -21997,6 +22962,18 @@ const (
 
 	// ParameterExceptionFieldPayloadType is a ParameterExceptionField enum value
 	ParameterExceptionFieldPayloadType = "PAYLOAD_TYPE"
+
+	// ParameterExceptionFieldHeaderMatchPattern is a ParameterExceptionField enum value
+	ParameterExceptionFieldHeaderMatchPattern = "HEADER_MATCH_PATTERN"
+
+	// ParameterExceptionFieldCookieMatchPattern is a ParameterExceptionField enum value
+	ParameterExceptionFieldCookieMatchPattern = "COOKIE_MATCH_PATTERN"
+
+	// ParameterExceptionFieldMapMatchScope is a ParameterExceptionField enum value
+	ParameterExceptionFieldMapMatchScope = "MAP_MATCH_SCOPE"
+
+	// ParameterExceptionFieldOversizeHandling is a ParameterExceptionField enum value
+	ParameterExceptionFieldOversizeHandling = "OVERSIZE_HANDLING"
 )
 
 // ParameterExceptionField_Values returns all elements of the ParameterExceptionField enum
@@ -22061,6 +23038,10 @@ func ParameterExceptionField_Values() []string {
 		ParameterExceptionFieldLogDestination,
 		ParameterExceptionFieldManagedRuleGroupConfig,
 		ParameterExceptionFieldPayloadType,
+		ParameterExceptionFieldHeaderMatchPattern,
+		ParameterExceptionFieldCookieMatchPattern,
+		ParameterExceptionFieldMapMatchScope,
+		ParameterExceptionFieldOversizeHandling,
 	}
 }
 
@@ -22149,6 +23130,9 @@ const (
 
 	// ResourceTypeAppsync is a ResourceType enum value
 	ResourceTypeAppsync = "APPSYNC"
+
+	// ResourceTypeCognitoUserPool is a ResourceType enum value
+	ResourceTypeCognitoUserPool = "COGNITO_USER_POOL"
 )
 
 // ResourceType_Values returns all elements of the ResourceType enum
@@ -22157,6 +23141,7 @@ func ResourceType_Values() []string {
 		ResourceTypeApplicationLoadBalancer,
 		ResourceTypeApiGateway,
 		ResourceTypeAppsync,
+		ResourceTypeCognitoUserPool,
 	}
 }
 
@@ -22193,6 +23178,22 @@ func Scope_Values() []string {
 	return []string{
 		ScopeCloudfront,
 		ScopeRegional,
+	}
+}
+
+const (
+	// SensitivityLevelLow is a SensitivityLevel enum value
+	SensitivityLevelLow = "LOW"
+
+	// SensitivityLevelHigh is a SensitivityLevel enum value
+	SensitivityLevelHigh = "HIGH"
+)
+
+// SensitivityLevel_Values returns all elements of the SensitivityLevel enum
+func SensitivityLevel_Values() []string {
+	return []string{
+		SensitivityLevelLow,
+		SensitivityLevelHigh,
 	}
 }
 

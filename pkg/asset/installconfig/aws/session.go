@@ -153,8 +153,8 @@ func IsStaticCredentials(credsValue credentials.Value) bool {
 }
 
 // errCodeEquals returns true if the error matches all these conditions:
-//  * err is of type awserr.Error
-//  * Error.Code() equals code
+//   - err is of type awserr.Error
+//   - Error.Code() equals code
 func errCodeEquals(err error, code string) bool {
 	var awsErr awserr.Error
 	if errors.As(err, &awsErr) {

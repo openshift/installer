@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
@@ -157,6 +157,11 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 	}
 
 	// TODO: IBM[#95]: proxy
+
+	if platform == azure.Name && installConfig.Azure.CloudName == azure.StackCloud {
+		set.Insert("168.63.129.16")
+		set.Insert(installConfig.Config.Azure.ARMEndpoint)
+	}
 
 	// From https://cloud.google.com/vpc/docs/special-configurations add GCP metadata.
 	// "metadata.google.internal." added due to https://bugzilla.redhat.com/show_bug.cgi?id=1754049

@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -36,39 +37,51 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 	for _, id := range ids {
 		idPointers = append(idPointers, aws.String(id))
 	}
-	results, err := client.DescribeSubnetsWithContext( // FIXME: port to DescribeSubnetsPagesWithContext once we bump our vendored AWS package past v1.19.30
+
+	var lastError error
+	err = client.DescribeSubnetsPagesWithContext(
 		ctx,
 		&ec2.DescribeSubnetsInput{SubnetIds: idPointers},
+		func(results *ec2.DescribeSubnetsOutput, lastPage bool) bool {
+			for _, subnet := range results.Subnets {
+				if subnet.SubnetId == nil {
+					continue
+				}
+				if subnet.SubnetArn == nil {
+					lastError = errors.Errorf("%s has no ARN", *subnet.SubnetId)
+					return false
+				}
+				if subnet.VpcId == nil {
+					lastError = errors.Errorf("%s has no VPC", *subnet.SubnetId)
+					return false
+				}
+				if subnet.AvailabilityZone == nil {
+					lastError = errors.Errorf("%s has not availability zone", *subnet.SubnetId)
+					return false
+				}
+
+				if vpc == "" {
+					vpc = *subnet.VpcId
+					vpcFromSubnet = *subnet.SubnetId
+				} else if *subnet.VpcId != vpc {
+					lastError = errors.Errorf("all subnets must belong to the same VPC: %s is from %s, but %s is from %s", *subnet.SubnetId, *subnet.VpcId, vpcFromSubnet, vpc)
+					return false
+				}
+
+				metas[*subnet.SubnetId] = Subnet{
+					ARN:  *subnet.SubnetArn,
+					Zone: *subnet.AvailabilityZone,
+					CIDR: *subnet.CidrBlock,
+				}
+			}
+			return !lastPage
+		},
 	)
+	if err == nil {
+		err = lastError
+	}
 	if err != nil {
 		return vpc, nil, nil, errors.Wrap(err, "describing subnets")
-	}
-	for _, subnet := range results.Subnets {
-		if subnet.SubnetId == nil {
-			continue
-		}
-		if subnet.SubnetArn == nil {
-			return vpc, nil, nil, errors.Errorf("%s has no ARN", *subnet.SubnetId)
-		}
-		if subnet.VpcId == nil {
-			return vpc, nil, nil, errors.Errorf("%s has no VPC", *subnet.SubnetId)
-		}
-		if subnet.AvailabilityZone == nil {
-			return vpc, nil, nil, errors.Errorf("%s has no availability zone", *subnet.SubnetId)
-		}
-
-		if vpc == "" {
-			vpc = *subnet.VpcId
-			vpcFromSubnet = *subnet.SubnetId
-		} else if *subnet.VpcId != vpc {
-			return vpc, nil, nil, errors.Errorf("all subnets must belong to the same VPC: %s is from %s, but %s is from %s", *subnet.SubnetId, *subnet.VpcId, vpcFromSubnet, vpc)
-		}
-
-		metas[*subnet.SubnetId] = Subnet{
-			ARN:  *subnet.SubnetArn,
-			Zone: *subnet.AvailabilityZone,
-			CIDR: *subnet.CidrBlock,
-		}
 	}
 
 	var routeTables []*ec2.RouteTable
@@ -89,11 +102,14 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 		return vpc, nil, nil, errors.Wrap(err, "describing route tables")
 	}
 
+	publicOnlySubnets := os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY") != ""
+
 	for _, id := range ids {
 		meta, ok := metas[id]
 		if !ok {
 			return vpc, nil, nil, errors.Errorf("failed to find %s", id)
 		}
+
 		isPublic, err := isSubnetPublic(routeTables, id)
 		if err != nil {
 			return vpc, nil, nil, err
@@ -101,6 +117,15 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 		if isPublic {
 			public[id] = meta
 		} else {
+			private[id] = meta
+		}
+
+		// Let public subnets work as if they were private. This allows us to
+		// have clusters with public-only subnets without having to introduce a
+		// lot of changes in the installer. Such clusters can be used in a
+		// NAT-less GW scenario, therefore decreasing costs in cases where node
+		// security is not a concern (e.g, ephemeral clusters in CI)
+		if publicOnlySubnets && isPublic {
 			private[id] = meta
 		}
 	}

@@ -83,6 +83,12 @@ resource "vsphereprivate_import_ova" "import" {
   folder    = var.vsphere_failure_domains[count.index].topology.folder
   tag       = vsphere_tag.tag.id
   disk_type = var.vsphere_disk_type
+
+  // Since the folder resource might not be ran because there could be
+  // user defined folder per failure domain if a folder is created
+  // the import resource is not waiting. Adding
+  // this depends_on so the import happens after creating folder(s).
+  depends_on = [vsphere_folder.folder]
 }
 
 resource "vsphere_tag_category" "category" {

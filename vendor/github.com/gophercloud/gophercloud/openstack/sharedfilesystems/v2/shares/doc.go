@@ -6,6 +6,7 @@ For more information, see:
 https://docs.openstack.org/api-ref/shared-file-system/
 
 Example to Revert a Share to a Snapshot ID
+
 	opts := &shares.RevertOpts{
 		// snapshot ID to revert to
 		SnapshotID: "ddeac769-9742-497f-b985-5bcfa94a3fd6",
@@ -17,6 +18,7 @@ Example to Revert a Share to a Snapshot ID
 	}
 
 Example to Reset a Share Status
+
 	opts := &shares.ResetStatusOpts{
 		// a new Share Status
 		Status: "available",
@@ -28,6 +30,7 @@ Example to Reset a Share Status
 	}
 
 Example to Force Delete a Share
+
 	manilaClient.Microversion = "2.7"
 	err := shares.ForceDelete(manilaClient, shareID).ExtractErr()
 	if err != nil {
@@ -35,11 +38,11 @@ Example to Force Delete a Share
 	}
 
 Example to Unmanage a Share
+
 	manilaClient.Microversion = "2.7"
 	err := shares.Unmanage(manilaClient, shareID).ExtractErr()
 	if err != nil {
 		panic(err)
 	}
-
 */
 package shares

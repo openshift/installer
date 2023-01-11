@@ -1,16 +1,15 @@
 package openstack
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/openstack/clientconfig"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
-
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // DeleteGlanceImage deletes the image with the specified name
@@ -24,7 +23,7 @@ func DeleteGlanceImage(name string, cloud string) error {
 		return deleteGlanceImage(name, cloud)
 	})
 	if err != nil {
-		return errors.Errorf("Unrecoverable error/timed out: %v", err)
+		return fmt.Errorf("unrecoverable error/timed out: %w", err)
 	}
 
 	return nil

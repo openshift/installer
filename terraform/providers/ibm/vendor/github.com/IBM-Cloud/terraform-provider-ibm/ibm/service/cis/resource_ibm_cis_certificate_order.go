@@ -39,6 +39,8 @@ func ResourceIBMCISCertificateOrder() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS object id or CRN",
 				Required:    true,
+				ValidateFunc: validate.InvokeValidator(ibmCISCertificateOrder,
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -56,6 +58,8 @@ func ResourceIBMCISCertificateOrder() *schema.Resource {
 				Description: "certificate type",
 				Optional:    true,
 				Default:     cisCertificateOrderTypeDedicated,
+				ValidateFunc: validate.InvokeValidator(ibmCISCertificateOrder,
+					cisCertificateOrderType),
 			},
 			cisCertificateOrderHosts: {
 				Type:        schema.TypeList,
@@ -74,6 +78,14 @@ func ResourceIBMCISCertificateOrder() *schema.Resource {
 
 func ResourceIBMCISCertificateOrderValidator() *validate.ResourceValidator {
 	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 cisCertificateOrderType,

@@ -1,3 +1,79 @@
+# v1.18.19 (2022-09-20)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.18 (2022-09-14)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.17 (2022-09-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.16 (2022-08-31)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.15 (2022-08-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.14 (2022-08-24)
+
+* **Documentation**: Documentation updates for AWS Identity and Access Management (IAM).
+
+# v1.18.13 (2022-08-11)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.12 (2022-08-09)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.11 (2022-08-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.10 (2022-08-01)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.9 (2022-07-05)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.8 (2022-06-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.7 (2022-06-08)
+
+* **Documentation**: Documentation updates for AWS Identity and Access Management (IAM).
+
+# v1.18.6 (2022-06-07)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.5 (2022-05-17)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.4 (2022-04-25)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.3 (2022-03-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.2 (2022-03-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.18.1 (2022-03-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.18.0 (2022-03-08)
 
 * **Feature**: Updated `github.com/aws/smithy-go` to latest version

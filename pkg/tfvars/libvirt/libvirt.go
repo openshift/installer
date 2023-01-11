@@ -11,10 +11,11 @@ import (
 	"strconv"
 
 	"github.com/apparentlymart/go-cidr/cidr"
+	"github.com/pkg/errors"
+
 	"github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/pkg/errors"
 )
 
 type config struct {

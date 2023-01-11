@@ -5672,3 +5672,1166 @@ func (options *UpdateSegmentOptions) SetHeaders(param map[string]string) *Update
 	options.Headers = param
 	return options
 }
+
+// ListSnapshots : Get list of Git configs
+// List all the Git configs.
+func (appConfiguration *AppConfigurationV1) ListSnapshots(listSnapshotsOptions *ListSnapshotsOptions) (result *SnapshotsList, response *core.DetailedResponse, err error) {
+	return appConfiguration.ListSnapshotsWithContext(context.Background(), listSnapshotsOptions)
+}
+
+// ListSnapshotsWithContext is an alternate form of the ListSnapshots method which supports a Context parameter
+func (appConfiguration *AppConfigurationV1) ListSnapshotsWithContext(ctx context.Context, listSnapshotsOptions *ListSnapshotsOptions) (result *SnapshotsList, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(listSnapshotsOptions, "listSnapshotsOptions")
+	if err != nil {
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = appConfiguration.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(appConfiguration.Service.Options.URL, `/gitconfigs`, nil)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listSnapshotsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("app_configuration", "V1", "ListSnapshots")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listSnapshotsOptions.Sort != nil {
+		builder.AddQuery("sort", fmt.Sprint(*listSnapshotsOptions.Sort))
+	}
+	if listSnapshotsOptions.CollectionID != nil {
+		builder.AddQuery("collection_id", fmt.Sprint(*listSnapshotsOptions.CollectionID))
+	}
+	if listSnapshotsOptions.EnvironmentID != nil {
+		builder.AddQuery("environment_id", fmt.Sprint(*listSnapshotsOptions.EnvironmentID))
+	}
+	if listSnapshotsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listSnapshotsOptions.Limit))
+	}
+	if listSnapshotsOptions.Offset != nil {
+		builder.AddQuery("offset", fmt.Sprint(*listSnapshotsOptions.Offset))
+	}
+	if listSnapshotsOptions.Search != nil {
+		builder.AddQuery("search", fmt.Sprint(*listSnapshotsOptions.Search))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+
+	response, err = appConfiguration.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshotsList)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateGitconfig : Create Git config
+// Create a gitconfig.
+func (appConfiguration *AppConfigurationV1) CreateGitconfig(createGitconfigOptions *CreateGitconfigOptions) (result *SnapshotResponsePostApi, response *core.DetailedResponse, err error) {
+	return appConfiguration.CreateGitconfigWithContext(context.Background(), createGitconfigOptions)
+}
+
+// CreateGitconfigWithContext is an alternate form of the CreateGitconfig method which supports a Context parameter
+func (appConfiguration *AppConfigurationV1) CreateGitconfigWithContext(ctx context.Context, createGitconfigOptions *CreateGitconfigOptions) (result *SnapshotResponsePostApi, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(createGitconfigOptions, "createGitconfigOptions")
+	if err != nil {
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = appConfiguration.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(appConfiguration.Service.Options.URL, `/gitconfigs`, nil)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range createGitconfigOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("app_configuration", "V1", "CreateGitconfig")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+
+	if createGitconfigOptions.GitConfigName != nil {
+		body["git_config_name"] = createGitconfigOptions.GitConfigName
+	}
+	if createGitconfigOptions.GitConfigID != nil {
+		body["git_config_id"] = createGitconfigOptions.GitConfigID
+	}
+	if createGitconfigOptions.CollectionID != nil {
+		body["collection_id"] = createGitconfigOptions.CollectionID
+	}
+
+	if createGitconfigOptions.EnvironmentID != nil {
+		body["environment_id"] = createGitconfigOptions.EnvironmentID
+	}
+	if createGitconfigOptions.GitURL != nil {
+		body["git_url"] = createGitconfigOptions.GitURL
+	}
+	if createGitconfigOptions.GitBranch != nil {
+		body["git_branch"] = createGitconfigOptions.GitBranch
+	}
+	if createGitconfigOptions.GitFilePath != nil {
+		body["git_file_path"] = createGitconfigOptions.GitFilePath
+	}
+	if createGitconfigOptions.GitToken != nil {
+		body["git_token"] = createGitconfigOptions.GitToken
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+
+	response, err = appConfiguration.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshotResponsePostApi)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateGitconfig : Update Git Config
+// Update the gitconfig properties.
+func (appConfiguration *AppConfigurationV1) UpdateGitconfig(updateGitconfigOptions *UpdateGitconfigOptions) (result *SnapshotResponsePutApi, response *core.DetailedResponse, err error) {
+	return appConfiguration.UpdateGitconfigWithContext(context.Background(), updateGitconfigOptions)
+}
+
+// UpdateGitconfigWithContext is an alternate form of the UpdateGitconfig method which supports a Context parameter
+func (appConfiguration *AppConfigurationV1) UpdateGitconfigWithContext(ctx context.Context, updateGitconfigOptions *UpdateGitconfigOptions) (result *SnapshotResponsePutApi, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateGitconfigOptions, "updateGitconfigOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(updateGitconfigOptions, "updateGitconfigOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"git_config_id": *updateGitconfigOptions.GitConfigID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = appConfiguration.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(appConfiguration.Service.Options.URL, `/gitconfigs/{git_config_id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range updateGitconfigOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("app_configuration", "V1", "UpdateGitconfig")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updateGitconfigOptions.GitConfigName != nil {
+		body["git_config_name"] = updateGitconfigOptions.GitConfigName
+	}
+	if updateGitconfigOptions.CollectionID != nil {
+		body["collection_id"] = updateGitconfigOptions.CollectionID
+	}
+	if updateGitconfigOptions.EnvironmentID != nil {
+		body["environment_id"] = updateGitconfigOptions.EnvironmentID
+	}
+	if updateGitconfigOptions.GitURL != nil {
+		body["git_url"] = updateGitconfigOptions.GitURL
+	}
+	if updateGitconfigOptions.GitBranch != nil {
+		body["git_branch"] = updateGitconfigOptions.GitBranch
+	}
+	if updateGitconfigOptions.GitFilePath != nil {
+		body["git_file_path"] = updateGitconfigOptions.GitFilePath
+	}
+	if updateGitconfigOptions.GitToken != nil {
+		body["git_token"] = updateGitconfigOptions.GitToken
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = appConfiguration.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshotResponsePutApi)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetGitconfig : Get Git Config
+// Retrieve details of a gitconfig.
+func (appConfiguration *AppConfigurationV1) GetGitconfig(getGitconfigOptions *GetGitconfigOptions) (result *SnapshotResponseGetApi, response *core.DetailedResponse, err error) {
+	return appConfiguration.GetGitconfigWithContext(context.Background(), getGitconfigOptions)
+}
+
+// GetGitconfigWithContext is an alternate form of the GetGitconfig method which supports a Context parameter
+func (appConfiguration *AppConfigurationV1) GetGitconfigWithContext(ctx context.Context, getGitconfigOptions *GetGitconfigOptions) (result *SnapshotResponseGetApi, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getGitconfigOptions, "getGitconfigOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getGitconfigOptions, "getGitconfigOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"git_config_id": *getGitconfigOptions.GitConfigID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = appConfiguration.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(appConfiguration.Service.Options.URL, `/gitconfigs/{git_config_id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getGitconfigOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("app_configuration", "V1", "GetGitconfig")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+
+	response, err = appConfiguration.Service.Request(request, &rawResponse)
+
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshotResponseGetApi)
+		if err != nil {
+			return
+		}
+		response.Result = result
+		//
+	}
+
+	return
+}
+
+// DeleteGitconfig : Delete Git Config
+// Delete a gitconfig.
+func (appConfiguration *AppConfigurationV1) DeleteGitconfig(deleteGitconfigOptions *DeleteGitconfigOptions) (response *core.DetailedResponse, err error) {
+	return appConfiguration.DeleteGitconfigWithContext(context.Background(), deleteGitconfigOptions)
+}
+
+// DeleteGitconfigWithContext is an alternate form of the DeleteGitconfig method which supports a Context parameter
+func (appConfiguration *AppConfigurationV1) DeleteGitconfigWithContext(ctx context.Context, deleteGitconfigOptions *DeleteGitconfigOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteGitconfigOptions, "deleteGitconfigOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(deleteGitconfigOptions, "deleteGitconfigOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"git_config_id": *deleteGitconfigOptions.GitConfigID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = appConfiguration.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(appConfiguration.Service.Options.URL, `/gitconfigs/{git_config_id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range deleteGitconfigOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("app_configuration", "V1", "DeleteGitconfig")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = appConfiguration.Service.Request(request, nil)
+
+	return
+}
+
+// PromoteGitconfig : Promote configuration
+// Promote configuration, this api will write or update your chosen configuration to the git hub based on the git url,
+// file path and branch data. In simple words this api will create or updates the bootstrap json file.
+func (appConfiguration *AppConfigurationV1) PromoteGitconfig(promoteGitconfigOptions *PromoteGitconfigOptions) (result *SnapshotPromote, response *core.DetailedResponse, err error) {
+	return appConfiguration.PromoteGitconfigWithContext(context.Background(), promoteGitconfigOptions)
+}
+
+// PromoteGitconfigWithContext is an alternate form of the PromoteGitconfig method which supports a Context parameter
+func (appConfiguration *AppConfigurationV1) PromoteGitconfigWithContext(ctx context.Context, promoteGitconfigOptions *PromoteGitconfigOptions) (result *SnapshotPromote, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(promoteGitconfigOptions, "promoteGitconfigOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(promoteGitconfigOptions, "promoteGitconfigOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"git_config_id": *promoteGitconfigOptions.GitConfigID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = appConfiguration.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(appConfiguration.Service.Options.URL, `/gitconfigs/{git_config_id}/promote`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range promoteGitconfigOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("app_configuration", "V1", "PromoteGitconfig")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = appConfiguration.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshotPromote)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateGitconfigOptions : The CreateGitconfig options.
+type CreateGitconfigOptions struct {
+	// Git config name. Allowed special characters are dot ( . ), hyphen( - ), underscore ( _ ) only.
+	GitConfigName *string `json:"git_config_name,omitempty"`
+
+	// Git config id. Allowed special characters are dot ( . ), hyphen( - ), underscore ( _ ) only.
+	GitConfigID *string `json:"git_config_id,omitempty"`
+
+	// Collection_id.
+	CollectionID *string `json:"collection_id,omitempty"`
+
+	// Environment_id.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// Git url which will be used to connect to the github account.
+	GitURL *string `json:"git_url,omitempty"`
+
+	// Branch name to which you need to write or update the configuration.
+	GitBranch *string `json:"git_branch,omitempty"`
+
+	// Git file path, this is a path where your configuration file will be written. The path must contain the file name
+	// with `json` extension. We do not create folders, so make sure if your path contains folder then it must be already
+	// present in your git. We only create or update `json` extension file.
+	GitFilePath *string `json:"git_file_path,omitempty"`
+
+	// Git token, this needs to be provided with enough permission to write and update the file.
+	GitToken *string `json:"git_token,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewCreateGitconfigOptions : Instantiate CreateGitconfigOptions
+func (*AppConfigurationV1) NewCreateGitconfigOptions() *CreateGitconfigOptions {
+	return &CreateGitconfigOptions{}
+}
+
+// SetGitConfigName : Allow user to set GitConfigName
+func (_options *CreateGitconfigOptions) SetGitConfigName(gitConfigName string) *CreateGitconfigOptions {
+	_options.GitConfigName = core.StringPtr(gitConfigName)
+	return _options
+}
+
+// SetGitConfigID : Allow user to set GitConfigID
+func (_options *CreateGitconfigOptions) SetGitConfigID(gitConfigID string) *CreateGitconfigOptions {
+	_options.GitConfigID = core.StringPtr(gitConfigID)
+	return _options
+}
+
+// SetCollectionID : Allow user to set CollectionID
+func (_options *CreateGitconfigOptions) SetCollectionID(collectionID string) *CreateGitconfigOptions {
+	_options.CollectionID = core.StringPtr(collectionID)
+	return _options
+}
+
+// SetEnvironmentID : Allow user to set EnvironmentID
+func (_options *CreateGitconfigOptions) SetEnvironmentID(environmentID string) *CreateGitconfigOptions {
+	_options.EnvironmentID = core.StringPtr(environmentID)
+	return _options
+}
+
+// SetGitURL : Allow user to set GitURL
+func (_options *CreateGitconfigOptions) SetGitURL(gitURL string) *CreateGitconfigOptions {
+	_options.GitURL = core.StringPtr(gitURL)
+	return _options
+}
+
+// SetGitBranch : Allow user to set GitBranch
+func (_options *CreateGitconfigOptions) SetGitBranch(gitBranch string) *CreateGitconfigOptions {
+	_options.GitBranch = core.StringPtr(gitBranch)
+	return _options
+}
+
+// SetGitFilePath : Allow user to set GitFilePath
+func (_options *CreateGitconfigOptions) SetGitFilePath(gitFilePath string) *CreateGitconfigOptions {
+	_options.GitFilePath = core.StringPtr(gitFilePath)
+	return _options
+}
+
+// SetGitToken : Allow user to set GitToken
+func (_options *CreateGitconfigOptions) SetGitToken(gitToken string) *CreateGitconfigOptions {
+	_options.GitToken = core.StringPtr(gitToken)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateGitconfigOptions) SetHeaders(param map[string]string) *CreateGitconfigOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteGitconfigOptions : The DeleteGitconfig options.
+type DeleteGitconfigOptions struct {
+	// Git Config Id.
+	GitConfigID *string `json:"git_config_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeleteGitconfigOptions : Instantiate DeleteGitconfigOptions
+func (*AppConfigurationV1) NewDeleteGitconfigOptions(gitConfigID string) *DeleteGitconfigOptions {
+	return &DeleteGitconfigOptions{
+		GitConfigID: core.StringPtr(gitConfigID),
+	}
+}
+
+// SetGitConfigID : Allow user to set GitConfigID
+func (_options *DeleteGitconfigOptions) SetGitConfigID(gitConfigID string) *DeleteGitconfigOptions {
+	_options.GitConfigID = core.StringPtr(gitConfigID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteGitconfigOptions) SetHeaders(param map[string]string) *DeleteGitconfigOptions {
+	options.Headers = param
+	return options
+}
+
+// GetGitconfigOptions : The GetGitconfig options.
+type GetGitconfigOptions struct {
+	// Git Config Id.
+	GitConfigID *string `json:"git_config_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetGitconfigOptions : Instantiate GetGitconfigOptions
+func (*AppConfigurationV1) NewGetGitconfigOptions(gitConfigID string) *GetGitconfigOptions {
+	return &GetGitconfigOptions{
+		GitConfigID: core.StringPtr(gitConfigID),
+	}
+}
+
+// SetGitConfigID : Allow user to set GitConfigID
+func (_options *GetGitconfigOptions) SetGitConfigID(gitConfigID string) *GetGitconfigOptions {
+	_options.GitConfigID = core.StringPtr(gitConfigID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetGitconfigOptions) SetHeaders(param map[string]string) *GetGitconfigOptions {
+	options.Headers = param
+	return options
+}
+
+// PromoteGitconfigOptions : The PromoteGitconfig options.
+type PromoteGitconfigOptions struct {
+	// Git Config Id.
+	GitConfigID *string `json:"git_config_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewPromoteGitconfigOptions : Instantiate PromoteGitconfigOptions
+func (*AppConfigurationV1) NewPromoteGitconfigOptions(gitConfigID string) *PromoteGitconfigOptions {
+	return &PromoteGitconfigOptions{
+		GitConfigID: core.StringPtr(gitConfigID),
+	}
+}
+
+// SetGitConfigID : Allow user to set GitConfigID
+func (_options *PromoteGitconfigOptions) SetGitConfigID(gitConfigID string) *PromoteGitconfigOptions {
+	_options.GitConfigID = core.StringPtr(gitConfigID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *PromoteGitconfigOptions) SetHeaders(param map[string]string) *PromoteGitconfigOptions {
+	options.Headers = param
+	return options
+}
+
+// UnmarshalSnapshotOutput unmarshals an instance of SnapshotOutput from the specified map of raw messages.
+func UnmarshalSnapshotOutput(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SnapshotOutput)
+	err = core.UnmarshalPrimitive(m, "git_config_id", &obj.GitConfigID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SnapshotOutput : Snapshot object.
+type SnapshotOutput struct {
+	// Git Config id.
+	GitConfigID *string `json:"git_config_id" validate:"required"`
+
+	// Git Config name.
+	Name *string `json:"name" validate:"required"`
+}
+
+// SnapshotPromote : Details of the git commit.
+type SnapshotPromote struct {
+	// Git commit id will be given as part of the response upon successful git operation.
+	GitCommitID *string `json:"git_commit_id,omitempty"`
+
+	// Message explaining about the status of the promote action.
+	Message *string `json:"message,omitempty"`
+
+	// Latest time when the snapshot was synced to git.
+	LastSyncTime *strfmt.DateTime `json:"last_sync_time,omitempty"`
+}
+
+// UnmarshalSnapshotPromote unmarshals an instance of SnapshotPromote from the specified map of raw messages.
+func UnmarshalSnapshotPromote(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SnapshotPromote)
+	err = core.UnmarshalPrimitive(m, "git_commit_id", &obj.GitCommitID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_sync_time", &obj.LastSyncTime)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SnapshotResponseGetApi : Details of the Snapshot.
+type SnapshotResponseGetApi struct {
+	// Git config name. Allowed special characters are dot ( . ), hyphen( - ), underscore ( _ ) only.
+	GitConfigName *string `json:"git_config_name" validate:"required"`
+
+	// Git config id. Allowed special characters are dot ( . ), hyphen( - ), underscore ( _ ) only.
+	GitConfigID *string `json:"git_config_id" validate:"required"`
+
+	// Collection object will be returned containing attributes collection_id, collection_name.
+	Collection interface{} `json:"collection,omitempty"`
+
+	// Environment object will be returned containing attributes environment_id, environment_name, color_code.
+	Environment interface{} `json:"environment,omitempty"`
+
+	// Git url which will be used to connect to the github account.
+	GitURL *string `json:"git_url" validate:"required"`
+
+	// Branch name to which you need to write or update the configuration.
+	GitBranch *string `json:"git_branch" validate:"required"`
+
+	// Git file path, this is a path where your configuration file will be written. The path must contain the file name
+	// with `json` extension. We do not create folders, so make sure if your path contains folder then it must be already
+	// present in your git. We only create or update `json` extension file.
+	GitFilePath *string `json:"git_file_path" validate:"required"`
+
+	// Latest time when the snapshot was synced to git.
+	LastSyncTime *strfmt.DateTime `json:"last_sync_time,omitempty"`
+
+	// Creation time of the git config.
+	CreatedTime *strfmt.DateTime `json:"created_time,omitempty"`
+
+	// Last modified time of the git config data.
+	UpdatedTime *strfmt.DateTime `json:"updated_time,omitempty"`
+
+	// Git config URL.
+	Href *string `json:"href,omitempty"`
+}
+
+// UnmarshalSnapshotResponseGetApi unmarshals an instance of SnapshotResponseGetApi from the specified map of raw messages.
+func UnmarshalSnapshotResponseGetApi(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SnapshotResponseGetApi)
+	err = core.UnmarshalPrimitive(m, "git_config_name", &obj.GitConfigName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_config_id", &obj.GitConfigID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "collection", &obj.Collection)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment", &obj.Environment)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_url", &obj.GitURL)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_branch", &obj.GitBranch)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_file_path", &obj.GitFilePath)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_sync_time", &obj.LastSyncTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_time", &obj.CreatedTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_time", &obj.UpdatedTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SnapshotResponsePostApi : Details of the Snapshot.
+type SnapshotResponsePostApi struct {
+	// Git config name. Allowed special characters are dot ( . ), hyphen( - ), underscore ( _ ) only.
+	GitConfigName *string `json:"git_config_name" validate:"required"`
+
+	// Git config id. Allowed special characters are dot ( . ), hyphen( - ), underscore ( _ ) only.
+	GitConfigID *string `json:"git_config_id" validate:"required"`
+
+	// collection_id.
+	CollectionID *string `json:"collection_id" validate:"required"`
+
+	// environment_id.
+	EnvironmentID *string `json:"environment_id" validate:"required"`
+
+	// Git url which will be used to connect to the github account.
+	GitURL *string `json:"git_url" validate:"required"`
+
+	// Branch name to which you need to write or update the configuration.
+	GitBranch *string `json:"git_branch" validate:"required"`
+
+	// Git file path, this is a path where your configuration file will be written. The path must contain the file name
+	// with `json` extension. We do not create folders, so make sure if your path contains folder then it must be already
+	// present in your git. We only create or update `json` extension file.
+	GitFilePath *string `json:"git_file_path" validate:"required"`
+
+	// Creation time of the git config.
+	CreatedTime *strfmt.DateTime `json:"created_time,omitempty"`
+
+	// Last modified time of the git config data.
+	UpdatedTime *strfmt.DateTime `json:"updated_time,omitempty"`
+
+	// Git config URL.
+	Href *string `json:"href,omitempty"`
+}
+
+// UnmarshalSnapshotResponsePostApi unmarshals an instance of SnapshotResponsePostApi from the specified map of raw messages.
+func UnmarshalSnapshotResponsePostApi(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SnapshotResponsePostApi)
+	err = core.UnmarshalPrimitive(m, "git_config_name", &obj.GitConfigName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_config_id", &obj.GitConfigID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "collection_id", &obj.CollectionID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_url", &obj.GitURL)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_branch", &obj.GitBranch)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_file_path", &obj.GitFilePath)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_time", &obj.CreatedTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_time", &obj.UpdatedTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SnapshotResponsePutApi : Details of the Snapshot.
+type SnapshotResponsePutApi struct {
+	// Git config name. Allowed special characters are dot ( . ), hyphen( - ), underscore ( _ ) only.
+	GitConfigName *string `json:"git_config_name" validate:"required"`
+
+	// Git config id. Allowed special characters are dot ( . ), hyphen( - ), underscore ( _ ) only.
+	GitConfigID *string `json:"git_config_id" validate:"required"`
+
+	// Collection object will be returned containing attributes collection_id, collection_name.
+	Collection interface{} `json:"collection" validate:"required"`
+
+	// Environment object will be returned containing attributes environment_id, environment_name, color_code.
+	Environment interface{} `json:"environment" validate:"required"`
+
+	// Git url which will be used to connect to the github account. The url must be formed in this format,
+	// https://api.github.com/repos/{owner}/{repo_name} for the personal git account. If you are using the organization
+	// account then url must be in this format https://api.github.{organization_name}.com/repos/{owner}/{repo_name} . Note
+	// do not provide /(slash) in the beginning or at the end of the url.
+	GitURL *string `json:"git_url" validate:"required"`
+
+	// Branch name to which you need to write or update the configuration. Just provide the branch name, do not provide any
+	// /(slashes) in the beginning or at the end of the branch name. Note make sure branch exists in your repository.
+	GitBranch *string `json:"git_branch" validate:"required"`
+
+	// Git file path, this is a path where your configuration file will be written. The path must contain the file name
+	// with `json` extension. We only create or update `json` extension file. Note do not provide any /(slashes) in the
+	// beginning or at the end of the file path.
+	GitFilePath *string `json:"git_file_path" validate:"required"`
+
+	// Latest time when the snapshot was synced to git.
+	LastSyncTime *strfmt.DateTime `json:"last_sync_time,omitempty"`
+
+	// Creation time of the git config.
+	CreatedTime *strfmt.DateTime `json:"created_time,omitempty"`
+
+	// Last modified time of the git config data.
+	UpdatedTime *strfmt.DateTime `json:"updated_time,omitempty"`
+
+	// Git config URL.
+	Href *string `json:"href,omitempty"`
+}
+
+// UnmarshalSnapshotResponsePutApi unmarshals an instance of SnapshotResponsePutApi from the specified map of raw messages.
+func UnmarshalSnapshotResponsePutApi(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SnapshotResponsePutApi)
+	err = core.UnmarshalPrimitive(m, "git_config_name", &obj.GitConfigName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_config_id", &obj.GitConfigID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "collection", &obj.Collection)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment", &obj.Environment)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_url", &obj.GitURL)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_branch", &obj.GitBranch)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_file_path", &obj.GitFilePath)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_sync_time", &obj.LastSyncTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_time", &obj.CreatedTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_time", &obj.UpdatedTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UpdateGitconfigOptions : The UpdateGitconfig options.
+type UpdateGitconfigOptions struct {
+	// Git Config Id.
+	GitConfigID *string `json:"git_config_id" validate:"required,ne="`
+
+	// Git config name. Allowed special characters are dot ( . ), hyphen( - ), underscore ( _ ) only.
+	GitConfigName *string `json:"git_config_name,omitempty"`
+
+	// Collection_id.
+	CollectionID *string `json:"collection_id,omitempty"`
+
+	// Environment_id.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// Git url which will be used to connect to the github account.
+	GitURL *string `json:"git_url,omitempty"`
+
+	// Branch name to which you need to write or update the configuration.
+	GitBranch *string `json:"git_branch,omitempty"`
+
+	// Git file path, this is a path where your configuration file will be written. The path must contain the file name
+	// with `json` extension. We do not create folders, so make sure if your path contains folder then it must be already
+	// present in your git. We only create or update `json` extension file.
+	GitFilePath *string `json:"git_file_path,omitempty"`
+
+	// Git token, this needs to be provided with enough permission to write and update the file.
+	GitToken *string `json:"git_token,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUpdateGitconfigOptions : Instantiate UpdateGitconfigOptions
+func (*AppConfigurationV1) NewUpdateGitconfigOptions(gitConfigID string) *UpdateGitconfigOptions {
+	return &UpdateGitconfigOptions{
+		GitConfigID: core.StringPtr(gitConfigID),
+	}
+}
+
+// SetGitConfigID : Allow user to set GitConfigID
+func (_options *UpdateGitconfigOptions) SetGitConfigID(gitConfigID string) *UpdateGitconfigOptions {
+	_options.GitConfigID = core.StringPtr(gitConfigID)
+	return _options
+}
+
+// SetGitConfigName : Allow user to set GitConfigName
+func (_options *UpdateGitconfigOptions) SetGitConfigName(gitConfigName string) *UpdateGitconfigOptions {
+	_options.GitConfigName = core.StringPtr(gitConfigName)
+	return _options
+}
+
+// SetCollectionID : Allow user to set CollectionID
+func (_options *UpdateGitconfigOptions) SetCollectionID(collectionID string) *UpdateGitconfigOptions {
+	_options.CollectionID = core.StringPtr(collectionID)
+	return _options
+}
+
+// SetEnvironmentID : Allow user to set EnvironmentID
+func (_options *UpdateGitconfigOptions) SetEnvironmentID(environmentID string) *UpdateGitconfigOptions {
+	_options.EnvironmentID = core.StringPtr(environmentID)
+	return _options
+}
+
+// SetGitURL : Allow user to set GitURL
+func (_options *UpdateGitconfigOptions) SetGitURL(gitURL string) *UpdateGitconfigOptions {
+	_options.GitURL = core.StringPtr(gitURL)
+	return _options
+}
+
+// SetGitBranch : Allow user to set GitBranch
+func (_options *UpdateGitconfigOptions) SetGitBranch(gitBranch string) *UpdateGitconfigOptions {
+	_options.GitBranch = core.StringPtr(gitBranch)
+	return _options
+}
+
+// SetGitFilePath : Allow user to set GitFilePath
+func (_options *UpdateGitconfigOptions) SetGitFilePath(gitFilePath string) *UpdateGitconfigOptions {
+	_options.GitFilePath = core.StringPtr(gitFilePath)
+	return _options
+}
+
+// SetGitToken : Allow user to set GitToken
+func (_options *UpdateGitconfigOptions) SetGitToken(gitToken string) *UpdateGitconfigOptions {
+	_options.GitToken = core.StringPtr(gitToken)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateGitconfigOptions) SetHeaders(param map[string]string) *UpdateGitconfigOptions {
+	options.Headers = param
+	return options
+}
+
+// ListSnapshotsOptions : The ListSnapshots options.
+type ListSnapshotsOptions struct {
+	// Sort the git configurations details based on the specified attribute.
+	Sort *string `json:"sort,omitempty"`
+
+	// Filters the response based on the specified collection_id.
+	CollectionID *string `json:"collection_id,omitempty"`
+
+	// Filters the response based on the specified environment_id.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// The number of records to retrieve. By default, the list operation return the first 10 records. To retrieve different
+	// set of records, use `limit` with `offset` to page through the available records.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// The number of records to skip. By specifying `offset`, you retrieve a subset of items that starts with the `offset`
+	// value. Use `offset` with `limit` to page through the available records.
+	Offset *int64 `json:"offset,omitempty"`
+
+	// Searches for the provided keyword and returns the appropriate row with that value. Here the search happens on the
+	// '[Name]' of the entity.
+	Search *string `json:"search,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// SnapshotsList : List of all snapshots.
+type SnapshotsList struct {
+	// Array of Snapshots.
+	Snapshot []SnapshotResponseGetApi `json:"git_config,omitempty"`
+
+	// Number of records returned.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// Skipped number of records.
+	Offset *int64 `json:"offset" validate:"required"`
+
+	// Total number of records.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+
+	// Response having URL of the page.
+	First *PageHrefResponse `json:"first" validate:"required"`
+
+	// Response having URL of the page.
+	Previous *PageHrefResponse `json:"previous,omitempty"`
+
+	// Response having URL of the page.
+	Next *PageHrefResponse `json:"next,omitempty"`
+
+	// Response having URL of the page.
+	Last *PageHrefResponse `json:"last" validate:"required"`
+}
+
+// UnmarshalSnapshotsList unmarshals an instance of SnapshotsList from the specified map of raw messages.
+func UnmarshalSnapshotsList(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SnapshotsList)
+	err = core.UnmarshalModel(m, "git_config", &obj.Snapshot, UnmarshalSnapshotResponseGetApi)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *SnapshotsList) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
+}
+
+// NewListSnapshotsOptions : Instantiate ListSnapshotsOptions
+func (*AppConfigurationV1) NewListSnapshotsOptions() *ListSnapshotsOptions {
+	return &ListSnapshotsOptions{}
+}
+
+// SetSort : Allow user to set Sort
+func (_options *ListSnapshotsOptions) SetSort(sort string) *ListSnapshotsOptions {
+	_options.Sort = core.StringPtr(sort)
+	return _options
+}
+
+// SetCollectionID : Allow user to set CollectionID
+func (_options *ListSnapshotsOptions) SetCollectionID(collectionID string) *ListSnapshotsOptions {
+	_options.CollectionID = core.StringPtr(collectionID)
+	return _options
+}
+
+// SetEnvironmentID : Allow user to set EnvironmentID
+func (_options *ListSnapshotsOptions) SetEnvironmentID(environmentID string) *ListSnapshotsOptions {
+	_options.EnvironmentID = core.StringPtr(environmentID)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListSnapshotsOptions) SetLimit(limit int64) *ListSnapshotsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetOffset : Allow user to set Offset
+func (_options *ListSnapshotsOptions) SetOffset(offset int64) *ListSnapshotsOptions {
+	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetSearch : Allow user to set Search
+func (_options *ListSnapshotsOptions) SetSearch(search string) *ListSnapshotsOptions {
+	_options.Search = core.StringPtr(search)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListSnapshotsOptions) SetHeaders(param map[string]string) *ListSnapshotsOptions {
+	options.Headers = param
+	return options
+}

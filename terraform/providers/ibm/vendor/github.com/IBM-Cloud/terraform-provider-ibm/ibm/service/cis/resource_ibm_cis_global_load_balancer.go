@@ -42,6 +42,8 @@ func ResourceIBMCISGlb() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeValidator("ibm_cis_global_load_balancer",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -174,7 +176,21 @@ func ResourceIBMCISGlb() *schema.Resource {
 		Importer: &schema.ResourceImporter{},
 	}
 }
-
+func ResourceIBMCISGlbValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+	ibmCISGlbValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_global_load_balancer",
+		Schema:       validateSchema}
+	return &ibmCISGlbValidator
+}
 func resourceCISGlbCreate(d *schema.ResourceData, meta interface{}) error {
 	cisClient, err := meta.(conns.ClientSession).CisGLBClientSession()
 	if err != nil {

@@ -43,25 +43,21 @@ variable "powervs_publish_strategy" {
   type        = string
   description = "The cluster publishing strategy, either Internal or External"
   default     = "External"
-  validation {
-    condition     = var.powervs_publish_strategy == "External" || var.powervs_publish_strategy == "Internal"
-    error_message = "The powervs_publish_strategy value must be \"External\" or \"Internal\"."
-  }
 }
 
 ################################################################
 # Configure storage
 ################################################################
+variable "powervs_cos_region" {
+  type        = string
+  description = "The region where your COS instance is located in"
+  default     = "eu-gb"
+}
+
 variable "powervs_cos_instance_location" {
   type        = string
   description = "The location of your COS instance"
   default     = "global"
-}
-
-variable "powervs_cos_bucket_location" {
-  type        = string
-  description = "The location to create your COS bucket"
-  default     = "us-east"
 }
 
 variable "powervs_cos_storage_class" {
@@ -97,12 +93,35 @@ variable "powervs_vpc_name" {
   default     = ""
 }
 
+variable "powervs_vpc_permitted" {
+  type        = bool
+  description = "Specifies whether an existing VPC is already a Permitted Network for DNS Instance, for Private clusters."
+  default     = false
+}
+
+variable "powervs_vpc_gateway_attached" {
+  type        = bool
+  description = "Specifies whether an existing gateway is already attached to an existing VPC."
+  default     = false
+}
+
+variable "powervs_vpc_gateway_name" {
+  type        = string
+  description = "The name of a pre-created VPC gateway. Must be in $powervs_vpc_region"
+  default     = ""
+}
+
 variable "powervs_vpc_subnet_name" {
   type        = string
   description = "The name of a pre-created IBM Cloud Subnet. Must be in $powervs_vpc_region"
   default     = ""
 }
 
+variable "powervs_enable_snat" {
+  type        = bool
+  description = "Boolean indicating if SNAT should be enabled or disabled."
+  default     = true
+}
 
 ################################################################
 # Configure instances
@@ -184,6 +203,11 @@ variable "powervs_expose_bootstrap" {
 variable "powervs_cis_crn" {
   type        = string
   description = "The CRN of CIS instance to use."
+}
+
+variable "powervs_dns_guid" {
+  type        = string
+  description = "The GUID of the IBM DNS Service instance to use when creating a private cluster."
 }
 
 ################################################################

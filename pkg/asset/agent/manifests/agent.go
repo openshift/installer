@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 const (
@@ -65,7 +66,6 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 		&ClusterImageSet{},
 	} {
 		dependencies.Get(a)
-		m.FileList = append(m.FileList, a.Files()...)
 
 		switch v := a.(type) {
 		case *AgentPullSecret:
@@ -73,6 +73,11 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 		case *InfraEnv:
 			m.InfraEnv = v.Config
 		case *NMStateConfig:
+			// continue if there are no configs defined to avoid
+			// writing out a empty nmstateconfig.yaml file
+			if len(v.Config) == 0 {
+				continue
+			}
 			m.StaticNetworkConfigs = append(m.StaticNetworkConfigs, v.StaticNetworkConfig...)
 			m.NMStateConfigs = append(m.NMStateConfigs, v.Config...)
 		case *AgentClusterInstall:
@@ -82,6 +87,8 @@ func (m *AgentManifests) Generate(dependencies asset.Parents) error {
 		case *ClusterImageSet:
 			m.ClusterImageSet = v.Config
 		}
+
+		m.FileList = append(m.FileList, a.Files()...)
 	}
 
 	asset.SortFiles(m.FileList)

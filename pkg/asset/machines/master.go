@@ -9,7 +9,14 @@ import (
 
 	"github.com/ghodss/yaml"
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+
 	machinev1 "github.com/openshift/api/machine/v1"
+	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	baremetalapi "github.com/openshift/cluster-api-provider-baremetal/pkg/apis"
 	baremetalprovider "github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
@@ -19,15 +26,6 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
-	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -62,6 +60,7 @@ import (
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 )
 
 // Master generates the machines for the `master` machine pool.
@@ -272,7 +271,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.GCP = &mpool
-		machines, err = gcp.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName)
+		machines, controlPlaneMachineSet, err = gcp.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -368,8 +367,9 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		useImageGallery := installConfig.Azure.CloudName != azuretypes.StackCloud
 
-		machines, err = azure.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName, capabilities)
+		machines, err = azure.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName, capabilities, useImageGallery)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -431,6 +431,23 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.MemoryMiB = 16384
 		mpool.Set(ic.Platform.VSphere.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.VSphere)
+
+		// The machinepool has no zones defined, there are FailureDomains
+		// This is a vSphere zonal installation. Generate machinepool zone
+		// list.
+
+		fdCount := int64(len(ic.Platform.VSphere.FailureDomains))
+		var idx int64
+		if len(mpool.Zones) == 0 && len(ic.VSphere.FailureDomains) != 0 {
+			for i := int64(0); i < *(ic.ControlPlane.Replicas); i++ {
+				idx = i
+				if idx >= fdCount {
+					idx = i % fdCount
+				}
+				mpool.Zones = append(mpool.Zones, ic.VSphere.FailureDomains[idx].Name)
+			}
+		}
+
 		pool.Platform.VSphere = &mpool
 		templateName := clusterID.InfraID + "-rhcos"
 
@@ -608,8 +625,10 @@ func (m *Master) Machines() ([]machinev1beta1.Machine, error) {
 	baremetalapi.AddToScheme(scheme)
 	ibmcloudapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
-	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
+	scheme.AddKnownTypes(machinev1alpha1.GroupVersion,
+		&machinev1alpha1.OpenstackProviderSpec{},
+	)
 	scheme.AddKnownTypes(machinev1beta1.SchemeGroupVersion,
 		&machinev1beta1.AWSMachineProviderConfig{},
 		&machinev1beta1.VSphereMachineProviderSpec{},
@@ -629,7 +648,7 @@ func (m *Master) Machines() ([]machinev1beta1.Machine, error) {
 		baremetalprovider.SchemeGroupVersion,
 		ibmcloudprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
-		openstackprovider.SchemeGroupVersion,
+		machinev1alpha1.GroupVersion,
 		machinev1beta1.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
 	)

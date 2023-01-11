@@ -11,26 +11,28 @@ import (
 
 // WaitForBootstrapComplete Wait for the bootstrap process to complete on
 // cluster installations triggered by the agent installer.
-func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
-
-	ctx := context.Background()
-	cluster, err := NewCluster(ctx, assetDir)
-	if err != nil {
-		logrus.Warn("unable to make cluster object to track installation")
-		return nil, err
-	}
-
+func WaitForBootstrapComplete(cluster *Cluster) error {
 	start := time.Now()
 	previous := time.Now()
-	timeout := 30 * time.Minute
+	timeout := 60 * time.Minute
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
 
+	var lastErr error
 	wait.Until(func() {
-		bootstrap, err := cluster.IsBootstrapComplete()
+		bootstrap, exitOnErr, err := cluster.IsBootstrapComplete()
 		if bootstrap && err == nil {
 			logrus.Info("cluster bootstrap is complete")
 			cancel()
+		}
+
+		if err != nil {
+			if exitOnErr {
+				lastErr = err
+				cancel()
+			} else {
+				logrus.Info(err)
+			}
 		}
 
 		current := time.Now()
@@ -44,26 +46,21 @@ func WaitForBootstrapComplete(assetDir string) (*Cluster, error) {
 	}, 2*time.Second, waitContext.Done())
 
 	waitErr := waitContext.Err()
-	if waitErr != nil && waitErr != context.Canceled {
-		if err != nil {
-			return cluster, errors.Wrap(err, "bootstrap process returned error")
+	if waitErr != nil {
+		if waitErr == context.Canceled && lastErr != nil {
+			return errors.Wrap(lastErr, "bootstrap process returned error")
 		}
-		return cluster, errors.Wrap(waitErr, "bootstrap process timed out")
+		if waitErr == context.DeadlineExceeded {
+			return errors.Wrap(waitErr, "bootstrap process timed out")
+		}
 	}
 
-	return cluster, nil
+	return nil
 }
 
 // WaitForInstallComplete Waits for the cluster installation triggered by the
 // agent installer to be complete.
-func WaitForInstallComplete(assetDir string) (*Cluster, error) {
-
-	cluster, err := WaitForBootstrapComplete(assetDir)
-
-	if err != nil {
-		return cluster, errors.Wrap(err, "error occured during bootstrap process")
-	}
-
+func WaitForInstallComplete(cluster *Cluster) error {
 	timeout := 90 * time.Minute
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
@@ -79,10 +76,7 @@ func WaitForInstallComplete(assetDir string) (*Cluster, error) {
 
 	waitErr := waitContext.Err()
 	if waitErr != nil && waitErr != context.Canceled {
-		if err != nil {
-			return cluster, errors.Wrap(err, "Error occurred during installation")
-		}
-		return cluster, errors.Wrap(waitErr, "Cluster installation timed out")
+		return errors.Wrap(waitErr, "Cluster installation timed out")
 	}
-	return cluster, nil
+	return nil
 }

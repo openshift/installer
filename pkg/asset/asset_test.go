@@ -2,7 +2,7 @@ package asset
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -82,7 +82,7 @@ func TestPersistToFile(t *testing.T) {
 }
 
 func verifyFilesCreated(t *testing.T, dir string, expectedFiles map[string][]byte) {
-	dirContents, err := ioutil.ReadDir(dir)
+	dirContents, err := os.ReadDir(dir)
 	assert.NoError(t, err, "could not read contents of directory %q", dir)
 	for _, fileinfo := range dirContents {
 		fullPath := filepath.Join(dir, fileinfo.Name())
@@ -94,7 +94,7 @@ func verifyFilesCreated(t *testing.T, dir string, expectedFiles map[string][]byt
 				t.Errorf("Unexpected file created: %v", fullPath)
 				continue
 			}
-			actualData, err := ioutil.ReadFile(fullPath)
+			actualData, err := os.ReadFile(fullPath)
 			assert.NoError(t, err, "unexpected error reading created file %q", fullPath)
 			assert.Equal(t, expectedData, actualData, "unexpected data in created file %q", fullPath)
 			delete(expectedFiles, fullPath)

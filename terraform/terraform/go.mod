@@ -62,7 +62,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-azure-helpers v0.14.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-getter v1.5.2 // indirect
 	github.com/hashicorp/go-hclog v0.15.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -138,11 +138,11 @@ require (
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 // indirect
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5 // indirect
 	golang.org/x/mod v0.4.2 // indirect
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/oauth2 v0.0.0-20210313182246-cd4f82c27b84 // indirect
-	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
+	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf // indirect
-	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/tools v0.1.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
@@ -165,3 +165,11 @@ require (
 replace google.golang.org/grpc v1.36.0 => google.golang.org/grpc v1.27.1
 
 replace k8s.io/client-go => k8s.io/client-go v0.0.0-20190620085101-78d2af792bab
+
+replace github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2064702
+replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2100495
+replace golang.org/x/text => golang.org/x/text v0.3.7

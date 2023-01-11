@@ -30,6 +30,9 @@ type InfraEnvCreateParams struct {
 	// The CPU architecture of the image (x86_64/arm64/etc).
 	CPUArchitecture string `json:"cpu_architecture,omitempty"`
 
+	// discovery kernel arguments
+	DiscoveryKernelArguments KernelArguments `json:"discovery_kernel_arguments,omitempty"`
+
 	// JSON formatted string containing the user overrides for the initial ignition config.
 	IgnitionConfigOverride string `json:"ignition_config_override,omitempty"`
 
@@ -65,6 +68,10 @@ func (m *InfraEnvCreateParams) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateDiscoveryKernelArguments(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateImageType(formats); err != nil {
 		res = append(res, err)
 	}
@@ -97,6 +104,23 @@ func (m *InfraEnvCreateParams) validateClusterID(formats strfmt.Registry) error 
 	}
 
 	if err := validate.FormatOf("cluster_id", "body", "uuid", m.ClusterID.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *InfraEnvCreateParams) validateDiscoveryKernelArguments(formats strfmt.Registry) error {
+	if swag.IsZero(m.DiscoveryKernelArguments) { // not required
+		return nil
+	}
+
+	if err := m.DiscoveryKernelArguments.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("discovery_kernel_arguments")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("discovery_kernel_arguments")
+		}
 		return err
 	}
 
@@ -187,6 +211,10 @@ func (m *InfraEnvCreateParams) validateStaticNetworkConfig(formats strfmt.Regist
 func (m *InfraEnvCreateParams) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateDiscoveryKernelArguments(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateImageType(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -202,6 +230,20 @@ func (m *InfraEnvCreateParams) ContextValidate(ctx context.Context, formats strf
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *InfraEnvCreateParams) contextValidateDiscoveryKernelArguments(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.DiscoveryKernelArguments.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("discovery_kernel_arguments")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("discovery_kernel_arguments")
+		}
+		return err
+	}
+
 	return nil
 }
 

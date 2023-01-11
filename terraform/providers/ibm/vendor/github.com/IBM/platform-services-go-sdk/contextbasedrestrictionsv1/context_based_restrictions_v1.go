@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.50.0-af9e48c4-20220523-163800
+ * IBM OpenAPI SDK Code Generator Version: 3.53.0-9710cac3-20220713-193508
  */
 
 // Package contextbasedrestrictionsv1 : Operations and models for the ContextBasedRestrictionsV1 service
@@ -635,6 +635,9 @@ func (contextBasedRestrictions *ContextBasedRestrictionsV1) CreateRuleWithContex
 	if createRuleOptions.Resources != nil {
 		body["resources"] = createRuleOptions.Resources
 	}
+	if createRuleOptions.Operations != nil {
+		body["operations"] = createRuleOptions.Operations
+	}
 	if createRuleOptions.EnforcementMode != nil {
 		body["enforcement_mode"] = createRuleOptions.EnforcementMode
 	}
@@ -729,6 +732,9 @@ func (contextBasedRestrictions *ContextBasedRestrictionsV1) ListRulesWithContext
 	}
 	if listRulesOptions.Sort != nil {
 		builder.AddQuery("sort", fmt.Sprint(*listRulesOptions.Sort))
+	}
+	if listRulesOptions.EnforcementMode != nil {
+		builder.AddQuery("enforcement_mode", fmt.Sprint(*listRulesOptions.EnforcementMode))
 	}
 
 	request, err := builder.Build()
@@ -877,6 +883,9 @@ func (contextBasedRestrictions *ContextBasedRestrictionsV1) ReplaceRuleWithConte
 	}
 	if replaceRuleOptions.Resources != nil {
 		body["resources"] = replaceRuleOptions.Resources
+	}
+	if replaceRuleOptions.Operations != nil {
+		body["operations"] = replaceRuleOptions.Operations
 	}
 	if replaceRuleOptions.EnforcementMode != nil {
 		body["enforcement_mode"] = replaceRuleOptions.EnforcementMode
@@ -1027,6 +1036,108 @@ func (contextBasedRestrictions *ContextBasedRestrictionsV1) GetAccountSettingsWi
 	return
 }
 
+// ListAvailableServiceOperations : List available service operations
+// This operation lists all available service operations.
+func (contextBasedRestrictions *ContextBasedRestrictionsV1) ListAvailableServiceOperations(listAvailableServiceOperationsOptions *ListAvailableServiceOperationsOptions) (result *OperationsList, response *core.DetailedResponse, err error) {
+	return contextBasedRestrictions.ListAvailableServiceOperationsWithContext(context.Background(), listAvailableServiceOperationsOptions)
+}
+
+// ListAvailableServiceOperationsWithContext is an alternate form of the ListAvailableServiceOperations method which supports a Context parameter
+func (contextBasedRestrictions *ContextBasedRestrictionsV1) ListAvailableServiceOperationsWithContext(ctx context.Context, listAvailableServiceOperationsOptions *ListAvailableServiceOperationsOptions) (result *OperationsList, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listAvailableServiceOperationsOptions, "listAvailableServiceOperationsOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listAvailableServiceOperationsOptions, "listAvailableServiceOperationsOptions")
+	if err != nil {
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = contextBasedRestrictions.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(contextBasedRestrictions.Service.Options.URL, `/v1/operations`, nil)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listAvailableServiceOperationsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("context_based_restrictions", "V1", "ListAvailableServiceOperations")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if listAvailableServiceOperationsOptions.XCorrelationID != nil {
+		builder.AddHeader("X-Correlation-Id", fmt.Sprint(*listAvailableServiceOperationsOptions.XCorrelationID))
+	}
+	if listAvailableServiceOperationsOptions.TransactionID != nil {
+		builder.AddHeader("Transaction-Id", fmt.Sprint(*listAvailableServiceOperationsOptions.TransactionID))
+	}
+
+	builder.AddQuery("service_name", fmt.Sprint(*listAvailableServiceOperationsOptions.ServiceName))
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = contextBasedRestrictions.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOperationsList)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// APIType : Service API Type details.
+type APIType struct {
+	// The id of the API type.
+	APITypeID *string `json:"api_type_id" validate:"required"`
+
+	// The displayed name of the API type.
+	DisplayName *string `json:"display_name" validate:"required"`
+
+	// The description of the API type.
+	Description *string `json:"description" validate:"required"`
+
+	// The actions available for the API type.
+	Actions []Action `json:"actions" validate:"required"`
+}
+
+// UnmarshalAPIType unmarshals an instance of APIType from the specified map of raw messages.
+func UnmarshalAPIType(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(APIType)
+	err = core.UnmarshalPrimitive(m, "api_type_id", &obj.APITypeID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "actions", &obj.Actions, UnmarshalAction)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // AccountSettings : An output account settings.
 type AccountSettings struct {
 	// The globally unique ID of the account settings.
@@ -1114,6 +1225,30 @@ func UnmarshalAccountSettings(m map[string]json.RawMessage, result interface{}) 
 	return
 }
 
+// Action : Service API Type actions.
+type Action struct {
+	// The id of the action.
+	ActionID *string `json:"action_id" validate:"required"`
+
+	// The description of the action.
+	Description *string `json:"description" validate:"required"`
+}
+
+// UnmarshalAction unmarshals an instance of Action from the specified map of raw messages.
+func UnmarshalAction(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Action)
+	err = core.UnmarshalPrimitive(m, "action_id", &obj.ActionID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // Address : A zone address.
 // Models which "extend" this model:
 // - AddressIPAddress
@@ -1190,6 +1325,9 @@ type CreateRuleOptions struct {
 	// The resources this rule apply to.
 	Resources []Resource `json:"resources,omitempty"`
 
+	// The operations this rule applies to.
+	Operations *NewRuleOperations `json:"operations,omitempty"`
+
 	// The rule enforcement mode:
 	//  * `enabled` - The restrictions are enforced and reported. This is the default.
 	//  * `disabled` - The restrictions are disabled. Nothing is enforced or reported.
@@ -1241,6 +1379,12 @@ func (_options *CreateRuleOptions) SetContexts(contexts []RuleContext) *CreateRu
 // SetResources : Allow user to set Resources
 func (_options *CreateRuleOptions) SetResources(resources []Resource) *CreateRuleOptions {
 	_options.Resources = resources
+	return _options
+}
+
+// SetOperations : Allow user to set Operations
+func (_options *CreateRuleOptions) SetOperations(operations *NewRuleOperations) *CreateRuleOptions {
+	_options.Operations = operations
 	return _options
 }
 
@@ -1603,6 +1747,56 @@ func (options *GetZoneOptions) SetHeaders(param map[string]string) *GetZoneOptio
 	return options
 }
 
+// ListAvailableServiceOperationsOptions : The ListAvailableServiceOperations options.
+type ListAvailableServiceOperationsOptions struct {
+	// The name of the service.
+	ServiceName *string `json:"service_name" validate:"required"`
+
+	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
+	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
+	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
+	XCorrelationID *string `json:"X-Correlation-Id,omitempty"`
+
+	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
+	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
+	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	TransactionID *string `json:"Transaction-Id,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListAvailableServiceOperationsOptions : Instantiate ListAvailableServiceOperationsOptions
+func (*ContextBasedRestrictionsV1) NewListAvailableServiceOperationsOptions(serviceName string) *ListAvailableServiceOperationsOptions {
+	return &ListAvailableServiceOperationsOptions{
+		ServiceName: core.StringPtr(serviceName),
+	}
+}
+
+// SetServiceName : Allow user to set ServiceName
+func (_options *ListAvailableServiceOperationsOptions) SetServiceName(serviceName string) *ListAvailableServiceOperationsOptions {
+	_options.ServiceName = core.StringPtr(serviceName)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *ListAvailableServiceOperationsOptions) SetXCorrelationID(xCorrelationID string) *ListAvailableServiceOperationsOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
+// SetTransactionID : Allow user to set TransactionID
+func (_options *ListAvailableServiceOperationsOptions) SetTransactionID(transactionID string) *ListAvailableServiceOperationsOptions {
+	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListAvailableServiceOperationsOptions) SetHeaders(param map[string]string) *ListAvailableServiceOperationsOptions {
+	options.Headers = param
+	return options
+}
+
 // ListAvailableServicerefTargetsOptions : The ListAvailableServicerefTargets options.
 type ListAvailableServicerefTargetsOptions struct {
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
@@ -1698,9 +1892,20 @@ type ListRulesOptions struct {
 	// [Sorting](https://cloud.ibm.com/docs/api-handbook?topic=api-handbook-sorting).
 	Sort *string `json:"sort,omitempty"`
 
+	// The rule's `enforcement_mode` attribute.
+	EnforcementMode *string `json:"enforcement_mode,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
+
+// Constants associated with the ListRulesOptions.EnforcementMode property.
+// The rule's `enforcement_mode` attribute.
+const (
+	ListRulesOptionsEnforcementModeDisabledConst = "disabled"
+	ListRulesOptionsEnforcementModeEnabledConst  = "enabled"
+	ListRulesOptionsEnforcementModeReportConst   = "report"
+)
 
 // NewListRulesOptions : Instantiate ListRulesOptions
 func (*ContextBasedRestrictionsV1) NewListRulesOptions(accountID string) *ListRulesOptions {
@@ -1772,6 +1977,12 @@ func (_options *ListRulesOptions) SetZoneID(zoneID string) *ListRulesOptions {
 // SetSort : Allow user to set Sort
 func (_options *ListRulesOptions) SetSort(sort string) *ListRulesOptions {
 	_options.Sort = core.StringPtr(sort)
+	return _options
+}
+
+// SetEnforcementMode : Allow user to set EnforcementMode
+func (_options *ListRulesOptions) SetEnforcementMode(enforcementMode string) *ListRulesOptions {
+	_options.EnforcementMode = core.StringPtr(enforcementMode)
 	return _options
 }
 
@@ -1850,6 +2061,74 @@ func (options *ListZonesOptions) SetHeaders(param map[string]string) *ListZonesO
 	return options
 }
 
+// NewRuleOperations : The operations this rule applies to.
+type NewRuleOperations struct {
+	// The API types this rule applies to.
+	APITypes []NewRuleOperationsAPITypesItem `json:"api_types" validate:"required"`
+}
+
+// NewNewRuleOperations : Instantiate NewRuleOperations (Generic Model Constructor)
+func (*ContextBasedRestrictionsV1) NewNewRuleOperations(apiTypes []NewRuleOperationsAPITypesItem) (_model *NewRuleOperations, err error) {
+	_model = &NewRuleOperations{
+		APITypes: apiTypes,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalNewRuleOperations unmarshals an instance of NewRuleOperations from the specified map of raw messages.
+func UnmarshalNewRuleOperations(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(NewRuleOperations)
+	err = core.UnmarshalModel(m, "api_types", &obj.APITypes, UnmarshalNewRuleOperationsAPITypesItem)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// NewRuleOperationsAPITypesItem : NewRuleOperationsAPITypesItem struct
+type NewRuleOperationsAPITypesItem struct {
+	APITypeID *string `json:"api_type_id" validate:"required"`
+}
+
+// NewNewRuleOperationsAPITypesItem : Instantiate NewRuleOperationsAPITypesItem (Generic Model Constructor)
+func (*ContextBasedRestrictionsV1) NewNewRuleOperationsAPITypesItem(apiTypeID string) (_model *NewRuleOperationsAPITypesItem, err error) {
+	_model = &NewRuleOperationsAPITypesItem{
+		APITypeID: core.StringPtr(apiTypeID),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalNewRuleOperationsAPITypesItem unmarshals an instance of NewRuleOperationsAPITypesItem from the specified map of raw messages.
+func UnmarshalNewRuleOperationsAPITypesItem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(NewRuleOperationsAPITypesItem)
+	err = core.UnmarshalPrimitive(m, "api_type_id", &obj.APITypeID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// OperationsList : The response object of the `list_available_service_operations` operation.
+type OperationsList struct {
+	// The returned API types.
+	APITypes []APIType `json:"api_types" validate:"required"`
+}
+
+// UnmarshalOperationsList unmarshals an instance of OperationsList from the specified map of raw messages.
+func UnmarshalOperationsList(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(OperationsList)
+	err = core.UnmarshalModel(m, "api_types", &obj.APITypes, UnmarshalAPIType)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // ReplaceRuleOptions : The ReplaceRule options.
 type ReplaceRuleOptions struct {
 	// The ID of a rule.
@@ -1867,6 +2146,9 @@ type ReplaceRuleOptions struct {
 
 	// The resources this rule apply to.
 	Resources []Resource `json:"resources,omitempty"`
+
+	// The operations this rule applies to.
+	Operations *NewRuleOperations `json:"operations,omitempty"`
 
 	// The rule enforcement mode:
 	//  * `enabled` - The restrictions are enforced and reported. This is the default.
@@ -1934,6 +2216,12 @@ func (_options *ReplaceRuleOptions) SetContexts(contexts []RuleContext) *Replace
 // SetResources : Allow user to set Resources
 func (_options *ReplaceRuleOptions) SetResources(resources []Resource) *ReplaceRuleOptions {
 	_options.Resources = resources
+	return _options
+}
+
+// SetOperations : Allow user to set Operations
+func (_options *ReplaceRuleOptions) SetOperations(operations *NewRuleOperations) *ReplaceRuleOptions {
+	_options.Operations = operations
 	return _options
 }
 
@@ -2200,6 +2488,9 @@ type Rule struct {
 	// The resources this rule apply to.
 	Resources []Resource `json:"resources" validate:"required"`
 
+	// The operations this rule applies to.
+	Operations *NewRuleOperations `json:"operations,omitempty"`
+
 	// The rule enforcement mode:
 	//  * `enabled` - The restrictions are enforced and reported. This is the default.
 	//  * `disabled` - The restrictions are disabled. Nothing is enforced or reported.
@@ -2253,6 +2544,10 @@ func UnmarshalRule(m map[string]json.RawMessage, result interface{}) (err error)
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalResource)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "operations", &obj.Operations, UnmarshalNewRuleOperations)
 	if err != nil {
 		return
 	}
@@ -2375,6 +2670,9 @@ type ServiceRefTarget struct {
 
 	// The type of the service.
 	ServiceType *string `json:"service_type,omitempty"`
+
+	// The locations the service is available.
+	Locations []ServiceRefTargetLocationsItem `json:"locations,omitempty"`
 }
 
 // UnmarshalServiceRefTarget unmarshals an instance of ServiceRefTarget from the specified map of raw messages.
@@ -2385,6 +2683,10 @@ func UnmarshalServiceRefTarget(m map[string]json.RawMessage, result interface{})
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service_type", &obj.ServiceType)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "locations", &obj.Locations, UnmarshalServiceRefTargetLocationsItem)
 	if err != nil {
 		return
 	}
@@ -2416,6 +2718,23 @@ func UnmarshalServiceRefTargetList(m map[string]json.RawMessage, result interfac
 	return
 }
 
+// ServiceRefTargetLocationsItem : ServiceRefTargetLocationsItem struct
+type ServiceRefTargetLocationsItem struct {
+	// The location name.
+	Name *string `json:"name" validate:"required"`
+}
+
+// UnmarshalServiceRefTargetLocationsItem unmarshals an instance of ServiceRefTargetLocationsItem from the specified map of raw messages.
+func UnmarshalServiceRefTargetLocationsItem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ServiceRefTargetLocationsItem)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // ServiceRefValue : A service reference value.
 type ServiceRefValue struct {
 	// The id of the account owning the service.
@@ -2429,6 +2748,9 @@ type ServiceRefValue struct {
 
 	// The service instance.
 	ServiceInstance *string `json:"service_instance,omitempty"`
+
+	// The location.
+	Location *string `json:"location,omitempty"`
 }
 
 // NewServiceRefValue : Instantiate ServiceRefValue (Generic Model Constructor)
@@ -2456,6 +2778,10 @@ func UnmarshalServiceRefValue(m map[string]json.RawMessage, result interface{}) 
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service_instance", &obj.ServiceInstance)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
 	if err != nil {
 		return
 	}

@@ -27,4 +27,19 @@ BOOTSTRAP_HOST_MAC=${NODE_ZERO_MAC}
 EOF
 
     echo "Created file ${NODE0_PATH}"
+
+    rendezvousHostMessage="This host {{.NodeZeroIP}} is the rendezvous host."
+
+    cat <<EOF >/etc/motd
+The primary service is assisted-service.service. To watch its status, run:
+
+  journalctl -u assisted-service.service
+EOF
+else
+
+    rendezvousHostMessage="This host is not the rendezvous host. The rendezvous host is at {{.NodeZeroIP}}."
 fi
+mkdir -p /etc/motd.d/
+echo $rendezvousHostMessage > /etc/motd.d/60-rendezvous-host
+echo $rendezvousHostMessage > /etc/issue.d/60-rendezvous-host.issue
+agetty --reload

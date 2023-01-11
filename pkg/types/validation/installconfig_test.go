@@ -5,6 +5,13 @@ import (
 	"net"
 	"testing"
 
+	"github.com/pborman/uuid"
+	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/pointer"
+	utilsslice "k8s.io/utils/strings/slices"
+
 	configv1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -22,13 +29,9 @@ import (
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	"github.com/pborman/uuid"
-	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/pointer"
-	utilsslice "k8s.io/utils/strings/slices"
 )
+
+const TechPreviewNoUpgrade = "TechPreviewNoUpgrade"
 
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
@@ -1998,6 +2001,77 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: "platform.vsphere.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set",
+		},
+		{
+			name: "GCP BYO PUBLIC DNS SHOULD return error if used WITHOUT tech preview",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.PublicDNSZone = &gcp.DNSZone{
+					ID:        "myZone",
+					ProjectID: "myProject",
+				}
+
+				return c
+			}(),
+			expectedError: "platform.gcp.publicDNSZone.projectID: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field",
+		},
+		{
+			name: "GCP BYO PRIVATE DNS SHOULD return error if used WITHOUT tech preview",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
+					ProjectID: "myProject",
+				}
+
+				return c
+			}(),
+			expectedError: "platform.gcp.privateDNSZone.projectID: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field",
+		},
+		{
+			name: "GCP BYO DNS should NOT return error if used WITH tech preview",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.PublicDNSZone = &gcp.DNSZone{
+					ID:        "myZone",
+					ProjectID: "myProject",
+				}
+				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
+					ProjectID: "myProject",
+				}
+				c.FeatureSet = TechPreviewNoUpgrade
+
+				return c
+			}(),
+		},
+		{
+			name: "GCP BYO Private DNS Invalid with ID",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				c.Platform.GCP.PublicDNSZone = &gcp.DNSZone{
+					ID:        "myZone",
+					ProjectID: "myProject",
+				}
+				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
+					ProjectID: "myProject",
+					ID:        "IDShouldNotExist",
+				}
+				c.FeatureSet = TechPreviewNoUpgrade
+
+				return c
+			}(),
+			expectedError: "platform.gcp.privateDNSZone.id: Forbidden: do not provide an ID for the private DNS zone.",
 		},
 	}
 	for _, tc := range cases {

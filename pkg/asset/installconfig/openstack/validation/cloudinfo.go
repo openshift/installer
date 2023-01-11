@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"errors"
+	"fmt"
 	"net/url"
 
 	"github.com/gophercloud/gophercloud"
@@ -21,7 +23,6 @@ import (
 	flavorutils "github.com/gophercloud/utils/openstack/compute/v2/flavors"
 	imageutils "github.com/gophercloud/utils/openstack/imageservice/v2/images"
 	networkutils "github.com/gophercloud/utils/openstack/networking/v2/networks"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/quota"
@@ -81,27 +82,27 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 
 	ci.clients.networkClient, err = clientconfig.NewServiceClient("network", opts)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create a network client")
+		return nil, fmt.Errorf("failed to create a network client: %w", err)
 	}
 
 	ci.clients.computeClient, err = clientconfig.NewServiceClient("compute", opts)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create a compute client")
+		return nil, fmt.Errorf("failed to create a compute client: %w", err)
 	}
 
 	ci.clients.imageClient, err = clientconfig.NewServiceClient("image", opts)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create an image client")
+		return nil, fmt.Errorf("failed to create an image client: %w", err)
 	}
 
 	ci.clients.identityClient, err = clientconfig.NewServiceClient("identity", opts)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create an identity client")
+		return nil, fmt.Errorf("failed to create an identity client: %w", err)
 	}
 
 	ci.clients.volumeClient, err = clientconfig.NewServiceClient("volume", opts)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create a volume client")
+		return nil, fmt.Errorf("failed to create a volume client: %w", err)
 	}
 
 	err = ci.collectInfo(ic, opts)
@@ -118,7 +119,7 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 
 	ci.ExternalNetwork, err = ci.getNetwork(ic.OpenStack.ExternalNetwork)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch external network info")
+		return fmt.Errorf("failed to fetch external network info: %w", err)
 	}
 
 	// Fetch the image info if the user provided a Glance image name
@@ -179,7 +180,7 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 
 	ci.MachinesSubnet, err = ci.getSubnet(ic.OpenStack.MachinesSubnet)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch machine subnet info")
+		return fmt.Errorf("failed to fetch machine subnet info: %w", err)
 	}
 
 	ci.APIFIP, err = ci.getFloatingIP(ic.OpenStack.APIFloatingIP)
@@ -214,13 +215,13 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 		} else if isNotFoundError(err) {
 			logrus.Warnf("Quota API is not available and therefore will skip checking them: %v", err)
 		} else {
-			return errors.Wrap(err, "failed to load Quota")
+			return fmt.Errorf("failed to load Quota: %w", err)
 		}
 	}
 
 	ci.NetworkExtensions, err = networkextensions.Get(ci.clients.networkClient)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch network extensions")
+		return fmt.Errorf("failed to fetch network extensions: %w", err)
 	}
 
 	return nil
@@ -347,11 +348,11 @@ func (ci *CloudInfo) getImage(imageName string) (*images.Image, error) {
 func (ci *CloudInfo) getComputeZones() ([]string, error) {
 	zones, err := azutils.ListAvailableAvailabilityZones(ci.clients.computeClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list compute availability zones")
+		return nil, fmt.Errorf("failed to list compute availability zones: %w", err)
 	}
 
 	if len(zones) == 0 {
-		return nil, errors.New("could not find an available compute availability zone")
+		return nil, fmt.Errorf("could not find an available compute availability zone")
 	}
 
 	return zones, nil
@@ -360,16 +361,16 @@ func (ci *CloudInfo) getComputeZones() ([]string, error) {
 func (ci *CloudInfo) getVolumeZones() ([]string, error) {
 	allPages, err := availabilityzones.List(ci.clients.volumeClient).AllPages()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list volume availability zones")
+		return nil, fmt.Errorf("failed to list volume availability zones: %w", err)
 	}
 
 	availabilityZoneInfo, err := availabilityzones.ExtractAvailabilityZones(allPages)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse response with volume availability zone list")
+		return nil, fmt.Errorf("failed to parse response with volume availability zone list: %w", err)
 	}
 
 	if len(availabilityZoneInfo) == 0 {
-		return nil, errors.New("could not find an available volume availability zone")
+		return nil, fmt.Errorf("could not find an available volume availability zone")
 	}
 
 	var zones []string
@@ -385,16 +386,16 @@ func (ci *CloudInfo) getVolumeZones() ([]string, error) {
 func (ci *CloudInfo) getVolumeTypes() ([]string, error) {
 	allPages, err := volumetypes.List(ci.clients.volumeClient, volumetypes.ListOpts{}).AllPages()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list volume types")
+		return nil, fmt.Errorf("failed to list volume types: %w", err)
 	}
 
 	volumeTypeInfo, err := volumetypes.ExtractVolumeTypes(allPages)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse response with volume types list")
+		return nil, fmt.Errorf("failed to parse response with volume types list: %w", err)
 	}
 
 	if len(volumeTypeInfo) == 0 {
-		return nil, errors.New("could not find an available block storage volume type")
+		return nil, fmt.Errorf("could not find an available block storage volume type")
 	}
 
 	var types []string
@@ -412,18 +413,18 @@ func loadQuotas(ci *CloudInfo) ([]quota.Quota, error) {
 
 	projectID, err := getProjectID(ci)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get keystone project ID")
+		return nil, fmt.Errorf("failed to get keystone project ID: %w", err)
 	}
 
 	computeRecords, err := getComputeLimits(ci, projectID)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get compute quota records")
+		return nil, fmt.Errorf("failed to get compute quota records: %w", err)
 	}
 	quotas = append(quotas, computeRecords...)
 
 	networkRecords, err := getNetworkLimits(ci, projectID)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get network quota records")
+		return nil, fmt.Errorf("failed to get network quota records: %w", err)
 	}
 	quotas = append(quotas, networkRecords...)
 
@@ -433,7 +434,7 @@ func loadQuotas(ci *CloudInfo) ([]quota.Quota, error) {
 func getComputeLimits(ci *CloudInfo, projectID string) ([]quota.Quota, error) {
 	qs, err := computequotasets.GetDetail(ci.clients.computeClient, projectID).Extract()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get QuotaSets from OpenStack Compute API")
+		return nil, fmt.Errorf("failed to get QuotaSets from OpenStack Compute API: %w", err)
 	}
 
 	var quotas []quota.Quota
@@ -456,7 +457,7 @@ func getComputeLimits(ci *CloudInfo, projectID string) ([]quota.Quota, error) {
 func getNetworkLimits(ci *CloudInfo, projectID string) ([]quota.Quota, error) {
 	qs, err := networkquotasets.GetDetail(ci.clients.networkClient, projectID).Extract()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get QuotaSets from OpenStack Network API")
+		return nil, fmt.Errorf("failed to get QuotaSets from OpenStack Network API: %w", err)
 	}
 
 	var quotas []quota.Quota
@@ -482,27 +483,27 @@ func getNetworkLimits(ci *CloudInfo, projectID string) ([]quota.Quota, error) {
 func getProjectID(ci *CloudInfo) (string, error) {
 	authResult := ci.clients.identityClient.GetAuthResult()
 	if authResult == nil {
-		return "", errors.Errorf("Client did not use openstack.Authenticate()")
+		return "", fmt.Errorf("client did not use openstack.Authenticate()")
 	}
 
 	switch authResult.(type) {
 	case tokensv2.CreateResult:
 		// Gophercloud has support for v2, but keystone has deprecated
 		// and it's not even documented.
-		return "", errors.Errorf("Extracting project ID using the keystone v2 API is not supported")
+		return "", fmt.Errorf("extracting project ID using the keystone v2 API is not supported")
 
 	case tokensv3.CreateResult:
 		v3Result := authResult.(tokensv3.CreateResult)
 		project, err := v3Result.ExtractProject()
 		if err != nil {
-			return "", errors.Wrap(err, "Extracting project from v3 authResult")
+			return "", fmt.Errorf("extracting project from v3 authResult: %w", err)
 		} else if project == nil {
-			return "", errors.Errorf("Token is not scoped to a project")
+			return "", fmt.Errorf("token is not scoped to a project")
 		}
 		return project.ID, nil
 
 	default:
-		return "", errors.Errorf("Unsupported AuthResult type: %T", authResult)
+		return "", fmt.Errorf("unsupported AuthResult type: %T", authResult)
 	}
 }
 

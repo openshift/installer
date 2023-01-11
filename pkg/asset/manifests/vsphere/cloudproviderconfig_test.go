@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	vsphere "github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/stretchr/testify/assert"
+
+	vsphere "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 var (

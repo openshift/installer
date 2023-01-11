@@ -78,7 +78,20 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
     ./aws/install -b /bin && \
     rm -rf ./aws awscliv2.zip
 
-RUN mkdir /output && chown 1000:1000 /output
+# Download the latest IBM Cloud release binary
+ARG IBMCLI_URI=https://clis.cloud.ibm.com/install/linux
+RUN mkdir /output && HOME=/output && \ 
+    echo "-4" > $HOME/.curlrc && \
+    curl -fsSL ${IBMCLI_URI} | sh && \    
+    ibmcloud plugin install vpc-infrastructure -f && \
+    ibmcloud plugin install cloud-dns-services -f && \
+    ibmcloud plugin install cloud-internet-services -f && \
+    cp /usr/local/bin/ibmcloud /bin/ibmcloud && \
+    rm -f $HOME/.curlrc && \
+    ibmcloud version && \
+    ibmcloud plugin list
+
+RUN chown 1000:1000 /output && chmod -R g=u "/output/.bluemix/"
 USER 1000:1000
 ENV PATH /bin
 ENV HOME /output

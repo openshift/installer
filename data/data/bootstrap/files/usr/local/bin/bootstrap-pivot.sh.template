@@ -1,0 +1,46 @@
+{{if .IsOKD -}}
+#!/usr/bin/env bash
+set -euo pipefail
+# Rebase to OKD's OSTree container image.
+# This is required in OKD as the node is first provisioned with plain Fedora CoreOS.
+
+# shellcheck disable=SC1091
+. /usr/local/bin/bootstrap-service-record.sh
+. /usr/local/bin/release-image.sh
+
+# Pivot bootstrap node to OKD's OSTree image
+if [ ! -f /opt/openshift/.pivot-done ]; then
+{{if .IsFCOS -}}
+  MACHINE_OS_IMAGE=$(image_for fedora-coreos)
+{{else if .IsSCOS -}}
+  MACHINE_OS_IMAGE=$(image_for centos-stream-coreos-9)
+{{end -}}
+  echo "Pulling ${MACHINE_OS_IMAGE}..."
+  while true
+  do
+    record_service_stage_start "pull-okd-os-image"
+    if podman pull --quiet "${MACHINE_OS_IMAGE}"
+    then
+        record_service_stage_success
+        break
+    else
+        record_service_stage_failure
+        echo "Pull failed. Retrying ${MACHINE_OS_IMAGE}..."
+    fi
+  done
+
+  record_service_stage_start "rebase-to-okd-os-image"
+{{if .IsFCOS -}}
+  mnt="$(podman image mount "${MACHINE_OS_IMAGE}")"
+  pushd "${mnt}/bootstrap"
+    # shellcheck disable=SC1091
+    . ./pre-pivot.sh
+  popd
+{{else if .IsSCOS -}}
+  rpm-ostree rebase --experimental "ostree-unverified-registry:${MACHINE_OS_IMAGE}"
+  touch /opt/openshift/.pivot-done
+  record_service_stage_success
+  systemctl reboot
+{{end -}}
+fi
+{{end -}}

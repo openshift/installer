@@ -74,6 +74,12 @@ type V2GetClusterParams struct {
 	*/
 	DiscoveryAgentVersion *string
 
+	/* ExcludeHosts.
+
+	   If true, do not include hosts.
+	*/
+	ExcludeHosts *bool
+
 	/* GetUnregisteredClusters.
 
 	   Whether to return clusters that have been unregistered.
@@ -166,6 +172,17 @@ func (o *V2GetClusterParams) SetDiscoveryAgentVersion(discoveryAgentVersion *str
 	o.DiscoveryAgentVersion = discoveryAgentVersion
 }
 
+// WithExcludeHosts adds the excludeHosts to the v2 get cluster params
+func (o *V2GetClusterParams) WithExcludeHosts(excludeHosts *bool) *V2GetClusterParams {
+	o.SetExcludeHosts(excludeHosts)
+	return o
+}
+
+// SetExcludeHosts adds the excludeHosts to the v2 get cluster params
+func (o *V2GetClusterParams) SetExcludeHosts(excludeHosts *bool) {
+	o.ExcludeHosts = excludeHosts
+}
+
 // WithGetUnregisteredClusters adds the getUnregisteredClusters to the v2 get cluster params
 func (o *V2GetClusterParams) WithGetUnregisteredClusters(getUnregisteredClusters *bool) *V2GetClusterParams {
 	o.SetGetUnregisteredClusters(getUnregisteredClusters)
@@ -195,6 +212,23 @@ func (o *V2GetClusterParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.
 		// header param discovery_agent_version
 		if err := r.SetHeaderParam("discovery_agent_version", *o.DiscoveryAgentVersion); err != nil {
 			return err
+		}
+	}
+
+	if o.ExcludeHosts != nil {
+
+		// query param exclude-hosts
+		var qrExcludeHosts bool
+
+		if o.ExcludeHosts != nil {
+			qrExcludeHosts = *o.ExcludeHosts
+		}
+		qExcludeHosts := swag.FormatBool(qrExcludeHosts)
+		if qExcludeHosts != "" {
+
+			if err := r.SetQueryParam("exclude-hosts", qExcludeHosts); err != nil {
+				return err
+			}
 		}
 	}
 

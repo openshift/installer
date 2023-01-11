@@ -10,6 +10,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/authenticatedoriginpullapiv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -41,6 +42,8 @@ func ResourceIBMCISOriginAuthPull() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "CIS instance crn",
 				Required:    true,
+				ValidateFunc: validate.InvokeValidator("ibm_cis_origin_auth",
+					"cis_id"),
 			},
 			cisDomainID: {
 				Type:             schema.TypeString,
@@ -104,6 +107,21 @@ func ResourceIBMCISOriginAuthPull() *schema.Resource {
 		},
 	}
 
+}
+func ResourceIBMCISOriginAuthPullValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cis_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "ResourceInstance",
+			CloudDataRange:             []string{"service:internet-svcs"},
+			Required:                   true})
+	ibmCISOriginAuthPullValidator := validate.ResourceValidator{
+		ResourceName: "ibm_cis_origin_auth",
+		Schema:       validateSchema}
+	return &ibmCISOriginAuthPullValidator
 }
 
 func resourceIBMCISOriginAuthPullCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

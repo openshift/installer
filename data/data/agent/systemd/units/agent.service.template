@@ -9,14 +9,12 @@ Environment=HTTPS_PROXY=
 Environment=https_proxy=
 Environment=NO_PROXY=
 Environment=no_proxy=
-# TODO: If AUTH_TYPE != none, then PULL_SECRET_TOKEN needs to be updated
-# https://github.com/openshift/assisted-service/blob/master/internal/ignition/ignition.go#L1381
-Environment=PULL_SECRET_TOKEN={{.PullSecretToken}}
 TimeoutStartSec=3000
 ExecStartPre=/usr/local/bin/extract-agent.sh
 ExecStart=/usr/local/bin/start-agent.sh
 
 [Unit]
+Description=Assisted Installer Agent
 Wants=network-online.target set-hostname.service
 After=network-online.target set-hostname.service
 

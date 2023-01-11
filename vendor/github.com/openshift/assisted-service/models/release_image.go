@@ -20,9 +20,12 @@ import (
 // swagger:model release-image
 type ReleaseImage struct {
 
-	// The CPU architecture of the image (x86_64/arm64/etc).
+	// (DEPRECATED) The CPU architecture of the image (x86_64/arm64/etc).
 	// Required: true
 	CPUArchitecture *string `json:"cpu_architecture" gorm:"default:'x86_64'"`
+
+	// List of CPU architectures provided by the image.
+	CPUArchitectures []string `json:"cpu_architectures"`
 
 	// Indication that the version is the recommended one.
 	Default bool `json:"default,omitempty"`

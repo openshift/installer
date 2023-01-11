@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/assisted-service/client/events"
 	"github.com/openshift/assisted-service/client/installer"
 	"github.com/openshift/assisted-service/models"
-
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
@@ -118,10 +117,10 @@ func (rest *NodeZeroRestClient) getClusterID() (*strfmt.UUID, error) {
 	// GET /v2/clusters and return first result
 	listClusterParams := installer.NewV2ListClustersParams()
 	clusterResult, err := rest.Client.Installer.V2ListClusters(rest.ctx, listClusterParams)
-	clusterList := clusterResult.Payload
 	if err != nil {
 		return nil, err
 	}
+	clusterList := clusterResult.Payload
 	if len(clusterList) == 1 {
 		clusterID := clusterList[0].ID
 		return clusterID, nil
@@ -139,10 +138,10 @@ func (rest *NodeZeroRestClient) getClusterInfraEnvID() (*strfmt.UUID, error) {
 	// GET /v2/infraenvs and return first result
 	listInfraEnvParams := installer.NewListInfraEnvsParams()
 	infraEnvResult, err := rest.Client.Installer.ListInfraEnvs(rest.ctx, listInfraEnvParams)
-	infraEnvList := infraEnvResult.Payload
 	if err != nil {
 		return nil, err
 	}
+	infraEnvList := infraEnvResult.Payload
 	if len(infraEnvList) == 1 {
 		clusterInfraEnvID := infraEnvList[0].ID
 		return clusterInfraEnvID, nil

@@ -22,6 +22,9 @@ type InfraEnvUpdateParams struct {
 	// A comma-separated list of NTP sources (name or IP) going to be added to all the hosts.
 	AdditionalNtpSources *string `json:"additional_ntp_sources,omitempty"`
 
+	// discovery kernel arguments
+	DiscoveryKernelArguments KernelArguments `json:"discovery_kernel_arguments,omitempty"`
+
 	// JSON formatted string containing the user overrides for the initial ignition config.
 	IgnitionConfigOverride string `json:"ignition_config_override,omitempty"`
 
@@ -45,6 +48,10 @@ type InfraEnvUpdateParams struct {
 func (m *InfraEnvUpdateParams) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateDiscoveryKernelArguments(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateImageType(formats); err != nil {
 		res = append(res, err)
 	}
@@ -60,6 +67,23 @@ func (m *InfraEnvUpdateParams) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *InfraEnvUpdateParams) validateDiscoveryKernelArguments(formats strfmt.Registry) error {
+	if swag.IsZero(m.DiscoveryKernelArguments) { // not required
+		return nil
+	}
+
+	if err := m.DiscoveryKernelArguments.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("discovery_kernel_arguments")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("discovery_kernel_arguments")
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -129,6 +153,10 @@ func (m *InfraEnvUpdateParams) validateStaticNetworkConfig(formats strfmt.Regist
 func (m *InfraEnvUpdateParams) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateDiscoveryKernelArguments(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateImageType(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -144,6 +172,20 @@ func (m *InfraEnvUpdateParams) ContextValidate(ctx context.Context, formats strf
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *InfraEnvUpdateParams) contextValidateDiscoveryKernelArguments(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.DiscoveryKernelArguments.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("discovery_kernel_arguments")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("discovery_kernel_arguments")
+		}
+		return err
+	}
+
 	return nil
 }
 

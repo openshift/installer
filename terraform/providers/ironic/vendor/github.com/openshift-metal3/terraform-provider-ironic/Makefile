@@ -20,11 +20,11 @@ install: default
 fmt:
 	gofmt -s -d -e ./ironic
 
-tools:
-	go get golang.org/x/lint/golint
+lint :$(GOPATH)/golangci-lint
+	GOLANGCI_LINT_CACHE=/tmp/golangci-lint-cache/ $(GOPATH)/golangci-lint run ironic
 
-lint: tools
-	go run golang.org/x/lint/golint -set_exit_status ./ironic .
+$(GOPATH)/golangci-lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH) v1.50.0
 
 test:
 	go test -tags "${TAGS}" -v ./ironic

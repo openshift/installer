@@ -247,6 +247,11 @@ func ResourceIBMPIInstance() *schema.Resource {
 				ConflictsWith: []string{PISAPInstanceProfileID},
 				Description:   "Memory size",
 			},
+			PIInstanceDeploymentType: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Custom Deployment Type Information",
+			},
 			PISAPInstanceProfileID: {
 				Type:          schema.TypeString,
 				Optional:      true,
@@ -476,7 +481,7 @@ func resourceIBMPIInstanceRead(ctx context.Context, d *schema.ResourceData, meta
 		d.Set("min_virtual_cores", powervmdata.VirtualCores.Min)
 	}
 	d.Set(helpers.PIInstanceLicenseRepositoryCapacity, powervmdata.LicenseRepositoryCapacity)
-
+	d.Set(PIInstanceDeploymentType, powervmdata.DeploymentType)
 	return nil
 }
 
@@ -1220,6 +1225,10 @@ func createPVMInstance(d *schema.ResourceData, client *st.IBMPIInstanceClient, i
 	}
 	if sp, ok := d.GetOk(PIInstanceStoragePool); ok {
 		body.StoragePool = sp.(string)
+	}
+
+	if dt, ok := d.GetOk(PIInstanceDeploymentType); ok {
+		body.DeploymentType = dt.(string)
 	}
 
 	if ap, ok := d.GetOk(PIAffinityPolicy); ok {

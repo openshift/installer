@@ -1,6 +1,38 @@
 <!-- markdownlint-disable single-title -->
 # v2.0.0 (Unreleased)
 
+# v2.0.0-beta.17 (2022-08-31)
+
+ENHANCEMENTS
+
+* Adds support for `max_attempts` in shared config files. ([#278](https://github.com/hashicorp/aws-sdk-go-base/pull/278))
+* Prevents silent failures when `RoleARN` missing from `AssumeRole` or `AssumeRoleWithWebIdentity`. ([#277](https://github.com/hashicorp/aws-sdk-go-base/pull/277))
+* Adds support for `SourceIdentity` with `AssumeRole`. ([#311](https://github.com/hashicorp/aws-sdk-go-base/pull/311))
+* Adds support for AWS region `me-central-1`. ([#328](https://github.com/hashicorp/aws-sdk-go-base/pull/328))
+* Adds support for passing HTTP User-Agent products in `useragent.Context`. ([#318](https://github.com/hashicorp/aws-sdk-go-base/pull/318))
+
+# v2.0.0-beta.16 (2022-04-27)
+
+BREAKING CHANGES
+
+* Removes boolean `SkipEC2MetadataApiCheck` and adds `EC2MetadataServiceEnableState` of type `imds.ClientEnableState`. ([#240](https://github.com/hashicorp/aws-sdk-go-base/pull/240))
+
+ENHANCEMENTS
+
+* Adds support for assuming IAM role with web identity. ([#178](https://github.com/hashicorp/aws-sdk-go-base/pull/178))
+
+# v2.0.0-beta.15 (2022-04-12)
+
+ENHANCEMENTS
+
+* Adds parameter `SuppressDebugLog` to suppress logging. ([#232](https://github.com/hashicorp/aws-sdk-go-base/pull/232))
+
+# v2.0.0-beta.14 (2022-04-07)
+
+ENHANCEMENTS
+
+* Adds support for custom CA bundles in shared config files for AWS SDK for Go v1. ([#226](https://github.com/hashicorp/aws-sdk-go-base/pull/226))
+
 # v2.0.0-beta.13 (2022-03-09)
 
 NOTES

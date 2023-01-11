@@ -10,9 +10,6 @@ import (
 	"github.com/pborman/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
-
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/dns/v1"
@@ -20,6 +17,8 @@ import (
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
 	"google.golang.org/api/storage/v1"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/destroy/providers"
@@ -34,11 +33,12 @@ var (
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
 type ClusterUninstaller struct {
-	Logger    logrus.FieldLogger
-	Region    string
-	ProjectID string
-	ClusterID string
-	Context   context.Context
+	Logger           logrus.FieldLogger
+	Region           string
+	ProjectID        string
+	NetworkProjectID string
+	ClusterID        string
+	Context          context.Context
 
 	computeSvc *compute.Service
 	iamSvc     *iam.Service
@@ -66,6 +66,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Logger:             logger,
 		Region:             metadata.ClusterPlatformMetadata.GCP.Region,
 		ProjectID:          metadata.ClusterPlatformMetadata.GCP.ProjectID,
+		NetworkProjectID:   metadata.ClusterPlatformMetadata.GCP.NetworkProjectID,
 		ClusterID:          metadata.InfraID,
 		Context:            context.Background(),
 		cloudControllerUID: gcptypes.CloudControllerUID(metadata.InfraID),

@@ -65,6 +65,13 @@ func ResourceIBMPIDhcp() *schema.Resource {
 				Description: "Optional name of DHCP Service (will be prefixed by DHCP identifier)",
 				ForceNew:    true,
 			},
+			Arg_DhcpSnatEnabled: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Indicates if SNAT will be enabled for the DHCP service",
+				ForceNew:    true,
+			},
 
 			// Attributes
 			Attr_DhcpID: {
@@ -144,6 +151,8 @@ func resourceIBMPIDhcpCreate(ctx context.Context, d *schema.ResourceData, meta i
 		n := name.(string)
 		body.Name = &n
 	}
+	snatEnabled := d.Get(Arg_DhcpSnatEnabled).(bool)
+	body.SnatEnabled = &snatEnabled
 
 	// create dhcp
 	client := st.NewIBMPIDhcpClient(ctx, sess, cloudInstanceID)
@@ -196,10 +205,15 @@ func resourceIBMPIDhcpRead(ctx context.Context, d *schema.ResourceData, meta int
 	// set attributes
 	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, *dhcpServer.ID))
 	d.Set(Attr_DhcpID, *dhcpServer.ID)
-	d.Set(Attr_DhcpNetworkDeprecated, *dhcpServer.Network.ID)
-	d.Set(Attr_DhcpNetworkID, *dhcpServer.Network.ID)
-	d.Set(Attr_DhcpNetworkName, *dhcpServer.Network.Name)
 	d.Set(Attr_DhcpStatus, *dhcpServer.Status)
+
+	if dhcpServer.Network != nil {
+		dhcpNetwork := dhcpServer.Network
+		d.Set(Attr_DhcpNetworkDeprecated, *dhcpNetwork.ID)
+		d.Set(Attr_DhcpNetworkID, *dhcpNetwork.ID)
+		d.Set(Attr_DhcpNetworkName, *dhcpNetwork.Name)
+	}
+
 	if dhcpServer.Leases != nil {
 		leaseList := make([]map[string]string, len(dhcpServer.Leases))
 		for i, lease := range dhcpServer.Leases {

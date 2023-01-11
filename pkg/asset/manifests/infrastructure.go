@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
+	vsphereinfra "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -212,6 +213,8 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 				IngressIPs:           installConfig.Config.VSphere.IngressVIPs,
 			}
 		}
+		config.Spec.PlatformSpec.VSphere = vsphereinfra.GetInfraPlatformSpec(installConfig)
+
 		if _, exists := cloudproviderconfig.ConfigMap.Data["vsphere.conf"]; exists {
 			cloudProviderConfigMapKey = "vsphere.conf"
 		}
@@ -226,14 +229,27 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		}
 	case powervs.Name:
 		config.Spec.PlatformSpec.Type = configv1.PowerVSPlatformType
-		cisInstanceCRN, err := installConfig.PowerVS.CISInstanceCRN(context.TODO())
-		if err != nil {
-			return errors.Wrapf(err, "failed to get instance CRN")
+		var cisInstanceCRN, dnsInstanceCRN string
+		var err error
+		switch installConfig.Config.Publish {
+		case types.InternalPublishingStrategy:
+			dnsInstanceCRN, err = installConfig.PowerVS.DNSInstanceCRN(context.TODO())
+			if err != nil {
+				return errors.Wrapf(err, "failed to get instance CRN")
+			}
+		case types.ExternalPublishingStrategy:
+			cisInstanceCRN, err = installConfig.PowerVS.CISInstanceCRN(context.TODO())
+			if err != nil {
+				return errors.Wrapf(err, "failed to get instance CRN")
+			}
+		default:
+			return errors.New("unknown publishing strategy")
 		}
 		config.Status.PlatformStatus.PowerVS = &configv1.PowerVSPlatformStatus{
 			Region:         installConfig.Config.Platform.PowerVS.Region,
 			Zone:           installConfig.Config.Platform.PowerVS.Zone,
 			CISInstanceCRN: cisInstanceCRN,
+			DNSInstanceCRN: dnsInstanceCRN,
 		}
 	case nutanix.Name:
 		nutanixPlatform := installConfig.Config.Nutanix

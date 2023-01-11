@@ -54,7 +54,7 @@ func ResourceIBMIsVPNServer() *schema.Resource {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    false,
-				MaxItems:    1,
+				MaxItems:    2,
 				Description: "The methods used to authenticate VPN clients to this VPN server. VPN clients must authenticate against all provided methods.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -384,15 +384,25 @@ func resourceIBMIsVPNServerCreate(context context.Context, d *schema.ResourceDat
 		clientAuthPrototype.Method = &method
 
 		if method == "certificate" {
-			crn_val := clientAuth["client_ca_crn"].(string)
-			certificateInstanceIdentity := &vpcv1.CertificateInstanceIdentity{}
-			certificateInstanceIdentity.CRN = &crn_val
-			clientAuthPrototype.ClientCa = certificateInstanceIdentity
-		} else {
-			providerType := clientAuth["identity_provider"].(string)
-			clientAuthPrototype.IdentityProvider = &vpcv1.VPNServerAuthenticationByUsernameIDProvider{
-				ProviderType: &providerType,
+			if clientAuth["client_ca_crn"] != nil {
+				crn_val := clientAuth["client_ca_crn"].(string)
+				certificateInstanceIdentity := &vpcv1.CertificateInstanceIdentity{}
+				certificateInstanceIdentity.CRN = &crn_val
+				clientAuthPrototype.ClientCa = certificateInstanceIdentity
+
+			} else {
+				return diag.FromErr(fmt.Errorf("[ERROR] Error method type `certificate` should be passed with `client_ca_crn`"))
 			}
+		} else {
+			if clientAuth["identity_provider"] != nil {
+				providerType := clientAuth["identity_provider"].(string)
+				clientAuthPrototype.IdentityProvider = &vpcv1.VPNServerAuthenticationByUsernameIDProvider{
+					ProviderType: &providerType,
+				}
+			} else {
+				return diag.FromErr(fmt.Errorf("[ERROR] Error method type `username` should be passed with `identity_provider`"))
+			}
+
 		}
 		clientAuthentication = append(clientAuthentication, clientAuthPrototype)
 	}
@@ -744,15 +754,25 @@ func resourceIBMIsVPNServerUpdate(context context.Context, d *schema.ResourceDat
 			clientAuthPrototype.Method = &method
 
 			if method == "certificate" {
-				crn_val := clientAuth["client_ca_crn"].(string)
-				certificateInstanceIdentity := &vpcv1.CertificateInstanceIdentity{}
-				certificateInstanceIdentity.CRN = &crn_val
-				clientAuthPrototype.ClientCa = certificateInstanceIdentity
-			} else {
-				providerType := clientAuth["identity_provider"].(string)
-				clientAuthPrototype.IdentityProvider = &vpcv1.VPNServerAuthenticationByUsernameIDProvider{
-					ProviderType: &providerType,
+				if clientAuth["client_ca_crn"] != nil && clientAuth["client_ca_crn"] != "" {
+					crn_val := clientAuth["client_ca_crn"].(string)
+					certificateInstanceIdentity := &vpcv1.CertificateInstanceIdentity{}
+					certificateInstanceIdentity.CRN = &crn_val
+					clientAuthPrototype.ClientCa = certificateInstanceIdentity
+
+				} else {
+					return diag.FromErr(fmt.Errorf("[ERROR] Error method type `certificate` should be passed with `client_ca_crn`"))
 				}
+			} else {
+				if clientAuth["identity_provider"] != nil && clientAuth["identity_provider"] != "" {
+					providerType := clientAuth["identity_provider"].(string)
+					clientAuthPrototype.IdentityProvider = &vpcv1.VPNServerAuthenticationByUsernameIDProvider{
+						ProviderType: &providerType,
+					}
+				} else {
+					return diag.FromErr(fmt.Errorf("[ERROR] Error method type `username` should be passed with `identity_provider`"))
+				}
+
 			}
 			clientAuthentication = append(clientAuthentication, clientAuthPrototype)
 		}

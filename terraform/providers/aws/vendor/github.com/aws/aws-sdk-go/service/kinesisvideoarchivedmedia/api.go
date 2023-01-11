@@ -29,14 +29,13 @@ const opGetClip = "GetClip"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetClipRequest method.
+//	req, resp := client.GetClipRequest(params)
 //
-//    // Example sending a request using the GetClipRequest method.
-//    req, resp := client.GetClipRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/GetClip
 func (c *KinesisVideoArchivedMedia) GetClipRequest(input *GetClipInput) (req *request.Request, output *GetClipOutput) {
@@ -69,22 +68,22 @@ func (c *KinesisVideoArchivedMedia) GetClipRequest(input *GetClipInput) (req *re
 // An Amazon Kinesis video stream has the following requirements for providing
 // data through MP4:
 //
-//    * The media must contain h.264 or h.265 encoded video and, optionally,
-//    AAC or G.711 encoded audio. Specifically, the codec ID of track 1 should
-//    be V_MPEG/ISO/AVC (for h.264) or V_MPEGH/ISO/HEVC (for H.265). Optionally,
-//    the codec ID of track 2 should be A_AAC (for AAC) or A_MS/ACM (for G.711).
+//   - The media must contain h.264 or h.265 encoded video and, optionally,
+//     AAC or G.711 encoded audio. Specifically, the codec ID of track 1 should
+//     be V_MPEG/ISO/AVC (for h.264) or V_MPEGH/ISO/HEVC (for H.265). Optionally,
+//     the codec ID of track 2 should be A_AAC (for AAC) or A_MS/ACM (for G.711).
 //
-//    * Data retention must be greater than 0.
+//   - Data retention must be greater than 0.
 //
-//    * The video track of each fragment must contain codec private data in
-//    the Advanced Video Coding (AVC) for H.264 format and HEVC for H.265 format.
-//    For more information, see MPEG-4 specification ISO/IEC 14496-15 (https://www.iso.org/standard/55980.html).
-//    For information about adapting stream data to a given format, see NAL
-//    Adaptation Flags (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/producer-reference-nal.html).
+//   - The video track of each fragment must contain codec private data in
+//     the Advanced Video Coding (AVC) for H.264 format and HEVC for H.265 format.
+//     For more information, see MPEG-4 specification ISO/IEC 14496-15 (https://www.iso.org/standard/55980.html).
+//     For information about adapting stream data to a given format, see NAL
+//     Adaptation Flags (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/producer-reference-nal.html).
 //
-//    * The audio track (if present) of each fragment must contain codec private
-//    data in the AAC format (AAC specification ISO/IEC 13818-7 (https://www.iso.org/standard/43345.html))
-//    or the MS Wave format (http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html).
+//   - The audio track (if present) of each fragment must contain codec private
+//     data in the AAC format (AAC specification ISO/IEC 13818-7 (https://www.iso.org/standard/43345.html))
+//     or the MS Wave format (http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html).
 //
 // You can monitor the amount of outgoing data by monitoring the GetClip.OutgoingBytes
 // Amazon CloudWatch metric. For information about using CloudWatch to monitor
@@ -101,49 +100,50 @@ func (c *KinesisVideoArchivedMedia) GetClipRequest(input *GetClipInput) (req *re
 // API operation GetClip for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   GetMedia throws this error when Kinesis Video Streams can't find the stream
-//   that you specified.
 //
-//   GetHLSStreamingSessionURL and GetDASHStreamingSessionURL throw this error
-//   if a session with a PlaybackMode of ON_DEMAND or LIVE_REPLAYis requested
-//   for a stream that has no fragments within the requested time range, or if
-//   a session with a PlaybackMode of LIVE is requested for a stream that has
-//   no fragments within the last 30 seconds.
+//   - ResourceNotFoundException
+//     GetMedia throws this error when Kinesis Video Streams can't find the stream
+//     that you specified.
 //
-//   * InvalidArgumentException
-//   A specified parameter exceeds its restrictions, is not supported, or can't
-//   be used.
+//     GetHLSStreamingSessionURL and GetDASHStreamingSessionURL throw this error
+//     if a session with a PlaybackMode of ON_DEMAND or LIVE_REPLAYis requested
+//     for a stream that has no fragments within the requested time range, or if
+//     a session with a PlaybackMode of LIVE is requested for a stream that has
+//     no fragments within the last 30 seconds.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   a limit. Try making the call later. For information about limits, see Kinesis
-//   Video Streams Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
+//   - InvalidArgumentException
+//     A specified parameter exceeds its restrictions, is not supported, or can't
+//     be used.
 //
-//   * NotAuthorizedException
-//   Status Code: 403, The caller is not authorized to perform an operation on
-//   the given stream, or the token has expired.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     a limit. Try making the call later. For information about limits, see Kinesis
+//     Video Streams Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
 //
-//   * UnsupportedStreamMediaTypeException
-//   The type of the media (for example, h.264 or h.265 video or ACC or G.711
-//   audio) could not be determined from the codec IDs of the tracks in the first
-//   fragment for a playback session. The codec ID for track 1 should be V_MPEG/ISO/AVC
-//   and, optionally, the codec ID for track 2 should be A_AAC.
+//   - NotAuthorizedException
+//     Status Code: 403, The caller is not authorized to perform an operation on
+//     the given stream, or the token has expired.
 //
-//   * MissingCodecPrivateDataException
-//   No codec private data was found in at least one of tracks of the video stream.
+//   - UnsupportedStreamMediaTypeException
+//     The type of the media (for example, h.264 or h.265 video or ACC or G.711
+//     audio) could not be determined from the codec IDs of the tracks in the first
+//     fragment for a playback session. The codec ID for track 1 should be V_MPEG/ISO/AVC
+//     and, optionally, the codec ID for track 2 should be A_AAC.
 //
-//   * InvalidCodecPrivateDataException
-//   The codec private data in at least one of the tracks of the video stream
-//   is not valid for this operation.
+//   - MissingCodecPrivateDataException
+//     No codec private data was found in at least one of tracks of the video stream.
 //
-//   * InvalidMediaFrameException
-//   One or more frames in the requested clip could not be parsed based on the
-//   specified codec.
+//   - InvalidCodecPrivateDataException
+//     The codec private data in at least one of the tracks of the video stream
+//     is not valid for this operation.
 //
-//   * NoDataRetentionException
-//   A streaming session was requested for a stream that does not retain data
-//   (that is, has a DataRetentionInHours of 0).
+//   - InvalidMediaFrameException
+//     One or more frames in the requested clip could not be parsed based on the
+//     specified codec.
+//
+//   - NoDataRetentionException
+//     A streaming session was requested for a stream that does not retain data
+//     (that is, has a DataRetentionInHours of 0).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/GetClip
 func (c *KinesisVideoArchivedMedia) GetClip(input *GetClipInput) (*GetClipOutput, error) {
@@ -183,14 +183,13 @@ const opGetDASHStreamingSessionURL = "GetDASHStreamingSessionURL"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetDASHStreamingSessionURLRequest method.
+//	req, resp := client.GetDASHStreamingSessionURLRequest(params)
 //
-//    // Example sending a request using the GetDASHStreamingSessionURLRequest method.
-//    req, resp := client.GetDASHStreamingSessionURLRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/GetDASHStreamingSessionURL
 func (c *KinesisVideoArchivedMedia) GetDASHStreamingSessionURLRequest(input *GetDASHStreamingSessionURLInput) (req *request.Request, output *GetDASHStreamingSessionURLOutput) {
@@ -220,22 +219,22 @@ func (c *KinesisVideoArchivedMedia) GetDASHStreamingSessionURLRequest(input *Get
 // An Amazon Kinesis video stream has the following requirements for providing
 // data through MPEG-DASH:
 //
-//    * The media must contain h.264 or h.265 encoded video and, optionally,
-//    AAC or G.711 encoded audio. Specifically, the codec ID of track 1 should
-//    be V_MPEG/ISO/AVC (for h.264) or V_MPEGH/ISO/HEVC (for H.265). Optionally,
-//    the codec ID of track 2 should be A_AAC (for AAC) or A_MS/ACM (for G.711).
+//   - The media must contain h.264 or h.265 encoded video and, optionally,
+//     AAC or G.711 encoded audio. Specifically, the codec ID of track 1 should
+//     be V_MPEG/ISO/AVC (for h.264) or V_MPEGH/ISO/HEVC (for H.265). Optionally,
+//     the codec ID of track 2 should be A_AAC (for AAC) or A_MS/ACM (for G.711).
 //
-//    * Data retention must be greater than 0.
+//   - Data retention must be greater than 0.
 //
-//    * The video track of each fragment must contain codec private data in
-//    the Advanced Video Coding (AVC) for H.264 format and HEVC for H.265 format.
-//    For more information, see MPEG-4 specification ISO/IEC 14496-15 (https://www.iso.org/standard/55980.html).
-//    For information about adapting stream data to a given format, see NAL
-//    Adaptation Flags (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/producer-reference-nal.html).
+//   - The video track of each fragment must contain codec private data in
+//     the Advanced Video Coding (AVC) for H.264 format and HEVC for H.265 format.
+//     For more information, see MPEG-4 specification ISO/IEC 14496-15 (https://www.iso.org/standard/55980.html).
+//     For information about adapting stream data to a given format, see NAL
+//     Adaptation Flags (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/producer-reference-nal.html).
 //
-//    * The audio track (if present) of each fragment must contain codec private
-//    data in the AAC format (AAC specification ISO/IEC 13818-7 (https://www.iso.org/standard/43345.html))
-//    or the MS Wave format (http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html).
+//   - The audio track (if present) of each fragment must contain codec private
+//     data in the AAC format (AAC specification ISO/IEC 13818-7 (https://www.iso.org/standard/43345.html))
+//     or the MS Wave format (http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html).
 //
 // The following procedure shows how to use MPEG-DASH with Kinesis Video Streams:
 //
@@ -268,28 +267,28 @@ func (c *KinesisVideoArchivedMedia) GetDASHStreamingSessionURLRequest(input *Get
 // and media data normally. When the media player requests data, it calls the
 // following actions:
 //
-//    * GetDASHManifest: Retrieves an MPEG DASH manifest, which contains the
-//    metadata for the media that you want to playback.
+//   - GetDASHManifest: Retrieves an MPEG DASH manifest, which contains the
+//     metadata for the media that you want to playback.
 //
-//    * GetMP4InitFragment: Retrieves the MP4 initialization fragment. The media
-//    player typically loads the initialization fragment before loading any
-//    media fragments. This fragment contains the "fytp" and "moov" MP4 atoms,
-//    and the child atoms that are needed to initialize the media player decoder.
-//    The initialization fragment does not correspond to a fragment in a Kinesis
-//    video stream. It contains only the codec private data for the stream and
-//    respective track, which the media player needs to decode the media frames.
+//   - GetMP4InitFragment: Retrieves the MP4 initialization fragment. The media
+//     player typically loads the initialization fragment before loading any
+//     media fragments. This fragment contains the "fytp" and "moov" MP4 atoms,
+//     and the child atoms that are needed to initialize the media player decoder.
+//     The initialization fragment does not correspond to a fragment in a Kinesis
+//     video stream. It contains only the codec private data for the stream and
+//     respective track, which the media player needs to decode the media frames.
 //
-//    * GetMP4MediaFragment: Retrieves MP4 media fragments. These fragments
-//    contain the "moof" and "mdat" MP4 atoms and their child atoms, containing
-//    the encoded fragment's media frames and their timestamps. After the first
-//    media fragment is made available in a streaming session, any fragments
-//    that don't contain the same codec private data cause an error to be returned
-//    when those different media fragments are loaded. Therefore, the codec
-//    private data should not change between fragments in a session. This also
-//    means that the session fails if the fragments in a stream change from
-//    having only video to having both audio and video. Data retrieved with
-//    this action is billable. See Pricing (https://aws.amazon.com/kinesis/video-streams/pricing/)
-//    for details.
+//   - GetMP4MediaFragment: Retrieves MP4 media fragments. These fragments
+//     contain the "moof" and "mdat" MP4 atoms and their child atoms, containing
+//     the encoded fragment's media frames and their timestamps. After the first
+//     media fragment is made available in a streaming session, any fragments
+//     that don't contain the same codec private data cause an error to be returned
+//     when those different media fragments are loaded. Therefore, the codec
+//     private data should not change between fragments in a session. This also
+//     means that the session fails if the fragments in a stream change from
+//     having only video to having both audio and video. Data retrieved with
+//     this action is billable. See Pricing (https://aws.amazon.com/kinesis/video-streams/pricing/)
+//     for details.
 //
 // For restrictions that apply to MPEG-DASH sessions, see Kinesis Video Streams
 // Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
@@ -309,12 +308,12 @@ func (c *KinesisVideoArchivedMedia) GetDASHStreamingSessionURLRequest(input *Get
 // API, in addition to the HTTP status code and the response body, it includes
 // the following pieces of information:
 //
-//    * x-amz-ErrorType HTTP header – contains a more specific error type
-//    in addition to what the HTTP status code provides.
+//   - x-amz-ErrorType HTTP header – contains a more specific error type
+//     in addition to what the HTTP status code provides.
 //
-//    * x-amz-RequestId HTTP header – if you want to report an issue to AWS,
-//    the support team can better diagnose the problem if given the Request
-//    Id.
+//   - x-amz-RequestId HTTP header – if you want to report an issue to AWS,
+//     the support team can better diagnose the problem if given the Request
+//     Id.
 //
 // Both the HTTP status code and the ErrorType header can be utilized to make
 // programmatic decisions about whether errors are retry-able and under what
@@ -332,45 +331,46 @@ func (c *KinesisVideoArchivedMedia) GetDASHStreamingSessionURLRequest(input *Get
 // API operation GetDASHStreamingSessionURL for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   GetMedia throws this error when Kinesis Video Streams can't find the stream
-//   that you specified.
 //
-//   GetHLSStreamingSessionURL and GetDASHStreamingSessionURL throw this error
-//   if a session with a PlaybackMode of ON_DEMAND or LIVE_REPLAYis requested
-//   for a stream that has no fragments within the requested time range, or if
-//   a session with a PlaybackMode of LIVE is requested for a stream that has
-//   no fragments within the last 30 seconds.
+//   - ResourceNotFoundException
+//     GetMedia throws this error when Kinesis Video Streams can't find the stream
+//     that you specified.
 //
-//   * InvalidArgumentException
-//   A specified parameter exceeds its restrictions, is not supported, or can't
-//   be used.
+//     GetHLSStreamingSessionURL and GetDASHStreamingSessionURL throw this error
+//     if a session with a PlaybackMode of ON_DEMAND or LIVE_REPLAYis requested
+//     for a stream that has no fragments within the requested time range, or if
+//     a session with a PlaybackMode of LIVE is requested for a stream that has
+//     no fragments within the last 30 seconds.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   a limit. Try making the call later. For information about limits, see Kinesis
-//   Video Streams Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
+//   - InvalidArgumentException
+//     A specified parameter exceeds its restrictions, is not supported, or can't
+//     be used.
 //
-//   * NotAuthorizedException
-//   Status Code: 403, The caller is not authorized to perform an operation on
-//   the given stream, or the token has expired.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     a limit. Try making the call later. For information about limits, see Kinesis
+//     Video Streams Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
 //
-//   * UnsupportedStreamMediaTypeException
-//   The type of the media (for example, h.264 or h.265 video or ACC or G.711
-//   audio) could not be determined from the codec IDs of the tracks in the first
-//   fragment for a playback session. The codec ID for track 1 should be V_MPEG/ISO/AVC
-//   and, optionally, the codec ID for track 2 should be A_AAC.
+//   - NotAuthorizedException
+//     Status Code: 403, The caller is not authorized to perform an operation on
+//     the given stream, or the token has expired.
 //
-//   * NoDataRetentionException
-//   A streaming session was requested for a stream that does not retain data
-//   (that is, has a DataRetentionInHours of 0).
+//   - UnsupportedStreamMediaTypeException
+//     The type of the media (for example, h.264 or h.265 video or ACC or G.711
+//     audio) could not be determined from the codec IDs of the tracks in the first
+//     fragment for a playback session. The codec ID for track 1 should be V_MPEG/ISO/AVC
+//     and, optionally, the codec ID for track 2 should be A_AAC.
 //
-//   * MissingCodecPrivateDataException
-//   No codec private data was found in at least one of tracks of the video stream.
+//   - NoDataRetentionException
+//     A streaming session was requested for a stream that does not retain data
+//     (that is, has a DataRetentionInHours of 0).
 //
-//   * InvalidCodecPrivateDataException
-//   The codec private data in at least one of the tracks of the video stream
-//   is not valid for this operation.
+//   - MissingCodecPrivateDataException
+//     No codec private data was found in at least one of tracks of the video stream.
+//
+//   - InvalidCodecPrivateDataException
+//     The codec private data in at least one of the tracks of the video stream
+//     is not valid for this operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/GetDASHStreamingSessionURL
 func (c *KinesisVideoArchivedMedia) GetDASHStreamingSessionURL(input *GetDASHStreamingSessionURLInput) (*GetDASHStreamingSessionURLOutput, error) {
@@ -410,14 +410,13 @@ const opGetHLSStreamingSessionURL = "GetHLSStreamingSessionURL"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetHLSStreamingSessionURLRequest method.
+//	req, resp := client.GetHLSStreamingSessionURLRequest(params)
 //
-//    // Example sending a request using the GetHLSStreamingSessionURLRequest method.
-//    req, resp := client.GetHLSStreamingSessionURLRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/GetHLSStreamingSessionURL
 func (c *KinesisVideoArchivedMedia) GetHLSStreamingSessionURLRequest(input *GetHLSStreamingSessionURLInput) (req *request.Request, output *GetHLSStreamingSessionURLOutput) {
@@ -447,21 +446,21 @@ func (c *KinesisVideoArchivedMedia) GetHLSStreamingSessionURLRequest(input *GetH
 // An Amazon Kinesis video stream has the following requirements for providing
 // data through HLS:
 //
-//    * The media must contain h.264 or h.265 encoded video and, optionally,
-//    AAC encoded audio. Specifically, the codec ID of track 1 should be V_MPEG/ISO/AVC
-//    (for h.264) or V_MPEG/ISO/HEVC (for h.265). Optionally, the codec ID of
-//    track 2 should be A_AAC.
+//   - The media must contain h.264 or h.265 encoded video and, optionally,
+//     AAC encoded audio. Specifically, the codec ID of track 1 should be V_MPEG/ISO/AVC
+//     (for h.264) or V_MPEG/ISO/HEVC (for h.265). Optionally, the codec ID of
+//     track 2 should be A_AAC.
 //
-//    * Data retention must be greater than 0.
+//   - Data retention must be greater than 0.
 //
-//    * The video track of each fragment must contain codec private data in
-//    the Advanced Video Coding (AVC) for H.264 format or HEVC for H.265 format
-//    (MPEG-4 specification ISO/IEC 14496-15 (https://www.iso.org/standard/55980.html)).
-//    For information about adapting stream data to a given format, see NAL
-//    Adaptation Flags (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/producer-reference-nal.html).
+//   - The video track of each fragment must contain codec private data in
+//     the Advanced Video Coding (AVC) for H.264 format or HEVC for H.265 format
+//     (MPEG-4 specification ISO/IEC 14496-15 (https://www.iso.org/standard/55980.html)).
+//     For information about adapting stream data to a given format, see NAL
+//     Adaptation Flags (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/producer-reference-nal.html).
 //
-//    * The audio track (if present) of each fragment must contain codec private
-//    data in the AAC format (AAC specification ISO/IEC 13818-7 (https://www.iso.org/standard/43345.html)).
+//   - The audio track (if present) of each fragment must contain codec private
+//     data in the AAC format (AAC specification ISO/IEC 13818-7 (https://www.iso.org/standard/43345.html)).
 //
 // Kinesis Video Streams HLS sessions contain fragments in the fragmented MPEG-4
 // form (also called fMP4 or CMAF) or the MPEG-2 form (also called TS chunks,
@@ -499,46 +498,46 @@ func (c *KinesisVideoArchivedMedia) GetHLSStreamingSessionURLRequest(input *GetH
 // and media data normally. When the media player requests data, it calls the
 // following actions:
 //
-//    * GetHLSMasterPlaylist: Retrieves an HLS master playlist, which contains
-//    a URL for the GetHLSMediaPlaylist action for each track, and additional
-//    metadata for the media player, including estimated bitrate and resolution.
+//   - GetHLSMasterPlaylist: Retrieves an HLS master playlist, which contains
+//     a URL for the GetHLSMediaPlaylist action for each track, and additional
+//     metadata for the media player, including estimated bitrate and resolution.
 //
-//    * GetHLSMediaPlaylist: Retrieves an HLS media playlist, which contains
-//    a URL to access the MP4 initialization fragment with the GetMP4InitFragment
-//    action, and URLs to access the MP4 media fragments with the GetMP4MediaFragment
-//    actions. The HLS media playlist also contains metadata about the stream
-//    that the player needs to play it, such as whether the PlaybackMode is
-//    LIVE or ON_DEMAND. The HLS media playlist is typically static for sessions
-//    with a PlaybackType of ON_DEMAND. The HLS media playlist is continually
-//    updated with new fragments for sessions with a PlaybackType of LIVE. There
-//    is a distinct HLS media playlist for the video track and the audio track
-//    (if applicable) that contains MP4 media URLs for the specific track.
+//   - GetHLSMediaPlaylist: Retrieves an HLS media playlist, which contains
+//     a URL to access the MP4 initialization fragment with the GetMP4InitFragment
+//     action, and URLs to access the MP4 media fragments with the GetMP4MediaFragment
+//     actions. The HLS media playlist also contains metadata about the stream
+//     that the player needs to play it, such as whether the PlaybackMode is
+//     LIVE or ON_DEMAND. The HLS media playlist is typically static for sessions
+//     with a PlaybackType of ON_DEMAND. The HLS media playlist is continually
+//     updated with new fragments for sessions with a PlaybackType of LIVE. There
+//     is a distinct HLS media playlist for the video track and the audio track
+//     (if applicable) that contains MP4 media URLs for the specific track.
 //
-//    * GetMP4InitFragment: Retrieves the MP4 initialization fragment. The media
-//    player typically loads the initialization fragment before loading any
-//    media fragments. This fragment contains the "fytp" and "moov" MP4 atoms,
-//    and the child atoms that are needed to initialize the media player decoder.
-//    The initialization fragment does not correspond to a fragment in a Kinesis
-//    video stream. It contains only the codec private data for the stream and
-//    respective track, which the media player needs to decode the media frames.
+//   - GetMP4InitFragment: Retrieves the MP4 initialization fragment. The media
+//     player typically loads the initialization fragment before loading any
+//     media fragments. This fragment contains the "fytp" and "moov" MP4 atoms,
+//     and the child atoms that are needed to initialize the media player decoder.
+//     The initialization fragment does not correspond to a fragment in a Kinesis
+//     video stream. It contains only the codec private data for the stream and
+//     respective track, which the media player needs to decode the media frames.
 //
-//    * GetMP4MediaFragment: Retrieves MP4 media fragments. These fragments
-//    contain the "moof" and "mdat" MP4 atoms and their child atoms, containing
-//    the encoded fragment's media frames and their timestamps. After the first
-//    media fragment is made available in a streaming session, any fragments
-//    that don't contain the same codec private data cause an error to be returned
-//    when those different media fragments are loaded. Therefore, the codec
-//    private data should not change between fragments in a session. This also
-//    means that the session fails if the fragments in a stream change from
-//    having only video to having both audio and video. Data retrieved with
-//    this action is billable. See Pricing (https://aws.amazon.com/kinesis/video-streams/pricing/)
-//    for details.
+//   - GetMP4MediaFragment: Retrieves MP4 media fragments. These fragments
+//     contain the "moof" and "mdat" MP4 atoms and their child atoms, containing
+//     the encoded fragment's media frames and their timestamps. After the first
+//     media fragment is made available in a streaming session, any fragments
+//     that don't contain the same codec private data cause an error to be returned
+//     when those different media fragments are loaded. Therefore, the codec
+//     private data should not change between fragments in a session. This also
+//     means that the session fails if the fragments in a stream change from
+//     having only video to having both audio and video. Data retrieved with
+//     this action is billable. See Pricing (https://aws.amazon.com/kinesis/video-streams/pricing/)
+//     for details.
 //
-//    * GetTSFragment: Retrieves MPEG TS fragments containing both initialization
-//    and media data for all tracks in the stream. If the ContainerFormat is
-//    MPEG_TS, this API is used instead of GetMP4InitFragment and GetMP4MediaFragment
-//    to retrieve stream media. Data retrieved with this action is billable.
-//    For more information, see Kinesis Video Streams pricing (https://aws.amazon.com/kinesis/video-streams/pricing/).
+//   - GetTSFragment: Retrieves MPEG TS fragments containing both initialization
+//     and media data for all tracks in the stream. If the ContainerFormat is
+//     MPEG_TS, this API is used instead of GetMP4InitFragment and GetMP4MediaFragment
+//     to retrieve stream media. Data retrieved with this action is billable.
+//     For more information, see Kinesis Video Streams pricing (https://aws.amazon.com/kinesis/video-streams/pricing/).
 //
 // A streaming session URL must not be shared between players. The service might
 // throttle a session if multiple media players are sharing it. For connection
@@ -559,12 +558,12 @@ func (c *KinesisVideoArchivedMedia) GetHLSStreamingSessionURLRequest(input *GetH
 // API, in addition to the HTTP status code and the response body, it includes
 // the following pieces of information:
 //
-//    * x-amz-ErrorType HTTP header – contains a more specific error type
-//    in addition to what the HTTP status code provides.
+//   - x-amz-ErrorType HTTP header – contains a more specific error type
+//     in addition to what the HTTP status code provides.
 //
-//    * x-amz-RequestId HTTP header – if you want to report an issue to AWS,
-//    the support team can better diagnose the problem if given the Request
-//    Id.
+//   - x-amz-RequestId HTTP header – if you want to report an issue to AWS,
+//     the support team can better diagnose the problem if given the Request
+//     Id.
 //
 // Both the HTTP status code and the ErrorType header can be utilized to make
 // programmatic decisions about whether errors are retry-able and under what
@@ -582,45 +581,46 @@ func (c *KinesisVideoArchivedMedia) GetHLSStreamingSessionURLRequest(input *GetH
 // API operation GetHLSStreamingSessionURL for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   GetMedia throws this error when Kinesis Video Streams can't find the stream
-//   that you specified.
 //
-//   GetHLSStreamingSessionURL and GetDASHStreamingSessionURL throw this error
-//   if a session with a PlaybackMode of ON_DEMAND or LIVE_REPLAYis requested
-//   for a stream that has no fragments within the requested time range, or if
-//   a session with a PlaybackMode of LIVE is requested for a stream that has
-//   no fragments within the last 30 seconds.
+//   - ResourceNotFoundException
+//     GetMedia throws this error when Kinesis Video Streams can't find the stream
+//     that you specified.
 //
-//   * InvalidArgumentException
-//   A specified parameter exceeds its restrictions, is not supported, or can't
-//   be used.
+//     GetHLSStreamingSessionURL and GetDASHStreamingSessionURL throw this error
+//     if a session with a PlaybackMode of ON_DEMAND or LIVE_REPLAYis requested
+//     for a stream that has no fragments within the requested time range, or if
+//     a session with a PlaybackMode of LIVE is requested for a stream that has
+//     no fragments within the last 30 seconds.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   a limit. Try making the call later. For information about limits, see Kinesis
-//   Video Streams Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
+//   - InvalidArgumentException
+//     A specified parameter exceeds its restrictions, is not supported, or can't
+//     be used.
 //
-//   * NotAuthorizedException
-//   Status Code: 403, The caller is not authorized to perform an operation on
-//   the given stream, or the token has expired.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     a limit. Try making the call later. For information about limits, see Kinesis
+//     Video Streams Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
 //
-//   * UnsupportedStreamMediaTypeException
-//   The type of the media (for example, h.264 or h.265 video or ACC or G.711
-//   audio) could not be determined from the codec IDs of the tracks in the first
-//   fragment for a playback session. The codec ID for track 1 should be V_MPEG/ISO/AVC
-//   and, optionally, the codec ID for track 2 should be A_AAC.
+//   - NotAuthorizedException
+//     Status Code: 403, The caller is not authorized to perform an operation on
+//     the given stream, or the token has expired.
 //
-//   * NoDataRetentionException
-//   A streaming session was requested for a stream that does not retain data
-//   (that is, has a DataRetentionInHours of 0).
+//   - UnsupportedStreamMediaTypeException
+//     The type of the media (for example, h.264 or h.265 video or ACC or G.711
+//     audio) could not be determined from the codec IDs of the tracks in the first
+//     fragment for a playback session. The codec ID for track 1 should be V_MPEG/ISO/AVC
+//     and, optionally, the codec ID for track 2 should be A_AAC.
 //
-//   * MissingCodecPrivateDataException
-//   No codec private data was found in at least one of tracks of the video stream.
+//   - NoDataRetentionException
+//     A streaming session was requested for a stream that does not retain data
+//     (that is, has a DataRetentionInHours of 0).
 //
-//   * InvalidCodecPrivateDataException
-//   The codec private data in at least one of the tracks of the video stream
-//   is not valid for this operation.
+//   - MissingCodecPrivateDataException
+//     No codec private data was found in at least one of tracks of the video stream.
+//
+//   - InvalidCodecPrivateDataException
+//     The codec private data in at least one of the tracks of the video stream
+//     is not valid for this operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/GetHLSStreamingSessionURL
 func (c *KinesisVideoArchivedMedia) GetHLSStreamingSessionURL(input *GetHLSStreamingSessionURLInput) (*GetHLSStreamingSessionURLOutput, error) {
@@ -644,6 +644,163 @@ func (c *KinesisVideoArchivedMedia) GetHLSStreamingSessionURLWithContext(ctx aws
 	return out, req.Send()
 }
 
+const opGetImages = "GetImages"
+
+// GetImagesRequest generates a "aws/request.Request" representing the
+// client's request for the GetImages operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetImages for more information on using the GetImages
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetImagesRequest method.
+//	req, resp := client.GetImagesRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/GetImages
+func (c *KinesisVideoArchivedMedia) GetImagesRequest(input *GetImagesInput) (req *request.Request, output *GetImagesOutput) {
+	op := &request.Operation{
+		Name:       opGetImages,
+		HTTPMethod: "POST",
+		HTTPPath:   "/getImages",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &GetImagesInput{}
+	}
+
+	output = &GetImagesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetImages API operation for Amazon Kinesis Video Streams Archived Media.
+//
+// Retrieves a list of Images corresponding to each timestamp for a given time
+// range, sampling interval, and image format configuration.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Kinesis Video Streams Archived Media's
+// API operation GetImages for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ResourceNotFoundException
+//     GetMedia throws this error when Kinesis Video Streams can't find the stream
+//     that you specified.
+//
+//     GetHLSStreamingSessionURL and GetDASHStreamingSessionURL throw this error
+//     if a session with a PlaybackMode of ON_DEMAND or LIVE_REPLAYis requested
+//     for a stream that has no fragments within the requested time range, or if
+//     a session with a PlaybackMode of LIVE is requested for a stream that has
+//     no fragments within the last 30 seconds.
+//
+//   - InvalidArgumentException
+//     A specified parameter exceeds its restrictions, is not supported, or can't
+//     be used.
+//
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     a limit. Try making the call later. For information about limits, see Kinesis
+//     Video Streams Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
+//
+//   - NotAuthorizedException
+//     Status Code: 403, The caller is not authorized to perform an operation on
+//     the given stream, or the token has expired.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/GetImages
+func (c *KinesisVideoArchivedMedia) GetImages(input *GetImagesInput) (*GetImagesOutput, error) {
+	req, out := c.GetImagesRequest(input)
+	return out, req.Send()
+}
+
+// GetImagesWithContext is the same as GetImages with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetImages for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *KinesisVideoArchivedMedia) GetImagesWithContext(ctx aws.Context, input *GetImagesInput, opts ...request.Option) (*GetImagesOutput, error) {
+	req, out := c.GetImagesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// GetImagesPages iterates over the pages of a GetImages operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See GetImages method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a GetImages operation.
+//	pageNum := 0
+//	err := client.GetImagesPages(params,
+//	    func(page *kinesisvideoarchivedmedia.GetImagesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *KinesisVideoArchivedMedia) GetImagesPages(input *GetImagesInput, fn func(*GetImagesOutput, bool) bool) error {
+	return c.GetImagesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// GetImagesPagesWithContext same as GetImagesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *KinesisVideoArchivedMedia) GetImagesPagesWithContext(ctx aws.Context, input *GetImagesInput, fn func(*GetImagesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *GetImagesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.GetImagesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*GetImagesOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opGetMediaForFragmentList = "GetMediaForFragmentList"
 
 // GetMediaForFragmentListRequest generates a "aws/request.Request" representing the
@@ -660,14 +817,13 @@ const opGetMediaForFragmentList = "GetMediaForFragmentList"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetMediaForFragmentListRequest method.
+//	req, resp := client.GetMediaForFragmentListRequest(params)
 //
-//    // Example sending a request using the GetMediaForFragmentListRequest method.
-//    req, resp := client.GetMediaForFragmentListRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/GetMediaForFragmentList
 func (c *KinesisVideoArchivedMedia) GetMediaForFragmentListRequest(input *GetMediaForFragmentListInput) (req *request.Request, output *GetMediaForFragmentListOutput) {
@@ -701,12 +857,12 @@ func (c *KinesisVideoArchivedMedia) GetMediaForFragmentListRequest(input *GetMed
 // API, in addition to the HTTP status code and the response body, it includes
 // the following pieces of information:
 //
-//    * x-amz-ErrorType HTTP header – contains a more specific error type
-//    in addition to what the HTTP status code provides.
+//   - x-amz-ErrorType HTTP header – contains a more specific error type
+//     in addition to what the HTTP status code provides.
 //
-//    * x-amz-RequestId HTTP header – if you want to report an issue to AWS,
-//    the support team can better diagnose the problem if given the Request
-//    Id.
+//   - x-amz-RequestId HTTP header – if you want to report an issue to AWS,
+//     the support team can better diagnose the problem if given the Request
+//     Id.
 //
 // Both the HTTP status code and the ErrorType header can be utilized to make
 // programmatic decisions about whether errors are retry-able and under what
@@ -724,28 +880,29 @@ func (c *KinesisVideoArchivedMedia) GetMediaForFragmentListRequest(input *GetMed
 // API operation GetMediaForFragmentList for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   GetMedia throws this error when Kinesis Video Streams can't find the stream
-//   that you specified.
 //
-//   GetHLSStreamingSessionURL and GetDASHStreamingSessionURL throw this error
-//   if a session with a PlaybackMode of ON_DEMAND or LIVE_REPLAYis requested
-//   for a stream that has no fragments within the requested time range, or if
-//   a session with a PlaybackMode of LIVE is requested for a stream that has
-//   no fragments within the last 30 seconds.
+//   - ResourceNotFoundException
+//     GetMedia throws this error when Kinesis Video Streams can't find the stream
+//     that you specified.
 //
-//   * InvalidArgumentException
-//   A specified parameter exceeds its restrictions, is not supported, or can't
-//   be used.
+//     GetHLSStreamingSessionURL and GetDASHStreamingSessionURL throw this error
+//     if a session with a PlaybackMode of ON_DEMAND or LIVE_REPLAYis requested
+//     for a stream that has no fragments within the requested time range, or if
+//     a session with a PlaybackMode of LIVE is requested for a stream that has
+//     no fragments within the last 30 seconds.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   a limit. Try making the call later. For information about limits, see Kinesis
-//   Video Streams Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
+//   - InvalidArgumentException
+//     A specified parameter exceeds its restrictions, is not supported, or can't
+//     be used.
 //
-//   * NotAuthorizedException
-//   Status Code: 403, The caller is not authorized to perform an operation on
-//   the given stream, or the token has expired.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     a limit. Try making the call later. For information about limits, see Kinesis
+//     Video Streams Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
+//
+//   - NotAuthorizedException
+//     Status Code: 403, The caller is not authorized to perform an operation on
+//     the given stream, or the token has expired.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/GetMediaForFragmentList
 func (c *KinesisVideoArchivedMedia) GetMediaForFragmentList(input *GetMediaForFragmentListInput) (*GetMediaForFragmentListOutput, error) {
@@ -785,14 +942,13 @@ const opListFragments = "ListFragments"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListFragmentsRequest method.
+//	req, resp := client.ListFragmentsRequest(params)
 //
-//    // Example sending a request using the ListFragmentsRequest method.
-//    req, resp := client.ListFragmentsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/ListFragments
 func (c *KinesisVideoArchivedMedia) ListFragmentsRequest(input *ListFragmentsInput) (req *request.Request, output *ListFragmentsOutput) {
@@ -835,12 +991,12 @@ func (c *KinesisVideoArchivedMedia) ListFragmentsRequest(input *ListFragmentsInp
 // API, in addition to the HTTP status code and the response body, it includes
 // the following pieces of information:
 //
-//    * x-amz-ErrorType HTTP header – contains a more specific error type
-//    in addition to what the HTTP status code provides.
+//   - x-amz-ErrorType HTTP header – contains a more specific error type
+//     in addition to what the HTTP status code provides.
 //
-//    * x-amz-RequestId HTTP header – if you want to report an issue to AWS,
-//    the support team can better diagnose the problem if given the Request
-//    Id.
+//   - x-amz-RequestId HTTP header – if you want to report an issue to AWS,
+//     the support team can better diagnose the problem if given the Request
+//     Id.
 //
 // Both the HTTP status code and the ErrorType header can be utilized to make
 // programmatic decisions about whether errors are retry-able and under what
@@ -858,28 +1014,29 @@ func (c *KinesisVideoArchivedMedia) ListFragmentsRequest(input *ListFragmentsInp
 // API operation ListFragments for usage and error information.
 //
 // Returned Error Types:
-//   * ResourceNotFoundException
-//   GetMedia throws this error when Kinesis Video Streams can't find the stream
-//   that you specified.
 //
-//   GetHLSStreamingSessionURL and GetDASHStreamingSessionURL throw this error
-//   if a session with a PlaybackMode of ON_DEMAND or LIVE_REPLAYis requested
-//   for a stream that has no fragments within the requested time range, or if
-//   a session with a PlaybackMode of LIVE is requested for a stream that has
-//   no fragments within the last 30 seconds.
+//   - ResourceNotFoundException
+//     GetMedia throws this error when Kinesis Video Streams can't find the stream
+//     that you specified.
 //
-//   * InvalidArgumentException
-//   A specified parameter exceeds its restrictions, is not supported, or can't
-//   be used.
+//     GetHLSStreamingSessionURL and GetDASHStreamingSessionURL throw this error
+//     if a session with a PlaybackMode of ON_DEMAND or LIVE_REPLAYis requested
+//     for a stream that has no fragments within the requested time range, or if
+//     a session with a PlaybackMode of LIVE is requested for a stream that has
+//     no fragments within the last 30 seconds.
 //
-//   * ClientLimitExceededException
-//   Kinesis Video Streams has throttled the request because you have exceeded
-//   a limit. Try making the call later. For information about limits, see Kinesis
-//   Video Streams Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
+//   - InvalidArgumentException
+//     A specified parameter exceeds its restrictions, is not supported, or can't
+//     be used.
 //
-//   * NotAuthorizedException
-//   Status Code: 403, The caller is not authorized to perform an operation on
-//   the given stream, or the token has expired.
+//   - ClientLimitExceededException
+//     Kinesis Video Streams has throttled the request because you have exceeded
+//     a limit. Try making the call later. For information about limits, see Kinesis
+//     Video Streams Limits (http://docs.aws.amazon.com/kinesisvideostreams/latest/dg/limits.html).
+//
+//   - NotAuthorizedException
+//     Status Code: 403, The caller is not authorized to perform an operation on
+//     the given stream, or the token has expired.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-archived-media-2017-09-30/ListFragments
 func (c *KinesisVideoArchivedMedia) ListFragments(input *ListFragmentsInput) (*ListFragmentsOutput, error) {
@@ -911,15 +1068,14 @@ func (c *KinesisVideoArchivedMedia) ListFragmentsWithContext(ctx aws.Context, in
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListFragments operation.
-//    pageNum := 0
-//    err := client.ListFragmentsPages(params,
-//        func(page *kinesisvideoarchivedmedia.ListFragmentsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListFragments operation.
+//	pageNum := 0
+//	err := client.ListFragmentsPages(params,
+//	    func(page *kinesisvideoarchivedmedia.ListFragmentsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *KinesisVideoArchivedMedia) ListFragmentsPages(input *ListFragmentsInput, fn func(*ListFragmentsOutput, bool) bool) error {
 	return c.ListFragmentsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1381,13 +1537,13 @@ func (s *Fragment) SetServerTimestamp(v time.Time) *Fragment {
 // start time and less than or equal to the end time are returned. For example,
 // if a stream contains fragments with the following start timestamps:
 //
-//    * 00:00:00
+//   - 00:00:00
 //
-//    * 00:00:02
+//   - 00:00:02
 //
-//    * 00:00:04
+//   - 00:00:04
 //
-//    * 00:00:06
+//   - 00:00:06
 //
 // A fragment selector range with a start time of 00:00:01 and end time of 00:00:04
 // would return the fragments with start times of 00:00:02 and 00:00:04.
@@ -2112,6 +2268,268 @@ func (s *GetHLSStreamingSessionURLOutput) SetHLSStreamingSessionURL(v string) *G
 	return s
 }
 
+type GetImagesInput struct {
+	_ struct{} `type:"structure"`
+
+	// The end timestamp for the range of images to be generated.
+	//
+	// EndTimestamp is a required field
+	EndTimestamp *time.Time `type:"timestamp" required:"true"`
+
+	// The format that will be used to encode the image.
+	//
+	// Format is a required field
+	Format *string `type:"string" required:"true" enum:"Format"`
+
+	// The list of a key-value pair structure that contains extra parameters that
+	// can be applied when the image is generated. The FormatConfig key is the JPEGQuality,
+	// which indicates the JPEG quality key to be used to generate the image. The
+	// FormatConfig value accepts ints from 1 to 100. If the value is 1, the image
+	// will be generated with less quality and the best compression. If the value
+	// is 100, the image will be generated with the best quality and less compression.
+	// If no value is provided, the default value of the JPEGQuality key will be
+	// set to 80.
+	FormatConfig map[string]*string `min:"1" type:"map"`
+
+	// The height of the output image that is used in conjunction with the WidthPixels
+	// parameter. When both HeightPixels and WidthPixels parameters are provided,
+	// the image will be stretched to fit the specified aspect ratio. If only the
+	// HeightPixels parameter is provided, its original aspect ratio will be used
+	// to calculate the WidthPixels ratio. If neither parameter is provided, the
+	// original image size will be returned.
+	HeightPixels *int64 `min:"1" type:"integer"`
+
+	// The origin of the Server or Producer timestamps to use to generate the images.
+	//
+	// ImageSelectorType is a required field
+	ImageSelectorType *string `type:"string" required:"true" enum:"ImageSelectorType"`
+
+	// The maximum number of images to be returned by the API.
+	//
+	// The default limit is 100 images per API response. The additional results
+	// will be paginated.
+	MaxResults *int64 `min:"1" type:"long"`
+
+	// A token that specifies where to start paginating the next set of Images.
+	// This is the GetImages:NextToken from a previously truncated response.
+	NextToken *string `min:"1" type:"string"`
+
+	// The time interval in milliseconds (ms) at which the images need to be generated
+	// from the stream. The minimum value that can be provided is 3000 ms. If the
+	// timestamp range is less than the sampling interval, the Image from the startTimestamp
+	// will be returned if available.
+	//
+	// The minimum value of 3000 ms is a soft limit. If needed, a lower sampling
+	// frequency can be requested.
+	//
+	// SamplingInterval is a required field
+	SamplingInterval *int64 `min:"3000" type:"integer" required:"true"`
+
+	// The starting point from which the images should be generated. This StartTimestamp
+	// must be within an inclusive range of timestamps for an image to be returned.
+	//
+	// StartTimestamp is a required field
+	StartTimestamp *time.Time `type:"timestamp" required:"true"`
+
+	// The Amazon Resource Name (ARN) of the stream from which to retrieve the images.
+	// You must specify either the StreamName or the StreamARN.
+	StreamARN *string `min:"1" type:"string"`
+
+	// The name of the stream from which to retrieve the images. You must specify
+	// either the StreamName or the StreamARN.
+	StreamName *string `min:"1" type:"string"`
+
+	// The width of the output image that is used in conjunction with the HeightPixels
+	// parameter. When both WidthPixels and HeightPixels parameters are provided,
+	// the image will be stretched to fit the specified aspect ratio. If only the
+	// WidthPixels parameter is provided or if only the HeightPixels is provided,
+	// a ValidationException will be thrown. If neither parameter is provided, the
+	// original image size from the stream will be returned.
+	WidthPixels *int64 `min:"1" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetImagesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetImagesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetImagesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetImagesInput"}
+	if s.EndTimestamp == nil {
+		invalidParams.Add(request.NewErrParamRequired("EndTimestamp"))
+	}
+	if s.Format == nil {
+		invalidParams.Add(request.NewErrParamRequired("Format"))
+	}
+	if s.FormatConfig != nil && len(s.FormatConfig) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FormatConfig", 1))
+	}
+	if s.HeightPixels != nil && *s.HeightPixels < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("HeightPixels", 1))
+	}
+	if s.ImageSelectorType == nil {
+		invalidParams.Add(request.NewErrParamRequired("ImageSelectorType"))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+	if s.SamplingInterval == nil {
+		invalidParams.Add(request.NewErrParamRequired("SamplingInterval"))
+	}
+	if s.SamplingInterval != nil && *s.SamplingInterval < 3000 {
+		invalidParams.Add(request.NewErrParamMinValue("SamplingInterval", 3000))
+	}
+	if s.StartTimestamp == nil {
+		invalidParams.Add(request.NewErrParamRequired("StartTimestamp"))
+	}
+	if s.StreamARN != nil && len(*s.StreamARN) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamARN", 1))
+	}
+	if s.StreamName != nil && len(*s.StreamName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamName", 1))
+	}
+	if s.WidthPixels != nil && *s.WidthPixels < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("WidthPixels", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEndTimestamp sets the EndTimestamp field's value.
+func (s *GetImagesInput) SetEndTimestamp(v time.Time) *GetImagesInput {
+	s.EndTimestamp = &v
+	return s
+}
+
+// SetFormat sets the Format field's value.
+func (s *GetImagesInput) SetFormat(v string) *GetImagesInput {
+	s.Format = &v
+	return s
+}
+
+// SetFormatConfig sets the FormatConfig field's value.
+func (s *GetImagesInput) SetFormatConfig(v map[string]*string) *GetImagesInput {
+	s.FormatConfig = v
+	return s
+}
+
+// SetHeightPixels sets the HeightPixels field's value.
+func (s *GetImagesInput) SetHeightPixels(v int64) *GetImagesInput {
+	s.HeightPixels = &v
+	return s
+}
+
+// SetImageSelectorType sets the ImageSelectorType field's value.
+func (s *GetImagesInput) SetImageSelectorType(v string) *GetImagesInput {
+	s.ImageSelectorType = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *GetImagesInput) SetMaxResults(v int64) *GetImagesInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetImagesInput) SetNextToken(v string) *GetImagesInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetSamplingInterval sets the SamplingInterval field's value.
+func (s *GetImagesInput) SetSamplingInterval(v int64) *GetImagesInput {
+	s.SamplingInterval = &v
+	return s
+}
+
+// SetStartTimestamp sets the StartTimestamp field's value.
+func (s *GetImagesInput) SetStartTimestamp(v time.Time) *GetImagesInput {
+	s.StartTimestamp = &v
+	return s
+}
+
+// SetStreamARN sets the StreamARN field's value.
+func (s *GetImagesInput) SetStreamARN(v string) *GetImagesInput {
+	s.StreamARN = &v
+	return s
+}
+
+// SetStreamName sets the StreamName field's value.
+func (s *GetImagesInput) SetStreamName(v string) *GetImagesInput {
+	s.StreamName = &v
+	return s
+}
+
+// SetWidthPixels sets the WidthPixels field's value.
+func (s *GetImagesInput) SetWidthPixels(v int64) *GetImagesInput {
+	s.WidthPixels = &v
+	return s
+}
+
+type GetImagesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The list of images generated from the video stream. If there is no media
+	// available for the given timestamp, the NO_MEDIA error will be listed in the
+	// output. If an error occurs while the image is being generated, the MEDIA_ERROR
+	// will be listed in the output as the cause of the missing image.
+	Images []*Image `type:"list"`
+
+	// The encrypted token that was used in the request to get more images.
+	NextToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetImagesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetImagesOutput) GoString() string {
+	return s.String()
+}
+
+// SetImages sets the Images field's value.
+func (s *GetImagesOutput) SetImages(v []*Image) *GetImagesOutput {
+	s.Images = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetImagesOutput) SetNextToken(v string) *GetImagesOutput {
+	s.NextToken = &v
+	return s
+}
+
 type GetMediaForFragmentListInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2378,6 +2796,65 @@ func (s *HLSTimestampRange) SetEndTimestamp(v time.Time) *HLSTimestampRange {
 // SetStartTimestamp sets the StartTimestamp field's value.
 func (s *HLSTimestampRange) SetStartTimestamp(v time.Time) *HLSTimestampRange {
 	s.StartTimestamp = &v
+	return s
+}
+
+// A structure that contains the Timestamp, Error, and ImageContent.
+type Image struct {
+	_ struct{} `type:"structure"`
+
+	// The error message shown when the image for the provided timestamp was not
+	// extracted due to a non-tryable error. An error will be returned if:
+	//
+	//    * There is no media that exists for the specified Timestamp.
+	//
+	//    * The media for the specified time does not allow an image to be extracted.
+	//    In this case the media is audio only, or the incorrect media has been
+	//    ingested.
+	Error *string `type:"string" enum:"ImageError"`
+
+	// An attribute of the Image object that is Base64 encoded.
+	ImageContent *string `min:"1" type:"string"`
+
+	// An attribute of the Image object that is used to extract an image from the
+	// video stream. This field is used to manage gaps on images or to better understand
+	// the pagination window.
+	TimeStamp *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Image) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Image) GoString() string {
+	return s.String()
+}
+
+// SetError sets the Error field's value.
+func (s *Image) SetError(v string) *Image {
+	s.Error = &v
+	return s
+}
+
+// SetImageContent sets the ImageContent field's value.
+func (s *Image) SetImageContent(v string) *Image {
+	s.ImageContent = &v
+	return s
+}
+
+// SetTimeStamp sets the TimeStamp field's value.
+func (s *Image) SetTimeStamp(v time.Time) *Image {
+	s.TimeStamp = &v
 	return s
 }
 
@@ -3213,6 +3690,34 @@ func DASHPlaybackMode_Values() []string {
 }
 
 const (
+	// FormatJpeg is a Format enum value
+	FormatJpeg = "JPEG"
+
+	// FormatPng is a Format enum value
+	FormatPng = "PNG"
+)
+
+// Format_Values returns all elements of the Format enum
+func Format_Values() []string {
+	return []string{
+		FormatJpeg,
+		FormatPng,
+	}
+}
+
+const (
+	// FormatConfigKeyJpegquality is a FormatConfigKey enum value
+	FormatConfigKeyJpegquality = "JPEGQuality"
+)
+
+// FormatConfigKey_Values returns all elements of the FormatConfigKey enum
+func FormatConfigKey_Values() []string {
+	return []string{
+		FormatConfigKeyJpegquality,
+	}
+}
+
+const (
 	// FragmentSelectorTypeProducerTimestamp is a FragmentSelectorType enum value
 	FragmentSelectorTypeProducerTimestamp = "PRODUCER_TIMESTAMP"
 
@@ -3297,5 +3802,37 @@ func HLSPlaybackMode_Values() []string {
 		HLSPlaybackModeLive,
 		HLSPlaybackModeLiveReplay,
 		HLSPlaybackModeOnDemand,
+	}
+}
+
+const (
+	// ImageErrorNoMedia is a ImageError enum value
+	ImageErrorNoMedia = "NO_MEDIA"
+
+	// ImageErrorMediaError is a ImageError enum value
+	ImageErrorMediaError = "MEDIA_ERROR"
+)
+
+// ImageError_Values returns all elements of the ImageError enum
+func ImageError_Values() []string {
+	return []string{
+		ImageErrorNoMedia,
+		ImageErrorMediaError,
+	}
+}
+
+const (
+	// ImageSelectorTypeProducerTimestamp is a ImageSelectorType enum value
+	ImageSelectorTypeProducerTimestamp = "PRODUCER_TIMESTAMP"
+
+	// ImageSelectorTypeServerTimestamp is a ImageSelectorType enum value
+	ImageSelectorTypeServerTimestamp = "SERVER_TIMESTAMP"
+)
+
+// ImageSelectorType_Values returns all elements of the ImageSelectorType enum
+func ImageSelectorType_Values() []string {
+	return []string{
+		ImageSelectorTypeProducerTimestamp,
+		ImageSelectorTypeServerTimestamp,
 	}
 }

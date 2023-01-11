@@ -8,7 +8,7 @@ locals {
   description = "Created By OpenShift Installer"
 
   public_endpoints = var.aws_publish_strategy == "External" ? true : false
-  volume_type      = "gp3"
+  volume_type      = "gp2"
   volume_size      = 30
   volume_iops      = local.volume_type == "io1" ? 100 : 0
 
@@ -64,7 +64,7 @@ resource "aws_s3_bucket_acl" ignition {
   acl    = "private"
 }
 
-resource "aws_s3_bucket_object" "ignition" {
+resource "aws_s3_object" "ignition" {
   bucket = aws_s3_bucket.ignition.id
   key    = "bootstrap.ign"
   source = var.ignition_bootstrap_file
@@ -188,7 +188,7 @@ resource "aws_instance" "bootstrap" {
   )
 
   depends_on = [
-    aws_s3_bucket_object.ignition,
+    aws_s3_object.ignition,
     # https://bugzilla.redhat.com/show_bug.cgi?id=1859153
     aws_iam_instance_profile.bootstrap,
   ]
@@ -240,4 +240,3 @@ resource "aws_security_group_rule" "bootstrap_journald_gateway" {
   from_port   = 19531
   to_port     = 19531
 }
-
