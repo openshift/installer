@@ -7,7 +7,7 @@ require github.com/openshift-metal3/terraform-provider-ironic v0.2.8
 require (
 	cloud.google.com/go v0.65.0 // indirect
 	cloud.google.com/go/storage v1.10.0 // indirect
-	github.com/Masterminds/goutils v1.1.0 // indirect
+	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/agext/levenshtein v1.2.2 // indirect
@@ -127,6 +127,8 @@ require (
 )
 
 replace (
+	// https://issues.redhat.com/browse/OCPBUGS-5665
+	github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
 	github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
 	github.com/metal3-io/baremetal-operator/apis => github.com/metal3-io/baremetal-operator/apis v0.0.0-20220310151803-2b47127ed7ae
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0-20220310151803-2b47127ed7ae
