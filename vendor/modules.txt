@@ -409,7 +409,7 @@ github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1
 github.com/IBM/vpc-go-sdk/common
 github.com/IBM/vpc-go-sdk/vpcclassicv1
 github.com/IBM/vpc-go-sdk/vpcv1
-# github.com/Masterminds/goutils v1.1.0
+# github.com/Masterminds/goutils v1.1.1 => github.com/Masterminds/goutils v1.1.1
 ## explicit
 github.com/Masterminds/goutils
 # github.com/Masterminds/semver v1.5.0
@@ -3184,3 +3184,4 @@ sigs.k8s.io/yaml
 # google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 # google.golang.org/grpc => google.golang.org/grpc v1.35.0
 # github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
+# github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
