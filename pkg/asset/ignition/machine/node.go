@@ -39,7 +39,9 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			ignitionHost = net.JoinHostPort(installConfig.Nutanix.APIVIPs[0], "22623")
 		}
 	case openstacktypes.Name:
-		ignitionHost = net.JoinHostPort(installConfig.OpenStack.APIVIPs[0], "22623")
+		if len(installConfig.OpenStack.APIVIPs) > 0 {
+			ignitionHost = net.JoinHostPort(installConfig.OpenStack.APIVIPs[0], "22623")
+		}
 	case ovirttypes.Name:
 		ignitionHost = net.JoinHostPort(installConfig.Ovirt.APIVIPs[0], "22623")
 	case vspheretypes.Name:
