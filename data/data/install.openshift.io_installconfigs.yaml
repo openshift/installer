@@ -3092,7 +3092,6 @@ spec:
                     type: string
                 required:
                 - powervsResourceGroup
-                - region
                 - serviceInstanceID
                 - userID
                 - zone

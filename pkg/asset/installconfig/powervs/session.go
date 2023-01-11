@@ -257,7 +257,6 @@ func (c *BxClient) NewPISession() error {
 	options := &ibmpisession.IBMPIOptions{
 		Authenticator: authenticator,
 		UserAccount:   c.User.Account,
-		Region:        pisv.Region,
 		Zone:          pisv.Zone,
 		Debug:         false,
 	}

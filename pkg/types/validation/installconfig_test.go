@@ -96,7 +96,7 @@ func validIBMCloudPlatform() *ibmcloud.Platform {
 
 func validPowerVSPlatform() *powervs.Platform {
 	return &powervs.Platform{
-		Region: "dal",
+		Zone: "dal12",
 	}
 }
 
@@ -1049,7 +1049,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^\Qplatform.powervs.region: Required value: region must be specified\E$`,
+			expectedError: `^\Qplatform.powervs.zone: Required value: zone must be specified\E$`,
 		},
 		{
 			name: "valid azurestack platform",
