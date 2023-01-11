@@ -281,3 +281,6 @@ replace golang.org/x/text => golang.org/x/text v0.3.7
 
 // https://issues.redhat.com/browse/OCPBUGS-5324
 replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
+
+// https://issues.redhat.com/browse/OCPBUGS-5667
+replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
