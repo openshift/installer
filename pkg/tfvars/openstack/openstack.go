@@ -186,6 +186,12 @@ func TFVars(
 		}
 	}
 
+	var apiVIP, ingressVIP string
+	if len(installConfig.Config.Platform.OpenStack.APIVIPs) > 0 {
+		apiVIP = installConfig.Config.Platform.OpenStack.APIVIPs[0]
+		ingressVIP = installConfig.Config.Platform.OpenStack.IngressVIPs[0]
+	}
+
 	return json.MarshalIndent(struct {
 		BaseImageName                     string                            `json:"openstack_base_image_name,omitempty"`
 		ExternalNetwork                   string                            `json:"openstack_external_network,omitempty"`
@@ -218,8 +224,8 @@ func TFVars(
 		FlavorName:                        masterSpecs[0].Flavor,
 		APIFloatingIP:                     installConfig.Config.Platform.OpenStack.APIFloatingIP,
 		IngressFloatingIP:                 installConfig.Config.Platform.OpenStack.IngressFloatingIP,
-		APIVIP:                            installConfig.Config.Platform.OpenStack.APIVIPs[0],
-		IngressVIP:                        installConfig.Config.Platform.OpenStack.IngressVIPs[0],
+		APIVIP:                            apiVIP,
+		IngressVIP:                        ingressVIP,
 		TrunkSupport:                      masterSpecs[0].Trunk,
 		OctaviaSupport:                    octaviaSupport,
 		RootVolumeSize:                    rootVolumeSize,
