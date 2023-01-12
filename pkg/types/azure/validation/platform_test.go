@@ -167,3 +167,107 @@ func TestValidatePlatform(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateUserTags(t *testing.T) {
+	fieldPath := "spec.platform.azure.userTags"
+	cases := []struct {
+		name     string
+		userTags map[string]string
+		wantErr  bool
+	}{
+		{
+			name:     "userTags not configured",
+			userTags: map[string]string{},
+			wantErr:  false,
+		},
+		{
+			name:     "userTags configured",
+			userTags: map[string]string{
+				"key1": "value1", "key_2": "value_2", "key.3": "value.3", "key=4": "value=4", "key+5": "value+5",
+				"key-6": "value-6", "key@7": "value@7", "key8_": "value8-", "key9=": "value9+", "key10-": "value10@"},
+			wantErr:  false,
+		},
+		{
+			name: "userTags configured is more than max limit",
+			userTags: map[string]string{
+				"key1": "value1", "key2": "value2", "key3": "value3", "key4": "value4", "key5": "value5",
+				"key6": "value6", "key7": "value7", "key8": "value8", "key9": "value9", "key10": "value10",
+				"key11": "value11"},
+			wantErr: true,
+		},
+		{
+			name:     "userTags contains key starting a number",
+			userTags: map[string]string{"1key": "1value"},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains empty key",
+			userTags: map[string]string{"": "value"},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains key length greater than 128",
+			userTags: map[string]string{
+				"thisisaverylongkeywithmorethan128characterswhichisnotallowedforazureresourcetagkeysandthetagkeyvalidationshouldfailwithinvalidfieldvalueerror": "value"},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains key with invalid character",
+			userTags: map[string]string{"key/test": "value"},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains value length greater than 256",
+			userTags: map[string]string{"key": "thisisaverylongvaluewithmorethan256characterswhichisnotallowedforazureresourcetagvaluesandthetagvaluevalidationshouldfailwithinvalidfieldvalueerrorrepeatthisisaverylongvaluewithmorethan256characterswhichisnotallowedforazureresourcetagvaluesandthetagvaluevalidationshouldfailwithinvalidfieldvalueerror"},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains empty value",
+			userTags: map[string]string{"key": ""},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains value with invalid character",
+			userTags: map[string]string{"key": "value*^%"},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains key as name",
+			userTags: map[string]string{"name": "value"},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains allowed key name123",
+			userTags: map[string]string{"name123": "value"},
+			wantErr:  false,
+		},
+		{
+			name:     "userTags contains key with prefix kubernetes.io",
+			userTags: map[string]string{"kubernetes.io_cluster": "value"},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains allowed key prefix for_openshift.io",
+			userTags: map[string]string{"for_openshift.io": "azure"},
+			wantErr:  false,
+		},
+		{
+			name:     "userTags contains key with prefix azure",
+			userTags: map[string]string{"azure": "microsoft"},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains allowed key resourcename",
+			userTags: map[string]string{"resourcename": "value"},
+			wantErr:  false,
+		},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateUserTags(tt.userTags, field.NewPath(fieldPath))
+			if (len(err) > 0) != tt.wantErr {
+				t.Errorf("unexpected error, err: %v", err)
+			}
+		})
+	}
+}
