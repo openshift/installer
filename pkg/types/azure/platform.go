@@ -87,7 +87,7 @@ type Platform struct {
 	// +optional
 	ResourceGroupName string `json:"resourceGroupName,omitempty"`
 
-	// UserTags additional keys and values that the installer will add
+	// UserTags has additional keys and values that the installer will add
 	// as tags to all resources that it creates. Resources created by the
 	// cluster itself may not include these tags.
 	// +optional

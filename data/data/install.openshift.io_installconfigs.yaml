@@ -1947,9 +1947,10 @@ spec:
                   userTags:
                     additionalProperties:
                       type: string
-                    description: UserTags additional keys and values that the installer
-                      will add as tags to all resources that it creates. Resources
-                      created by the cluster itself may not include these tags.
+                    description: UserTags has additional keys and values that the
+                      installer will add as tags to all resources that it creates.
+                      Resources created by the cluster itself may not include these
+                      tags.
                     type: object
                   virtualNetwork:
                     description: VirtualNetwork specifies the name of an existing
