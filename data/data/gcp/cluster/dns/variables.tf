@@ -33,17 +33,3 @@ variable "public_endpoints" {
   description = "If the cluster should have externally accessible resources."
 }
 
-variable "create_public_zone_records" {
-  type        = bool
-  description = "Create records for the public managed zone."
-}
-
-variable "public_zone_project" {
-  type        = string
-  description = "Project where the public managed zone will exist."
-}
-
-variable "private_zone_project" {
-  type        = string
-  description = "Project where the private managed zone will exist."
-}

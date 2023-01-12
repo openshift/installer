@@ -152,19 +152,6 @@ func TestValidatePlatform(t *testing.T) {
 			credentialsMode: types.MintCredentialsMode,
 			valid:           false,
 		},
-		{
-			name: "GCP invalid private dns zone",
-			platform: &gcp.Platform{
-				Region:             "us-east1",
-				NetworkProjectID:   "valid-network-project",
-				ProjectID:          "valid-project",
-				Network:            "valid-vpc",
-				ControlPlaneSubnet: "valid-cp-subnet",
-				PrivateDNSZone:     &gcp.DNSZone{ID: "bad-id", ProjectID: "valid-project"},
-			},
-			credentialsMode: types.PassthroughCredentialsMode,
-			valid:           false,
-		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

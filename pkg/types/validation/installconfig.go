@@ -999,16 +999,6 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
 		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
 
-		if c.GCP != nil {
-			if c.GCP.PrivateDNSZone != nil && len(c.GCP.PrivateDNSZone.ProjectID) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "privateDNSZone", "projectID"), errMsg))
-			}
-
-			if c.GCP.PublicDNSZone != nil && len(c.GCP.PublicDNSZone.ProjectID) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "publicDNSZone", "projectID"), errMsg))
-			}
-		}
-
 		if c.VSphere != nil {
 			if len(c.VSphere.FailureDomains) > 0 {
 				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "vsphere", "failureDomains"), errMsg))
