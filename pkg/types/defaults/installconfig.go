@@ -20,7 +20,8 @@ import (
 )
 
 var (
-	defaultMachineCIDR    = ipnet.MustParseCIDR("10.0.0.0/16")
+	// DefaultMachineCIDR default machine CIDR applied to MachineNetwork.
+	DefaultMachineCIDR    = ipnet.MustParseCIDR("10.0.0.0/16")
 	defaultServiceNetwork = ipnet.MustParseCIDR("172.30.0.0/16")
 	defaultClusterNetwork = ipnet.MustParseCIDR("10.128.0.0/14")
 	defaultHostPrefix     = 23
@@ -34,7 +35,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	}
 	if len(c.Networking.MachineNetwork) == 0 {
 		c.Networking.MachineNetwork = []types.MachineNetworkEntry{
-			{CIDR: *defaultMachineCIDR},
+			{CIDR: *DefaultMachineCIDR},
 		}
 		if c.Platform.Libvirt != nil {
 			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
