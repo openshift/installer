@@ -476,9 +476,6 @@ github.com/go-playground/validator/v10
 # github.com/go-stack/stack v1.8.1
 ## explicit; go 1.17
 github.com/go-stack/stack
-# github.com/go-yaml/yaml v2.1.0+incompatible
-## explicit
-github.com/go-yaml/yaml
 # github.com/gobuffalo/flect v0.2.5
 ## explicit; go 1.13
 github.com/gobuffalo/flect
@@ -9235,7 +9232,7 @@ gopkg.in/ini.v1
 # gopkg.in/warnings.v0 v0.1.2
 ## explicit
 gopkg.in/warnings.v0
-# gopkg.in/yaml.v2 v2.4.0
+# gopkg.in/yaml.v2 v2.4.0 => gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
@@ -9609,3 +9606,4 @@ sigs.k8s.io/yaml
 # github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20220928142635-a40422bdea61
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 # golang.org/x/text => golang.org/x/text v0.3.7
+# gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
