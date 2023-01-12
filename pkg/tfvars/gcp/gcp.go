@@ -44,6 +44,7 @@ type config struct {
 	ControlPlaneSubnet      string   `json:"gcp_control_plane_subnet,omitempty"`
 	ComputeSubnet           string   `json:"gcp_compute_subnet,omitempty"`
 	ControlPlaneTags        []string `json:"gcp_control_plane_tags,omitempty"`
+	SecureBoot              string   `json:"gcp_master_secure_boot,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -95,7 +96,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ComputeSubnet:           workerConfig.NetworkInterfaces[0].Subnetwork,
 		PreexistingNetwork:      sources.PreexistingNetwork,
 		ControlPlaneTags:        masterConfig.Tags,
+		SecureBoot:              string(masterConfig.ShieldedInstanceConfig.SecureBoot),
 	}
+
 	cfg.PreexistingImage = true
 	if len(sources.ImageLicenses) > 0 {
 		cfg.PreexistingImage = false

@@ -18,4 +18,5 @@ tests:
         to:
           kind: Service
           name: foo
+          weight: 100
         wildcardPolicy: None

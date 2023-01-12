@@ -67,3 +67,9 @@ variable "root_volume_kms_key_link" {
 variable "zones" {
   type = list
 }
+
+variable "secure_boot" {
+  type        = string
+  description = "Verify the digital signature of all boot components."
+  default     = ""
+}
