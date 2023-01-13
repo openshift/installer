@@ -69,7 +69,7 @@ while [ $should_configure -eq 1 ]; do
       # if they would like to make a change. After 60s, the prompt disappears
       # and automated flow will start.
       echo "INFO: Boot will continue in 60s if the next prompt goes unanswered."
-      read -t 60 -e -p "Do you wish to enter NetworkManager terminal user interface to change the network configuration? (Y)es/(N)o: " ANSWER
+      read -t 60 -e -r -p "Do you wish to enter NetworkManager terminal user interface to change the network configuration? (Y)es/(N)o: " ANSWER
       if [[ "$ANSWER" =~ ^[Yy](es)?$ ]]; then
 	      # TODO: execute tui
         #/usr/local/bin/agent-tui
