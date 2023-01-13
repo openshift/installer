@@ -10,4 +10,4 @@ IMAGE=$(image_for agent-installer-node-agent)
 
 echo "Using agent image: ${IMAGE} to copy bin"
 
-/usr/bin/podman run --privileged --rm -v /usr/local/bin:/hostbin ${IMAGE} cp /usr/bin/agent /hostbin
+/usr/bin/podman run --privileged --rm -v /usr/local/bin:/hostbin "${IMAGE}" cp /usr/bin/agent /hostbin

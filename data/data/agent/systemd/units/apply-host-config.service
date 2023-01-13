@@ -4,13 +4,12 @@ Wants=network-online.target
 Requires=create-cluster-and-infraenv.service
 PartOf=assisted-service-pod.service
 After=network-online.target create-cluster-and-infraenv.service
-ConditionPathExists=/etc/assisted-service/node0
+ConditionPathExists=/etc/assisted/node0
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
-Environment=SERVICE_BASE_URL={{.ServiceBaseURL}}
-Environment=INFRA_ENV_ID={{.InfraEnvID}}
 EnvironmentFile=/usr/local/share/assisted-service/agent-images.env
+EnvironmentFile=/usr/local/share/assisted-service/assisted-service.env
 ExecStartPre=/bin/rm -f %t/%n.ctr-id
 ExecStartPre=/bin/mkdir -p %t/agent-installer /etc/assisted/hostconfig
 ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
