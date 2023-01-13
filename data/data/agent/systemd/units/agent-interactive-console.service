@@ -2,6 +2,7 @@
 Description=Get interactive user configuration at boot
 After=network-pre.target NetworkManager.service pre-network-manager-config.service selinux.service
 Before=network.target network.service agent.service NetworkManager-wait-online.service
+ConditionPathExists=/usr/local/bin/agent-tui
 
 [Service]
 Type=oneshot
