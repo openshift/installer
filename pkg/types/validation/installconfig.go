@@ -770,9 +770,10 @@ func validateProxy(p *types.Proxy, c *types.InstallConfig, fldPath *field.Path) 
 			v = strings.TrimSpace(v)
 			errDomain := validate.NoProxyDomainName(v)
 			_, _, errCIDR := net.ParseCIDR(v)
-			if errDomain != nil && errCIDR != nil {
+			ip := net.ParseIP(v)
+			if errDomain != nil && errCIDR != nil && ip == nil {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("noProxy"), p.NoProxy, fmt.Sprintf(
-					"each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element %d %q", idx, v)))
+					"each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element %d %q", idx, v)))
 			}
 		}
 	}
