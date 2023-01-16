@@ -88,12 +88,6 @@ func downloadIso() (string, error) {
 	return "", fmt.Errorf("no ISO found to download for %s", archName)
 }
 
-func getIsoFromReleasePayload() (string, error) {
-
-	// TODO
-	return "", nil
-}
-
 // Dependencies returns dependencies used by the asset.
 func (i *BaseIso) Dependencies() []asset.Asset {
 	return []asset.Asset{
@@ -124,10 +118,11 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 
 		// If we have the image registry location and 'oc' command is available then get from release payload
 		ocRelease := NewRelease(&executer.CommonExecuter{},
-			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay})
+			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
+			releaseImage, pullSecret, registriesConf.MirrorConfig)
 
 		logrus.Info("Extracting base ISO from release payload")
-		baseIsoFileName, err = ocRelease.GetBaseIso(releaseImage, pullSecret, archName, registriesConf.MirrorConfig)
+		baseIsoFileName, err = ocRelease.GetBaseIso(archName)
 		if err == nil {
 			logrus.Debugf("Extracted base ISO image %s from release payload", baseIsoFileName)
 			i.File = &asset.File{Filename: baseIsoFileName}
