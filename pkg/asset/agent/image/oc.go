@@ -45,6 +45,7 @@ type Config struct {
 // Release is the interface to use the oc command to the get image info
 type Release interface {
 	GetBaseIso(architecture string) (string, error)
+	ExtractFile(image string, filename string) (string, error)
 }
 
 type release struct {
@@ -73,7 +74,26 @@ const (
 	templateImageExtractWithIcsp = "oc image extract --path %s:%s --confirm --icsp-file=%s %s"
 )
 
-// Get the CoreOS ISO from the releaseImage
+// ExtractFile extracts the specified file from the given image name, and store it in the cache dir.
+func (r *release) ExtractFile(image string, filename string) (string, error) {
+	imagePullSpec, err := r.getImageFromRelease(image)
+	if err != nil {
+		return "", err
+	}
+
+	cacheDir, err := GetCacheDir(filesDataType)
+	if err != nil {
+		return "", err
+	}
+
+	path, err := r.extractFileFromImage(imagePullSpec, filename, cacheDir)
+	if err != nil {
+		return "", err
+	}
+	return path, err
+}
+
+// Get the CoreOS ISO from the releaseImage.
 func (r *release) GetBaseIso(architecture string) (string, error) {
 	// Get the machine-os-images pullspec from the release and use that to get the CoreOS ISO
 	image, err := r.getImageFromRelease(machineOsImageName)

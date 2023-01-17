@@ -25,6 +25,7 @@ import (
 const (
 	applicationName = "agent"
 	imageDataType   = "image"
+	filesDataType   = "files"
 )
 
 // GetFileFromCache returns path of the cached file if found, otherwise returns an empty string
