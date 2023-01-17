@@ -54,7 +54,7 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 					ComputeCluster: "/test-datacenter/host/test-cluster",
 					Datastore:      "test-datastore",
 					Networks:       []string{"test-portgroup"},
-					ResourcePool:   "test-resourcepool",
+					ResourcePool:   "/test-datacenter/host/test-cluster/Resources/test-resourcepool",
 					Folder:         "/test-datacenter/vm/test-folder",
 				},
 			},
@@ -68,7 +68,6 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 					ComputeCluster: "/test-datacenter/host/test-cluster",
 					Datastore:      "test-datastore",
 					Networks:       []string{"test-portgroup"},
-					ResourcePool:   "test-resourcepool",
 					Folder:         "/test-datacenter/vm/test-folder",
 				},
 			},
@@ -303,7 +302,12 @@ func TestValidatePlatform(t *testing.T) {
 				p.FailureDomains[0].Topology.ComputeCluster = ""
 				return p
 			}(),
-			expectedError: `^test-path.failureDomains.topology.computeCluster: Required value: must specify a computeCluster`,
+			postValidationFunction: func(platform *vsphere.Platform) error {
+				if platform.FailureDomains[0].Topology.ComputeCluster != fmt.Sprintf("/%s/host/%s", platform.Datacenter, platform.Cluster) {
+					return errors.New("topology cluster not set to default")
+				}
+				return nil
+			},
 		},
 		{
 			name: "Multi-zone platform failure domain topology datastore required",
@@ -312,7 +316,12 @@ func TestValidatePlatform(t *testing.T) {
 				p.FailureDomains[0].Topology.Datastore = ""
 				return p
 			}(),
-			expectedError: `^test-path.failureDomains.topology.datastore: Required value: must specify a datastore`,
+			postValidationFunction: func(platform *vsphere.Platform) error {
+				if platform.FailureDomains[0].Topology.Datastore != platform.DefaultDatastore {
+					return errors.New("topology datastore not set to default")
+				}
+				return nil
+			},
 		},
 		{
 			name: "Multi-zone platform datacenter in failure domain topology doesn't match cluster datacenter",
@@ -366,7 +375,12 @@ func TestValidatePlatform(t *testing.T) {
 				p.FailureDomains[0].Topology.Datacenter = ""
 				return p
 			}(),
-			expectedError: `^test-path\.failureDomains\.topology\.datacenter: Required value: must specify a datacenter`,
+			postValidationFunction: func(platform *vsphere.Platform) error {
+				if platform.FailureDomains[0].Topology.Datacenter != platform.Datacenter {
+					return errors.New("topology datacenter not set to default")
+				}
+				return nil
+			},
 		},
 		{
 			name: "Multi-zone platform failureDomain topology empty networks",
@@ -375,7 +389,13 @@ func TestValidatePlatform(t *testing.T) {
 				p.FailureDomains[0].Topology.Networks = []string{}
 				return p
 			}(),
-			expectedError: `^test-path\.failureDomains\.topology\.networks: Required value: must specify a network`,
+			postValidationFunction: func(platform *vsphere.Platform) error {
+				if len(platform.FailureDomains[0].Topology.Networks) != 1 ||
+					platform.FailureDomains[0].Topology.Networks[0] != platform.Network {
+					return errors.New("topology networks not set to default")
+				}
+				return nil
+			},
 		},
 		{
 			name: "Multi-zone platform failureDomain defaults applied",
