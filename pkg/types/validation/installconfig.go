@@ -996,32 +996,5 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 		}()
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), c.FeatureSet, sortedFeatureSets))
 	}
-
-	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
-		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
-
-		if c.VSphere != nil {
-			if len(c.VSphere.FailureDomains) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "vsphere", "failureDomains"), errMsg))
-			}
-
-			if len(c.VSphere.VCenters) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "vsphere", "vcenters"), errMsg))
-			}
-
-			if c.VSphere.DefaultMachinePlatform != nil && len(c.VSphere.DefaultMachinePlatform.Zones) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "vsphere", "defaultMachinePlatform", "zones"), errMsg))
-			}
-
-			if c.ControlPlane != nil && c.ControlPlane.Platform.VSphere != nil && len(c.ControlPlane.Platform.VSphere.Zones) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("controlPlane", "platform", "vsphere", "zones"), errMsg))
-			}
-
-			if len(c.Compute) != 0 && c.Compute[0].Platform.VSphere != nil && len(c.Compute[0].Platform.VSphere.Zones) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("compute", "platform", "vsphere", "zones"), errMsg))
-			}
-		}
-	}
-
 	return allErrs
 }
