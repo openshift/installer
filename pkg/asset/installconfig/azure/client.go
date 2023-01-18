@@ -355,7 +355,7 @@ func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceTyp
 
 	// Only supported filter atm is `location`
 	filter := fmt.Sprintf("location eq '%s'", region)
-	for res, err := client.List(ctx, filter); res.NotDone(); err = res.NextWithContext(ctx) {
+	for res, err := client.List(ctx, filter, "false"); res.NotDone(); err = res.NextWithContext(ctx) {
 		if err != nil {
 			return nil, err
 		}

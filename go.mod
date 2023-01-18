@@ -5,7 +5,7 @@ go 1.17
 require (
 	cloud.google.com/go v0.81.0
 	github.com/AlecAivazis/survey/v2 v2.2.12
-	github.com/Azure/azure-sdk-for-go v51.2.0+incompatible
+	github.com/Azure/azure-sdk-for-go v63.1.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.18
 	github.com/Azure/go-autorest/autorest/azure/auth v0.4.1
 	github.com/Azure/go-autorest/autorest/to v0.4.0
