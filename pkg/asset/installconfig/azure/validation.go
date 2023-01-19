@@ -161,6 +161,8 @@ func validateFamily(fieldPath *field.Path, instanceType, family string) field.Er
 		"standardDCADSv5Family",
 		"standardECASv5Family",
 		"standardECADSv5Family",
+		"standardECIADSv5Family",
+		"standardECIASv5Family",
 	)
 	windowsVMFamilies := sets.NewString(
 		"standardNVSv4Family",
