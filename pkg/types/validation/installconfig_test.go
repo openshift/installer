@@ -917,7 +917,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com,*.bad-proxy"
 				return c
 			}(),
-			expectedError: `^\Qproxy.noProxy: Invalid value: "good-no-proxy.com,*.bad-proxy": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 1 "*.bad-proxy"\E$`,
+			expectedError: `^\Qproxy.noProxy: Invalid value: "good-no-proxy.com,*.bad-proxy": each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element 1 "*.bad-proxy"\E$`,
 		},
 		{
 			name: "invalid NoProxy spaces",
@@ -926,7 +926,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com, *.bad-proxy"
 				return c
 			}(),
-			expectedError: `^\Q[proxy.noProxy: Invalid value: "good-no-proxy.com, *.bad-proxy": noProxy must not have spaces, proxy.noProxy: Invalid value: "good-no-proxy.com, *.bad-proxy": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 1 "*.bad-proxy"]\E$`,
+			expectedError: `^\Q[proxy.noProxy: Invalid value: "good-no-proxy.com, *.bad-proxy": noProxy must not have spaces, proxy.noProxy: Invalid value: "good-no-proxy.com, *.bad-proxy": each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element 1 "*.bad-proxy"]\E$`,
 		},
 		{
 			name: "invalid NoProxy CIDR",
@@ -935,7 +935,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com,172.bad.CIDR.0/16"
 				return c
 			}(),
-			expectedError: `^\Qproxy.noProxy: Invalid value: "good-no-proxy.com,172.bad.CIDR.0/16": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 1 "172.bad.CIDR.0/16"\E$`,
+			expectedError: `^\Qproxy.noProxy: Invalid value: "good-no-proxy.com,172.bad.CIDR.0/16": each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element 1 "172.bad.CIDR.0/16"\E$`,
 		},
 		{
 			name: "invalid NoProxy domain & CIDR",
@@ -944,7 +944,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end"
 				return c
 			}(),
-			expectedError: `^\Q[proxy.noProxy: Invalid value: "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 2 "*.bad-proxy.", proxy.noProxy: Invalid value: "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 4 "172.bad.CIDR.0/16"]\E$`,
+			expectedError: `^\Q[proxy.noProxy: Invalid value: "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end": each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element 2 "*.bad-proxy.", proxy.noProxy: Invalid value: "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end": each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element 4 "172.bad.CIDR.0/16"]\E$`,
 		},
 		{
 			name: "valid * NoProxy",
