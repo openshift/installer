@@ -1,0 +1,9 @@
+[Unit]
+Description=Activate agent-interactive-console.service only when the agent-tui path exists
+
+[Path]
+PathExists=/usr/local/bin/agent-tui
+Unit=agent-interactive-console.service
+
+[Install]
+WantedBy=default.target
