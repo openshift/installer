@@ -744,9 +744,9 @@ github.com/hashicorp/go-azure-helpers/resourceproviders
 github.com/hashicorp/go-azure-helpers/response
 github.com/hashicorp/go-azure-helpers/sender
 github.com/hashicorp/go-azure-helpers/storage
-# github.com/hashicorp/go-cleanhttp v0.5.1
+# github.com/hashicorp/go-cleanhttp v0.5.2
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-getter v1.4.2-0.20200106182914-9813cbd4eb02
+# github.com/hashicorp/go-getter v1.6.2 => github.com/hashicorp/go-getter v1.6.2
 github.com/hashicorp/go-getter
 github.com/hashicorp/go-getter/helper/url
 # github.com/hashicorp/go-hclog v0.14.1
@@ -933,7 +933,7 @@ github.com/hashicorp/terraform-plugin-sdk/plugin
 github.com/hashicorp/terraform-plugin-sdk/terraform
 github.com/hashicorp/terraform-plugin-sdk/tfdiags
 github.com/hashicorp/terraform-plugin-sdk/tfplugin5
-# github.com/hashicorp/terraform-plugin-test v1.3.0
+# github.com/hashicorp/terraform-plugin-test v1.3.0 => github.com/jhixson74/terraform-plugin-test v1.3.0-openshift
 github.com/hashicorp/terraform-plugin-test
 # github.com/hashicorp/terraform-provider-kubernetes v1.13.3
 ## explicit
@@ -1020,6 +1020,12 @@ github.com/keybase/go-crypto/openpgp/errors
 github.com/keybase/go-crypto/openpgp/packet
 github.com/keybase/go-crypto/openpgp/s2k
 github.com/keybase/go-crypto/rsa
+# github.com/klauspost/compress v1.11.2
+github.com/klauspost/compress/fse
+github.com/klauspost/compress/huff0
+github.com/klauspost/compress/snappy
+github.com/klauspost/compress/zstd
+github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/kr/fs v0.1.0
 github.com/kr/fs
 # github.com/kr/pretty v0.2.1
@@ -1820,7 +1826,7 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073
+# golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -2603,3 +2609,5 @@ sigs.k8s.io/yaml
 # google.golang.org/api => google.golang.org/api v0.25.0
 # google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 # google.golang.org/grpc => google.golang.org/grpc v1.29.1
+# github.com/hashicorp/terraform-plugin-test => github.com/jhixson74/terraform-plugin-test v1.3.0-openshift
+# github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
