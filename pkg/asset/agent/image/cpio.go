@@ -75,7 +75,6 @@ func (ca *CpioArchive) StoreFile(filename string) error {
 	_, err = io.Copy(ca.cpioWriter, f)
 	if err != nil {
 		return err
-
 	}
 
 	return nil

@@ -103,9 +103,25 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 		},
 
 		Cmds: map[string]func(*testscript.TestScript, bool, []string){
-			"isocmp": isoCmp,
+			"isocmp":              isoCmp,
+			"ignitionImgContains": ignitionImgContains,
 		},
 	})
+}
+
+// [!] ignitionImgContains `isoPath` `file` check if the specified file `file`
+// is stored within /images/ignition.img archive in the ISO `isoPath` image.
+func ignitionImgContains(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: ignitionImgContains isoPath file")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, eFilePath := args[0], args[1]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	_, err := extractFileFromIgnitionImg(isoPathAbs, eFilePath)
+	ts.Check(err)
 }
 
 // [!] isoCmp `isoPath` `isoFile` `expectedFile` check that the content of the file
@@ -120,7 +136,7 @@ func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 	isoPath, aFilePath, eFilePath := args[0], args[1], args[2]
 	isoPathAbs := filepath.Join(workDir, isoPath)
 
-	aData, err := readFileFromISO(isoPathAbs, aFilePath)
+	aData, err := readFileFromISOIgnitionCfg(isoPathAbs, aFilePath)
 	ts.Check(err)
 
 	eFilePathAbs := filepath.Join(workDir, eFilePath)
@@ -152,8 +168,8 @@ func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Fatalf("%s and %s differ", aFilePath, eFilePath)
 }
 
-func readFileFromISO(isoPath string, nodePath string) ([]byte, error) {
-	config, err := readIgnitionFromISO(isoPath)
+func readFileFromISOIgnitionCfg(isoPath string, nodePath string) ([]byte, error) {
+	config, err := extractIgnitionCfg(isoPath)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +187,7 @@ func readFileFromISO(isoPath string, nodePath string) ([]byte, error) {
 	return nil, errors.NotFound(nodePath)
 }
 
-func readIgnitionFromISO(isoPath string) (*igntypes.Config, error) {
+func extractFileFromIgnitionImg(isoPath string, fileName string) ([]byte, error) {
 	disk, err := diskfs.OpenWithMode(isoPath, diskfs.ReadOnly)
 	if err != nil {
 		return nil, err
@@ -193,12 +209,31 @@ func readIgnitionFromISO(isoPath string) (*igntypes.Config, error) {
 	}
 
 	cpioReader := cpio.NewReader(gzipReader)
-	_, err = cpioReader.Next()
-	if err != nil {
-		return nil, err
+
+	for {
+		header, err := cpioReader.Next()
+		if err == io.EOF { //nolint:errorlint
+			// end of cpio archive
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		if header.Name == fileName {
+			rawContent, err := io.ReadAll(cpioReader)
+			if err != nil {
+				return nil, err
+			}
+			return rawContent, nil
+		}
 	}
 
-	rawContent, err := io.ReadAll(cpioReader)
+	return nil, errors.NotFound(fmt.Sprintf("File %s not found within the /images/ignition.img archive", fileName))
+}
+
+func extractIgnitionCfg(isoPath string) (*igntypes.Config, error) {
+	rawContent, err := extractFileFromIgnitionImg(isoPath, "config.ign")
 	if err != nil {
 		return nil, err
 	}
