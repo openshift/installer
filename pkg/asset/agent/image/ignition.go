@@ -215,6 +215,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	agentEnabledServices := []string{
 		"agent.service",
+		"agent-tui.path",
 		"assisted-service-db.service",
 		"assisted-service-pod.service",
 		"assisted-service.service",
