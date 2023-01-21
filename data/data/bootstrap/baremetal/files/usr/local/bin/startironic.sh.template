@@ -88,7 +88,9 @@ IPTABLES=ip6tables
 IPTABLES=iptables
 {{ end }}
 
-{{ if .UseIPv6ForNodeIP }}
+{{ if .UseDualForNodeIP }}
+EXTERNAL_IP_OPTIONS="ip=dhcp,dhcp6"
+{{ else if .UseIPv6ForNodeIP }}
 EXTERNAL_IP_OPTIONS="ip=dhcp6"
 {{ else }}
 EXTERNAL_IP_OPTIONS="ip=dhcp"
