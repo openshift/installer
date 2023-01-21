@@ -93,12 +93,6 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		}
 	}
 
-	if p.PrivateDNSZone != nil {
-		if p.PrivateDNSZone.ID != "" {
-			allErrs = append(allErrs, field.Forbidden(fldPath.Child("privateDNSZone").Child("id"), "do not provide an ID for the private DNS zone."))
-		}
-	}
-
 	if (p.ComputeSubnet != "" || p.ControlPlaneSubnet != "") && p.Network == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "must provide a VPC network when supplying subnets"))
 	}
