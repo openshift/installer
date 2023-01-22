@@ -24,6 +24,23 @@ function signal_bootstrap_complete {
   done
 }
 
+function release_cvo_lease {
+  if [ ! -f /opt/openshift/release_cvo_lease.done ]
+  then
+    until [ "$(oc get leases -n openshift-cluster-version version | grep -c "version")" -eq 0 ];
+    do
+      echo "Deleting openshift-cluster-version version lease"
+      oc delete leases -n openshift-cluster-version version || sleep 5
+    done
+    until [ "$(oc get cm -n openshift-cluster-version version | grep -c "version")" -eq 0 ];
+    do
+      echo "Deleting openshift-cluster-version version cm"
+      oc delete cm -n openshift-cluster-version version || sleep 5
+    done
+    touch /opt/openshift/expedite_bootstrapping.done
+  fi
+}
+
 function restart_kubelet {
   echo "Waiting for kube-apiserver-operator"
   until [ "$(oc get pod -n openshift-kube-apiserver-operator --selector='app=kube-apiserver-operator' -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
@@ -98,6 +115,7 @@ function clean {
 
 wait_for_api
 signal_bootstrap_complete
+release_cvo_lease
 restore_cvo_overrides
 approve_csr
 restart_kubelet
