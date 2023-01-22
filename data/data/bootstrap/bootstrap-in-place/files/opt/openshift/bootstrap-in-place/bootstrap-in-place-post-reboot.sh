@@ -24,6 +24,18 @@ function signal_bootstrap_complete {
   done
 }
 
+function expedite_bootstrapping {
+  if [ ! -f /opt/openshift/expedite_bootstrapping.done ]
+  then
+    until oc get namespace openshift-service-ca &> /dev/null
+    do
+      echo "Creating openshift-service-ca namespace ..."
+      oc create namespace openshift-service-ca || sleep 5
+    done
+    touch /opt/openshift/expedite_bootstrapping.done
+  fi
+}
+
 function release_cvo_lease {
   if [ ! -f /opt/openshift/release_cvo_lease.done ]
   then
@@ -116,6 +128,7 @@ function clean {
 wait_for_api
 signal_bootstrap_complete
 release_cvo_lease
+expedite_bootstrapping
 restore_cvo_overrides
 approve_csr
 restart_kubelet
