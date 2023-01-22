@@ -25,12 +25,15 @@ function signal_bootstrap_complete {
 }
 
 function restart_kubelet {
-  echo "Restarting kubelet"
-  until [ "$(oc get pod -n openshift-kube-apiserver-operator --selector='app=kube-apiserver-operator' -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
+  echo "Waiting for kube-apiserver-operator"
+  until [ "$(oc get pod -n openshift-kube-apiserver-operator --selector='app=kube-apiserver-operator' -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
   do
     echo "Waiting for kube-apiserver-operator ready condition to be True"
+    oc get --raw='/readyz' &> /dev/null || echo "Api is not available"
     sleep 10
   done
+
+  echo "Restarting kubelet"
   # daemon-reload is required because /etc/systemd/system/kubelet.service.d/20-nodenet.conf is added after kubelet started
   systemctl daemon-reload
   systemctl restart kubelet
@@ -40,26 +43,31 @@ function restart_kubelet {
     echo "Waiting for kube-apiserver to apply the new static pod configuration"
     sleep 10
   done
+
+  echo "Restarting kubelet"
   systemctl restart kubelet
 }
 
 function approve_csr {
-  echo "Approving csrs ..."
+  echo "Waiting for node to report ready status"
   # use [*] and not [0] in the jsonpath because the node resource may not have been created yet
   until [ "$(oc get nodes --selector='node-role.kubernetes.io/master' -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
   do
     echo "Approving csrs ..."
     oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs --no-run-if-empty oc adm certificate approve &> /dev/null || true
-    sleep 30
+    sleep 10
   done
+  echo "node is ready"
 }
 
 function wait_for_cvo {
   echo "Waiting for cvo"
-  until [ "$(oc get clusterversion -o jsonpath='{.items[0].status.conditions[?(@.type=="Available")].status}')" == "True" ];
+  until [ "$(oc get clusterversion -o jsonpath='{.items[*].status.conditions[?(@.type=="Available")].status}')" == "True" ];
   do
     echo "Still waiting for cvo ..."
-    sleep 30
+    # print the not ready operators names and message
+    oc get clusteroperator -o jsonpath='{range .items[*]}{@.metadata.name}: {range @.status.conditions[?(@.type=="Available")]}{@.type}={@.status} {@.message}{"\n"}{end}{end}' | grep "Available=False" || true
+    sleep 20
   done
 }
 
@@ -83,6 +91,7 @@ function clean {
   rm -rf /usr/local/bin/installer-gather.sh
   rm -rf /usr/local/bin/installer-masters-gather.sh
   rm -rf /var/log/log-bundle-bootstrap.tar.gz
+  rm -rf /opt/openshift
 
   systemctl disable bootkube.service
 }
