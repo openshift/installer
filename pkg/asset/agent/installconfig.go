@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -347,7 +348,7 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			fieldPath := field.NewPath("Platform", "VSphere", "ClusterOSImage")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.ClusterOSImage))
 		}
-		if vspherePlatform.DefaultMachinePlatform != &(vsphere.MachinePool{}) {
+		if vspherePlatform.DefaultMachinePlatform != nil && !reflect.DeepEqual(*vspherePlatform.DefaultMachinePlatform, vsphere.MachinePool{}) {
 			fieldPath := field.NewPath("Platform", "VSphere", "DefaultMachinePlatform")
 			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.DefaultMachinePlatform))
 		}
@@ -381,8 +382,8 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		fieldPath := field.NewPath("BootstrapInPlace", "InstallationDisk")
 		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.BootstrapInPlace.InstallationDisk))
 	}
-	if installConfig.Capabilities != &(types.Capabilities{}) {
+	if installConfig.Capabilities != nil {
 		fieldPath := field.NewPath("Capabilities")
-		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.Capabilities))
+		logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, *installConfig.Capabilities))
 	}
 }
