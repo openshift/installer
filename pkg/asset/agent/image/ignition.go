@@ -214,6 +214,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	}
 
 	agentEnabledServices := []string{
+		"agent-copy-iso-files.service",
 		"agent.service",
 		"agent-tui.path",
 		"assisted-service-db.service",

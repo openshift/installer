@@ -1,0 +1,12 @@
+[Unit]
+Description=Copy the additional files stored in the agent ISO during the boot
+After=network-pre.target NetworkManager.service pre-network-manager-config.service selinux.service
+Before=network.target network.service agent.service NetworkManager-wait-online.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/local/bin/agent-copy-iso-files.sh
+
+[Install]
+WantedBy=multi-user.target
