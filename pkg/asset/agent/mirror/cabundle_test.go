@@ -36,9 +36,11 @@ func TestCaBundle_Generate(t *testing.T) {
 				&agent.OptionalInstallConfig{
 					Supplied: true,
 					InstallConfig: installconfig.InstallConfig{
-						Config: &types.InstallConfig{
-							ObjectMeta: v1.ObjectMeta{
-								Namespace: "cluster-0",
+						AssetBase: installconfig.AssetBase{
+							Config: &types.InstallConfig{
+								ObjectMeta: v1.ObjectMeta{
+									Namespace: "cluster-0",
+								},
 							},
 						},
 					},
@@ -51,11 +53,12 @@ func TestCaBundle_Generate(t *testing.T) {
 				&agent.OptionalInstallConfig{
 					Supplied: true,
 					InstallConfig: installconfig.InstallConfig{
-						Config: &types.InstallConfig{
-							ObjectMeta: v1.ObjectMeta{
-								Namespace: "cluster-0",
-							},
-							AdditionalTrustBundle: `
+						AssetBase: installconfig.AssetBase{
+							Config: &types.InstallConfig{
+								ObjectMeta: v1.ObjectMeta{
+									Namespace: "cluster-0",
+								},
+								AdditionalTrustBundle: `
 -----BEGIN CERTIFICATE-----
 MIIDZTCCAk2gAwIBAgIURbA8lR+5xlJZUoOXK66AHFWd3uswDQYJKoZIhvcNAQEL
 BQAwQjELMAkGA1UEBhMCWFgxFTATBgNVBAcMDERlZmF1bHQgQ2l0eTEcMBoGA1UE
@@ -78,6 +81,7 @@ S655uiFW5AX2wDVUcQEDCOiEn6SI9DTt5oQjWPMxPf+rEyfQ2f1QwVez7cyr6Qc5
 OIUk31HnM/Fj
 -----END CERTIFICATE-----
 `,
+							},
 						},
 					},
 				},

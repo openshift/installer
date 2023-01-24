@@ -73,50 +73,52 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 
 	return &agent.OptionalInstallConfig{
 		InstallConfig: installconfig.InstallConfig{
-			Config: &types.InstallConfig{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "ocp-edge-cluster-0",
-					Namespace: "cluster-0",
-				},
-				BaseDomain: "testing.com",
-				PullSecret: testSecret,
-				SSHKey:     testSSHKey,
-				ControlPlane: &types.MachinePool{
-					Name:     "master",
-					Replicas: pointer.Int64Ptr(3),
-					Platform: types.MachinePoolPlatform{},
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:     "worker-machine-pool-1",
-						Replicas: pointer.Int64Ptr(2),
+			AssetBase: installconfig.AssetBase{
+				Config: &types.InstallConfig{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "ocp-edge-cluster-0",
+						Namespace: "cluster-0",
 					},
-					{
-						Name:     "worker-machine-pool-2",
+					BaseDomain: "testing.com",
+					PullSecret: testSecret,
+					SSHKey:     testSSHKey,
+					ControlPlane: &types.MachinePool{
+						Name:     "master",
 						Replicas: pointer.Int64Ptr(3),
+						Platform: types.MachinePoolPlatform{},
 					},
-				},
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
+					Compute: []types.MachinePool{
 						{
-							CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
+							Name:     "worker-machine-pool-1",
+							Replicas: pointer.Int64Ptr(2),
+						},
+						{
+							Name:     "worker-machine-pool-2",
+							Replicas: pointer.Int64Ptr(3),
 						},
 					},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       ipnet.IPNet{IPNet: *newCidr},
-							HostPrefix: 23,
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{
+								CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
+							},
 						},
+						ClusterNetwork: []types.ClusterNetworkEntry{
+							{
+								CIDR:       ipnet.IPNet{IPNet: *newCidr},
+								HostPrefix: 23,
+							},
+						},
+						ServiceNetwork: []ipnet.IPNet{
+							*ipnet.MustParseCIDR("172.30.0.0/16"),
+						},
+						NetworkType: "OVNKubernetes",
 					},
-					ServiceNetwork: []ipnet.IPNet{
-						*ipnet.MustParseCIDR("172.30.0.0/16"),
-					},
-					NetworkType: "OVNKubernetes",
-				},
-				Platform: types.Platform{
-					BareMetal: &baremetal.Platform{
-						APIVIPs:     []string{"192.168.122.10"},
-						IngressVIPs: []string{"192.168.122.11"},
+					Platform: types.Platform{
+						BareMetal: &baremetal.Platform{
+							APIVIPs:     []string{"192.168.122.10"},
+							IngressVIPs: []string{"192.168.122.11"},
+						},
 					},
 				},
 			},
@@ -134,56 +136,58 @@ func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
 
 	return &agent.OptionalInstallConfig{
 		InstallConfig: installconfig.InstallConfig{
-			Config: &types.InstallConfig{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "ocp-edge-cluster-0",
-					Namespace: "cluster-0",
-				},
-				BaseDomain: "testing.com",
-				PullSecret: testSecret,
-				SSHKey:     testSSHKey,
-				ControlPlane: &types.MachinePool{
-					Name:     "master",
-					Replicas: pointer.Int64Ptr(3),
-					Platform: types.MachinePoolPlatform{},
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:     "worker-machine-pool-1",
-						Replicas: pointer.Int64Ptr(2),
+			AssetBase: installconfig.AssetBase{
+				Config: &types.InstallConfig{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "ocp-edge-cluster-0",
+						Namespace: "cluster-0",
 					},
-					{
-						Name:     "worker-machine-pool-2",
+					BaseDomain: "testing.com",
+					PullSecret: testSecret,
+					SSHKey:     testSSHKey,
+					ControlPlane: &types.MachinePool{
+						Name:     "master",
 						Replicas: pointer.Int64Ptr(3),
+						Platform: types.MachinePoolPlatform{},
 					},
-				},
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
+					Compute: []types.MachinePool{
 						{
-							CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
+							Name:     "worker-machine-pool-1",
+							Replicas: pointer.Int64Ptr(2),
 						},
 						{
-							CIDR: ipnet.IPNet{IPNet: *machineNetCidrIPv6},
+							Name:     "worker-machine-pool-2",
+							Replicas: pointer.Int64Ptr(3),
 						},
 					},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       ipnet.IPNet{IPNet: *newCidr},
-							HostPrefix: 23,
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{
+								CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
+							},
+							{
+								CIDR: ipnet.IPNet{IPNet: *machineNetCidrIPv6},
+							},
 						},
-						{
-							CIDR:       ipnet.IPNet{IPNet: *newCidrIPv6},
-							HostPrefix: 64,
+						ClusterNetwork: []types.ClusterNetworkEntry{
+							{
+								CIDR:       ipnet.IPNet{IPNet: *newCidr},
+								HostPrefix: 23,
+							},
+							{
+								CIDR:       ipnet.IPNet{IPNet: *newCidrIPv6},
+								HostPrefix: 64,
+							},
+						},
+						ServiceNetwork: []ipnet.IPNet{
+							*ipnet.MustParseCIDR("172.30.0.0/16"), *ipnet.MustParseCIDR("fd02::/112"),
 						},
 					},
-					ServiceNetwork: []ipnet.IPNet{
-						*ipnet.MustParseCIDR("172.30.0.0/16"), *ipnet.MustParseCIDR("fd02::/112"),
-					},
-				},
-				Platform: types.Platform{
-					BareMetal: &baremetal.Platform{
-						APIVIPs:     []string{"192.168.122.10"},
-						IngressVIPs: []string{"192.168.122.11"},
+					Platform: types.Platform{
+						BareMetal: &baremetal.Platform{
+							APIVIPs:     []string{"192.168.122.10"},
+							IngressVIPs: []string{"192.168.122.11"},
+						},
 					},
 				},
 			},
