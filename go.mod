@@ -35,7 +35,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-openapi/errors v0.20.2
 	github.com/go-openapi/strfmt v0.21.2
-	github.com/go-playground/validator/v10 v10.2.0
+	github.com/go-playground/validator/v10 v10.10.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
@@ -53,7 +53,7 @@ require (
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0
 	github.com/microsoft/kiota-authentication-azure-go v0.5.0
 	github.com/microsoftgraph/msgraph-sdk-go v0.47.0
-	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
+	github.com/nutanix-cloud-native/prism-go-client v0.3.4
 	github.com/openshift/api v0.0.0-20230110144457-3299573be149
 	github.com/openshift/assisted-image-service v0.0.0-20220506122314-2f689a1084b8
 	github.com/openshift/assisted-service v0.0.0-20220928142635-a40422bdea61
