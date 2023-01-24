@@ -55,6 +55,8 @@ type TFVarsSources struct {
 
 	MasterConfigs, WorkerConfigs []*machinev1beta1.AWSMachineProviderConfig
 
+	BootstrapConfig *types.MachinePool
+
 	IgnitionBucket, IgnitionPresignedURL string
 
 	AdditionalTrustBundle string
@@ -118,6 +120,11 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	if *rootVolume.EBS.VolumeType == "io1" && rootVolume.EBS.Iops == nil {
 		return nil, errors.New("EBS IOPS must be configured for the io1 root volume")
 	}
+	bootstrapVolume := masterConfig.InstanceType
+	bootstrapConfig := sources.BootstrapConfig.Platform.AWS
+	if bootstrapConfig != nil && bootstrapConfig.InstanceType != "" {
+		bootstrapVolume = bootstrapConfig.InstanceType
+	}
 
 	cfg := &config{
 		CustomEndpoints:         endpoints,
@@ -125,7 +132,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ExtraTags:               tags,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		WorkerAvailabilityZones: workerAvailabilityZones,
-		BootstrapInstanceType:   masterConfig.InstanceType,
+		BootstrapInstanceType:   bootstrapVolume,
 		MasterInstanceType:      masterConfig.InstanceType,
 		Size:                    *rootVolume.EBS.VolumeSize,
 		Type:                    *rootVolume.EBS.VolumeType,

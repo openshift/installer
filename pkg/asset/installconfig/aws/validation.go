@@ -51,7 +51,9 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	if config.ControlPlane != nil && config.ControlPlane.Platform.AWS != nil {
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, field.NewPath("controlPlane", "platform", "aws"), config.Platform.AWS, config.ControlPlane.Platform.AWS, controlPlaneReq, "")...)
 	}
-
+	if config.Bootstrap != nil && config.Bootstrap.Platform.AWS != nil {
+		allErrs = append(allErrs, validateMachinePool(ctx, meta, field.NewPath("controlPlane", "platform", "aws"), config.Platform.AWS, config.Bootstrap.Platform.AWS, controlPlaneReq)...)
+	}
 	for idx, compute := range config.Compute {
 		fldPath := field.NewPath("compute").Index(idx)
 

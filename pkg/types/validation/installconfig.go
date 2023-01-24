@@ -122,6 +122,9 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
 	}
+	if c.Bootstrap != nil {
+		allErrs = append(allErrs, validateMachinePoolPlatform(&c.Platform, &c.Bootstrap.Platform, c.Bootstrap, field.NewPath("bootstrap"))...)
+	}
 	allErrs = append(allErrs, validateCompute(&c.Platform, c.ControlPlane, c.Compute, field.NewPath("compute"))...)
 	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))

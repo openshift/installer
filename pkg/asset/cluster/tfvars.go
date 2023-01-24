@@ -291,6 +291,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			InternalZone:          installConfig.Config.AWS.HostedZone,
 			Services:              installConfig.Config.AWS.ServiceEndpoints,
 			Publish:               installConfig.Config.Publish,
+			BootstrapConfig:       installConfig.Config.Bootstrap,
 			MasterConfigs:         masterConfigs,
 			WorkerConfigs:         workerConfigs,
 			AMIID:                 osImageID,

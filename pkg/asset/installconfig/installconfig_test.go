@@ -62,6 +62,9 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 				},
 			},
 		},
+		Bootstrap: &types.MachinePool{
+			Name: "bootstrap",
+		},
 		ControlPlane: &types.MachinePool{
 			Name:           "master",
 			Replicas:       pointer.Int64Ptr(3),
@@ -128,6 +131,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 							HostPrefix: 23,
 						},
 					},
+				},
+				Bootstrap: &types.MachinePool{
+					Name: "bootstrap",
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
@@ -216,6 +222,9 @@ wrong_key: wrong_value
 						},
 					},
 				},
+				Bootstrap: &types.MachinePool{
+					Name: "bootstrap",
+				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
 					Replicas:       pointer.Int64Ptr(3),
@@ -273,6 +282,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 							HostPrefix: 23,
 						},
 					},
+				},
+				Bootstrap: &types.MachinePool{
+					Name: "bootstrap",
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
@@ -333,6 +345,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 							HostPrefix: 23,
 						},
 					},
+				},
+				Bootstrap: &types.MachinePool{
+					Name: "bootstrap",
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
@@ -395,6 +410,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 						},
 					},
 				},
+				Bootstrap: &types.MachinePool{
+					Name: "bootstrap",
+				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
 					Replicas:       pointer.Int64Ptr(3),
@@ -455,6 +473,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 							HostPrefix: 23,
 						},
 					},
+				},
+				Bootstrap: &types.MachinePool{
+					Name: "bootstrap",
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",

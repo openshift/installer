@@ -45,6 +45,660 @@ spec:
             description: BaseDomain is the base domain to which the cluster should
               belong.
             type: string
+          bootstrap:
+            description: Bootstrap is the configuration for the machines that comprise
+              the bootstrap.
+            properties:
+              architecture:
+                default: amd64
+                description: Architecture is the instruction set architecture of the
+                  machine pool. Defaults to amd64.
+                enum:
+                - ""
+                - amd64
+                type: string
+              hyperthreading:
+                default: Enabled
+                description: Hyperthreading determines the mode of hyperthreading
+                  that machines in the pool will utilize. Default is for hyperthreading
+                  to be enabled.
+                enum:
+                - ""
+                - Enabled
+                - Disabled
+                type: string
+              name:
+                description: Name is the name of the machine pool. For the control
+                  plane machine pool, the name will always be "master". For the compute
+                  machine pools, the only valid name is "worker".
+                type: string
+              platform:
+                description: Platform is configuration for machine pool specific to
+                  the platform.
+                properties:
+                  alibabacloud:
+                    description: AlibabaCloud is the configuration used when installing
+                      on Alibaba Cloud.
+                    properties:
+                      imageID:
+                        description: ImageID is the Image ID that should be used to
+                          create ECS instance. If set, the ImageID should belong to
+                          the same region as the cluster.
+                        type: string
+                      instanceType:
+                        description: InstanceType defines the ECS instance type. eg.
+                          ecs.g6.large
+                        type: string
+                      systemDiskCategory:
+                        description: SystemDiskCategory defines the category of the
+                          system disk.
+                        enum:
+                        - ""
+                        - cloud_efficiency
+                        - cloud_essd
+                        type: string
+                      systemDiskSize:
+                        description: SystemDiskSize defines the size of the system
+                          disk in gibibytes (GiB).
+                        minimum: 120
+                        type: integer
+                      zones:
+                        description: Zones is list of availability zones that can
+                          be used. eg. ["cn-hangzhou-i", "cn-hangzhou-h", "cn-hangzhou-j"]
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  aws:
+                    description: AWS is the configuration used when installing on
+                      AWS.
+                    properties:
+                      amiID:
+                        description: AMIID is the AMI that should be used to boot
+                          the ec2 instance. If set, the AMI should belong to the same
+                          region as the cluster.
+                        type: string
+                      iamRole:
+                        description: IAMRole is the name of the IAM Role to use for
+                          the instance profile of the machine. Leave unset to have
+                          the installer create the IAM Role on your behalf.
+                        type: string
+                      metadataService:
+                        description: EC2MetadataOptions defines metadata service interaction
+                          options for EC2 instances in the machine pool.
+                        properties:
+                          authentication:
+                            description: Authentication determines whether or not
+                              the host requires the use of authentication when interacting
+                              with the metadata service. When using authentication,
+                              this enforces v2 interaction method (IMDSv2) with the
+                              metadata service. When omitted, this means the user
+                              has no opinion and the value is left to the platform
+                              to choose a good default, which is subject to change
+                              over time. The current default is optional. At this
+                              point this field represents `HttpTokens` parameter from
+                              `InstanceMetadataOptionsRequest` structure in AWS EC2
+                              API https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_InstanceMetadataOptionsRequest.html
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                        type: object
+                      rootVolume:
+                        description: EC2RootVolume defines the root volume for EC2
+                          instances in the machine pool.
+                        properties:
+                          iops:
+                            description: IOPS defines the amount of provisioned IOPS.
+                              (KiB/s). IOPS may only be set for io1, io2, & gp3 volume
+                              types.
+                            minimum: 0
+                            type: integer
+                          kmsKeyARN:
+                            description: The KMS key that will be used to encrypt
+                              the EBS volume. If no key is provided the default KMS
+                              key for the account will be used. https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
+                            type: string
+                          size:
+                            description: Size defines the size of the volume in gibibytes
+                              (GiB).
+                            minimum: 0
+                            type: integer
+                          type:
+                            description: Type defines the type of the volume.
+                            type: string
+                        required:
+                        - size
+                        - type
+                        type: object
+                      type:
+                        description: InstanceType defines the ec2 instance type. eg.
+                          m4-large
+                        type: string
+                      zones:
+                        description: Zones is list of availability zones that can
+                          be used.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  azure:
+                    description: Azure is the configuration used when installing on
+                      Azure.
+                    properties:
+                      encryptionAtHost:
+                        description: EncryptionAtHost enables encryption at the VM
+                          host.
+                        type: boolean
+                      osDisk:
+                        description: OSDisk defines the storage for instance.
+                        properties:
+                          diskEncryptionSet:
+                            description: DiskEncryptionSet defines a disk encryption
+                              set.
+                            properties:
+                              name:
+                                description: Name is the name of the disk encryption
+                                  set.
+                                type: string
+                              resourceGroup:
+                                description: ResourceGroup defines the Azure resource
+                                  group used by the disk encryption set.
+                                type: string
+                              subscriptionId:
+                                description: SubscriptionID defines the Azure subscription
+                                  the disk encryption set is in.
+                                type: string
+                            required:
+                            - name
+                            - resourceGroup
+                            type: object
+                          diskSizeGB:
+                            description: DiskSizeGB defines the size of disk in GB.
+                            format: int32
+                            minimum: 0
+                            type: integer
+                          diskType:
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid values are Premium_LRS and StandardSSD_LRS.
+                              Default is Premium_LRS.
+                            enum:
+                            - Standard_LRS
+                            - Premium_LRS
+                            - StandardSSD_LRS
+                            type: string
+                        required:
+                        - diskSizeGB
+                        type: object
+                      osImage:
+                        description: OSImage defines the image to use for the OS.
+                        properties:
+                          offer:
+                            description: Offer is the offer of the image.
+                            type: string
+                          publisher:
+                            description: Publisher is the publisher of the image.
+                            type: string
+                          sku:
+                            description: SKU is the SKU of the image.
+                            type: string
+                          version:
+                            description: Version is the version of the image.
+                            type: string
+                        required:
+                        - offer
+                        - publisher
+                        - sku
+                        - version
+                        type: object
+                      type:
+                        description: InstanceType defines the azure instance type.
+                          eg. Standard_DS_V2
+                        type: string
+                      ultraSSDCapability:
+                        description: ultraSSDCapability defines if the instance should
+                          use Ultra SSD disks.
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
+                      vmNetworkingType:
+                        description: 'VMNetworkingType specifies whether to enable
+                          accelerated networking. Accelerated networking enables single
+                          root I/O virtualization (SR-IOV) to a VM, greatly improving
+                          its networking performance. eg. values: "Accelerated", "Basic"'
+                        enum:
+                        - Accelerated
+                        - Basic
+                        type: string
+                      zones:
+                        description: Zones is list of availability zones that can
+                          be used. eg. ["1", "2", "3"]
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  baremetal:
+                    description: BareMetal is the configuration used when installing
+                      on bare metal.
+                    type: object
+                  gcp:
+                    description: GCP is the configuration used when installing on
+                      GCP
+                    properties:
+                      osDisk:
+                        description: OSDisk defines the storage for instance.
+                        properties:
+                          DiskSizeGB:
+                            description: DiskSizeGB defines the size of disk in GB.
+                            format: int64
+                            maximum: 65536
+                            minimum: 16
+                            type: integer
+                          diskType:
+                            description: DiskType defines the type of disk. For control
+                              plane nodes, the valid value is pd-ssd.
+                            enum:
+                            - pd-ssd
+                            - pd-standard
+                            type: string
+                          encryptionKey:
+                            description: EncryptionKey defines the KMS key to be used
+                              to encrypt the disk.
+                            properties:
+                              kmsKey:
+                                description: KMSKey is a reference to a KMS Key to
+                                  use for the encryption.
+                                properties:
+                                  keyRing:
+                                    description: KeyRing is the name of the KMS Key
+                                      Ring which the KMS Key belongs to.
+                                    type: string
+                                  location:
+                                    description: Location is the GCP location in which
+                                      the Key Ring exists.
+                                    type: string
+                                  name:
+                                    description: Name is the name of the customer
+                                      managed encryption key to be used for the disk
+                                      encryption.
+                                    type: string
+                                  projectID:
+                                    description: ProjectID is the ID of the Project
+                                      in which the KMS Key Ring exists. Defaults to
+                                      the VM ProjectID if not set.
+                                    type: string
+                                required:
+                                - keyRing
+                                - location
+                                - name
+                                type: object
+                              kmsKeyServiceAccount:
+                                description: KMSKeyServiceAccount is the service account
+                                  being used for the encryption request for the given
+                                  KMS key. If absent, the Compute Engine default service
+                                  account is used. See https://cloud.google.com/compute/docs/access/service-accounts#compute_engine_service_account
+                                  for details on the default service account.
+                                type: string
+                            type: object
+                        required:
+                        - DiskSizeGB
+                        type: object
+                      secureBoot:
+                        description: SecureBoot Defines whether the instance should
+                          have secure boot enabled. secure boot Verify the digital
+                          signature of all boot components, and halt the boot process
+                          if signature verification fails. If omitted, the platform
+                          chooses a default, which is subject to change over time,
+                          currently that default is false.
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
+                      tags:
+                        description: Tags defines a set of network tags which will
+                          be added to instances in the machineset
+                        items:
+                          type: string
+                        type: array
+                      type:
+                        description: InstanceType defines the GCP instance type. eg.
+                          n1-standard-4
+                        type: string
+                      zones:
+                        description: Zones is list of availability zones that can
+                          be used.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  ibmcloud:
+                    description: IBMCloud is the configuration used when installing
+                      on IBM Cloud.
+                    properties:
+                      bootVolume:
+                        description: BootVolume is the configuration for the machine's
+                          boot volume.
+                        properties:
+                          encryptionKey:
+                            description: EncryptionKey is the CRN referencing a Key
+                              Protect or Hyper Protect Crypto Services key to use
+                              for volume encryption. If not specified, a provider
+                              managed encryption key will be used.
+                            type: string
+                        type: object
+                      dedicatedHosts:
+                        description: DedicatedHosts is the configuration for the machine's
+                          dedicated host and profile.
+                        items:
+                          description: DedicatedHost stores the configuration for
+                            the machine's dedicated host platform.
+                          properties:
+                            name:
+                              description: Name is the name of the dedicated host
+                                to provision the machine on. If specified, machines
+                                will be created on pre-existing dedicated host.
+                              type: string
+                            profile:
+                              description: Profile is the profile ID for the dedicated
+                                host. If specified, new dedicated host will be created
+                                for machines.
+                              type: string
+                          type: object
+                        type: array
+                      type:
+                        description: InstanceType is the VSI machine profile.
+                        type: string
+                      zones:
+                        description: Zones is the list of availability zones used
+                          for machines in the pool.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  libvirt:
+                    description: Libvirt is the configuration used when installing
+                      on libvirt.
+                    type: object
+                  nutanix:
+                    description: Nutanix is the configuration used when installing
+                      on Nutanix.
+                    properties:
+                      coresPerSocket:
+                        description: 'NumCoresPerSocket is the number of cores per
+                          socket in a vm. The number of vCPUs on the vm will be NumCPUs
+                          times NumCoresPerSocket. For example: 4 CPUs and 4 Cores
+                          per socket will result in 16 VPUs. The AHV scheduler treats
+                          socket and core allocation exactly the same so there is
+                          no benefit to configuring cores over CPUs.'
+                        format: int64
+                        type: integer
+                      cpus:
+                        description: NumCPUs is the total number of virtual processor
+                          cores to assign a vm.
+                        format: int64
+                        type: integer
+                      memoryMiB:
+                        description: Memory is the size of a VM's memory in MiB.
+                        format: int64
+                        type: integer
+                      osDisk:
+                        description: OSDisk defines the storage for instance.
+                        properties:
+                          diskSizeGiB:
+                            description: DiskSizeGiB defines the size of disk in GiB.
+                            format: int64
+                            type: integer
+                        type: object
+                    type: object
+                  openstack:
+                    description: OpenStack is the configuration used when installing
+                      on OpenStack.
+                    properties:
+                      additionalNetworkIDs:
+                        description: AdditionalNetworkIDs contains IDs of additional
+                          networks for machines, where each ID is presented in UUID
+                          v4 format. Allowed address pairs won't be created for the
+                          additional networks.
+                        items:
+                          type: string
+                        type: array
+                      additionalSecurityGroupIDs:
+                        description: AdditionalSecurityGroupIDs contains IDs of additional
+                          security groups for machines, where each ID is presented
+                          in UUID v4 format.
+                        items:
+                          type: string
+                        type: array
+                      rootVolume:
+                        description: RootVolume defines the root volume for instances
+                          in the machine pool. The instances use ephemeral disks if
+                          not set.
+                        properties:
+                          size:
+                            description: Size defines the size of the volume in gibibytes
+                              (GiB). Required
+                            type: integer
+                          type:
+                            description: Type defines the type of the volume. Required
+                            type: string
+                          zones:
+                            description: Zones is the list of availability zones where
+                              the root volumes should be deployed. If no zones are
+                              provided, all instances will be deployed on OpenStack
+                              Cinder default availability zone
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - size
+                        - type
+                        type: object
+                      serverGroupPolicy:
+                        description: ServerGroupPolicy will be used to create the
+                          Server Group that will contain all the machines of this
+                          MachinePool. Defaults to "soft-anti-affinity".
+                        enum:
+                        - ""
+                        - affinity
+                        - soft-affinity
+                        - anti-affinity
+                        - soft-anti-affinity
+                        type: string
+                      type:
+                        description: FlavorName defines the OpenStack Nova flavor.
+                          eg. m1.large
+                        type: string
+                      zones:
+                        description: Zones is the list of availability zones where
+                          the instances should be deployed. If no zones are provided,
+                          all instances will be deployed on OpenStack Nova default
+                          availability zone
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - type
+                    type: object
+                  ovirt:
+                    description: Ovirt is the configuration used when installing on
+                      oVirt.
+                    properties:
+                      affinityGroupsNames:
+                        description: AffinityGroupsNames contains a list of oVirt
+                          affinity group names that the newly created machines will
+                          join. The affinity groups should exist on the oVirt cluster
+                          or created by the OpenShift installer.
+                        items:
+                          type: string
+                        type: array
+                      autoPinningPolicy:
+                        description: AutoPinningPolicy defines the policy to automatically
+                          set the CPU and NUMA including pinning to the host for the
+                          instance. When the field is omitted the default will be
+                          "none".
+                        enum:
+                        - none
+                        - resize_and_pin
+                        type: string
+                      clone:
+                        description: "Clone makes sure that the disks are cloned from
+                          the template and are not linked. Defaults to true for high
+                          performance and server VM types, false for desktop types.
+                          \n Note: this option is not documented in the OpenShift
+                          documentation. This is intentional as it has sane defaults
+                          that shouldn't be changed unless needed for debugging or
+                          resolving issues in cooperation with Red Hat support."
+                        type: boolean
+                      cpu:
+                        description: CPU defines the VM CPU.
+                        properties:
+                          cores:
+                            description: Cores is the number of cores per socket.
+                              Total CPUs is (Sockets * Cores)
+                            format: int32
+                            type: integer
+                          sockets:
+                            description: Sockets is the number of sockets for a VM.
+                              Total CPUs is (Sockets * Cores)
+                            format: int32
+                            type: integer
+                          threads:
+                            description: Threads is the number of CPU threads.
+                            format: int32
+                            type: integer
+                        required:
+                        - cores
+                        - sockets
+                        - threads
+                        type: object
+                      format:
+                        description: Format is the disk format that the disks are
+                          in. Can be "cow" or "raw". "raw" disables several features
+                          that may be needed, such as incremental backups.
+                        enum:
+                        - ""
+                        - raw
+                        - cow
+                        type: string
+                      hugepages:
+                        description: Hugepages is the size of a VM's hugepages to
+                          use in KiBs.
+                        enum:
+                        - 2048
+                        - 1048576
+                        format: int32
+                        type: integer
+                      instanceTypeID:
+                        description: InstanceTypeID defines the VM instance type and
+                          overrides the hardware parameters of the created VM, including
+                          cpu and memory. If InstanceTypeID is passed, all memory
+                          and cpu variables will be ignored.
+                        type: string
+                      memoryMB:
+                        description: MemoryMB is the size of a VM's memory in MiBs.
+                        format: int32
+                        type: integer
+                      osDisk:
+                        description: OSDisk is the the root disk of the node.
+                        properties:
+                          sizeGB:
+                            description: SizeGB size of the bootable disk in GiB.
+                            format: int64
+                            type: integer
+                        required:
+                        - sizeGB
+                        type: object
+                      sparse:
+                        description: Sparse indicates that sparse provisioning should
+                          be used and disks should be not preallocated.
+                        type: boolean
+                      vmType:
+                        description: VMType defines the workload type of the VM.
+                        enum:
+                        - ""
+                        - desktop
+                        - server
+                        - high_performance
+                        type: string
+                    type: object
+                  powervs:
+                    description: PowerVS is the configuration used when installing
+                      on IBM Power VS.
+                    properties:
+                      memoryGiB:
+                        description: memoryGiB is the size of a virtual machine's
+                          memory, in GiB.
+                        format: int32
+                        type: integer
+                      procType:
+                        description: ProcType defines the processor sharing model
+                          for the instance. Must be one of {Capped, Dedicated, Shared}.
+                        enum:
+                        - Dedicated
+                        - Shared
+                        - Capped
+                        - ""
+                        type: string
+                      processors:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: Processors defines the processing units for the
+                          instance.
+                        x-kubernetes-int-or-string: true
+                      sysType:
+                        description: SysType defines the system type for instance.
+                        type: string
+                      volumeIDs:
+                        description: VolumeIDs is the list of volumes attached to
+                          the instance.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  vsphere:
+                    description: VSphere is the configuration used when installing
+                      on vSphere.
+                    properties:
+                      coresPerSocket:
+                        description: NumCoresPerSocket is the number of cores per
+                          socket in a vm. The number of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
+                        format: int32
+                        type: integer
+                      cpus:
+                        description: NumCPUs is the total number of virtual processor
+                          cores to assign a vm.
+                        format: int32
+                        type: integer
+                      memoryMB:
+                        description: Memory is the size of a VM's memory in MB.
+                        format: int64
+                        type: integer
+                      osDisk:
+                        description: OSDisk defines the storage for instance.
+                        properties:
+                          diskSizeGB:
+                            description: DiskSizeGB defines the size of disk in GB.
+                            format: int32
+                            type: integer
+                        type: object
+                      zones:
+                        description: Zones defines available zones Zones is available
+                          in TechPreview.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                type: object
+              replicas:
+                description: Replicas is the machine count for the machine pool.
+                format: int64
+                type: integer
+            required:
+            - name
+            - platform
+            type: object
           bootstrapInPlace:
             description: BootstrapInPlace is the configuration for installing a single
               node with bootstrap in place installation.

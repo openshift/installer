@@ -78,9 +78,17 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	if defaultComputePoolUndefined {
 		c.Compute = append(c.Compute, types.MachinePool{Name: types.MachinePoolComputeRoleName})
 	}
+	if len(c.Compute) == 0 {
+		c.Compute = []types.MachinePool{{Name: "worker"}}
+	}
 	for i := range c.Compute {
 		SetMachinePoolDefaults(&c.Compute[i], c.Platform.Name())
 	}
+
+	if c.Bootstrap == nil {
+		c.Bootstrap = &types.MachinePool{}
+	}
+	c.Bootstrap.Name = "bootstrap"
 
 	if c.CredentialsMode == "" {
 		if c.Platform.Azure != nil && c.Platform.Azure.CloudName == azure.StackCloud {
