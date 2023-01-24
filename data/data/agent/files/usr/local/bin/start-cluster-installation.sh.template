@@ -6,7 +6,7 @@ source issue_status.sh
 
 wait_for_assisted_service
 
-BASE_URL="{{.ServiceBaseURL}}api/assisted-install/v2"
+BASE_URL="${SERVICE_BASE_URL}api/assisted-install/v2"
 
 cluster_id=""
 while [[ "${cluster_id}" = "" ]]
@@ -18,8 +18,7 @@ do
     fi
 done
 
-infra_env_id="{{.InfraEnvID}}"
-echo -e "\nInfra env id is $infra_env_id" 1>&2
+echo -e "\nInfra env id is ${INFRA_ENV_ID}" 1>&2
 
 required_master_nodes={{.ControlPlaneAgents}}
 required_worker_nodes={{.WorkerAgents}}
@@ -33,7 +32,7 @@ status_issue="90_start-install"
 num_known_hosts() {
     local known_hosts=0
     local insufficient_hosts=0
-    host_status=$(curl -s -S "${BASE_URL}/infra-envs/${infra_env_id}/hosts" | jq -r .[].status)
+    host_status=$(curl -s -S "${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts" | jq -r .[].status)
     if [[ -n ${host_status} ]]; then
         for status in ${host_status}; do
             if [[ "${status}" == "known" ]]; then

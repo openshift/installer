@@ -389,6 +389,7 @@ metadata:
 				"/root/assisted.te",
 				"/usr/local/bin/common.sh",
 				"/usr/local/bin/agent-gather",
+				"/usr/local/bin/agent-interactive-console.sh",
 				"/usr/local/bin/extract-agent.sh",
 				"/usr/local/bin/get-container-images.sh",
 				"/usr/local/bin/install-status.sh",

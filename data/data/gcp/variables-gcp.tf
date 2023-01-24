@@ -146,20 +146,8 @@ variable "gcp_create_firewall_rules" {
   description = "Create the cluster's network firewall rules."
 }
 
-variable "gcp_create_public_zone_records" {
-  type = bool
-  default = true
-  description = "Create records for the public managed zone."
-}
-
-variable "gcp_public_zone_project" {
+variable "gcp_master_secure_boot" {
   type = string
+  description = "Verify the digital signature of all boot components."
   default = ""
-  description = "Project where the public managed zone will exist."
-}
-
-variable "gcp_private_zone_project" {
-  type = string
-  default = ""
-  description = "Project where the private managed zone will exist."
 }

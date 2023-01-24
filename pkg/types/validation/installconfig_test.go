@@ -917,7 +917,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com,*.bad-proxy"
 				return c
 			}(),
-			expectedError: `^\Qproxy.noProxy: Invalid value: "good-no-proxy.com,*.bad-proxy": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 1 "*.bad-proxy"\E$`,
+			expectedError: `^\Qproxy.noProxy: Invalid value: "good-no-proxy.com,*.bad-proxy": each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element 1 "*.bad-proxy"\E$`,
 		},
 		{
 			name: "invalid NoProxy spaces",
@@ -926,7 +926,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com, *.bad-proxy"
 				return c
 			}(),
-			expectedError: `^\Q[proxy.noProxy: Invalid value: "good-no-proxy.com, *.bad-proxy": noProxy must not have spaces, proxy.noProxy: Invalid value: "good-no-proxy.com, *.bad-proxy": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 1 "*.bad-proxy"]\E$`,
+			expectedError: `^\Q[proxy.noProxy: Invalid value: "good-no-proxy.com, *.bad-proxy": noProxy must not have spaces, proxy.noProxy: Invalid value: "good-no-proxy.com, *.bad-proxy": each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element 1 "*.bad-proxy"]\E$`,
 		},
 		{
 			name: "invalid NoProxy CIDR",
@@ -935,7 +935,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com,172.bad.CIDR.0/16"
 				return c
 			}(),
-			expectedError: `^\Qproxy.noProxy: Invalid value: "good-no-proxy.com,172.bad.CIDR.0/16": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 1 "172.bad.CIDR.0/16"\E$`,
+			expectedError: `^\Qproxy.noProxy: Invalid value: "good-no-proxy.com,172.bad.CIDR.0/16": each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element 1 "172.bad.CIDR.0/16"\E$`,
 		},
 		{
 			name: "invalid NoProxy domain & CIDR",
@@ -944,7 +944,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end"
 				return c
 			}(),
-			expectedError: `^\Q[proxy.noProxy: Invalid value: "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 2 "*.bad-proxy.", proxy.noProxy: Invalid value: "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end": each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element 4 "172.bad.CIDR.0/16"]\E$`,
+			expectedError: `^\Q[proxy.noProxy: Invalid value: "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end": each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element 2 "*.bad-proxy.", proxy.noProxy: Invalid value: "good-no-proxy.com,a-good-one,*.bad-proxy.,another,172.bad.CIDR.0/16,good-end": each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element 4 "172.bad.CIDR.0/16"]\E$`,
 		},
 		{
 			name: "valid * NoProxy",
@@ -2001,77 +2001,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: "platform.vsphere.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set",
-		},
-		{
-			name: "GCP BYO PUBLIC DNS SHOULD return error if used WITHOUT tech preview",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					GCP: validGCPPlatform(),
-				}
-				c.Platform.GCP.PublicDNSZone = &gcp.DNSZone{
-					ID:        "myZone",
-					ProjectID: "myProject",
-				}
-
-				return c
-			}(),
-			expectedError: "platform.gcp.publicDNSZone.projectID: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field",
-		},
-		{
-			name: "GCP BYO PRIVATE DNS SHOULD return error if used WITHOUT tech preview",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					GCP: validGCPPlatform(),
-				}
-				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
-					ProjectID: "myProject",
-				}
-
-				return c
-			}(),
-			expectedError: "platform.gcp.privateDNSZone.projectID: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field",
-		},
-		{
-			name: "GCP BYO DNS should NOT return error if used WITH tech preview",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					GCP: validGCPPlatform(),
-				}
-				c.Platform.GCP.PublicDNSZone = &gcp.DNSZone{
-					ID:        "myZone",
-					ProjectID: "myProject",
-				}
-				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
-					ProjectID: "myProject",
-				}
-				c.FeatureSet = TechPreviewNoUpgrade
-
-				return c
-			}(),
-		},
-		{
-			name: "GCP BYO Private DNS Invalid with ID",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					GCP: validGCPPlatform(),
-				}
-				c.Platform.GCP.PublicDNSZone = &gcp.DNSZone{
-					ID:        "myZone",
-					ProjectID: "myProject",
-				}
-				c.Platform.GCP.PrivateDNSZone = &gcp.DNSZone{
-					ProjectID: "myProject",
-					ID:        "IDShouldNotExist",
-				}
-				c.FeatureSet = TechPreviewNoUpgrade
-
-				return c
-			}(),
-			expectedError: "platform.gcp.privateDNSZone.id: Forbidden: do not provide an ID for the private DNS zone.",
 		},
 	}
 	for _, tc := range cases {

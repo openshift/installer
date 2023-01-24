@@ -36,7 +36,6 @@ require (
 	github.com/go-openapi/errors v0.20.2
 	github.com/go-openapi/strfmt v0.21.2
 	github.com/go-playground/validator/v10 v10.2.0
-	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
@@ -55,7 +54,7 @@ require (
 	github.com/microsoft/kiota-authentication-azure-go v0.5.0
 	github.com/microsoftgraph/msgraph-sdk-go v0.47.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
-	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
+	github.com/openshift/api v0.0.0-20230110144457-3299573be149
 	github.com/openshift/assisted-image-service v0.0.0-20220506122314-2f689a1084b8
 	github.com/openshift/assisted-service v0.0.0-20220928142635-a40422bdea61
 	github.com/openshift/assisted-service/api v0.0.0
@@ -264,7 +263,7 @@ replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20
 
 // Override the OpenShift API version in hive
 
-replace github.com/openshift/api => github.com/openshift/api v0.0.0-20221004120407-c46852673d03
+replace github.com/openshift/api => github.com/openshift/api v0.0.0-20230110144457-3299573be149
 
 replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0
 
@@ -279,3 +278,9 @@ replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2100495
 replace golang.org/x/text => golang.org/x/text v0.3.7
+
+// https://issues.redhat.com/browse/OCPBUGS-5324
+replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
+
+// https://issues.redhat.com/browse/OCPBUGS-5667
+replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1

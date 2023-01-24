@@ -95,6 +95,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		},
 		Spec: machinev1.ControlPlaneMachineSetSpec{
 			Replicas: &replicas,
+			State:    machinev1.ControlPlaneMachineSetStateActive,
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"machine.openshift.io/cluster-api-machine-role": role,
@@ -172,7 +173,10 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			return nil, errors.New("could not find google service account")
 		}
 	}
-
+	shieldedInstanceConfig := machineapi.GCPShieldedInstanceConfig{}
+	if mpool.SecureBoot == string(machineapi.SecureBootPolicyEnabled) {
+		shieldedInstanceConfig.SecureBoot = machineapi.SecureBootPolicyEnabled
+	}
 	return &machineapi.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -197,16 +201,17 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Email:  instanceServiceAccount,
 			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
 		}},
-		Tags:        append(mpool.Tags, []string{fmt.Sprintf("%s-%s", clusterID, role)}...),
-		MachineType: mpool.InstanceType,
-		Region:      platform.Region,
-		Zone:        az,
-		ProjectID:   platform.ProjectID,
+		Tags:                   append(mpool.Tags, []string{fmt.Sprintf("%s-%s", clusterID, role)}...),
+		MachineType:            mpool.InstanceType,
+		Region:                 platform.Region,
+		Zone:                   az,
+		ProjectID:              platform.ProjectID,
+		ShieldedInstanceConfig: shieldedInstanceConfig,
 	}, nil
 }
 
 // ConfigMasters assigns a set of load balancers to the given machines
-func ConfigMasters(machines []machineapi.Machine, clusterID string, publish types.PublishingStrategy) {
+func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.ControlPlaneMachineSet, clusterID string, publish types.PublishingStrategy) error {
 	var targetPools []string
 	if publish == types.ExternalPublishingStrategy {
 		targetPools = append(targetPools, fmt.Sprintf("%s-api", clusterID))
@@ -216,6 +221,13 @@ func ConfigMasters(machines []machineapi.Machine, clusterID string, publish type
 		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*machineapi.GCPMachineProviderSpec)
 		providerSpec.TargetPools = targetPools
 	}
+
+	providerSpec, ok := controlPlane.Spec.Template.OpenShiftMachineV1Beta1Machine.Spec.ProviderSpec.Value.Object.(*machineapi.GCPMachineProviderSpec)
+	if !ok {
+		return errors.New("Unable to set target pools to control plane machine set")
+	}
+	providerSpec.TargetPools = targetPools
+	return nil
 }
 func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string, error) {
 	if platform.Network == "" {

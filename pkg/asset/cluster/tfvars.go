@@ -449,32 +449,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
 
-		// Setup defaults for public dns zone
-		createPublicZoneRecords := true
-		publicZoneName := ""
-		publicZoneProject := installConfig.Config.GCP.ProjectID
-		if installConfig.Config.GCP.PublicDNSZone != nil && installConfig.Config.GCP.PublicDNSZone.ProjectID != "" {
-			publicZoneProject = installConfig.Config.GCP.PublicDNSZone.ProjectID
-		}
-
-		switch {
-		case installConfig.Config.Publish != types.ExternalPublishingStrategy:
-			// Do not create public records when not publishing externally.
-			createPublicZoneRecords = false
-		case installConfig.Config.GCP.PublicDNSZone != nil && installConfig.Config.GCP.PublicDNSZone.ID != "":
-			publicZoneName = installConfig.Config.GCP.PublicDNSZone.ID
-		default:
-			// Search the project for a dns zone with the specified base domain.
-			publicZone, err := gcpconfig.GetPublicZone(ctx, publicZoneProject, installConfig.Config.BaseDomain)
-			if err != nil {
-				return errors.Wrapf(err, "failed to get GCP public zone")
-			}
-			publicZoneName = publicZone.Name
-		}
-
-		privateZoneProject := ""
-		if installConfig.Config.GCP.PrivateDNSZone != nil && installConfig.Config.GCP.PrivateDNSZone.ProjectID != "" {
-			privateZoneProject = installConfig.Config.GCP.PrivateDNSZone.ProjectID
+		// Search the project for a dns zone with the specified base domain.
+		publicZone, err := gcpconfig.GetPublicZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get GCP public zone")
 		}
 
 		archName := coreosarch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
@@ -497,19 +475,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		imageURL := fmt.Sprintf("https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz", img.Name)
 		data, err := gcptfvars.TFVars(
 			gcptfvars.TFVarsSources{
-				Auth:                    auth,
-				MasterConfigs:           masterConfigs,
-				WorkerConfigs:           workerConfigs,
-				CreateFirewallRules:     createFirewallRules,
-				CreatePublicZoneRecords: createPublicZoneRecords,
-				ImageURI:                imageURL,
-				ImageLicenses:           installConfig.Config.GCP.Licenses,
-				InstanceServiceAccount:  instanceServiceAccount,
-				PreexistingNetwork:      preexistingnetwork,
-				PrivateZoneProject:      privateZoneProject,
-				PublicZoneName:          publicZoneName,
-				PublicZoneProject:       publicZoneProject,
-				PublishStrategy:         installConfig.Config.Publish,
+				Auth:                   auth,
+				MasterConfigs:          masterConfigs,
+				WorkerConfigs:          workerConfigs,
+				CreateFirewallRules:    createFirewallRules,
+				ImageURI:               imageURL,
+				ImageLicenses:          installConfig.Config.GCP.Licenses,
+				InstanceServiceAccount: instanceServiceAccount,
+				PreexistingNetwork:     preexistingnetwork,
+				PublicZoneName:         publicZone.Name,
+				PublishStrategy:        installConfig.Config.Publish,
 			},
 		)
 		if err != nil {

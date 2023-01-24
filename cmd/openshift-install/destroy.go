@@ -55,6 +55,7 @@ func newDestroyClusterCmd() *cobra.Command {
 			if err != nil {
 				logrus.Fatal(err)
 			}
+			logrus.Infof("Uninstallation complete!")
 		},
 	}
 }

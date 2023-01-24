@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	ibmcloudmanifests "github.com/openshift/installer/pkg/asset/manifests/ibmcloud"
+	nutanixmanifests "github.com/openshift/installer/pkg/asset/manifests/nutanix"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	powervsmanifests "github.com/openshift/installer/pkg/asset/manifests/powervs"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
@@ -92,7 +93,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
-	case libvirttypes.Name, nonetypes.Name, baremetaltypes.Name, ovirttypes.Name, nutanixtypes.Name:
+	case libvirttypes.Name, nonetypes.Name, baremetaltypes.Name, ovirttypes.Name:
 		return nil
 	case awstypes.Name:
 		// Store the additional trust bundle in the ca-bundle.pem key if the cluster is being installed on a C2S region.
@@ -312,6 +313,12 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			}
 			cm.Data[cloudProviderConfigDataKey] = vsphereConfig
 		}
+	case nutanixtypes.Name:
+		configJSON, err := nutanixmanifests.CloudConfigJSON(installConfig.Config.Nutanix)
+		if err != nil {
+			return errors.Wrap(err, "could not create Nutanix Cloud provider config")
+		}
+		cm.Data[cloudProviderConfigDataKey] = configJSON
 	default:
 		return errors.New("invalid Platform")
 	}

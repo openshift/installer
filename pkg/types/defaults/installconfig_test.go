@@ -27,7 +27,7 @@ func defaultInstallConfig() *types.InstallConfig {
 		AdditionalTrustBundlePolicy: defaultAdditionalTrustBundlePolicy(),
 		Networking: &types.Networking{
 			MachineNetwork: []types.MachineNetworkEntry{
-				{CIDR: *defaultMachineCIDR},
+				{CIDR: *DefaultMachineCIDR},
 			},
 			NetworkType:    defaultNetworkType,
 			ServiceNetwork: []ipnet.IPNet{*defaultServiceNetwork},

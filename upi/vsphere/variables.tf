@@ -33,16 +33,19 @@ variable "vsphere_password" {
 
 variable "vsphere_cluster" {
   type        = string
+  default     = ""
   description = "This is the name of the vSphere cluster."
 }
 
 variable "vsphere_datacenter" {
   type        = string
+  default     = ""
   description = "This is the name of the vSphere data center."
 }
 
 variable "vsphere_datastore" {
   type        = string
+  default     = ""
   description = "This is the name of the vSphere data store."
 }
 variable "vm_network" {

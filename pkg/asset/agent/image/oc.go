@@ -44,17 +44,27 @@ type Config struct {
 
 // Release is the interface to use the oc command to the get image info
 type Release interface {
-	GetBaseIso(releaseImage, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (string, error)
+	GetBaseIso(architecture string) (string, error)
+	ExtractFile(image string, filename string) (string, error)
 }
 
 type release struct {
-	executer executer.Executer
-	config   Config
+	executer     executer.Executer
+	config       Config
+	releaseImage string
+	pullSecret   string
+	mirrorConfig []mirror.RegistriesConfig
 }
 
 // NewRelease is used to set up the executor to run oc commands
-func NewRelease(executer executer.Executer, config Config) Release {
-	return &release{executer: executer, config: config}
+func NewRelease(executer executer.Executer, config Config, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) Release {
+	return &release{
+		executer:     executer,
+		config:       config,
+		releaseImage: releaseImage,
+		pullSecret:   pullSecret,
+		mirrorConfig: mirrorConfig,
+	}
 }
 
 const (
@@ -64,10 +74,29 @@ const (
 	templateImageExtractWithIcsp = "oc image extract --path %s:%s --confirm --icsp-file=%s %s"
 )
 
-// Get the CoreOS ISO from the releaseImage
-func (r *release) GetBaseIso(releaseImage, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
+// ExtractFile extracts the specified file from the given image name, and store it in the cache dir.
+func (r *release) ExtractFile(image string, filename string) (string, error) {
+	imagePullSpec, err := r.getImageFromRelease(image)
+	if err != nil {
+		return "", err
+	}
+
+	cacheDir, err := GetCacheDir(filesDataType)
+	if err != nil {
+		return "", err
+	}
+
+	path, err := r.extractFileFromImage(imagePullSpec, filename, cacheDir)
+	if err != nil {
+		return "", err
+	}
+	return path, err
+}
+
+// Get the CoreOS ISO from the releaseImage.
+func (r *release) GetBaseIso(architecture string) (string, error) {
 	// Get the machine-os-images pullspec from the release and use that to get the CoreOS ISO
-	image, err := r.getImageFromRelease(machineOsImageName, releaseImage, pullSecret, mirrorConfig)
+	image, err := r.getImageFromRelease(machineOsImageName)
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +114,7 @@ func (r *release) GetBaseIso(releaseImage, pullSecret, architecture string, mirr
 	}
 	if cachedFile != "" {
 		logrus.Info("Verifying cached file")
-		valid, err := r.verifyCacheFile(image, cachedFile, pullSecret, architecture, mirrorConfig)
+		valid, err := r.verifyCacheFile(image, cachedFile, architecture)
 		if err != nil {
 			return "", err
 		}
@@ -96,7 +125,7 @@ func (r *release) GetBaseIso(releaseImage, pullSecret, architecture string, mirr
 	}
 
 	// Get the base ISO from the payload
-	path, err := r.extractFileFromImage(image, filename, cacheDir, pullSecret, mirrorConfig)
+	path, err := r.extractFileFromImage(image, filename, cacheDir)
 	if err != nil {
 		return "", err
 	}
@@ -104,12 +133,12 @@ func (r *release) GetBaseIso(releaseImage, pullSecret, architecture string, mirr
 	return path, err
 }
 
-func (r *release) getImageFromRelease(imageName, releaseImage, pullSecret string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
+func (r *release) getImageFromRelease(imageName string) (string, error) {
 	// This requires the 'oc' command so make sure its available
 	_, err := exec.LookPath("oc")
 	var cmd string
 	if err != nil {
-		if len(mirrorConfig) > 0 {
+		if len(r.mirrorConfig) > 0 {
 			logrus.Warning("Unable to validate mirror config because \"oc\" command is not available")
 		} else {
 			logrus.Debug("Skipping ISO extraction; \"oc\" command is not available")
@@ -117,20 +146,20 @@ func (r *release) getImageFromRelease(imageName, releaseImage, pullSecret string
 		return "", err
 	}
 
-	if len(mirrorConfig) > 0 {
+	if len(r.mirrorConfig) > 0 {
 		logrus.Debugf("Using mirror configuration")
-		icspFile, err := getIcspFileFromRegistriesConfig(mirrorConfig)
+		icspFile, err := getIcspFileFromRegistriesConfig(r.mirrorConfig)
 		if err != nil {
 			return "", err
 		}
 		defer removeIcspFile(icspFile)
-		cmd = fmt.Sprintf(templateGetImageWithIcsp, imageName, true, icspFile, releaseImage)
+		cmd = fmt.Sprintf(templateGetImageWithIcsp, imageName, true, icspFile, r.releaseImage)
 	} else {
-		cmd = fmt.Sprintf(templateGetImage, imageName, true, releaseImage)
+		cmd = fmt.Sprintf(templateGetImage, imageName, true, r.releaseImage)
 	}
 
 	logrus.Debugf("Fetching image from OCP release (%s)", cmd)
-	image, err := execute(r.executer, pullSecret, cmd)
+	image, err := execute(r.executer, r.pullSecret, cmd)
 	if err != nil {
 		if strings.Contains(err.Error(), "unknown flag: --icsp-file") {
 			logrus.Warning("Using older version of \"oc\" that does not support mirroring")
@@ -141,10 +170,10 @@ func (r *release) getImageFromRelease(imageName, releaseImage, pullSecret string
 	return image, nil
 }
 
-func (r *release) extractFileFromImage(image, file, cacheDir, pullSecret string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
+func (r *release) extractFileFromImage(image, file, cacheDir string) (string, error) {
 	var cmd string
-	if len(mirrorConfig) > 0 {
-		icspFile, err := getIcspFileFromRegistriesConfig(mirrorConfig)
+	if len(r.mirrorConfig) > 0 {
+		icspFile, err := getIcspFileFromRegistriesConfig(r.mirrorConfig)
 		if err != nil {
 			return "", err
 		}
@@ -155,7 +184,7 @@ func (r *release) extractFileFromImage(image, file, cacheDir, pullSecret string,
 	}
 
 	logrus.Debugf("extracting %s to %s, %s", file, cacheDir, cmd)
-	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, execute, r.executer, pullSecret, cmd)
+	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, execute, r.executer, r.pullSecret, cmd)
 	if err != nil {
 		return "", err
 	}
@@ -198,7 +227,7 @@ func matchingHash(imageSha []byte, sha string) bool {
 }
 
 // Check if there is a different base ISO in the release payload
-func (r *release) verifyCacheFile(image, file, pullSecret, architecture string, mirrorConfig []mirror.RegistriesConfig) (bool, error) {
+func (r *release) verifyCacheFile(image, file, architecture string) (bool, error) {
 	// Get hash of cached file
 	f, err := os.Open(file)
 	if err != nil {
@@ -228,7 +257,7 @@ func (r *release) verifyCacheFile(image, file, pullSecret, architecture string, 
 	defer os.RemoveAll(tempDir)
 
 	shaFilename := fmt.Sprintf(coreOsSha256FileName, architecture)
-	shaFile, err := r.extractFileFromImage(image, shaFilename, tempDir, pullSecret, mirrorConfig)
+	shaFile, err := r.extractFileFromImage(image, shaFilename, tempDir)
 	if err != nil {
 		logrus.Debug("Could not get SHA from payload for cache comparison")
 		return false, nil
